@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "voice-guide-settings-search.jpg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

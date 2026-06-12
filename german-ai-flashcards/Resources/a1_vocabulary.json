@@ -1,0 +1,4097 @@
+[
+  {
+    "word": "ab",
+    "article": null,
+    "wordType": "adj",
+    "translation": "off, detached",
+    "example": "Ab morgen muss ich arbeiten."
+  },
+  {
+    "word": "aber",
+    "article": null,
+    "wordType": "adv",
+    "translation": "but, however",
+    "example": "Ich bin oft im Büro, aber nur für wenige Stunden."
+  },
+  {
+    "word": "abfahren",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to depart, to leave",
+    "example": "Wir fahren um zwölf Uhr ab."
+  },
+  {
+    "word": "abgeben",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to hand in, give away",
+    "example": "Ich muss meine Schlüssel abgeben."
+  },
+  {
+    "word": "abholen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to collect, pick up or fetch someone or something",
+    "example": "Wann kann ich den Schrank bei dir abholen? Wir müssen noch meinen Bruder abholen."
+  },
+  {
+    "word": "Absender",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "sender",
+    "example": "Da ist ein Brief für dich ohne Absender."
+  },
+  {
+    "word": "Achtung",
+    "article": null,
+    "wordType": "noun",
+    "translation": "attention",
+    "example": "Achtung! Das dürfen Sie nicht tun."
+  },
+  {
+    "word": "Adresse",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "address",
+    "example": "Können Sie mir seine Adresse sagen?"
+  },
+  {
+    "word": "all",
+    "article": null,
+    "wordType": "noun",
+    "translation": "all, every",
+    "example": "Alles Gute! Das ist alles. Sind alle da? Alle Freunde kommen. Hast du alles?"
+  },
+  {
+    "word": "allein",
+    "article": null,
+    "wordType": "adj",
+    "translation": "alone",
+    "example": "Er kommt allein."
+  },
+  {
+    "word": "also",
+    "article": null,
+    "wordType": "adv",
+    "translation": "so, therefore, thus",
+    "example": "Also, es ist so: ... Er hat Zeit, also muss er uns helfen."
+  },
+  {
+    "word": "alt",
+    "article": null,
+    "wordType": "adj",
+    "translation": "old",
+    "example": "Wie alt sind Sie? Sie sehen aber nicht so alt aus. Mein Auto ist schon sehr alt. Wir wohnen in einem sehr alten Haus. Köln ist eine alte Stadt."
+  },
+  {
+    "word": "Alter",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "age, old age",
+    "example": "Alter: 26 Jahre."
+  },
+  {
+    "word": "an",
+    "article": null,
+    "wordType": "adv",
+    "translation": "at, on, to",
+    "example": "Fahren Sie an der nächsten Straße nach rechts. Wir treffen uns am Bahnhof. Am nächsten Montag geht es leider nicht."
+  },
+  {
+    "word": "anbieten",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to offer, to provide",
+    "example": "Was darf ich dir anbieten?"
+  },
+  {
+    "word": "ander",
+    "article": null,
+    "wordType": "adj",
+    "translation": "other",
+    "example": "WiIlst du diese Jacke? – Nein, ich möchte die andere."
+  },
+  {
+    "word": "anfangen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to begin",
+    "example": "Hier fängt die Bahnhofstraße an. Der Unterricht fängt gleich an. Wir machen Anfang Juli Urlaub."
+  },
+  {
+    "word": "anklicken",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to click on (with a mouse)",
+    "example": "Da musst du dieses Wort anklicken."
+  },
+  {
+    "word": "ankommen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to arrive",
+    "example": "Wann kommt dieser Zug in Hamburg an?"
+  },
+  {
+    "word": "Ankunft",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "arrival",
+    "example": "Auf diesem Plan steht nur die Ankunft(-szeit) der Züge."
+  },
+  {
+    "word": "ankreuzen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to tick, check off",
+    "example": "Auf dem Formular müssen Sie an mehreren Stellen etwas ankreuzen."
+  },
+  {
+    "word": "anmachen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to switch on, to turn on",
+    "example": "Mach bitte das Licht an!"
+  },
+  {
+    "word": "anmelden",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to announce, declare",
+    "example": "Wo kann ich mich anmelden?"
+  },
+  {
+    "word": "Anrede",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "salutation, form of address (e.g., in a letter)",
+    "example": "Schreiben Sie auch eine Anrede und einen Gruß."
+  },
+  {
+    "word": "anrufen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to call, phone",
+    "example": "Kann man Sie anrufen? Peter ruft kurz seine Freundin an."
+  },
+  {
+    "word": "Anruf",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "phone call",
+    "example": "Sie bekommt viele Anrufe auf ihrem Handy. beantworter den Anrufbeantworter."
+  },
+  {
+    "word": "Ansage",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "announcement",
+    "example": "Hören Sie die Ansagen."
+  },
+  {
+    "word": "Anschluss",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "connection, joining",
+    "example": "In Mannheim haben Sie Anschluss nach Saarbrücken. Ist das die Anmeldung für einen Telefonanschluss?"
+  },
+  {
+    "word": "an",
+    "article": null,
+    "wordType": "adv",
+    "translation": "at, on, to",
+    "example": "sein Heute Nacht war das Licht an."
+  },
+  {
+    "word": "antworten",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to answer, to reply",
+    "example": "Er antwortet nicht."
+  },
+  {
+    "word": "Anzeige",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "advertisement, announcement",
+    "example": "Ich habe Ihre Anzeige in der Zeitung gelesen."
+  },
+  {
+    "word": "anziehen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "dress",
+    "example": "Ich muss mich noch anziehen."
+  },
+  {
+    "word": "Apartment",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "apartment",
+    "example": "Wir haben ein Apartment gemietet."
+  },
+  {
+    "word": "Apfel",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "apple (fruit)",
+    "example": "Ein Pfund Äpfel bitte."
+  },
+  {
+    "word": "Appetit",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "appetite",
+    "example": "Guten Appetit!"
+  },
+  {
+    "word": "arbeiten",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to work",
+    "example": "Wo arbeiten Sie?"
+  },
+  {
+    "word": "arbeitslos",
+    "article": null,
+    "wordType": "adj",
+    "translation": "unemployed",
+    "example": "Es gibt bei uns viele Leute, die schon lange arbeitslos sind."
+  },
+  {
+    "word": "Arm",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "an arm",
+    "example": "Mein Arm tut weh."
+  },
+  {
+    "word": "auch",
+    "article": null,
+    "wordType": "adv",
+    "translation": "also, too, as well",
+    "example": "Ich bin auch Spanier."
+  },
+  {
+    "word": "auf",
+    "article": null,
+    "wordType": "adj",
+    "translation": "open",
+    "example": "Die Kinder spielen auf der Straße. Auf Wiedersehen. Wie heißt das auf Deutsch?"
+  },
+  {
+    "word": "Aufgabe",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "task, job",
+    "example": "Das ist eine schwere Aufgabe."
+  },
+  {
+    "word": "aufhören",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to stop",
+    "example": "Der Kurs hört in einer Woche auf. Hier hört die Bahnhofstraße auf."
+  },
+  {
+    "word": "auf",
+    "article": null,
+    "wordType": "adj",
+    "translation": "open",
+    "example": "sein Du brauchst den Schlüssel nicht. Die Wohnung ist auf."
+  },
+  {
+    "word": "aufstehen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to get up, stand up",
+    "example": "Ich muss immer um vier Uhr aufstehen. Soll ich aufstehen?"
+  },
+  {
+    "word": "Auge",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "eye",
+    "example": "Er hat blaue Augen."
+  },
+  {
+    "word": "aus",
+    "article": null,
+    "wordType": "adv",
+    "translation": "out",
+    "example": "Er kommt aus Brasilien."
+  },
+  {
+    "word": "Ausflug",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "excursion, outing, short trip",
+    "example": "Morgen machen wir einen Ausflug nach Heidelberg."
+  },
+  {
+    "word": "ausfüllen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to fill in",
+    "example": "Füllen Sie bitte dieses Formular aus."
+  },
+  {
+    "word": "Ausgang",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "exit (passage from inside to outside)",
+    "example": "Wo ist der Ausgang?"
+  },
+  {
+    "word": "Ausland",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "foreign countries (collectively)",
+    "example": "Fahren Sie ins Ausland? ausländisch Leider habe ich nur ausländisches Geld."
+  },
+  {
+    "word": "ausmachen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to turn off, switch off",
+    "example": "Mach bitte das Licht aus!"
+  },
+  {
+    "word": "Aussage",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "proposition",
+    "example": "Ist die Aussage richtig oder falsch?"
+  },
+  {
+    "word": "aussehen",
+    "article": null,
+    "wordType": "noun",
+    "translation": "look, appearance",
+    "example": "Das sieht schön aus."
+  },
+  {
+    "word": "aus",
+    "article": null,
+    "wordType": "adv",
+    "translation": "out",
+    "example": "sein Das Licht ist aus. Die Schule ist aus."
+  },
+  {
+    "word": "aussteigen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to exit, get off (especially a vehicle)",
+    "example": "Wo muss ich aussteigen?"
+  },
+  {
+    "word": "Ausweis",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "ID card",
+    "example": "Hier ist mein Ausweis."
+  },
+  {
+    "word": "ausziehen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to move out, to vacate",
+    "example": "Zieh die Schuhe aus, bitte!"
+  },
+  {
+    "word": "Auto",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "car",
+    "example": "Er kommt mit dem Auto."
+  },
+  {
+    "word": "Autobahn",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "motorway, highway",
+    "example": "Wo geht‘s hier bitte zur Autobahn?"
+  },
+  {
+    "word": "Automat",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "automaton, machine",
+    "example": "Die Fahrkarten gibt es nur am Automaten."
+  },
+  {
+    "word": "automatisch",
+    "article": null,
+    "wordType": "adj",
+    "translation": "automatic",
+    "example": "Du musst nichts machen. Das geht automatisch."
+  },
+  {
+    "word": "Baby",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "baby (infant)",
+    "example": "Mein Kind ist noch ein Baby."
+  },
+  {
+    "word": "Bäckerei",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "bakery, baker’s, bakehouse, bakeshop",
+    "example": "Ich geh mal schnell zur Bäckerei."
+  },
+  {
+    "word": "Bad",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "bath",
+    "example": "Wir haben kein großes Bad."
+  },
+  {
+    "word": "baden",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to bathe, to give a bath to or have a bath.",
+    "example": "Ich bade nicht so gern, ich dusche lieber."
+  },
+  {
+    "word": "Bahn",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "route, trail",
+    "example": "Wir fahren lieber mit der Bahn. Ich nehme die nächste Bahn."
+  },
+  {
+    "word": "Bahnhof",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "train station",
+    "example": "Komme ich hier zum Bahnhof?"
+  },
+  {
+    "word": "Bahnsteig",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "train platform",
+    "example": "Auf welchem Bahnsteig fährt der Zug?"
+  },
+  {
+    "word": "bald",
+    "article": null,
+    "wordType": "adv",
+    "translation": "soon (near in time)",
+    "example": "Ich komme bald."
+  },
+  {
+    "word": "Balkon",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "balcony",
+    "example": "Die Wohnung hat auch einen kleinen Balkon."
+  },
+  {
+    "word": "Banane",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "banana (fruit or tree)",
+    "example": "Drei Bananen, bitte!"
+  },
+  {
+    "word": "Bank",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "bank, bench",
+    "example": "Die Bank schließt schon um vier Uhr. Er sitzt im Park auf einer Bank und liest."
+  },
+  {
+    "word": "bar",
+    "article": null,
+    "wordType": "adj",
+    "translation": "cash",
+    "example": "Muss ich bar zahlen oder geht‘s auch mit Karte?"
+  },
+  {
+    "word": "Bauch",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "abdomen, belly",
+    "example": "Seit gestern tut mir der Bauch weh."
+  },
+  {
+    "word": "Beamte",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "civil servants",
+    "example": "Fragen Sie die Beamtin an Schalter acht!"
+  },
+  {
+    "word": "bedeuten",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to mean, signify",
+    "example": "Was bedeutet das Wort?"
+  },
+  {
+    "word": "beginnen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to begin",
+    "example": "Das Spiel beginnt um 15.30 Uhr."
+  },
+  {
+    "word": "bei",
+    "article": null,
+    "wordType": null,
+    "translation": "at, near, with",
+    "example": "Offenbach liegt bei Frankfurt. Ich wohne bei meinen Eltern. Bei uns regnet es heute. Er arbeitet bei der Polizei."
+  },
+  {
+    "word": "beide",
+    "article": null,
+    "wordType": null,
+    "translation": "both",
+    "example": "Beide Eltern arbeiten. Wir kommen beide."
+  },
+  {
+    "word": "Bein",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "leg of a person, animal, or object",
+    "example": "Mein rechtes Bein tut weh."
+  },
+  {
+    "word": "Beispiel",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "example",
+    "example": "Kannst du mir ein Beispiel sagen? zum Beispiel/z. B. Viele meiner Verwandten, z. B. meine beiden Brüder, arbeiten auch hier."
+  },
+  {
+    "word": "bekannt",
+    "article": null,
+    "wordType": "verb",
+    "translation": "known",
+    "example": "Picasso ist sehr bekannt."
+  },
+  {
+    "word": "der/die",
+    "article": null,
+    "wordType": null,
+    "translation": "the (article)",
+    "example": "Bekannte, -n Ein Bekannter von mir heißt Klaus."
+  },
+  {
+    "word": "bekommen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to receive",
+    "example": "Haben Sie meinen Brief bekommen? Was bekommen Sie? Dieses Medikament bekommen Sie in der Apotheke."
+  },
+  {
+    "word": "benutzen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to make use (of)",
+    "example": "Die Aufzüge bitte nicht benutzen!"
+  },
+  {
+    "word": "Beruf",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "occupation, profession, trade, job, career",
+    "example": "Was sind Sie von Beruf? Was ist Ihr Beruf?"
+  },
+  {
+    "word": "besetzt",
+    "article": null,
+    "wordType": "verb",
+    "translation": "occupied",
+    "example": "Die Nummer ist immer besetzt. Der Platz ist besetzt."
+  },
+  {
+    "word": "besichtigen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to visit (a city, tourist site, monument etc.)",
+    "example": "Ich möchte gern den Dom besichtigen."
+  },
+  {
+    "word": "besser",
+    "article": null,
+    "wordType": "adj",
+    "translation": "better",
+    "example": "Es geht mir schon besser."
+  },
+  {
+    "word": "best",
+    "article": null,
+    "wordType": null,
+    "translation": "best",
+    "example": "Am besten treffen wir uns morgen."
+  },
+  {
+    "word": "bestellen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to order",
+    "example": "Wir möchten bestellen, bitte. Dieses Buch haben wir nicht – sollen wir es für Sie bestellen?"
+  },
+  {
+    "word": "besuchen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to visit, to see",
+    "example": "Darf ich dich besuchen?"
+  },
+  {
+    "word": "Bett",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "bed",
+    "example": "Wir brauchen noch ein Kinderbett."
+  },
+  {
+    "word": "bezahlen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to pay, give money",
+    "example": "Wo muss ich bezahlen?"
+  },
+  {
+    "word": "Bier",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "beer",
+    "example": "Noch ein Bier bitte."
+  },
+  {
+    "word": "Bild",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "depiction, image, picture",
+    "example": "Hast du ein Bild von deinem Sohn?"
+  },
+  {
+    "word": "billig",
+    "article": null,
+    "wordType": "adj",
+    "translation": "cheap, inexpensive",
+    "example": "Die Jacke kostet nur 10 Euro! Die ist aber billig!"
+  },
+  {
+    "word": "Birne",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "pear",
+    "example": "Ein Kilo Birnen, bitte!"
+  },
+  {
+    "word": "bis",
+    "article": null,
+    "wordType": "noun",
+    "translation": "to",
+    "example": "Ich fahre nur bis Stuttgart. Ich warte bis morgen."
+  },
+  {
+    "word": "bisschen",
+    "article": null,
+    "wordType": "adv",
+    "translation": "(a) bit",
+    "example": "Ich spreche Englisch, Französisch und ein bisschen Deutsch."
+  },
+  {
+    "word": "bitte",
+    "article": null,
+    "wordType": "adv",
+    "translation": "please, if you please",
+    "example": "Eine Tasse Kaffee, bitte! Sprechen Sie bitte leise! bitten Darf ich Sie um etwas bitten?"
+  },
+  {
+    "word": "bitter",
+    "article": null,
+    "wordType": "adj",
+    "translation": "bitter",
+    "example": "Der Kaffee schmeckt bitter."
+  },
+  {
+    "word": "bleiben",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to remain (to continue to be)",
+    "example": "Ich bleibe heute zu Hause. Wir bleiben nur bis morgen."
+  },
+  {
+    "word": "Bleistift",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "pencil (writing utensil with a graphite shaft)",
+    "example": "Hast du einen Bleistift?"
+  },
+  {
+    "word": "Blick",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "glance, look",
+    "example": "Von diesem Hotel hat man einen guten Blick auf den Rhein."
+  },
+  {
+    "word": "Blume",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "flower, blossom of an angiosperm)",
+    "example": "Gefallen dir die Blumen?"
+  },
+  {
+    "word": "Bogen",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "bow (weapon)",
+    "example": "Schreiben Sie Ihre Lösungen bitte auf den Antwortbogen."
+  },
+  {
+    "word": "böse",
+    "article": null,
+    "wordType": "adj",
+    "translation": "evil",
+    "example": "Sie ist böse auf mich."
+  },
+  {
+    "word": "brauchen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to need, to be in need of, to require",
+    "example": "Brauchst du die Zeitung noch?"
+  },
+  {
+    "word": "breit",
+    "article": null,
+    "wordType": "adj",
+    "translation": "broad, wide",
+    "example": "Wie breit ist der Schrank?"
+  },
+  {
+    "word": "Brief",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "letter (written message)",
+    "example": "Haben Sie einen Brief für mich?"
+  },
+  {
+    "word": "Briefmarke",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "postage stamp",
+    "example": "Kaufst du bitte Briefmarken bei der Post."
+  },
+  {
+    "word": "bringen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to bring, to fetch, to take, to convey, to bear",
+    "example": "Bringen Sie mir bitte noch einen Kaffee! Wir müssen ihn zum Arzt bringen."
+  },
+  {
+    "word": "Brot",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "bread",
+    "example": "Haben Sie auch Weißbrot? Nimm noch ein paar Brote für die Fahrt mit."
+  },
+  {
+    "word": "Bruder",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "brother",
+    "example": "Sein Bruder arbeitet auch hier."
+  },
+  {
+    "word": "Buchstabe",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "letter (of the alphabet)",
+    "example": "Diesen Buchstaben gibt es in meiner Sprache nicht."
+  },
+  {
+    "word": "buchstabieren",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to spell (name the letters of a word)",
+    "example": "Bitte buchstabieren Sie Ihren Namen."
+  },
+  {
+    "word": "Bus",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "bus (public transport)",
+    "example": "Wann kommt der nächste Bus?"
+  },
+  {
+    "word": "Butter",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "butter",
+    "example": "Für mich bitte ein Brötchen mit Butter und Käse."
+  },
+  {
+    "word": "CD",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "CD (compact disc)",
+    "example": "Bring bitte deine Lieblings-CD mit."
+  },
+  {
+    "word": "Chef",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "boss, chief",
+    "example": "Wir haben eine neue Chefin."
+  },
+  {
+    "word": "circa/ca.",
+    "article": null,
+    "wordType": null,
+    "translation": "approximately, about",
+    "example": "Von Mainz nach Frankfurt sind es circa fünfzig Kilometer."
+  },
+  {
+    "word": "da",
+    "article": null,
+    "wordType": "adv",
+    "translation": "there",
+    "example": "Da hinten ist er ja. Wir sprechen gerade über Paul. Da kommt er ja gerade. Ich nehme das da. Ist Herr Klein schon da?"
+  },
+  {
+    "word": "Dame",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "lady (woman of good breeding and manners)",
+    "example": "Damen (an der Toilette) Sehr geehrte Damen und Herren!"
+  },
+  {
+    "word": "daneben",
+    "article": null,
+    "wordType": "adv",
+    "translation": "next to it, next to that",
+    "example": "Du kennst doch die Post. Daneben ist die Bank."
+  },
+  {
+    "word": "danken",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to thank",
+    "example": "Ich danke Ihnen für die Einladung. Herzlichen Dank! danke Soll ich Ihnen helfen? - Nein, danke!"
+  },
+  {
+    "word": "dann",
+    "article": null,
+    "wordType": "adv",
+    "translation": "then, after that",
+    "example": "Ich muss noch schnell zur Post, dann komme ich."
+  },
+  {
+    "word": "Datum",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "date (specific day for an event to take place)",
+    "example": "Bitte schreiben Sie noch das Datum auf das Formular."
+  },
+  {
+    "word": "dauern",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to last, to continue, to persist (for a period of time)",
+    "example": "Wie lange dauert der Film?"
+  },
+  {
+    "word": "dein",
+    "article": null,
+    "wordType": null,
+    "translation": "your (informal singular)",
+    "example": "Ist das dein Auto? Ist das deins?"
+  },
+  {
+    "word": "denn",
+    "article": null,
+    "wordType": "adv",
+    "translation": "so, then, ever, but, now",
+    "example": "Ich kann nicht kommen, denn ich bin krank."
+  },
+  {
+    "word": "der",
+    "article": null,
+    "wordType": null,
+    "translation": "the (masculine)",
+    "example": "die, das Ich nehme das da. Hier ist der Brief, den du suchst. Die Fahrkarte bekommst du am Bahnhof."
+  },
+  {
+    "word": "dich",
+    "article": null,
+    "wordType": null,
+    "translation": "you (accusative)",
+    "example": "Die Blumen sind für dich."
+  },
+  {
+    "word": "dies",
+    "article": null,
+    "wordType": null,
+    "translation": "this",
+    "example": "Ich nehme lieber diesen Kuchen."
+  },
+  {
+    "word": "dir",
+    "article": null,
+    "wordType": null,
+    "translation": "you (dative)",
+    "example": "Gefallen dir die Blumen?"
+  },
+  {
+    "word": "Disco",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "discotheque, nightclub",
+    "example": "Heute abend gehen wir in die Disco tanzen."
+  },
+  {
+    "word": "Doktor",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "doctor",
+    "example": "Meine Tochter ist krank. Wir gehen zum Doktor."
+  },
+  {
+    "word": "Doppelzimmer",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "double room",
+    "example": "Wollen Sie ein Doppelzimmer oder ein Einzelzimmer?"
+  },
+  {
+    "word": "dort",
+    "article": null,
+    "wordType": "adv",
+    "translation": "there, yonder",
+    "example": "-her, -hin Deine Tasche kannst du dorthin stellen. Dort ist unser Haus."
+  },
+  {
+    "word": "draußen",
+    "article": null,
+    "wordType": "adv",
+    "translation": "outside",
+    "example": "Wollen wir draußen sitzen?"
+  },
+  {
+    "word": "drucken",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to print (a book, newspaper etc.)",
+    "example": "Bitte drucke das Formular für mich."
+  },
+  {
+    "word": "drücken",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to press, to push (a button/key",
+    "example": "Drück hier, dann geht der Computer an."
+  },
+  {
+    "word": "durch",
+    "article": null,
+    "wordType": "adv",
+    "translation": "through, via",
+    "example": "Am besten gehen Sie durch die Breite Straße."
+  },
+  {
+    "word": "Durchsage",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "An announcement over loudspeakers or on the radio.",
+    "example": "Ich habe die Durchsage nicht verstanden."
+  },
+  {
+    "word": "dürfen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to be allowed (to do something)",
+    "example": "Sie dürfen hier nicht rauchen. Darf ich Sie zu einem Kaffee einladen? Es darf nicht mehr als 15 Euro kosten."
+  },
+  {
+    "word": "Durst",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "thirst",
+    "example": "Hast du etwas zu trinken? Ich habe großen Durst."
+  },
+  {
+    "word": "duschen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to shower",
+    "example": "Ich bade nicht so gern, ich dusche lieber."
+  },
+  {
+    "word": "Ecke",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "corner, edge",
+    "example": "An der nächsten Ecke links."
+  },
+  {
+    "word": "Ei",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "egg (all biological senses)",
+    "example": "Möchtest du ein Ei zum Frühstück?"
+  },
+  {
+    "word": "eilig",
+    "article": null,
+    "wordType": "adj",
+    "translation": "speedy, hasty",
+    "example": "Hast du es eilig?"
+  },
+  {
+    "word": "ein",
+    "article": null,
+    "wordType": "adv",
+    "translation": "indicating (concrete or abstract/metaphorical) motion into something",
+    "example": "Ich nehme ein Bier. Willst du auch eins? Ist hier einer, der das kann?"
+  },
+  {
+    "word": "einfach",
+    "article": null,
+    "wordType": "adj",
+    "translation": "easy",
+    "example": "Die Prüfung ist ganz einfach. Hin und zurück? – Nein, bitte nur einfach. Ich brauche nur ein einfaches Zimmer."
+  },
+  {
+    "word": "Eingang",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "entrance, entry",
+    "example": "Der Eingang ist um die Ecke."
+  },
+  {
+    "word": "einkaufen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to shop",
+    "example": "Ich muss noch für morgen einkaufen."
+  },
+  {
+    "word": "einladen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to invite",
+    "example": "Darf ich Sie zu einem Kaffee einladen?"
+  },
+  {
+    "word": "einmal",
+    "article": null,
+    "wordType": "adv",
+    "translation": "once, one time (one and only one time)",
+    "example": "Diese Prüfung mache ich nicht noch einmal."
+  },
+  {
+    "word": "einsteigen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to get in or on",
+    "example": "Schnell, steig ein, der Zug fährt gleich."
+  },
+  {
+    "word": "Eintritt",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "occurring",
+    "example": "Der Preis für den Eintritt ist 5 Euro."
+  },
+  {
+    "word": "Einzelzimmer",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "single room",
+    "example": "Haben Sie noch ein Einzelzimmer?"
+  },
+  {
+    "word": "Eltern",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "parents",
+    "example": "(pl.) Meine Eltern leben in Spanien."
+  },
+  {
+    "word": "E-Mail",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "e-mail (system",
+    "example": "Ich habe Ihre E-Mail nicht bekommen."
+  },
+  {
+    "word": "empfehlen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to propose, to advise in favor of",
+    "example": "Welchen Wein können Sie mir empfehlen?"
+  },
+  {
+    "word": "enden",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to end",
+    "example": "Die Straße endet hier. Er bekommt sein Geld am Ende des Monats."
+  },
+  {
+    "word": "entschuldigen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to excuse (something or (formal) someone)",
+    "example": "Entschuldigen Sie bitte!"
+  },
+  {
+    "word": "er",
+    "article": null,
+    "wordType": "noun",
+    "translation": "he",
+    "example": "Er heißt Ali."
+  },
+  {
+    "word": "Ergebnis",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "result, outcome, conclusion, finding, fruit, consequence, upshot, answer",
+    "example": "Das Ergebnis des Tests bekommen Sie in zwei Wochen."
+  },
+  {
+    "word": "erklären",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to explain, to make clear",
+    "example": "Kannst du mir das erklären?"
+  },
+  {
+    "word": "erlauben",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to allow",
+    "example": "Rauchen ist hier nicht erlaubt."
+  },
+  {
+    "word": "Erwachsene",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "adults",
+    "example": "Dieser Film ist nur für Erwachsene."
+  },
+  {
+    "word": "erzählen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to tell, to narrate, to recount",
+    "example": "Wir müssen euch etwas erzählen!"
+  },
+  {
+    "word": "es",
+    "article": null,
+    "wordType": "noun",
+    "translation": "it",
+    "example": "Es regnet."
+  },
+  {
+    "word": "essen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to eat",
+    "example": "Was gibt es zu essen?"
+  },
+  {
+    "word": "euer",
+    "article": null,
+    "wordType": null,
+    "translation": "your (plural informal)",
+    "example": "Euer Kurs beginnt heute."
+  },
+  {
+    "word": "fahren",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to go at speed",
+    "example": "Ich fahre mit dem Auto zur Arbeit."
+  },
+  {
+    "word": "Fahrkarte",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "fare ticket",
+    "example": "Hast du schon eine Fahrkarte?"
+  },
+  {
+    "word": "falsch",
+    "article": null,
+    "wordType": "adj",
+    "translation": "false, unfactual, untrue",
+    "example": "Das ist falsch."
+  },
+  {
+    "word": "Familie",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "family",
+    "example": "Meine Familie lebt in Spanien."
+  },
+  {
+    "word": "Farbe",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "colour",
+    "example": "Die Farbe gefällt mir gut."
+  },
+  {
+    "word": "Fax",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "fax",
+    "example": "Schicken Sie uns einfach ein Fax!"
+  },
+  {
+    "word": "Feier",
+    "article": null,
+    "wordType": "noun",
+    "translation": "celebration",
+    "example": "z. B. Feierabend, Feiertag Am Montag ist Feiertag."
+  },
+  {
+    "word": "feiern",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to celebrate",
+    "example": "Wir feiern heute meinen Geburtstag."
+  },
+  {
+    "word": "fehlen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "for there to be a lack [with dative ‘to someone/something’ and an (+ dative)...",
+    "example": "Herr Müller ist nicht da, er fehlt schon seit drei Tagen. Was fehlt Ihnen?"
+  },
+  {
+    "word": "fernsehen",
+    "article": null,
+    "wordType": "noun",
+    "translation": "television",
+    "example": "Wollen wir heute Abend mal fernsehen?"
+  },
+  {
+    "word": "fertig",
+    "article": null,
+    "wordType": "adj",
+    "translation": "ready for use",
+    "example": "Bist du fertig? Ist mein Auto schon fertig?"
+  },
+  {
+    "word": "Feuer",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "fire (chemical process)",
+    "example": "Haben Sie Feuer?"
+  },
+  {
+    "word": "Fieber",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "fever (heightened body temperature)",
+    "example": "Mein Mann hat noch immer Fieber."
+  },
+  {
+    "word": "Film",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "film (a thin layer of some substance)",
+    "example": "Ich möchte gern diesen Film sehen."
+  },
+  {
+    "word": "finden",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to find",
+    "example": "Wir müssen den Schlüssel finden."
+  },
+  {
+    "word": "Firma",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "A company, a business.",
+    "example": "Er arbeitet jetzt bei einer anderen Firma."
+  },
+  {
+    "word": "Fisch",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "fish",
+    "example": "Ich esse gern Fisch. Fleisch mag ich nicht."
+  },
+  {
+    "word": "Flasche",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "bottle",
+    "example": "Eine Flasche Bier, bitte."
+  },
+  {
+    "word": "Fleisch",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "flesh",
+    "example": "Fleisch mag ich nicht."
+  },
+  {
+    "word": "fliegen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to fly",
+    "example": "Ich fliege nicht gern. Deshalb fahre ich mit dem Zug. abfliegen Wann fliegst du ab?"
+  },
+  {
+    "word": "Flughafen",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "airport",
+    "example": "Kannst du mich zum Flughafen bringen?"
+  },
+  {
+    "word": "Flugzeug",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "aeroplane",
+    "example": "Das Flugzeug aus Berlin kommt heute später an."
+  },
+  {
+    "word": "Formular",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "form (document to be filled)",
+    "example": "Sie müssen dieses Formular ausfüllen."
+  },
+  {
+    "word": "Foto",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "photograph",
+    "example": "Darf ich ein Foto machen?"
+  },
+  {
+    "word": "fragen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to ask",
+    "example": "Er möchte Sie etwas fragen. Wann kommen Sie?"
+  },
+  {
+    "word": "Frau",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "woman (adult female human)",
+    "example": "Das ist Frau Becker. Guten Tag, Frau Schmitt! Hier arbeiten mehr Frauen als Männer."
+  },
+  {
+    "word": "frei",
+    "article": null,
+    "wordType": "adj",
+    "translation": "free",
+    "example": "Ist der Platz noch frei?"
+  },
+  {
+    "word": "Freizeit",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "free time, leisure time, spare time. The time during which one is not working.",
+    "example": "In meiner Freizeit spiele ich oft Fußball."
+  },
+  {
+    "word": "fremd",
+    "article": null,
+    "wordType": "adj",
+    "translation": "strange",
+    "example": "Das weiß ich nicht; ich bin fremd hier."
+  },
+  {
+    "word": "freuen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to gladden, to make glad, to make pleased",
+    "example": "Ich freue mich auf den Urlaub."
+  },
+  {
+    "word": "Freund",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "friend",
+    "example": "Das ist ein Freund von mir. Das ist meine Freundin."
+  },
+  {
+    "word": "früher",
+    "article": null,
+    "wordType": "adj",
+    "translation": "earlier",
+    "example": "Früher waren wir oft zusammen im Kino."
+  },
+  {
+    "word": "frühstücken",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to have breakfast, to breakfast (to eat the morning meal)",
+    "example": "Am Sonntag frühstücke ich gern im Bett."
+  },
+  {
+    "word": "Führung",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "lead",
+    "example": "Die Führung durch das Haus beginnt in 3 Minuten."
+  },
+  {
+    "word": "für",
+    "article": null,
+    "wordType": null,
+    "translation": "for",
+    "example": "Das ist für Sie. Das ist der Schlüssel für die Haustür. Das ist das Brot für morgen."
+  },
+  {
+    "word": "Fußball",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "soccer",
+    "example": "Spielt ihr gerne Fußball?"
+  },
+  {
+    "word": "Garten",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "garden, yard (grounds at the front or back of a house)",
+    "example": "Wir haben leider keinen Garten."
+  },
+  {
+    "word": "geben",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to give (changing ownership)",
+    "example": "Kannst du mir bitte deinen Kugelschreiber geben? Es gibt keine Karten mehr."
+  },
+  {
+    "word": "geboren",
+    "article": null,
+    "wordType": "verb",
+    "translation": "born",
+    "example": "Ich bin in Zagreb geboren."
+  },
+  {
+    "word": "Geburtsjahr",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "year of birth",
+    "example": "Das Geburtsjahr Ihres Sohnes, bitte?"
+  },
+  {
+    "word": "Geburtsort",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "birthplace, place of birth",
+    "example": "Bitte schreiben Sie Ihren Geburtsort auf das Formular."
+  },
+  {
+    "word": "Geburtstag",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "birthday",
+    "example": "Herzlichen Glückwunsch zum Geburtstag!"
+  },
+  {
+    "word": "gefallen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to please",
+    "example": "Das gefällt mir."
+  },
+  {
+    "word": "gegen",
+    "article": null,
+    "wordType": null,
+    "translation": "against, around (time)",
+    "example": "Fahr nicht gegen den Baum! Ich bin gegen diese Lösung. Wer spielt gegen wen?"
+  },
+  {
+    "word": "gehen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to go, to walk",
+    "example": "Ich weiß nicht, wie das geht. Wie geht‘s? Jetzt muss ich (aber) leider gehen. Ich muss zum Arzt gehen. Das geht nicht!"
+  },
+  {
+    "word": "gehören",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to belong to, be the property of",
+    "example": "Wem gehört das?"
+  },
+  {
+    "word": "Geld",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "money",
+    "example": "Hast du noch Geld?"
+  },
+  {
+    "word": "Gemüse",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "vegetable",
+    "example": "Gemüse brauchen wir auch noch."
+  },
+  {
+    "word": "Gepäck",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "luggage, baggage",
+    "example": "Wollen Sie Ihr Gepäck mitnehmen?"
+  },
+  {
+    "word": "gerade",
+    "article": null,
+    "wordType": "adj",
+    "translation": "even",
+    "example": "Da kommt er ja gerade."
+  },
+  {
+    "word": "geradeaus",
+    "article": null,
+    "wordType": "adv",
+    "translation": "straight ahead, straightforward (in a forward direction)",
+    "example": "Gehen Sie immer geradeaus!"
+  },
+  {
+    "word": "gern(e)",
+    "article": null,
+    "wordType": null,
+    "translation": "gladly, with pleasure",
+    "example": "Ich gehe gerne einkaufen."
+  },
+  {
+    "word": "Geschäft",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "shop",
+    "example": "Die Geschäfte schließen um 18.30 Uhr."
+  },
+  {
+    "word": "Geschenk",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "present, gift",
+    "example": "Danke für das schöne Geschenk."
+  },
+  {
+    "word": "Geschwister",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "sibling",
+    "example": "(pl.) Ich habe leider keine Geschwister."
+  },
+  {
+    "word": "Gespräch",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "conversation, chat, talk",
+    "example": "Das Gespräch mit Frau Kunz ist um 14 Uhr."
+  },
+  {
+    "word": "gestern",
+    "article": null,
+    "wordType": "adv",
+    "translation": "yesterday",
+    "example": "Gestern war ich krank."
+  },
+  {
+    "word": "gestorben",
+    "article": null,
+    "wordType": "verb",
+    "translation": "died",
+    "example": "Meine Frau ist gestern gestorben."
+  },
+  {
+    "word": "Getränk",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "drink, beverage (liquid for consumption)",
+    "example": "Mein Lieblingsgetränk ist Tomatensaft."
+  },
+  {
+    "word": "Gewicht",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "weight",
+    "example": "Bei „Gewicht“ schreibst du: 62 Kilo."
+  },
+  {
+    "word": "gewinnen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to win",
+    "example": "Wer gewinnt das Spiel?"
+  },
+  {
+    "word": "glauben",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to believe something (to consider true)",
+    "example": "Sie können mir glauben, es ist so. Ich glaube, er kommt gleich."
+  },
+  {
+    "word": "gleich",
+    "article": null,
+    "wordType": "adj",
+    "translation": "equal",
+    "example": "Das ist mir gleich. Das ist der gleiche Preis. Ich komme gleich."
+  },
+  {
+    "word": "Gleis",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "railway (track on which trains run)",
+    "example": "Der ICE nach Berlin hält heute an Gleis 12."
+  },
+  {
+    "word": "Glück",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "happiness, joy, bliss (state or emotion)",
+    "example": "Viel Glück!"
+  },
+  {
+    "word": "glücklich",
+    "article": null,
+    "wordType": "adj",
+    "translation": "happy",
+    "example": "Meine Kinder sind glücklich verheiratet."
+  },
+  {
+    "word": "Glückwunsch",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "congratulation",
+    "example": "Herzlichen Glückwunsch zum Geburtstag."
+  },
+  {
+    "word": "Grad",
+    "article": null,
+    "wordType": "adv",
+    "translation": "degree",
+    "example": "(Celsius) Heute haben wir dreißig Grad."
+  },
+  {
+    "word": "gratulieren",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to congratulate",
+    "example": "Ich gratuliere dir!"
+  },
+  {
+    "word": "grillen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to grill",
+    "example": "Heute grillen wir im Garten."
+  },
+  {
+    "word": "groß",
+    "article": null,
+    "wordType": "adj",
+    "translation": "big, large, large-scale",
+    "example": "Mein Bruder und ich sind gleich groß. Frankfurt ist eine große Stadt."
+  },
+  {
+    "word": "Großeltern",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "grandparents",
+    "example": "(pl.) Meine Großeltern leben in Japan."
+  },
+  {
+    "word": "Gruppe",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "group",
+    "example": "Die erste Gruppe beginnt um 16 Uhr."
+  },
+  {
+    "word": "gültig",
+    "article": null,
+    "wordType": "adj",
+    "translation": "valid, validated, legal",
+    "example": "Der Pass ist nicht mehr gültig."
+  },
+  {
+    "word": "günstig",
+    "article": null,
+    "wordType": "adj",
+    "translation": "favourable, propitious, opportune",
+    "example": "Dort gibt es günstige Angebote."
+  },
+  {
+    "word": "gut",
+    "article": null,
+    "wordType": "adj",
+    "translation": "good",
+    "example": "Das finde ich gut. Ich komme um 13 Uhr. – Gut! Guten Morgen! Ein gutes neues Jahr! Guten Appetit!"
+  },
+  {
+    "word": "Haar",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "hair",
+    "example": "Sie hat lange Haare."
+  },
+  {
+    "word": "haben",
+    "article": null,
+    "wordType": "verb",
+    "translation": "forms the perfect aspect (have)",
+    "example": "Ich habe ein neues Auto."
+  },
+  {
+    "word": "Halbpension",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "half board",
+    "example": "Möchten Sie Vollpension oder Halbpension?"
+  },
+  {
+    "word": "Halle",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "hall",
+    "example": "Wir treffen uns in Halle B"
+  },
+  {
+    "word": "hallo",
+    "article": null,
+    "wordType": "noun",
+    "translation": "hello",
+    "example": "Hallo Inge! Wie geht’s?"
+  },
+  {
+    "word": "halten",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to hold (an object in one's hands)",
+    "example": "Dieser Zug hält nicht in Rüdesheim."
+  },
+  {
+    "word": "Haltestelle",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "stop",
+    "example": "An der nächsten Haltestelle müssen Sie aussteigen."
+  },
+  {
+    "word": "Handy",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "mobile phone, mobile, cell phone, phone (portable, wireless telephone)",
+    "example": "In der Schule bitte die Handys ausmachen!"
+  },
+  {
+    "word": "Hausaufgabe",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "homework assignment, a piece of exercise or examination by which a teacher or...",
+    "example": "Kannst du mir bei den Hausaufgaben helfen?"
+  },
+  {
+    "word": "Heimat",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "home, home town, homeland, native land",
+    "example": "Ich komme aus der Schweiz. Das ist meine Heimat."
+  },
+  {
+    "word": "heiraten",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to marry",
+    "example": "Meine Schwester heiratet einen Japaner."
+  },
+  {
+    "word": "heißen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to have a name",
+    "example": "Ich heiße Charlotte Meier. Wie heißt das auf Deutsch?"
+  },
+  {
+    "word": "helfen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to help (someone)",
+    "example": "Können Sie mir helfen, bitte?"
+  },
+  {
+    "word": "hell",
+    "article": null,
+    "wordType": "adj",
+    "translation": "clear, bright, light",
+    "example": "Im Sommer ist es bis 21 Uhr hell."
+  },
+  {
+    "word": "Herd",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "cooker",
+    "example": "In der neuen Küche fehlt noch der Herd."
+  },
+  {
+    "word": "Herr",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "man, gentleman",
+    "example": "Guten Tag, Herr Sommer!"
+  },
+  {
+    "word": "herzlich",
+    "article": null,
+    "wordType": "adj",
+    "translation": "warm, warmhearted, friendly, affectionate, cordial",
+    "example": "Herzlichen Glückwunsch!"
+  },
+  {
+    "word": "heute",
+    "article": null,
+    "wordType": "adv",
+    "translation": "today",
+    "example": "Heute ist ein schöner Tag."
+  },
+  {
+    "word": "hier",
+    "article": null,
+    "wordType": "adv",
+    "translation": "here",
+    "example": "Hier ist 06131-553221, Pamela Linke. Hier wohne ich."
+  },
+  {
+    "word": "Hilfe",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "help, aid",
+    "example": "Hilfe! Bitte helfen Sie mir! Brauchen Sie meine Hilfe?"
+  },
+  {
+    "word": "hinten",
+    "article": null,
+    "wordType": "adv",
+    "translation": "behind",
+    "example": "Die Tür zum Aussteigen ist hinten."
+  },
+  {
+    "word": "Hobby",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "a hobby (activity)",
+    "example": "Meine Hobbys sind Wandern und Schwimmen."
+  },
+  {
+    "word": "hoch",
+    "article": null,
+    "wordType": "adj",
+    "translation": "high, tall",
+    "example": "Der Mount Everest ist 8.880 Meter hoch."
+  },
+  {
+    "word": "Hochzeit",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "wedding, marriage",
+    "example": "Zur dieser Hochzeit kommen mehr als fünfzig Gäste."
+  },
+  {
+    "word": "holen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to (go) get, to fetch (to go somewhere and take something)",
+    "example": "Ich hole zwei Flaschen Wasser aus der Küche."
+  },
+  {
+    "word": "hören",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to hear (to perceive sounds (or a sound) through the ear)",
+    "example": "Hör mal! Was ist das? Ich habe das Lied schon mal gehört."
+  },
+  {
+    "word": "Hotel",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "hotel",
+    "example": "Im Urlaub sind wir in einem Hotel am Meer."
+  },
+  {
+    "word": "Hund",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "dog, hound",
+    "example": "Der Hund ist noch jung."
+  },
+  {
+    "word": "Hunger",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "hunger",
+    "example": "Ich habe Hunger! Wann ist das Essen fertig?"
+  },
+  {
+    "word": "ich",
+    "article": null,
+    "wordType": "pronoun",
+    "translation": "I",
+    "example": "Ich heiße Veronika."
+  },
+  {
+    "word": "ihr/ihm/ihn",
+    "article": null,
+    "wordType": null,
+    "translation": "her/him/it (pronouns)",
+    "example": "Gib ihr/ihm bitte das Buch. Ruf ihn bitte an."
+  },
+  {
+    "word": "immer",
+    "article": null,
+    "wordType": "adv",
+    "translation": "always",
+    "example": "Frau Bast kommt immer zu spät."
+  },
+  {
+    "word": "in",
+    "article": null,
+    "wordType": "adj",
+    "translation": "in, popular (in fashion)",
+    "example": "Ich wohne in Wiesbaden. Der Zug kommt in fünf Minuten. Frau Rausch arbeitet in einem Geschäft. Komm, wir gehen ins Kino."
+  },
+  {
+    "word": "Information",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "a piece of information",
+    "example": "Wenn Sie Fragen haben, gehen Sie zur Information. Wir haben hier wichtige Informationen für Sie."
+  },
+  {
+    "word": "international",
+    "article": null,
+    "wordType": "adj",
+    "translation": "international",
+    "example": "Unser Deutschkurs ist international: Silvana kommt aus Italien, Conchi aus Spanien, Yin aus China ..."
+  },
+  {
+    "word": "Internet",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "internet",
+    "example": "Das findest du im Internet."
+  },
+  {
+    "word": "ja",
+    "article": null,
+    "wordType": "adv",
+    "translation": "obviously",
+    "example": "Sind Sie Herr Watanabe? – Ja."
+  },
+  {
+    "word": "Jacke",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "jacket",
+    "example": "Zieh dir eine Jacke an. Es ist kalt."
+  },
+  {
+    "word": "jed",
+    "article": null,
+    "wordType": null,
+    "translation": "every, each",
+    "example": "Blumen kannst du in jedem Bahnhof kaufen."
+  },
+  {
+    "word": "jetzt",
+    "article": null,
+    "wordType": "adv",
+    "translation": "now (at this moment, right now)",
+    "example": "Jetzt machen wir eine Pause."
+  },
+  {
+    "word": "Job",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "job, position, employment",
+    "example": "Jenny hat einen neuen Job bei der Post."
+  },
+  {
+    "word": "Jugendliche",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "teenagers",
+    "example": "Viele Jugendliche kaufen gern ein."
+  },
+  {
+    "word": "jung",
+    "article": null,
+    "wordType": "adj",
+    "translation": "young",
+    "example": "Claudia ist 21. – Was? Noch so jung?"
+  },
+  {
+    "word": "Junge",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "boy",
+    "example": "Ich habe zwei Kinder. Einen Jungen und ein Mädchen."
+  },
+  {
+    "word": "Kaffee",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "coffee",
+    "example": "Zum Frühstück trinke ich immer Kaffee."
+  },
+  {
+    "word": "kaputt",
+    "article": null,
+    "wordType": "adj",
+    "translation": "destroyed, broken, out of order",
+    "example": "Das Glas war teuer. Es geht sehr leicht kaputt."
+  },
+  {
+    "word": "Karte",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "card",
+    "example": "Ich schreibe meinen Bekannten eine Karte aus dem Urlaub. Wollen wir Karten spielen? Ich möchte auch etwas essen. Bringen Sie mir die Karte, bitte. (Kredit)-Karte, -n Kann ich auch mit Karte (be-) zahlen?"
+  },
+  {
+    "word": "Kartoffel",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "potato",
+    "example": "Für Pommes frites braucht man Kartoffeln."
+  },
+  {
+    "word": "Kasse",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "cash register, cash box",
+    "example": "Zahlen Sie bitte an der Kasse."
+  },
+  {
+    "word": "kaufen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to buy, to purchase",
+    "example": "Tim kauft sich ein neues Auto."
+  },
+  {
+    "word": "kein",
+    "article": null,
+    "wordType": null,
+    "translation": "no, not a",
+    "example": "Es gibt keine Eintrittskarten mehr."
+  },
+  {
+    "word": "kennen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to know",
+    "example": "Kennen Sie diese Frau? – Nein, leider nicht. kennenlernen Wir sind neu hier. Wir möchten Sie kennenlernen."
+  },
+  {
+    "word": "Kind",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "kid",
+    "example": "Wie viele Kinder haben Sie?"
+  },
+  {
+    "word": "Kindergarten",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "nursery school",
+    "example": "Die kleine Laura geht schon in den Kindergarten."
+  },
+  {
+    "word": "Kino",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "cinema",
+    "example": "Wir sehen heute Abend im Kino einen schönen Film."
+  },
+  {
+    "word": "Kiosk",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "kiosk",
+    "example": "Am Kiosk bekommen Sie Getränke, Zigaretten und Zeitungen."
+  },
+  {
+    "word": "klar",
+    "article": null,
+    "wordType": "adj",
+    "translation": "clear",
+    "example": "Kommst du mit? – Klar!"
+  },
+  {
+    "word": "Klasse",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "a class",
+    "example": "In unserer Klasse sind fünfundzwanzig Schüler. Im Zug fahre ich immer 2. Klasse."
+  },
+  {
+    "word": "Kleidung",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "clothing",
+    "example": "Wo finde ich Kleidung? – Jacken im ersten, Jeans im zweiten Stock."
+  },
+  {
+    "word": "klein",
+    "article": null,
+    "wordType": "adj",
+    "translation": "small, little, wee (in physical size or extent)",
+    "example": "Eltville ist eine kleine Stadt am Rhein."
+  },
+  {
+    "word": "kochen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to cook, to prepare food (chiefly hot food for lunch or supper)",
+    "example": "Herr Georgi kann gut kochen."
+  },
+  {
+    "word": "Kollege",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "colleague, coworker, workmate, fellow worker or member",
+    "example": "Wie heißt die neue Kollegin?"
+  },
+  {
+    "word": "kommen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to come",
+    "example": "Woher kommen Sie? – Aus Frankreich. Kommst du mit ins Schwimmbad?"
+  },
+  {
+    "word": "können",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to be able (to do or be something), to have the possibility of, can.",
+    "example": "Ich kann Deutsch und Russisch. Können Sie mir helfen?"
+  },
+  {
+    "word": "Konto",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "account",
+    "example": "Das Geld überweisen wir am ersten März auf Ihr Konto."
+  },
+  {
+    "word": "Kopf",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "head",
+    "example": "Mein Kopf tut weh!"
+  },
+  {
+    "word": "kosten",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to cost",
+    "example": "Wie viel kostet das? – 10 Euro."
+  },
+  {
+    "word": "krank",
+    "article": null,
+    "wordType": "adj",
+    "translation": "ill, sick (in bad health)",
+    "example": "Ich kann heute nicht zur Arbeit kommen, ich bin krank und liege im Bett."
+  },
+  {
+    "word": "kriegen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to get",
+    "example": "Ich kriege 15 Euro in der Stunde für meine Arbeit."
+  },
+  {
+    "word": "Küche",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "kitchen (room)",
+    "example": "Der neue Herd kommt in die Küche."
+  },
+  {
+    "word": "Kuchen",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "pie",
+    "example": "Ich nehme ein Stück Kuchen."
+  },
+  {
+    "word": "Kugelschreiber",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "ballpoint pen, biro",
+    "example": "Hast du einen Kugelschreiber für mich?"
+  },
+  {
+    "word": "Kühlschrank",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "refrigerator",
+    "example": "Haben wir noch Milch? – Ja, im Kühlschrank."
+  },
+  {
+    "word": "kulturell",
+    "article": null,
+    "wordType": "adj",
+    "translation": "cultural",
+    "example": "Ich bin kulturell interessiert. Ich gehe oft ins Museum."
+  },
+  {
+    "word": "sich",
+    "article": null,
+    "wordType": null,
+    "translation": "oneself, himself, herself, themselves",
+    "example": "kümmern Jede Mutter kümmert sich um ihre kleinen Kinder."
+  },
+  {
+    "word": "Kunde",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "customer, patron, client",
+    "example": "Einen Moment, bitte. Ich habe eine Kundin."
+  },
+  {
+    "word": "Kurs",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "course (direction)",
+    "example": "Der Deutschkurs geht bis zum Sommer."
+  },
+  {
+    "word": "kurz",
+    "article": null,
+    "wordType": "adj",
+    "translation": "short, quick, brief",
+    "example": "Ricardo hat kurzes Haar."
+  },
+  {
+    "word": "lachen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to laugh",
+    "example": "Die Kinder lachen viel."
+  },
+  {
+    "word": "Laden",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "shop",
+    "example": "Im Buchladen können Sie Bücher kaufen."
+  },
+  {
+    "word": "lang",
+    "article": null,
+    "wordType": "adj",
+    "translation": "long",
+    "example": "Die Jeans ist zu lang."
+  },
+  {
+    "word": "lange",
+    "article": null,
+    "wordType": "adv",
+    "translation": "long, for a long time",
+    "example": "Wie lange fährt der Zug von Hamburg nach Berlin?"
+  },
+  {
+    "word": "langsam",
+    "article": null,
+    "wordType": "adj",
+    "translation": "slow (taking a long time to move or travel",
+    "example": "Könnten Sie bitte etwas langsamer sprechen?"
+  },
+  {
+    "word": "laufen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to walk",
+    "example": "Ich möchte nicht Auto fahren, ich möchte laufen."
+  },
+  {
+    "word": "laut",
+    "article": null,
+    "wordType": "noun",
+    "translation": "loud",
+    "example": "Nicht so laut! Das Baby schläft."
+  },
+  {
+    "word": "leben",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to live, to be alive",
+    "example": "Sie lebt bei ihrer Schwester. Ihre Eltern leben nicht mehr. mittel (pl.) Lebensmittel bekommen Sie im Supermarkt."
+  },
+  {
+    "word": "ledig",
+    "article": null,
+    "wordType": "adj",
+    "translation": "unmarried",
+    "example": "Sind Sie verheiratet? – Nein. Ledig."
+  },
+  {
+    "word": "legen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "causative of liegen: to lay",
+    "example": "Legen Sie das Buch auf den Tisch."
+  },
+  {
+    "word": "leicht",
+    "article": null,
+    "wordType": "adj",
+    "translation": "light (not heavy)",
+    "example": "Der Koffer ist leicht. Deutsch ist nicht leicht."
+  },
+  {
+    "word": "leider",
+    "article": null,
+    "wordType": "adv",
+    "translation": "unfortunately",
+    "example": "Leider kann ich nicht kommen. Ich muss zum Arzt."
+  },
+  {
+    "word": "leise",
+    "article": null,
+    "wordType": "adj",
+    "translation": "quiet, soft, low",
+    "example": "Seid leise. Die anderen schlafen schon."
+  },
+  {
+    "word": "lernen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to learn, to acquire knowledge",
+    "example": "Wie lange lernen Sie schon Deutsch?"
+  },
+  {
+    "word": "lesen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to read",
+    "example": "Ich lese ein Buch von García Márquez."
+  },
+  {
+    "word": "letzt",
+    "article": null,
+    "wordType": "noun",
+    "translation": "last",
+    "example": "Morgen ist der letzte Kurstag."
+  },
+  {
+    "word": "Leute",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "people",
+    "example": "(pl.) In der Disko sind viele Leute."
+  },
+  {
+    "word": "Licht",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "light",
+    "example": "Wo macht man hier das Licht an?"
+  },
+  {
+    "word": "lieb",
+    "article": null,
+    "wordType": "adj",
+    "translation": "lovable",
+    "example": "Liebe Susanne, lieber Hans, lieben Ich liebe dich! lieber Sie fährt lieber mit der Bahn."
+  },
+  {
+    "word": "Lieblings",
+    "article": null,
+    "wordType": "noun",
+    "translation": "favorite",
+    "example": "Mein Lieblingsfilm ist „Schwarze Augen“."
+  },
+  {
+    "word": "Lied",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "song",
+    "example": "Welches ist dein Lieblingslied?"
+  },
+  {
+    "word": "liegen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to lie (to be in a horizontal position)",
+    "example": "Um neun Uhr liegt Judith noch im Bett. Frankfurt liegt am Main."
+  },
+  {
+    "word": "links",
+    "article": null,
+    "wordType": "adv",
+    "translation": "on the left",
+    "example": "Gehen Sie die nächste Straße links."
+  },
+  {
+    "word": "Lkw",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "abbreviation of Lastkraftwagen (“truck”)",
+    "example": "Dieser Lastkraftwagen ist sehr groß."
+  },
+  {
+    "word": "Lokal",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "A restaurant, especially when small and/or traditional",
+    "example": "In unserer Straße gibt es ein neues Lokal."
+  },
+  {
+    "word": "Lösung",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "solution (answer to a riddle or problem)",
+    "example": "Die Lösung ist ganz einfach."
+  },
+  {
+    "word": "lustig",
+    "article": null,
+    "wordType": "adj",
+    "translation": "funny, humorous",
+    "example": "Frau Mertens ist lustig. Sie lacht immer."
+  },
+  {
+    "word": "machen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to make, to produce, to create (an object, arrangement, situation, etc.)",
+    "example": "Was machst du heute Abend? Ich muss jetzt das Essen machen. Das macht 5 Euro 95. Das macht nichts."
+  },
+  {
+    "word": "man",
+    "article": null,
+    "wordType": "adv",
+    "translation": "one",
+    "example": "Hier darf man nicht rauchen."
+  },
+  {
+    "word": "Maschine",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "machine",
+    "example": "Die Waschmaschine ist günstig."
+  },
+  {
+    "word": "Meer",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "sea",
+    "example": "Wir machen Urlaub am Meer."
+  },
+  {
+    "word": "mehr",
+    "article": null,
+    "wordType": "adv",
+    "translation": "more",
+    "example": "Dieses Auto kostet 1.000 Euro mehr als das andere."
+  },
+  {
+    "word": "mein",
+    "article": null,
+    "wordType": null,
+    "translation": "my",
+    "example": "Mein Vater ist Arzt."
+  },
+  {
+    "word": "meist",
+    "article": null,
+    "wordType": "adj",
+    "translation": "mostly",
+    "example": "Die meisten Norddeutschen sind sehr groß."
+  },
+  {
+    "word": "Mensch",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "human, human being, person, man",
+    "example": "Die Menschen sind hier anders als bei uns."
+  },
+  {
+    "word": "mieten",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to hire, to rent",
+    "example": "Ich möchte ein Auto mieten."
+  },
+  {
+    "word": "Milch",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "milk",
+    "example": "Die Milch steht im Kühlschrank."
+  },
+  {
+    "word": "mit",
+    "article": null,
+    "wordType": "adv",
+    "translation": "among",
+    "example": "Trinken Sie den Kaffee mit Milch?"
+  },
+  {
+    "word": "mitbringen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to bring (along, with), to accompany",
+    "example": "Ich gehe einkaufen. Soll ich dir was mitbringen?"
+  },
+  {
+    "word": "mitkommen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to come with, to join and come along with (another person)",
+    "example": "Ich gehe ins Kino. Kommst du mit?"
+  },
+  {
+    "word": "mitmachen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to take part, to participate, to join in",
+    "example": "Warum macht ihr nicht mit?"
+  },
+  {
+    "word": "mitnehmen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to take with",
+    "example": "Nehmen wir meine Schwester ins Kino mit?"
+  },
+  {
+    "word": "Mitte",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "middle",
+    "example": "Der Lehrer steht in der Mitte des Klassenzimmers."
+  },
+  {
+    "word": "Möbel",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "piece of furniture",
+    "example": "(pl.) Sind die Möbel neu?"
+  },
+  {
+    "word": "möchten",
+    "article": null,
+    "wordType": "verb",
+    "translation": "want",
+    "example": "Was möchten Sie trinken?"
+  },
+  {
+    "word": "mögen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to like (something or someone)",
+    "example": "Magst du Kaffee oder Tee?"
+  },
+  {
+    "word": "möglich",
+    "article": null,
+    "wordType": "adj",
+    "translation": "possible (what can be done or achieved)",
+    "example": "Mit dieser Fahrkarte ist die Fahrt ab 9 Uhr möglich."
+  },
+  {
+    "word": "Moment",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "moment",
+    "example": "Moment mal bitte! Einen Moment bitte."
+  },
+  {
+    "word": "morgen",
+    "article": null,
+    "wordType": "noun",
+    "translation": "morning (part of the day from dawn to noon)",
+    "example": "Morgen beginnt die Schule um 10 Uhr."
+  },
+  {
+    "word": "müde",
+    "article": null,
+    "wordType": "adj",
+    "translation": "tired",
+    "example": "Ich bin müde. Ich gehe schlafen."
+  },
+  {
+    "word": "Mund",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "mouth of a person",
+    "example": "Öffnen Sie den Mund."
+  },
+  {
+    "word": "müssen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to have to (do something)",
+    "example": "Ich muss jeden Tag von 8 Uhr bis 18 Uhr arbeiten."
+  },
+  {
+    "word": "Mutter",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "mother",
+    "example": "Frau Berghäuser ist die Mutter von Michaela."
+  },
+  {
+    "word": "nach",
+    "article": null,
+    "wordType": "adv",
+    "translation": "Separated form of nach-",
+    "example": "Ich gehe jetzt nach Hause. Ich fliege nach München. Es ist schon 5 nach 12."
+  },
+  {
+    "word": "nächst",
+    "article": null,
+    "wordType": null,
+    "translation": "next",
+    "example": "Sehen wir uns nächste Woche?"
+  },
+  {
+    "word": "Name",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "name (forename, Christian name, given name)",
+    "example": "Mein Name ist Thomas Schmidt. Mein Vorname ist Thomas; Schmidt ist der Familienname."
+  },
+  {
+    "word": "nehmen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to take",
+    "example": "Heute gibt es Hähnchen. Das nehme ich. Ich nehme den Bus."
+  },
+  {
+    "word": "nein",
+    "article": null,
+    "wordType": "noun",
+    "translation": "a no",
+    "example": "Fährst du auch nach München? – Nein, ich habe keine Zeit."
+  },
+  {
+    "word": "neu",
+    "article": null,
+    "wordType": "adj",
+    "translation": "new",
+    "example": "Ich bin der neue Kollege. Wir haben eine neue Wohnung."
+  },
+  {
+    "word": "nicht",
+    "article": null,
+    "wordType": "adv",
+    "translation": "not, non-",
+    "example": "Das stimmt nicht. Das ist doch schön, nicht?"
+  },
+  {
+    "word": "nichts",
+    "article": null,
+    "wordType": "noun",
+    "translation": "nothingness, void",
+    "example": "Das macht nichts. Hier kaufe ich nichts. Der Laden gefällt mir nicht."
+  },
+  {
+    "word": "nie",
+    "article": null,
+    "wordType": "adv",
+    "translation": "never, never at all",
+    "example": "Er kommt nie pünktlich."
+  },
+  {
+    "word": "noch",
+    "article": null,
+    "wordType": "adv",
+    "translation": "still, yet (up to and including a given time)",
+    "example": "Vielleicht kommt er noch. Wir warten noch fünf Minuten. Ich habe noch 20 Euro."
+  },
+  {
+    "word": "normal",
+    "article": null,
+    "wordType": "adj",
+    "translation": "ordinary, normal",
+    "example": "75 kg. Sein Gewicht ist normal."
+  },
+  {
+    "word": "Nummer",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "number",
+    "example": "Sie haben Zimmer Nummer zwölf. Welche Hausnummer haben Sie? Können Sie mir Ihre Nummer geben?"
+  },
+  {
+    "word": "nur",
+    "article": null,
+    "wordType": "adv",
+    "translation": "only, just, merely, simply",
+    "example": "Ich möchte nur ein Glas Wasser."
+  },
+  {
+    "word": "oben",
+    "article": null,
+    "wordType": "adv",
+    "translation": "above",
+    "example": "Ich wohne oben."
+  },
+  {
+    "word": "Obst",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "fruit (food)",
+    "example": "Im Sommer ist das Obst billig."
+  },
+  {
+    "word": "oder",
+    "article": null,
+    "wordType": null,
+    "translation": "or",
+    "example": "Wann können Sie kommen – heute oder morgen?"
+  },
+  {
+    "word": "öffnen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to open",
+    "example": "Ich öffne die Tür. geöffnet Der Laden ist samstags bis 16.00 Uhr geöffnet."
+  },
+  {
+    "word": "oft",
+    "article": null,
+    "wordType": "adv",
+    "translation": "often",
+    "example": "Petra treffe ich oft."
+  },
+  {
+    "word": "ohne",
+    "article": null,
+    "wordType": "adv",
+    "translation": "without",
+    "example": "Ohne Geld kann er nichts kaufen."
+  },
+  {
+    "word": "Öl",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "oil",
+    "example": "Den Salat machen wir ohne Öl."
+  },
+  {
+    "word": "Oma",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "grandma, granny, nan",
+    "example": "Meine Oma ist schon tot."
+  },
+  {
+    "word": "Opa",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "grandpa",
+    "example": "Mein Opa heißt Hans."
+  },
+  {
+    "word": "Ordnung",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "arrangement, regulation",
+    "example": "Das ist in Ordnung."
+  },
+  {
+    "word": "Ort",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "place, location, point, position",
+    "example": "Der Ort liegt am Meer."
+  },
+  {
+    "word": "Papier",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "paper (material)",
+    "example": "Hier sind Papier und Bleistift."
+  },
+  {
+    "word": "Papiere",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "papers",
+    "example": "(pl.) Haben Sie Ihre Papiere dabei?"
+  },
+  {
+    "word": "Partnerin",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "female equivalent of Partner",
+    "example": "Sie ist meine Partnerin."
+  },
+  {
+    "word": "Party",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "party (social gathering)",
+    "example": "Heute Abend machen wir eine Party."
+  },
+  {
+    "word": "Pause",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "pause, break",
+    "example": "Von 12.00 bis 12.30 Uhr haben wir Mittagspause."
+  },
+  {
+    "word": "Polizei",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "police",
+    "example": "Holen Sie die Polizei!"
+  },
+  {
+    "word": "Post",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "mail, post (sent and received letters etc.)",
+    "example": "Wo ist die Post, bitte? Ist Post da?"
+  },
+  {
+    "word": "Postleitzahl",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "postal code",
+    "example": "Wie ist Ihre Postleitzahl?"
+  },
+  {
+    "word": "Praktikum",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "internship (job taken by a student), apprenticeship",
+    "example": "Ich mache ein Praktikum bei Siemens."
+  },
+  {
+    "word": "Praxis",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "practice, experience",
+    "example": "Die Praxis ist ab acht Uhr geöffnet."
+  },
+  {
+    "word": "Preis",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "price",
+    "example": "Die Preise sind hoch."
+  },
+  {
+    "word": "Problem",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "problem",
+    "example": "Mein Problem ist die Sprache."
+  },
+  {
+    "word": "Prospekt",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "brochure",
+    "example": "Bitte schicken Sie mir einen Prospekt von Ihrem Hotel."
+  },
+  {
+    "word": "Prüfung",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "an official test or examination on a subject",
+    "example": "Die Prüfung ist am Montag um 8.00 Uhr."
+  },
+  {
+    "word": "pünktlich",
+    "article": null,
+    "wordType": "adj",
+    "translation": "punctual, on time",
+    "example": "Der Bus fährt pünktlich um acht Uhr. Herr Müller ist immer pünktlich."
+  },
+  {
+    "word": "Rad",
+    "article": null,
+    "wordType": "noun",
+    "translation": "wheel",
+    "example": "fahren Das Kind kann schon Rad fahren."
+  },
+  {
+    "word": "rauchen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to smoke, give off smoke",
+    "example": "Ich rauche nicht."
+  },
+  {
+    "word": "Rechnung",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "bill, restaurant bill",
+    "example": "Die Rechnung, bitte."
+  },
+  {
+    "word": "rechts",
+    "article": null,
+    "wordType": "adv",
+    "translation": "on the right",
+    "example": "Die Schillerstraße ist hier rechts."
+  },
+  {
+    "word": "regnen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to rain",
+    "example": "Heute regnet es."
+  },
+  {
+    "word": "Reis",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "rice",
+    "example": "Ich esse gern Reis."
+  },
+  {
+    "word": "reisen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to travel",
+    "example": "Ich reise gern. Unser Reiseführer heißt Peter."
+  },
+  {
+    "word": "reparieren",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to repair",
+    "example": "Er hat das Fahrrad repariert."
+  },
+  {
+    "word": "Restaurant",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "restaurant",
+    "example": "Wir essen heute in einem Restaurant."
+  },
+  {
+    "word": "Rezeption",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "reception",
+    "example": "Fragen Sie bitte im Hotel an der Rezeption."
+  },
+  {
+    "word": "richtig",
+    "article": null,
+    "wordType": "adj",
+    "translation": "correct, accurate, right",
+    "example": "Habe ich das richtig verstanden? Das ist richtig."
+  },
+  {
+    "word": "riechen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to smell (something)",
+    "example": "Dieser Wein riecht gut."
+  },
+  {
+    "word": "ruhig",
+    "article": null,
+    "wordType": "adj",
+    "translation": "quiet",
+    "example": "Ich möchte ein ruhiges Zimmer."
+  },
+  {
+    "word": "Saft",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "juice",
+    "example": "Möchtest du einen Apfelsaft?"
+  },
+  {
+    "word": "sagen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to say (to pronounce",
+    "example": "Sag mal, wie geht es dir denn?"
+  },
+  {
+    "word": "Salat",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "salad (mixed, usually cold dish)",
+    "example": "Wie schmeckt dir der Salat?"
+  },
+  {
+    "word": "Salz",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "salt, table salt, sal",
+    "example": "Herr Ober, kann ich bitte Salz haben?"
+  },
+  {
+    "word": "Satz",
+    "article": null,
+    "wordType": "noun",
+    "translation": "sentence",
+    "example": "-ä, e Dieser Satz ist sehr einfach."
+  },
+  {
+    "word": "S-Bahn",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "A commuter rail/metro system (generally overground) serving a metropolitan ar...",
+    "example": "Ich nehme lieber die S-Bahn."
+  },
+  {
+    "word": "Schalter",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "agent noun of schalten",
+    "example": "Gehen Sie bitte zum Schalter drei!"
+  },
+  {
+    "word": "scheinen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to shine",
+    "example": "Die Sonne scheint."
+  },
+  {
+    "word": "schicken",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to send, to dispatch",
+    "example": "Bitte schicken Sie mir eine E-Mail."
+  },
+  {
+    "word": "Schild",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "sign, plate (flat surface bearing information)",
+    "example": "Haben Sie nicht das Schild gesehen?"
+  },
+  {
+    "word": "schlafen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to sleep",
+    "example": "Ich schlafe meistens acht Stunden."
+  },
+  {
+    "word": "schlecht",
+    "article": null,
+    "wordType": "adj",
+    "translation": "bad, evil, wicked (the opposite of good",
+    "example": "Mir ist schlecht! Sie sehen schlecht aus. Wir haben schlechtes Wetter."
+  },
+  {
+    "word": "schließen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to shut",
+    "example": "Bitte, schließen Sie die Tür. geschlossen Die Bank hat am Samstag geschlossen."
+  },
+  {
+    "word": "Schluss",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "end, ending, conclusion, finish",
+    "example": "Ich muss jetzt Schluss machen. Zum Schluss gibt er uns allen die Hand."
+  },
+  {
+    "word": "schmecken",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to taste",
+    "example": "Schmeckt das gut?"
+  },
+  {
+    "word": "schnell",
+    "article": null,
+    "wordType": "adj",
+    "translation": "quick, fast",
+    "example": "Er fährt schnell."
+  },
+  {
+    "word": "schon",
+    "article": null,
+    "wordType": "adv",
+    "translation": "already",
+    "example": "Ist das Essen schon fertig?"
+  },
+  {
+    "word": "schön",
+    "article": null,
+    "wordType": "adj",
+    "translation": "beautiful, lovely, pretty, handsome",
+    "example": "Schönen Urlaub! Das ist sehr schön."
+  },
+  {
+    "word": "schreiben",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to write, to write out (use letters to make words and texts)",
+    "example": "Er schreibt jeden Tag fünfzig E-Mails."
+  },
+  {
+    "word": "Schuh",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "shoe",
+    "example": "Zieh die Schuhe aus!"
+  },
+  {
+    "word": "Schule",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "school",
+    "example": "Meine Tochter geht schon in die Schule. Die Schule ist gleich hier um die Ecke. Schüler."
+  },
+  {
+    "word": "schwer",
+    "article": null,
+    "wordType": "adj",
+    "translation": "heavy, weighty",
+    "example": "Ist Ihr Gepäck sehr schwer? Das ist eine schwere Arbeit."
+  },
+  {
+    "word": "Schwester",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "sister",
+    "example": "Meine Schwester kommt am Dienstag."
+  },
+  {
+    "word": "schwimmen",
+    "article": null,
+    "wordType": "noun",
+    "translation": "swim",
+    "example": "Ich schwimme jeden Tag einen Kilometer."
+  },
+  {
+    "word": "See",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "lake",
+    "example": "Komm, wir fahren zum Starnberger See."
+  },
+  {
+    "word": "sehen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to see",
+    "example": "Ich kann dich nicht sehen. Ich habe diesen Jungen schon einmal gesehen."
+  },
+  {
+    "word": "sehr",
+    "article": null,
+    "wordType": "adv",
+    "translation": "very",
+    "example": "Danke sehr! Das ist sehr schwer."
+  },
+  {
+    "word": "sein",
+    "article": null,
+    "wordType": "verb",
+    "translation": "forms the present perfect and past perfect tenses of certain verbs",
+    "example": "Herr Müller ist in seinem Zimmer. Mir ist kalt. Ich bin dreiundzwanzig. an sein Das Licht ist noch an. auf sein Das Fenster ist noch auf. weg sein Herr Meier ist schon weg. zu sein Die Tür ist zu."
+  },
+  {
+    "word": "seit",
+    "article": null,
+    "wordType": null,
+    "translation": "since, for (time)",
+    "example": "Ich wohne seit drei Jahren in Köln."
+  },
+  {
+    "word": "selbstständig",
+    "article": null,
+    "wordType": "adj",
+    "translation": "independent",
+    "example": "Er ist selbstständig."
+  },
+  {
+    "word": "sich",
+    "article": null,
+    "wordType": null,
+    "translation": "oneself, himself, herself, themselves",
+    "example": "Sie müssen sich erst anmelden."
+  },
+  {
+    "word": "sie",
+    "article": null,
+    "wordType": null,
+    "translation": "she, they",
+    "example": "Wie heißt sie?"
+  },
+  {
+    "word": "Sie",
+    "article": null,
+    "wordType": null,
+    "translation": "you (formal)",
+    "example": "Wie heißen Sie, bitte?"
+  },
+  {
+    "word": "sitzen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to sit",
+    "example": "Wo sitzen Sie?"
+  },
+  {
+    "word": "so",
+    "article": null,
+    "wordType": "adv",
+    "translation": "so, such, that",
+    "example": "Sie müssen das so machen! Fahren Sie bitte nicht so schnell! Meine Frau ist so groß wie ich. So, das war‘s/wär‘s!"
+  },
+  {
+    "word": "Sofa",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "sofa, couch",
+    "example": "Das Sofa ist neu."
+  },
+  {
+    "word": "sofort",
+    "article": null,
+    "wordType": "adv",
+    "translation": "immediately, at once",
+    "example": "Bitte antworten Sie sofort."
+  },
+  {
+    "word": "sollen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "should",
+    "example": "Soll ich kommen? Was soll ich mitbringen?"
+  },
+  {
+    "word": "Sonne",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "a sun",
+    "example": "Die Sonne scheint."
+  },
+  {
+    "word": "spät",
+    "article": null,
+    "wordType": "adj",
+    "translation": "late",
+    "example": "Es ist schon spät, ich muss gehen."
+  },
+  {
+    "word": "später",
+    "article": null,
+    "wordType": "adj",
+    "translation": "later",
+    "example": "Das können wir später machen."
+  },
+  {
+    "word": "Speisekarte",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "menu",
+    "example": "Bringen Sie mir die Speisekarte, bitte."
+  },
+  {
+    "word": "spielen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to play",
+    "example": "Die Kinder spielen draußen. Spielen Sie Karten?"
+  },
+  {
+    "word": "Sport",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "sport",
+    "example": "Ich mache viel Sport."
+  },
+  {
+    "word": "Sprache",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "language",
+    "example": "Welche Sprachen sprichst du?"
+  },
+  {
+    "word": "sprechen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to speak (some language, the truth, etc.)",
+    "example": "Kann ich (mit) Herrn Klein sprechen?"
+  },
+  {
+    "word": "stehen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to stand",
+    "example": "Ich glaube es nicht, aber es steht in der Zeitung. Der Bus steht schon an der Haltestelle."
+  },
+  {
+    "word": "Stelle",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "place, stead, location, position, lieu",
+    "example": "Ich habe eine neue Stelle."
+  },
+  {
+    "word": "stellen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "causative of stehen: to put, place, position (someone or something) such that...",
+    "example": "Stell die Tasche rechts in die Ecke!"
+  },
+  {
+    "word": "Stock",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "stick",
+    "example": "Unsere Wohnung liegt im ersten Stock."
+  },
+  {
+    "word": "Straße",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "street",
+    "example": "In welcher Straße wohnen Sie?"
+  },
+  {
+    "word": "Straßenbahn",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "streetcar, tramway",
+    "example": "Wo fährt die Straßenbahn ab?"
+  },
+  {
+    "word": "studieren",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to study at university or college level",
+    "example": "Ich studiere in Mainz."
+  },
+  {
+    "word": "Studium",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "study (the act of studying in general)",
+    "example": "Das Studium beginnt im Oktober."
+  },
+  {
+    "word": "Stunde",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "hour (unit of time consisting of 60 minutes)",
+    "example": "Ich bin in einer Stunde zurück."
+  },
+  {
+    "word": "suchen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to search, to look for",
+    "example": "Suchst du etwas?"
+  },
+  {
+    "word": "tanzen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to dance",
+    "example": "Tanzen Sie gern?"
+  },
+  {
+    "word": "Tasche",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "bag",
+    "example": "Ich habe die Schlüssel in der Tasche."
+  },
+  {
+    "word": "Taxi",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "taxi, cab",
+    "example": "Es gibt heute keinen Bus mehr. Er fährt mit dem Taxi."
+  },
+  {
+    "word": "Tee",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "tea",
+    "example": "Ich trinke morgens immer Tee."
+  },
+  {
+    "word": "Teil",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "part, piece",
+    "example": "Lies bitte auch den zweiten Teil."
+  },
+  {
+    "word": "telefonieren",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to have a telephone call",
+    "example": "Darf ich mal telefonieren?"
+  },
+  {
+    "word": "Termin",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "date",
+    "example": "Am besten machen wir sofort einen Termin."
+  },
+  {
+    "word": "Test",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "test",
+    "example": "Der Test war einfach."
+  },
+  {
+    "word": "teuer",
+    "article": null,
+    "wordType": "adj",
+    "translation": "expensive, dear (high in price)",
+    "example": "Das ist mir zu teuer."
+  },
+  {
+    "word": "Text",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "text",
+    "example": "Lesen Sie bitte diesen Text."
+  },
+  {
+    "word": "Thema",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "topic, subject, issue",
+    "example": "Wir sprechen heute über das Thema „Essen und Trinken“."
+  },
+  {
+    "word": "Ticket",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "ticket",
+    "example": "Wie viel kostet das Ticket?"
+  },
+  {
+    "word": "Tisch",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "table",
+    "example": "Die Fotos liegen auf dem Tisch."
+  },
+  {
+    "word": "Tochter",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "daughter",
+    "example": "Das ist meine Tochter Katharina."
+  },
+  {
+    "word": "Toilette",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "toilet",
+    "example": "Wo ist die Toilette, bitte?"
+  },
+  {
+    "word": "Tomate",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "tomato (plant, fruit of this plant)",
+    "example": "Die Tomate ist noch grün."
+  },
+  {
+    "word": "tot",
+    "article": null,
+    "wordType": "adj",
+    "translation": "dead, deceased",
+    "example": "Sein Vater ist schon lange tot."
+  },
+  {
+    "word": "treffen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to meet",
+    "example": "Ich treffe in der Stadt einen Kollegen. Wir treffen uns immer freitags."
+  },
+  {
+    "word": "Treppe",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "stairs",
+    "example": "Die Toilette? Die Treppe hoch und dann links."
+  },
+  {
+    "word": "trinken",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to drink by mouth)",
+    "example": "Möchtest du etwas trinken?"
+  },
+  {
+    "word": "tschüss",
+    "article": null,
+    "wordType": null,
+    "translation": "bye, goodbye",
+    "example": "Junge Leute sagen meistens „tschüss!“ und nicht „auf Wiedersehen“."
+  },
+  {
+    "word": "tun",
+    "article": null,
+    "wordType": "verb",
+    "translation": "To do (to perform or execute an action).",
+    "example": "Ich habe noch etwas zu tun. Was tut Ihr Mann?"
+  },
+  {
+    "word": "über",
+    "article": null,
+    "wordType": "adj",
+    "translation": "left over, remaining, replaces übrig in all its predicative instances, includ...",
+    "example": "Gehen Sie hier über die Straße. Er wohnt im zweiten Stock über Familie Meier. Sind Sie über 18?"
+  },
+  {
+    "word": "übernachten",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to stay overnight, to overnight, stay the night, sleep over",
+    "example": "Du kannst bei mir übernachten."
+  },
+  {
+    "word": "überweisen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to transfer, to wire",
+    "example": "Sie können das Geld auch überweisen."
+  },
+  {
+    "word": "Uhr",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "hours, o'clock",
+    "example": "Es ist vier Uhr."
+  },
+  {
+    "word": "um",
+    "article": null,
+    "wordType": "adj",
+    "translation": "up, in the sense of finished",
+    "example": "Er kommt um sieben Uhr. Da kommt er gerade um die Ecke."
+  },
+  {
+    "word": "umziehen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to move",
+    "example": "Nächsten Monat ziehen wir um."
+  },
+  {
+    "word": "und",
+    "article": null,
+    "wordType": null,
+    "translation": "and",
+    "example": "Peter und Helmut sind meine Söhne."
+  },
+  {
+    "word": "unser",
+    "article": null,
+    "wordType": null,
+    "translation": "our",
+    "example": "Das ist unsere Lehrerin."
+  },
+  {
+    "word": "unten",
+    "article": null,
+    "wordType": "adv",
+    "translation": "below",
+    "example": "Er wohnt ganz unten im Haus."
+  },
+  {
+    "word": "unter",
+    "article": null,
+    "wordType": "noun",
+    "translation": "jack, knave (playing card)",
+    "example": "Unter uns wohnt eine Familie mit drei Kindern."
+  },
+  {
+    "word": "Unterricht",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "lesson, class, instruction, education",
+    "example": "Wir haben Unterricht von 8.00 bis 12.00 Uhr."
+  },
+  {
+    "word": "unterschreiben",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to sign (write one’s signature)",
+    "example": "Wo muss ich unterschreiben?"
+  },
+  {
+    "word": "Urlaub",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "holiday, vacation",
+    "example": "Ich nehme im September Urlaub."
+  },
+  {
+    "word": "Vater",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "father",
+    "example": "Mein Vater ist Arbeiter."
+  },
+  {
+    "word": "verboten",
+    "article": null,
+    "wordType": "verb",
+    "translation": "forbidden",
+    "example": "Hier ist Rauchen verboten."
+  },
+  {
+    "word": "verdienen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to make money, to earn",
+    "example": "Ich verdiene 1.500 Euro im Monat."
+  },
+  {
+    "word": "Verein",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "association, club, society",
+    "example": "Es gibt einen neuen Sportverein in der Stadt."
+  },
+  {
+    "word": "verheiratet",
+    "article": null,
+    "wordType": "verb",
+    "translation": "married",
+    "example": "Ich bin verheiratet und habe drei Kinder."
+  },
+  {
+    "word": "verkaufen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to sell (something in exchange for money)",
+    "example": "Er verkauft sein altes Auto."
+  },
+  {
+    "word": "vermieten",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to rent (to someone), to rent out",
+    "example": "Die Wohnung ist schon vermietet."
+  },
+  {
+    "word": "verstehen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to understand",
+    "example": "Können Sie mich verstehen?"
+  },
+  {
+    "word": "Verwandte",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "related",
+    "example": "Peter besucht seine Verwandten in Polen."
+  },
+  {
+    "word": "viel",
+    "article": null,
+    "wordType": "adv",
+    "translation": "much, a lot",
+    "example": "Hier regnet es viel."
+  },
+  {
+    "word": "vielleicht",
+    "article": null,
+    "wordType": "adv",
+    "translation": "perhaps, maybe",
+    "example": "Ich komme vielleicht mit dem Bus."
+  },
+  {
+    "word": "von",
+    "article": null,
+    "wordType": null,
+    "translation": "from, of, by",
+    "example": "Das Auto von Felix ist kaputt. Er kommt gerade von Köln/von zu Hause."
+  },
+  {
+    "word": "vor",
+    "article": null,
+    "wordType": null,
+    "translation": "before, in front of, ago",
+    "example": "Der Termin war vor einer Stunde. Das Auto steht vor der Tür."
+  },
+  {
+    "word": "Vorname",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "given name (name chosen for a child by its parents)",
+    "example": "Ich heiße Müller, mein Vorname ist Eva."
+  },
+  {
+    "word": "Vorsicht",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "caution, cautiousness",
+    "example": "Vorsicht! Da kommt ein Auto."
+  },
+  {
+    "word": "vorstellen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to introduce (someone), to present",
+    "example": "Wir wollen uns kennenlernen. Können Sie sich bitte vorstellen?"
+  },
+  {
+    "word": "Vorwahl",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "area code, prefix",
+    "example": "Wie ist die Vorwahl von München?"
+  },
+  {
+    "word": "wandern",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to hike, to go trekking",
+    "example": "Wir wandern um den Chiemsee."
+  },
+  {
+    "word": "wann",
+    "article": null,
+    "wordType": "adv",
+    "translation": "when",
+    "example": "Wann bist du fertig? Wann kann ich Sie anrufen? Wann sind Sie geboren?"
+  },
+  {
+    "word": "warten",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to wait (for)",
+    "example": "Können Sie ein paar Minuten warten? Auf wen warten Sie?"
+  },
+  {
+    "word": "warum",
+    "article": null,
+    "wordType": "adv",
+    "translation": "why",
+    "example": "Warum kommt er nicht?"
+  },
+  {
+    "word": "was",
+    "article": null,
+    "wordType": "adv",
+    "translation": "what",
+    "example": "Was ist das? Was möchten Sie?"
+  },
+  {
+    "word": "was",
+    "article": null,
+    "wordType": "adv",
+    "translation": "what",
+    "example": "für ein Was für eine Farbe möchten Sie?"
+  },
+  {
+    "word": "waschen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to wash",
+    "example": "Wo kann ich mir die Hände waschen? Ich muss morgen waschen."
+  },
+  {
+    "word": "Wasser",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "water (H₂O)",
+    "example": "Ein Glas Wasser, bitte."
+  },
+  {
+    "word": "weh",
+    "article": null,
+    "wordType": "adj",
+    "translation": "sore, painful",
+    "example": "tun Ich muss zum Arzt. Mein Bein tut weh."
+  },
+  {
+    "word": "weiblich",
+    "article": null,
+    "wordType": "adj",
+    "translation": "female",
+    "example": "Kreuzen Sie bitte an: „weiblich“ oder „männlich“."
+  },
+  {
+    "word": "Wein",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "wine",
+    "example": "Nein danke, ich möchte keinen Wein."
+  },
+  {
+    "word": "weit",
+    "article": null,
+    "wordType": "adj",
+    "translation": "wide",
+    "example": "Zum Bahnhof ist es nicht weit."
+  },
+  {
+    "word": "weiter",
+    "article": null,
+    "wordType": "adj",
+    "translation": "more",
+    "example": "Der Bus fährt nicht weiter."
+  },
+  {
+    "word": "welch",
+    "article": null,
+    "wordType": null,
+    "translation": "which, what",
+    "example": "Welches Buch möchtest du?"
+  },
+  {
+    "word": "Welt",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "world",
+    "example": "Es gibt viele Probleme auf der Welt."
+  },
+  {
+    "word": "wenig",
+    "article": null,
+    "wordType": "adj",
+    "translation": "little, few (a small amount, a small number)",
+    "example": "Ich habe leider nur wenig verstanden. Er verdient wenig."
+  },
+  {
+    "word": "wer",
+    "article": null,
+    "wordType": null,
+    "translation": "who",
+    "example": "Wer ist das?"
+  },
+  {
+    "word": "werden",
+    "article": null,
+    "wordType": "verb",
+    "translation": "will, to be going to, forms the future tense",
+    "example": "Mein Sohn will Arzt werden."
+  },
+  {
+    "word": "Wetter",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "weather",
+    "example": "Wir hatten schlechtes Wetter."
+  },
+  {
+    "word": "wichtig",
+    "article": null,
+    "wordType": "adj",
+    "translation": "important, relevant, significant, weighty",
+    "example": "Dieses Formular ist sehr wichtig."
+  },
+  {
+    "word": "wie",
+    "article": null,
+    "wordType": "adv",
+    "translation": "how",
+    "example": "Wie heißt du? Er schreibt wie ein Kind. Meine Frau ist so groß wie ich. Wie soll ich das machen? Wie groß ist die Wohnung? Wie bitte? Wie lange bist du schon hier?"
+  },
+  {
+    "word": "wiederholen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to repeat (to do or say again)",
+    "example": "Können Sie das bitte wiederholen?"
+  },
+  {
+    "word": "Wiederhören",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "hearing again",
+    "example": "Wir müssen jetzt Schluss machen. Also auf Wiederhören!"
+  },
+  {
+    "word": "Wiedersehen",
+    "article": "das",
+    "wordType": "noun",
+    "translation": "reunion",
+    "example": "Auf Wiedersehen!"
+  },
+  {
+    "word": "wie",
+    "article": null,
+    "wordType": "adv",
+    "translation": "how",
+    "example": "viel Wie viel Milch nehmen Sie?"
+  },
+  {
+    "word": "willkommen",
+    "article": null,
+    "wordType": "adj",
+    "translation": "welcome (received with gladness)",
+    "example": "Herzlich willkommen!"
+  },
+  {
+    "word": "Wind",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "wind",
+    "example": "Der Wind kommt aus Osten."
+  },
+  {
+    "word": "wir",
+    "article": null,
+    "wordType": null,
+    "translation": "we",
+    "example": "Wir lernen Deutsch."
+  },
+  {
+    "word": "wissen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to know",
+    "example": "Weißt du, wie er heißt?"
+  },
+  {
+    "word": "wo",
+    "article": null,
+    "wordType": "adv",
+    "translation": "where (at what place)",
+    "example": "Wo waren Sie im Urlaub? Wo ist die Post? Wo sind Sie geboren?"
+  },
+  {
+    "word": "woher",
+    "article": null,
+    "wordType": "adv",
+    "translation": "where from, whence",
+    "example": "Woher kommen Sie?"
+  },
+  {
+    "word": "wohin",
+    "article": null,
+    "wordType": "adv",
+    "translation": "where to, whither",
+    "example": "Wohin fährt dieser Bus? Wohin wollen Sie am Wochenende?"
+  },
+  {
+    "word": "wohnen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to live, reside, dwell",
+    "example": "Ich wohne in München."
+  },
+  {
+    "word": "wollen",
+    "article": null,
+    "wordType": "adj",
+    "translation": "wool",
+    "example": "Wollen Sie einen Kaffee trinken?"
+  },
+  {
+    "word": "wunderbar",
+    "article": null,
+    "wordType": "adj",
+    "translation": "wonderful",
+    "example": "Das Essen schmeckt wunderbar."
+  },
+  {
+    "word": "zahlen",
+    "article": null,
+    "wordType": "verb",
+    "translation": "to pay",
+    "example": "Zahlen, bitte!"
+  },
+  {
+    "word": "Zeit",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "time (as a concept)",
+    "example": "Ich habe heute keine Zeit. zurzeit Zurzeit habe ich sehr viel zu tun."
+  },
+  {
+    "word": "Zeitung",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "newspaper",
+    "example": "Ich lese gern Zeitung."
+  },
+  {
+    "word": "Zigarette",
+    "article": "die",
+    "wordType": "noun",
+    "translation": "cigarette",
+    "example": "Wie teuer sind die Zigaretten?"
+  },
+  {
+    "word": "Zoll",
+    "article": "der",
+    "wordType": "noun",
+    "translation": "custom (duty collected at the borders)",
+    "example": "Wir müssen noch durch den Zoll."
+  },
+  {
+    "word": "zu",
+    "article": null,
+    "wordType": "adv",
+    "translation": "too (excessively)",
+    "example": "Der Bus fährt zum Bahnhof. Ich gehe zu Fuß. Ich bin zu Hause."
+  },
+  {
+    "word": "zufrieden",
+    "article": null,
+    "wordType": "adj",
+    "translation": "satisfied, content, happy (with something)",
+    "example": "Ich bin mit der Wohnung zufrieden."
+  },
+  {
+    "word": "zurück",
+    "article": null,
+    "wordType": "adv",
+    "translation": "back, backward, backwards, to the rear.",
+    "example": "Einmal Frankfurt und zurück. Wann kommst du zurück?"
+  },
+  {
+    "word": "zusammen",
+    "article": null,
+    "wordType": "adv",
+    "translation": "together, jointly",
+    "example": "Sollen wir zusammen essen gehen? Das macht zusammen 2 Euro 80."
+  },
+  {
+    "word": "zwischen",
+    "article": null,
+    "wordType": null,
+    "translation": "between",
+    "example": "Heidelberg liegt zwischen Frankfurt und Stuttgart. Zwischen 8 und 10 Uhr bin ich zu Hause."
+  }
+]

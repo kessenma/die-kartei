@@ -1,0 +1,28 @@
+# Xcode
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+DerivedData/
+build/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved.lock
+
+# macOS
+.DS_Store
+
+# Secrets / local config
+*.env
+.env*
+secrets.*
+
+# Android port artifacts (cross-compiled outputs)
+*.so
+.android-build/

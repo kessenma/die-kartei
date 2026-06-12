@@ -1,0 +1,97 @@
+{
+  "categories": [
+    {
+      "id": "akk-definite",
+      "title": "Akkusativ: Definite Articles",
+      "subtitle": "den / die / das",
+      "grammaticalCase": "akkusativ",
+      "articleType": "definite",
+      "ruleNote": "Akkusativ: den (maskulin), die (feminin), das (neutrum), die (Plural)",
+      "options": ["den", "die", "das"],
+      "exercises": [
+        { "id": "akk-def-001", "sentence": "Ich habe ______ Buch.", "correctAnswer": "das", "noun": "Buch", "gender": "neutrum", "verb": "haben", "verbForm": "habe" },
+        { "id": "akk-def-002", "sentence": "Er isst ______ Apfel.", "correctAnswer": "den", "noun": "Apfel", "gender": "maskulin", "verb": "essen", "verbForm": "isst" },
+        { "id": "akk-def-003", "sentence": "Sie sucht ______ Schlüssel.", "correctAnswer": "den", "noun": "Schlüssel", "gender": "maskulin", "verb": "suchen", "verbForm": "sucht" },
+        { "id": "akk-def-004", "sentence": "Kennst du ______ Weg?", "correctAnswer": "den", "noun": "Weg", "gender": "maskulin", "verb": "kennen", "verbForm": "Kennst" },
+        { "id": "akk-def-005", "sentence": "Ich brauche ______ Computer.", "correctAnswer": "den", "noun": "Computer", "gender": "maskulin", "verb": "brauchen", "verbForm": "brauche" },
+        { "id": "akk-def-006", "sentence": "Sie sehen ______ Freunde.", "correctAnswer": "die", "noun": "Freunde", "gender": "plural", "verb": "sehen", "verbForm": "sehen" },
+        { "id": "akk-def-007", "sentence": "Hörst du ______ Musik?", "correctAnswer": "die", "noun": "Musik", "gender": "feminin", "verb": "hören", "verbForm": "Hörst" },
+        { "id": "akk-def-008", "sentence": "Ich koche ______ Kartoffeln.", "correctAnswer": "die", "noun": "Kartoffeln", "gender": "plural", "verb": "kochen", "verbForm": "koche" },
+        { "id": "akk-def-009", "sentence": "Er trinkt ______ Saft.", "correctAnswer": "den", "noun": "Saft", "gender": "maskulin", "verb": "trinken", "verbForm": "trinkt" },
+        { "id": "akk-def-010", "sentence": "Ich möchte ______ Bild.", "correctAnswer": "das", "noun": "Bild", "gender": "neutrum", "verb": "möchten", "verbForm": "möchte" }
+      ]
+    },
+    {
+      "id": "akk-possessive",
+      "title": "Akkusativ: Possessive Pronouns",
+      "subtitle": "meinen / meine / mein",
+      "grammaticalCase": "akkusativ",
+      "articleType": "possessive",
+      "ruleNote": "Akkusativ: meinen (maskulin), meine (feminin), mein (neutrum), meine (Plural)",
+      "options": ["meinen", "meine", "mein"],
+      "exercises": [
+        { "id": "akk-pos-001", "sentence": "Ich suche ______ Handy.", "correctAnswer": "mein", "noun": "Handy", "gender": "neutrum", "verb": "suchen", "verbForm": "suche" },
+        { "id": "akk-pos-002", "sentence": "Ich frage ______ Freundin.", "correctAnswer": "meine", "noun": "Freundin", "gender": "feminin", "verb": "fragen", "verbForm": "frage" },
+        { "id": "akk-pos-003", "sentence": "Ich liebe ______ Kind.", "correctAnswer": "mein", "noun": "Kind", "gender": "neutrum", "verb": "lieben", "verbForm": "liebe" },
+        { "id": "akk-pos-004", "sentence": "Ich besuche ______ Eltern.", "correctAnswer": "meine", "noun": "Eltern", "gender": "plural", "verb": "besuchen", "verbForm": "besuche" },
+        { "id": "akk-pos-005", "sentence": "Ich esse ______ Semmel.", "correctAnswer": "meine", "noun": "Semmel", "gender": "feminin", "verb": "essen", "verbForm": "esse" },
+        { "id": "akk-pos-006", "sentence": "Ich trinke ______ Kaffee.", "correctAnswer": "meinen", "noun": "Kaffee", "gender": "maskulin", "verb": "trinken", "verbForm": "trinke" },
+        { "id": "akk-pos-007", "sentence": "Ich vergesse ______ Termin beim Arzt.", "correctAnswer": "meinen", "noun": "Termin", "gender": "maskulin", "verb": "vergessen", "verbForm": "vergesse" },
+        { "id": "akk-pos-008", "sentence": "Ich höre ______ Lieblings-Band.", "correctAnswer": "meine", "noun": "Lieblings-Band", "gender": "feminin", "verb": "hören", "verbForm": "höre" },
+        { "id": "akk-pos-009", "sentence": "Ich öffne ______ Augen.", "correctAnswer": "meine", "noun": "Augen", "gender": "plural", "verb": "öffnen", "verbForm": "öffne" }
+      ]
+    },
+    {
+      "id": "akk-indefinite",
+      "title": "Akkusativ: Negation",
+      "subtitle": "keinen / keine / kein",
+      "grammaticalCase": "akkusativ",
+      "articleType": "indefinite",
+      "ruleNote": "Akkusativ: keinen (maskulin), keine (feminin), kein (neutrum), keine (Plural)",
+      "options": ["keinen", "keine", "kein"],
+      "exercises": [
+        { "id": "akk-indef-001", "sentence": "Er hat ______ Auto.", "correctAnswer": "kein", "noun": "Auto", "gender": "neutrum", "verb": "haben", "verbForm": "hat" },
+        { "id": "akk-indef-002", "sentence": "Wir brauchen ______ Hilfe.", "correctAnswer": "keine", "noun": "Hilfe", "gender": "feminin", "verb": "brauchen", "verbForm": "brauchen" }
+      ]
+    },
+    {
+      "id": "dat-mein",
+      "title": "Dativ: mein- Pronouns",
+      "subtitle": "meinem / meiner / meinen",
+      "grammaticalCase": "dativ",
+      "articleType": "possessive",
+      "ruleNote": "Dativ: meinem (maskulin), meiner (feminin), meinem (neutrum), meinen (Plural)",
+      "options": ["meinem", "meiner", "meinen"],
+      "exercises": [
+        { "id": "dat-mein-001", "sentence": "Ich schenke ______ Bruder einen Fußball.", "correctAnswer": "meinem", "noun": "Bruder", "gender": "maskulin", "verb": "schenken", "verbForm": "schenke" },
+        { "id": "dat-mein-002", "sentence": "Ich schenke ______ Schwester ein Buch.", "correctAnswer": "meiner", "noun": "Schwester", "gender": "feminin", "verb": "schenken", "verbForm": "schenke" },
+        { "id": "dat-mein-003", "sentence": "Ich gebe ______ Kind ein Geschenk.", "correctAnswer": "meinem", "noun": "Kind", "gender": "neutrum", "verb": "geben", "verbForm": "gebe" },
+        { "id": "dat-mein-004", "sentence": "Ich schenke ______ Eltern eine Reise.", "correctAnswer": "meinen", "noun": "Eltern", "gender": "plural", "verb": "schenken", "verbForm": "schenke" },
+        { "id": "dat-mein-005", "sentence": "Ich zeige ______ Freund das Foto.", "correctAnswer": "meinem", "noun": "Freund", "gender": "maskulin", "verb": "zeigen", "verbForm": "zeige" },
+        { "id": "dat-mein-006", "sentence": "Ich bringe ______ Mutter Blumen.", "correctAnswer": "meiner", "noun": "Mutter", "gender": "feminin", "verb": "bringen", "verbForm": "bringe" },
+        { "id": "dat-mein-007", "sentence": "Ich helfe ______ Bruder.", "correctAnswer": "meinem", "noun": "Bruder", "gender": "maskulin", "verb": "helfen", "verbForm": "helfe" },
+        { "id": "dat-mein-008", "sentence": "Ich helfe ______ Großeltern.", "correctAnswer": "meinen", "noun": "Großeltern", "gender": "plural", "verb": "helfen", "verbForm": "helfe" }
+      ]
+    },
+    {
+      "id": "dat-personal",
+      "title": "Dativ: Personal Pronouns",
+      "subtitle": "mir / dir / ihm / ihr / uns / euch / ihnen / Ihnen",
+      "grammaticalCase": "dativ",
+      "articleType": "personal",
+      "ruleNote": "Dativ: mir (ich), dir (du), ihm (er/es), ihr (sie), uns (wir), euch (ihr), ihnen (sie pl.), Ihnen (Sie)",
+      "options": ["ihm", "ihr", "ihnen"],
+      "exercises": [
+        { "id": "dat-per-001", "sentence": "Morgen kaufe ich ______ ein Fahrrad!", "correctAnswer": "mir", "noun": "", "gender": "", "verb": "kaufen", "verbForm": "kaufe", "options": ["mir", "dir", "uns"] },
+        { "id": "dat-per-002", "sentence": "Schreibst du ______ eine Karte aus dem Urlaub?", "correctAnswer": "mir", "noun": "", "gender": "", "verb": "schreiben", "verbForm": "Schreibst", "options": ["mir", "dir", "ihm"] },
+        { "id": "dat-per-003", "sentence": "Ich schreibe ______ auch eine Karte.", "correctAnswer": "dir", "noun": "", "gender": "", "verb": "schreiben", "verbForm": "schreibe", "options": ["mir", "dir", "ihr"] },
+        { "id": "dat-per-004", "sentence": "Gehört das Auto ______?", "correctAnswer": "euch", "noun": "", "gender": "", "verb": "gehören", "verbForm": "Gehört", "options": ["uns", "euch", "ihnen"] },
+        { "id": "dat-per-005", "sentence": "Das gefällt ______ gut.", "correctAnswer": "ihnen", "noun": "", "gender": "", "verb": "gefallen", "verbForm": "gefällt", "options": ["ihm", "ihr", "ihnen"] },
+        { "id": "dat-per-006", "sentence": "Papa, hast du ______ etwas mitgebracht?", "correctAnswer": "uns", "noun": "", "gender": "", "verb": "mitbringen", "verbForm": "hast", "options": ["mir", "uns", "euch"] },
+        { "id": "dat-per-007", "sentence": "Da backe ich ______ einen Kuchen.", "correctAnswer": "ihr", "noun": "", "gender": "", "verb": "backen", "verbForm": "backe", "options": ["ihm", "ihr", "ihnen"] },
+        { "id": "dat-per-008", "sentence": "Kannst du ______ etwas leihen?", "correctAnswer": "ihm", "noun": "", "gender": "", "verb": "leihen", "verbForm": "Kannst", "options": ["ihm", "ihr", "ihnen"] },
+        { "id": "dat-per-009", "sentence": "Herr Schmitt, gehört diese Tasche ______?", "correctAnswer": "Ihnen", "noun": "", "gender": "", "verb": "gehören", "verbForm": "gehört", "options": ["ihnen", "ihm", "Ihnen"] }
+      ]
+    }
+  ]
+}

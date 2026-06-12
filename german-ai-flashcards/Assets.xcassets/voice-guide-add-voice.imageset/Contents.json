@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "voice-guide-add-voice.jpg",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

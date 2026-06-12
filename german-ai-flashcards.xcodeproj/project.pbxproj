@@ -6,8 +6,18 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		8AB660352FB716E90052F4F4 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660342FB716E90052F4F4 /* MLX */; };
+		8AB660372FB716E90052F4F4 /* MLXRandom in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660362FB716E90052F4F4 /* MLXRandom */; };
+		8AB6603A2FB717370052F4F4 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660392FB717370052F4F4 /* MLXLLM */; };
+		8AB6603C2FB717370052F4F4 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB6603B2FB717370052F4F4 /* MLXLMCommon */; };
+		8AB6603F2FB717690052F4F4 /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB6603E2FB717690052F4F4 /* HuggingFace */; };
+		8AB660422FB717B00052F4F4 /* Transformers in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660412FB717B00052F4F4 /* Transformers */; };
+		8AB660452FB7199D0052F4F4 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660442FB7199D0052F4F4 /* MLXHuggingFace */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
-		8AB65FE82FB65EFD0052F4F4 /* german-ai-flashcards.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "german-ai-flashcards.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8AB65FE82FB65EFD0052F4F4 /* Die Kartei.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Die Kartei.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -23,6 +33,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8AB660422FB717B00052F4F4 /* Transformers in Frameworks */,
+				8AB6603A2FB717370052F4F4 /* MLXLLM in Frameworks */,
+				8AB660352FB716E90052F4F4 /* MLX in Frameworks */,
+				8AB6603F2FB717690052F4F4 /* HuggingFace in Frameworks */,
+				8AB660452FB7199D0052F4F4 /* MLXHuggingFace in Frameworks */,
+				8AB6603C2FB717370052F4F4 /* MLXLMCommon in Frameworks */,
+				8AB660372FB716E90052F4F4 /* MLXRandom in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +50,7 @@
 			isa = PBXGroup;
 			children = (
 				8AB65FEA2FB65EFD0052F4F4 /* german-ai-flashcards */,
+				8AB660432FB719410052F4F4 /* Frameworks */,
 				8AB65FE92FB65EFD0052F4F4 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -40,17 +58,24 @@
 		8AB65FE92FB65EFD0052F4F4 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8AB65FE82FB65EFD0052F4F4 /* german-ai-flashcards.app */,
+				8AB65FE82FB65EFD0052F4F4 /* Die Kartei.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		8AB660432FB719410052F4F4 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		8AB65FE72FB65EFD0052F4F4 /* german-ai-flashcards */ = {
+		8AB65FE72FB65EFD0052F4F4 /* Die Kartei */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 8AB65FF32FB65EFF0052F4F4 /* Build configuration list for PBXNativeTarget "german-ai-flashcards" */;
+			buildConfigurationList = 8AB65FF32FB65EFF0052F4F4 /* Build configuration list for PBXNativeTarget "Die Kartei" */;
 			buildPhases = (
 				8AB65FE42FB65EFD0052F4F4 /* Sources */,
 				8AB65FE52FB65EFD0052F4F4 /* Frameworks */,
@@ -63,11 +88,18 @@
 			fileSystemSynchronizedGroups = (
 				8AB65FEA2FB65EFD0052F4F4 /* german-ai-flashcards */,
 			);
-			name = "german-ai-flashcards";
+			name = "Die Kartei";
 			packageProductDependencies = (
+				8AB660342FB716E90052F4F4 /* MLX */,
+				8AB660362FB716E90052F4F4 /* MLXRandom */,
+				8AB660392FB717370052F4F4 /* MLXLLM */,
+				8AB6603B2FB717370052F4F4 /* MLXLMCommon */,
+				8AB6603E2FB717690052F4F4 /* HuggingFace */,
+				8AB660412FB717B00052F4F4 /* Transformers */,
+				8AB660442FB7199D0052F4F4 /* MLXHuggingFace */,
 			);
 			productName = "german-ai-flashcards";
-			productReference = 8AB65FE82FB65EFD0052F4F4 /* german-ai-flashcards.app */;
+			productReference = 8AB65FE82FB65EFD0052F4F4 /* Die Kartei.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -94,12 +126,18 @@
 			);
 			mainGroup = 8AB65FDF2FB65EFD0052F4F4;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				8AB660332FB716E90052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift" */,
+				8AB660382FB717370052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
+				8AB6603D2FB717690052F4F4 /* XCRemoteSwiftPackageReference "swift-huggingface" */,
+				8AB660402FB717B00052F4F4 /* XCRemoteSwiftPackageReference "swift-transformers" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8AB65FE92FB65EFD0052F4F4 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				8AB65FE72FB65EFD0052F4F4 /* german-ai-flashcards */,
+				8AB65FE72FB65EFD0052F4F4 /* Die Kartei */,
 			);
 		};
 /* End PBXProject section */
@@ -246,14 +284,19 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "german-ai-flashcards/german-ai-flashcards.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Die Kartei uses the camera to scan photos of German vocabulary and text for study.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Die Kartei uses the microphone so you can speak German out loud in AI voice conversations.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Die Kartei uses your photo library to import photos of German text for vocabulary study.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Speech recognition turns your spoken German into text so the AI can reply and correct you.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -268,7 +311,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "kyle-essenmacher.german-ai-flashcards";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -290,14 +333,19 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "german-ai-flashcards/german-ai-flashcards.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Die Kartei uses the camera to scan photos of German vocabulary and text for study.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Die Kartei uses the microphone so you can speak German out loud in AI voice conversations.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Die Kartei uses your photo library to import photos of German text for vocabulary study.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Speech recognition turns your spoken German into text so the AI can reply and correct you.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -312,7 +360,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "kyle-essenmacher.german-ai-flashcards";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -341,7 +389,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		8AB65FF32FB65EFF0052F4F4 /* Build configuration list for PBXNativeTarget "german-ai-flashcards" */ = {
+		8AB65FF32FB65EFF0052F4F4 /* Build configuration list for PBXNativeTarget "Die Kartei" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8AB65FF42FB65EFF0052F4F4 /* Debug */,
@@ -351,6 +399,79 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		8AB660332FB716E90052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.31.3;
+			};
+		};
+		8AB660382FB717370052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ml-explore/mlx-swift-lm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.31.3;
+			};
+		};
+		8AB6603D2FB717690052F4F4 /* XCRemoteSwiftPackageReference "swift-huggingface" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-huggingface";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.0;
+			};
+		};
+		8AB660402FB717B00052F4F4 /* XCRemoteSwiftPackageReference "swift-transformers" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/swift-transformers";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8AB660342FB716E90052F4F4 /* MLX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8AB660332FB716E90052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLX;
+		};
+		8AB660362FB716E90052F4F4 /* MLXRandom */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8AB660332FB716E90052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift" */;
+			productName = MLXRandom;
+		};
+		8AB660392FB717370052F4F4 /* MLXLLM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8AB660382FB717370052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLLM;
+		};
+		8AB6603B2FB717370052F4F4 /* MLXLMCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8AB660382FB717370052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXLMCommon;
+		};
+		8AB6603E2FB717690052F4F4 /* HuggingFace */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8AB6603D2FB717690052F4F4 /* XCRemoteSwiftPackageReference "swift-huggingface" */;
+			productName = HuggingFace;
+		};
+		8AB660412FB717B00052F4F4 /* Transformers */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8AB660402FB717B00052F4F4 /* XCRemoteSwiftPackageReference "swift-transformers" */;
+			productName = Transformers;
+		};
+		8AB660442FB7199D0052F4F4 /* MLXHuggingFace */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8AB660382FB717370052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
+			productName = MLXHuggingFace;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8AB65FE02FB65EFD0052F4F4 /* Project object */;
 }
