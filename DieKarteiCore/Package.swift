@@ -20,5 +20,9 @@ let package = Package(
                 .swiftLanguageMode(.v5),
             ]
         ),
+        .testTarget(
+            name: "DieKarteiCoreTests",
+            dependencies: ["DieKarteiCore"]
+        ),
     ]
 )
