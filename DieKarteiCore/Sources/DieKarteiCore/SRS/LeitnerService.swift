@@ -10,18 +10,18 @@ import Foundation
 /// Rules:
 /// - **Correct** → card moves up one box (max 5).
 /// - **Wrong** → card drops back to Box 1.
-enum LeitnerService {
+public enum LeitnerService {
 
-    static let maxBox = 5
+    public static let maxBox = 5
 
     /// Promote a card after a correct answer.
-    static func markCorrect(_ card: SavedCard) {
+    public static func markCorrect(_ card: some SRSCardState) {
         card.leitnerBox = min(card.leitnerBox + 1, maxBox)
         card.totalReviews += 1
     }
 
     /// Demote a card after a wrong answer (back to Box 1).
-    static func markWrong(_ card: SavedCard) {
+    public static func markWrong(_ card: some SRSCardState) {
         card.leitnerBox = 1
         card.totalReviews += 1
         card.lapses += 1
@@ -35,7 +35,7 @@ enum LeitnerService {
     /// `sessionNumber % interval == 0`.
     ///
     /// Box 0 cards (new) are always included.
-    static func dueCards(in cards: [SavedCard], sessionNumber: Int) -> [SavedCard] {
+    public static func dueCards<C: SRSCardState>(in cards: [C], sessionNumber: Int) -> [C] {
         cards.filter { card in
             isDue(box: card.leitnerBox, sessionNumber: sessionNumber)
         }
@@ -43,14 +43,14 @@ enum LeitnerService {
     }
 
     /// Check if a given box should be reviewed this session.
-    static func isDue(box: Int, sessionNumber: Int) -> Bool {
+    public static func isDue(box: Int, sessionNumber: Int) -> Bool {
         guard box > 0 else { return true } // Box 0 always due
         let interval = 1 << (box - 1) // 1, 2, 4, 8, 16
         return sessionNumber % interval == 0
     }
 
     /// Human-readable label for a box number.
-    static func boxLabel(_ box: Int) -> String {
+    public static func boxLabel(_ box: Int) -> String {
         switch box {
         case 0: "New"
         case 1: "Box 1"
@@ -63,7 +63,7 @@ enum LeitnerService {
     }
 
     /// Color name for a box (used for tinting).
-    static func boxColor(_ box: Int) -> String {
+    public static func boxColor(_ box: Int) -> String {
         switch box {
         case 0: "gray"
         case 1: "red"
@@ -76,7 +76,7 @@ enum LeitnerService {
     }
 
     /// Returns the distribution of cards across boxes for display.
-    static func boxDistribution(_ cards: [SavedCard]) -> [(box: Int, count: Int)] {
+    public static func boxDistribution(_ cards: [some SRSCardState]) -> [(box: Int, count: Int)] {
         (0...maxBox).map { box in
             (box, cards.filter { $0.leitnerBox == box }.count)
         }

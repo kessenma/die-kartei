@@ -1,12 +1,27 @@
 import Foundation
 
+/// One line of a conversation transcript, decoupled from any persistence model.
+/// The iOS app maps SwiftData `ChatMessage` objects into these; an Android host
+/// maps its own message records the same way.
+public struct TranscriptLine {
+    public var isUser: Bool
+    public var text: String
+    public var sortOrder: Int
+
+    public init(isUser: Bool, text: String, sortOrder: Int) {
+        self.isUser = isUser
+        self.text = text
+        self.sortOrder = sortOrder
+    }
+}
+
 /// Builds the prompts that steer the on-device model for conversation, correction,
 /// translation, and the end-of-session coaching summary — and parses their output.
-enum ConversationPrompts {
+public enum ConversationPrompts {
 
     // MARK: - Conversation system prompt
 
-    static func systemPrompt(for config: ConversationConfig) -> String {
+    public static func systemPrompt(for config: ConversationConfig) -> String {
         var parts: [String] = []
 
         // Role / persona
@@ -57,11 +72,11 @@ enum ConversationPrompts {
     }
 
     /// The hidden seed turn that prompts the AI to open the conversation.
-    static let openerSeed = "Beginne jetzt das Gespräch auf Deutsch mit einer kurzen, freundlichen Begrüßung und einer Frage an mich."
+    public static let openerSeed = "Beginne jetzt das Gespräch auf Deutsch mit einer kurzen, freundlichen Begrüßung und einer Frage an mich."
 
     // MARK: - Correction
 
-    static func correctionSystemPrompt(for config: ConversationConfig) -> String {
+    public static func correctionSystemPrompt(for config: ConversationConfig) -> String {
         var s = "You are a meticulous German teacher reviewing one line a student said during a spoken conversation. "
         s += "The student's level is \(config.level.rawValue). "
         s += config.strictness.promptInstruction + " "
@@ -78,21 +93,26 @@ enum ConversationPrompts {
         return s
     }
 
-    static func correctionUserPrompt(partnerLine: String?, studentLine: String) -> String {
+    public static func correctionUserPrompt(partnerLine: String?, studentLine: String) -> String {
         if let partnerLine, !partnerLine.isEmpty {
             return "The conversation partner just said: \"\(partnerLine)\"\nThe student replied: \"\(studentLine)\"\n\nEvaluate only the student's reply."
         }
         return "The student said: \"\(studentLine)\"\n\nEvaluate the student's sentence."
     }
 
-    struct CorrectionResult {
-        var correctedText: String?
-        var note: String?
-        var isClean: Bool { correctedText == nil }
+    public struct CorrectionResult {
+        public var correctedText: String?
+        public var note: String?
+        public var isClean: Bool { correctedText == nil }
+
+        public init(correctedText: String? = nil, note: String? = nil) {
+            self.correctedText = correctedText
+            self.note = note
+        }
     }
 
     /// Parse the correction model output into a structured result.
-    static func parseCorrection(_ raw: String, original: String) -> CorrectionResult {
+    public static func parseCorrection(_ raw: String, original: String) -> CorrectionResult {
         let cleaned = stripThinkBlocks(raw).trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Treat a bare "OK" (the model's "no issues" signal) as clean.
@@ -130,13 +150,13 @@ enum ConversationPrompts {
 
     // MARK: - Translation
 
-    static let translationSystemPrompt =
+    public static let translationSystemPrompt =
         "You are a professional German-to-English translator. You ONLY translate. You never answer, continue, react to, or have a conversation about the text — you just render it in English."
 
     /// Framed user prompt — small models follow an instruction in the user turn (ending with
     /// "English:") far more reliably than a system-only instruction, which they tend to ignore
     /// and instead *reply* to the German in German.
-    static func translationUserPrompt(german: String) -> String {
+    public static func translationUserPrompt(german: String) -> String {
         """
         Translate the German text below into natural English. \
         Output ONLY the English translation — no German, no quotation marks, no notes, and do not answer or continue the text.
@@ -146,7 +166,7 @@ enum ConversationPrompts {
         """
     }
 
-    static func cleanTranslation(_ raw: String) -> String {
+    public static func cleanTranslation(_ raw: String) -> String {
         var s = stripThinkBlocks(raw).trimmingCharacters(in: .whitespacesAndNewlines)
         // Strip a leading label the model sometimes echoes back.
         for label in ["English:", "English translation:", "Translation:", "EN:", "Englisch:"] {
@@ -164,7 +184,7 @@ enum ConversationPrompts {
 
     // MARK: - Summary
 
-    static func summarySystemPrompt(for config: ConversationConfig) -> String {
+    public static func summarySystemPrompt(for config: ConversationConfig) -> String {
         var s = "You are a supportive German language coach. Below is a transcript of a conversation-practice session between a STUDENT (the learner, level \(config.level.rawValue)) and a PARTNER (the AI). "
         s += "Analyze the STUDENT's German across the whole conversation and write a short, encouraging coaching report in ENGLISH.\n\n"
         if !config.focusAreas.isEmpty {
@@ -179,18 +199,18 @@ enum ConversationPrompts {
         return s
     }
 
-    static func transcript(from messages: [ChatMessage]) -> String {
-        messages
+    public static func transcript(from lines: [TranscriptLine]) -> String {
+        lines
             .sorted { $0.sortOrder < $1.sortOrder }
-            .map { msg in
-                let speaker = msg.isUser ? "STUDENT" : "PARTNER"
-                return "\(speaker): \(msg.text)"
+            .map { line in
+                let speaker = line.isUser ? "STUDENT" : "PARTNER"
+                return "\(speaker): \(line.text)"
             }
             .joined(separator: "\n")
     }
 
     /// Parse the coaching report into structured arrays. Falls back to raw text.
-    static func parseSummary(_ raw: String) -> (strengths: [String], improvements: [String], pattern: String) {
+    public static func parseSummary(_ raw: String) -> (strengths: [String], improvements: [String], pattern: String) {
         let cleaned = stripThinkBlocks(raw)
         var strengths: [String] = []
         var improvements: [String] = []
@@ -229,7 +249,7 @@ enum ConversationPrompts {
     // MARK: - Vocabulary matching
 
     /// Returns which of `targetWords` appear in `text` (case/diacritic-insensitive, whole-word-ish).
-    static func matchedWords(in text: String, targetWords: [String]) -> [String] {
+    public static func matchedWords(in text: String, targetWords: [String]) -> [String] {
         guard !targetWords.isEmpty else { return [] }
         let haystack = " " + normalize(text) + " "
         var found: [String] = []
@@ -286,7 +306,7 @@ enum ConversationPrompts {
     }
 
     /// Remove <think>…</think> reasoning blocks some models emit.
-    static func stripThinkBlocks(_ text: String) -> String {
+    public static func stripThinkBlocks(_ text: String) -> String {
         var cleaned = text
         while let range = cleaned.range(of: #"<think>[\s\S]*?</think>"#, options: .regularExpression) {
             cleaned.removeSubrange(range)

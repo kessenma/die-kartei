@@ -1,3 +1,4 @@
+import DieKarteiCore
 import Foundation
 import ImageIO
 import Vision

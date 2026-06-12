@@ -1,3 +1,4 @@
+import DieKarteiCore
 import SwiftUI
 
 /// The full, categorized scenario list. Tap one to select it and pop back.

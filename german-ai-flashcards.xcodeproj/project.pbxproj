@@ -14,6 +14,7 @@
 		8AB6603F2FB717690052F4F4 /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB6603E2FB717690052F4F4 /* HuggingFace */; };
 		8AB660422FB717B00052F4F4 /* Transformers in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660412FB717B00052F4F4 /* Transformers */; };
 		8AB660452FB7199D0052F4F4 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660442FB7199D0052F4F4 /* MLXHuggingFace */; };
+		D1ECA00000000000000000A3 /* DieKarteiCore in Frameworks */ = {isa = PBXBuildFile; productRef = D1ECA00000000000000000A2 /* DieKarteiCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 				8AB660452FB7199D0052F4F4 /* MLXHuggingFace in Frameworks */,
 				8AB6603C2FB717370052F4F4 /* MLXLMCommon in Frameworks */,
 				8AB660372FB716E90052F4F4 /* MLXRandom in Frameworks */,
+				D1ECA00000000000000000A3 /* DieKarteiCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -97,6 +99,7 @@
 				8AB6603E2FB717690052F4F4 /* HuggingFace */,
 				8AB660412FB717B00052F4F4 /* Transformers */,
 				8AB660442FB7199D0052F4F4 /* MLXHuggingFace */,
+				D1ECA00000000000000000A2 /* DieKarteiCore */,
 			);
 			productName = "german-ai-flashcards";
 			productReference = 8AB65FE82FB65EFD0052F4F4 /* Die Kartei.app */;
@@ -127,6 +130,7 @@
 			mainGroup = 8AB65FDF2FB65EFD0052F4F4;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				D1ECA00000000000000000A1 /* XCLocalSwiftPackageReference "DieKarteiCore" */,
 				8AB660332FB716E90052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift" */,
 				8AB660382FB717370052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
 				8AB6603D2FB717690052F4F4 /* XCRemoteSwiftPackageReference "swift-huggingface" */,
@@ -400,6 +404,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		D1ECA00000000000000000A1 /* XCLocalSwiftPackageReference "DieKarteiCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = DieKarteiCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		8AB660332FB716E90052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -436,6 +447,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		D1ECA00000000000000000A2 /* DieKarteiCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DieKarteiCore;
+		};
 		8AB660342FB716E90052F4F4 /* MLX */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8AB660332FB716E90052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift" */;

@@ -1,3 +1,4 @@
+import DieKarteiCore
 import SwiftUI
 
 enum WordTypeFilter: String, CaseIterable, Codable {

@@ -1,3 +1,4 @@
+import DieKarteiCore
 import SwiftUI
 
 struct ModelCrossCheckView: View {

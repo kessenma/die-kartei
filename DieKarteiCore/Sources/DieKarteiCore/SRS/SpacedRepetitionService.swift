@@ -1,14 +1,13 @@
 import Foundation
-import SwiftData
 
 /// User rating for an Anki-style review.
-enum AnkiRating: Int, CaseIterable {
+public enum AnkiRating: Int, CaseIterable {
     case again = 1
     case hard = 2
     case good = 3
     case easy = 4
 
-    var label: String {
+    public var label: String {
         switch self {
         case .again: "Again"
         case .hard: "Hard"
@@ -17,7 +16,7 @@ enum AnkiRating: Int, CaseIterable {
         }
     }
 
-    var color: String {
+    public var color: String {
         switch self {
         case .again: "red"
         case .hard: "orange"
@@ -28,10 +27,10 @@ enum AnkiRating: Int, CaseIterable {
 }
 
 /// Implements a simplified SM-2 spaced repetition algorithm.
-enum SpacedRepetitionService {
+public enum SpacedRepetitionService {
 
     /// Apply a rating to a card and update its SRS fields in-place.
-    static func apply(rating: AnkiRating, to card: SavedCard) {
+    public static func apply(rating: AnkiRating, to card: some SRSCardState) {
         card.totalReviews += 1
 
         switch rating {
@@ -85,10 +84,10 @@ enum SpacedRepetitionService {
         card.nextReviewDate = Calendar.current.date(byAdding: .day, value: card.interval, to: .now)
     }
 
-    /// Returns cards from the deck that are due for review (nextReviewDate <= now, or never reviewed).
-    static func dueCards(in deck: SavedDeck) -> [SavedCard] {
+    /// Returns cards that are due for review (nextReviewDate <= now, or never reviewed).
+    public static func dueCards<C: SRSCardState>(in cards: [C]) -> [C] {
         let now = Date.now
-        return deck.cards
+        return cards
             .filter { card in
                 guard let next = card.nextReviewDate else { return true } // never reviewed
                 return next <= now
@@ -97,14 +96,14 @@ enum SpacedRepetitionService {
     }
 
     /// Describes the next interval for each rating option, given the card's current state.
-    static func previewIntervals(for card: SavedCard) -> [(rating: AnkiRating, label: String)] {
+    public static func previewIntervals(for card: some SRSCardState) -> [(rating: AnkiRating, label: String)] {
         AnkiRating.allCases.map { rating in
             let days = previewInterval(rating: rating, card: card)
             return (rating, formatInterval(days))
         }
     }
 
-    private static func previewInterval(rating: AnkiRating, card: SavedCard) -> Int {
+    private static func previewInterval(rating: AnkiRating, card: some SRSCardState) -> Int {
         switch rating {
         case .again:
             return 1

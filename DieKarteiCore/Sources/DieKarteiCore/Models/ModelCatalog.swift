@@ -1,17 +1,21 @@
 import Foundation
-import MLXLLM
-import MLXLMCommon
 
 // MARK: - Model Provider
 
-enum ModelProvider: String, CaseIterable, Codable {
+public enum ModelProvider: String, CaseIterable, Codable {
     case mlx = "MLX"
 }
 
-// MARK: - MLX Model Definitions
+// MARK: - Model Definitions
 
-/// Specific MLX model variants the user can select and run.
-enum MLXModel: String, CaseIterable, Codable, Identifiable {
+/// Specific on-device model variants the user can select and run.
+///
+/// This catalog is platform-neutral metadata. The mapping to an actual
+/// inference engine lives outside the core: on iOS,
+/// `MLXModel+MLX.swift` in the app target maps each case to an MLX
+/// registry configuration; an Android host maps cases to its own engine
+/// (e.g. GGUF checkpoints for llama.cpp).
+public enum MLXModel: String, CaseIterable, Codable, Identifiable {
     case gemma4_E4B   = "Gemma 4 E4B"
     case mistral7B    = "Mistral 7B"
     case qwen3_8B     = "Qwen3 8B"
@@ -22,26 +26,11 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
     case gemma3_1B    = "Gemma 3 1B"
     case qwen3_0_6B   = "Qwen3 0.6B"
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    /// The MLX registry configuration for this model.
-    var configuration: ModelConfiguration {
-        switch self {
-        case .gemma4_E4B:   LLMRegistry.gemma4_e4b_it_4bit
-        case .mistral7B:    LLMRegistry.mistral7B4bit
-        case .qwen3_8B:     LLMRegistry.qwen3_8b_4bit
-        case .gemma3n_E4B:  LLMRegistry.gemma3n_E4B_it_lm_4bit
-        case .qwen3_4B:     LLMRegistry.qwen3_4b_4bit
-        case .phi4Mini:     ModelConfiguration(id: "mlx-community/Phi-4-mini-instruct-4bit")
-        case .llama3_2_1B:  LLMRegistry.llama3_2_1B_4bit
-        case .gemma3_1B:    LLMRegistry.gemma3_1B_qat_4bit
-        case .qwen3_0_6B:   LLMRegistry.qwen3_0_6b_4bit
-        }
-    }
+    public var displayName: String { rawValue }
 
-    var displayName: String { rawValue }
-
-    var approximateSizeMB: Int {
+    public var approximateSizeMB: Int {
         switch self {
         case .gemma4_E4B:   5500
         case .mistral7B:    4000
@@ -57,7 +46,7 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
 
     // MARK: Model Info
 
-    var description: String {
+    public var description: String {
         switch self {
         case .gemma4_E4B:
             "Google's latest Gemma 4 with effective 4B parameters, 4-bit quantized. Best quality but larger download (~5 GB)."
@@ -80,7 +69,7 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    var parameterCount: String {
+    public var parameterCount: String {
         switch self {
         case .gemma4_E4B:   "~4B"
         case .mistral7B:    "7B"
@@ -95,7 +84,7 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
     }
 
     /// Numeric parameter count for sorting the Parameters tab.
-    var parameterCountValue: Double {
+    public var parameterCountValue: Double {
         switch self {
         case .mistral7B:     7.0
         case .qwen3_8B:      8.0
@@ -110,7 +99,7 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
     }
 
     /// Relative German quality score used by the Recommended sort (1 = lowest, 5 = highest).
-    var germanQualityScore: Int {
+    public var germanQualityScore: Int {
         switch self {
         case .mistral7B:    4
         case .qwen3_8B:     5
@@ -124,10 +113,10 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    var quantization: String { "4-bit" }
+    public var quantization: String { "4-bit" }
 
     /// Minimum device RAM (in GB) needed to run this model comfortably.
-    var minimumRAMGB: Int {
+    public var minimumRAMGB: Int {
         switch self {
         case .qwen3_0_6B, .llama3_2_1B, .gemma3_1B: 4
         case .qwen3_4B, .gemma3n_E4B, .gemma4_E4B, .phi4Mini, .mistral7B: 6
@@ -136,7 +125,7 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
     }
 
     /// Short device compatibility hint shown in the model picker.
-    var deviceNote: String {
+    public var deviceNote: String {
         switch self {
         case .qwen3_0_6B, .llama3_2_1B, .gemma3_1B:
             "iPhone 12 or newer"
@@ -151,7 +140,7 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    var logoName: String {
+    public var logoName: String {
         switch self {
         case .qwen3_0_6B, .qwen3_4B, .qwen3_8B: "logo-qwen"
         case .llama3_2_1B: "logo-meta"
@@ -161,11 +150,7 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    var huggingFaceRepoURL: URL {
-        URL(string: "https://huggingface.co/\(configuration.name)")!
-    }
-
-    var promoPageURL: URL {
+    public var promoPageURL: URL {
         switch self {
         case .qwen3_0_6B, .qwen3_4B, .qwen3_8B:
             URL(string: "https://qwen.ai/blog?id=qwen3")!

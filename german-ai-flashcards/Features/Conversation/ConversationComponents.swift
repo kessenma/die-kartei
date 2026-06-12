@@ -1,3 +1,4 @@
+import DieKarteiCore
 import SwiftUI
 
 // MARK: - Model picker (downloaded-first)

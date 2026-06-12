@@ -5,6 +5,7 @@
 //  Created by Kyle Essenmacher on 5/14/26.
 //
 
+import DieKarteiCore
 import SwiftUI
 import SwiftData
 

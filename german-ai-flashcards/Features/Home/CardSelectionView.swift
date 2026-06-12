@@ -1,3 +1,4 @@
+import DieKarteiCore
 import SwiftUI
 
 /// Shown after generation finishes. Lets the user pick which freshly generated

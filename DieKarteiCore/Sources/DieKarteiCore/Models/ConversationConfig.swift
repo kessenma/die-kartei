@@ -2,18 +2,18 @@ import Foundation
 
 // MARK: - Conversation Mode
 
-enum ConversationMode: String, CaseIterable, Codable, Identifiable {
+public enum ConversationMode: String, CaseIterable, Codable, Identifiable {
     case freestyle = "Freestyle"
     case decks     = "From Decks"
     case scenario  = "Scenario"
     case paper     = "Paper"
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
     /// Modes selectable in the normal setup picker (paper chats start from a paper instead).
-    static var setupCases: [ConversationMode] { [.freestyle, .decks, .scenario] }
+    public static var setupCases: [ConversationMode] { [.freestyle, .decks, .scenario] }
 
-    var systemImage: String {
+    public var systemImage: String {
         switch self {
         case .freestyle: "bubble.left.and.bubble.right"
         case .decks:     "rectangle.stack"
@@ -22,7 +22,7 @@ enum ConversationMode: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    var subtitle: String {
+    public var subtitle: String {
         switch self {
         case .freestyle: "Open-ended chat about anything"
         case .decks:     "Practice words from your decks"
@@ -34,16 +34,16 @@ enum ConversationMode: String, CaseIterable, Codable, Identifiable {
 
 // MARK: - CEFR Level
 
-enum CEFRLevel: String, CaseIterable, Codable, Identifiable {
+public enum CEFRLevel: String, CaseIterable, Codable, Identifiable {
     case a1 = "A1"
     case a2 = "A2"
     case b1 = "B1"
     case b2 = "B2"
     case c1 = "C1"
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var englishLabel: String {
+    public var englishLabel: String {
         switch self {
         case .a1: "Beginner"
         case .a2: "Elementary"
@@ -54,7 +54,7 @@ enum CEFRLevel: String, CaseIterable, Codable, Identifiable {
     }
 
     /// Instruction injected into the system prompt to control the AI's complexity.
-    var promptInstruction: String {
+    public var promptInstruction: String {
         switch self {
         case .a1:
             "The learner is a beginner (A1). Use only the most common words and short, simple sentences in the present tense. Keep each reply to one or two short sentences."
@@ -72,20 +72,20 @@ enum CEFRLevel: String, CaseIterable, Codable, Identifiable {
 
 // MARK: - Formality
 
-enum Formality: String, CaseIterable, Codable, Identifiable {
+public enum Formality: String, CaseIterable, Codable, Identifiable {
     case du  = "du"
     case sie = "Sie"
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var englishLabel: String {
+    public var englishLabel: String {
         switch self {
         case .du:  "Informal (du)"
         case .sie: "Formal (Sie)"
         }
     }
 
-    var promptInstruction: String {
+    public var promptInstruction: String {
         switch self {
         case .du:  "Address the learner informally using the \"du\" form."
         case .sie: "Address the learner formally using the \"Sie\" form."
@@ -95,14 +95,14 @@ enum Formality: String, CaseIterable, Codable, Identifiable {
 
 // MARK: - Correction Strictness
 
-enum CorrectionStrictness: String, CaseIterable, Codable, Identifiable {
+public enum CorrectionStrictness: String, CaseIterable, Codable, Identifiable {
     case gentle   = "Gentle"
     case balanced = "Balanced"
     case strict   = "Strict"
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var subtitle: String {
+    public var subtitle: String {
         switch self {
         case .gentle:   "Only flags mistakes that obscure meaning"
         case .balanced: "Flags grammar, case & clear word-choice errors"
@@ -110,7 +110,7 @@ enum CorrectionStrictness: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    var promptInstruction: String {
+    public var promptInstruction: String {
         switch self {
         case .gentle:
             "Only point out mistakes that genuinely obscure meaning or are clear grammatical errors. Ignore minor style or punctuation issues."
@@ -127,7 +127,7 @@ enum CorrectionStrictness: String, CaseIterable, Codable, Identifiable {
 /// A grammar structure the conversation should emphasize. Used to steer the AI's
 /// questions and to focus the correction pass. Each case carries an English label
 /// and explanation for the picker's subheader and info modal.
-enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
+public enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
     case perfekt
     case praeteritum
     case futur
@@ -139,10 +139,10 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
     case wechselpraepositionen
     case adjektivendungen
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
     /// The German name shown as the primary label.
-    var germanLabel: String {
+    public var germanLabel: String {
         switch self {
         case .perfekt:              "Perfekt"
         case .praeteritum:          "Präteritum"
@@ -158,7 +158,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
     }
 
     /// Short English gloss shown as a subheader under the German label.
-    var englishLabel: String {
+    public var englishLabel: String {
         switch self {
         case .perfekt:              "Conversational past tense"
         case .praeteritum:          "Simple / written past"
@@ -174,7 +174,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
     }
 
     /// Longer English explanation shown in the info modal.
-    var explanation: String {
+    public var explanation: String {
         switch self {
         case .perfekt:
             "The everyday past tense used when speaking — “ich habe gegessen”, “ich bin gegangen”. Formed with haben or sein plus the past participle."
@@ -200,7 +200,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
     }
 
     /// A German example/hint the AI can use to elicit this structure.
-    var steeringHint: String {
+    public var steeringHint: String {
         switch self {
         case .perfekt:               "frage nach Vergangenem, z. B. „Was hast du am Wochenende gemacht?“"
         case .praeteritum:           "erzähle und frage im Präteritum, z. B. „Wie war dein Tag?“"
@@ -218,16 +218,16 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
 
 // MARK: - Scenario category
 
-enum ScenarioCategory: String, CaseIterable, Identifiable {
+public enum ScenarioCategory: String, CaseIterable, Identifiable {
     case dining
     case services
     case social
     case work
     case travel
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var germanTitle: String {
+    public var germanTitle: String {
         switch self {
         case .dining:   "Essen & Trinken"
         case .services: "Unterwegs & Erledigungen"
@@ -237,7 +237,7 @@ enum ScenarioCategory: String, CaseIterable, Identifiable {
         }
     }
 
-    var englishTitle: String {
+    public var englishTitle: String {
         switch self {
         case .dining:   "Food & Drink"
         case .services: "Out & About"
@@ -247,7 +247,7 @@ enum ScenarioCategory: String, CaseIterable, Identifiable {
         }
     }
 
-    var systemImage: String {
+    public var systemImage: String {
         switch self {
         case .dining:   "fork.knife"
         case .services: "bag.fill"
@@ -258,14 +258,14 @@ enum ScenarioCategory: String, CaseIterable, Identifiable {
     }
 
     /// The scenarios in this category (excludes `custom`).
-    var scenarios: [ConversationScenario] {
+    public var scenarios: [ConversationScenario] {
         ConversationScenario.allCases.filter { $0.category == self }
     }
 }
 
 // MARK: - Scenario
 
-enum ConversationScenario: String, CaseIterable, Codable, Identifiable {
+public enum ConversationScenario: String, CaseIterable, Codable, Identifiable {
     // Dining
     case restaurant          // sit-down, host seats you
     case fastCasual          // counter service (döner, build-a-bowl)
@@ -297,10 +297,10 @@ enum ConversationScenario: String, CaseIterable, Codable, Identifiable {
     // Special
     case custom
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
     /// The category this scenario belongs to (`custom` has none).
-    var category: ScenarioCategory? {
+    public var category: ScenarioCategory? {
         switch self {
         case .restaurant, .fastCasual, .cafe, .bar, .bakery:
             return .dining
@@ -317,7 +317,7 @@ enum ConversationScenario: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    var germanTitle: String {
+    public var germanTitle: String {
         switch self {
         case .restaurant:       "Im Restaurant"
         case .fastCasual:       "Imbiss / Döner"
@@ -346,7 +346,7 @@ enum ConversationScenario: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    var englishDescription: String {
+    public var englishDescription: String {
         switch self {
         case .restaurant:       "A sit-down restaurant — a host seats you and a waiter takes your order."
         case .fastCasual:       "Order at a counter (döner, build-your-own bowl) and customize it."
@@ -375,7 +375,7 @@ enum ConversationScenario: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    var systemImage: String {
+    public var systemImage: String {
         switch self {
         case .restaurant:       "fork.knife"
         case .fastCasual:       "takeoutbag.and.cup.and.straw.fill"
@@ -405,13 +405,13 @@ enum ConversationScenario: String, CaseIterable, Codable, Identifiable {
     }
 
     /// A random scenario for "surprise me" (never `custom`).
-    static func random() -> ConversationScenario {
+    public static func random() -> ConversationScenario {
         allCases.filter { $0 != .custom }.randomElement() ?? .smallTalk
     }
 
     /// The role the AI plays and how it should open the scene.
     /// `custom` returns nil so the caller can substitute the user's own text.
-    var roleInstruction: String? {
+    public var roleInstruction: String? {
         switch self {
         case .restaurant:
             "You are a waiter at a sit-down restaurant. Welcome the guest, seat them, and offer the menu, then take their order."
@@ -468,32 +468,70 @@ enum ConversationScenario: String, CaseIterable, Codable, Identifiable {
 // MARK: - Conversation Configuration
 
 /// The full configuration captured in the setup screen and used to drive a session.
-struct ConversationConfig {
-    var mode: ConversationMode = .freestyle
-    var deckIDs: [UUID] = []
-    var deckLabel: String = ""
-    var deckWords: [String] = []
-    var scenario: ConversationScenario? = nil
-    var customScenario: String = ""
-    var focusAreas: [GrammarFocus] = []
-    var level: CEFRLevel = .a2
-    var formality: Formality = .du
-    var correctionsEnabled: Bool = true
-    var strictness: CorrectionStrictness = .balanced
-    var model: MLXModel
-    var autoPlay: Bool = true
+public struct ConversationConfig {
+    public var mode: ConversationMode = .freestyle
+    public var deckIDs: [UUID] = []
+    public var deckLabel: String = ""
+    public var deckWords: [String] = []
+    public var scenario: ConversationScenario? = nil
+    public var customScenario: String = ""
+    public var focusAreas: [GrammarFocus] = []
+    public var level: CEFRLevel = .a2
+    public var formality: Formality = .du
+    public var correctionsEnabled: Bool = true
+    public var strictness: CorrectionStrictness = .balanced
+    public var model: MLXModel
+    public var autoPlay: Bool = true
     /// Pre-compute the translation and a next-turn hint in the background after each reply.
-    var eagerAssist: Bool = false
+    public var eagerAssist: Bool = false
     /// When eager assist is on, also display the translation automatically (vs. pre-load only).
-    var autoShowTranslation: Bool = true
+    public var autoShowTranslation: Bool = true
     /// How many suggestions the hint feature generates (1–3).
-    var hintCount: Int = 1
+    public var hintCount: Int = 1
     /// For `.paper` mode: the paper's title and the reference text injected into the chat.
-    var paperTitle: String? = nil
-    var paperContext: String? = nil
+    public var paperTitle: String? = nil
+    public var paperContext: String? = nil
+
+    public init(mode: ConversationMode = .freestyle,
+                deckIDs: [UUID] = [],
+                deckLabel: String = "",
+                deckWords: [String] = [],
+                scenario: ConversationScenario? = nil,
+                customScenario: String = "",
+                focusAreas: [GrammarFocus] = [],
+                level: CEFRLevel = .a2,
+                formality: Formality = .du,
+                correctionsEnabled: Bool = true,
+                strictness: CorrectionStrictness = .balanced,
+                model: MLXModel,
+                autoPlay: Bool = true,
+                eagerAssist: Bool = false,
+                autoShowTranslation: Bool = true,
+                hintCount: Int = 1,
+                paperTitle: String? = nil,
+                paperContext: String? = nil) {
+        self.mode = mode
+        self.deckIDs = deckIDs
+        self.deckLabel = deckLabel
+        self.deckWords = deckWords
+        self.scenario = scenario
+        self.customScenario = customScenario
+        self.focusAreas = focusAreas
+        self.level = level
+        self.formality = formality
+        self.correctionsEnabled = correctionsEnabled
+        self.strictness = strictness
+        self.model = model
+        self.autoPlay = autoPlay
+        self.eagerAssist = eagerAssist
+        self.autoShowTranslation = autoShowTranslation
+        self.hintCount = hintCount
+        self.paperTitle = paperTitle
+        self.paperContext = paperContext
+    }
 
     /// A human-readable title for the saved-chats list.
-    var displayTitle: String {
+    public var displayTitle: String {
         switch mode {
         case .scenario:
             if scenario == .custom, !customScenario.isEmpty {

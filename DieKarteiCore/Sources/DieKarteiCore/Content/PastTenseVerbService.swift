@@ -1,27 +1,27 @@
 import Foundation
 
-struct PastTenseVerbEntry: Codable, Identifiable {
-    let infinitive: String
-    let translation: String
-    let auxiliary: String
-    let pastParticiple: String
-    let isSeparable: Bool
-    let prefix: String?
-    let isRegular: Bool
-    let example: String?
-    let level: String
+public struct PastTenseVerbEntry: Codable, Identifiable {
+    public let infinitive: String
+    public let translation: String
+    public let auxiliary: String
+    public let pastParticiple: String
+    public let isSeparable: Bool
+    public let prefix: String?
+    public let isRegular: Bool
+    public let example: String?
+    public let level: String
 
-    var id: String { infinitive }
+    public var id: String { infinitive }
 }
 
-enum PastTenseLevel: String, CaseIterable, Identifiable {
+public enum PastTenseLevel: String, CaseIterable, Identifiable {
     case a1 = "A1"
     case a2 = "A2"
     case b1 = "B1"
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var description: String {
+    public var description: String {
         switch self {
         case .a1: return "Elementary verbs"
         case .a2: return "Pre-intermediate verbs"
@@ -29,7 +29,7 @@ enum PastTenseLevel: String, CaseIterable, Identifiable {
         }
     }
 
-    var color: String {
+    public var color: String {
         switch self {
         case .a1: return "green"
         case .a2: return "blue"
@@ -38,11 +38,11 @@ enum PastTenseLevel: String, CaseIterable, Identifiable {
     }
 }
 
-enum PastTenseVerbService {
+public enum PastTenseVerbService {
     private static var cache: [PastTenseLevel: [PastTenseVerbEntry]] = [:]
     private static var allCache: [PastTenseVerbEntry]? = nil
 
-    static func entries(for level: PastTenseLevel) -> [PastTenseVerbEntry] {
+    public static func entries(for level: PastTenseLevel) -> [PastTenseVerbEntry] {
         if let cached = cache[level] { return cached }
         let all = allEntries
         let filtered = all.filter { $0.level == level.rawValue }
@@ -50,17 +50,15 @@ enum PastTenseVerbService {
         return filtered
     }
 
-    static var allEntries: [PastTenseVerbEntry] {
+    public static var allEntries: [PastTenseVerbEntry] {
         if let cached = allCache { return cached }
-        guard let url = Bundle.main.url(forResource: "past_tense_verbs", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let entries = try? JSONDecoder().decode([PastTenseVerbEntry].self, from: data)
+        guard let entries = CoreResources.decode([PastTenseVerbEntry].self, resource: "past_tense_verbs")
         else { return [] }
         allCache = entries
         return entries
     }
 
-    static func toVocabCards(_ entries: [PastTenseVerbEntry]) -> [VocabCard] {
+    public static func toVocabCards(_ entries: [PastTenseVerbEntry]) -> [VocabCard] {
         entries.map { entry in
             VocabCard(
                 germanWord: entry.infinitive,
