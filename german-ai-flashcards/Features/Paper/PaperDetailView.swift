@@ -19,8 +19,40 @@ struct PaperDetailView: View {
         return allDecks.first { $0.id == id }
     }
 
+    /// Brand theme of the model that generated this paper (or the current study model).
+    private var theme: ModelTheme { (paper.model ?? modelManager.selectedPaperModel).theme }
+
+    private var sourceLabel: String {
+        switch paper.sourceKind {
+        case .photo: "From a photo"
+        case .link: "From a link"
+        case .document: "From a document"
+        }
+    }
+
     var body: some View {
         List {
+            Section {
+                HStack(spacing: 8) {
+                    Image(systemName: paper.sourceSymbol)
+                        .foregroundStyle(theme.accent)
+                    Text(sourceLabel)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    if let model = paper.model {
+                        model.logoImage
+                            .resizable().scaledToFit()
+                            .frame(width: 18, height: 18)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                        Text(model.rawValue)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .listRowBackground(theme.accent.opacity(0.06))
+
             Section {
                 Button {
                     startChat()
@@ -112,6 +144,7 @@ struct PaperDetailView: View {
             }
         }
         .navigationTitle(paper.title)
+        .tint(theme.accent)
         .navigationBarTitleDisplayMode(.inline)
         .contentMargins(.bottom, 120, for: .scrollContent)
         .fullScreenCover(item: $activeChat) { chat in
@@ -134,6 +167,7 @@ struct PaperDetailView: View {
         config.level = CEFRLevel(rawValue: modelManager.chatLevelRaw) ?? .b1
         config.formality = .sie  // an examiner addresses you formally
         config.correctionsEnabled = modelManager.chatCorrectionsEnabled
+        config.correctionTranslationEnabled = modelManager.chatShowCorrectionTranslation
         config.strictness = CorrectionStrictness(rawValue: modelManager.chatStrictnessRaw) ?? .balanced
         config.autoPlay = modelManager.autoPlayReplies
         config.eagerAssist = modelManager.chatEagerAssist

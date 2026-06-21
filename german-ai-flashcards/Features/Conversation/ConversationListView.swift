@@ -31,16 +31,12 @@ struct ConversationListView: View {
                 NavigationLink {
                     PhotoScanListView(modelManager: modelManager, mlxService: mlxService)
                 } label: {
-                    HStack {
-                        Label("Scan text from a photo", systemImage: "camera.viewfinder")
-                        Spacer()
-                        Text("Beta")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(.orange, in: Capsule())
-                    }
+                    Label("Scan text from a photo", systemImage: "camera.viewfinder")
+                }
+                NavigationLink {
+                    PhraseLibraryView(modelManager: modelManager, mlxService: mlxService)
+                } label: {
+                    Label("Phrase library", systemImage: "ear.badge.waveform")
                 }
             } footer: {
                 Text("Have a spoken German conversation with the on-device AI. Pick a topic, deck, or scenario, choose a grammar focus, and talk — it corrects you as you go. Or upload a German paper to study and discuss.")
@@ -96,7 +92,7 @@ struct ConversationListView: View {
             }
         }
         .sheet(isPresented: $showSetup) {
-            ConversationSetupView(modelManager: modelManager) { config in
+            ConversationSetupView(modelManager: modelManager, mlxService: mlxService) { config in
                 showSetup = false
                 startNewChat(with: config)
             }
@@ -153,6 +149,7 @@ struct ConversationListView: View {
         c.level = convo.level
         c.formality = convo.formality
         c.correctionsEnabled = convo.correctionsEnabled
+        c.correctionTranslationEnabled = modelManager.chatShowCorrectionTranslation
         c.strictness = convo.strictness
         c.autoPlay = convo.autoPlay
         c.eagerAssist = modelManager.chatEagerAssist
@@ -223,8 +220,8 @@ private struct ConversationRow: View {
 
             Spacer()
 
-            if let logo = conversation.model?.logoName {
-                Image(logo).resizable().scaledToFit()
+            if let model = conversation.model {
+                model.logoImage.resizable().scaledToFit()
                     .frame(width: 22, height: 22)
                     .clipShape(RoundedRectangle(cornerRadius: 5))
             }

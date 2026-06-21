@@ -1,0 +1,4 @@
+app_identifier(ENV["APP_IDENTIFIER"] || "kyle-essenmacher.german-ai-flashcards")
+apple_id(ENV["APPLE_ID"] || "kessen@umich.edu")        # account that owns Team RHPLRY9X9P
+team_id(ENV["TEAM_ID"] || "RHPLRY9X9P")
+itc_team_id(ENV["ITUNES_CONNECT_TEAM_ID"] || "124074455")

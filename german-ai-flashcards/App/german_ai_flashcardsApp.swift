@@ -18,7 +18,8 @@ struct german_ai_flashcardsApp: App {
         let schema = Schema([
             SavedDeck.self, SavedCard.self, QuizResult.self,
             ChatConversation.self, ChatMessage.self,
-            StudyPaper.self
+            StudyPaper.self,
+            LearnedPhrase.self
         ])
         let config = SwiftData.ModelConfiguration(schema: schema)
 

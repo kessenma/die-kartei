@@ -7,6 +7,7 @@ struct GeneratingFlashcardsView: View {
     var isValidating: Bool
     var topic: String
     var startTime: Date
+    var model: MLXModel
     var generatedWords: [String] = []
     var streamingTokenCount: Int = 0
     var currentBatchSize: Int = 0
@@ -45,7 +46,7 @@ struct GeneratingFlashcardsView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 24) {
-                AnimatedCardStack()
+                AnimatedCardStack(accent: model.theme.accent)
                     .frame(height: 200)
 
                 Text("Generating Flashcards")
@@ -54,7 +55,7 @@ struct GeneratingFlashcardsView: View {
 
                 VStack(spacing: 8) {
                     ProgressView(value: smoothedProgress)
-                        .tint(.accentColor)
+                        .tint(model.theme.accent)
                         .frame(maxWidth: 240)
                         .animation(.linear(duration: 0.3), value: smoothedProgress)
 
@@ -94,6 +95,7 @@ struct GeneratingFlashcardsView: View {
                     HStack(spacing: 8) {
                         ProgressView()
                             .controlSize(.small)
+                            .tint(model.theme.accent)
                         Text("Validating against dictionary…")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -120,17 +122,17 @@ struct GeneratingFlashcardsView: View {
         if index < currentBatchIndex {
             // Completed batch — solid filled circle
             Circle()
-                .fill(Color.accentColor)
+                .fill(model.theme.accent)
                 .frame(width: 10, height: 10)
         } else if index == currentBatchIndex {
             // Active batch — arc fills as tokens stream in
             ZStack {
                 Circle()
-                    .stroke(Color.accentColor.opacity(0.2), lineWidth: 2)
+                    .stroke(model.theme.accent.opacity(0.2), lineWidth: 2)
                     .frame(width: 12, height: 12)
                 Circle()
                     .trim(from: 0, to: tokenFill)
-                    .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .stroke(model.theme.accent, style: StrokeStyle(lineWidth: 2, lineCap: .round))
                     .frame(width: 12, height: 12)
                     .rotationEffect(.degrees(-90))
                     .animation(.linear(duration: 0.3), value: tokenFill)
@@ -153,6 +155,8 @@ struct GeneratingFlashcardsView: View {
 // MARK: - Animated card stack
 
 private struct AnimatedCardStack: View {
+    var accent: Color = .accentColor
+
     @Environment(\.colorScheme) private var colorScheme
 
     @State private var isFlipped = false
@@ -174,11 +178,18 @@ private struct AnimatedCardStack: View {
             : Color(red: 0.85, green: 0.35, blue: 0.35).opacity(0.5)
     }
     private var borderColor: Color {
-        Color.gray.opacity(colorScheme == .dark ? 0.5 : 0.3)
+        accent.opacity(colorScheme == .dark ? 0.5 : 0.35)
     }
 
     var body: some View {
         ZStack {
+            // Soft brand glow behind the stack, tying it to the generating model.
+            Ellipse()
+                .fill(accent)
+                .frame(width: 260, height: 170)
+                .opacity(0.18)
+                .blur(radius: 45)
+
             // Background stacked cards for depth
             blankCard
                 .frame(width: 220, height: 150)

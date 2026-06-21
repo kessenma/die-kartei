@@ -97,7 +97,7 @@ struct PaperListView: View {
             }
         }
         .sheet(isPresented: $showURLImport) {
-            URLImportView { title, text, url in
+            URLImportView(accent: modelManager.selectedPaperModel.theme.accent) { title, text, url in
                 // Defer so the URL sheet finishes dismissing before the next sheet/dialog appears.
                 DispatchQueue.main.async {
                     tryImport(title: title, text: text, sourceURL: url)
@@ -105,7 +105,7 @@ struct PaperListView: View {
             }
         }
         .sheet(item: $reviewItem) { item in
-            ExtractedTextReviewView(title: item.title, text: item.text) { deckCount, selectedWords in
+            ExtractedTextReviewView(title: item.title, text: item.text, accent: modelManager.selectedPaperModel.theme.accent) { deckCount, selectedWords in
                 // Defer so the review sheet finishes dismissing before the generating sheet appears.
                 DispatchQueue.main.async {
                     createAndGenerate(
@@ -134,11 +134,12 @@ struct PaperListView: View {
     }
 
     private func row(_ paper: StudyPaper) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: paper.sourceURL != nil ? "link" : "doc.text.fill")
-                .foregroundStyle(.tint)
+        let accent = paper.rowTheme?.accent ?? modelManager.selectedPaperModel.theme.accent
+        return HStack(spacing: 12) {
+            Image(systemName: paper.sourceSymbol)
+                .foregroundStyle(accent)
                 .frame(width: 30, height: 30)
-                .background(Color.accentColor.opacity(0.12))
+                .background(accent.opacity(0.12))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             VStack(alignment: .leading, spacing: 2) {
                 Text(paper.title).lineLimit(1)
@@ -273,6 +274,7 @@ private struct PaperGeneratingView: View {
                 default:
                     ProgressView(value: service.progress)
                         .progressViewStyle(.linear)
+                        .tint(service.model.theme.accent)
                         .frame(maxWidth: 260)
                     Text(service.statusText).foregroundStyle(.secondary)
                     if service.phase == .loadingModel {
@@ -297,6 +299,7 @@ private struct PaperGeneratingView: View {
 
 /// Paste a link to fetch and study its German text.
 private struct URLImportView: View {
+    var accent: Color = .accentColor
     var onFetched: (_ title: String, _ text: String, _ url: String) -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -376,7 +379,7 @@ private struct URLImportView: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             }
             .fullScreenCover(isPresented: $showBrowser) {
-                WebClipperView(initialURL: urlText.isEmpty ? nil : urlText) { title, text, url in
+                WebClipperView(initialURL: urlText.isEmpty ? nil : urlText, accent: accent) { title, text, url in
                     showBrowser = false
                     onFetched(title, text, url)
                     dismiss()

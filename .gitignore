@@ -26,3 +26,13 @@ secrets.*
 # Android port artifacts (cross-compiled outputs)
 *.so
 .android-build/
+
+# fastlane
+fastlane/report.xml
+fastlane/test_output/
+fastlane/Preview.html
+fastlane/*.p8
+AuthKey_*.p8
+build-logs/
+# Commit the .env template even though the `.env*` rule above would hide it.
+!fastlane/.env.example

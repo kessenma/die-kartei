@@ -36,6 +36,14 @@ struct SayItView: View {
                     if recognizer.isRecording {
                         Text(recognizer.transcript.isEmpty ? "Listening…" : recognizer.transcript)
                             .font(.caption).foregroundStyle(.secondary)
+
+                        RecordingControls(
+                            onPeriod:   { recognizer.appendPunctuation(".") },
+                            onQuestion: { recognizer.appendPunctuation("?") },
+                            onRestart:  { recognizer.restart() }
+                        )
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 8, trailing: 12))
                     }
                     if let authError {
                         Text(authError).font(.caption).foregroundStyle(.orange)
@@ -67,10 +75,11 @@ struct SayItView: View {
                         }
                         Button {
                             recognizer.cancel()
-                            engine.usePhrase(german)
+                            let gloss = englishText.trimmingCharacters(in: .whitespacesAndNewlines)
+                            engine.practiceSaying(german, english: gloss.isEmpty ? nil : gloss)
                             dismiss()
                         } label: {
-                            Label("Use as my response", systemImage: "paperplane.fill")
+                            Label("Let me say it", systemImage: "mic.fill")
                         }
                     }
                 }

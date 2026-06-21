@@ -10,6 +10,7 @@ struct FullscreenCardView: View {
     let showExamplesOnGermanSide: Bool
     let isQuizMode: Bool
     let badgeLogoName: String?
+    var model: MLXModel? = nil
     var onApplyCorrection: ((Int, String?) -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
@@ -132,6 +133,7 @@ struct FullscreenCardView: View {
                 article: cards[currentIndex].article,
                 showGermanFirst: showGermanFirst,
                 badgeLogoName: badgeLogoName,
+                model: model,
                 auxiliaryVerb: cards[currentIndex].auxiliaryVerb,
                 pastParticiple: cards[currentIndex].pastParticiple,
                 isSeparable: cards[currentIndex].isSeparable,
@@ -171,6 +173,7 @@ struct FullscreenCardView: View {
                 article: cards[currentIndex].article,
                 showGermanFirst: showGermanFirst,
                 badgeLogoName: badgeLogoName,
+                model: model,
                 auxiliaryVerb: cards[currentIndex].auxiliaryVerb,
                 pastParticiple: cards[currentIndex].pastParticiple,
                 isSeparable: cards[currentIndex].isSeparable,

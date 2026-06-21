@@ -34,8 +34,6 @@ struct HomeView: View {
     @State private var selectedTenses: Set<String> = ["Präsens"]
     @State private var showingTenseInfo: TenseInfo?
     @State private var showingShortfallAlert = false
-    @State private var cacheRefreshID = UUID()
-    @State private var showingModelPicker = false
     @State private var showingTopicInfo = false
 
     private let wordCountOptions = [5, 10, 15, 20, 30, 50]
@@ -201,12 +199,13 @@ struct HomeView: View {
                 Section {
                     Button(action: generate) {
                         Label("Generate Flashcards", systemImage: "sparkles")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .foregroundStyle(activeTheme == nil ? AnyShapeStyle(.tint) : AnyShapeStyle(.white))
                     }
-                    .disabled(
-                        topic.trimmingCharacters(in: .whitespaces).isEmpty
-                        || service.isGenerating
-                        || !service.isAvailable
-                    )
+                    .disabled(generateDisabled)
+                    .listRowBackground(generateRowBackground)
                 }
 
                 if let error = service.errorMessage {
@@ -217,11 +216,9 @@ struct HomeView: View {
                 }
             }
             .navigationTitle("Create")
+            .tint(activeTheme?.accent)
             .scrollDismissesKeyboard(.interactively)
             .contentMargins(.bottom, 120)
-            .sheet(isPresented: $showingModelPicker) {
-                modelPickerSheet
-            }
             .overlay {
                 if service.isGenerating {
                     generatingOverlay
@@ -267,6 +264,7 @@ struct HomeView: View {
             isValidating: service.isValidating,
             topic: topic,
             startTime: service.generationStartTime ?? Date(),
+            model: service.modelManager.selectedMLXModel,
             generatedWords: service.generatedCards.map { $0.englishTranslation },
             streamingTokenCount: service.mlxService.streamingTokenCount,
             currentBatchSize: service.currentBatchSize,
@@ -275,228 +273,44 @@ struct HomeView: View {
         )
     }
 
-    // MARK: - Model Status & Picker
-
-    private var activeModel: MLXModel {
-        let mlxService = service.mlxService
-        let modelManager = service.modelManager
-        if let current = mlxService.currentModel, mlxService.isModelLoaded {
-            return current
-        }
-        return modelManager.selectedMLXModel
-    }
-
-    private var activeModelName: String {
-        activeModel.rawValue
-    }
+    // MARK: - Model Status
 
     private var activeModelIsReady: Bool {
         service.isAvailable
     }
 
+    /// Brand theme of the model currently loaded in memory, or `nil` when none is ready. Drives the
+    /// per-model tint of the whole form and the Generate button's gradient.
+    private var activeTheme: ModelTheme? {
+        service.mlxService.loadedModel?.theme
+    }
+
+    private var generateDisabled: Bool {
+        topic.trimmingCharacters(in: .whitespaces).isEmpty
+        || service.isGenerating
+        || !service.isAvailable
+    }
+
+    /// A brand-gradient fill for the Generate button once a model is loaded (it's only enabled then),
+    /// dimmed while disabled; falls back to the standard grouped-cell color otherwise.
     @ViewBuilder
+    private var generateRowBackground: some View {
+        if let activeTheme {
+            activeTheme.linear.opacity(generateDisabled ? 0.4 : 1)
+        } else {
+            Color(.secondarySystemGroupedBackground)
+        }
+    }
+
     private var modelSection: some View {
-        let mlxService = service.mlxService
-
-        Section {
-            // Current model indicator — tap to open picker
-            Button {
-                showingModelPicker = true
-            } label: {
-                HStack {
-                    Image(activeModel.logoName)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 28, height: 28)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(activeModelName)
-                            .foregroundStyle(.primary)
-                        if mlxService.isLoading {
-                            Text("Loading…")
-                                .font(.caption)
-                                .foregroundStyle(.orange)
-                        } else if activeModelIsReady {
-                            Text("Ready")
-                                .font(.caption)
-                                .foregroundStyle(.green)
-                        } else {
-                            Text("Not loaded")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .disabled(mlxService.isLoading)
-
-            // Inline loading progress when an MLX model is being loaded
-            if mlxService.isLoading {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .controlSize(.small)
-                        Image(activeModel.logoName)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 18, height: 18)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
-                        Text(mlxService.downloadInfo ?? "Loading model…")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    if let progress = mlxService.downloadProgress, progress > 0 {
-                        ProgressView(value: progress)
-                    } else {
-                        ProgressView()
-                            .progressViewStyle(.linear)
-                    }
-                    HStack {
-                        if let start = mlxService.loadStartTime {
-                            TimelineView(.periodic(from: .now, by: 1)) { _ in
-                                Text("Elapsed: \(elapsedString(since: start))")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .monospacedDigit()
-                            }
-                        }
-                        Spacer()
-                        if let bytes = mlxService.downloadBytesInfo {
-                            Text(bytes)
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-                    }
-                    Button("Cancel", role: .destructive) {
-                        mlxService.cancelLoad()
-                    }
-                    .font(.caption)
-                }
-            }
-        } header: {
-            Label("Model", systemImage: "cpu")
-        }
-
-        if let error = mlxService.loadError {
-            Section {
-                Label(error, systemImage: "exclamationmark.triangle")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
-        }
-    }
-
-    // MARK: - Model Picker Sheet
-
-    @ViewBuilder
-    private var modelPickerSheet: some View {
-        let mlxService = service.mlxService
-        let modelManager = service.modelManager
-        let downloadedModels = MLXModel.allCases.filter { isDownloaded($0) }
-        let lastLoaded = modelManager.lastLoadedModel
-
-        NavigationStack {
-            List {
-                Section {
-                    if downloadedModels.isEmpty {
-                        Label("No models downloaded yet. Go to Settings to download one.", systemImage: "arrow.down.circle")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(downloadedModels) { model in
-                            let isActive = mlxService.isModelLoaded && mlxService.currentModel == model
-                            let isLastUsed = lastLoaded == model && !isActive
-
-                            Button {
-                                modelManager.selectedMLXModel = model
-                                showingModelPicker = false
-                                Task {
-                                    await mlxService.loadModel(model)
-                                    cacheRefreshID = UUID()
-                                }
-                            } label: {
-                                HStack {
-                                    Image(model.logoName)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 28, height: 28)
-                                        .clipShape(RoundedRectangle(cornerRadius: 6))
-
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        HStack(spacing: 6) {
-                                            Text(model.rawValue)
-                                                .foregroundStyle(.primary)
-                                            if isLastUsed {
-                                                Text("Last used")
-                                                    .font(.caption2)
-                                                    .fontWeight(.semibold)
-                                                    .padding(.horizontal, 5)
-                                                    .padding(.vertical, 2)
-                                                    .background(Color.secondary.opacity(0.12))
-                                                    .foregroundStyle(.secondary)
-                                                    .clipShape(Capsule())
-                                            }
-                                        }
-                                        Text("~\(formattedSize(model.approximateSizeMB))")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    Spacer()
-                                    if isActive {
-                                        Image(systemName: "checkmark")
-                                            .foregroundStyle(.tint)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } header: {
-                    Text("MLX Models")
-                } footer: {
-                    Text("Download more models in Settings.")
-                }
-            }
-            .navigationTitle("Select Model")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { showingModelPicker = false }
-                }
-            }
-        }
-        .onChange(of: mlxService.currentModel) { _, newModel in
-            if let model = newModel {
-                service.modelManager.lastLoadedModel = model
-            }
-        }
-        .presentationDetents([.medium])
-    }
-
-    private func isDownloaded(_ model: MLXModel) -> Bool {
-        _ = cacheRefreshID
-        return model.isDownloaded
-    }
-
-    private func formattedSize(_ mb: Int) -> String {
-        if mb >= 1000 {
-            let gb = Double(mb) / 1000.0
-            return String(format: "%.1f GB", gb)
-        }
-        return "\(mb) MB"
-    }
-
-    private func elapsedString(since start: Date) -> String {
-        let seconds = Int(Date().timeIntervalSince(start))
-        if seconds < 60 {
-            return "\(seconds)s"
-        }
-        return "\(seconds / 60)m \(seconds % 60)s"
+        ModelPickerButton(
+            selection: Binding(
+                get: { service.modelManager.selectedMLXModel },
+                set: { service.modelManager.selectedMLXModel = $0 }
+            ),
+            modelManager: service.modelManager,
+            mlxService: service.mlxService
+        )
     }
 
     private func generate() {

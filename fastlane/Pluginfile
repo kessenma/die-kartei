@@ -1,0 +1,4 @@
+# Edits MARKETING_VERSION / CURRENT_PROJECT_VERSION directly in the build
+# settings (this project has no VERSIONING_SYSTEM = apple-generic, so the
+# stock agvtool-based increment_* actions don't work here).
+gem "fastlane-plugin-versioning"

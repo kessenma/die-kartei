@@ -5,6 +5,8 @@ import SwiftUI
 struct ExtractedTextReviewView: View {
     let title: String
     let text: String
+    /// Brand accent of the model that will generate the cards.
+    var accent: Color = .accentColor
     /// Called when the user confirms. `selectedWords` is nil when the AI should pick the words itself.
     var onGenerate: (_ deckCount: Int, _ selectedWords: [String]?) -> Void
 
@@ -133,7 +135,7 @@ struct ExtractedTextReviewView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .frame(maxWidth: .infinity)
-                .background(isSelected ? Color.accentColor : Color.gray.opacity(0.15), in: Capsule())
+                .background(isSelected ? accent : Color.gray.opacity(0.15), in: Capsule())
                 .foregroundStyle(isSelected ? .white : .primary)
         }
         .buttonStyle(.plain)

@@ -17,6 +17,21 @@ struct InspectedWord: Identifiable, Equatable {
     var saved: Bool
 }
 
+/// A phrase the learner asked help with via "Say it in German", now shown above the mic so they
+/// can practice saying it out loud themselves (instead of it being auto-posted). Tracks their
+/// spoken attempt so the card can coach them when they miss.
+struct SayItPrompt: Identifiable, Equatable {
+    let id = UUID()
+    /// The target German sentence to say out loud.
+    let german: String
+    /// The learner's original English (shown as a reminder of intent), if any.
+    let english: String?
+    /// What the recognizer heard on their most recent attempt.
+    var heardText: String?
+    /// nil until they've tried; true if the attempt was close enough, false if it missed.
+    var matched: Bool?
+}
+
 /// Drives a single voice conversation: recording, correction, streamed replies,
 /// translation, playback, and the end-of-session coaching summary. Persists as it goes.
 @Observable
@@ -49,6 +64,8 @@ final class ConversationEngine {
     private(set) var errorMessage: String?
     /// IDs of assistant messages whose translation is being generated.
     private(set) var translatingIDs: Set<UUID> = []
+    /// IDs of user messages whose correction's English meaning is being generated.
+    private(set) var translatingCorrectionIDs: Set<UUID> = []
     /// The message currently being spoken aloud, if any.
     private(set) var speakingMessageID: UUID?
     /// The word range currently being spoken (for read-along highlighting), within `spokenText`.
@@ -57,6 +74,8 @@ final class ConversationEngine {
     /// "What could I say?" suggestions, shown in an inline card when requested.
     private(set) var hints: [HintSuggestion] = []
     private(set) var hintLoading = false
+    /// A "Say it in German" phrase the learner is practicing saying out loud, shown above the mic.
+    private(set) var sayItPrompt: SayItPrompt?
     /// Pre-computed hints (eager assist), tied to the assistant message they were made for.
     private var cachedHints: [HintSuggestion] = []
     private var cachedHintMessageID: UUID?
@@ -66,6 +85,11 @@ final class ConversationEngine {
     private var pendingHintUse = false
     /// The word the user tapped to inspect (translate / save), if any.
     private(set) var inspectedWord: InspectedWord?
+    /// Set when the user taps a model-requiring control before the model is loaded.
+    /// Drives the "load this conversation's model" prompt in the view.
+    private(set) var showModelLoadPrompt = false
+    /// Action to run once the model finishes loading from that prompt (if any).
+    private var pendingModelAction: (() -> Void)?
 
     // Timer
     private var appearedAt: Date?
@@ -75,6 +99,10 @@ final class ConversationEngine {
     var liveTranscript: String { speechRecognizer.transcript }
     var micLevel: Double { speechRecognizer.level }
     var isBusy: Bool { phase == .thinking || phase == .loadingModel || phase == .summarizing }
+    /// True when this conversation's model is loaded into memory and ready to generate.
+    var isModelReady: Bool { mlxService.isModelLoaded && mlxService.currentModel == config.model }
+    /// True while this conversation's model is loading / downloading.
+    var isLoadingModel: Bool { phase == .loadingModel }
 
     init(
         conversation: ChatConversation,
@@ -150,6 +178,39 @@ final class ConversationEngine {
         return false
     }
 
+    /// Guard a model-dependent action. Returns `true` if the model is already loaded; otherwise
+    /// raises the load prompt (optionally stashing `action` to run after a successful load) and
+    /// returns `false`. Lets every entry point fail gracefully when an older conversation is opened
+    /// before its model is in memory.
+    @discardableResult
+    func requireModelReady(orRun action: (() -> Void)? = nil) -> Bool {
+        if isModelReady { return true }
+        pendingModelAction = action
+        showModelLoadPrompt = true
+        return false
+    }
+
+    /// Explicitly load this conversation's model (e.g. from the header menu). No-op if it's already
+    /// loaded or currently loading.
+    func loadModel() {
+        guard !isModelReady, !isLoadingModel else { return }
+        Task { await ensureModelLoaded() }
+    }
+
+    /// The user confirmed the load prompt — load the model, then run any stashed action.
+    func confirmModelLoad() {
+        showModelLoadPrompt = false
+        let action = pendingModelAction
+        pendingModelAction = nil
+        Task { if await ensureModelLoaded() { action?() } }
+    }
+
+    /// The user dismissed the load prompt without loading.
+    func cancelModelLoad() {
+        showModelLoadPrompt = false
+        pendingModelAction = nil
+    }
+
     // MARK: - Opener
 
     private func generateOpenerIfNeeded() async {
@@ -190,9 +251,24 @@ final class ConversationEngine {
             return
         }
         guard phase == .idle else { return }
+        // An older conversation may be open before its model is loaded — prompt to load it rather
+        // than silently starting a (possibly long) load with a live mic. The user taps again once
+        // it's ready, so we don't hot-mic them at the end of a download.
+        guard requireModelReady() else { return }
         eagerTask?.cancel()
         eagerTask = nil
         Task { await beginRecording() }
+    }
+
+    /// Add a punctuation mark to the live transcript while recording (period / question mark).
+    func addPunctuation(_ mark: String) {
+        speechRecognizer.appendPunctuation(mark)
+    }
+
+    /// Clear the current spoken turn and keep listening, for when the learner wants a do-over.
+    func restartRecording() {
+        guard speechRecognizer.isRecording else { return }
+        speechRecognizer.restart()
     }
 
     private func beginRecording() async {
@@ -212,7 +288,12 @@ final class ConversationEngine {
             self.phase = .idle
             let trimmed = finalText.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty else { return }
-            Task { await self.handleUtterance(trimmed) }
+            // A live "say it" target means this turn is a practice attempt, not a free reply.
+            if self.sayItPrompt != nil {
+                Task { await self.evaluateSayItAttempt(trimmed) }
+            } else {
+                Task { await self.handleUtterance(trimmed) }
+            }
         }
     }
 
@@ -226,6 +307,7 @@ final class ConversationEngine {
         userMessage.usedPhraseHelper = viaPhraseHelper
         pendingHintUse = false
         hints = []  // dismiss the hint card now that the turn is taken
+        sayItPrompt = nil  // and the say-it practice card
         userMessage.conversation = conversation
         conversation.messages.append(userMessage)
         modelContext.insert(userMessage)
@@ -242,6 +324,12 @@ final class ConversationEngine {
         await runReply()
 
         phase = .idle
+
+        // 4. With the turn done and the model free, fill in the correction's English meaning if the
+        //    setting is on (no-op when there was no correction). Kept off the reply's critical path.
+        if config.correctionTranslationEnabled && !viaPhraseHelper {
+            await translateCorrection(userMessage)
+        }
     }
 
     private func runCorrection(on message: ChatMessage) async {
@@ -294,6 +382,7 @@ final class ConversationEngine {
     /// User actively reveals an AI reply's translation (counts as a "click"); generates it if needed.
     func revealTranslation(_ message: ChatMessage) {
         guard !message.isUser else { return }
+        guard requireModelReady(orRun: { [weak self] in self?.revealTranslation(message) }) else { return }
         message.translationViewed = true
         save()
         if message.translationText == nil {
@@ -335,12 +424,63 @@ final class ConversationEngine {
         message.translationViewed || (config.eagerAssist && config.autoShowTranslation)
     }
 
+    // MARK: - Correction translation ("what the suggestion means")
+
+    /// Whether the English meaning should be shown under a correction (driven by the setting).
+    func shouldShowCorrectionTranslation(_ message: ChatMessage) -> Bool {
+        config.correctionTranslationEnabled && message.hasCorrection
+    }
+
+    func isTranslatingCorrection(_ message: ChatMessage) -> Bool {
+        translatingCorrectionIDs.contains(message.id)
+    }
+
+    /// Lazily generate a correction's English meaning if it's missing — used when an older
+    /// conversation is reopened (or the setting is flipped on mid-session). Won't force a model
+    /// load; it runs once the model is ready.
+    func ensureCorrectionTranslation(_ message: ChatMessage) {
+        guard config.correctionTranslationEnabled,
+              message.hasCorrection,
+              message.correctionTranslationText == nil,
+              phase == .idle,
+              isModelReady else { return }
+        Task { await translateCorrection(message) }
+    }
+
+    @discardableResult
+    private func translateCorrection(_ message: ChatMessage) async -> Bool {
+        guard let corrected = message.correctedText, !corrected.isEmpty,
+              message.correctionTranslationText == nil,
+              !translatingCorrectionIDs.contains(message.id) else { return false }
+        translatingCorrectionIDs.insert(message.id)
+        defer { translatingCorrectionIDs.remove(message.id) }
+        guard await ensureModelLoaded() else { return false }
+        do {
+            let raw = try await mlxService.generateText(
+                system: ConversationPrompts.translationSystemPrompt,
+                user: ConversationPrompts.translationUserPrompt(german: corrected),
+                model: config.model,
+                maxTokens: 160
+            )
+            let cleaned = ConversationPrompts.cleanTranslation(raw)
+            message.correctionTranslationText = cleaned.isEmpty ? nil : cleaned
+            save()
+            return message.correctionTranslationText != nil
+        } catch is CancellationError {
+            return false
+        } catch {
+            return false
+        }
+    }
+
     // MARK: - Hint ("what could I say?")
 
     func requestHints() {
         guard !hintLoading else { return }
+        guard requireModelReady(orRun: { [weak self] in self?.requestHints() }) else { return }
         // Actively asking for a hint marks this turn as hint-assisted.
         pendingHintUse = true
+        sayItPrompt = nil  // don't stack with a say-it practice card
         // Use pre-computed hints if they're for the latest assistant turn.
         if !cachedHints.isEmpty, cachedHintMessageID == latestAssistantID() {
             hints = cachedHints
@@ -411,6 +551,9 @@ final class ConversationEngine {
     func inspectWord(_ raw: String) {
         let word = cleanWord(raw)
         guard !word.isEmpty else { return }
+        // Translating a tapped word needs the model — prompt to load it rather than opening an
+        // inspector that just spins.
+        guard requireModelReady(orRun: { [weak self] in self?.inspectWord(raw) }) else { return }
         inspectedWord = InspectedWord(
             word: word,
             translation: nil,
@@ -499,6 +642,43 @@ final class ConversationEngine {
         guard !text.isEmpty, phase == .idle else { return }
         eagerTask?.cancel()
         Task { await handleUtterance(text, viaPhraseHelper: true) }
+    }
+
+    /// Surface a translated phrase above the mic so the learner can practice *saying* it themselves,
+    /// rather than auto-posting it. Mirrors how hints are shown. The user then taps the mic and
+    /// speaks it; `evaluateSayItAttempt` judges the result.
+    func practiceSaying(_ german: String, english: String?) {
+        let text = german.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        hints = []  // don't stack with a hint card
+        let gloss = english?.trimmingCharacters(in: .whitespacesAndNewlines)
+        sayItPrompt = SayItPrompt(german: text, english: (gloss?.isEmpty == false) ? gloss : nil)
+    }
+
+    func clearSayItPrompt() { sayItPrompt = nil }
+
+    /// Post the active say-it target as the learner's turn without a spoken attempt — the
+    /// "use it anyway" escape hatch that preserves the old one-tap behavior.
+    func useSayItPromptAnyway() {
+        guard let prompt = sayItPrompt else { return }
+        sayItPrompt = nil
+        usePhrase(prompt.german)
+    }
+
+    /// Judge a spoken attempt against the active say-it target. Close enough → post the correct
+    /// German as the turn; otherwise keep the card up in a coaching state so they can try again.
+    private func evaluateSayItAttempt(_ heard: String) async {
+        guard let prompt = sayItPrompt else {
+            await handleUtterance(heard)  // safety: no target, treat as a normal turn
+            return
+        }
+        if Self.phraseSimilarity(heard, prompt.german) >= 0.75 {
+            sayItPrompt = nil
+            await handleUtterance(prompt.german, viaPhraseHelper: true)
+        } else {
+            sayItPrompt?.heardText = heard
+            sayItPrompt?.matched = false
+        }
     }
 
     // MARK: - Eager assist (background pre-loading)
@@ -661,6 +841,46 @@ final class ConversationEngine {
         } catch {
             print("[ConversationEngine] save failed: \(error)")
         }
+    }
+
+    // MARK: - Phrase similarity (say-it practice)
+
+    /// A 0…1 similarity between two German phrases, ignoring case, punctuation and ß/ss spelling —
+    /// used to decide whether a spoken attempt matches the say-it target closely enough.
+    static func phraseSimilarity(_ a: String, _ b: String) -> Double {
+        let x = Array(normalizedForCompare(a))
+        let y = Array(normalizedForCompare(b))
+        guard !x.isEmpty, !y.isEmpty else { return 0 }
+        if x == y { return 1 }
+        let distance = levenshtein(x, y)
+        let maxLen = max(x.count, y.count)
+        return maxLen == 0 ? 1 : 1 - Double(distance) / Double(maxLen)
+    }
+
+    /// Lowercase, fold ß→ss, drop everything but letters and single spaces — so the comparison
+    /// reflects the spoken words, not capitalization or end punctuation the recognizer omits anyway.
+    private static func normalizedForCompare(_ s: String) -> String {
+        let lowered = s.lowercased().replacingOccurrences(of: "ß", with: "ss")
+        let kept = lowered.unicodeScalars.filter { CharacterSet.letters.contains($0) || $0 == " " }
+        return String(String.UnicodeScalarView(kept))
+            .split(separator: " ")
+            .joined(separator: " ")
+    }
+
+    private static func levenshtein(_ a: [Character], _ b: [Character]) -> Int {
+        if a.isEmpty { return b.count }
+        if b.isEmpty { return a.count }
+        var prev = Array(0...b.count)
+        var curr = [Int](repeating: 0, count: b.count + 1)
+        for i in 1...a.count {
+            curr[0] = i
+            for j in 1...b.count {
+                let cost = a[i - 1] == b[j - 1] ? 0 : 1
+                curr[j] = min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost)
+            }
+            swap(&prev, &curr)
+        }
+        return prev[b.count]
     }
 
     private func friendly(_ error: Error) -> String {

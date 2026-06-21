@@ -1,0 +1,20 @@
+NEW: AI Voice Chat — practice speaking German out loud and get corrected as you go.
+• Role-play 20+ everyday scenarios, or focus on specific grammar (Perfekt, Konjunktiv II, the cases, and more)
+• Hints, tap-a-word translations, and replies read aloud
+• "Say it in German" — work out what you want to say from English, then get coached through saying it
+• Each chat ends with a coaching report and can become a flashcard deck
+
+NEW: Save phrases you hear in the wild
+• Double-tap or highlight any word or phrase in a chat to get its meaning — or save it
+• Keep a library of phrases you want to practice; the AI weaves the active ones into matching chats
+• Turn saved phrases into flashcard decks
+
+NEW: Build cards and conversations from your own material — scan PDFs, scan photos, or paste a webpage.
+
+NEW: The app takes on the look of whichever AI model you pick, conversations included.
+
+ALSO IN THIS UPDATE
+• A dedicated Conversation settings tab
+• Step-by-step instructions (with screenshots) for downloading Apple's higher-quality voices
+• Smarter model loading, so the right model is ready before you start a chat
+• The first Akkusativ and Dativ study cards in the Goethe decks

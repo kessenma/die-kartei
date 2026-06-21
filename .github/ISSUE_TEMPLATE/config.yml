@@ -1,0 +1,3 @@
+# Force every new issue through a structured template so labels are applied
+# consistently (the in-app buttons link straight to these templates).
+blank_issues_enabled: false

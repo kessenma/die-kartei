@@ -9,6 +9,8 @@ import WebKit
 /// sites, because it's a real browser with the user's own session/cookies.
 struct WebClipperView: View {
     var initialURL: String?
+    /// Brand accent of the model that will process the captured page.
+    var accent: Color = .accentColor
     var onCapture: (_ title: String, _ text: String, _ url: String) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -62,7 +64,7 @@ struct WebClipperView: View {
                 // Thin page-load progress bar.
                 Group {
                     if model.isLoading && model.progress < 1 {
-                        ProgressView(value: model.progress).progressViewStyle(.linear).tint(.accentColor)
+                        ProgressView(value: model.progress).progressViewStyle(.linear).tint(accent)
                     } else {
                         Color.clear.frame(height: 2)
                     }

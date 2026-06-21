@@ -2,13 +2,20 @@ import SwiftUI
 import SwiftData
 
 /// The "Conversation Options" screen — pick mode, decks, scenario, grammar focus,
-/// level, formality, corrections, and model, then start a session.
+/// level, formality, and model, then start a session. Corrections, voice, and
+/// learning-aid defaults live in Settings ▸ Conversation.
 struct ConversationSetupView: View {
     @Bindable var modelManager: MLXModelManager
+    var mlxService: MLXGenerationService
     var onStart: (ConversationConfig) -> Void
 
     @Query(sort: \SavedDeck.createdAt, order: .reverse) private var allDecks: [SavedDeck]
+    @Query private var allPhrases: [LearnedPhrase]
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+
+    /// Set when a scenario chat has phrases to review; drives the pre-start preview push.
+    @State private var previewData: ScenarioPhrasePreview?
 
     @State private var mode: ConversationMode = .freestyle
     @State private var selectedDeckIDs: Set<UUID> = []
@@ -17,12 +24,7 @@ struct ConversationSetupView: View {
     @State private var focus: Set<GrammarFocus> = []
     @State private var level: CEFRLevel = .a2
     @State private var formality: Formality = .du
-    @State private var corrections: Bool = true
-    @State private var strictness: CorrectionStrictness = .balanced
     @State private var model: MLXModel = .qwen3_0_6B
-    @State private var eager: Bool = false
-    @State private var autoShowTranslation: Bool = true
-    @State private var hintCount: Int = 1
     @State private var didLoadDefaults = false
 
     /// Real, non-internal decks the user generated (mirrors SavedDecksView filtering).
@@ -53,12 +55,8 @@ struct ConversationSetupView: View {
                 GrammarFocusPickerSection(selected: $focus)
 
                 levelSection
-                correctionsSection
 
                 ChatModelPickerSection(selected: $model, cacheRefreshID: UUID())
-
-                voiceSection
-                learningAidsSection
             }
             .navigationTitle("New Conversation")
             .navigationBarTitleDisplayMode(.inline)
@@ -73,6 +71,15 @@ struct ConversationSetupView: View {
                 }
             }
             .onAppear(perform: loadDefaults)
+            .navigationDestination(item: $previewData) { data in
+                ConversationPhrasePreviewView(
+                    phrases: data.phrases,
+                    model: data.config.model,
+                    mlxService: mlxService
+                ) { confirmed in
+                    begin(baseConfig: data.config, confirmed: confirmed)
+                }
+            }
         }
     }
 
@@ -117,9 +124,24 @@ struct ConversationSetupView: View {
             }
 
             NavigationLink {
-                ScenarioPickerView(selected: $scenario)
+                ScenarioPickerView(selected: $scenario, modelManager: modelManager, mlxService: mlxService)
             } label: {
                 Label("Browse all scenarios", systemImage: "square.grid.2x2.fill")
+            }
+
+            if scenario != .custom {
+                NavigationLink {
+                    PhraseLibraryView(modelManager: modelManager, mlxService: mlxService, anchorScenario: scenario)
+                } label: {
+                    HStack {
+                        Label("Phrases for this scenario", systemImage: "ear.badge.waveform")
+                        Spacer()
+                        let count = activePhraseCount(for: scenario)
+                        if count > 0 {
+                            Text("\(count)").foregroundStyle(.secondary).monospacedDigit()
+                        }
+                    }
+                }
             }
 
             if scenario == .custom {
@@ -129,9 +151,13 @@ struct ConversationSetupView: View {
         } header: {
             Text("Scenario")
         } footer: {
-            Text("A random scenario is picked for you — tap Surprise me to reroll, or browse the full list. The AI stays in character and sets the scene.")
+            Text("A random scenario is picked for you — tap Surprise me to reroll, or browse the full list. The AI stays in character and sets the scene. Add phrases you've heard in the wild and the AI will work them in.")
                 .font(.caption2)
         }
+    }
+
+    private func activePhraseCount(for scenario: ConversationScenario) -> Int {
+        allPhrases.filter { $0.isActive && $0.applies(to: scenario) }.count
     }
 
     private var levelSection: some View {
@@ -156,70 +182,6 @@ struct ConversationSetupView: View {
         }
     }
 
-    private var correctionsSection: some View {
-        Section {
-            Toggle("Correct my mistakes", isOn: $corrections)
-            if corrections {
-                Picker("Strictness", selection: $strictness) {
-                    ForEach(CorrectionStrictness.allCases) { s in
-                        Text(s.rawValue).tag(s)
-                    }
-                }
-                .pickerStyle(.segmented)
-                Text(strictness.subtitle)
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-        } header: {
-            Text("Corrections")
-        } footer: {
-            Text("When on, the corrected sentence and a short explanation appear above your message whenever something needs fixing.")
-                .font(.caption2)
-        }
-    }
-
-    private var voiceSection: some View {
-        Section {
-            Toggle("Auto-play AI replies", isOn: $modelManager.autoPlayReplies)
-        } header: {
-            Text("Voice")
-        } footer: {
-            Text("Replies are spoken aloud automatically. You can always replay them with the play / slow buttons.")
-                .font(.caption2)
-        }
-    }
-
-    private var learningAidsSection: some View {
-        Section {
-            Picker("Hints per request", selection: $hintCount) {
-                Text("1").tag(1)
-                Text("2").tag(2)
-                Text("3").tag(3)
-            }
-            .pickerStyle(.segmented)
-
-            Toggle("Auto-translate & pre-load hints", isOn: $eager)
-
-            if eager {
-                Toggle("Auto-show translations", isOn: $autoShowTranslation)
-            }
-        } header: {
-            Text("Learning aids")
-        } footer: {
-            Text(learningAidsFooter)
-                .font(.caption2)
-        }
-    }
-
-    private var learningAidsFooter: String {
-        if !eager {
-            return "Pick how many hint suggestions to generate. Turn on auto-translate to prepare translations and hints in the background so they’re instant."
-        }
-        if autoShowTranslation {
-            return "Translations appear automatically under each reply, and hints are pre-loaded so they show instantly. Great for early learners — uses a bit more battery."
-        }
-        return "Translations and hints are prepared in the background but stay hidden until you tap, so taps are instant. Uses a bit more battery."
-    }
-
     // MARK: - Actions
 
     private func loadDefaults() {
@@ -228,24 +190,15 @@ struct ConversationSetupView: View {
         model = modelManager.selectedChatModel
         level = CEFRLevel(rawValue: modelManager.chatLevelRaw) ?? .a2
         formality = Formality(rawValue: modelManager.chatFormalityRaw) ?? .du
-        strictness = CorrectionStrictness(rawValue: modelManager.chatStrictnessRaw) ?? .balanced
-        corrections = modelManager.chatCorrectionsEnabled
-        eager = modelManager.chatEagerAssist
-        autoShowTranslation = modelManager.chatAutoShowTranslation
-        hintCount = modelManager.chatHintCount
         scenario = ConversationScenario.random()
     }
 
     private func start() {
-        // Persist choices as the new defaults.
+        // Persist the per-conversation choices as the new defaults. Corrections, voice, and
+        // learning-aid defaults are edited directly in Settings, so they aren't written here.
         modelManager.selectedChatModel = model
         modelManager.chatLevelRaw = level.rawValue
         modelManager.chatFormalityRaw = formality.rawValue
-        modelManager.chatStrictnessRaw = strictness.rawValue
-        modelManager.chatCorrectionsEnabled = corrections
-        modelManager.chatEagerAssist = eager
-        modelManager.chatAutoShowTranslation = autoShowTranslation
-        modelManager.chatHintCount = hintCount
 
         let chosenDecks = decks.filter { selectedDeckIDs.contains($0.id) }
         let deckWords = chosenDecks.flatMap { $0.cards.map(\.germanWord) }
@@ -261,13 +214,49 @@ struct ConversationSetupView: View {
         config.focusAreas = GrammarFocus.allCases.filter { focus.contains($0) }
         config.level = level
         config.formality = formality
-        config.correctionsEnabled = corrections
-        config.strictness = strictness
+        config.correctionsEnabled = modelManager.chatCorrectionsEnabled
+        config.correctionTranslationEnabled = modelManager.chatShowCorrectionTranslation
+        config.strictness = CorrectionStrictness(rawValue: modelManager.chatStrictnessRaw) ?? .balanced
         config.autoPlay = modelManager.autoPlayReplies
-        config.eagerAssist = eager
-        config.autoShowTranslation = autoShowTranslation
-        config.hintCount = hintCount
+        config.eagerAssist = modelManager.chatEagerAssist
+        config.autoShowTranslation = modelManager.chatAutoShowTranslation
+        config.hintCount = modelManager.chatHintCount
+
+        // For a scenario chat with phrases in rotation, review them (and warm up the model)
+        // before starting. Otherwise begin immediately, as before.
+        if mode == .scenario, scenario != .custom {
+            let sample = LearnedPhrase.sample(for: scenario, from: allPhrases)
+            if !sample.isEmpty {
+                previewData = ScenarioPhrasePreview(config: config, phrases: sample)
+                return
+            }
+        }
 
         onStart(config)
     }
+
+    /// Called from the phrase preview once the user confirms which phrases to keep this session.
+    private func begin(baseConfig: ConversationConfig, confirmed: [LearnedPhrase]) {
+        for phrase in confirmed { phrase.markSurfaced() }
+        try? modelContext.save()
+
+        var config = baseConfig
+        config.learnedPhrases = confirmed.map(\.item)
+        // Fold any grammar focus the surfaced phrases carry into the session's steering.
+        let union = Set(config.focusAreas).union(confirmed.flatMap(\.focusAreas))
+        config.focusAreas = GrammarFocus.allCases.filter { union.contains($0) }
+
+        onStart(config)
+    }
+}
+
+/// Payload for the pre-start phrase preview push. Identifiable/Hashable by id so it can drive
+/// `navigationDestination(item:)` (ConversationConfig itself isn't Hashable).
+struct ScenarioPhrasePreview: Identifiable, Hashable {
+    let id = UUID()
+    var config: ConversationConfig
+    var phrases: [LearnedPhrase]
+
+    static func == (lhs: ScenarioPhrasePreview, rhs: ScenarioPhrasePreview) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }

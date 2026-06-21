@@ -10,6 +10,8 @@ struct CardDeckView: View {
     /// Saved cards for Anki-style SRS updates; passed when launching from library.
     var savedCards: [SavedCard] = []
     var flashcardStyle: FlashcardStyle = .default
+    /// The model that generated this deck, when known. Drives the deck's brand theming.
+    var generatorModel: MLXModel? = nil
     var onStartGoetheStudy: (([VocabCard], String, FlashcardStyle, String) -> Void)? = nil
     var resetTrigger: Int = 0
     var autoAdvance: Bool = false
@@ -50,6 +52,11 @@ struct CardDeckView: View {
     var isAnkiMode: Bool { localStyle == .anki && !savedCards.isEmpty }
     var isLeitnerMode: Bool { localStyle == .leitner && !savedCards.isEmpty }
     var isSRSMode: Bool { isAnkiMode || isLeitnerMode }
+
+    /// The generating model's brand theme, when known.
+    var deckTheme: ModelTheme? { generatorModel?.theme }
+    /// The model's accent, or the app accent for bundled decks with no model.
+    var brandAccent: Color { deckTheme?.accent ?? .accentColor }
 
     var cardBadgeLogoName: String? {
         let goetheLevels = ["A1", "A2", "B1", "B2", "C1", "C2"]
@@ -110,6 +117,7 @@ struct CardDeckView: View {
             }
             .navigationTitle(hasStarted ? "" : "Flashcards")
             .navigationBarTitleDisplayMode(.inline)
+            .tint(brandAccent)
             .toolbar {
                 if hasStarted && !cards.isEmpty {
                     ToolbarItem(placement: .topBarLeading) {
@@ -161,6 +169,7 @@ struct CardDeckView: View {
                     showExamplesOnGermanSide: showExamplesOnGermanSide,
                     isQuizMode: isQuizMode,
                     badgeLogoName: cardBadgeLogoName,
+                    model: generatorModel,
                     onApplyCorrection: { index, article in applyCorrection(at: index, newArticle: article) }
                 )
             }

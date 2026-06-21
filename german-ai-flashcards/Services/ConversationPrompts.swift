@@ -53,6 +53,15 @@ enum ConversationPrompts {
             parts.append("The learner is studying these German words; weave a few of them naturally into your questions and replies, and encourage the learner to use them: \(sample).")
         }
 
+        // Learned phrases the user has heard in the wild and wants to get used to hearing.
+        // These are things YOUR character would say to the learner — work them in naturally.
+        if !config.learnedPhrases.isEmpty {
+            let list = config.learnedPhrases
+                .map { "«\($0.german)» (means: \($0.english))" }
+                .joined(separator: ", ")
+            parts.append("The learner has heard these German phrases in real life and wants to get used to hearing them. Naturally bring them into the conversation as things YOU (in your role) would say to the learner, and steer the scene so each one comes up. Say them in German exactly as written; do NOT translate or explain them in your replies: \(list).")
+        }
+
         return parts.joined(separator: "\n\n")
     }
 
@@ -160,6 +169,177 @@ enum ConversationPrompts {
             s = String(s[..<firstBlank.lowerBound])
         }
         return stripWrappingQuotes(s)
+    }
+
+    // MARK: - Phrase check (library validation)
+
+    struct PhraseCheckResult {
+        /// The natural German phrase the model confirmed or produced.
+        var german: String
+        /// A natural English translation.
+        var english: String
+        /// True when the model adjusted the learner's German (vs. confirming it was already fine).
+        var fixed: Bool
+        /// A short note on what was off, if any.
+        var note: String?
+        /// Scenarios the model suggested for this phrase (only when `suggestScenarios` was requested).
+        var scenarios: [ConversationScenario] = []
+        /// Grammar structures the model tagged (only when `suggestGrammar` was requested).
+        var focusAreas: [GrammarFocus] = []
+    }
+
+    /// The allowed scenario keys (rawValue) and their short English label, for the suggest prompt.
+    private static var phraseScenarioKeyList: String {
+        ConversationScenario.allCases
+            .filter { $0 != .custom }
+            .map { "- \($0.rawValue): \($0.englishTitle)" }
+            .joined(separator: "\n")
+    }
+
+    /// The allowed grammar keys (rawValue) and their short English label, for the suggest prompt.
+    private static var phraseGrammarKeyList: String {
+        GrammarFocus.allCases
+            .map { "- \($0.rawValue): \($0.englishLabel)" }
+            .joined(separator: "\n")
+    }
+
+    static func phraseCheckSystemPrompt(
+        inputIsGerman: Bool,
+        suggestScenarios: Bool = false,
+        suggestGrammar: Bool = false
+    ) -> String {
+        var s = "You are a meticulous German teacher helping a learner save a phrase they heard in real life so they can practice it. "
+        if inputIsGerman {
+            s += "The learner typed what they think they heard, in German. Confirm it, or fix it into the natural German a real speaker would actually say. "
+        } else {
+            s += "The learner typed what they want in English. Render it as the natural German a real speaker would actually say. "
+        }
+        s += "Reply in EXACTLY this format and nothing else — each line starting with its label:\n"
+        s += "GERMAN: <the natural German phrase>\n"
+        s += "ENGLISH: <a natural English translation>\n"
+        s += "STATUS: <OK if the German needed no change, or FIXED if you changed or produced it>\n"
+        s += "NOTE: <at most 15 words on what was off, or leave blank>\n"
+        if suggestScenarios {
+            s += "SCENARIOS: <1 to 3 keys from the scenario list, comma-separated — where a learner is most likely to hear this>\n"
+        }
+        if suggestGrammar {
+            s += "GRAMMAR: <0 to 2 keys from the grammar list, comma-separated — the main structure(s) this phrase shows, or leave blank if none stands out>\n"
+        }
+        s += "\n"
+        if suggestScenarios {
+            s += "Scenario keys (use the key exactly as written):\n\(phraseScenarioKeyList)\n\n"
+        }
+        if suggestGrammar {
+            s += "Grammar keys (use the key exactly as written):\n\(phraseGrammarKeyList)\n\n"
+        }
+        s += "Example:\n"
+        s += "GERMAN: Sonst noch etwas?\n"
+        s += "ENGLISH: Anything else?\n"
+        s += "STATUS: OK\n"
+        s += "NOTE:"
+        if suggestScenarios { s += "\nSCENARIOS: bakery, cafe" }
+        if suggestGrammar { s += "\nGRAMMAR:" }
+        return s
+    }
+
+    static func phraseCheckUserPrompt(_ input: String) -> String {
+        "Phrase: \"\(input.trimmingCharacters(in: .whitespacesAndNewlines))\""
+    }
+
+    /// Parse the phrase-check output. Returns nil if no usable German line was produced.
+    static func parsePhraseCheck(_ raw: String) -> PhraseCheckResult? {
+        let cleaned = stripThinkBlocks(raw).trimmingCharacters(in: .whitespacesAndNewlines)
+        var german: String?
+        var english: String?
+        var status: String?
+        var note: String?
+        var scenarioKeys: String?
+        var grammarKeys: String?
+
+        for rawLine in cleaned.components(separatedBy: .newlines) {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            if let r = matchPrefix(line, prefixes: ["GERMAN:", "German:", "Deutsch:", "DE:"]) {
+                german = stripWrappingQuotes(r)
+            } else if let r = matchPrefix(line, prefixes: ["ENGLISH:", "English:", "Englisch:", "EN:"]) {
+                english = stripWrappingQuotes(r)
+            } else if let r = matchPrefix(line, prefixes: ["STATUS:", "Status:"]) {
+                status = r.uppercased()
+            } else if let r = matchPrefix(line, prefixes: ["NOTE:", "Note:", "Notiz:"]) {
+                note = r.trimmingCharacters(in: .whitespaces)
+            } else if let r = matchPrefix(line, prefixes: ["SCENARIOS:", "Scenarios:", "SCENARIO:", "Scenario:", "Szenarien:"]) {
+                scenarioKeys = r
+            } else if let r = matchPrefix(line, prefixes: ["GRAMMAR:", "Grammar:", "Grammatik:"]) {
+                grammarKeys = r
+            }
+        }
+
+        // Lenient fallback: a small model sometimes drops the labels and just echoes the German
+        // phrase. If there's no GERMAN line but the whole reply is a single short line, treat that
+        // as the German so the user still gets a usable result.
+        if german == nil {
+            let lines = cleaned.components(separatedBy: .newlines)
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .filter { !$0.isEmpty }
+            if lines.count == 1, lines[0].count <= 120 {
+                german = stripWrappingQuotes(lines[0])
+            }
+        }
+
+        guard let germanText = german?.trimmingCharacters(in: .whitespacesAndNewlines), !germanText.isEmpty else {
+            return nil
+        }
+        let fixed = status?.contains("FIX") ?? false
+        let cleanedNote = (note?.isEmpty == false) ? note : nil
+        return PhraseCheckResult(
+            german: germanText,
+            english: english?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+            fixed: fixed,
+            note: cleanedNote,
+            scenarios: parseScenarioKeys(scenarioKeys),
+            focusAreas: parseGrammarKeys(grammarKeys)
+        )
+    }
+
+    /// Map a comma/semicolon/slash-separated key list onto known scenarios (matched leniently by
+    /// rawValue, German title, or English title). Unknown tokens are dropped.
+    private static func parseScenarioKeys(_ raw: String?) -> [ConversationScenario] {
+        let matched = keyTokens(raw).compactMap { token in
+            ConversationScenario.allCases.first {
+                $0 != .custom && (
+                    $0.rawValue.lowercased() == token
+                    || $0.germanTitle.lowercased() == token
+                    || $0.englishTitle.lowercased() == token
+                )
+            }
+        }
+        return deduped(matched)
+    }
+
+    /// Map a key list onto known grammar structures. Unknown tokens (e.g. "none") are dropped.
+    private static func parseGrammarKeys(_ raw: String?) -> [GrammarFocus] {
+        let matched = keyTokens(raw).compactMap { token in
+            GrammarFocus.allCases.first {
+                $0.rawValue.lowercased() == token
+                || $0.germanLabel.lowercased() == token
+                || $0.englishLabel.lowercased() == token
+            }
+        }
+        return deduped(matched)
+    }
+
+    /// Split a model-produced key list into normalized, lowercased tokens.
+    private static func keyTokens(_ raw: String?) -> [String] {
+        guard let raw, !raw.isEmpty else { return [] }
+        return raw
+            .components(separatedBy: CharacterSet(charactersIn: ",;/\n"))
+            .map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
+            .filter { !$0.isEmpty }
+    }
+
+    /// Order-preserving dedupe.
+    private static func deduped<T: Hashable>(_ items: [T]) -> [T] {
+        var seen = Set<T>()
+        return items.filter { seen.insert($0).inserted }
     }
 
     // MARK: - Summary

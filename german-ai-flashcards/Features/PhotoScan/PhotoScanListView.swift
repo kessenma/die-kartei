@@ -6,7 +6,7 @@ import UIKit
 #endif
 
 /// Lists photo scans and lets the user import a new photo (camera or library) to study.
-/// Beta feature — Apple's Vision recognizer extracts the text, then an MLX model
+/// Apple's Vision recognizer extracts the text, then an MLX model
 /// tidies it up and generates the study materials.
 struct PhotoScanListView: View {
     @Bindable var modelManager: MLXModelManager
@@ -32,7 +32,7 @@ struct PhotoScanListView: View {
 
     var body: some View {
         List {
-            betaBannerSection
+            tipBannerSection
             importSection
 
             ChatModelPickerSection(
@@ -102,7 +102,7 @@ struct PhotoScanListView: View {
             #endif
         }
         .sheet(item: $scanReview) { review in
-            ExtractedTextReviewView(title: "Scanned text", text: review.text) { deckCount, selectedWords in
+            ExtractedTextReviewView(title: "Scanned text", text: review.text, accent: modelManager.selectedPaperModel.theme.accent) { deckCount, selectedWords in
                 // Defer so the review sheet finishes dismissing before the generating sheet appears.
                 DispatchQueue.main.async {
                     Task {
@@ -126,17 +126,16 @@ struct PhotoScanListView: View {
 
     // MARK: - Sections
 
-    private var betaBannerSection: some View {
+    private var tipBannerSection: some View {
         Section {
             HStack(spacing: 10) {
-                Image(systemName: "flask.fill")
-                    .foregroundStyle(.orange)
+                Image(systemName: "info.circle.fill")
+                    .foregroundStyle(modelManager.selectedPaperModel.theme.accent)
                     .font(.title3)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Beta Feature")
+                    Text("How it works")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.orange)
-                    Text("Text is read with Apple's on-device scanner, then the AI tidies it up and builds the study materials. The AI step is experimental and may make mistakes — check the extracted text before studying.")
+                    Text("Text is read with Apple's on-device scanner, then the AI tidies it up and builds the study materials. The AI can occasionally make mistakes — review the extracted text before studying.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -172,11 +171,12 @@ struct PhotoScanListView: View {
     // MARK: - Row
 
     private func row(_ paper: StudyPaper) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "camera.fill")
-                .foregroundStyle(.tint)
+        let accent = paper.rowTheme?.accent ?? modelManager.selectedPaperModel.theme.accent
+        return HStack(spacing: 12) {
+            Image(systemName: paper.sourceSymbol)
+                .foregroundStyle(accent)
                 .frame(width: 30, height: 30)
-                .background(Color.accentColor.opacity(0.12))
+                .background(accent.opacity(0.12))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             VStack(alignment: .leading, spacing: 2) {
                 Text(paper.title).lineLimit(1)

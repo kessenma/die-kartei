@@ -48,6 +48,7 @@ extension CardDeckView {
                 article: currentCard.article,
                 showGermanFirst: showGermanFirst,
                 badgeLogoName: cardBadgeLogoName,
+                model: generatorModel,
                 auxiliaryVerb: cards[currentIndex].auxiliaryVerb,
                 pastParticiple: cards[currentIndex].pastParticiple,
                 isSeparable: cards[currentIndex].isSeparable,
@@ -92,7 +93,7 @@ extension CardDeckView {
                         } label: {
                             Image(systemName: "speaker.wave.2.fill")
                                 .font(.caption)
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(brandAccent)
                         }
                         .buttonStyle(.plain)
                     }
@@ -239,7 +240,7 @@ extension CardDeckView {
             } label: {
                 Image(systemName: "speaker.wave.2.fill")
                     .font(.caption2)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(brandAccent)
             }
             .buttonStyle(.plain)
         }

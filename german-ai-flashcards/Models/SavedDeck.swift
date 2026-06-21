@@ -61,8 +61,11 @@ final class SavedDeck {
     }
 
     /// Asset name for the generator logo, or nil if no custom image is available.
+    /// The built-in Apple model has no logo asset, so decks generated with it show no badge.
     var generatorLogoName: String? {
-        if let model = MLXModel(rawValue: generatorRaw) { return model.logoName }
+        if let model = MLXModel(rawValue: generatorRaw) {
+            return model.usesSFSymbolLogo ? nil : model.logoName
+        }
         if generatorRaw == "goethe" { return "logo-goethe" }
         return nil
     }

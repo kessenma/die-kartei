@@ -10,6 +10,9 @@ struct FlashCardView: View {
     var article: String? = nil
     var showGermanFirst: Bool = true
     var badgeLogoName: String? = nil
+    /// The model that generated this card's deck, when known — drives subtle brand accents and the
+    /// corner logo badge. `nil` keeps the plain index-card look.
+    var model: MLXModel? = nil
 
     // Optional verb grammar fields — when set, the back shows rich Perfekt info
     var auxiliaryVerb: String? = nil
@@ -20,6 +23,16 @@ struct FlashCardView: View {
     var exampleSentence: String? = nil
 
     @Environment(\.colorScheme) private var colorScheme
+
+    private var theme: ModelTheme? { model?.theme }
+
+    /// Top-right corner badge image: the generating model's logo when known, else the deck's asset
+    /// badge (e.g. Goethe), else nothing.
+    private var makerBadge: Image? {
+        if let model { return model.logoImage }
+        if let badgeLogoName { return Image(badgeLogoName) }
+        return nil
+    }
 
     private var cardColor: Color {
         colorScheme == .dark
@@ -134,7 +147,10 @@ struct FlashCardView: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(cardColor)
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.gray.opacity(colorScheme == .dark ? 0.5 : 0.3), lineWidth: 1)
+                .stroke(
+                    theme?.accent.opacity(0.35) ?? Color.gray.opacity(colorScheme == .dark ? 0.5 : 0.3),
+                    lineWidth: 1
+                )
 
             // Ruled lines
             VStack(spacing: 0) {
@@ -160,16 +176,24 @@ struct FlashCardView: View {
             .padding(.top, 70)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-            // Badge logo (e.g. Goethe) in top-right corner
-            if let logoName = badgeLogoName {
+            // Maker badge in the top-right corner: the generating model's logo when known,
+            // otherwise the deck's asset badge (e.g. Goethe).
+            if let badge = makerBadge {
                 VStack {
                     HStack {
                         Spacer()
-                        Image(logoName)
+                        badge
                             .resizable()
                             .scaledToFit()
                             .frame(height: 22)
-                            .padding(14)
+                            .padding(7)
+                            .background(
+                                Circle()
+                                    .fill(.white)
+                                    .opacity(0.55)
+                                    .blur(radius: 6)
+                            )
+                            .padding(8)
                     }
                     Spacer()
                 }
@@ -202,7 +226,7 @@ struct FlashCardView: View {
                             } label: {
                                 Image(systemName: "speaker.wave.2.fill")
                                     .font(.title3)
-                                    .foregroundStyle(.blue)
+                                    .foregroundStyle(theme?.accent ?? .blue)
                             }
                             .buttonStyle(.plain)
                         }
@@ -227,7 +251,10 @@ struct FlashCardView: View {
             .rotation3DEffect(.degrees(isFlipped ? 180 : 0), axis: (x: 0, y: 1, z: 0))
         }
         .frame(height: 280)
-        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+        .shadow(
+            color: theme?.accent.opacity(0.28) ?? .black.opacity(0.1),
+            radius: theme == nil ? 8 : 12, x: 0, y: 4
+        )
         .padding(.horizontal)
         .onTapGesture {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {

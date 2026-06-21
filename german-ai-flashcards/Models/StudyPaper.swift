@@ -79,3 +79,28 @@ final class StudyPaper {
         return String(fullText.prefix(2000))
     }
 }
+
+// MARK: - Source kind & branding
+
+extension StudyPaper {
+    /// How this paper was imported, inferred from `sourceURL`.
+    enum SourceKind { case photo, link, document }
+
+    var sourceKind: SourceKind {
+        if sourceURL?.hasPrefix("photo://") == true { return .photo }
+        if sourceURL != nil { return .link }
+        return .document
+    }
+
+    /// SF Symbol representing the import source (photo / web link / document).
+    var sourceSymbol: String {
+        switch sourceKind {
+        case .photo: "camera"
+        case .link: "link"
+        case .document: "doc.text"
+        }
+    }
+
+    /// Brand theme of the model that generated this paper, when known.
+    var rowTheme: ModelTheme? { model?.theme }
+}

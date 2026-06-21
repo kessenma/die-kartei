@@ -18,7 +18,11 @@ struct ContentView: View {
     @State private var currentDeckID: PersistentIdentifier?
     @State private var displayedSavedCards: [SavedCard] = []
     @State private var displayedFlashcardStyle: FlashcardStyle = .default
+    /// Raw generator of the displayed deck (`MLXModel.rawValue`, or `"goethe"`/`""` for bundled
+    /// content). Drives the per-model brand theming of the card deck.
+    @State private var displayedGeneratorRaw: String = ""
     @State private var cardsResetToken: Int = 0
+    @State private var settingsResetToken: Int = 0
     @State private var pendingSubDeckLabel: String?
     @State private var grammarMultipleChoiceCategory: GrammarCategory?
     @State private var grammarMultipleChoiceShowHints = false
@@ -50,11 +54,13 @@ struct ContentView: View {
                         },
                         savedCards: displayedSavedCards,
                         flashcardStyle: displayedFlashcardStyle,
+                        generatorModel: MLXModel(rawValue: displayedGeneratorRaw),
                         onStartGoetheStudy: { cards, topic, style, label in
                             displayedCards = cards
                             displayedTopic = topic
                             displayedValidation = []
                             displayedSavedCards = []
+                            displayedGeneratorRaw = ""
                             currentDeckID = fetchOrCreateGoetheStatsDeck(for: topic)?.persistentModelID
                             pendingSubDeckLabel = label
                         },
@@ -76,6 +82,7 @@ struct ContentView: View {
                             displayedValidation = WiktionaryValidator.shared.validate(deck.vocabCards)
                             displayedSavedCards = deck.cards.sorted { $0.sortOrder < $1.sortOrder }
                             displayedFlashcardStyle = coordinator.modelManager.flashcardStyle
+                            displayedGeneratorRaw = deck.generatorRaw
                             selectedTab = .cards
                         },
                         onSelectGoetheLevel: { cards, topic, style, label in
@@ -83,6 +90,7 @@ struct ContentView: View {
                             displayedTopic = topic
                             displayedValidation = []
                             displayedFlashcardStyle = style
+                            displayedGeneratorRaw = ""
                             pendingSubDeckLabel = label
 
                             if style == .anki || style == .leitner,
@@ -105,6 +113,7 @@ struct ContentView: View {
                             displayedTopic = topic
                             displayedValidation = []
                             displayedFlashcardStyle = style
+                            displayedGeneratorRaw = ""
                             pendingSubDeckLabel = label
 
                             if style == .anki || style == .leitner,
@@ -128,6 +137,7 @@ struct ContentView: View {
                             displayedValidation = []
                             displayedFlashcardStyle = style
                             displayedSavedCards = []
+                            displayedGeneratorRaw = ""
                             pendingSubDeckLabel = label
                             currentDeckID = fetchOrCreateGrammarStatsDeck(for: topic)?.persistentModelID
                             selectedTab = .cards
@@ -167,7 +177,8 @@ struct ContentView: View {
                 if visitedTabs.contains(.settings) {
                     SettingsView(
                         modelManager: coordinator.modelManager,
-                        mlxService: coordinator.mlxService
+                        mlxService: coordinator.mlxService,
+                        resetToken: settingsResetToken
                     )
                     .opacity(selectedTab == .settings ? 1 : 0)
                     .allowsHitTesting(selectedTab == .settings)
@@ -193,8 +204,12 @@ struct ContentView: View {
                     isGenerating: coordinator.isGenerating,
                     isDownloading: coordinator.mlxService.isLoading,
                     downloadProgress: coordinator.mlxService.downloadProgress,
+                    modelTheme: coordinator.mlxService.loadedModel?.theme,
                     onReselect: { tab in
                         if tab == .cards { cardsResetToken += 1 }
+                        // Re-tapping Settings while it's already active pops any pushed
+                        // sub-screen back to the root Settings view.
+                        if tab == .settings { settingsResetToken += 1 }
                     }
                 )
             }
@@ -227,6 +242,7 @@ struct ContentView: View {
         displayedValidation = WiktionaryValidator.shared.validate(selectedCards)
         displayedSavedCards = deck?.cards.sorted { $0.sortOrder < $1.sortOrder } ?? []
         displayedFlashcardStyle = coordinator.modelManager.flashcardStyle
+        displayedGeneratorRaw = coordinator.lastGeneratorRaw
         selectedTab = .cards
     }
 

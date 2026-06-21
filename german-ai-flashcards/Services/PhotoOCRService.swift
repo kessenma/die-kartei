@@ -4,7 +4,7 @@ import Vision
 
 /// Extracts German text from a photo using Apple's on-device Vision text recognizer,
 /// then cleans the raw OCR output into readable study text with an MLX model.
-/// Beta feature — the AI cleanup step may make mistakes.
+/// The AI cleanup step can occasionally make mistakes.
 @Observable
 @MainActor
 final class PhotoOCRService {

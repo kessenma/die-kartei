@@ -77,6 +77,10 @@ class MLXModelManager {
     var chatCorrectionsEnabled: Bool {
         didSet { UserDefaults.standard.set(chatCorrectionsEnabled, forKey: "chatCorrectionsEnabled") }
     }
+    /// When a correction is shown, also surface the English meaning of the corrected sentence.
+    var chatShowCorrectionTranslation: Bool {
+        didSet { UserDefaults.standard.set(chatShowCorrectionTranslation, forKey: "chatShowCorrectionTranslation") }
+    }
     /// Pre-compute translations & hints in the background (learning aid; uses more compute/battery).
     var chatEagerAssist: Bool {
         didSet { UserDefaults.standard.set(chatEagerAssist, forKey: "chatEagerAssist") }
@@ -114,8 +118,13 @@ class MLXModelManager {
         let providerRaw = UserDefaults.standard.string(forKey: "activeModelProvider") ?? ""
         self.activeProvider = ModelProvider(rawValue: providerRaw) ?? .mlx
 
+        // On first run (no stored choice), default to Apple's built-in model when the device
+        // supports it — zero download, instant start. The user can switch to any other model and
+        // that choice persists as their new default.
+        let firstRunDefault: MLXModel = AppleIntelligenceService.currentlyAvailable() ? .appleIntelligence : .qwen3_0_6B
+
         let modelRaw = UserDefaults.standard.string(forKey: "selectedMLXModel") ?? ""
-        self.selectedMLXModel = MLXModel(rawValue: modelRaw) ?? .qwen3_0_6B
+        self.selectedMLXModel = MLXModel(rawValue: modelRaw) ?? firstRunDefault
 
         let styleRaw = UserDefaults.standard.string(forKey: "flashcardStyle") ?? ""
         self.flashcardStyle = FlashcardStyle(rawValue: styleRaw) ?? .default
@@ -130,12 +139,13 @@ class MLXModelManager {
         let chatModelRaw = UserDefaults.standard.string(forKey: "selectedChatModel") ?? ""
         self.selectedChatModel = MLXModel(rawValue: chatModelRaw)
             ?? MLXModel(rawValue: modelRaw)
-            ?? .qwen3_0_6B
+            ?? firstRunDefault
         self.autoPlayReplies = (UserDefaults.standard.object(forKey: "autoPlayReplies") as? Bool) ?? true
         self.chatLevelRaw = UserDefaults.standard.string(forKey: "chatLevelRaw") ?? CEFRLevel.a2.rawValue
         self.chatFormalityRaw = UserDefaults.standard.string(forKey: "chatFormalityRaw") ?? Formality.du.rawValue
         self.chatStrictnessRaw = UserDefaults.standard.string(forKey: "chatStrictnessRaw") ?? CorrectionStrictness.balanced.rawValue
         self.chatCorrectionsEnabled = (UserDefaults.standard.object(forKey: "chatCorrectionsEnabled") as? Bool) ?? true
+        self.chatShowCorrectionTranslation = (UserDefaults.standard.object(forKey: "chatShowCorrectionTranslation") as? Bool) ?? false
         self.chatEagerAssist = (UserDefaults.standard.object(forKey: "chatEagerAssist") as? Bool) ?? false
         self.chatAutoShowTranslation = (UserDefaults.standard.object(forKey: "chatAutoShowTranslation") as? Bool) ?? true
         let storedHintCount = UserDefaults.standard.integer(forKey: "chatHintCount")

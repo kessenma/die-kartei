@@ -15,8 +15,10 @@ extension MLXModel {
         "models--" + configuration.name.replacingOccurrences(of: "/", with: "--")
     }
 
-    /// Whether this model's weights are already downloaded in the HuggingFace Hub cache.
+    /// Whether this model is ready to use. For the built-in Apple model there is nothing to
+    /// download — "ready" means Apple Intelligence is currently available on this device.
     var isDownloaded: Bool {
+        if self == .appleIntelligence { return AppleIntelligenceService.currentlyAvailable() }
         let refsFile = hubCacheDirectory
             .appendingPathComponent(repoDirectoryName)
             .appendingPathComponent("refs")
@@ -25,7 +27,10 @@ extension MLXModel {
     }
 
     /// Disk size of the cached model in bytes, or nil if not downloaded.
+    /// The built-in Apple model uses no app-managed storage, so it reports nil (excluded from the
+    /// storage breakdown).
     var cachedSizeBytes: Int64? {
+        if self == .appleIntelligence { return nil }
         let repoDir = hubCacheDirectory.appendingPathComponent(repoDirectoryName)
         guard FileManager.default.fileExists(atPath: repoDir.path) else { return nil }
         return directorySize(repoDir)
@@ -33,6 +38,7 @@ extension MLXModel {
 
     /// Delete the cached model from the HuggingFace Hub cache.
     func deleteFromCache() throws {
+        if self == .appleIntelligence { return }   // built-in model — nothing to delete
         let repoDir = hubCacheDirectory.appendingPathComponent(repoDirectoryName)
         guard FileManager.default.fileExists(atPath: repoDir.path) else { return }
         try FileManager.default.removeItem(at: repoDir)
@@ -214,6 +220,12 @@ class MLXGenerationService {
     var loadError: String?
     private(set) var currentModel: MLXModel?
 
+    /// The model currently loaded in memory, or `nil` if none is ready. Drives per-model brand
+    /// theming (`MLXModel.theme`) on screens that should pick up the active model's colors —
+    /// the Create screen and the nav bar. `currentModel` can be non-nil mid-load, so gate on
+    /// `isModelLoaded` to only theme once the model is actually ready.
+    var loadedModel: MLXModel? { isModelLoaded ? currentModel : nil }
+
     /// Download progress (0.0–1.0). `nil` means indeterminate (connecting/preparing).
     var downloadProgress: Double?
     /// Short status label shown next to the spinner (e.g. "Downloading Gemma…").
@@ -233,6 +245,9 @@ class MLXGenerationService {
     var lastBatchEndedEarly: Bool = false
 
     private var modelContainer: ModelContainer?
+    /// Backend for the built-in Apple on-device model (`.appleIntelligence`). The four generation
+    /// methods delegate to this when that model is selected; everything else stays on MLX.
+    let appleService = AppleIntelligenceService()
     private var loadTask: Task<Void, Never>?
     private var downloadPollingTask: Task<Void, Never>?
     private var activeProgress: Progress?
@@ -263,6 +278,25 @@ class MLXGenerationService {
         }
 
         guard !isModelLoaded || currentModel != model else { return }
+
+        // Apple's built-in model: no download and no MLX container — just verify availability.
+        if model == .appleIntelligence {
+            isLoading = true
+            loadError = nil
+            downloadProgress = nil
+            downloadInfo = nil
+            downloadBytesInfo = nil
+            if appleService.isAvailable {
+                currentModel = .appleIntelligence
+                isModelLoaded = true
+                lastBatchEndedEarly = false
+            } else {
+                isModelLoaded = false
+                loadError = appleService.unavailableReason ?? "Apple Intelligence isn't available."
+            }
+            isLoading = false
+            return
+        }
 
         isLoading = true
         loadError = nil
@@ -487,6 +521,31 @@ class MLXGenerationService {
         timeoutSeconds: Double = 300,
         excludeWords: [String] = []
     ) async throws -> [VocabCard] {
+        // Apple's built-in model has no MLX container: build the same prompt, generate raw text,
+        // and reuse the existing tolerant parser. (See AppleIntelligence-CardGeneration-TODO.md
+        // for the planned @Generable upgrade.)
+        if model == .appleIntelligence {
+            guard isModelLoaded, currentModel == model else { throw MLXError.modelNotLoaded }
+            let applePrompt = buildJSONPrompt(
+                topic: topic,
+                count: count,
+                includeExamples: includeExamples,
+                includeGender: includeGender,
+                wordTypeFilter: wordTypeFilter,
+                includeConjugations: includeConjugations,
+                selectedTenses: selectedTenses,
+                excludeWords: excludeWords
+            )
+            let appleSystem = "You are a German language tutor. Respond ONLY with valid JSON. No markdown fences, no explanation."
+            streamingTokenCount = 0
+            lastBatchEndedEarly = false
+            let raw = try await appleService.generateCardsRaw(system: appleSystem, user: applePrompt)
+            print("--- Apple Intelligence raw output ---")
+            print(raw)
+            print("--- end raw output ---")
+            return try parseVocabCards(from: raw)
+        }
+
         guard let container = modelContainer, isModelLoaded, currentModel == model else {
             throw MLXError.modelNotLoaded
         }
@@ -590,6 +649,13 @@ class MLXGenerationService {
         model: MLXModel,
         maxTokens: Int = 32
     ) async throws -> String {
+        if model == .appleIntelligence {
+            guard isModelLoaded, currentModel == model else { throw MLXError.modelNotLoaded }
+            return try await appleService.generateText(
+                system: systemPrompt, user: userMessage, maxTokens: maxTokens
+            )
+        }
+
         guard let container = modelContainer, isModelLoaded, currentModel == model else {
             throw MLXError.modelNotLoaded
         }
@@ -639,6 +705,23 @@ class MLXGenerationService {
         temperature: Float = 0.7,
         onPartial: @escaping (String) -> Void
     ) async throws -> String {
+        if model == .appleIntelligence {
+            guard isModelLoaded, currentModel == model else { throw MLXError.modelNotLoaded }
+            let reply = try await appleService.streamChatReply(
+                history: history,
+                system: system,
+                maxTokens: maxTokens,
+                temperature: Double(temperature),
+                onPartial: { partial in
+                    let visible = ConversationPrompts.stripThinkBlocks(partial)
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    onPartial(visible)
+                }
+            )
+            return ConversationPrompts.stripThinkBlocks(reply)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
         guard let container = modelContainer, isModelLoaded, currentModel == model else {
             throw MLXError.modelNotLoaded
         }

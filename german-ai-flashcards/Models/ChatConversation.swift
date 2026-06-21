@@ -178,6 +178,9 @@ final class ChatMessage {
     var correctedText: String?
     /// For user messages: a short English explanation of the mistake.
     var correctionNote: String?
+    /// For user messages: cached English translation of the corrected sentence (filled on demand
+    /// when "show English meaning" is on). Default keeps this an additive SwiftData migration.
+    var correctionTranslationText: String?
     /// For user messages: target deck words the learner actually used.
     var targetWordsUsed: [String]
     /// For user messages: whether the learner viewed a hint before this turn.

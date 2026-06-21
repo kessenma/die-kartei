@@ -59,7 +59,7 @@ struct ChatModelPickerSection: View {
             selected = model
         } label: {
             HStack(spacing: 12) {
-                Image(model.logoName)
+                model.logoImage
                     .resizable().scaledToFit()
                     .frame(width: 28, height: 28)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
@@ -67,9 +67,13 @@ struct ChatModelPickerSection: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(model.rawValue).foregroundStyle(.primary)
                     HStack(spacing: 6) {
-                        Text("~\(formattedSize(model.approximateSizeMB))")
-                        if downloaded {
-                            Text("Downloaded").fontWeight(.medium).foregroundStyle(.green)
+                        if model.isAppleIntelligence {
+                            Text("Built-in · no download")
+                        } else {
+                            Text("~\(formattedSize(model.approximateSizeMB))")
+                            if downloaded {
+                                Text("Downloaded").fontWeight(.medium).foregroundStyle(.green)
+                            }
                         }
                     }
                     .font(.caption)

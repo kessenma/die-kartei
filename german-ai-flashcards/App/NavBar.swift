@@ -38,20 +38,30 @@ private struct PieProgress: Shape {
 
 private struct DownloadBadge: View {
     let progress: Double?
+    @State private var spin = false
 
     var body: some View {
         ZStack {
             Circle().fill(Color.secondary.opacity(0.35))
             if let p = progress {
+                // Determinate download — pie fill that tracks progress.
                 PieProgress(progress: max(p, 0.06))
                     .fill(Color.accentColor)
                     .animation(.easeInOut, value: p)
             } else {
-                Circle().fill(Color.accentColor)
+                // Indeterminate (connecting / loading into memory) — a spinning arc.
+                Circle()
+                    .trim(from: 0, to: 0.3)
+                    .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .padding(1.5)
+                    .rotationEffect(.degrees(spin ? 360 : 0))
             }
         }
         .frame(width: 13, height: 13)
         .shadow(radius: 1)
+        .onAppear {
+            withAnimation(.linear(duration: 0.8).repeatForever(autoreverses: false)) { spin = true }
+        }
     }
 }
 
@@ -77,12 +87,21 @@ struct NavBar: View {
     var isGenerating: Bool = false
     var isDownloading: Bool = false
     var downloadProgress: Double? = nil
+    /// Brand theme of the model loaded in memory, or `nil` when none is ready. Tints the selected
+    /// tab (icon, label, and the highlight pill) with the model's colors so the bar reflects which
+    /// model is active. Falls back to the app accent when nil.
+    var modelTheme: ModelTheme? = nil
     var onReselect: ((MenuTab) -> Void)? = nil
 
     var body: some View {
         HStack {
             navButton(tab: .home, icon: "sparkles.rectangle.stack", selectedIcon: "sparkles.rectangle.stack.fill", label: "Create") {
-                if isGenerating {
+                // A model load can be kicked off from Create too, so show the same loading badge
+                // here as on Settings. Generation only runs once a model is loaded, so these never
+                // overlap — prefer the download badge while loading.
+                if isDownloading {
+                    DownloadBadge(progress: downloadProgress)
+                } else if isGenerating {
                     GeneratingBadge()
                 }
             }
@@ -99,11 +118,23 @@ struct NavBar: View {
                 }
             }
         }
+        .tint(modelTheme?.accent)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .shadow(radius: 10)
         .padding(.bottom, 16)
+        .animation(.easeInOut(duration: 0.3), value: modelTheme?.accent)
+    }
+
+    /// Fill for the selected tab's highlight pill: the model's brand gradient when a model is loaded,
+    /// otherwise the standard faint tint wash.
+    private var selectedTabFill: AnyShapeStyle {
+        if let modelTheme {
+            AnyShapeStyle(modelTheme.linear.opacity(0.18))
+        } else {
+            AnyShapeStyle(.tint.opacity(0.12))
+        }
     }
 
     @ViewBuilder
@@ -140,7 +171,7 @@ struct NavBar: View {
             .background {
                 if isSelected {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(.tint.opacity(0.12))
+                        .fill(selectedTabFill)
                 }
             }
         }

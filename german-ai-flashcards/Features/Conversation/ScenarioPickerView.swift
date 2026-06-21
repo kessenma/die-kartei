@@ -3,6 +3,8 @@ import SwiftUI
 /// The full, categorized scenario list. Tap one to select it and pop back.
 struct ScenarioPickerView: View {
     @Binding var selected: ConversationScenario
+    var modelManager: MLXModelManager
+    var mlxService: MLXGenerationService
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -32,6 +34,13 @@ struct ScenarioPickerView: View {
                     dismiss()
                 } label: {
                     Label("Surprise me", systemImage: "die.face.5.fill")
+                }
+            }
+            ToolbarItem(placement: .topBarLeading) {
+                NavigationLink {
+                    PhraseLibraryView(modelManager: modelManager, mlxService: mlxService)
+                } label: {
+                    Label("Phrase library", systemImage: "ear.badge.waveform")
                 }
             }
         }

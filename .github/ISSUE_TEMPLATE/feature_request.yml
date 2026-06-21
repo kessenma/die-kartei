@@ -1,0 +1,31 @@
+name: Feature request
+description: Suggest an idea or improvement for the app
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion! Describe what you'd like and why it would help.
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like to see?
+      placeholder: e.g. Let me export a deck as a PDF.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it help?
+    validations:
+      required: false
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: App diagnostics
+      description: >
+        Auto-filled by the app when you tap "Request a feature". Optional for
+        feature requests — you can clear it if it isn't relevant.
+    validations:
+      required: false

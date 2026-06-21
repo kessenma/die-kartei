@@ -122,7 +122,7 @@ private struct GuideRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 12) {
-                Image(model.logoName)
+                model.logoImage
                     .resizable()
                     .scaledToFit()
                     .frame(width: 36, height: 36)
@@ -153,10 +153,12 @@ private struct GuideRow: View {
                         .foregroundStyle(.tertiary)
 
                     HStack(spacing: 4) {
-                        Image(systemName: "arrow.down.circle")
-                            .imageScale(.small)
-                        Text("~\(formattedSize(model.approximateSizeMB))")
-                        Text("·")
+                        if !model.isAppleIntelligence {
+                            Image(systemName: "arrow.down.circle")
+                                .imageScale(.small)
+                            Text("~\(formattedSize(model.approximateSizeMB))")
+                            Text("·")
+                        }
                         Text(model.parameterCount)
                         Text("·")
                         Text(model.quantization)
@@ -167,9 +169,11 @@ private struct GuideRow: View {
             }
 
             HStack(spacing: 16) {
-                Link(destination: model.huggingFaceRepoURL) {
-                    Label("HuggingFace", systemImage: "arrow.up.right.square")
-                        .font(.caption)
+                if let repoURL = model.huggingFaceRepoURL {
+                    Link(destination: repoURL) {
+                        Label("HuggingFace", systemImage: "arrow.up.right.square")
+                            .font(.caption)
+                    }
                 }
                 Link(destination: model.promoPageURL) {
                     Label("Learn more", systemImage: "globe")
