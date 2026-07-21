@@ -35,6 +35,17 @@ struct ConversationSummaryView: View {
                     }
                 }
 
+                if let reviews = summary.spacedReviews, !reviews.isEmpty {
+                    Section {
+                        FlowChips(items: reviews)
+                    } header: {
+                        Label("Reviewed in conversation (\(reviews.count))", systemImage: "arrow.triangle.2.circlepath")
+                    } footer: {
+                        Text("You used these due words correctly, so their flashcard review has been pushed further out — spaced repetition, straight from the chat.")
+                            .font(.caption2)
+                    }
+                }
+
                 if !summary.wordsPracticed.isEmpty {
                     Section("Vocabulary you used") {
                         FlowChips(items: summary.wordsPracticed)
@@ -74,14 +85,21 @@ struct ConversationSummaryView: View {
     // MARK: - Sections
 
     private var statItems: [(value: String, label: String)] {
-        [
+        var items: [(value: String, label: String)] = [
             ("\(summary.turnCount)", "Your turns"),
             (conversation.durationLabel, "Duration"),
             ("\(summary.correctionCount)", "Corrections"),
+        ]
+        // Only surface self-corrections when the learner actually repaired some (Nudge me mode).
+        if let selfFixed = summary.selfCorrections, selfFixed > 0 {
+            items.append(("\(selfFixed)", "Self-fixed"))
+        }
+        items.append(contentsOf: [
             ("\(summary.hintsUsed ?? 0)", "Hints used"),
             ("\(summary.translationsUsed ?? 0)", "Translations"),
             ("\(summary.phraseHelperUsed ?? 0)", "Phrase helps"),
-        ]
+        ])
+        return items
     }
 
     private var statsSection: some View {

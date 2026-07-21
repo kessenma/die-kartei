@@ -10,20 +10,11 @@ import Tokenizers
 // MARK: - Hub Cache Helpers
 
 extension MLXModel {
-    /// The HuggingFace repo directory name for this model (e.g. "models--Qwen--Qwen3-0.6B-4bit").
-    private var repoDirectoryName: String {
-        "models--" + configuration.name.replacingOccurrences(of: "/", with: "--")
-    }
-
     /// Whether this model is ready to use. For the built-in Apple model there is nothing to
     /// download — "ready" means Apple Intelligence is currently available on this device.
     var isDownloaded: Bool {
         if self == .appleIntelligence { return AppleIntelligenceService.currentlyAvailable() }
-        let refsFile = hubCacheDirectory
-            .appendingPathComponent(repoDirectoryName)
-            .appendingPathComponent("refs")
-            .appendingPathComponent("main")
-        return FileManager.default.fileExists(atPath: refsFile.path)
+        return HubCacheLocation.isDownloaded(repoID: configuration.name)
     }
 
     /// Disk size of the cached model in bytes, or nil if not downloaded.
@@ -31,53 +22,14 @@ extension MLXModel {
     /// storage breakdown).
     var cachedSizeBytes: Int64? {
         if self == .appleIntelligence { return nil }
-        let repoDir = hubCacheDirectory.appendingPathComponent(repoDirectoryName)
-        guard FileManager.default.fileExists(atPath: repoDir.path) else { return nil }
-        return directorySize(repoDir)
+        return HubCacheLocation.cachedSizeBytes(repoID: configuration.name)
     }
 
-    /// Delete the cached model from the HuggingFace Hub cache.
+    /// Delete the cached model from the HuggingFace Hub cache, along with any partially
+    /// downloaded files a resumable download left behind.
     func deleteFromCache() throws {
         if self == .appleIntelligence { return }   // built-in model — nothing to delete
-        let repoDir = hubCacheDirectory.appendingPathComponent(repoDirectoryName)
-        guard FileManager.default.fileExists(atPath: repoDir.path) else { return }
-        try FileManager.default.removeItem(at: repoDir)
-    }
-
-    /// The HuggingFace Hub cache root directory.
-    private var hubCacheDirectory: URL {
-        // Matches CacheLocationProvider logic: sandboxed apps use Library/Caches,
-        // non-sandboxed macOS uses ~/.cache
-        #if os(iOS) || os(visionOS) || os(tvOS) || os(watchOS)
-        return URL.cachesDirectory
-            .appendingPathComponent("huggingface")
-            .appendingPathComponent("hub")
-        #else
-        if ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil {
-            return URL.cachesDirectory
-                .appendingPathComponent("huggingface")
-                .appendingPathComponent("hub")
-        }
-        return FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".cache")
-            .appendingPathComponent("huggingface")
-            .appendingPathComponent("hub")
-        #endif
-    }
-
-    /// Recursively compute the size of a directory.
-    private func directorySize(_ url: URL) -> Int64 {
-        let fm = FileManager.default
-        guard let enumerator = fm.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey]) else {
-            return 0
-        }
-        var total: Int64 = 0
-        for case let fileURL as URL in enumerator {
-            guard let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]),
-                  values.isRegularFile == true else { continue }
-            total += Int64(values.fileSize ?? 0)
-        }
-        return total
+        try HubCacheLocation.delete(repoID: configuration.name)
     }
 }
 
@@ -191,10 +143,29 @@ struct CodableVocabCardResponse: Codable {
     let cards: [CodableVocabCard]
 }
 
+// MARK: - Codable types for AI grammar exercises
+
+/// One model-produced fill-in-the-blank exercise. Only sentence + answer are required;
+/// everything else degrades gracefully (hints simply don't render without noun/gender).
+struct CodableGrammarExercise: Codable {
+    let sentence: String
+    let correctAnswer: String
+    let options: [String]?
+    let noun: String?
+    let gender: String?
+    let verb: String?
+    let verbForm: String?
+}
+
+struct CodableGrammarExerciseResponse: Codable {
+    let exercises: [CodableGrammarExercise]
+}
+
 // MARK: - Errors
 
 enum MLXError: LocalizedError {
     case modelNotLoaded
+    case generationTimedOut
     case jsonExtractionFailed(rawOutput: String)
     case jsonDecodingFailed(extractedJSON: String, decodingError: String)
 
@@ -202,12 +173,26 @@ enum MLXError: LocalizedError {
         switch self {
         case .modelNotLoaded:
             "Model not loaded. Please load the model first in Settings."
+        case .generationTimedOut:
+            "The model stopped responding. It may be busy or stuck."
         case .jsonExtractionFailed(let rawOutput):
             "Could not find JSON in model output. Raw output:\n\(String(rawOutput.prefix(500)))"
         case .jsonDecodingFailed(let json, let decodingError):
             "JSON decode error: \(decodingError)\n\nExtracted JSON:\n\(String(json.prefix(500)))"
         }
     }
+}
+
+// MARK: - Generation stall watchdog
+
+/// Records when a streaming generation last made progress (a token arrived). Main-actor confined,
+/// so the streaming task and the watchdog can share it without a data race — they interleave
+/// cooperatively on the main actor rather than running in parallel.
+@MainActor
+final class GenerationActivity {
+    private(set) var lastProgress = Date()
+    func recordProgress() { lastProgress = Date() }
+    var idleSeconds: TimeInterval { Date().timeIntervalSince(lastProgress) }
 }
 
 // MARK: - MLX Generation Service
@@ -249,8 +234,10 @@ class MLXGenerationService {
     /// methods delegate to this when that model is selected; everything else stays on MLX.
     let appleService = AppleIntelligenceService()
     private var loadTask: Task<Void, Never>?
-    private var downloadPollingTask: Task<Void, Never>?
-    private var activeProgress: Progress?
+    /// Model whose download was cut off by a network drop or app suspension. Partial files stay
+    /// on disk, so `resumeInterruptedDownloadIfNeeded()` (called when the app returns to the
+    /// foreground) picks up exactly where the transfer stopped.
+    private(set) var interruptedDownloadModel: MLXModel?
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "de.germanflashcards", category: "ModelLoad")
     private let genLogger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "de.germanflashcards", category: "Generation")
@@ -312,162 +299,67 @@ class MLXGenerationService {
 
         Memory.cacheLimit = 20 * 1024 * 1024
 
-        let expectedBytes = Int64(model.approximateSizeMB) * 1024 * 1024
-
-        // Snapshot existing temp files so we only count growth from THIS download,
-        // not leftover CFNetworkDownload_*.tmp files from previous cancelled sessions.
-        let tmpDir = FileManager.default.temporaryDirectory
-        var initialTempSizes: [String: Int64] = [:]
-        if let e = FileManager.default.enumerator(at: tmpDir, includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey]) {
-            while let url = e.nextObject() as? URL {
-                guard let v = try? url.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]),
-                      v.isRegularFile == true, let sz = v.fileSize else { continue }
-                initialTempSizes[url.path] = Int64(sz)
-            }
-        }
-
-        // Poll temp file growth every 0.5s for byte-level progress.
-        // The Progress callback fires ~5x/sec but completedUnitCount is frozen (known
-        // swift-huggingface bug #48) — so we track CFNetworkDownload_*.tmp growth instead.
-        downloadPollingTask = Task { @MainActor [weak self] in
-            var lastReported: Int64 = -1
-            var sawTempFiles = false
-            var lastTempGrowth: Int64 = -1
-            var staleCount = 0
-            var pollCount = 0
-            // Mutable — expands if the actual download exceeds the static estimate
-            var effectiveExpectedBytes = expectedBytes
-
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 500_000_000)
-                guard let self, self.isLoading, let progress = self.activeProgress else { continue }
-                pollCount += 1
-
-                let cachedBytes = progress.completedUnitCount
-                guard expectedBytes > 0, cachedBytes >= 0 else { continue }
-
-                // Sum only the GROWTH of temp files since download started
-                var tempGrowth: Int64 = 0
-                var tempFileCount = 0
-                var tempFileDetails: [(String, Int64, Int64)] = [] // (name, current, growth)
-                if let enumerator = FileManager.default.enumerator(
-                    at: tmpDir,
-                    includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey]
-                ) {
-                    while let url = enumerator.nextObject() as? URL {
-                        guard let vals = try? url.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]),
-                              vals.isRegularFile == true, let sz = vals.fileSize else { continue }
-                        let initial = initialTempSizes[url.path] ?? 0
-                        let growth = Int64(sz) - initial
-                        tempFileCount += 1
-                        if growth > 0 {
-                            tempGrowth += growth
-                            tempFileDetails.append((url.lastPathComponent, Int64(sz), growth))
-                        }
-                    }
-                }
-
-                // Log every 10 polls (~5s) and whenever stale state changes
-                let shouldLog = (pollCount % 10 == 0) || (staleCount == 1) || (staleCount == 10)
-                if shouldLog {
-                    print("[DLProgress] poll=\(pollCount) sawTempFiles=\(sawTempFiles) tempGrowth=\(tempGrowth) lastTempGrowth=\(lastTempGrowth) staleCount=\(staleCount) cachedBytes=\(cachedBytes) expectedBytes=\(expectedBytes) fileCount=\(tempFileCount)")
-                    for (name, sz, growth) in tempFileDetails {
-                        print("[DLProgress]   file: \(name) size=\(sz) growth=\(growth)")
-                    }
-                }
-
-                if tempGrowth > 0 {
-                    sawTempFiles = true
-
-                    // Track how many consecutive polls show no new bytes.
-                    // When temp files stop growing (download done, files being moved to cache)
-                    // but haven't been deleted yet, we'd otherwise freeze at ~100%.
-                    if tempGrowth == lastTempGrowth {
-                        staleCount += 1
-                    } else {
-                        staleCount = 0
-                        lastTempGrowth = tempGrowth
-                    }
-
-                    // 10 polls × 0.5s = 5 seconds with no new bytes → assume loading phase
-                    if staleCount >= 10 {
-                        print("[DLProgress] stale threshold reached — switching to loading state")
-                        self.downloadProgress = nil
-                        self.downloadInfo = "Loading \(model.displayName) into memory…"
-                        self.downloadBytesInfo = nil
-                        continue
-                    }
-
-                    let totalDownloaded = cachedBytes + tempGrowth
-                    guard totalDownloaded != lastReported else { continue }
-                    lastReported = totalDownloaded
-
-                    // Expand denominator if actual download exceeds our static estimate
-                    if totalDownloaded > effectiveExpectedBytes {
-                        effectiveExpectedBytes = Int64(Double(totalDownloaded) * 1.05)
-                        print("[DLProgress] expanding expectedBytes to \(effectiveExpectedBytes)")
-                    }
-
-                    let fraction = min(Double(totalDownloaded) / Double(effectiveExpectedBytes), 0.99)
-                    let fmt = ByteCountFormatter()
-                    fmt.countStyle = .file
-                    // Always update bytes display; only gate fraction on forward progress
-                    self.downloadInfo = "Downloading \(model.displayName)…"
-                    self.downloadBytesInfo = "\(fmt.string(fromByteCount: totalDownloaded)) / ~\(fmt.string(fromByteCount: effectiveExpectedBytes))"
-                    if fraction > (self.downloadProgress ?? 0) {
-                        self.downloadProgress = fraction
-                    }
-                } else if sawTempFiles {
-                    print("[DLProgress] tempGrowth=0 after sawTempFiles — switching to loading state")
-                    // Temp files deleted — download finished, now loading weights
-                    self.downloadProgress = nil
-                    self.downloadInfo = "Loading \(model.displayName) into memory…"
-                    self.downloadBytesInfo = nil
-                } else if model.isDownloaded {
-                    // Model is cached — loading weights from local storage into RAM
-                    self.downloadInfo = "Loading \(model.displayName) into memory…"
-                    self.downloadBytesInfo = nil
-                } else {
-                    // Pre-download phase — show size hint so the user knows what's coming
-                    self.downloadInfo = "Downloading \(model.displayName)…"
-                    self.downloadBytesInfo = "~\(ByteCountFormatter.string(fromByteCount: expectedBytes, countStyle: .file))"
-                }
-            }
-            print("[DLProgress] polling task exited (cancelled=\(Task.isCancelled))")
-        }
-
         let task = Task {
             do {
                 try Task.checkCancellation()
+
+                // Not cached yet: fetch with the resumable downloader first, so an interrupted
+                // transfer keeps its bytes on disk and the next attempt continues mid-file.
+                // Progress here is byte-accurate (from the repo's true file sizes).
+                if !model.isDownloaded {
+                    await ModelDownloadNotificationService.requestAuthorizationIfNeeded()
+
+                    try await ResumableModelDownloader().download(
+                        repoID: model.configuration.name
+                    ) { [weak self] downloaded, total in
+                        guard let self, self.isLoading else { return }
+                        self.downloadInfo = "Downloading \(model.displayName)…"
+                        self.downloadBytesInfo = ByteCountFormatter.string(fromByteCount: downloaded, countStyle: .file)
+                            + " / " + ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
+                        if total > 0 {
+                            self.downloadProgress = Double(downloaded) / Double(total)
+                        }
+                    }
+                    await ModelDownloadNotificationService.notifyDownloadFinished(modelName: model.displayName)
+                }
+
+                try Task.checkCancellation()
+                downloadProgress = nil
+                downloadBytesInfo = nil
+                downloadInfo = "Loading \(model.displayName) into memory…"
+
+                // Everything is in the hub cache now, so this resolves without downloading.
                 let container = try await LLMModelFactory.shared.loadContainer(
                     from: #hubDownloader(),
                     using: #huggingFaceTokenizerLoader(),
                     configuration: model.configuration
-                ) { [weak self] progress in
-                    Task { @MainActor [weak self] in
-                        self?.activeProgress = progress
-                    }
-                }
+                ) { _ in }
 
                 try Task.checkCancellation()
                 modelContainer = container
                 currentModel = model
                 isModelLoaded = true
+                interruptedDownloadModel = nil
                 let footprintAfter = memFootprintMB()
                 logger.info("[\(model.rawValue, privacy: .public)] Loaded successfully — App footprint: \(footprintAfter, privacy: .public) MB")
             } catch is CancellationError {
                 loadError = nil
                 logger.info("[\(model.rawValue, privacy: .public)] Load cancelled by user")
+            } catch let error as URLError where error.code == .cancelled {
+                loadError = nil
+                logger.info("[\(model.rawValue, privacy: .public)] Load cancelled by user")
             } catch {
                 let footprintOnError = memFootprintMB()
                 logger.error("[\(model.rawValue, privacy: .public)] Load FAILED — footprint: \(footprintOnError, privacy: .public) MB, error: \(error.localizedDescription, privacy: .public), raw: \(String(describing: error), privacy: .public)")
-                loadError = "Failed to load model: \(error.localizedDescription)"
+                if Self.isNetworkInterruption(error), !model.isDownloaded {
+                    interruptedDownloadModel = model
+                    loadError = "Download interrupted — progress is saved. It resumes automatically, or select the model again."
+                } else {
+                    loadError = "Failed to load model: \(error.localizedDescription)"
+                }
                 isModelLoaded = false
             }
 
-            downloadPollingTask?.cancel()
-            downloadPollingTask = nil
-            activeProgress = nil
             downloadProgress = nil
             downloadInfo = nil
             downloadBytesInfo = nil
@@ -479,18 +371,48 @@ class MLXGenerationService {
         await task.value
     }
 
-    /// Cancel an in-progress model load/download.
+    /// True for failures where the transfer stopped but saved partial files can resume it
+    /// (connection drops, timeouts, app suspension killing the socket).
+    private static func isNetworkInterruption(_ error: Error) -> Bool {
+        if error is URLError { return true }
+        if case ModelDownloadError.incompleteTransfer = error { return true }
+        return false
+    }
+
+    /// Call when the app returns to the foreground: if a download was cut off while the user
+    /// was away (or offline), restart it — completed files are skipped and the interrupted
+    /// file resumes from its partial, so this is cheap.
+    func resumeInterruptedDownloadIfNeeded() {
+        guard let model = interruptedDownloadModel, !isLoading else { return }
+        interruptedDownloadModel = nil
+        Task { await loadModel(model) }
+    }
+
+    /// Cancel an in-progress model load/download. Downloaded bytes stay on disk (completed
+    /// files in the hub cache, the in-flight file as a partial), so selecting the model again
+    /// continues where this left off. Cancelling is explicit, so no auto-resume.
     func cancelLoad() {
         loadTask?.cancel()
         loadTask = nil
-        downloadPollingTask?.cancel()
-        downloadPollingTask = nil
-        activeProgress = nil
+        interruptedDownloadModel = nil
         downloadProgress = nil
         downloadInfo = nil
         loadStartTime = nil
         isLoading = false
         loadError = nil
+    }
+
+    /// Drop the loaded model from memory but keep its files on disk. Callers that need the
+    /// LLM later (grading, translation, chat) reload lazily through their existing
+    /// ensureModelReady-style guards. Used to make room for the Stable Diffusion pipeline
+    /// during story illustration — the two never fit in memory together on 6 GB devices.
+    func unloadModel() {
+        guard !isLoading else { return }
+        modelContainer = nil
+        isModelLoaded = false
+        currentModel = nil
+        Memory.clearCache()
+        logger.info("Model unloaded — App footprint: \(self.memFootprintMB(), privacy: .public) MB")
     }
 
     /// Delete a downloaded model from the HuggingFace Hub cache.
@@ -688,6 +610,323 @@ class MLXGenerationService {
         return output.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Like `generateText`, but built for long-form output (story writing): streams with live
+    /// `streamingTokenCount` updates, honors `isStopRequested` (returning the partial text and
+    /// setting `lastBatchEndedEarly`), and takes a sampling temperature — creative prose needs
+    /// more than the near-greedy default the short extraction calls use.
+    /// The model must already be loaded and must match `model`.
+    func generateStreamedText(
+        system systemPrompt: String,
+        user userMessage: String,
+        model: MLXModel,
+        maxTokens: Int,
+        temperature: Float = 0.7,
+        timeoutSeconds: Double = 300
+    ) async throws -> String {
+        if model == .appleIntelligence {
+            guard isModelLoaded, currentModel == model else { throw MLXError.modelNotLoaded }
+            streamingTokenCount = 0
+            lastBatchEndedEarly = false
+            return try await appleService.generateText(
+                system: systemPrompt, user: userMessage, maxTokens: maxTokens
+            )
+        }
+
+        guard let container = modelContainer, isModelLoaded, currentModel == model else {
+            throw MLXError.modelNotLoaded
+        }
+
+        let adjustedUser: String
+        switch model {
+        case .qwen3_0_6B, .qwen3_4B:
+            adjustedUser = userMessage + "\n/no_think"
+        default:
+            adjustedUser = userMessage
+        }
+
+        let userInput = UserInput(chat: [
+            .system(systemPrompt),
+            .user(adjustedUser)
+        ])
+
+        MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
+        let lmInput = try await container.prepare(input: userInput)
+        let parameters = GenerateParameters(maxTokens: maxTokens, temperature: temperature)
+        let stream = try await container.generate(input: lmInput, parameters: parameters)
+
+        var output = ""
+        var tokenCount = 0
+        var exitedEarly = false
+        streamingTokenCount = 0
+        lastBatchEndedEarly = false
+        isStopRequested = false
+        let startTime = Date()
+
+        for try await generation in stream {
+            try Task.checkCancellation()
+            if isStopRequested {
+                exitedEarly = true
+                break
+            }
+            if Date().timeIntervalSince(startTime) > timeoutSeconds {
+                exitedEarly = true
+                break
+            }
+            if let chunk = generation.chunk {
+                output += chunk
+                tokenCount += 1
+                if tokenCount % 32 == 0 {
+                    streamingTokenCount = tokenCount
+                }
+            }
+        }
+
+        if exitedEarly { lastBatchEndedEarly = true }
+        return output.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // MARK: - AI grammar exercises
+
+    /// Generate fill-in-the-blank grammar exercises for one `GrammarFocus` on a given topic.
+    /// Mirrors `generateCards`: same model routing (Apple Intelligence vs MLX), stop/timeout
+    /// handling with partial salvage, and tolerant JSON parsing. Returns normalized exercises
+    /// ready for `GrammarMultipleChoiceView` (single blank, deduped, options always include
+    /// the correct answer).
+    /// - Parameter learnerWords: words from the learner profile to weave into sentences.
+    func generateGrammarExercises(
+        topic: String,
+        focus: GrammarFocus,
+        count: Int,
+        learnerWords: [String] = [],
+        model: MLXModel,
+        timeoutSeconds: Double = 240
+    ) async throws -> [GrammarExercise] {
+        let prompt = buildGrammarExercisePrompt(
+            topic: topic, focus: focus, count: count, learnerWords: learnerWords
+        )
+        let systemPrompt = "You are a German language tutor. Respond ONLY with valid JSON. No markdown fences, no explanation."
+
+        if model == .appleIntelligence {
+            guard isModelLoaded, currentModel == model else { throw MLXError.modelNotLoaded }
+            streamingTokenCount = 0
+            lastBatchEndedEarly = false
+            let raw = try await appleService.generateCardsRaw(system: systemPrompt, user: prompt)
+            return try parseGrammarExercises(from: raw, focus: focus, count: count)
+        }
+
+        guard let container = modelContainer, isModelLoaded, currentModel == model else {
+            throw MLXError.modelNotLoaded
+        }
+
+        let userMessage: String
+        switch model {
+        case .qwen3_0_6B, .qwen3_4B:
+            userMessage = prompt + "\n/no_think"
+        default:
+            userMessage = prompt
+        }
+
+        let userInput = UserInput(chat: [
+            .system(systemPrompt),
+            .user(userMessage)
+        ])
+
+        MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
+        let lmInput = try await container.prepare(input: userInput)
+        let parameters = GenerateParameters(maxTokens: 3072, temperature: 0.6)
+
+        genLogger.info("[\(model.rawValue, privacy: .public)] Grammar exercise generation start — focus=\(focus.rawValue, privacy: .public), count=\(count, privacy: .public)")
+
+        let stream = try await container.generate(input: lmInput, parameters: parameters)
+
+        var fullText = ""
+        var tokenCount = 0
+        var exitedEarly = false
+        streamingTokenCount = 0
+        lastBatchEndedEarly = false
+        isStopRequested = false
+        let startTime = Date()
+
+        for try await generation in stream {
+            if isStopRequested {
+                exitedEarly = true
+                break
+            }
+            if Date().timeIntervalSince(startTime) > timeoutSeconds {
+                genLogger.warning("[\(model.rawValue, privacy: .public)] Grammar exercise timeout (\(tokenCount, privacy: .public) tokens) — attempting partial parse")
+                exitedEarly = true
+                break
+            }
+            if let chunk = generation.chunk {
+                fullText += chunk
+                tokenCount += 1
+                if tokenCount % 32 == 0 {
+                    streamingTokenCount = tokenCount
+                }
+            }
+        }
+
+        genLogger.info("[\(model.rawValue, privacy: .public)] Grammar exercise generation \(exitedEarly ? "interrupted" : "done", privacy: .public) — tokens=\(tokenCount, privacy: .public)")
+        print("--- MLX grammar exercise output (\(model.rawValue)) ---")
+        print(fullText)
+        print("--- end output ---")
+
+        if exitedEarly {
+            lastBatchEndedEarly = true
+            return (try? parseGrammarExercises(from: fullText, focus: focus, count: count)) ?? []
+        }
+        return try parseGrammarExercises(from: fullText, focus: focus, count: count)
+    }
+
+    private func buildGrammarExercisePrompt(
+        topic: String,
+        focus: GrammarFocus,
+        count: Int,
+        learnerWords: [String]
+    ) -> String {
+        let seed = focus.exerciseSeed
+        var prompt = """
+            Create exactly \(count) German fill-in-the-blank exercises practicing \(focus.germanLabel) (\(focus.englishLabel)).
+            Every sentence must be about the topic "\(topic)".
+            \(seed.blankInstruction)
+            Respond with a JSON object: {"exercises":[\(seed.exampleJSON), ...]}
+            Rules:
+            - Each "sentence" contains exactly ONE blank written as ______ (six underscores).
+            - "correctAnswer" is the single word that fills the blank.
+            - "options" lists 3 choices: the correct answer plus 2 plausible wrong forms of the same kind.
+            - Keep sentences short and simple (A2 level, 5-10 words). Every sentence must be different.
+            - "noun" is the noun the blank refers to and "gender" its gender (maskulin/feminin/neutrum/plural); use "" when not relevant. "verb" is the main verb's infinitive, "verbForm" its form in the sentence.
+            """
+        if !learnerWords.isEmpty {
+            prompt += "\nWhere it fits naturally, build sentences with these words the learner is studying: \(learnerWords.joined(separator: ", "))."
+        }
+        return prompt
+    }
+
+    private func parseGrammarExercises(
+        from rawOutput: String,
+        focus: GrammarFocus,
+        count: Int
+    ) throws -> [GrammarExercise] {
+        guard let jsonString = extractJSON(from: rawOutput, arrayKey: "exercises"),
+              let data = jsonString.data(using: .utf8) else {
+            throw MLXError.jsonExtractionFailed(rawOutput: rawOutput)
+        }
+
+        var decoded: [CodableGrammarExercise] = []
+        if let response = try? JSONDecoder().decode(CodableGrammarExerciseResponse.self, from: data) {
+            decoded = response.exercises
+        } else {
+            print("[MLX] Grammar exercise full decode FAILED — falling back to object salvage")
+            decoded = salvageGrammarExercises(from: jsonString)
+        }
+
+        let normalized = normalizeGrammarExercises(decoded, focus: focus, count: count)
+        guard !normalized.isEmpty else {
+            throw MLXError.jsonDecodingFailed(
+                extractedJSON: jsonString,
+                decodingError: "Could not parse any valid exercises from model output"
+            )
+        }
+        return normalized
+    }
+
+    /// Brace-match individual exercise objects out of malformed JSON (same idea as `salvageCards`).
+    private func salvageGrammarExercises(from json: String) -> [CodableGrammarExercise] {
+        let sanitized = sanitizeModelJSON(json)
+        var exercises: [CodableGrammarExercise] = []
+        let decoder = JSONDecoder()
+
+        var searchStart = sanitized.startIndex
+        while searchStart < sanitized.endIndex {
+            guard let openBrace = sanitized[searchStart...].firstIndex(of: "{") else { break }
+            var depth = 0
+            var end: String.Index?
+            for i in sanitized.indices[openBrace...] {
+                if sanitized[i] == "{" { depth += 1 }
+                if sanitized[i] == "}" { depth -= 1 }
+                if depth == 0 {
+                    end = i
+                    break
+                }
+            }
+            guard let closeBrace = end else { break }
+            let candidate = String(sanitized[openBrace...closeBrace])
+            searchStart = sanitized.index(after: closeBrace)
+
+            guard candidate.contains("correctAnswer") else { continue }
+            if let data = candidate.data(using: .utf8),
+               let exercise = try? decoder.decode(CodableGrammarExercise.self, from: data) {
+                exercises.append(exercise)
+            }
+        }
+        return exercises
+    }
+
+    /// Clean, validate, and dedupe model-produced exercises so every survivor is playable:
+    /// exactly one `______` blank, an answer, and ≥2 options that include the answer.
+    private func normalizeGrammarExercises(
+        _ raw: [CodableGrammarExercise],
+        focus: GrammarFocus,
+        count: Int
+    ) -> [GrammarExercise] {
+        var seenSentences = Set<String>()
+        var result: [GrammarExercise] = []
+
+        for (index, exercise) in raw.enumerated() {
+            var sentence = exercise.sentence.trimmingCharacters(in: .whitespacesAndNewlines)
+            let correct = exercise.correctAnswer.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !sentence.isEmpty, !correct.isEmpty else { continue }
+
+            // Canonicalize any run of 3+ underscores; if the model wrote the sentence
+            // filled-in instead, blank out the first occurrence of the answer.
+            sentence = sentence.replacingOccurrences(of: "_{3,}", with: "______", options: .regularExpression)
+            if !sentence.contains("______") {
+                let pattern = "\\b\(NSRegularExpression.escapedPattern(for: correct))\\b"
+                guard let range = sentence.range(of: pattern, options: [.regularExpression, .caseInsensitive]) else { continue }
+                sentence = sentence.replacingCharacters(in: range, with: "______")
+            }
+            guard sentence.components(separatedBy: "______").count == 2 else { continue }
+
+            let sentenceKey = sentence.lowercased()
+            guard !seenSentences.contains(sentenceKey) else { continue }
+
+            var options: [String] = []
+            for option in (exercise.options ?? []).map({ $0.trimmingCharacters(in: .whitespacesAndNewlines) }) {
+                guard !option.isEmpty,
+                      !options.contains(where: { $0.caseInsensitiveCompare(option) == .orderedSame })
+                else { continue }
+                options.append(option)
+            }
+            if !options.contains(where: { $0.caseInsensitiveCompare(correct) == .orderedSame }) {
+                options.append(correct)
+            }
+            if options.count < 2 {
+                for fallback in focus.exerciseSeed.fallbackOptions
+                where !options.contains(where: { $0.caseInsensitiveCompare(fallback) == .orderedSame }) {
+                    options.append(fallback)
+                    if options.count >= 3 { break }
+                }
+            }
+            guard options.count >= 2 else { continue }
+            options = Array(options.prefix(4)).shuffled()
+
+            seenSentences.insert(sentenceKey)
+            result.append(GrammarExercise(
+                id: "ai-\(index)-\(UUID().uuidString.prefix(8))",
+                sentence: sentence,
+                correctAnswer: correct,
+                noun: exercise.noun ?? "",
+                gender: exercise.gender ?? "",
+                verb: exercise.verb ?? "",
+                options: options,
+                verbForm: exercise.verbForm
+            ))
+            if result.count >= count { break }
+        }
+        return result
+    }
+
     // MARK: - Conversation chat
 
     /// Streamed, multi-turn chat reply for the conversation feature.
@@ -703,12 +942,27 @@ class MLXGenerationService {
         model: MLXModel,
         maxTokens: Int = 256,
         temperature: Float = 0.7,
+        /// Give up if no token arrives within this many seconds (a wedged GPU / stalled decode).
+        /// It's an *idle* timeout, so a legitimately long reply keeps going as long as tokens flow.
+        stallTimeout: Double = 30,
         onPartial: @escaping (String) -> Void
     ) async throws -> String {
+        // Several chat templates (notably Gemma's) require the turn sequence to begin with a
+        // `user` message and to strictly alternate user/assistant. Our conversations open with an
+        // AI-generated line — an `assistant` turn with no preceding user turn — so a naive history
+        // starts with `assistant`, which makes the template call `raise_exception(...)` and
+        // surfaces to the user as "Jinja.TemplateException". Re-insert the opener seed as the
+        // eliciting user turn so the sequence alternates cleanly (and the model still sees the
+        // opener it's replying to). No-op for histories that already start on a user turn.
+        var turns = history
+        if turns.first?.role == .assistant {
+            turns.insert((role: .user, content: ConversationPrompts.openerSeed), at: 0)
+        }
+
         if model == .appleIntelligence {
             guard isModelLoaded, currentModel == model else { throw MLXError.modelNotLoaded }
             let reply = try await appleService.streamChatReply(
-                history: history,
+                history: turns,
                 system: system,
                 maxTokens: maxTokens,
                 temperature: Double(temperature),
@@ -727,10 +981,10 @@ class MLXGenerationService {
         }
 
         var messages: [Chat.Message] = [.system(system)]
-        for (index, turn) in history.enumerated() {
+        for (index, turn) in turns.enumerated() {
             var content = turn.content
             // Qwen3 small models only honor /no_think at the end of the final user turn.
-            if turn.role == .user, index == history.count - 1 {
+            if turn.role == .user, index == turns.count - 1 {
                 switch model {
                 case .qwen3_0_6B, .qwen3_4B: content += "\n/no_think"
                 default: break
@@ -745,22 +999,60 @@ class MLXGenerationService {
 
         let userInput = UserInput(chat: messages)
         MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
-        let lmInput = try await container.prepare(input: userInput)
         let parameters = GenerateParameters(maxTokens: maxTokens, temperature: temperature)
-        let stream = try await container.generate(input: lmInput, parameters: parameters)
 
-        var full = ""
-        for try await generation in stream {
-            try Task.checkCancellation()
-            if let chunk = generation.chunk {
-                full += chunk
-                let visible = ConversationPrompts.stripThinkBlocks(full)
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                onPartial(visible)
+        // Run the decode as a cancellable child task so a stall watchdog can abort it. Without this,
+        // a GPU that never yields a token leaves `for try await generation in stream` suspended
+        // forever — the user is stuck on the typing indicator with no way out. The watchdog cancels
+        // the task if no token arrives within `stallTimeout`; the loop stops at its next
+        // `checkCancellation()` and we surface `generationTimedOut` (shown with "Try again").
+        let activity = GenerationActivity()
+        let decode = Task { @MainActor in
+            let lmInput = try await container.prepare(input: userInput)
+            let stream = try await container.generate(input: lmInput, parameters: parameters)
+            var full = ""
+            for try await generation in stream {
+                try Task.checkCancellation()
+                activity.recordProgress()
+                if let chunk = generation.chunk {
+                    full += chunk
+                    let visible = ConversationPrompts.stripThinkBlocks(full)
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    onPartial(visible)
+                }
             }
+            return ConversationPrompts.stripThinkBlocks(full)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        return ConversationPrompts.stripThinkBlocks(full)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return try await value(of: decode, abortingIfIdlePast: stallTimeout, tracking: activity)
+    }
+
+    /// Await a streaming generation's result, but abort it if it goes idle (no token) longer than
+    /// `stallTimeout`. On stall, cancels the task and throws `MLXError.generationTimedOut`. The
+    /// watchdog runs on the main actor alongside the (also main-actor) decode task, so they share
+    /// `activity` safely and interleave at each other's suspension points.
+    private func value<T: Sendable>(
+        of task: Task<T, Error>,
+        abortingIfIdlePast stallTimeout: Double,
+        tracking activity: GenerationActivity
+    ) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask { try await task.value }
+            group.addTask { @MainActor in
+                while true {
+                    let idle = activity.idleSeconds
+                    if idle >= stallTimeout {
+                        task.cancel()
+                        throw MLXError.generationTimedOut
+                    }
+                    // Sleep just past the projected deadline, then re-check.
+                    let wait = max(0.25, stallTimeout - idle)
+                    try await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
+                }
+            }
+            defer { group.cancelAll() }
+            return try await group.next()!
+        }
     }
 
     // MARK: - Prompt Building
@@ -1108,8 +1400,10 @@ class MLXGenerationService {
 
     /// Extract the first complete JSON object from raw text using brace matching.
     /// Strips thinking blocks, markdown fences, and other wrapper text first.
-    /// If the JSON is truncated (e.g. token limit), attempts to repair it.
-    private func extractJSON(from text: String) -> String? {
+    /// If the JSON is truncated (e.g. token limit), attempts to repair it —
+    /// `arrayKey` names the top-level array ("cards", "exercises", "questions") the repair scans for.
+    /// Internal so other generation services (story questions) can reuse the salvage chain.
+    func extractJSON(from text: String, arrayKey: String = "cards") -> String? {
         var cleaned = text
 
         // Strip all <think>...</think> blocks (Qwen3 may emit multiple in one response)
@@ -1160,19 +1454,19 @@ class MLXGenerationService {
         }
 
         // JSON is truncated — try to repair by finding the last complete card object
-        return repairTruncatedJSON(String(cleaned[startIndex...]))
+        return repairTruncatedJSON(String(cleaned[startIndex...]), arrayKey: arrayKey)
     }
 
     /// Attempt to repair truncated JSON like `{"cards":[{...},{...},{incomplete`
     /// by finding the last complete card and closing the structure.
-    private func repairTruncatedJSON(_ json: String) -> String? {
+    private func repairTruncatedJSON(_ json: String, arrayKey: String = "cards") -> String? {
         // Find the last complete "}" that closes a card object inside the cards array.
         // Strategy: find last occurrence of "},{"  or the pattern "}]}" which would be the end.
         // If we find "},", we can cut there, close the array and object.
 
         // Look for the last complete card boundary: "},{"
         // or a complete card ending with just "}"
-        guard let cardsStart = json.range(of: #""cards"\s*:\s*\["#, options: .regularExpression) else {
+        guard let cardsStart = json.range(of: "\"\(arrayKey)\"\\s*:\\s*\\[", options: .regularExpression) else {
             return nil
         }
 
@@ -1216,5 +1510,245 @@ class MLXGenerationService {
 
         print("--- Repaired truncated JSON (kept cards up to index \(cardEnd)) ---")
         return repaired
+    }
+}
+
+// MARK: - Grammar exercise prompt seeds
+
+/// Per-structure guidance for the exercise generator: what the blank must replace, a concrete
+/// example object for the prompt, and article-style options to fall back on when the model
+/// forgets to provide distractors (empty where distractors are word-specific, e.g. verb forms).
+struct GrammarExerciseSeed {
+    let blankInstruction: String
+    let exampleJSON: String
+    let fallbackOptions: [String]
+}
+
+extension GrammarFocus {
+    var exerciseSeed: GrammarExerciseSeed {
+        switch self {
+        case .artikel:
+            GrammarExerciseSeed(
+                blankInstruction: "The blank replaces the definite article (der, die, or das — Nominativ) directly before a noun.",
+                exampleJSON: #"{"sentence":"______ Hund schläft im Garten.","correctAnswer":"Der","options":["Der","Die","Das"],"noun":"Hund","gender":"maskulin","verb":"schlafen","verbForm":"schläft"}"#,
+                fallbackOptions: ["der", "die", "das"]
+            )
+        case .akkusativ:
+            GrammarExerciseSeed(
+                blankInstruction: "The blank replaces the Akkusativ article or determiner of the direct object.",
+                exampleJSON: #"{"sentence":"Ich sehe ______ Hund im Park.","correctAnswer":"den","options":["den","die","das"],"noun":"Hund","gender":"maskulin","verb":"sehen","verbForm":"sehe"}"#,
+                fallbackOptions: ["den", "die", "das"]
+            )
+        case .dativ:
+            GrammarExerciseSeed(
+                blankInstruction: "The blank replaces the Dativ article or determiner of the indirect object (or after a Dativ verb/preposition).",
+                exampleJSON: #"{"sentence":"Ich helfe ______ Frau mit den Taschen.","correctAnswer":"der","options":["der","dem","den"],"noun":"Frau","gender":"feminin","verb":"helfen","verbForm":"helfe"}"#,
+                fallbackOptions: ["dem", "der", "den"]
+            )
+        case .genitiv:
+            GrammarExerciseSeed(
+                blankInstruction: "The blank replaces the Genitiv article showing possession.",
+                exampleJSON: #"{"sentence":"Das ist das Auto ______ Mannes.","correctAnswer":"des","options":["des","der","dem"],"noun":"Mann","gender":"maskulin","verb":"sein","verbForm":"ist"}"#,
+                fallbackOptions: ["des", "der", "dem"]
+            )
+        case .perfekt:
+            GrammarExerciseSeed(
+                blankInstruction: "The blank replaces the auxiliary (haben or sein form) of a Perfekt sentence — the past participle stays visible.",
+                exampleJSON: #"{"sentence":"Ich ______ gestern nach Hause gegangen.","correctAnswer":"bin","options":["bin","habe","ist"],"noun":"","gender":"","verb":"gehen","verbForm":"gegangen"}"#,
+                fallbackOptions: []
+            )
+        case .praeteritum:
+            GrammarExerciseSeed(
+                blankInstruction: "The blank replaces the verb in Präteritum (simple past) form.",
+                exampleJSON: #"{"sentence":"Gestern ______ ich sehr müde.","correctAnswer":"war","options":["war","bin","wäre"],"noun":"","gender":"","verb":"sein","verbForm":"war"}"#,
+                fallbackOptions: []
+            )
+        case .futur:
+            GrammarExerciseSeed(
+                blankInstruction: "The blank replaces the conjugated form of werden in a Futur I sentence — the infinitive stays at the end.",
+                exampleJSON: #"{"sentence":"Wir ______ nächsten Sommer nach Berlin fahren.","correctAnswer":"werden","options":["werden","wird","werdet"],"noun":"","gender":"","verb":"fahren","verbForm":"fahren"}"#,
+                fallbackOptions: []
+            )
+        case .konjunktiv2:
+            GrammarExerciseSeed(
+                blankInstruction: "The blank replaces the Konjunktiv II form (würde, hätte, wäre, könnte, …) in a hypothetical or polite sentence.",
+                exampleJSON: #"{"sentence":"Wenn ich Zeit hätte, ______ ich mehr lesen.","correctAnswer":"würde","options":["würde","werde","will"],"noun":"","gender":"","verb":"lesen","verbForm":"lesen"}"#,
+                fallbackOptions: []
+            )
+        case .modalverben:
+            GrammarExerciseSeed(
+                blankInstruction: "The blank replaces the conjugated modal verb — the main verb stays as an infinitive at the end.",
+                exampleJSON: #"{"sentence":"Ich ______ heute noch einkaufen gehen.","correctAnswer":"muss","options":["muss","musst","müssen"],"noun":"","gender":"","verb":"müssen","verbForm":"muss"}"#,
+                fallbackOptions: []
+            )
+        case .wechselpraepositionen:
+            GrammarExerciseSeed(
+                blankInstruction: "Each sentence uses a two-way preposition (in, an, auf, über, unter, vor, hinter, neben, zwischen); the blank replaces the article after it — Akkusativ for movement, Dativ for location.",
+                exampleJSON: #"{"sentence":"Ich gehe in ______ Stadt.","correctAnswer":"die","options":["die","der","das"],"noun":"Stadt","gender":"feminin","verb":"gehen","verbForm":"gehe"}"#,
+                fallbackOptions: ["die", "der", "dem"]
+            )
+        case .adjektivendungen:
+            GrammarExerciseSeed(
+                blankInstruction: "The blank replaces an adjective directly before a noun — the options differ only in their ending.",
+                exampleJSON: #"{"sentence":"Das ist ein ______ Wein.","correctAnswer":"guter","options":["guter","gute","gutes"],"noun":"Wein","gender":"maskulin","verb":"sein","verbForm":"ist"}"#,
+                fallbackOptions: []
+            )
+        }
+    }
+}
+
+// MARK: - Article-noun generation (der/die/das game)
+
+extension MLXGenerationService {
+
+    /// Topic nouns for the article game. Same contract as the other generators: model must
+    /// already be loaded; returns whatever parses (possibly empty on stop/timeout). Every
+    /// survivor is dictionary-checked — when the bundled Wiktionary is unanimous about a
+    /// noun's gender, its article wins over the model's, so the game never teaches a wrong one.
+    func generateArticleNouns(
+        topic: String,
+        count: Int,
+        model: MLXModel,
+        timeoutSeconds: Double = 120
+    ) async throws -> [ArticleQuestion] {
+        let systemPrompt = "You are a German language tutor. Respond ONLY with valid JSON. No markdown fences, no explanation."
+        let prompt = """
+            List exactly \(count) common German nouns about the topic "\(topic)".
+            Respond with a JSON object: {"nouns":[{"noun":"Gabel","article":"die","english":"fork"}, ...]}
+            Rules:
+            - "article" is the noun's definite article: der, die, or das. It must be correct.
+            - "noun" is the singular noun WITHOUT the article, capitalized.
+            - "english" is a short English translation.
+            - Concrete, useful words a learner meets at A1-B1. No plural-only nouns, no proper names. Every noun must be different.
+            """
+
+        if model == .appleIntelligence {
+            guard isModelLoaded, currentModel == model else { throw MLXError.modelNotLoaded }
+            streamingTokenCount = 0
+            lastBatchEndedEarly = false
+            let raw = try await appleService.generateCardsRaw(system: systemPrompt, user: prompt)
+            return parseArticleNouns(from: raw)
+        }
+
+        guard let container = modelContainer, isModelLoaded, currentModel == model else {
+            throw MLXError.modelNotLoaded
+        }
+
+        let userMessage: String
+        switch model {
+        case .qwen3_0_6B, .qwen3_4B:
+            userMessage = prompt + "\n/no_think"
+        default:
+            userMessage = prompt
+        }
+
+        let userInput = UserInput(chat: [
+            .system(systemPrompt),
+            .user(userMessage)
+        ])
+
+        MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
+        let lmInput = try await container.prepare(input: userInput)
+        let parameters = GenerateParameters(maxTokens: 1536, temperature: 0.6)
+
+        genLogger.info("[\(model.rawValue, privacy: .public)] Article-noun generation start — topic length=\(topic.count, privacy: .public), count=\(count, privacy: .public)")
+
+        let stream = try await container.generate(input: lmInput, parameters: parameters)
+
+        var fullText = ""
+        var tokenCount = 0
+        streamingTokenCount = 0
+        lastBatchEndedEarly = false
+        isStopRequested = false
+        let startTime = Date()
+
+        for try await generation in stream {
+            if isStopRequested || Date().timeIntervalSince(startTime) > timeoutSeconds {
+                lastBatchEndedEarly = true
+                break
+            }
+            if let chunk = generation.chunk {
+                fullText += chunk
+                tokenCount += 1
+                if tokenCount % 32 == 0 {
+                    streamingTokenCount = tokenCount
+                }
+            }
+        }
+
+        genLogger.info("[\(model.rawValue, privacy: .public)] Article-noun generation done — tokens=\(tokenCount, privacy: .public)")
+        return parseArticleNouns(from: fullText)
+    }
+
+    private struct CodableArticleNoun: Decodable {
+        let noun: String
+        let article: String
+        let english: String
+    }
+
+    private struct CodableArticleNounResponse: Decodable {
+        let nouns: [CodableArticleNoun]
+    }
+
+    private func parseArticleNouns(from rawOutput: String) -> [ArticleQuestion] {
+        guard let jsonString = extractJSON(from: rawOutput, arrayKey: "nouns"),
+              let data = jsonString.data(using: .utf8) else { return [] }
+
+        var decoded: [CodableArticleNoun] = []
+        if let response = try? JSONDecoder().decode(CodableArticleNounResponse.self, from: data) {
+            decoded = response.nouns
+        } else {
+            decoded = salvageArticleNouns(from: jsonString)
+        }
+
+        var seen = Set<String>()
+        var questions: [ArticleQuestion] = []
+        for item in decoded {
+            var noun = ArticleGameService.bareNoun(item.noun)
+            let english = item.english.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !noun.isEmpty, !english.isEmpty,
+                  var article = GermanArticle(text: item.article),
+                  seen.insert(noun.lowercased()).inserted
+            else { continue }
+            noun = noun.prefix(1).uppercased() + noun.dropFirst()
+            // The dictionary outranks the model — a gender game must never teach a wrong article.
+            if let hit = WiktionaryValidator.shared.nounArticle(for: noun) {
+                article = hit.article
+            }
+            questions.append(ArticleQuestion(noun: noun, article: article, english: english))
+        }
+        return questions
+    }
+
+    /// Brace-match individual noun objects out of malformed JSON (same idea as `salvageCards`).
+    private func salvageArticleNouns(from json: String) -> [CodableArticleNoun] {
+        let sanitized = sanitizeModelJSON(json)
+        var nouns: [CodableArticleNoun] = []
+        let decoder = JSONDecoder()
+
+        var searchStart = sanitized.startIndex
+        while searchStart < sanitized.endIndex {
+            guard let openBrace = sanitized[searchStart...].firstIndex(of: "{") else { break }
+            var depth = 0
+            var end: String.Index?
+            for i in sanitized.indices[openBrace...] {
+                if sanitized[i] == "{" { depth += 1 }
+                if sanitized[i] == "}" { depth -= 1 }
+                if depth == 0 {
+                    end = i
+                    break
+                }
+            }
+            guard let closeBrace = end else { break }
+            let candidate = String(sanitized[openBrace...closeBrace])
+            searchStart = sanitized.index(after: closeBrace)
+
+            guard candidate.contains("article") else { continue }
+            if let data = candidate.data(using: .utf8),
+               let noun = try? decoder.decode(CodableArticleNoun.self, from: data) {
+                nouns.append(noun)
+            }
+        }
+        return nouns
     }
 }

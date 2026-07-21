@@ -43,7 +43,7 @@ extension MLXModel {
                 accent: Color(hex: 0xBF5AF2)
             )
 
-        case .gemma3_1B, .gemma3n_E4B, .gemma4_E4B:
+        case .gemma3_1B, .gemma3n_E4B, .gemma4_E4B, .gemma4_E4B_german:
             // Google / Gemma soft blue.
             ModelTheme(
                 palette: [

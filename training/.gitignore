@@ -1,0 +1,13 @@
+.venv/
+.env
+__pycache__/
+data/raw/
+results/
+
+# Large training / conversion artifacts (model weights, CoreML bundles)
+imagegen/
+models/
+runpod/e2b_artifacts/
+*.safetensors
+*.mlmodelc/
+*.mlpackage/

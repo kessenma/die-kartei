@@ -7,6 +7,11 @@ struct ExtractedTextReviewView: View {
     let text: String
     /// Brand accent of the model that will generate the cards.
     var accent: Color = .accentColor
+    /// Show the deck-size stepper + word picker. Off at import time (the deck is now built
+    /// on-demand when the learner picks "Make flashcards"), on when this view collects deck options.
+    var collectDeckOptions: Bool = true
+    /// Label for the confirm button (e.g. "Study this text" at import, "Make flashcards" on demand).
+    var confirmTitle: String = "Generate"
     /// Called when the user confirms. `selectedWords` is nil when the AI should pick the words itself.
     var onGenerate: (_ deckCount: Int, _ selectedWords: [String]?) -> Void
 
@@ -35,8 +40,10 @@ struct ExtractedTextReviewView: View {
     var body: some View {
         NavigationStack {
             Form {
-                deckSizeSection
-                wordPickerSection
+                if collectDeckOptions {
+                    deckSizeSection
+                    wordPickerSection
+                }
                 extractedTextSection
             }
             .navigationTitle(title)
@@ -46,8 +53,8 @@ struct ExtractedTextReviewView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Generate") {
-                        let chosen = (pickWords && !selectedKeys.isEmpty) ? orderedSelection : nil
+                    Button(confirmTitle) {
+                        let chosen = (collectDeckOptions && pickWords && !selectedKeys.isEmpty) ? orderedSelection : nil
                         onGenerate(deckCount, chosen)
                         dismiss()
                     }
@@ -55,7 +62,7 @@ struct ExtractedTextReviewView: View {
                 }
             }
             .onAppear {
-                if words.isEmpty { words = Self.uniqueWords(in: text) }
+                if collectDeckOptions, words.isEmpty { words = Self.uniqueWords(in: text) }
             }
         }
     }

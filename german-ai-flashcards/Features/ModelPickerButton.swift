@@ -120,23 +120,46 @@ struct ModelPickerSheet: View {
     var body: some View {
         let downloaded = MLXModel.allCases.filter { $0.isDownloaded }
         let lastLoaded = modelManager.lastLoadedModel
+        // Promote the hero to its own section when it's downloaded and the device can run it.
+        let heroFeatured = downloaded.contains(.hero) && DeviceCapability.canRunHero
+        let others = heroFeatured ? downloaded.filter { !$0.isHero } : downloaded
+        // Nudge to grab the hero when the device supports it but it isn't downloaded yet.
+        let suggestHero = !downloaded.contains(.hero) && DeviceCapability.canRunHero
 
         NavigationStack {
             List {
+                if heroFeatured {
+                    Section {
+                        modelRow(.hero, lastLoaded: lastLoaded, isHero: true)
+                    } header: {
+                        Text("Recommended")
+                    } footer: {
+                        Text(MLXModel.hero.heroTagline)
+                    }
+                }
+
                 Section {
                     if downloaded.isEmpty {
                         Label("No models downloaded yet. Go to Settings → Model to download one.", systemImage: "arrow.down.circle")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
+                    } else if others.isEmpty {
+                        Text("No other models downloaded yet.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     } else {
-                        ForEach(downloaded) { model in
+                        ForEach(others) { model in
                             modelRow(model, lastLoaded: lastLoaded)
                         }
                     }
                 } header: {
-                    Text("MLX Models")
+                    Text(heroFeatured ? "Other models" : "MLX Models")
                 } footer: {
-                    Text("Download more models in Settings → Model.")
+                    if suggestHero {
+                        Text("Tip: download the recommended \(MLXModel.hero.rawValue) in Settings → Model for the best German quality on this device.")
+                    } else {
+                        Text("Download more models in Settings → Model.")
+                    }
                 }
             }
             .navigationTitle("Select Model")
@@ -154,7 +177,7 @@ struct ModelPickerSheet: View {
         .presentationDetents([.medium])
     }
 
-    @ViewBuilder private func modelRow(_ model: MLXModel, lastLoaded: MLXModel?) -> some View {
+    @ViewBuilder private func modelRow(_ model: MLXModel, lastLoaded: MLXModel?, isHero: Bool = false) -> some View {
         let active = mlxService.isModelLoaded && mlxService.currentModel == model
         let lastUsed = lastLoaded == model && !active
 
@@ -172,6 +195,7 @@ struct ModelPickerSheet: View {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 6) {
                             Text(model.rawValue).foregroundStyle(.primary)
+                            if isHero { RecommendedBadge() }
                             if lastUsed { lastUsedTag }
                         }
                         Text("~\(formattedSize(model.approximateSizeMB))")
@@ -203,6 +227,7 @@ struct ModelPickerSheet: View {
             .buttonStyle(.plain)
         }
         .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 0))
+        .modifier(ConditionalHeroHighlight(isHero: isHero))
     }
 
     private var lastUsedTag: some View {

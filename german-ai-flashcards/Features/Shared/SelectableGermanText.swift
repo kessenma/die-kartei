@@ -30,6 +30,10 @@ struct SelectableGermanText: UIViewRepresentable {
     /// A multi-word selection the learner wants to save into their phrase library. When nil, the
     /// "Save phrase" edit-menu action is omitted (e.g. for the user's own messages).
     var onSavePhrase: ((String) -> Void)? = nil
+    /// A single tap anywhere in the text (distinct from the double-tap word inspect). When set, a
+    /// tap fires this after the double-tap recognizer fails — used by the read-along player to
+    /// "start reading from this sentence".
+    var onSingleTap: (() -> Void)? = nil
 
     func makeUIView(context: Context) -> UITextView {
         let tv = UITextView()
@@ -49,6 +53,16 @@ struct SelectableGermanText: UIViewRepresentable {
         tap.numberOfTapsRequired = tapsToInspect
         tap.delegate = context.coordinator
         tv.addGestureRecognizer(tap)
+
+        // Optional single-tap ("start reading here") that yields to the word-inspect double-tap.
+        if onSingleTap != nil {
+            let single = UITapGestureRecognizer(target: context.coordinator,
+                                                action: #selector(Coordinator.handleSingleTap(_:)))
+            single.numberOfTapsRequired = 1
+            single.delegate = context.coordinator
+            single.require(toFail: tap)
+            tv.addGestureRecognizer(single)
+        }
 
         context.coordinator.textView = tv
         return tv
@@ -118,6 +132,12 @@ struct SelectableGermanText: UIViewRepresentable {
                 tv.selectedTextRange = nil
                 parent.onTapWord(word)
             }
+        }
+
+        // Single tap that isn't a word-inspect double-tap: "start reading from this sentence".
+        @objc func handleSingleTap(_ gr: UITapGestureRecognizer) {
+            textView?.selectedTextRange = nil
+            parent.onSingleTap?()
         }
 
         // Prepend our two actions to the selection's edit menu (iOS 16+).

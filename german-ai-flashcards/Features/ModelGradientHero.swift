@@ -7,13 +7,22 @@ import SwiftUI
 /// Apply behind a `List` that has `.scrollContentBackground(.hidden)`, and place a `ModelLogoMark`
 /// in the last section so the logo sits over the densest part of the wash.
 struct ModelSheetBackground: View {
-    let model: MLXModel
+    /// Stored as a theme rather than a model so non-`MLXModel` sheets (the image model's card) can
+    /// use the same background. Language models keep the `init(model:)` spelling.
+    let theme: ModelTheme
     /// `nil` follows the Reduce Motion setting; pass `false` to force a still wash.
     var animated: Bool? = nil
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var theme: ModelTheme { model.theme }
+    init(theme: ModelTheme, animated: Bool? = nil) {
+        self.theme = theme
+        self.animated = animated
+    }
+
+    init(model: MLXModel, animated: Bool? = nil) {
+        self.init(theme: model.theme, animated: animated)
+    }
 
     var body: some View {
         let isAnimated = animated ?? !reduceMotion

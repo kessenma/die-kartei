@@ -27,7 +27,7 @@ extension CardDeckView {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
-                    Text("\(currentIndex + 1) / \(cards.count)")
+                    Text("\(cardPosition + 1) / \(cards.count)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -54,7 +54,9 @@ extension CardDeckView {
                 isSeparable: cards[currentIndex].isSeparable,
                 verbPrefix: cards[currentIndex].verbPrefix,
                 isRegular: cards[currentIndex].isRegular,
-                exampleSentence: cards[currentIndex].exampleSentence
+                exampleSentence: cards[currentIndex].exampleSentence,
+                imageFileName: imageFileName(at: currentIndex),
+                imageDeckID: deckUUID
             )
             .id("\(currentIndex)-\(showGermanFirst)")
 
@@ -151,12 +153,12 @@ extension CardDeckView {
                         Image(systemName: "chevron.left.circle.fill")
                             .font(.system(size: 44))
                     }
-                    .disabled(currentIndex == 0)
+                    .disabled(cardPosition == 0)
 
                     if isQuizMode {
                         if !localAutoAdvance {
                             Button(action: advanceOrFinish) {
-                                Image(systemName: currentIndex >= cards.count - 1 ? "checkmark.circle.fill" : "chevron.right.circle.fill")
+                                Image(systemName: cardPosition >= cards.count - 1 ? "checkmark.circle.fill" : "chevron.right.circle.fill")
                                     .font(.system(size: 44))
                             }
                             .disabled(cardResults[currentIndex] == nil)
@@ -166,7 +168,7 @@ extension CardDeckView {
                             Image(systemName: "chevron.right.circle.fill")
                                 .font(.system(size: 44))
                         }
-                        .disabled(currentIndex >= cards.count - 1)
+                        .disabled(cardPosition >= cards.count - 1)
                     }
                 }
                 .padding(.bottom, 90)
@@ -246,17 +248,28 @@ extension CardDeckView {
         }
     }
 
+    /// Steps back through the order the session is actually being played in — the due list in SRS
+    /// modes, the (possibly shuffled) play order everywhere else.
     func previousCard() {
-        if currentIndex > 0 {
+        if isSRSMode {
+            guard ankiDuePosition > 0, ankiDueIndices.indices.contains(ankiDuePosition - 1) else { return }
             isFlipped = false
-            currentIndex -= 1
+            ankiDuePosition -= 1
+            currentIndex = ankiDueIndices[ankiDuePosition]
+        } else {
+            let order = playOrder
+            guard cardPosition > 0, order.indices.contains(cardPosition - 1) else { return }
+            isFlipped = false
+            cardPosition -= 1
+            currentIndex = order[cardPosition]
         }
     }
 
     func nextCard() {
-        if currentIndex < cards.count - 1 {
-            isFlipped = false
-            currentIndex += 1
-        }
+        let order = playOrder
+        guard order.indices.contains(cardPosition + 1) else { return }
+        isFlipped = false
+        cardPosition += 1
+        currentIndex = order[cardPosition]
     }
 }

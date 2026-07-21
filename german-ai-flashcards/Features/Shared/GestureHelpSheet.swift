@@ -1,11 +1,13 @@
 import SwiftUI
 
-/// A short, self-playing tutorial shown from the conversation's info button. It teaches the two
-/// in-chat gestures with looping animations over real German text:
+/// A short, self-playing tutorial shown from the info button on screens with interactive German
+/// text (conversation, story reading). It teaches the two gestures with looping animations:
 ///  • **Double-tap a word** → translate it (and save it to the flashcard library).
 ///  • **Select a phrase** → "Save phrase" → the phrase library.
 /// Honors Reduce Motion by showing each demo's end state statically instead of looping.
-struct ConversationHelpSheet: View {
+struct GestureHelpSheet: View {
+    /// Context line above the demos, e.g. "Two quick gestures help you learn while you chat."
+    let intro: String
     var accent: Color = .accentColor
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -14,7 +16,7 @@ struct ConversationHelpSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    Text("Two quick gestures help you learn while you chat.")
+                    Text(intro)
                         .font(.callout)
                         .foregroundStyle(.secondary)
 

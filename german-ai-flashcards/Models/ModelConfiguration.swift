@@ -23,6 +23,9 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
     /// Apple's built-in on-device model (Apple Intelligence). No download; runtime-gated by device
     /// eligibility. Listed first so it leads any unsorted picker.
     case appleIntelligence = "Apple Intelligence"
+    /// Our Gemma 4 E4B fine-tuned for German grammar (verbs+prepositions, separable verbs,
+    /// reflexives, da-/wo-compounds, haben/sein) and correction reliability. See training/PLAN.md.
+    case gemma4_E4B_german = "Gemma 4 E4B German Tutor"
     case gemma4_E4B   = "Gemma 4 E4B"
     case mistral7B    = "Mistral 7B"
     case qwen3_8B     = "Qwen3 8B"
@@ -43,6 +46,7 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
     var configuration: ModelConfiguration {
         switch self {
         case .appleIntelligence: ModelConfiguration(id: "apple-intelligence")
+        case .gemma4_E4B_german: ModelConfiguration(id: "kessenma/gemma4-e4b-german-tutor-4bit")
         case .gemma4_E4B:   LLMRegistry.gemma4_e4b_it_4bit
         case .mistral7B:    LLMRegistry.mistral7B4bit
         case .qwen3_8B:     LLMRegistry.qwen3_8b_4bit
@@ -62,7 +66,7 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
         case .appleIntelligence: "logo-apple"   // placeholder — never used; see `usesSFSymbolLogo`/`logoImage`
         case .qwen3_0_6B, .qwen3_4B, .qwen3_8B: "logo-qwen"
         case .llama3_2_1B: "logo-meta"
-        case .gemma3_1B, .gemma3n_E4B, .gemma4_E4B: "logo-gemma"
+        case .gemma3_1B, .gemma3n_E4B, .gemma4_E4B, .gemma4_E4B_german: "logo-gemma"
         case .mistral7B: "logo-mistral"
         case .phi4Mini: "logo-microsoft"
         }

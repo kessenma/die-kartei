@@ -14,7 +14,9 @@ struct SettingsView: View {
 
     enum SettingsTab: String, CaseIterable, Identifiable {
         case cards        = "Cards"
-        case conversation = "Conversation"
+        // Short labels: four segments have to fit side by side on the narrowest phone.
+        case conversation = "Chat"
+        case stories      = "Stories"
         case model        = "Model"
 
         var id: String { rawValue }
@@ -23,6 +25,7 @@ struct SettingsView: View {
             switch self {
             case .cards:        "rectangle.stack"
             case .conversation: "bubble.left.and.bubble.right"
+            case .stories:      "book.pages"
             case .model:        "cpu"
             }
         }
@@ -57,6 +60,16 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    // Model status lives on the Model tab (the rightmost segment). While a model
+                    // is downloading/loading, badge that segment's corner so it's clear where to
+                    // look — the same badge that appears on the Settings nav item.
+                    .overlay(alignment: .topTrailing) {
+                        if mlxService.isLoading {
+                            DownloadBadge(progress: mlxService.downloadProgress)
+                                .offset(x: 5, y: -5)
+                                .allowsHitTesting(false)
+                        }
+                    }
                 }
 
                 switch selectedTab {
@@ -64,6 +77,8 @@ struct SettingsView: View {
                     CardSettingsView(modelManager: modelManager)
                 case .conversation:
                     ConversationSettingsView(modelManager: modelManager, mlxService: mlxService)
+                case .stories:
+                    StorySettingsView(modelManager: modelManager)
                 case .model:
                     ModelSettingsView(modelManager: modelManager, mlxService: mlxService)
                 }

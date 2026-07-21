@@ -50,9 +50,61 @@ class GenerationCoordinator {
     var validationResults: [ValidationResult] = []
     var isValidating = false
 
+    // MARK: - Draft pictures
+
+    /// The `CardImageTiming.everyCard` phase: pictures drawn straight after the words, before the
+    /// "keep which cards?" review, so the review has them and the deck opens complete.
+    ///
+    /// Deliberately not folded into `generateVocab` — the batch queue shares that method and does
+    /// its own picture pass at the end of the queue, where it doesn't cost the run a 5 GB model
+    /// swap per deck. Only the interactive Home flow calls this.
+    var isDrawingImages = false
+    /// When the picture phase began, so the overlay's clock keeps running across the handover
+    /// instead of restarting (`generationStartTime` is cleared once the words are done).
+    private(set) var drawingImagesStartTime: Date?
+    /// Scratch directory id for the pictures of this run, until they're adopted into a saved deck.
+    private(set) var draftImageID: UUID?
+    /// Draft file names by German word, lowercased. Empty until the draft phase finishes.
+    private(set) var draftImages: [String: String] = [:]
+    /// Set when the learner stopped the draft run, so the flow doesn't turn around and offer to
+    /// draw the very cards they just declined.
+    private(set) var draftImagesStopped = false
+
+    /// Draw a picture for every generated card, keeping the generation overlay up while it runs.
+    func drawDraftImages() async {
+        guard !generatedCards.isEmpty else { return }
+
+        discardDraftImages()
+        let draftID = UUID()
+        draftImageID = draftID
+        drawingImagesStartTime = Date()
+        isDrawingImages = true
+        defer { isDrawingImages = false }
+
+        draftImages = await DeckIllustrationService.shared.illustrateDraft(
+            cards: generatedCards, draftID: draftID, mlxService: mlxService
+        )
+        draftImagesStopped = DeckIllustrationService.shared.wasStopped
+        if draftImages.isEmpty {
+            // Nothing landed — don't leave an empty directory behind for the flow to reason about.
+            discardDraftImages()
+        }
+    }
+
+    /// Forget this run's draft pictures and delete them from disk. Called once they've been
+    /// adopted into a deck, and when the learner discards the generated cards outright.
+    func discardDraftImages() {
+        if let draftImageID {
+            CardImageStore.discardDraft(draftImageID)
+        }
+        draftImageID = nil
+        draftImages = [:]
+        draftImagesStopped = false
+    }
+
     // MARK: - Backends
 
-    let mlxService = MLXGenerationService()
+    let mlxService: MLXGenerationService
     let modelManager: MLXModelManager
 
     // MARK: - Availability
@@ -71,12 +123,19 @@ class GenerationCoordinator {
         return nil
     }
 
-    init(modelManager: MLXModelManager) {
+    /// Pass `mlxService` to share an already-loaded model with another coordinator (the batch
+    /// queue does this so its runs never load a second copy); by default each coordinator owns
+    /// its own service.
+    @MainActor
+    init(modelManager: MLXModelManager, mlxService: MLXGenerationService? = nil) {
         self.modelManager = modelManager
+        self.mlxService = mlxService ?? MLXGenerationService()
     }
 
     // MARK: - Generation
 
+    /// `model` pins a specific generator (the batch queue passes the model chosen when the job
+    /// was queued); nil uses the current selection.
     func generateVocab(
         topic: String,
         count: Int,
@@ -84,8 +143,10 @@ class GenerationCoordinator {
         includeGender: Bool,
         wordTypeFilter: WordTypeFilter = .all,
         includeConjugations: Bool = false,
-        selectedTenses: [String] = []
+        selectedTenses: [String] = [],
+        model: MLXModel? = nil
     ) async {
+        let resolvedModel = model ?? modelManager.selectedMLXModel
         isGenerating = true
         errorMessage = nil
         generatedCards = []
@@ -94,6 +155,7 @@ class GenerationCoordinator {
         cardsRequested = count
         uniqueShortfall = nil
         validationResults = []
+        discardDraftImages()   // a previous run's pictures belong to cards that no longer exist
         generationStartTime = Date()
         stopRequested = false
         wasStoppedEarly = false
@@ -106,29 +168,40 @@ class GenerationCoordinator {
         lastWordTypeFilter = wordTypeFilter
         lastIncludeConjugations = includeConjugations
         lastSelectedTenses = selectedTenses
-        lastGeneratorRaw = modelManager.selectedMLXModel.rawValue
+        lastGeneratorRaw = resolvedModel.rawValue
 
         await generateWithMLX(
             topic: topic, count: count,
             includeExamples: includeExamples, includeGender: includeGender,
             wordTypeFilter: wordTypeFilter,
             includeConjugations: includeConjugations,
-            selectedTenses: selectedTenses
+            selectedTenses: selectedTenses,
+            model: resolvedModel
         )
 
         if let start = generationStartTime, !generatedCards.isEmpty {
             let elapsed = Date().timeIntervalSince(start)
             lastGenerationTimeSeconds = elapsed
-            modelManager.recordGenerationTime(elapsed, cardCount: generatedCards.count, for: modelManager.selectedMLXModel)
+            modelManager.recordGenerationTime(elapsed, cardCount: generatedCards.count, for: resolvedModel)
         } else {
             lastGenerationTimeSeconds = 0
         }
         generationStartTime = nil
 
-        // Validate generated cards against the Wiktionary dictionary
+        // Check the generated cards against the Wiktionary dictionary, applying every article
+        // fix the dictionary (or a gender rule) can settle on its own. The user sees corrected
+        // cards and a count of what changed, rather than a queue of warnings to work through.
         if !generatedCards.isEmpty {
             isValidating = true
-            validationResults = WiktionaryValidator.shared.validate(generatedCards)
+            let outcome = WiktionaryValidator.shared.validateAndCorrect(generatedCards)
+            generatedCards = outcome.cards
+            validationResults = outcome.results
+            if !outcome.corrections.isEmpty {
+                let summary = outcome.corrections
+                    .map { "\($0.germanWord): \($0.from ?? "—")→\($0.to)" }
+                    .joined(separator: ", ")
+                logger.info("[validation] auto-corrected \(outcome.corrections.count, privacy: .public) article(s) — \(summary, privacy: .public)")
+            }
             isValidating = false
         }
 
@@ -157,10 +230,9 @@ class GenerationCoordinator {
         topic: String, count: Int,
         includeExamples: Bool, includeGender: Bool,
         wordTypeFilter: WordTypeFilter,
-        includeConjugations: Bool, selectedTenses: [String]
+        includeConjugations: Bool, selectedTenses: [String],
+        model: MLXModel
     ) async {
-        let model = modelManager.selectedMLXModel
-
         // Auto-load model if needed
         if !mlxService.isModelLoaded || mlxService.currentModel != model {
             await mlxService.loadModel(model)
@@ -218,6 +290,19 @@ class GenerationCoordinator {
                     if let article = c.article,
                        article.lowercased() == "null" || article.trimmingCharacters(in: .whitespaces).isEmpty {
                         c.article = nil
+                    }
+                    // The model sometimes bakes the article into the word itself ("der Flug"
+                    // alongside article "der"), which doubles on display and defeats dedup.
+                    if isNoun {
+                        let parts = c.germanWord
+                            .trimmingCharacters(in: .whitespaces)
+                            .split(separator: " ", maxSplits: 1)
+                        if parts.count == 2, ["der", "die", "das"].contains(parts[0].lowercased()) {
+                            c.germanWord = String(parts[1])
+                            if c.article?.isEmpty != false {
+                                c.article = parts[0].lowercased()
+                            }
+                        }
                     }
                     if let sentence = c.exampleSentence,
                        sentence.lowercased() == "null" || sentence.trimmingCharacters(in: .whitespaces).isEmpty {

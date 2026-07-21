@@ -11,7 +11,12 @@ struct ModelSettingsView: View {
     @State private var modelForInfo: MLXModel?
     @State private var modelRequiringRAMWarning: MLXModel?
     @State private var showModelGuide = false
+    @State private var showHeroIntro = false
     @State private var modelListTab: ModelListTab = .recommended
+
+    /// Whether this device can run the promoted hero model — gates the hero card and whether the
+    /// hero is pulled out of the "Other models" list.
+    private var showsHeroCard: Bool { DeviceCapability.canRunHero }
 
     enum ModelListTab: String, CaseIterable {
         case recommended = "Recommended"
@@ -34,7 +39,23 @@ struct ModelSettingsView: View {
                 } label: {
                     Label("Which model should I use?", systemImage: "info.circle")
                 }
+            } header: {
+                Text("This device")
+            }
 
+            // Hero model — the one we push hardest, shown only when this device can run it.
+            if showsHeroCard {
+                Section {
+                    heroCard
+                } header: {
+                    Text("Recommended for this app")
+                } footer: {
+                    Text("Gemma 4 E4B, fine-tuned on German grammar specifically for this app. It's the top pick on capable devices like yours.")
+                        .font(.caption2)
+                }
+            }
+
+            Section {
                 Picker("Sort by", selection: $modelListTab) {
                     ForEach(ModelListTab.allCases, id: \.self) { tab in
                         Text(tab.rawValue).tag(tab)
@@ -63,14 +84,18 @@ struct ModelSettingsView: View {
                         .foregroundStyle(.red)
                 }
             } header: {
-                Text("MLX Model")
+                Text(showsHeroCard ? "Other models" : "MLX Model")
             } footer: {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Tap a model to load it. The one loaded and ready is marked with a green checkmark.")
+                    if showsHeroCard {
+                        Text("These models generate flashcards well, but they're weaker at live, turn-based conversation, which the recommended model above handles best. Tap one to load it; the loaded model is marked with a green checkmark.")
+                    } else {
+                        Text("Tap a model to load it. The one loaded and ready is marked with a green checkmark.")
+                    }
                     Group {
                         switch modelListTab {
                         case .recommended:
-                            Text("Top 3 models for your \(deviceRAMGB) GB device, ranked by German quality. Switch to Size or Parameters to browse all models.")
+                            Text("Ranked by German quality for your \(deviceRAMGB) GB device. Switch to Size or Parameters to reorder.")
                         case .size:
                             Text("Sorted smallest to largest download. Tap \(Image(systemName: "info.circle")) for model details. Swipe left on a downloaded model to delete it.")
                         case .parameters:
@@ -81,12 +106,21 @@ struct ModelSettingsView: View {
                 .font(.caption2)
             }
 
-            ModelStorageSection(models: MLXModel.allCases, cacheRefreshID: cacheRefreshID)
+            ImageGenerationSection(cacheRefreshID: $cacheRefreshID)
+
+            ModelStorageSection(
+                models: MLXModel.allCases,
+                imageModels: ImageGenModel.allCases,
+                cacheRefreshID: cacheRefreshID
+            )
 
             FeedbackSection(loadedModelName: mlxService.currentModel?.rawValue)
         }
         .sheet(isPresented: $showModelGuide) {
             ModelGuideSheet()
+        }
+        .sheet(isPresented: $showHeroIntro) {
+            HeroModelIntroSheet(modelManager: modelManager, mlxService: mlxService)
         }
         .sheet(item: $modelForInfo) { model in
             ModelInfoSheet(model: model) {
@@ -120,13 +154,115 @@ struct ModelSettingsView: View {
         }
     }
 
+    // MARK: - Hero Card
+
+    /// The prominent, promoted card for the hero model. Only shown when the device can run it.
+    @ViewBuilder private var heroCard: some View {
+        let model = MLXModel.hero
+        let downloaded = isDownloaded(model)
+        let isDownloading = mlxService.isLoading && modelManager.selectedMLXModel == model
+        let isLoaded = mlxService.isModelLoaded && mlxService.currentModel == model
+
+        VStack(alignment: .leading, spacing: 12) {
+            Button {
+                loadAndSelect(model)   // hero always fits when this card is shown, so no RAM gate
+            } label: {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 12) {
+                        if isDownloading {
+                            ModelLoadingIndicator(model: model, progress: mlxService.downloadProgress, size: 34)
+                        } else {
+                            model.logoImage
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 34, height: 34)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            HStack(spacing: 6) {
+                                Text(model.rawValue)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                RecommendedBadge()
+                            }
+                            HStack(spacing: 6) {
+                                if isDownloading {
+                                    Text(mlxService.downloadInfo ?? "Downloading…")
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(.orange)
+                                    if let bytes = mlxService.downloadBytesInfo {
+                                        Text(bytes).foregroundStyle(.secondary)
+                                    }
+                                } else if isLoaded {
+                                    Text("Loaded & ready").fontWeight(.medium).foregroundStyle(.green)
+                                } else if downloaded {
+                                    Text("Downloaded · tap to load").foregroundStyle(.green)
+                                } else {
+                                    Text("~\(formattedSize(model.approximateSizeMB)) · one-time download")
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .font(.caption)
+                        }
+
+                        Spacer()
+
+                        if isDownloading {
+                            ProgressView().controlSize(.small)
+                        } else if isLoaded {
+                            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                        } else if downloaded {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .foregroundStyle(.green)
+                                .imageScale(.small)
+                        } else {
+                            Image(systemName: "arrow.down.circle").foregroundStyle(model.theme.accent)
+                        }
+                    }
+
+                    Text(model.heroTagline)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(mlxService.isLoading)
+
+            Divider()
+
+            HStack {
+                Button {
+                    showHeroIntro = true
+                } label: {
+                    Label("Why this model?", systemImage: "sparkles")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
+                Spacer()
+                Button {
+                    modelForInfo = model
+                } label: {
+                    Label("Details", systemImage: "info.circle")
+                        .font(.caption)
+                }
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(model.theme.accent)
+        }
+        .padding(.vertical, 4)
+        .heroRowHighlight()
+    }
+
     // MARK: - Model Row
 
     @ViewBuilder private func modelRow(_ model: MLXModel) -> some View {
         let downloaded = isDownloaded(model)
         let isDownloading = mlxService.isLoading && modelManager.selectedMLXModel == model
         let isLoaded = mlxService.isModelLoaded && mlxService.currentModel == model
-        let isRecommended = model == recommendedModel
+        // The hero card above already carries the recommendation, so don't also badge a list row.
+        let isRecommended = !showsHeroCard && model == recommendedModel
         let isLastUsed = modelManager.lastLoadedModel == model && !isLoaded && !isDownloading
         HStack(spacing: 0) {
             Button {
@@ -251,30 +387,22 @@ struct ModelSettingsView: View {
     // MARK: - Model Sorting
 
     private var sortedModels: [MLXModel] {
+        // When the hero card is shown above, drop the hero from the list so it isn't duplicated.
+        let models = showsHeroCard ? MLXModel.allCases.filter { !$0.isHero } : MLXModel.allCases
         switch modelListTab {
         case .recommended:
-            let ram = deviceRAMGB
-            let compatible = MLXModel.allCases
-                .filter { $0.minimumRAMGB <= ram }
-                .sorted { $0.germanQualityScore > $1.germanQualityScore }
-            let incompatible = MLXModel.allCases
-                .filter { $0.minimumRAMGB > ram }
-                .sorted { $0.germanQualityScore > $1.germanQualityScore }
-            return Array((compatible + incompatible).prefix(3))
+            return MLXModel.recommendedOrder(ramGB: deviceRAMGB).filter { models.contains($0) }
         case .size:
-            return MLXModel.allCases.sorted { $0.approximateSizeMB < $1.approximateSizeMB }
+            return models.sorted { $0.approximateSizeMB < $1.approximateSizeMB }
         case .parameters:
-            return MLXModel.allCases.sorted { $0.parameterCountValue > $1.parameterCountValue }
+            return models.sorted { $0.parameterCountValue > $1.parameterCountValue }
         }
     }
 
-    /// The single best model for this device — highest German quality among those that fit in RAM
-    /// (falling back to the overall best if none fit). Marked with the "Best" tag in any sort order.
+    /// The single best model to badge in the *list* — used only when the hero card isn't shown (i.e.
+    /// on devices that can't run the hero). Otherwise the hero card carries the recommendation.
     private var recommendedModel: MLXModel? {
-        let ram = deviceRAMGB
-        let compatible = MLXModel.allCases.filter { $0.minimumRAMGB <= ram }
-        let pool = compatible.isEmpty ? MLXModel.allCases : compatible
-        return pool.max { $0.germanQualityScore < $1.germanQualityScore }
+        MLXModel.recommended(ramGB: deviceRAMGB)
     }
 
     // MARK: - Loading
@@ -320,17 +448,25 @@ struct ModelSettingsView: View {
 
 // MARK: - Storage
 
+/// On-disk usage for everything the app downloads: the MLX language models *and* the CoreML image
+/// model, which share the same HuggingFace hub cache.
 private struct ModelStorageSection: View {
     let models: [MLXModel]
+    let imageModels: [ImageGenModel]
     let cacheRefreshID: UUID
 
     private let modelColors: [Color] = [.blue, .purple, .orange, .teal, .indigo, .pink]
 
+    /// A downloaded model of either kind, flattened to what the bar and list need so the two enums
+    /// don't have to share a protocol.
     private struct ModelEntry: Identifiable {
-        let model: MLXModel
+        let id: String
+        let name: String
+        let logo: Image
         let bytes: Int64
+        /// Image models get a small "Pictures" tag so the list explains the extra rows.
+        let isImageModel: Bool
         let colorIndex: Int
-        var id: String { model.id }
     }
 
     private var downloadedModels: [ModelEntry] {
@@ -339,7 +475,27 @@ private struct ModelStorageSection: View {
         var idx = 0
         for model in models {
             if let bytes = model.cachedSizeBytes, bytes > 0 {
-                result.append(ModelEntry(model: model, bytes: bytes, colorIndex: idx))
+                result.append(ModelEntry(
+                    id: model.id,
+                    name: model.rawValue,
+                    logo: model.logoImage,
+                    bytes: bytes,
+                    isImageModel: false,
+                    colorIndex: idx
+                ))
+                idx += 1
+            }
+        }
+        for model in imageModels {
+            if let bytes = model.cachedSizeBytes, bytes > 0 {
+                result.append(ModelEntry(
+                    id: "image-" + model.id,
+                    name: model.displayName,
+                    logo: model.logoImage,
+                    bytes: bytes,
+                    isImageModel: true,
+                    colorIndex: idx
+                ))
                 idx += 1
             }
         }
@@ -427,7 +583,7 @@ private struct ModelStorageSection: View {
                     ForEach(entries) { entry in
                         HStack(spacing: 8) {
                             ZStack(alignment: .bottomTrailing) {
-                                entry.model.logoImage
+                                entry.logo
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 24, height: 24)
@@ -437,8 +593,17 @@ private struct ModelStorageSection: View {
                                     .frame(width: 7, height: 7)
                                     .offset(x: 2, y: 2)
                             }
-                            Text(entry.model.rawValue)
+                            Text(entry.name)
                                 .font(.caption)
+                            if entry.isImageModel {
+                                Text("Pictures")
+                                    .font(.caption2)
+                                    .padding(.horizontal, 5)
+                                    .padding(.vertical, 2)
+                                    .background(Color.secondary.opacity(0.14))
+                                    .foregroundStyle(.secondary)
+                                    .clipShape(Capsule())
+                            }
                             Spacer()
                             Text(formatBytes(entry.bytes))
                                 .font(.caption)
@@ -451,6 +616,9 @@ private struct ModelStorageSection: View {
             .padding(.vertical, 4)
         } header: {
             Label("Storage", systemImage: "internaldrive")
+        } footer: {
+            Text("Counts every downloaded model, language and image alike. Swipe a language model above to delete it; the image model has its own Delete button.")
+                .font(.caption2)
         }
     }
 
@@ -469,7 +637,7 @@ private struct ModelStorageSection: View {
     private func modelLegendChip(entry: ModelEntry) -> some View {
         HStack(spacing: 3) {
             ZStack(alignment: .bottomTrailing) {
-                entry.model.logoImage
+                entry.logo
                     .resizable()
                     .scaledToFit()
                     .frame(width: 12, height: 12)
@@ -479,7 +647,7 @@ private struct ModelStorageSection: View {
                     .frame(width: 5, height: 5)
                     .offset(x: 2, y: 2)
             }
-            Text(entry.model.rawValue)
+            Text(entry.name)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)

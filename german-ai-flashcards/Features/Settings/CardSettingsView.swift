@@ -6,6 +6,9 @@ import AVFoundation
 struct CardSettingsView: View {
     @Bindable var modelManager: MLXModelManager
 
+    /// Shared with the same picker in the deck-creation options.
+    @AppStorage(CardImageTiming.defaultsKey) private var imageTiming: CardImageTiming = .keptCards
+
     @State private var germanVoices: [AVSpeechSynthesisVoice] = []
     @State private var showVoiceGuide = false
 
@@ -25,6 +28,87 @@ struct CardSettingsView: View {
 
                 Toggle("Auto-advance", isOn: $modelManager.autoAdvance)
                 Text("Moves to the next card automatically after selecting a rating — no need to tap Next.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                // Mirrors the toggle in the deck-creation options; hidden until the image model
+                // is downloaded (Settings ▸ Model).
+                if ImageGenModel.current.isDownloaded {
+                    Toggle("AI pictures on new decks", isOn: $modelManager.flashcardIllustrationsEnabled)
+                    Text("Draws a picture for each new card on-device and shows it on the German side. Existing decks can be illustrated from their start screen.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    if modelManager.flashcardIllustrationsEnabled {
+                        Picker("Draw pictures for", selection: $imageTiming) {
+                            ForEach(CardImageTiming.allCases) { timing in
+                                Text(timing.label).tag(timing)
+                            }
+                        }
+                        Text(imageTiming.caption)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    CardImageStyleRow()
+                    Text("Sets the look of new card pictures. A deck already illustrated keeps its pictures until you redraw it from its start screen.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Section("Reminders") {
+                NavigationLink {
+                    ReminderSettingsView(modelManager: modelManager)
+                } label: {
+                    Label {
+                        HStack {
+                            Text("Practice Reminders")
+                            Spacer()
+                            Text(reminderSummary)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "bell.badge")
+                    }
+                }
+            }
+
+            Section("Haptics") {
+                Picker("Game vibrations", selection: $modelManager.hapticFeedbackMode) {
+                    ForEach(HapticFeedbackMode.allCases) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                Text(modelManager.hapticFeedbackMode.description + " Applies to the matching, der/die/das, and grammar drills — never stories, chat, or flashcards.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Card Matching") {
+                Picker("Pairs per round", selection: $modelManager.matchingPairCount) {
+                    ForEach([6, 8, 10, 12], id: \.self) { count in
+                        Text("\(count)").tag(count)
+                    }
+                }
+
+                Toggle("Bring back tricky pairs", isOn: $modelManager.matchingTrickyFirst)
+                Text("Rounds mix in words you've missed before until you match them first-try a few rounds in a row.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Toggle("Share tricky words with the coach", isOn: $modelManager.matchingFeedsCoach)
+                Text("Words you keep missing join the coach's memory, so conversations work them in and they show up in Coach's Notes.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Der · Die · Das") {
+                Toggle("Share missed nouns with the coach", isOn: $modelManager.articleFeedsCoach)
+                Text("Nouns whose article keeps tripping you up join the coach's memory too, and every round nudges the profile's Artikel skill.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -80,6 +164,8 @@ struct CardSettingsView: View {
                 }
             }
 
+            DialogueVoicePickerSection(modelManager: modelManager)
+
             Section("About") {
                 NavigationLink(destination: SourcesView()) {
                     Label("Sources & Attributions", systemImage: "doc.text.magnifyingglass")
@@ -102,6 +188,14 @@ struct CardSettingsView: View {
         }
     }
 
+    /// Trailing summary on the Practice Reminders row: "Off", or the enabled checkpoints shortest-first.
+    private var reminderSummary: String {
+        guard modelManager.practiceRemindersEnabled else { return "Off" }
+        let checkpoints = modelManager.practiceReminderCheckpoints
+        guard !checkpoints.isEmpty else { return "On" }
+        return checkpoints.sorted().map(\.title).joined(separator: " · ")
+    }
+
     /// German voices the user downloaded (Enhanced/Premium). Compact voices are
     /// pre-installed with iOS, so anything above compact quality was added by
     /// the user — we use that as the "you downloaded this" signal.
@@ -120,7 +214,7 @@ struct CardSettingsView: View {
 
 // MARK: - Voice Download Guide
 
-private struct VoiceGuideSheet: View {
+struct VoiceGuideSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 

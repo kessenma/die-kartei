@@ -25,11 +25,32 @@ extension CardDeckView {
         }
     }
 
+    /// The end-of-session tally, read from whichever results store the active mode actually fills:
+    /// Anki → `ankiRatings`, Leitner → `leitnerResults`, quiz/default → `cardResults`. Mirrors the
+    /// three `finish*` functions. The shared summary screen used to always read `cardResults`, so
+    /// SRS runs (whose results live elsewhere) showed 0% with the wrong total.
+    var quizSummaryTally: (correct: Int, total: Int, missed: [Int]) {
+        if isAnkiMode {
+            let correct = ankiRatings.values.filter { $0 != .again }.count
+            let missed = ankiRatings.filter { $0.value == .again }.map { $0.key }.sorted()
+            return (correct, ankiDueIndices.count, missed)
+        } else if isLeitnerMode {
+            let correct = leitnerResults.values.filter { $0 }.count
+            let missed = leitnerResults.filter { !$0.value }.map { $0.key }.sorted()
+            return (correct, ankiDueIndices.count, missed)
+        } else {
+            let correct = cardResults.values.filter { $0 }.count
+            let missed = cardResults.filter { !$0.value }.map { $0.key }.sorted()
+            return (correct, cards.count, missed)
+        }
+    }
+
     @ViewBuilder
     var quizSummaryScreen: some View {
-        let correct = cardResults.values.filter { $0 }.count
-        let total = cards.count
-        let missed = cardResults.filter { !$0.value }.map { $0.key }.sorted()
+        let tally = quizSummaryTally
+        let correct = tally.correct
+        let total = tally.total
+        let missed = tally.missed
         let percentage = total > 0 ? Int(Double(correct) / Double(total) * 100) : 0
 
         ScrollView {
@@ -102,6 +123,8 @@ extension CardDeckView {
                         showQuizSummary = false
                         cardResults = [:]
                         currentIndex = 0
+                        cardOrder = []
+                        cardPosition = 0
                     } label: {
                         Label("Done", systemImage: "checkmark")
                             .frame(maxWidth: 260)
@@ -114,10 +137,18 @@ extension CardDeckView {
         }
     }
 
+    /// The order the plain (non-SRS) deck is played in, falling back to deck order whenever the
+    /// stored order is stale (deck swapped out from under us).
+    var playOrder: [Int] {
+        cardOrder.count == cards.count ? cardOrder : Array(cards.indices)
+    }
+
     func advanceOrFinish() {
-        if currentIndex < cards.count - 1 {
+        let order = playOrder
+        if cardPosition < order.count - 1 {
             isFlipped = false
-            currentIndex += 1
+            cardPosition += 1
+            currentIndex = order[cardPosition]
         } else {
             finishQuiz()
         }
@@ -132,12 +163,28 @@ extension CardDeckView {
         showQuizSummary = true
     }
 
+    /// "Try Again": replay the whole session from the top in a fresh random order. Every mode's
+    /// results *and* its position have to be cleared — leaving `ankiDuePosition` parked at the end
+    /// used to drop you on the last card and finish the session on the first answer.
     func resetQuiz() {
         cardResults = [:]
-        currentIndex = 0
+        ankiRatings = [:]
+        leitnerResults = [:]
         isFlipped = false
         showQuizSummary = false
         sessionStartTime = .now
         elapsedSeconds = 0
+
+        if isSRSMode {
+            // Replay the same due set rather than recomputing it: the first pass already
+            // rescheduled these cards, so a fresh "what's due" query would come back empty.
+            ankiDueIndices = ankiDueIndices.shuffled()
+            ankiDuePosition = 0
+            currentIndex = ankiDueIndices.first ?? 0
+        } else {
+            cardOrder = Array(cards.indices).shuffled()
+            cardPosition = 0
+            currentIndex = cardOrder.first ?? 0
+        }
     }
 }

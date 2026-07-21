@@ -50,7 +50,8 @@ struct PaperListView: View {
                 selected: $modelManager.selectedPaperModel,
                 cacheRefreshID: cacheRefreshID,
                 title: "Study model",
-                footerText: "Used to generate the summary, deck, and questions, and to discuss the paper. \(PaperStudyService.requiredModel.rawValue) is recommended for its German quality, but any downloaded model works."
+                footerText: "Used to generate the summary, deck, and questions, and to discuss the paper. \(PaperStudyService.requiredModel.rawValue) is recommended for its German quality, but any downloaded model works.",
+                emphasizeHero: false
             )
 
             if let importError {
@@ -105,13 +106,18 @@ struct PaperListView: View {
             }
         }
         .sheet(item: $reviewItem) { item in
-            ExtractedTextReviewView(title: item.title, text: item.text, accent: modelManager.selectedPaperModel.theme.accent) { deckCount, selectedWords in
+            // Deck-building is deferred until the learner picks "Make flashcards" in the paper, so the
+            // review step here just verifies the extracted text before generating summary + questions.
+            ExtractedTextReviewView(
+                title: item.title,
+                text: item.text,
+                accent: modelManager.selectedPaperModel.theme.accent,
+                collectDeckOptions: false,
+                confirmTitle: "Study this text"
+            ) { _, _ in
                 // Defer so the review sheet finishes dismissing before the generating sheet appears.
                 DispatchQueue.main.async {
-                    createAndGenerate(
-                        title: item.title, text: item.text, sourceURL: item.sourceURL,
-                        deckCount: deckCount, selectedWords: selectedWords
-                    )
+                    createAndGenerate(title: item.title, text: item.text, sourceURL: item.sourceURL)
                 }
             }
         }
@@ -188,11 +194,11 @@ struct PaperListView: View {
         }
     }
 
-    private func createAndGenerate(title: String, text: String, sourceURL: String?, deckCount: Int, selectedWords: [String]?) {
+    private func createAndGenerate(title: String, text: String, sourceURL: String?) {
         let paper = StudyPaper(title: title, fullText: text, sourceURL: sourceURL)
         modelContext.insert(paper)
         try? modelContext.save()
-        startGeneration(for: paper, deckCount: deckCount, selectedWords: selectedWords)
+        startGeneration(for: paper)
     }
 
     private func findDuplicate(sourceURL: String?, title: String, text: String) -> StudyPaper? {
@@ -221,15 +227,12 @@ struct PaperListView: View {
         return k
     }
 
-    private func startGeneration(for paper: StudyPaper, deckCount: Int, selectedWords: [String]?) {
+    private func startGeneration(for paper: StudyPaper) {
         let svc = PaperStudyService(mlxService: mlxService, modelContext: modelContext)
         service = svc
         generatingPaper = paper
         Task {
-            await svc.generate(
-                for: paper, model: modelManager.selectedPaperModel,
-                deckCount: deckCount, questionCount: 6, selectedWords: selectedWords
-            )
+            await svc.generate(for: paper, model: modelManager.selectedPaperModel, questionCount: 6)
         }
     }
 

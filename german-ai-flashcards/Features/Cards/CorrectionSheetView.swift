@@ -174,8 +174,6 @@ struct CorrectionSheetView: View {
             Text("Choose correct article")
         }
 
-        crossCheckSection(dictionarySuggestion: suggested)
-
         Section {
             Button {
                 onApply(selectedArticle)
@@ -210,8 +208,6 @@ struct CorrectionSheetView: View {
             }
         }
 
-        crossCheckSection(dictionarySuggestion: nil)
-
         Section {
             Button {
                 onApply(isNoun ? selectedArticle : nil)
@@ -234,28 +230,4 @@ struct CorrectionSheetView: View {
         }
     }
 
-    // MARK: - Cross-check section
-
-    @ViewBuilder
-    private func crossCheckSection(dictionarySuggestion: String?) -> some View {
-        let installed = MLXModel.allCases.filter { $0.isDownloaded }
-        if !installed.isEmpty {
-            Section {
-                NavigationLink {
-                    ModelCrossCheckView(
-                        germanWord: germanWord,
-                        englishWord: englishWord,
-                        wordType: wordType,
-                        dictionarySuggestion: dictionarySuggestion
-                    )
-                } label: {
-                    Label("Ask local AI models", systemImage: "brain")
-                }
-            } header: {
-                Text("Cross-check")
-            } footer: {
-                Text("Query your downloaded models to see what each one thinks the correct article is.")
-            }
-        }
-    }
 }

@@ -23,6 +23,19 @@ enum ConversationPrompts {
 
             Ask thoughtful questions about the paper's content, probe the learner's understanding, gently correct mistaken claims about the paper, and keep the whole discussion in German.
             """)
+        } else if config.mode == .interview {
+            let posting = (config.jobContext ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let position = config.jobTitle.map { " for the position \"\($0)\"" } ?? ""
+            parts.append("""
+            You are an experienced recruiter conducting a job interview\(position), and the learner is the candidate. \
+            The job posting below is your knowledge of the role. It may be written in German or English, but you conduct the entire interview in German:
+
+            \"\"\"
+            \(posting)
+            \"\"\"
+
+            Run a realistic interview: welcome the candidate and ask them to briefly introduce themselves, then ask about their experience and skills as they relate to the posting's requirements, their motivation for applying, and how they would handle typical situations in this role. Ask ONE question at a time, react briefly to each answer, and occasionally probe deeper with a follow-up. If the candidate asks about the job, answer from the posting. Stay in character as the interviewer for the whole session.
+            """)
         } else if config.mode == .scenario {
             if config.scenario == .custom {
                 let custom = config.customScenario.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -62,6 +75,18 @@ enum ConversationPrompts {
             parts.append("The learner has heard these German phrases in real life and wants to get used to hearing them. Naturally bring them into the conversation as things YOU (in your role) would say to the learner, and steer the scene so each one comes up. Say them in German exactly as written; do NOT translate or explain them in your replies: \(list).")
         }
 
+        // Spaced re-encounter: words the learner is due to review right now (SRS-timed). Steering
+        // only — using one correctly is counted as a review in a separate pass, so never announce it.
+        if !config.dueReviewWords.isEmpty {
+            let list = config.dueReviewWords.prefix(8).joined(separator: ", ")
+            parts.append("These specific words are due for the learner's spaced review right now: \(list). Make a natural, unforced effort to steer toward topics where the learner would want to say each one, and gently invite them to use it — but only where it fits the conversation. Never list these words, translate them, or mention that they're being reviewed.")
+        }
+
+        // Persistent coach memory (steering-only — correction happens in a separate pass).
+        if !config.learnerBriefing.isEmpty {
+            parts.append(config.learnerBriefing)
+        }
+
         return parts.joined(separator: "\n\n")
     }
 
@@ -78,12 +103,25 @@ enum ConversationPrompts {
             let names = config.focusAreas.map { "\($0.germanLabel) (\($0.englishLabel))" }.joined(separator: ", ")
             s += "Pay particular attention to: \(names). "
         }
+        if !config.correctionMemoryHint.isEmpty {
+            s += config.correctionMemoryHint + " "
+        }
         s += "The student uses the \(config.formality.rawValue) form. "
         s += "They may have mixed in an English word they didn't know — in your correction, replace it with the correct German word.\n\n"
         s += "If the sentence is already correct and natural German, reply with exactly:\nOK\n\n"
-        s += "Otherwise reply in EXACTLY this format and nothing else:\n"
-        s += "FIX: <the full corrected sentence in natural German>\n"
-        s += "WHY: <one short explanation in English, at most 18 words>"
+        if config.feedbackStyle == .nudgeMe {
+            // Elicitation: still give the fix (used to check the learner's retry and to reveal on
+            // request), but also a German question that points at the mistake without giving away
+            // the answer, so the learner can repair it themselves.
+            s += "Otherwise reply in EXACTLY this format and nothing else:\n"
+            s += "FIX: <the full corrected sentence in natural German>\n"
+            s += "WHY: <one short explanation in English, at most 18 words>\n"
+            s += "HINT: <a SHORT German question that points the student at their single main mistake so they can fix it themselves — e.g. \"Welcher Fall kommt nach 'mit'?\" or \"Wo steht das Verb in einem Nebensatz?\". Name the grammar category, but do NOT reveal the corrected word or sentence.>"
+        } else {
+            s += "Otherwise reply in EXACTLY this format and nothing else:\n"
+            s += "FIX: <the full corrected sentence in natural German>\n"
+            s += "WHY: <one short explanation in English, at most 18 words>"
+        }
         return s
     }
 
@@ -97,6 +135,8 @@ enum ConversationPrompts {
     struct CorrectionResult {
         var correctedText: String?
         var note: String?
+        /// The German elicitation question, when the model was asked for one ("Nudge me" mode).
+        var hint: String?
         var isClean: Bool { correctedText == nil }
     }
 
@@ -112,12 +152,15 @@ enum ConversationPrompts {
 
         var fix: String?
         var why: String?
+        var hint: String?
         for rawLine in cleaned.components(separatedBy: .newlines) {
             let line = rawLine.trimmingCharacters(in: .whitespaces)
             if let r = matchPrefix(line, prefixes: ["FIX:", "FIX -", "Fix:", "Korrektur:"]) {
                 fix = r
             } else if let r = matchPrefix(line, prefixes: ["WHY:", "WHY -", "Why:", "Grund:", "Erklärung:"]) {
                 why = r
+            } else if let r = matchPrefix(line, prefixes: ["HINT:", "HINT -", "Hint:", "Tipp:", "Frage:"]) {
+                hint = r
             }
         }
 
@@ -134,7 +177,12 @@ enum ConversationPrompts {
         }
 
         let note = why?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return CorrectionResult(correctedText: corrected, note: (note?.isEmpty == false) ? note : nil)
+        let hintText = stripWrappingQuotes(hint?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "")
+        return CorrectionResult(
+            correctedText: corrected,
+            note: (note?.isEmpty == false) ? note : nil,
+            hint: hintText.isEmpty ? nil : hintText
+        )
     }
 
     // MARK: - Translation
@@ -354,7 +402,10 @@ enum ConversationPrompts {
         s += "Reply in EXACTLY this format:\n"
         s += "STRENGTHS:\n- <something the student did well>\n- <something else they did well>\n"
         s += "IMPROVE:\n- <a specific, actionable area to work on>\n- <another specific area>\n"
-        s += "PATTERN: <one sentence naming a recurring habit you noticed, good or bad>\n\n"
+        s += "PATTERN: <one sentence naming a recurring habit you noticed, good or bad>\n"
+        s += "WEAK: <comma-separated keys from the list below for structures the student clearly struggled with this session, or leave blank>\n"
+        s += "STRONG: <comma-separated keys from the list below for structures the student handled well, or leave blank>\n\n"
+        s += "Grammar keys (use each key exactly as written, and only when the transcript clearly shows it):\n\(phraseGrammarKeyList)\n\n"
         s += "Base everything only on the student's lines. Be specific about grammar, vocabulary, and structures. If the student barely spoke, say so kindly."
         return s
     }
@@ -404,6 +455,23 @@ enum ConversationPrompts {
         }
 
         return (strengths, improvements, pattern)
+    }
+
+    /// Parse the machine-readable WEAK/STRONG grammar tags appended to the coaching report.
+    /// Reuses the same lenient key matching as the phrase-library grammar suggestions.
+    static func parseProfileSignals(_ raw: String) -> (weak: [GrammarFocus], strong: [GrammarFocus]) {
+        let cleaned = stripThinkBlocks(raw)
+        var weakKeys: String?
+        var strongKeys: String?
+        for rawLine in cleaned.components(separatedBy: .newlines) {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            if let r = matchPrefix(line, prefixes: ["WEAK:", "Weak:", "WEAK -"]) {
+                weakKeys = r
+            } else if let r = matchPrefix(line, prefixes: ["STRONG:", "Strong:", "STRONG -"]) {
+                strongKeys = r
+            }
+        }
+        return (parseGrammarKeys(weakKeys), parseGrammarKeys(strongKeys))
     }
 
     // MARK: - Vocabulary matching

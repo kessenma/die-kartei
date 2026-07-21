@@ -9,31 +9,54 @@ struct ChatModelPickerSection: View {
     var cacheRefreshID: UUID
     var title: String = "Conversation model"
     var footerText: String = "Downloaded models are listed first. Picking one that isn’t downloaded yet will download it (~once) when the chat starts."
+    /// When true (and the device can run it), the hero model is pulled into its own "Recommended"
+    /// section at the top. Set false for features that shouldn't push it (e.g. multimodal
+    /// paper/photo study, which is pinned to a vision-capable model).
+    var emphasizeHero: Bool = true
     @State private var modelForInfo: MLXModel?
 
-    private var deviceRAMGB: Int {
-        Int((Double(ProcessInfo.processInfo.physicalMemory) / 1_073_741_824).rounded())
-    }
+    /// Whether to surface the promoted hero section here.
+    private var showsHero: Bool { emphasizeHero && DeviceCapability.canRunHero }
 
     private var sortedModels: [MLXModel] {
         _ = cacheRefreshID
-        return MLXModel.allCases.sorted { a, b in
+        let sorted = MLXModel.allCases.sorted { a, b in
             let da = a.isDownloaded, db = b.isDownloaded
             if da != db { return da }            // downloaded first
             return a.germanQualityScore > b.germanQualityScore
         }
+        // The hero has its own section above when emphasized, so drop it from the main list.
+        return showsHero ? sorted.filter { !$0.isHero } : sorted
     }
 
     var body: some View {
-        Section {
-            ForEach(sortedModels) { model in
-                row(model)
+        Group {
+            if showsHero {
+                Section {
+                    row(MLXModel.hero, isHero: true)
+                } header: {
+                    Text("Recommended")
+                } footer: {
+                    Text(MLXModel.hero.heroTagline)
+                        .font(.caption2)
+                }
             }
-        } header: {
-            Text(title)
-        } footer: {
-            Text(footerText)
-                .font(.caption2)
+
+            Section {
+                ForEach(sortedModels) { model in
+                    row(model)
+                }
+            } header: {
+                Text(showsHero ? "Other models" : title)
+            } footer: {
+                if showsHero {
+                    Text("These models are good at generating flashcards, but they're weaker at live, turn-based conversation. \(MLXModel.hero.rawValue) is the strongest at holding a back-and-forth chat and correcting you as you go. Any downloaded model still works here.")
+                        .font(.caption2)
+                } else {
+                    Text(footerText)
+                        .font(.caption2)
+                }
+            }
         }
         // An alert (not a sheet) avoids a sheet-on-sheet conflict, since this picker
         // lives inside the setup sheet.
@@ -53,7 +76,7 @@ struct ChatModelPickerSection: View {
         return "\(model.description)\n\nParameters: \(model.parameterCount) · ~\(size)\nRecommended: \(model.deviceNote)"
     }
 
-    @ViewBuilder private func row(_ model: MLXModel) -> some View {
+    @ViewBuilder private func row(_ model: MLXModel, isHero: Bool = false) -> some View {
         let downloaded = model.isDownloaded
         Button {
             selected = model
@@ -65,7 +88,10 @@ struct ChatModelPickerSection: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(model.rawValue).foregroundStyle(.primary)
+                    HStack(spacing: 6) {
+                        Text(model.rawValue).foregroundStyle(.primary)
+                        if isHero { RecommendedBadge() }
+                    }
                     HStack(spacing: 6) {
                         if model.isAppleIntelligence {
                             Text("Built-in · no download")
@@ -95,6 +121,7 @@ struct ChatModelPickerSection: View {
             }
         }
         .buttonStyle(.plain)
+        .modifier(ConditionalHeroHighlight(isHero: isHero))
     }
 
     private func formattedSize(_ mb: Int) -> String {

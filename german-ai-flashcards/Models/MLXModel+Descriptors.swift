@@ -9,6 +9,7 @@ extension MLXModel {
     var approximateSizeMB: Int {
         switch self {
         case .appleIntelligence: 0   // built-in, no download
+        case .gemma4_E4B_german: 5000
         case .gemma4_E4B:   5500
         case .mistral7B:    4000
         case .qwen3_8B:     4900
@@ -25,6 +26,8 @@ extension MLXModel {
         switch self {
         case .appleIntelligence:
             "Apple's built-in on-device model (Apple Intelligence). No download — it runs entirely on your device, privately and offline. Apple updates this model with each major iOS release, so it keeps improving automatically. Requires a supported device with Apple Intelligence turned on."
+        case .gemma4_E4B_german:
+            "Gemma 4 E4B fine-tuned specifically for this app on German grammar: verbs with prepositions, separable verbs, reflexive verbs, da-/wo-compounds, and haben/sein — with fewer false corrections. The best German tutor quality available here (~5 GB)."
         case .gemma4_E4B:
             "Google's latest Gemma 4 with effective 4B parameters, 4-bit quantized. Best quality but larger download (~5 GB)."
         case .mistral7B:
@@ -49,6 +52,7 @@ extension MLXModel {
     var parameterCount: String {
         switch self {
         case .appleIntelligence: "On-device"
+        case .gemma4_E4B_german: "~4B"
         case .gemma4_E4B:   "~4B"
         case .mistral7B:    "7B"
         case .qwen3_8B:     "8B"
@@ -68,6 +72,7 @@ extension MLXModel {
         case .mistral7B:     7.0
         case .qwen3_8B:      8.0
         case .gemma4_E4B:    4.0
+        case .gemma4_E4B_german: 4.0
         case .gemma3n_E4B:   4.0
         case .qwen3_4B:      4.0
         case .phi4Mini:      3.8
@@ -83,6 +88,7 @@ extension MLXModel {
         case .appleIntelligence: 5   // iOS 27's on-device model is strong and improves each OS update
         case .mistral7B:    4
         case .qwen3_8B:     5
+        case .gemma4_E4B_german: 5
         case .gemma4_E4B:   4
         case .gemma3n_E4B:  4
         case .qwen3_4B:     3
@@ -105,7 +111,7 @@ extension MLXModel {
         switch self {
         case .appleIntelligence: 0   // gated by Apple Intelligence eligibility, not by RAM
         case .qwen3_0_6B, .llama3_2_1B, .gemma3_1B: 4
-        case .qwen3_4B, .gemma3n_E4B, .gemma4_E4B, .phi4Mini, .mistral7B: 6
+        case .qwen3_4B, .gemma3n_E4B, .gemma4_E4B, .gemma4_E4B_german, .phi4Mini, .mistral7B: 6
         case .qwen3_8B: 8
         }
     }
@@ -119,7 +125,7 @@ extension MLXModel {
             "iPhone 12 or newer"
         case .qwen3_4B:
             "iPhone 13 Pro / iPhone 14 or newer (6 GB RAM)"
-        case .gemma3n_E4B, .gemma4_E4B:
+        case .gemma3n_E4B, .gemma4_E4B, .gemma4_E4B_german:
             "iPhone 14 Pro / iPhone 15 or newer (6 GB+ RAM)"
         case .phi4Mini, .mistral7B:
             "iPhone 14 Pro / iPhone 15 or newer (6 GB RAM)"
@@ -138,10 +144,76 @@ extension MLXModel {
             URL(string: "https://www.llama.com/models/llama-3/")!
         case .gemma3_1B, .gemma3n_E4B, .gemma4_E4B:
             URL(string: "https://deepmind.google/models/gemma/")!
+        case .gemma4_E4B_german:
+            URL(string: "https://huggingface.co/kessenma/gemma4-e4b-german-tutor-4bit")!
         case .mistral7B:
             URL(string: "https://mistral.ai/models/")!
         case .phi4Mini:
             URL(string: "https://azure.microsoft.com/en-us/products/phi")!
         }
+    }
+}
+
+// MARK: - Hero model & recommendation ordering
+
+extension MLXModel {
+    /// The single model this app promotes above all others: our Gemma 4 E4B, fine-tuned in-house on
+    /// German grammar specifically for this app. It's the only model trained on this app's coaching
+    /// task, so wherever the device can run it the UI leads with it and treats the rest as
+    /// alternatives. See training/PLAN.md. Changing the hero is a one-line edit here.
+    static let hero: MLXModel = .gemma4_E4B_german
+
+    /// Whether this is the promoted hero model.
+    var isHero: Bool { self == Self.hero }
+
+    /// One-line reason the hero wins — reused by the hero card, the pickers, and the intro wizard.
+    /// Only meaningful for the hero model.
+    var heroTagline: String {
+        "Fine-tuned on German grammar just for this app, built on Google's Gemma and its years of "
+        + "translation research."
+    }
+
+    /// Longer marketing points for the intro wizard. Hero only.
+    var heroSellingPoints: [String] {
+        [
+            "Purpose-trained on German grammar for this exact app, not a general-purpose model.",
+            "Built on Google's Gemma family, which draws on years of Google Translate research.",
+            "Sharper on the hard parts of German: verbs with prepositions, separable and reflexive "
+            + "verbs, da-/wo-compounds, and haben/sein, with fewer false corrections.",
+            "Runs fully on-device: private, offline, and free after a one-time ~5 GB download.",
+        ]
+    }
+
+    /// Canonical "recommended" ordering for a device with `ramGB` RAM. One source of truth for every
+    /// picker: the hero model leads when it fits, then Apple Intelligence (instant, no download), then
+    /// the remaining runnable models by German quality, with anything the device can't run sinking to
+    /// the bottom.
+    static func recommendedOrder(ramGB: Int) -> [MLXModel] {
+        allCases.sorted { recommendationRank($0, ramGB: ramGB) < recommendationRank($1, ramGB: ramGB) }
+    }
+
+    /// The single model to badge as "Recommended" for this device — the hero when it fits, otherwise
+    /// the best option the device can actually run.
+    static func recommended(ramGB: Int) -> MLXModel {
+        recommendedOrder(ramGB: ramGB).first ?? hero
+    }
+
+    /// Sort key for `recommendedOrder`. Lower sorts first:
+    /// (priority bucket, inverted German quality, inverted parameter count).
+    private static func recommendationRank(_ model: MLXModel, ramGB: Int) -> (Int, Int, Double) {
+        let runnable = model.isAppleIntelligence
+            ? AppleIntelligenceService.currentlyAvailable()
+            : model.minimumRAMGB <= ramGB
+        let bucket: Int
+        if model.isHero && runnable {
+            bucket = 0                                   // hero pinned to the very top when it fits
+        } else if model.isAppleIntelligence && runnable {
+            bucket = 1                                   // instant, zero-download option next
+        } else if runnable {
+            bucket = 2                                   // other models the device can run
+        } else {
+            bucket = 3                                   // can't run here — sink to the bottom
+        }
+        return (bucket, -model.germanQualityScore, -model.parameterCountValue)
     }
 }

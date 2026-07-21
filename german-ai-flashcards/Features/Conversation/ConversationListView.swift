@@ -5,6 +5,9 @@ import SwiftData
 struct ConversationListView: View {
     @Bindable var modelManager: MLXModelManager
     var mlxService: MLXGenerationService
+    /// When false (embedded as the Library's "Chats" section), the create-actions header and the
+    /// "+" toolbar are hidden so this reads as a pure browse/resume list of saved conversations.
+    var showsCreateActions: Bool = true
 
     @Query(sort: \ChatConversation.updatedAt, order: .reverse) private var conversations: [ChatConversation]
     @Query private var decks: [SavedDeck]
@@ -16,31 +19,23 @@ struct ConversationListView: View {
 
     var body: some View {
         List {
-            Section {
-                Button {
-                    showSetup = true
-                } label: {
-                    Label("New Conversation", systemImage: "plus.bubble.fill")
-                        .font(.body.weight(.medium))
+            if showsCreateActions {
+                Section {
+                    Button {
+                        showSetup = true
+                    } label: {
+                        Label("New Conversation", systemImage: "plus.bubble.fill")
+                            .font(.body.weight(.medium))
+                    }
+                    NavigationLink {
+                        PhraseLibraryView(modelManager: modelManager, mlxService: mlxService)
+                    } label: {
+                        Label("Phrase library", systemImage: "ear.badge.waveform")
+                    }
+                } footer: {
+                    Text("Have a spoken German conversation with the on-device AI. Pick a topic, deck, or scenario, choose a grammar focus, and talk — it corrects you as you go.")
+                        .font(.caption2)
                 }
-                NavigationLink {
-                    PaperListView(modelManager: modelManager, mlxService: mlxService)
-                } label: {
-                    Label("Study a paper or link", systemImage: "doc.text.magnifyingglass")
-                }
-                NavigationLink {
-                    PhotoScanListView(modelManager: modelManager, mlxService: mlxService)
-                } label: {
-                    Label("Scan text from a photo", systemImage: "camera.viewfinder")
-                }
-                NavigationLink {
-                    PhraseLibraryView(modelManager: modelManager, mlxService: mlxService)
-                } label: {
-                    Label("Phrase library", systemImage: "ear.badge.waveform")
-                }
-            } footer: {
-                Text("Have a spoken German conversation with the on-device AI. Pick a topic, deck, or scenario, choose a grammar focus, and talk — it corrects you as you go. Or upload a German paper to study and discuss.")
-                    .font(.caption2)
             }
 
             if conversations.isEmpty {
@@ -79,15 +74,17 @@ struct ConversationListView: View {
                 }
             }
         }
-        .navigationTitle("Conversation Practice")
+        .navigationTitle(showsCreateActions ? "Conversation Practice" : "Library")
         .navigationBarTitleDisplayMode(.inline)
         .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showSetup = true
-                } label: {
-                    Image(systemName: "plus")
+            if showsCreateActions {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showSetup = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
                 }
             }
         }
@@ -151,12 +148,15 @@ struct ConversationListView: View {
         c.correctionsEnabled = convo.correctionsEnabled
         c.correctionTranslationEnabled = modelManager.chatShowCorrectionTranslation
         c.strictness = convo.strictness
+        c.feedbackStyle = convo.feedbackStyle
         c.autoPlay = convo.autoPlay
         c.eagerAssist = modelManager.chatEagerAssist
         c.autoShowTranslation = modelManager.chatAutoShowTranslation
         c.hintCount = modelManager.chatHintCount
         c.paperTitle = convo.paperTitle
         c.paperContext = convo.paperContext
+        c.jobTitle = convo.jobTitle
+        c.jobContext = convo.jobContext
         return c
     }
 }

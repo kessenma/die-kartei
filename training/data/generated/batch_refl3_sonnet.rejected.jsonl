@@ -1,0 +1,1 @@
+{"reason": "languagetool: GERMAN_SPELLER_RULE: Möglicher Tippfehler gefunden.", "task": "correction", "phenomenon": "refl", "level": "A2", "formality": "du", "partner": null, "student": "Leg sich hin und ruh dich aus!", "verdict": "fix", "fix": "Leg dich hin und ruh dich aus!", "why": "'sich hinlegen' with 'du' needs 'dich', not 'sich'.", "meta": {"verb": "sich hinlegen"}}

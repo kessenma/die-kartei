@@ -45,6 +45,11 @@ final class SavedCard {
     var conjugationsData: Data?
     var sortOrder: Int
 
+    /// File name of this card's AI-generated picture inside `CardImageStore.directory(for:)`,
+    /// or nil if the card has none. Optional so existing stores migrate lightweightly, and so
+    /// "has no picture yet" is the natural query for the illustrate-the-rest pass.
+    var imageFileName: String?
+
     // MARK: - Spaced Repetition (Anki-style) Fields
 
     /// SM-2 ease factor — starts at 2.5, minimum 1.3.
@@ -83,6 +88,7 @@ final class SavedCard {
         self.article = article
         self.exampleSentence = exampleSentence
         self.sortOrder = sortOrder
+        self.imageFileName = nil
 
         // SRS defaults
         self.easeFactor = 2.5

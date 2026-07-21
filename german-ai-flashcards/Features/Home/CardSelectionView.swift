@@ -6,6 +6,11 @@ struct CardSelectionView: View {
     let cards: [VocabCard]
     let topic: String
     let validationResults: [ValidationResult]
+    /// Scratch directory holding this run's pictures, when they were drawn before the review
+    /// (`CardImageTiming.everyCard`). Nil when the pictures come later, or not at all.
+    let draftImageID: UUID?
+    /// Draft file name per German word, lowercased — see `DeckIllustrationService.illustrateDraft`.
+    let draftImages: [String: String]
     let onSave: ([VocabCard]) -> Void
     let onCancel: () -> Void
 
@@ -18,12 +23,16 @@ struct CardSelectionView: View {
         cards: [VocabCard],
         topic: String,
         validationResults: [ValidationResult],
+        draftImageID: UUID? = nil,
+        draftImages: [String: String] = [:],
         onSave: @escaping ([VocabCard]) -> Void,
         onCancel: @escaping () -> Void
     ) {
         self.cards = cards
         self.topic = topic
         self.validationResults = validationResults
+        self.draftImageID = draftImageID
+        self.draftImages = draftImages
         self.onSave = onSave
         self.onCancel = onCancel
         _selected = State(initialValue: Set(cards.indices))
@@ -95,6 +104,10 @@ struct CardSelectionView: View {
                     .font(.title3)
                     .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
 
+                if let draftImageID, let fileName = draftImages[card.germanWord.lowercased()] {
+                    DraftCardThumbnail(fileName: fileName, draftImageID: draftImageID)
+                }
+
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
                         Text(germanDisplay(card))
@@ -163,10 +176,7 @@ struct CardSelectionView: View {
     // MARK: - Helpers
 
     private func germanDisplay(_ card: VocabCard) -> String {
-        if let article = card.article, !article.isEmpty {
-            return "\(article) \(card.germanWord)"
-        }
-        return card.germanWord
+        card.germanWord.withArticle(card.article)
     }
 
     private func toggle(_ index: Int) {
@@ -182,6 +192,34 @@ struct CardSelectionView: View {
             selected.removeAll()
         } else {
             selected = Set(cards.indices)
+        }
+    }
+}
+
+// MARK: - Draft thumbnail
+
+/// The picture a card was given before it had a deck, at row size. Loaded in a `.task` like
+/// `FlashCardView` does, so scrolling never waits on a PNG decode.
+private struct DraftCardThumbnail: View {
+    let fileName: String
+    let draftImageID: UUID
+
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Color.secondary.opacity(0.12)
+            }
+        }
+        .frame(width: 48, height: 48)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .task(id: fileName) {
+            image = CardImageStore.loadImage(fileName: fileName, deckID: draftImageID)
         }
     }
 }

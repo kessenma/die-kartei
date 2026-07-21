@@ -39,7 +39,8 @@ struct PhotoScanListView: View {
                 selected: $modelManager.selectedPaperModel,
                 cacheRefreshID: cacheRefreshID,
                 title: "Study model",
-                footerText: "Used to tidy up the scanned text and to generate the summary, deck, and questions. Any downloaded model works."
+                footerText: "Used to tidy up the scanned text and to generate the summary, deck, and questions. Any downloaded model works.",
+                emphasizeHero: false
             )
 
             if let importError {
@@ -102,11 +103,19 @@ struct PhotoScanListView: View {
             #endif
         }
         .sheet(item: $scanReview) { review in
-            ExtractedTextReviewView(title: "Scanned text", text: review.text, accent: modelManager.selectedPaperModel.theme.accent) { deckCount, selectedWords in
+            // Deck-building is deferred to the paper's "Make flashcards" chooser, so this review step
+            // just lets the user verify the scanned/cleaned text before generating summary + questions.
+            ExtractedTextReviewView(
+                title: "Scanned text",
+                text: review.text,
+                accent: modelManager.selectedPaperModel.theme.accent,
+                collectDeckOptions: false,
+                confirmTitle: "Study this text"
+            ) { _, _ in
                 // Defer so the review sheet finishes dismissing before the generating sheet appears.
                 DispatchQueue.main.async {
                     Task {
-                        await cleanupAndGenerate(rawText: review.text, deckCount: deckCount, selectedWords: selectedWords)
+                        await cleanupAndGenerate(rawText: review.text)
                     }
                 }
             }
@@ -235,9 +244,9 @@ struct PhotoScanListView: View {
         }
     }
 
-    /// After the user confirms the review: clean up the OCR text with the AI,
-    /// then generate the summary, deck, and questions.
-    private func cleanupAndGenerate(rawText: String, deckCount: Int, selectedWords: [String]?) async {
+    /// After the user confirms the review: clean up the OCR text with the AI, then generate the
+    /// summary + questions. The vocab deck is built on-demand from the paper's "Make flashcards".
+    private func cleanupAndGenerate(rawText: String) async {
         guard let ocr = ocrService else { return }
 
         let dateStr = Date.now.formatted(date: .abbreviated, time: .omitted)
@@ -254,7 +263,7 @@ struct PhotoScanListView: View {
         paper.fullText = cleaned
         try? modelContext.save()
 
-        await svc.generate(for: paper, model: model, deckCount: deckCount, questionCount: 6, selectedWords: selectedWords)
+        await svc.generate(for: paper, model: model, questionCount: 6)
     }
 
     private func delete(_ paper: StudyPaper) {

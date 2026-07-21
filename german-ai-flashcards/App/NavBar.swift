@@ -6,12 +6,12 @@
 import SwiftUI
 
 enum MenuTab: String {
-    case home, cards, library, conversation, settings
+    case home, library, settings
 }
 
 // MARK: - Badge shapes
 
-private struct PieProgress: Shape {
+struct PieProgress: Shape {
     var progress: Double
 
     var animatableData: Double {
@@ -36,7 +36,10 @@ private struct PieProgress: Shape {
     }
 }
 
-private struct DownloadBadge: View {
+/// The circular download/loading badge used on the Settings nav item and, mirrored, on the
+/// Settings → Model segment. A determinate pie while downloading, a spinning arc while
+/// indeterminate (connecting / loading into memory).
+struct DownloadBadge: View {
     let progress: Double?
     @State private var spin = false
 
@@ -95,22 +98,16 @@ struct NavBar: View {
 
     var body: some View {
         HStack {
-            navButton(tab: .home, icon: "sparkles.rectangle.stack", selectedIcon: "sparkles.rectangle.stack.fill", label: "Create") {
-                // A model load can be kicked off from Create too, so show the same loading badge
-                // here as on Settings. Generation only runs once a model is loaded, so these never
-                // overlap — prefer the download badge while loading.
-                if isDownloading {
-                    DownloadBadge(progress: downloadProgress)
-                } else if isGenerating {
+            navButton(tab: .home, icon: "house", selectedIcon: "house.fill", label: "Home") {
+                // Generation can be kicked off from Home, so keep the generating pulse here. The
+                // download badge lives only on Settings (where the model status screen is), so users
+                // learn to look there for load progress.
+                if isGenerating {
                     GeneratingBadge()
                 }
             }
 
-            navButton(tab: .cards, icon: "rectangle.stack", selectedIcon: "rectangle.stack.fill", label: "Cards")
-
             navButton(tab: .library, icon: "brain.head.profile", selectedIcon: "brain.head.profile.fill", label: "Library")
-
-            navButton(tab: .conversation, icon: "bubble.left.and.bubble.right", selectedIcon: "bubble.left.and.bubble.right.fill", label: "Talk")
 
             navButton(tab: .settings, icon: "gearshape.2", selectedIcon: "gearshape.2.fill", label: "Settings") {
                 if isDownloading {

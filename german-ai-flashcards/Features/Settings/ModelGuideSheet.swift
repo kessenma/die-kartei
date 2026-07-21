@@ -7,6 +7,14 @@ struct ModelGuideSheet: View {
         NavigationStack {
             List {
                 Section {
+                    GuideRow(model: .hero, badge: "Recommended", badgeColor: MLXModel.hero.theme.accent)
+                } header: {
+                    Text("Our recommendation")
+                } footer: {
+                    Text("Gemma 4 E4B, fine-tuned on German grammar specifically for this app, built on Google's Gemma and its years of translation research. It's measurably better at verbs with prepositions, separable and reflexive verbs, da-/wo-compounds, and haben/sein, with fewer false corrections. On a capable device (6 GB RAM, iPhone 14 Pro or iPhone 15 and newer) it's the top pick. The other models below are solid alternatives if you'd rather not download it, or if your device can't run it.")
+                }
+
+                Section {
                     GuideRow(model: .qwen3_8B, badge: "Best Overall", badgeColor: .purple)
                     GuideRow(model: .mistral7B, badge: "Best Multilingual", badgeColor: .blue)
                 } header: {
@@ -17,11 +25,11 @@ struct ModelGuideSheet: View {
 
                 Section {
                     GuideRow(model: .gemma4_E4B, badge: "Best Quality", badgeColor: .purple)
-                    GuideRow(model: .gemma3n_E4B, badge: "Recommended", badgeColor: .blue)
+                    GuideRow(model: .gemma3n_E4B, badge: "Efficient", badgeColor: .blue)
                 } header: {
                     Text("Best for German (6 GB Devices)")
                 } footer: {
-                    Text("Both 4B-class models are significantly more reliable for grammar annotations, noun genders, and case notes — the best choice for 6 GB devices like iPhone 14 Pro or iPhone 15.")
+                    Text("Google's stock Gemma 4 models for 6 GB devices like iPhone 14 Pro or iPhone 15. Strong German quality, but for this app the fine-tuned version above is the better pick.")
                 }
 
                 Section {

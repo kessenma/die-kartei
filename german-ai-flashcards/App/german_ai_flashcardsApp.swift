@@ -7,19 +7,40 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
+
+final class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        handleEventsForBackgroundURLSession identifier: String,
+        completionHandler: @escaping () -> Void
+    ) {
+        BackgroundModelDownloadSession.shared.setBackgroundCompletionHandler(completionHandler)
+    }
+}
 
 @main
 struct german_ai_flashcardsApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     let container: ModelContainer
     @State private var modelManager: MLXModelManager
     @State private var coordinator: GenerationCoordinator
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         let schema = Schema([
             SavedDeck.self, SavedCard.self, QuizResult.self,
             ChatConversation.self, ChatMessage.self,
             StudyPaper.self,
-            LearnedPhrase.self
+            StudyStory.self,
+            LearnedPhrase.self,
+            LearnerProfile.self, ArchivedMemoryItem.self,
+            StudyDay.self,
+            MatchingPairStat.self, MatchingRound.self,
+            ArticleWordStat.self, ArticleRound.self,
+            StoryReadingSession.self, StoryQuizAttempt.self,
+            BatchJob.self
         ])
         let config = SwiftData.ModelConfiguration(schema: schema)
 
@@ -52,6 +73,24 @@ struct german_ai_flashcardsApp: App {
         WindowGroup {
             ContentView(coordinator: coordinator)
                 .environment(coordinator.mlxService)
+                .onChange(of: scenePhase) { _, phase in
+                    // A model download cut off while the user was in another app resumes
+                    // from its saved partial files as soon as they come back.
+                    if phase == .active {
+                        coordinator.mlxService.resumeInterruptedDownloadIfNeeded()
+                    }
+                    // Keep practice reminders anchored to the real last-practice date: re-derive the
+                    // ladder whenever the app enters or leaves the foreground. Leaving captures any
+                    // practice done this session; entering picks up permission or settings changes.
+                    if phase == .active || phase == .background {
+                        Task { @MainActor in
+                            await PracticeReminderService.refresh(
+                                context: container.mainContext,
+                                modelManager: modelManager
+                            )
+                        }
+                    }
+                }
         }
         .modelContainer(container)
     }

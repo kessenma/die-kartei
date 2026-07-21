@@ -10,6 +10,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
     case praeteritum
     case futur
     case konjunktiv2
+    case artikel
     case akkusativ
     case dativ
     case genitiv
@@ -26,6 +27,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .praeteritum:          "Präteritum"
         case .futur:                "Futur I"
         case .konjunktiv2:          "Konjunktiv II"
+        case .artikel:              "Artikel"
         case .akkusativ:            "Akkusativ"
         case .dativ:                "Dativ"
         case .genitiv:              "Genitiv"
@@ -42,6 +44,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .praeteritum:          "Simple / written past"
         case .futur:                "Future tense"
         case .konjunktiv2:          "Hypotheticals & politeness"
+        case .artikel:              "Noun gender (der/die/das)"
         case .akkusativ:            "Direct-object case"
         case .dativ:                "Indirect-object case"
         case .genitiv:              "Possessive case"
@@ -62,6 +65,8 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
             "Talking about the future using werden plus an infinitive — “ich werde morgen arbeiten”."
         case .konjunktiv2:
             "Used for hypotheticals, wishes, and politeness — “ich würde gehen”, “wenn ich Zeit hätte…”, “könnten Sie mir helfen?”."
+        case .artikel:
+            "Every German noun has a grammatical gender shown by its article: der (masculine), die (feminine), das (neuter). Endings often give it away — “-ung”, “-heit” and “-keit” are feminine, “-chen” and “-lein” are neuter — but many just have to be learned with the noun."
         case .akkusativ:
             "The direct object — the thing receiving the action. It changes the article: der → den. “Ich sehe den Mann.”"
         case .dativ:
@@ -77,6 +82,24 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         }
     }
 
+    /// One-line rule reminder shown above drill exercises (mirrors the bundled
+    /// categories' `ruleNote`, which the multiple-choice header displays).
+    var compactRule: String {
+        switch self {
+        case .perfekt:              "Perfekt: haben/sein + Partizip II — „ich habe gegessen“, „ich bin gegangen“"
+        case .praeteritum:          "Präteritum: simple past — „ich war“, „ich hatte“, „ich ging“"
+        case .futur:                "Futur I: werden + Infinitiv — „ich werde arbeiten“"
+        case .konjunktiv2:          "Konjunktiv II: würde / hätte / wäre / könnte — hypotheticals & politeness"
+        case .artikel:              "der (m) · die (f) · das (n) — Endungen helfen: -ung → die, -chen → das"
+        case .akkusativ:            "Akkusativ: den (m) · die (f) · das (n) · die (Pl.)"
+        case .dativ:                "Dativ: dem (m) · der (f) · dem (n) · den (Pl.)"
+        case .genitiv:              "Genitiv: des …s (m/n) · der (f/Pl.)"
+        case .modalverben:          "Modalverb konjugiert, Hauptverb als Infinitiv ans Satzende"
+        case .wechselpraepositionen: "Wohin? (movement) → Akkusativ · Wo? (location) → Dativ"
+        case .adjektivendungen:     "Endings follow case, gender & article — „ein guter Wein“"
+        }
+    }
+
     /// A German example/hint the AI can use to elicit this structure.
     var steeringHint: String {
         switch self {
@@ -84,6 +107,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .praeteritum:           "erzähle und frage im Präteritum, z. B. „Wie war dein Tag?“"
         case .futur:                 "sprich über die Zukunft, z. B. „Was wirst du nächstes Jahr machen?“"
         case .konjunktiv2:           "stelle hypothetische Fragen, z. B. „Was würdest du tun, wenn du viel Geld hättest?“"
+        case .artikel:               "frage nach konkreten Dingen und Gegenständen, z. B. „Was ist in deiner Küche?“, damit Substantive mit Artikeln vorkommen"
         case .akkusativ:             "nutze Sätze mit direktem Objekt, z. B. „Was kaufst du heute?“"
         case .dativ:                 "nutze Dativ-Verben und -Präpositionen, z. B. „Wem hilfst du?“, „Mit wem gehst du?“"
         case .genitiv:               "nutze den Genitiv, z. B. „Wessen Idee war das?“"

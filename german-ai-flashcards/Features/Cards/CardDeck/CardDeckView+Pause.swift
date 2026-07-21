@@ -20,6 +20,10 @@ extension CardDeckView {
         isPaused = false
         hasStarted = false
         currentIndex = 0
+        cardOrder = []
+        cardPosition = 0
+        ankiDueIndices = []
+        ankiDuePosition = 0
         isFlipped = false
         cardResults = [:]
         ankiRatings = [:]
@@ -78,6 +82,9 @@ extension CardDeckView {
         leitnerResults = progress.leitnerResults ?? [:]
         ankiDueIndices = progress.ankiDueIndices ?? []
         ankiDuePosition = progress.ankiDuePosition ?? 0
+        // The play order isn't persisted, so a cross-launch resume lands back in deck order;
+        // within a session this recovers the position in whatever order is live.
+        cardPosition = playOrder.firstIndex(of: progress.cardIndex) ?? 0
         sessionStartTime = Date.now - TimeInterval(elapsedSeconds)
         savedProgress = nil
         clearPauseProgress()

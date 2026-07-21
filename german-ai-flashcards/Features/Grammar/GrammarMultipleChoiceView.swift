@@ -3,6 +3,8 @@ import SwiftUI
 struct GrammarMultipleChoiceView: View {
     let category: GrammarCategory
     var showHints: Bool = false
+    /// Gates the right/wrong vibrations (Settings ▸ Cards ▸ Haptics).
+    var hapticMode: HapticFeedbackMode = .all
     var onComplete: ((_ correct: Int, _ total: Int) -> Void)?
     var onDismiss: (() -> Void)?
 
@@ -10,6 +12,7 @@ struct GrammarMultipleChoiceView: View {
     @State private var currentIndex = 0
     @State private var selectedAnswer: String? = nil
     @State private var correctCount = 0
+    @State private var wrongCount = 0
     @State private var missedExercises: [GrammarExercise] = []
     @State private var sessionComplete = false
 
@@ -41,6 +44,12 @@ struct GrammarMultipleChoiceView: View {
         }
         .onAppear {
             exercises = category.exercises.shuffled()
+        }
+        .sensoryFeedback(.success, trigger: correctCount) { old, new in
+            new > old && hapticMode.playsSuccess
+        }
+        .sensoryFeedback(.error, trigger: wrongCount) { old, new in
+            new > old && hapticMode.playsError
         }
     }
 
@@ -179,6 +188,7 @@ struct GrammarMultipleChoiceView: View {
                     if option == exercise.correctAnswer {
                         correctCount += 1
                     } else {
+                        wrongCount += 1
                         missedExercises.append(exercise)
                     }
                 } label: {

@@ -100,13 +100,19 @@ struct ConversationView: View {
             get: { engine.inspectedWord != nil },
             set: { if !$0 { engine.dismissInspector() } }
         )) {
-            WordInspectorSheet(engine: engine)
+            WordInspectorSheet(
+                source: engine,
+                footer: "Saved words become flashcards: they appear in your end-of-session report, where you can add them to a deck."
+            )
         }
         .sheet(isPresented: $showSavedWords) {
             SavedWordsSheet(engine: engine)
         }
         .sheet(isPresented: $showHelp) {
-            ConversationHelpSheet(accent: theme.accent)
+            GestureHelpSheet(
+                intro: "Two quick gestures help you learn while you chat.",
+                accent: theme.accent
+            )
         }
         .sheet(item: $phraseDraft) { draft in
             AddEditPhraseSheet(
@@ -243,7 +249,10 @@ struct ConversationView: View {
                     }
 
                     if let error = engine.errorMessage {
-                        ErrorBanner(text: error)
+                        ErrorBanner(
+                            text: error,
+                            onRetry: engine.canRetryReply ? { engine.retryReply() } : nil
+                        )
                     }
 
                     Color.clear.frame(height: 1).id("bottom")
@@ -287,16 +296,31 @@ struct ConversationView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
-            // Assist actions
-            HStack(spacing: 10) {
-                AssistPill(icon: "lightbulb.fill", title: "Hint", tint: .yellow,
-                           disabled: engine.isBusy || engine.isRecording) {
-                    engine.requestHints()
-                }
-                AssistPill(icon: "character.bubble.fill", title: "Say it in German", tint: theme.accent,
-                           disabled: engine.isBusy || engine.isRecording) {
-                    // Needs the model to translate — load it first, then open the sheet.
-                    if engine.requireModelReady(orRun: { showSayIt = true }) { showSayIt = true }
+            if let repair = engine.repairPrompt {
+                NudgePromptCard(
+                    prompt: repair,
+                    accent: theme.accent,
+                    onHear: { SpeechService.shared.speak(repair.target) },
+                    onHearSlow: { SpeechService.shared.speak(repair.target, slow: true) },
+                    onReveal: { engine.revealRepair() },
+                    onSkip: { engine.skipRepair() },
+                    onClose: { engine.skipRepair() }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
+            // Assist actions — hidden while a nudge is active so the mic stays focused on the retry.
+            if engine.repairPrompt == nil {
+                HStack(spacing: 10) {
+                    AssistPill(icon: "lightbulb.fill", title: "Hint", tint: .yellow,
+                               disabled: engine.isBusy || engine.isRecording) {
+                        engine.requestHints()
+                    }
+                    AssistPill(icon: "character.bubble.fill", title: "Say it in German", tint: theme.accent,
+                               disabled: engine.isBusy || engine.isRecording) {
+                        // Needs the model to translate — load it first, then open the sheet.
+                        if engine.requireModelReady(orRun: { showSayIt = true }) { showSayIt = true }
+                    }
                 }
             }
 
@@ -356,6 +380,7 @@ struct ConversationView: View {
         .animation(.easeInOut(duration: 0.2), value: engine.isRecording)
         .animation(.easeInOut(duration: 0.25), value: engine.isModelReady)
         .animation(.easeInOut(duration: 0.2), value: engine.sayItPrompt)
+        .animation(.easeInOut(duration: 0.2), value: engine.repairPrompt)
         .sheet(isPresented: $showSayIt) {
             SayItView(engine: engine)
         }
@@ -374,6 +399,9 @@ struct ConversationView: View {
         case .idle:
             if !engine.isModelReady {
                 return "Tap the mic to load \(config.model.rawValue) and pick up where you left off"
+            }
+            if engine.repairPrompt != nil {
+                return "Tap the mic and say the corrected sentence"
             }
             return engine.conversation.messages.isEmpty ? "Getting ready…" : "Tap to speak"
         }
@@ -514,7 +542,9 @@ private struct UserMessageView: View {
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 6) {
-            if message.hasCorrection {
+            // The corrected sentence stays hidden while an elicitation nudge is active for this turn
+            // (the learner is being asked to fix it themselves); it appears once the nudge resolves.
+            if message.hasCorrection, engine.activeRepairMessageID != message.id {
                 CorrectionCard(message: message, engine: engine, onSavePhrase: onSavePhrase)
             }
 
@@ -557,6 +587,12 @@ private struct UserMessageView: View {
                         .font(.caption2)
                         .foregroundStyle(.green)
                 }
+                if !message.reviewedWords.isEmpty {
+                    Label("reviewed: \(message.reviewedWords.joined(separator: ", "))",
+                          systemImage: "arrow.triangle.2.circlepath")
+                        .font(.caption2)
+                        .foregroundStyle(.blue)
+                }
             }
         }
     }
@@ -570,16 +606,20 @@ private struct CorrectionCard: View {
 
     private var corrected: String { message.correctedText ?? "" }
     private var note: String? { message.correctionNote }
+    private var selfCorrected: Bool { message.selfCorrected }
+    /// Green when the learner repaired it themselves (elicitation), orange for a handed-over fix.
+    private var tint: Color { selfCorrected ? .green : .orange }
 
     var body: some View {
         HStack {
             Spacer(minLength: 24)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
-                    Image(systemName: "pencil.and.outline")
-                    Text("Suggested correction").font(.caption.weight(.semibold))
+                    Image(systemName: selfCorrected ? "checkmark.seal.fill" : "pencil.and.outline")
+                    Text(selfCorrected ? "You fixed this yourself" : "Suggested correction")
+                        .font(.caption.weight(.semibold))
                 }
-                .foregroundStyle(.orange)
+                .foregroundStyle(tint)
 
                 correctedGermanView
 
@@ -603,10 +643,10 @@ private struct CorrectionCard: View {
                 .padding(.top, 1)
             }
             .padding(12)
-            .background(Color.orange.opacity(0.10))
+            .background(tint.opacity(0.10))
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(Color.orange.opacity(0.35), lineWidth: 1)
+                    .strokeBorder(tint.opacity(0.35), lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
@@ -643,7 +683,7 @@ private struct CorrectionCard: View {
                 .foregroundStyle(.secondary)
                 .padding(.leading, 8)
                 .overlay(alignment: .leading) {
-                    Rectangle().fill(Color.orange.opacity(0.5)).frame(width: 2)
+                    Rectangle().fill(tint.opacity(0.5)).frame(width: 2)
                 }
                 .fixedSize(horizontal: false, vertical: true)
         } else if engine.isTranslatingCorrection(message) {
@@ -876,76 +916,6 @@ private struct ModelLoadingBanner: View {
     }
 }
 
-/// Shown when the user taps a word — its translation, hear-it, and a save-to-library action.
-private struct WordInspectorSheet: View {
-    let engine: ConversationEngine
-
-    var body: some View {
-        NavigationStack {
-            Group {
-                if let inspected = engine.inspectedWord {
-                    content(inspected)
-                } else {
-                    Color.clear
-                }
-            }
-            .navigationTitle("Word")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { engine.dismissInspector() }
-                }
-            }
-            .presentationDetents([.height(300)])
-        }
-    }
-
-    @ViewBuilder
-    private func content(_ inspected: InspectedWord) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(inspected.word)
-                .font(.largeTitle.weight(.semibold))
-                .fixedSize(horizontal: false, vertical: true)
-
-            if inspected.loading {
-                HStack(spacing: 8) {
-                    ProgressView()
-                    Text("Translating…").foregroundStyle(.secondary)
-                }
-            } else if let translation = inspected.translation, !translation.isEmpty {
-                Text(translation).font(.title3).foregroundStyle(.secondary)
-            } else {
-                Text("No translation found.").font(.callout).foregroundStyle(.secondary)
-            }
-
-            HStack(spacing: 16) {
-                Button { SpeechService.shared.speak(inspected.word) } label: {
-                    Label("Hear it", systemImage: "speaker.wave.2.fill")
-                }
-                .buttonStyle(.bordered)
-
-                if inspected.saved {
-                    Label("Saved", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                } else {
-                    Button { engine.saveInspectedWord() } label: {
-                        Label("Save to flashcard library", systemImage: "rectangle.stack.badge.plus")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(inspected.loading)
-                }
-            }
-
-            Text("Saved words become flashcards: they appear in your end-of-session report, where you can add them to a deck.")
-                .font(.caption2).foregroundStyle(.secondary)
-
-            Spacer()
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
 /// Bookmark button with a count badge, shown near the mic when words have been saved.
 private struct SavedWordsButton: View {
     let count: Int
@@ -1018,14 +988,28 @@ private struct SavedWordsSheet: View {
 
 private struct ErrorBanner: View {
     let text: String
+    /// When set, a "Try again" button is shown to re-trigger the AI response.
+    var onRetry: (() -> Void)? = nil
+
     var body: some View {
-        Label(text, systemImage: "exclamationmark.triangle.fill")
-            .font(.caption)
-            .foregroundStyle(.orange)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(10)
-            .background(Color.orange.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+        VStack(alignment: .leading, spacing: 8) {
+            Label(text, systemImage: "exclamationmark.triangle.fill")
+                .font(.caption)
+                .foregroundStyle(.orange)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if let onRetry {
+                Button(action: onRetry) {
+                    Label("Try again", systemImage: "arrow.clockwise")
+                        .font(.caption.weight(.semibold))
+                }
+                .buttonStyle(.borderless)
+                .tint(.orange)
+            }
+        }
+        .padding(10)
+        .background(Color.orange.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
 
@@ -1163,6 +1147,100 @@ private struct SayItPromptCard: View {
                 Spacer()
                 Button { onUseAnyway() } label: {
                     Text("Use it anyway").font(.caption2.weight(.medium))
+                }
+                .buttonStyle(.borderless)
+            }
+            .padding(.top, 2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(tint.opacity(0.10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(tint.opacity(0.35), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(.horizontal, 16)
+    }
+}
+
+/// The elicitation ("Nudge me") card: a targeted question that lets the learner repair their own
+/// mistake by saying the corrected sentence back. Mirrors `SayItPromptCard`'s try-again loop, but
+/// the answer stays hidden until they miss or ask to see it.
+private struct NudgePromptCard: View {
+    let prompt: RepairPrompt
+    let accent: Color
+    let onHear: () -> Void
+    let onHearSlow: () -> Void
+    let onReveal: () -> Void
+    let onSkip: () -> Void
+    let onClose: () -> Void
+
+    private var missed: Bool { prompt.matched == false }
+    private var revealed: Bool { prompt.revealed }
+    private var tint: Color { missed ? .orange : accent }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: missed ? "exclamationmark.bubble.fill" : "questionmark.bubble.fill")
+                    .foregroundStyle(tint)
+                Text(missed ? "Almost — try the fix" : "Your turn — fix it yourself")
+                    .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                Spacer()
+                Button { onClose() } label: {
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            // The German nudge question — always shown; it's the whole point of this mode.
+            Text(prompt.hint)
+                .font(.callout.weight(.medium))
+                .fixedSize(horizontal: false, vertical: true)
+
+            if missed, let heard = prompt.heardText, !heard.isEmpty {
+                Text("You said: \(heard)")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            // The answer — revealed only after a miss or an explicit "Show me".
+            if revealed {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(prompt.target)
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(tint)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                    Button { onHear() } label: {
+                        Image(systemName: "speaker.wave.2.fill").font(.caption)
+                    }
+                    .buttonStyle(.borderless)
+                    Button { onHearSlow() } label: {
+                        Image(systemName: "tortoise.fill").font(.caption)
+                    }
+                    .buttonStyle(.borderless)
+                }
+                if let note = prompt.note, !note.isEmpty {
+                    Text(note).font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            HStack(spacing: 8) {
+                Label(missed ? "Tap the mic to try again" : "Tap the mic and say it correctly",
+                      systemImage: "mic.fill")
+                    .font(.caption2).foregroundStyle(.secondary)
+                Spacer()
+                if !revealed {
+                    Button { onReveal() } label: {
+                        Text("Show me").font(.caption2.weight(.medium))
+                    }
+                    .buttonStyle(.borderless)
+                }
+                Button { onSkip() } label: {
+                    Text(revealed ? "Continue" : "Skip").font(.caption2.weight(.medium))
                 }
                 .buttonStyle(.borderless)
             }

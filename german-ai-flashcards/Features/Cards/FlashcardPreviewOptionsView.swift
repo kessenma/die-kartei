@@ -9,26 +9,9 @@ struct FlashcardPreviewOptionsView: View {
     @Binding var autoAdvance: Bool
     var showHints: Binding<Bool>? = nil
     var hasExamples: Bool
-    var validationIssues: [ValidationResult] = []
     var cards: [VocabCard] = []
-    var onFixIssues: (() -> Void)? = nil
 
     @State private var showingWordList = false
-
-    private var correctableCount: Int {
-        validationIssues.filter { $0.status.isCorrectable }.count
-    }
-
-    private var genderIssueCount: Int {
-        validationIssues.filter {
-            if case .genderMismatch = $0.status { return true }
-            return false
-        }.count
-    }
-
-    private var notFoundCount: Int {
-        validationIssues.filter { $0.status == .notFound }.count
-    }
 
     var body: some View {
         VStack(spacing: 12) {
@@ -113,42 +96,6 @@ struct FlashcardPreviewOptionsView: View {
             }
         }
 
-        if correctableCount > 0, let onFixIssues {
-            VStack(spacing: 8) {
-                HStack(spacing: 6) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-                    Text("Validation Issues")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                Text(issueDescription)
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 280)
-
-                Button(action: onFixIssues) {
-                    Label("Fix Issues", systemImage: "pencil.circle")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                }
-                .buttonStyle(.bordered)
-                .tint(.orange)
-            }
-        }
-    }
-
-    private var issueDescription: String {
-        var parts: [String] = []
-        if genderIssueCount > 0 {
-            parts.append("\(genderIssueCount) gender issue\(genderIssueCount == 1 ? "" : "s")")
-        }
-        if notFoundCount > 0 {
-            parts.append("\(notFoundCount) not in dictionary")
-        }
-        return parts.joined(separator: " · ")
     }
 }
 

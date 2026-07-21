@@ -27,3 +27,14 @@ struct VocabCard {
 struct VocabCardResponse {
     var cards: [VocabCard]
 }
+
+extension String {
+    /// Prefixes a noun with its article for display — `"Flug".withArticle("der")` → "der Flug".
+    /// No-op when the article is missing or the word already starts with it (older saved cards
+    /// can have the article baked into the word itself).
+    func withArticle(_ article: String?) -> String {
+        guard let article, !article.isEmpty else { return self }
+        if lowercased().hasPrefix(article.lowercased() + " ") { return self }
+        return "\(article) \(self)"
+    }
+}

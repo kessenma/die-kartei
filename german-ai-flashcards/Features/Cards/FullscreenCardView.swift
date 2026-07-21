@@ -11,6 +11,10 @@ struct FullscreenCardView: View {
     let isQuizMode: Bool
     let badgeLogoName: String?
     var model: MLXModel? = nil
+    /// Index-aligned with `cards`; supplies each card's picture file name. Empty for loose decks.
+    var savedCards: [SavedCard] = []
+    /// The deck the pictures are filed under, or nil when there's no saved deck.
+    var deckUUID: UUID? = nil
     var onApplyCorrection: ((Int, String?) -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
@@ -20,6 +24,11 @@ struct FullscreenCardView: View {
 
     private var isShowingGermanSide: Bool {
         (showGermanFirst && !isFlipped) || (!showGermanFirst && isFlipped)
+    }
+
+    /// The current card's picture file name, when this deck has saved cards backing it.
+    private var currentImageFileName: String? {
+        savedCards.indices.contains(currentIndex) ? savedCards[currentIndex].imageFileName : nil
     }
 
     var body: some View {
@@ -139,7 +148,9 @@ struct FullscreenCardView: View {
                 isSeparable: cards[currentIndex].isSeparable,
                 verbPrefix: cards[currentIndex].verbPrefix,
                 isRegular: cards[currentIndex].isRegular,
-                exampleSentence: cards[currentIndex].exampleSentence
+                exampleSentence: cards[currentIndex].exampleSentence,
+                imageFileName: currentImageFileName,
+                imageDeckID: deckUUID
             )
             .id("fs-\(currentIndex)-\(showGermanFirst)")
             .frame(maxWidth: visibleHeight - 32) // constrain card width to fit rotated bounds
@@ -179,7 +190,9 @@ struct FullscreenCardView: View {
                 isSeparable: cards[currentIndex].isSeparable,
                 verbPrefix: cards[currentIndex].verbPrefix,
                 isRegular: cards[currentIndex].isRegular,
-                exampleSentence: cards[currentIndex].exampleSentence
+                exampleSentence: cards[currentIndex].exampleSentence,
+                imageFileName: currentImageFileName,
+                imageDeckID: deckUUID
             )
             .id("fs-\(currentIndex)-\(showGermanFirst)")
             .offset(x: dragOffset * 0.3)

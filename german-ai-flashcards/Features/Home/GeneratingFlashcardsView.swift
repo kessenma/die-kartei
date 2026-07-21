@@ -14,6 +14,15 @@ struct GeneratingFlashcardsView: View {
     var currentBatchIndex: Int = 0
     var onStop: (() -> Void)? = nil
 
+    /// The `CardImageTiming.everyCard` second half: the words are done and pictures are being drawn
+    /// for them. Same overlay rather than a new screen — from the learner's side it's still one
+    /// "make my deck" operation, it just has two phases.
+    var isDrawingImages: Bool = false
+    var imagesDrawn: Int = 0
+    var imagesTotal: Int = 0
+    var imageProgress: Double = 0
+    var onStopImages: (() -> Void)? = nil
+
     private var tokenFill: Double {
         guard currentBatchSize > 0, progress < 1.0 else { return 0 }
         let estimatedTokensPerBatch = max(currentBatchSize * 180, 100)
@@ -49,18 +58,21 @@ struct GeneratingFlashcardsView: View {
                 AnimatedCardStack(accent: model.theme.accent)
                     .frame(height: 200)
 
-                Text("Generating Flashcards")
+                Text(isDrawingImages ? "Drawing Pictures" : "Generating Flashcards")
                     .font(.title3)
                     .fontWeight(.semibold)
 
                 VStack(spacing: 8) {
-                    ProgressView(value: smoothedProgress)
+                    ProgressView(value: isDrawingImages ? imageProgress : smoothedProgress)
                         .tint(model.theme.accent)
                         .frame(maxWidth: 240)
                         .animation(.linear(duration: 0.3), value: smoothedProgress)
+                        .animation(.linear(duration: 0.3), value: imageProgress)
 
                     HStack(spacing: 12) {
-                        Text("\(estimatedCardsInProgress) of \(cardsRequested) cards")
+                        Text(isDrawingImages
+                             ? "Picture \(min(imagesDrawn + 1, max(imagesTotal, 1))) of \(imagesTotal)"
+                             : "\(estimatedCardsInProgress) of \(cardsRequested) cards")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
@@ -73,8 +85,24 @@ struct GeneratingFlashcardsView: View {
                     }
                 }
 
+                if isDrawingImages {
+                    Text("All \(imagesTotal) cards are written. You'll see the pictures when you pick which cards to keep.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 280)
+
+                    if let onStopImages {
+                        Button(role: .destructive, action: onStopImages) {
+                            Label("Skip the Pictures", systemImage: "stop.circle")
+                                .font(.subheadline)
+                        }
+                        .padding(.top, 4)
+                    }
+                }
+
                 // Batch dots — one per chunk, fills with token progress while active
-                if totalBatches > 1 {
+                if !isDrawingImages, totalBatches > 1 {
                     HStack(spacing: 10) {
                         ForEach(0..<totalBatches, id: \.self) { i in
                             batchDot(at: i)
@@ -91,7 +119,7 @@ struct GeneratingFlashcardsView: View {
                         .animation(.easeInOut(duration: 0.4), value: generatedWords.count)
                 }
 
-                if isValidating {
+                if isValidating, !isDrawingImages {
                     HStack(spacing: 8) {
                         ProgressView()
                             .controlSize(.small)
@@ -106,7 +134,7 @@ struct GeneratingFlashcardsView: View {
                         .foregroundStyle(.tertiary)
                 }
 
-                if let onStop, !isValidating {
+                if let onStop, !isValidating, !isDrawingImages {
                     Button(role: .destructive, action: onStop) {
                         Label("Stop & Keep Cards", systemImage: "stop.circle")
                             .font(.subheadline)

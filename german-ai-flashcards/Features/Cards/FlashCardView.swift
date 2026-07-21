@@ -3,6 +3,20 @@
 
 import SwiftUI
 
+/// How a card's AI picture is presented on the German side. Persisted (shared with the deck's
+/// toolbar toggle) via `FlashcardImageStyle.defaultsKey`.
+enum FlashcardImageStyle: String, CaseIterable, Identifiable {
+    /// Full-bleed picture, minimal bottom gradient, white word floated over it.
+    case immersive
+    /// Full-bleed picture with a solid dark bar behind the word — less arty, maximum legibility.
+    case highContrast
+
+    var id: String { rawValue }
+    static let defaultsKey = "flashcardImageStyle"
+    var label: String { self == .immersive ? "Immersive" : "High contrast" }
+    var systemImage: String { self == .immersive ? "photo.fill" : "rectangle.bottomthird.inset.filled" }
+}
+
 struct FlashCardView: View {
     @Binding var isFlipped: Bool
     var germanWord: String = "Haus"
@@ -22,7 +36,18 @@ struct FlashCardView: View {
     var isRegular: Bool? = nil
     var exampleSentence: String? = nil
 
+    /// This card's AI-generated picture (`SavedCard.imageFileName`) and the deck it's filed under.
+    /// Both are needed to find the file; either being nil means the card has no picture.
+    var imageFileName: String? = nil
+    var imageDeckID: UUID? = nil
+
     @Environment(\.colorScheme) private var colorScheme
+    @AppStorage(FlashcardImageStyle.defaultsKey) private var imageStyle: FlashcardImageStyle = .immersive
+
+    /// Loaded from disk by the card itself, so a picture that finishes generating mid-session
+    /// appears as soon as SwiftData hands down the new file name.
+    @State private var cardImage: UIImage?
+    @State private var showingFullScreenImage = false
 
     private var theme: ModelTheme? { model?.theme }
 
@@ -51,15 +76,7 @@ struct FlashCardView: View {
     }
 
     private var germanDisplay: String {
-        if let article, !article.isEmpty {
-            // Avoid duplication if the model already included the article in germanWord
-            let lower = germanWord.lowercased()
-            if lower.hasPrefix(article.lowercased() + " ") {
-                return germanWord
-            }
-            return "\(article) \(germanWord)"
-        }
-        return germanWord
+        germanWord.withArticle(article)
     }
     private var frontText: String { showGermanFirst ? germanDisplay : englishWord }
     private var backText: String { showGermanFirst ? englishWord : germanDisplay }
@@ -70,6 +87,14 @@ struct FlashCardView: View {
     private var isShowingGerman: Bool {
         (showGermanFirst && !isFlipped) || (!showGermanFirst && isFlipped)
     }
+
+    /// The picture is a memory hook for the German word, so it only takes over the card on the
+    /// German side; showing it on the answer side would hand over the answer.
+    private var showsImageFace: Bool { isShowingGerman && cardImage != nil }
+
+    /// Keyed off whether the card *has* a picture (not whether it's currently visible) so the card
+    /// doesn't resize halfway through the flip.
+    private var cardHeight: CGFloat { cardImage != nil ? 360 : 280 }
 
     @ViewBuilder
     private var verbBackContent: some View {
@@ -143,7 +168,7 @@ struct FlashCardView: View {
 
     var body: some View {
         ZStack {
-            // Card background
+            // Card background — the base for the ruled (text) face; the image face covers it.
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(cardColor)
             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -152,29 +177,15 @@ struct FlashCardView: View {
                     lineWidth: 1
                 )
 
-            // Ruled lines
-            VStack(spacing: 0) {
-                // Top margin area with red rule line
-                Rectangle()
-                    .fill(redRuleColor)
-                    .frame(height: 1.5)
-                    .padding(.top, 60)
-
-                Spacer()
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-            // Horizontal ruled lines
-            VStack(spacing: 28) {
-                ForEach(0..<6, id: \.self) { _ in
-                    Rectangle()
-                        .fill(lineColor)
-                        .frame(height: 0.5)
+            // The two faces, counter-rotated together so text/word reads correctly on the flip.
+            Group {
+                if showsImageFace {
+                    imageFace
+                } else {
+                    textFace
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 70)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .rotation3DEffect(.degrees(isFlipped ? 180 : 0), axis: (x: 0, y: 1, z: 0))
 
             // Maker badge in the top-right corner: the generating model's logo when known,
             // otherwise the deck's asset badge (e.g. Goethe).
@@ -198,10 +209,154 @@ struct FlashCardView: View {
                     Spacer()
                 }
             }
+        }
+        .frame(height: cardHeight)
+        .task(id: imageFileName) {
+            guard let imageFileName, let imageDeckID else {
+                cardImage = nil
+                return
+            }
+            cardImage = CardImageStore.loadImage(fileName: imageFileName, deckID: imageDeckID)
+        }
+        .shadow(
+            color: theme?.accent.opacity(0.28) ?? .black.opacity(0.1),
+            radius: theme == nil ? 8 : 12, x: 0, y: 4
+        )
+        .padding(.horizontal)
+        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .onTapGesture {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                isFlipped.toggle()
+            }
+        }
+        .rotation3DEffect(.degrees(isFlipped ? 180 : 0), axis: (x: 0, y: 1, z: 0))
+        .fullScreenCover(isPresented: $showingFullScreenImage) {
+            if let cardImage {
+                FullScreenImageView(image: cardImage, caption: germanDisplay)
+            }
+        }
+    }
 
-            // Card content — counter-rotated when flipped so text isn't mirrored
+    // MARK: - Image face (German side, full-bleed picture)
+
+    @ViewBuilder
+    private var imageFace: some View {
+        if let cardImage {
+            ZStack(alignment: .bottom) {
+                Image(uiImage: cardImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                scrim
+
+                // Word + pronunciation, floated over the picture.
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(germanDisplay)
+                        .font(.system(size: 32, weight: .bold, design: .serif))
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.55), radius: 4, x: 0, y: 1)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.6)
+
+                    Button {
+                        SpeechService.shared.speak(germanDisplay)
+                    } label: {
+                        Image(systemName: "speaker.wave.2.fill")
+                            .font(.title3)
+                            .foregroundStyle(.white)
+                            .shadow(color: .black.opacity(0.5), radius: 3)
+                    }
+                    .buttonStyle(.plain)
+
+                    Spacer(minLength: 0)
+
+                    if let badge = genderBadge {
+                        Image(systemName: badge.symbol)
+                            .font(.title2)
+                            .foregroundStyle(.white)
+                            .shadow(color: .black.opacity(0.5), radius: 3)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 18)
+
+                // Expand-to-fullscreen affordance, top-left (clear of the maker badge).
+                VStack {
+                    HStack {
+                        Button {
+                            showingFullScreenImage = true
+                        } label: {
+                            Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .padding(9)
+                                .background(.ultraThinMaterial, in: Circle())
+                                .environment(\.colorScheme, .dark)
+                        }
+                        .buttonStyle(.plain)
+                        Spacer()
+                    }
+                    Spacer()
+                }
+                .padding(10)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+    }
+
+    /// Legibility scrim under the word. Immersive keeps the picture clear except for a soft bottom
+    /// fade; high-contrast lays down a near-solid dark bar.
+    @ViewBuilder
+    private var scrim: some View {
+        switch imageStyle {
+        case .immersive:
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0.5),
+                    .init(color: .black.opacity(0.7), location: 1.0),
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+        case .highContrast:
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0.62),
+                    .init(color: .black.opacity(0.86), location: 0.74),
+                    .init(color: .black.opacity(0.86), location: 1.0),
+                ],
+                startPoint: .top, endPoint: .bottom
+            )
+        }
+    }
+
+    // MARK: - Text face (ruled index card: answer side, or cards without a picture)
+
+    private var textFace: some View {
+        ZStack {
+            // Ruled lines
             VStack(spacing: 0) {
-                // Language label
+                Rectangle()
+                    .fill(redRuleColor)
+                    .frame(height: 1.5)
+                    .padding(.top, 60)
+                Spacer()
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            VStack(spacing: 28) {
+                ForEach(0..<6, id: \.self) { _ in
+                    Rectangle()
+                        .fill(lineColor)
+                        .frame(height: 0.5)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 70)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            VStack(spacing: 0) {
                 Text(isFlipped ? backLabel : frontLabel)
                     .font(.caption2)
                     .fontWeight(.semibold)
@@ -214,7 +369,6 @@ struct FlashCardView: View {
                 if isFlipped && auxiliaryVerb != nil {
                     verbBackContent
                 } else {
-                    // Main word
                     HStack(spacing: 10) {
                         Text(isFlipped ? backText : frontText)
                             .font(.system(size: 38, weight: .bold, design: .serif))
@@ -242,26 +396,12 @@ struct FlashCardView: View {
 
                 Spacer()
 
-                // Hint
                 Text(isFlipped ? "Tap to see Question" : "Tap to see Answer")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                     .padding(.bottom, 16)
             }
-            .rotation3DEffect(.degrees(isFlipped ? 180 : 0), axis: (x: 0, y: 1, z: 0))
         }
-        .frame(height: 280)
-        .shadow(
-            color: theme?.accent.opacity(0.28) ?? .black.opacity(0.1),
-            radius: theme == nil ? 8 : 12, x: 0, y: 4
-        )
-        .padding(.horizontal)
-        .onTapGesture {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                isFlipped.toggle()
-            }
-        }
-        .rotation3DEffect(.degrees(isFlipped ? 180 : 0), axis: (x: 0, y: 1, z: 0))
     }
 }
 

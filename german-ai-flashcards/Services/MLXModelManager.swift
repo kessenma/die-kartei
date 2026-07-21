@@ -23,11 +23,47 @@ class MLXModelManager {
         }
     }
 
+    /// Whether a newly created deck starts drawing AI pictures for its cards in the background.
+    /// Off by default — pictures need a separate model download and real generation time. Lives
+    /// here rather than in `@AppStorage` because two views share it (deck setup and Card Settings).
+    var flashcardIllustrationsEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(flashcardIllustrationsEnabled, forKey: "flashcardIllustrationsEnabled")
+        }
+    }
+
     /// The identifier of the preferred German TTS voice (nil = system default de-DE).
     var selectedVoiceIdentifier: String? {
         didSet {
             UserDefaults.standard.set(selectedVoiceIdentifier, forKey: "selectedVoiceIdentifier")
         }
+    }
+
+    /// Per-role German voices used to give each speaker of a dialogue/e-mail story its own voice
+    /// in listening mode. Each nil = fall back to `selectedVoiceIdentifier`, then the system de-DE.
+    var voiceMaleIdentifier: String? {
+        didSet { UserDefaults.standard.set(voiceMaleIdentifier, forKey: "voiceMaleIdentifier") }
+    }
+    var voiceFemaleIdentifier: String? {
+        didSet { UserDefaults.standard.set(voiceFemaleIdentifier, forKey: "voiceFemaleIdentifier") }
+    }
+    var voiceBoyIdentifier: String? {
+        didSet { UserDefaults.standard.set(voiceBoyIdentifier, forKey: "voiceBoyIdentifier") }
+    }
+    var voiceGirlIdentifier: String? {
+        didSet { UserDefaults.standard.set(voiceGirlIdentifier, forKey: "voiceGirlIdentifier") }
+    }
+
+    /// The downloaded voice a speaker role maps to, falling back to the single selected voice.
+    func voiceIdentifier(for role: StorySpeaker.Role) -> String? {
+        let roleVoice: String?
+        switch role {
+        case .male:   roleVoice = voiceMaleIdentifier
+        case .female: roleVoice = voiceFemaleIdentifier
+        case .boy:    roleVoice = voiceBoyIdentifier
+        case .girl:   roleVoice = voiceGirlIdentifier
+        }
+        return roleVoice ?? selectedVoiceIdentifier
     }
 
     /// When true, selecting a rating automatically advances to the next card (no Next button needed).
@@ -46,6 +82,32 @@ class MLXModelManager {
                 UserDefaults.standard.removeObject(forKey: "lastLoadedModel")
             }
         }
+    }
+
+    // MARK: - Card Matching Settings
+
+    /// Pairs per matching round (the board size). Clamped to the picker's 6/8/10/12 choices.
+    var matchingPairCount: Int {
+        didSet { UserDefaults.standard.set(matchingPairCount, forKey: "matchingPairCount") }
+    }
+    /// When on, rounds draw up to half their pairs from words the learner keeps missing,
+    /// so recurring mistakes come back around until they're re-proven.
+    var matchingTrickyFirst: Bool {
+        didSet { UserDefaults.standard.set(matchingTrickyFirst, forKey: "matchingTrickyFirst") }
+    }
+    /// When on, repeatedly-missed matching words flow into the learner profile, so the
+    /// conversation coach works them in and they're drillable from Coach's Notes.
+    var matchingFeedsCoach: Bool {
+        didSet { UserDefaults.standard.set(matchingFeedsCoach, forKey: "matchingFeedsCoach") }
+    }
+    /// Same hand-off for the der/die/das game: nouns whose article keeps being missed
+    /// flow into the learner profile as words being built.
+    var articleFeedsCoach: Bool {
+        didSet { UserDefaults.standard.set(articleFeedsCoach, forKey: "articleFeedsCoach") }
+    }
+    /// How much the games vibrate (matching + der/die/das): all feedback, mistakes only, or off.
+    var hapticFeedbackMode: HapticFeedbackMode {
+        didSet { UserDefaults.standard.set(hapticFeedbackMode.rawValue, forKey: "hapticFeedbackMode") }
     }
 
     // MARK: - Conversation (Voice Chat) Settings
@@ -74,6 +136,11 @@ class MLXModelManager {
     var chatStrictnessRaw: String {
         didSet { UserDefaults.standard.set(chatStrictnessRaw, forKey: "chatStrictnessRaw") }
     }
+    /// Raw `FeedbackStyle` — whether corrections are handed over ("Tell me") or elicited via a
+    /// question first ("Nudge me"). New conversations start from this default.
+    var chatFeedbackStyleRaw: String {
+        didSet { UserDefaults.standard.set(chatFeedbackStyleRaw, forKey: "chatFeedbackStyleRaw") }
+    }
     var chatCorrectionsEnabled: Bool {
         didSet { UserDefaults.standard.set(chatCorrectionsEnabled, forKey: "chatCorrectionsEnabled") }
     }
@@ -93,9 +160,110 @@ class MLXModelManager {
     var chatHintCount: Int {
         didSet { UserDefaults.standard.set(chatHintCount, forKey: "chatHintCount") }
     }
+    /// When on, the coach keeps a persistent on-device learner profile and uses it to
+    /// personalize each session (steer toward weak spots, reuse the learner's words, sharpen
+    /// corrections). See `LearnerMemoryService`.
+    var chatPersonalizedCoaching: Bool {
+        didSet { UserDefaults.standard.set(chatPersonalizedCoaching, forKey: "chatPersonalizedCoaching") }
+    }
+    /// When on, conversations resurface SRS-due flashcards ("spaced re-encounter") and advance a
+    /// card's real review schedule when the learner uses the word correctly. See `ConversationReviewTracker`.
+    var chatSpacedReview: Bool {
+        didSet { UserDefaults.standard.set(chatSpacedReview, forKey: "chatSpacedReview") }
+    }
+    /// Which conversations spaced review applies to (raw `SpacedReviewScope`).
+    var chatSpacedReviewScopeRaw: String {
+        didSet { UserDefaults.standard.set(chatSpacedReviewScopeRaw, forKey: "chatSpacedReviewScopeRaw") }
+    }
+    /// Typed accessor for the spaced-review scope.
+    var spacedReviewScope: SpacedReviewScope {
+        get { SpacedReviewScope(rawValue: chatSpacedReviewScopeRaw) ?? .everywhere }
+        set { chatSpacedReviewScopeRaw = newValue.rawValue }
+    }
     /// The model used to generate study materials from papers/links (and to discuss them).
     var selectedPaperModel: MLXModel {
         didSet { UserDefaults.standard.set(selectedPaperModel.rawValue, forKey: "selectedPaperModel") }
+    }
+
+    // MARK: - Short Stories Settings
+
+    /// Remembered story-setup defaults. The level starts from the conversation level and then
+    /// tracks the learner's own story choice.
+    var storyLevelRaw: String {
+        didSet { UserDefaults.standard.set(storyLevelRaw, forKey: "storyLevelRaw") }
+    }
+    var storyGenreRaw: String {
+        didSet { UserDefaults.standard.set(storyGenreRaw, forKey: "storyGenreRaw") }
+    }
+    /// Comma-joined `StoryQuestion.Kind` raw values the learner wants generated.
+    var storyQuestionTypesRaw: String {
+        didSet { UserDefaults.standard.set(storyQuestionTypesRaw, forKey: "storyQuestionTypesRaw") }
+    }
+    var storyQuestionCount: Int {
+        didSet { UserDefaults.standard.set(storyQuestionCount, forKey: "storyQuestionCount") }
+    }
+    /// Default for "Illustrate this story" in the setup form. Off by default — images are a
+    /// separate model download and add generation time.
+    var storyIllustrationsEnabled: Bool {
+        didSet { UserDefaults.standard.set(storyIllustrationsEnabled, forKey: "storyIllustrationsEnabled") }
+    }
+    /// Images per illustrated story (1–4; the first is always the header image).
+    var storyImageCount: Int {
+        didSet { UserDefaults.standard.set(storyImageCount, forKey: "storyImageCount") }
+    }
+    /// Default for "Translate after writing" in the setup form. Off by default — the translation
+    /// is always available on demand from the story screen, and pre-writing it costs another run.
+    var storyTranslationEnabled: Bool {
+        didSet { UserDefaults.standard.set(storyTranslationEnabled, forKey: "storyTranslationEnabled") }
+    }
+    /// When on, time spent reading or listening to a story keeps the streak alive on its own —
+    /// no questions required (a minute minimum, see `StudyDay.storyStreakSeconds`).
+    var storyTimeCountsTowardStreak: Bool {
+        didSet { UserDefaults.standard.set(storyTimeCountsTowardStreak, forKey: "storyTimeCountsTowardStreak") }
+    }
+    /// When on, words saved while reading and single-word fixes from graded written answers flow
+    /// into the learner profile — the same hand-off the matching game and article game make.
+    var storyFeedsCoach: Bool {
+        didSet { UserDefaults.standard.set(storyFeedsCoach, forKey: "storyFeedsCoach") }
+    }
+
+    var storyLevel: CEFRLevel {
+        get { CEFRLevel(rawValue: storyLevelRaw) ?? .a2 }
+        set { storyLevelRaw = newValue.rawValue }
+    }
+    var storyGenre: StoryGenre {
+        get { StoryGenre(rawValue: storyGenreRaw) ?? .alltag }
+        set { storyGenreRaw = newValue.rawValue }
+    }
+    /// Selected question kinds in canonical order; never empty (falls back to multiple choice).
+    var storyQuestionKinds: [StoryQuestion.Kind] {
+        get {
+            let kinds = storyQuestionTypesRaw.split(separator: ",").compactMap { StoryQuestion.Kind(rawValue: String($0)) }
+            return kinds.isEmpty ? [.multipleChoice] : kinds
+        }
+        set {
+            let ordered = StoryQuestion.Kind.allCases.filter { newValue.contains($0) }
+            storyQuestionTypesRaw = (ordered.isEmpty ? [.multipleChoice] : ordered).map(\.rawValue).joined(separator: ",")
+        }
+    }
+
+    // MARK: - Practice Reminder Settings
+
+    /// Master switch for the "come back and practice" local notifications. Off by default — the app
+    /// never nags unless the learner opts in. See `PracticeReminderService`.
+    var practiceRemindersEnabled: Bool {
+        didSet { UserDefaults.standard.set(practiceRemindersEnabled, forKey: "practiceRemindersEnabled") }
+    }
+    /// Which inactivity checkpoints are on, stored as comma-joined `ReminderCheckpoint` raw values.
+    /// Each enabled checkpoint fires once, measured from the last practice — turning several on
+    /// builds an escalating ladder whose gaps grow, so reminders thin out the longer someone's away.
+    var practiceReminderCheckpointsRaw: String {
+        didSet { UserDefaults.standard.set(practiceReminderCheckpointsRaw, forKey: "practiceReminderCheckpointsRaw") }
+    }
+    /// Typed accessor for the enabled reminder checkpoints.
+    var practiceReminderCheckpoints: Set<ReminderCheckpoint> {
+        get { Set(practiceReminderCheckpointsRaw.split(separator: ",").compactMap { ReminderCheckpoint(rawValue: String($0)) }) }
+        set { practiceReminderCheckpointsRaw = newValue.map(\.rawValue).sorted().joined(separator: ",") }
     }
 
     // MARK: - Generation Speed Tracking
@@ -128,12 +296,21 @@ class MLXModelManager {
 
         let styleRaw = UserDefaults.standard.string(forKey: "flashcardStyle") ?? ""
         self.flashcardStyle = FlashcardStyle(rawValue: styleRaw) ?? .default
+        self.flashcardIllustrationsEnabled = UserDefaults.standard.bool(forKey: "flashcardIllustrationsEnabled")
 
         self.selectedVoiceIdentifier = UserDefaults.standard.string(forKey: "selectedVoiceIdentifier")
         self.autoAdvance = UserDefaults.standard.bool(forKey: "autoAdvance")
 
         let lastRaw = UserDefaults.standard.string(forKey: "lastLoadedModel") ?? ""
         self.lastLoadedModel = MLXModel(rawValue: lastRaw)
+
+        // Matching settings.
+        let storedPairCount = UserDefaults.standard.integer(forKey: "matchingPairCount")
+        self.matchingPairCount = [6, 8, 10, 12].contains(storedPairCount) ? storedPairCount : 8
+        self.matchingTrickyFirst = (UserDefaults.standard.object(forKey: "matchingTrickyFirst") as? Bool) ?? true
+        self.matchingFeedsCoach = (UserDefaults.standard.object(forKey: "matchingFeedsCoach") as? Bool) ?? true
+        self.articleFeedsCoach = (UserDefaults.standard.object(forKey: "articleFeedsCoach") as? Bool) ?? true
+        self.hapticFeedbackMode = HapticFeedbackMode(rawValue: UserDefaults.standard.string(forKey: "hapticFeedbackMode") ?? "") ?? .all
 
         // Conversation settings — default the chat model to the selected card model.
         let chatModelRaw = UserDefaults.standard.string(forKey: "selectedChatModel") ?? ""
@@ -144,13 +321,40 @@ class MLXModelManager {
         self.chatLevelRaw = UserDefaults.standard.string(forKey: "chatLevelRaw") ?? CEFRLevel.a2.rawValue
         self.chatFormalityRaw = UserDefaults.standard.string(forKey: "chatFormalityRaw") ?? Formality.du.rawValue
         self.chatStrictnessRaw = UserDefaults.standard.string(forKey: "chatStrictnessRaw") ?? CorrectionStrictness.balanced.rawValue
+        self.chatFeedbackStyleRaw = UserDefaults.standard.string(forKey: "chatFeedbackStyleRaw") ?? FeedbackStyle.tellMe.rawValue
         self.chatCorrectionsEnabled = (UserDefaults.standard.object(forKey: "chatCorrectionsEnabled") as? Bool) ?? true
         self.chatShowCorrectionTranslation = (UserDefaults.standard.object(forKey: "chatShowCorrectionTranslation") as? Bool) ?? false
         self.chatEagerAssist = (UserDefaults.standard.object(forKey: "chatEagerAssist") as? Bool) ?? false
         self.chatAutoShowTranslation = (UserDefaults.standard.object(forKey: "chatAutoShowTranslation") as? Bool) ?? true
         let storedHintCount = UserDefaults.standard.integer(forKey: "chatHintCount")
         self.chatHintCount = (1...3).contains(storedHintCount) ? storedHintCount : 1
+        self.chatPersonalizedCoaching = (UserDefaults.standard.object(forKey: "chatPersonalizedCoaching") as? Bool) ?? true
+        self.chatSpacedReview = (UserDefaults.standard.object(forKey: "chatSpacedReview") as? Bool) ?? true
+        self.chatSpacedReviewScopeRaw = UserDefaults.standard.string(forKey: "chatSpacedReviewScopeRaw") ?? SpacedReviewScope.everywhere.rawValue
         let paperModelRaw = UserDefaults.standard.string(forKey: "selectedPaperModel") ?? ""
         self.selectedPaperModel = MLXModel(rawValue: paperModelRaw) ?? .gemma4_E4B
+
+        // Story settings — the level follows the conversation level until changed.
+        self.storyLevelRaw = UserDefaults.standard.string(forKey: "storyLevelRaw")
+            ?? UserDefaults.standard.string(forKey: "chatLevelRaw")
+            ?? CEFRLevel.a2.rawValue
+        self.storyGenreRaw = UserDefaults.standard.string(forKey: "storyGenreRaw") ?? StoryGenre.alltag.rawValue
+        self.storyQuestionTypesRaw = UserDefaults.standard.string(forKey: "storyQuestionTypesRaw")
+            ?? StoryQuestion.Kind.multipleChoice.rawValue
+        let storedStoryQuestionCount = UserDefaults.standard.integer(forKey: "storyQuestionCount")
+        self.storyQuestionCount = [4, 6, 8, 10].contains(storedStoryQuestionCount) ? storedStoryQuestionCount : 6
+        self.storyIllustrationsEnabled = (UserDefaults.standard.object(forKey: "storyIllustrationsEnabled") as? Bool) ?? false
+        let storedStoryImageCount = UserDefaults.standard.integer(forKey: "storyImageCount")
+        self.storyImageCount = (1...4).contains(storedStoryImageCount) ? storedStoryImageCount : 2
+        self.storyTranslationEnabled = (UserDefaults.standard.object(forKey: "storyTranslationEnabled") as? Bool) ?? false
+        self.storyTimeCountsTowardStreak = (UserDefaults.standard.object(forKey: "storyTimeCountsTowardStreak") as? Bool) ?? true
+        self.storyFeedsCoach = (UserDefaults.standard.object(forKey: "storyFeedsCoach") as? Bool) ?? true
+
+        // Practice reminders — opt-in, so the master switch defaults off (nothing is scheduled while
+        // it's off). The checkpoint set is pre-seeded with a gentle escalating ladder so flipping the
+        // switch on is immediately useful.
+        self.practiceRemindersEnabled = UserDefaults.standard.bool(forKey: "practiceRemindersEnabled")
+        self.practiceReminderCheckpointsRaw = UserDefaults.standard.string(forKey: "practiceReminderCheckpointsRaw")
+            ?? [ReminderCheckpoint.threeDays, .week, .month].map(\.rawValue).joined(separator: ",")
     }
 }

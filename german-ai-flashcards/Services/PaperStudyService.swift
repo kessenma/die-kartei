@@ -41,9 +41,17 @@ final class PaperStudyService {
 
     private(set) var model: MLXModel = PaperStudyService.requiredModel
 
+    /// The deck built by the most recent `generateDeck(...)` call, so the caller can launch it
+    /// immediately without waiting for a `@Query` refresh.
+    private(set) var generatedDeck: SavedDeck?
+
     // MARK: - Generation
 
-    func generate(for paper: StudyPaper, model: MLXModel, deckCount: Int, questionCount: Int, selectedWords: [String]? = nil) async {
+    /// Generate the base study materials — the German summary + comprehension questions — which is
+    /// all the `.paper` discussion needs. The vocab deck is *not* built here; it's produced
+    /// on-demand by `generateDeck(...)` the first time the learner picks "Make flashcards", so a
+    /// "just discuss it" import stays cheap.
+    func generate(for paper: StudyPaper, model: MLXModel, questionCount: Int) async {
         self.model = model
         paper.modelRaw = model.rawValue
         try? modelContext.save()
@@ -72,23 +80,59 @@ final class PaperStudyService {
         progress = 0.1
         await makeSummary(for: paper, chunks: chunks)
 
-        // 2. Vocab deck.
-        phase = .cards
-        statusText = "Vokabeln werden extrahiert…"
-        if let selectedWords, !selectedWords.isEmpty {
-            await makeDeck(for: paper, words: selectedWords)
-        } else {
-            await makeDeck(for: paper, chunks: chunks, target: deckCount)
-        }
-
-        // 3. Questions.
+        // 2. Questions.
         phase = .questions
         statusText = "Fragen werden erstellt…"
-        progress = 0.9
+        progress = 0.6
         await makeQuestions(for: paper, count: questionCount)
 
         paper.generationComplete = true
         try? modelContext.save()
+        progress = 1
+        phase = .done
+        statusText = "Fertig!"
+    }
+
+    /// Build the vocab deck on demand — invoked when the learner picks "Make flashcards" for a paper.
+    /// Either mines the text for `deckCount` useful words, or translates exactly `selectedWords`.
+    /// The created deck lands on `generatedDeck` (and `paper.deckID`) so the caller can launch it.
+    func generateDeck(for paper: StudyPaper, model: MLXModel, deckCount: Int, selectedWords: [String]?) async {
+        self.model = model
+        generatedDeck = nil
+
+        phase = .loadingModel
+        progress = 0
+        statusText = "Loading \(model.rawValue)…"
+
+        if !mlxService.isModelLoaded || mlxService.currentModel != model {
+            await mlxService.loadModel(model)
+        }
+        guard mlxService.isModelLoaded, mlxService.currentModel == model else {
+            phase = .failed(mlxService.loadError ?? "Couldn’t load \(model.rawValue).")
+            return
+        }
+
+        let chunks = PDFTextExtractor.chunk(paper.fullText, maxChars: 1500)
+        guard !chunks.isEmpty else {
+            phase = .failed("No readable text found in this text.")
+            return
+        }
+
+        phase = .cards
+        statusText = "Vokabeln werden extrahiert…"
+        progress = 0.1
+        let deck: SavedDeck?
+        if let selectedWords, !selectedWords.isEmpty {
+            deck = await makeDeck(for: paper, words: selectedWords)
+        } else {
+            deck = await makeDeck(for: paper, chunks: chunks, target: deckCount)
+        }
+
+        guard let deck else {
+            phase = .failed("Couldn’t extract vocabulary from this text.")
+            return
+        }
+        generatedDeck = deck
         progress = 1
         phase = .done
         statusText = "Fertig!"
@@ -120,7 +164,8 @@ final class PaperStudyService {
         progress = 0.35
     }
 
-    private func makeDeck(for paper: StudyPaper, chunks: [String], target: Int) async {
+    @discardableResult
+    private func makeDeck(for paper: StudyPaper, chunks: [String], target: Int) async -> SavedDeck? {
         var pairs: [(german: String, english: String)] = []
         var seen = Set<String>()
         let chunkCap = min(chunks.count, 8)
@@ -148,12 +193,13 @@ final class PaperStudyService {
             progress = 0.35 + 0.5 * (Double(index + 1) / Double(chunkCap))
         }
 
-        saveDeck(for: paper, pairs: pairs)
+        return saveDeck(for: paper, pairs: pairs)
     }
 
     /// Build the deck from user-picked words: translate exactly those words in batches
     /// instead of letting the model mine the text for its own picks.
-    private func makeDeck(for paper: StudyPaper, words: [String]) async {
+    @discardableResult
+    private func makeDeck(for paper: StudyPaper, words: [String]) async -> SavedDeck? {
         var pairs: [(german: String, english: String)] = []
         var seen = Set<String>()
         let batchSize = 12
@@ -186,11 +232,12 @@ final class PaperStudyService {
             progress = 0.35 + 0.5 * (Double(index + 1) / Double(batches.count))
         }
 
-        saveDeck(for: paper, pairs: pairs)
+        return saveDeck(for: paper, pairs: pairs)
     }
 
-    private func saveDeck(for paper: StudyPaper, pairs: [(german: String, english: String)]) {
-        guard !pairs.isEmpty else { return }
+    @discardableResult
+    private func saveDeck(for paper: StudyPaper, pairs: [(german: String, english: String)]) -> SavedDeck? {
+        guard !pairs.isEmpty else { return nil }
         let vocab = pairs.map { pair -> VocabCard in
             let (german, article) = splitArticle(pair.german)
             return VocabCard(
@@ -213,6 +260,7 @@ final class PaperStudyService {
         modelContext.insert(deck)
         paper.deckID = deck.id
         try? modelContext.save()
+        return deck
     }
 
     private func makeQuestions(for paper: StudyPaper, count: Int) async {

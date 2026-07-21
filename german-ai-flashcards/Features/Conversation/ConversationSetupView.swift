@@ -27,6 +27,15 @@ struct ConversationSetupView: View {
     @State private var model: MLXModel = .qwen3_0_6B
     @State private var didLoadDefaults = false
 
+    // Interview mode: the job posting, from a link or pasted in.
+    @State private var jobSource: JobDescriptionSource = .link
+    @State private var jobURLText = ""
+    @State private var jobPastedText = ""
+    @State private var jobTitleText = ""
+    @State private var fetchedJob: WebTextExtractor.Extracted?
+    @State private var jobLoading = false
+    @State private var jobError: String?
+
     /// Real, non-internal decks the user generated (mirrors SavedDecksView filtering).
     private var decks: [SavedDeck] {
         allDecks.filter {
@@ -36,7 +45,14 @@ struct ConversationSetupView: View {
 
     private var canStart: Bool {
         if mode == .decks { return !selectedDeckIDs.isEmpty }
+        if mode == .interview { return !jobDescriptionText.isEmpty }
         return true
+    }
+
+    /// The interview job description from whichever source is active.
+    private var jobDescriptionText: String {
+        let raw = jobSource == .link ? (fetchedJob?.text ?? "") : jobPastedText
+        return raw.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var body: some View {
@@ -50,6 +66,10 @@ struct ConversationSetupView: View {
 
                 if mode == .scenario {
                     scenarioSection
+                }
+
+                if mode == .interview {
+                    interviewSection
                 }
 
                 GrammarFocusPickerSection(selected: $focus)
@@ -71,6 +91,10 @@ struct ConversationSetupView: View {
                 }
             }
             .onAppear(perform: loadDefaults)
+            .onChange(of: mode) { _, newMode in
+                // Interviews are formal by convention; the learner can still switch back.
+                if newMode == .interview { formality = .sie }
+            }
             .navigationDestination(item: $previewData) { data in
                 ConversationPhrasePreviewView(
                     phrases: data.phrases,
@@ -160,6 +184,64 @@ struct ConversationSetupView: View {
         allPhrases.filter { $0.isActive && $0.applies(to: scenario) }.count
     }
 
+    private var interviewSection: some View {
+        Section {
+            Picker("Job description", selection: $jobSource) {
+                ForEach(JobDescriptionSource.allCases) { source in
+                    Text(source.label).tag(source)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            if jobSource == .link {
+                if let fetchedJob {
+                    HStack(spacing: 10) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(fetchedJob.title).font(.callout.weight(.medium)).lineLimit(1)
+                            Text("\(fetchedJob.text.split(whereSeparator: \.isWhitespace).count) words")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button("Clear") {
+                            self.fetchedJob = nil
+                        }
+                        .font(.caption)
+                    }
+                } else {
+                    TextField("Link to the job posting…", text: $jobURLText)
+                        .keyboardType(.URL)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+
+                    Button(action: fetchJobPosting) {
+                        if jobLoading {
+                            HStack(spacing: 8) { ProgressView(); Text("Fetching…") }
+                        } else {
+                            Label("Fetch posting", systemImage: "arrow.down.doc")
+                        }
+                    }
+                    .disabled(jobURLText.trimmingCharacters(in: .whitespaces).isEmpty || jobLoading)
+                }
+
+                if let jobError {
+                    Text(jobError).font(.caption).foregroundStyle(.red)
+                }
+            } else {
+                TextField("Paste the job description here…", text: $jobPastedText, axis: .vertical)
+                    .lineLimit(4...10)
+            }
+
+            TextField("Job title (used as the chat name)", text: $jobTitleText)
+        } header: {
+            Text("Job posting")
+        } footer: {
+            Text("Paste or fetch the posting — German or English both work; the interview itself is in German. The AI plays the recruiter and asks about your experience for this role.")
+                .font(.caption2)
+        }
+    }
+
     private var levelSection: some View {
         Section {
             Picker("Level", selection: $level) {
@@ -198,7 +280,10 @@ struct ConversationSetupView: View {
         // learning-aid defaults are edited directly in Settings, so they aren't written here.
         modelManager.selectedChatModel = model
         modelManager.chatLevelRaw = level.rawValue
-        modelManager.chatFormalityRaw = formality.rawValue
+        // Interviews auto-switch to "Sie" — don't let that overwrite the learner's usual default.
+        if mode != .interview {
+            modelManager.chatFormalityRaw = formality.rawValue
+        }
 
         let chosenDecks = decks.filter { selectedDeckIDs.contains($0.id) }
         let deckWords = chosenDecks.flatMap { $0.cards.map(\.germanWord) }
@@ -211,12 +296,20 @@ struct ConversationSetupView: View {
         config.deckWords = deckWords
         config.scenario = (mode == .scenario) ? scenario : nil
         config.customScenario = customScenario
+        if mode == .interview {
+            let title = jobTitleText.trimmingCharacters(in: .whitespacesAndNewlines)
+            config.jobTitle = title.isEmpty ? nil : String(title.prefix(90))
+            // Fetched pages carry navigation boilerplate and can be huge; cap what we inject and
+            // persist so small on-device models keep room for the actual conversation.
+            config.jobContext = String(jobDescriptionText.prefix(3000))
+        }
         config.focusAreas = GrammarFocus.allCases.filter { focus.contains($0) }
         config.level = level
         config.formality = formality
         config.correctionsEnabled = modelManager.chatCorrectionsEnabled
         config.correctionTranslationEnabled = modelManager.chatShowCorrectionTranslation
         config.strictness = CorrectionStrictness(rawValue: modelManager.chatStrictnessRaw) ?? .balanced
+        config.feedbackStyle = FeedbackStyle(rawValue: modelManager.chatFeedbackStyleRaw) ?? .tellMe
         config.autoPlay = modelManager.autoPlayReplies
         config.eagerAssist = modelManager.chatEagerAssist
         config.autoShowTranslation = modelManager.chatAutoShowTranslation
@@ -235,6 +328,24 @@ struct ConversationSetupView: View {
         onStart(config)
     }
 
+    private func fetchJobPosting() {
+        let input = jobURLText.trimmingCharacters(in: .whitespaces)
+        guard !input.isEmpty, !jobLoading else { return }
+        jobLoading = true
+        jobError = nil
+        Task {
+            let result = await WebTextExtractor.fetch(input)
+            jobLoading = false
+            switch result {
+            case .success(let extracted):
+                fetchedJob = extracted
+                if jobTitleText.isEmpty { jobTitleText = extracted.title }
+            case .failure(let webError):
+                jobError = webError.errorDescription
+            }
+        }
+    }
+
     /// Called from the phrase preview once the user confirms which phrases to keep this session.
     private func begin(baseConfig: ConversationConfig, confirmed: [LearnedPhrase]) {
         for phrase in confirmed { phrase.markSurfaced() }
@@ -247,6 +358,21 @@ struct ConversationSetupView: View {
         config.focusAreas = GrammarFocus.allCases.filter { union.contains($0) }
 
         onStart(config)
+    }
+}
+
+/// How the learner supplies the job posting for interview mode.
+private enum JobDescriptionSource: String, CaseIterable, Identifiable {
+    case link
+    case paste
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .link:  "From a link"
+        case .paste: "Paste text"
+        }
     }
 }
 

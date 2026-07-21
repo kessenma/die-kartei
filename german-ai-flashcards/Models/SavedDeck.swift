@@ -71,10 +71,47 @@ final class SavedDeck {
     }
 
     var isPastTenseDeck: Bool {
-        generatorRaw == "past-tense" || generatorRaw == "past-tense-srs"
+        kind == .pastTense || kind == .pastTenseSRS
     }
 
     var hasPausedSession: Bool { pausedAt != nil }
+
+    /// What sort of deck this is, derived from `generatorRaw`. Replaces scattered string
+    /// comparisons so classification stays consistent across the app.
+    enum Kind {
+        /// User-generated (AI or bundled default) — the real "My Decks" content.
+        case generated
+        case goethe, goetheSRS
+        case pastTense, pastTenseSRS
+        case grammar
+        /// Real saved-word content built from the phrase library / a conversation / a paper / a story.
+        case phrase, conversation, paper, story
+    }
+
+    var kind: Kind {
+        switch generatorRaw {
+        case "goethe": .goethe
+        case "goethe-srs": .goetheSRS
+        case "past-tense": .pastTense
+        case "past-tense-srs": .pastTenseSRS
+        case "grammar": .grammar
+        case "phrase": .phrase
+        case "conversation": .conversation
+        case "paper": .paper
+        case "story": .story
+        default: .generated // "" or an MLXModel.rawValue
+        }
+    }
+
+    /// Decks that belong in the Library's browsable "Decks" list. Excludes the internal
+    /// stats/SRS holders for Goethe / Past-tense / Grammar (which are activity plumbing,
+    /// not standalone content) — fixing the empty-`grammar`-deck leak the old string filter missed.
+    var isBrowsableContent: Bool {
+        switch kind {
+        case .generated, .phrase, .conversation, .paper, .story: true
+        case .goethe, .goetheSRS, .pastTense, .pastTenseSRS, .grammar: false
+        }
+    }
 
 
     /// Create a SavedDeck from generation parameters and resulting VocabCards.

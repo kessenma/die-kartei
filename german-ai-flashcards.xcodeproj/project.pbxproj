@@ -14,6 +14,7 @@
 		8AB6603F2FB717690052F4F4 /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB6603E2FB717690052F4F4 /* HuggingFace */; };
 		8AB660422FB717B00052F4F4 /* Transformers in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660412FB717B00052F4F4 /* Transformers */; };
 		8AB660452FB7199D0052F4F4 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660442FB7199D0052F4F4 /* MLXHuggingFace */; };
+		8AB660532FB720000052F4F4 /* StableDiffusion in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660522FB720000052F4F4 /* StableDiffusion */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 				8AB660452FB7199D0052F4F4 /* MLXHuggingFace in Frameworks */,
 				8AB6603C2FB717370052F4F4 /* MLXLMCommon in Frameworks */,
 				8AB660372FB716E90052F4F4 /* MLXRandom in Frameworks */,
+				8AB660532FB720000052F4F4 /* StableDiffusion in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -97,6 +99,7 @@
 				8AB6603E2FB717690052F4F4 /* HuggingFace */,
 				8AB660412FB717B00052F4F4 /* Transformers */,
 				8AB660442FB7199D0052F4F4 /* MLXHuggingFace */,
+				8AB660522FB720000052F4F4 /* StableDiffusion */,
 			);
 			productName = "german-ai-flashcards";
 			productReference = 8AB65FE82FB65EFD0052F4F4 /* Die Kartei.app */;
@@ -110,7 +113,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2630;
-				LastUpgradeCheck = 2630;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					8AB65FE72FB65EFD0052F4F4 = {
 						CreatedOnToolsVersion = 26.3;
@@ -131,6 +134,7 @@
 				8AB660382FB717370052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
 				8AB6603D2FB717690052F4F4 /* XCRemoteSwiftPackageReference "swift-huggingface" */,
 				8AB660402FB717B00052F4F4 /* XCRemoteSwiftPackageReference "swift-transformers" */,
+				8AB660512FB720000052F4F4 /* XCRemoteSwiftPackageReference "ml-stable-diffusion" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8AB65FE92FB65EFD0052F4F4 /* Products */;
@@ -197,6 +201,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -220,6 +225,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -259,6 +265,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -275,6 +282,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
@@ -287,12 +295,14 @@
 				CODE_SIGN_ENTITLEMENTS = "german-ai-flashcards/german-ai-flashcards.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Die Kartei uses the camera to scan photos of German vocabulary and text for study.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Die Kartei uses the microphone so you can speak German out loud in AI voice conversations.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Die Kartei uses your photo library to import photos of German text for vocabulary study.";
@@ -321,6 +331,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "german-ai-flashcards/Interop/german-ai-flashcards-Bridging-Header.h";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
@@ -336,12 +347,14 @@
 				CODE_SIGN_ENTITLEMENTS = "german-ai-flashcards/german-ai-flashcards.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Die Kartei uses the camera to scan photos of German vocabulary and text for study.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Die Kartei uses the microphone so you can speak German out loud in AI voice conversations.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Die Kartei uses your photo library to import photos of German text for vocabulary study.";
@@ -370,6 +383,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "german-ai-flashcards/Interop/german-ai-flashcards-Bridging-Header.h";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
@@ -424,6 +438,8 @@
 				kind = upToNextMajorVersion;
 				minimumVersion = 0.9.0;
 			};
+			traits = (
+			);
 		};
 		8AB660402FB717B00052F4F4 /* XCRemoteSwiftPackageReference "swift-transformers" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -431,6 +447,16 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 1.3.2;
+			};
+			traits = (
+			);
+		};
+		8AB660512FB720000052F4F4 /* XCRemoteSwiftPackageReference "ml-stable-diffusion" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/ml-stable-diffusion";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -470,6 +496,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8AB660382FB717370052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
 			productName = MLXHuggingFace;
+		};
+		8AB660522FB720000052F4F4 /* StableDiffusion */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8AB660512FB720000052F4F4 /* XCRemoteSwiftPackageReference "ml-stable-diffusion" */;
+			productName = StableDiffusion;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

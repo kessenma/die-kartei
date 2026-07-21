@@ -6,18 +6,20 @@ enum ConversationMode: String, CaseIterable, Codable, Identifiable {
     case freestyle = "Freestyle"
     case decks     = "From Decks"
     case scenario  = "Scenario"
+    case interview = "Interview"
     case paper     = "Paper"
 
     var id: String { rawValue }
 
     /// Modes selectable in the normal setup picker (paper chats start from a paper instead).
-    static var setupCases: [ConversationMode] { [.freestyle, .decks, .scenario] }
+    static var setupCases: [ConversationMode] { [.freestyle, .decks, .scenario, .interview] }
 
     var systemImage: String {
         switch self {
         case .freestyle: "bubble.left.and.bubble.right"
         case .decks:     "rectangle.stack"
         case .scenario:  "theatermasks"
+        case .interview: "briefcase.fill"
         case .paper:     "doc.text"
         }
     }
@@ -27,6 +29,7 @@ enum ConversationMode: String, CaseIterable, Codable, Identifiable {
         case .freestyle: "Open-ended chat about anything"
         case .decks:     "Practice words from your decks"
         case .scenario:  "Role-play a real-life situation"
+        case .interview: "Interview for a real job posting"
         case .paper:     "Discuss a paper you uploaded"
         }
     }
@@ -118,6 +121,33 @@ enum CorrectionStrictness: String, CaseIterable, Codable, Identifiable {
             "Point out grammar, case, word-order, and clear vocabulary mistakes. Ignore tiny stylistic issues."
         case .strict:
             "Point out every grammatical, case, word-order, spelling, and word-choice mistake, even small ones."
+        }
+    }
+}
+
+// MARK: - Feedback style
+
+/// How a correction is delivered. `tellMe` hands the learner the fix (today's behavior);
+/// `nudgeMe` first asks a targeted question so they can repair their own error, revealing the
+/// fix only after a miss or on request. Repairing your own mistake sticks far better than being
+/// handed the answer, so this is a pedagogically stronger mode for learners who want to work.
+enum FeedbackStyle: String, CaseIterable, Codable, Identifiable {
+    case tellMe  = "Tell me"
+    case nudgeMe = "Nudge me"
+
+    var id: String { rawValue }
+
+    var subtitle: String {
+        switch self {
+        case .tellMe:  "Shows the corrected sentence right away"
+        case .nudgeMe: "Asks a question first so you can fix it yourself"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .tellMe:  "text.bubble.fill"
+        case .nudgeMe: "questionmark.bubble.fill"
         }
     }
 }
@@ -401,6 +431,62 @@ enum ConversationScenario: String, CaseIterable, Codable, Identifiable {
     }
 }
 
+// MARK: - Spaced review scope
+
+/// Where SRS "spaced re-encounter" applies — which conversations may resurface due flashcards and
+/// advance their schedule when the learner uses the word correctly. Backed by a raw string setting.
+enum SpacedReviewScope: String, CaseIterable, Codable, Identifiable {
+    /// Every conversation. Deck chats favor their own decks first, then top up library-wide.
+    case everywhere
+    /// Only "From Decks" conversations, using that chat's chosen decks.
+    case decksOnly
+    /// Freestyle and deck chats only — scenario role-plays, interviews, and paper discussions
+    /// are left alone.
+    case exceptScripted
+
+    var id: String { rawValue }
+
+    /// Short label for the settings picker.
+    var label: String {
+        switch self {
+        case .everywhere:    "Everywhere"
+        case .decksOnly:     "Deck chats"
+        case .exceptScripted: "Skip role-plays"
+        }
+    }
+
+    /// One-line explanation shown under the picker.
+    var footer: String {
+        switch self {
+        case .everywhere:
+            "Every conversation can resurface your most-overdue cards — deck chats favor their own decks first."
+        case .decksOnly:
+            "Only “From Decks” conversations, using that chat's decks."
+        case .exceptScripted:
+            "Freestyle and deck chats only — role-plays, interviews, and paper discussions are left alone."
+        }
+    }
+
+    /// Whether spaced review runs at all for a conversation of this mode.
+    func applies(to mode: ConversationMode) -> Bool {
+        switch self {
+        case .everywhere:     return true
+        case .decksOnly:      return mode == .decks
+        case .exceptScripted: return mode == .freestyle || mode == .decks
+        }
+    }
+
+    /// Whether, for this mode, due cards may be pulled from the whole library (vs. the chat's decks
+    /// only). Deck chats always prioritize their own decks first regardless.
+    func allowsLibraryWide(for mode: ConversationMode) -> Bool {
+        switch self {
+        case .everywhere:     return true
+        case .decksOnly:      return false
+        case .exceptScripted: return true
+        }
+    }
+}
+
 // MARK: - Learned phrase (session payload)
 
 /// A single phrase from the user's library, carried into a session so the AI can weave it in.
@@ -425,12 +511,23 @@ struct ConversationConfig {
     /// Phrases from the user's library that are surfaced this session — the AI weaves these
     /// into the scenario as things its character says, so the learner gets used to hearing them.
     var learnedPhrases: [LearnedPhraseItem] = []
+    /// Steering-only coach memory injected into the conversation prompt (built from the
+    /// persistent `LearnerProfile` at session start). Empty when personalized coaching is off.
+    var learnerBriefing: String = ""
+    /// Watch-for coach memory injected into the separate correction pass.
+    var correctionMemoryHint: String = ""
+    /// German words that are SRS-due right now (article-prefixed display forms), injected into the
+    /// conversation prompt so the coach steers the learner toward re-using them. Empty when spaced
+    /// review is off or nothing is currently due. Advancement is handled by `ConversationReviewTracker`.
+    var dueReviewWords: [String] = []
     var level: CEFRLevel = .a2
     var formality: Formality = .du
     var correctionsEnabled: Bool = true
     /// When a correction is shown, also display the English meaning of the corrected sentence.
     var correctionTranslationEnabled: Bool = false
     var strictness: CorrectionStrictness = .balanced
+    /// How corrections are delivered — hand over the fix, or nudge the learner to self-correct first.
+    var feedbackStyle: FeedbackStyle = .tellMe
     var model: MLXModel
     var autoPlay: Bool = true
     /// Pre-compute the translation and a next-turn hint in the background after each reply.
@@ -442,6 +539,10 @@ struct ConversationConfig {
     /// For `.paper` mode: the paper's title and the reference text injected into the chat.
     var paperTitle: String? = nil
     var paperContext: String? = nil
+    /// For `.interview` mode: the job title and the posting text the recruiter interviews from
+    /// (German or English — the interview itself is always in German).
+    var jobTitle: String? = nil
+    var jobContext: String? = nil
 
     /// A human-readable title for the saved-chats list.
     var displayTitle: String {
@@ -455,6 +556,8 @@ struct ConversationConfig {
             return deckLabel.isEmpty ? "Deck-Gespräch" : deckLabel
         case .freestyle:
             return "Freies Gespräch"
+        case .interview:
+            return jobTitle ?? "Vorstellungsgespräch"
         case .paper:
             return paperTitle ?? "Paper-Gespräch"
         }

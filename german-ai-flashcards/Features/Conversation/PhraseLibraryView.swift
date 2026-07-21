@@ -9,6 +9,9 @@ struct PhraseLibraryView: View {
     var mlxService: MLXGenerationService
     /// When opened from a scenario, new phrases are pre-tagged to it.
     var anchorScenario: ConversationScenario? = nil
+    /// True when rendered inline inside the Library's segmented control (rather than pushed as its
+    /// own screen). The Library owns the nav bar via a principal picker, so we yield our title to it.
+    var embedded: Bool = false
 
     @Query(sort: \LearnedPhrase.createdAt, order: .reverse) private var phrases: [LearnedPhrase]
     @Environment(\.modelContext) private var modelContext
@@ -75,7 +78,7 @@ struct PhraseLibraryView: View {
         .contentMargins(.bottom, 170, for: .scrollContent)
         // Pick up the loaded model's brand color, mirroring Home's per-model tint.
         .tint(activeTheme?.accent)
-        .navigationTitle("Phrase library")
+        .navigationTitle(embedded ? "Library" : "Phrase library")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if !phrases.isEmpty {
