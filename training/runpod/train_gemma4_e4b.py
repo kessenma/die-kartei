@@ -25,7 +25,9 @@ from unsloth.chat_templates import get_chat_template, train_on_responses_only
 from datasets import load_dataset
 from trl import SFTConfig, SFTTrainer
 
-MAX_SEQ_LEN = int(os.environ.get("MAX_SEQ_LEN", 2048))
+# 1024 is enough for the v2 corpus (max observed 1000 tokens) and halves the attention cost
+# versus the v1 default of 2048. Raise it if a future dataset has longer rows.
+MAX_SEQ_LEN = int(os.environ.get("MAX_SEQ_LEN", 1024))
 
 print("== loading base model (4-bit) ==")
 MODEL_NAME = os.environ.get("MODEL_NAME", "unsloth/gemma-4-E4B-it")
@@ -78,7 +80,10 @@ def render(example):
     return {"text": text}
 
 
-ds = ds.map(render, remove_columns=["messages"])
+# Drop every source column, not just "messages" — train.jsonl also carries a `meta` block
+# (task/phenomenon/level/formality/template_family) from pack_dataset.py, and any column that
+# survives here is handed to the trainer as a stray feature.
+ds = ds.map(render, remove_columns=ds["train"].column_names)
 print(ds)
 print("--- sample rendered example ---")
 print(ds["train"][0]["text"][:600])
@@ -115,15 +120,19 @@ trainer = SFTTrainer(
     args=SFTConfig(
         dataset_text_field="text",
         max_seq_length=MAX_SEQ_LEN,
-        per_device_train_batch_size=2,
-        gradient_accumulation_steps=4,
-        warmup_steps=5,
-        num_train_epochs=float(os.environ.get("EPOCHS", 2)),
-        learning_rate=2e-4,
-        logging_steps=10,
+        # v2 defaults keep the EFFECTIVE batch at 8 (same as v1) but do it in one forward/backward
+        # instead of four. Safe here because the v2 corpus is short: p50 284 tokens, p99 840, max
+        # 1000 — so MAX_SEQ_LEN=1024 truncates nothing and 8x1024 fits comfortably in 24 GB.
+        # Override with BATCH_SIZE / GRAD_ACCUM if VRAM complains.
+        per_device_train_batch_size=int(os.environ.get("BATCH_SIZE", 8)),
+        gradient_accumulation_steps=int(os.environ.get("GRAD_ACCUM", 1)),
+        warmup_steps=int(os.environ.get("WARMUP", 20)),
+        num_train_epochs=float(os.environ.get("EPOCHS", 1)),
+        learning_rate=float(os.environ.get("LR", 2e-4)),
+        logging_steps=25,
         eval_strategy="steps",
-        eval_steps=50,
-        per_device_eval_batch_size=2,
+        eval_steps=int(os.environ.get("EVAL_STEPS", 250)),
+        per_device_eval_batch_size=int(os.environ.get("BATCH_SIZE", 8)),
         optim="adamw_8bit",
         weight_decay=0.01,
         lr_scheduler_type="linear",

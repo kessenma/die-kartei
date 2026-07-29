@@ -38,18 +38,86 @@ DAWO_RE = re.compile(
     r"\b(da|dar|wo|wor)(an|auf|aus|bei|durch|für|gegen|hinter|in|mit|nach|neben|über|um|unter|von|vor|zu|zwischen)\b",
     re.I,
 )
-PHENOMENA = {"vmp", "sep", "refl", "dawo", "aux", "verdict", "adjend", "artikel"}
+# "recovery" (v2): deliberately broken spoken input — English word mixed in, transcription
+# glitches. Kept distinct from "verdict" (which means "correct sentence, tests verdict discipline")
+# so the phenomenon stats stay meaningful. Neither carries a structural requirement.
+PHENOMENA = {"vmp", "sep", "refl", "dawo", "aux", "verdict", "adjend", "artikel", "recovery"}
 
 
 def norm(s: str) -> str:
     return re.sub(r"[^a-zäöüß ]", "", (s or "").lower()).strip()
 
 
+def leaks_answer(hint: str, student: str, fix: str) -> bool:
+    """Does a nudgeMe HINT give away the correction instead of pointing at it?
+
+    The words the learner has to *supply* are exactly those in the fix but not in the student's
+    own sentence. If the hint contains any of them, the learner can copy the answer out of the
+    question and the elicitation is worthless.
+
+    Short words are NOT exempt. The largest phenomenon in this dataset is verbs+prepositions, where
+    the supplied word is always short (`auf`, `für`, `mit`, `an`) — and the same goes for articles
+    (`das`) and dative reflexives (`mir`). An earlier version skipped words of <= 3 characters and
+    was consequently blind to the most common leak there is:
+        "Heißt es nicht 'interessiere mich für Musik'?"   <- hands over the answer
+    Words already in the student's own sentence are fine to quote — those are the trigger, not the
+    answer ("Welcher Fall kommt nach 'mit'?" where the student wrote `mit`).
+
+    Short *function* words only count when the hint QUOTES them. Measured on the 2026-07-28 smoke
+    batch, an unconditional check false-rejected valid hints at a real rate — e.g. student
+    "Kannst du mir die Wasser geben?" → fix "das Wasser", hint "Ist das Wort neutral oder feminin?".
+    That hint is exactly right, but `das` is the supplied word and also the most common word in
+    German. So for closed-class supplied words we require the hint to quote them, which is how a
+    leaking hint actually reads ("Heißt es nicht 'das Buch'?"). Content words still leak on any
+    occurrence.
+
+    Still deliberately over-rejects at the margin: at generation scale a false reject costs one
+    candidate, while a false accept teaches the model to give the answer away — the exact behaviour
+    nudgeMe exists to prevent.
+    """
+    CLOSED = {"der", "die", "das", "den", "dem", "des", "ein", "eine", "einen", "einem", "einer",
+              "mir", "mich", "dir", "dich", "sich", "uns", "euch", "ihm", "ihr", "ihn", "es",
+              "auf", "an", "in", "mit", "für", "von", "zu", "bei", "um", "über", "nach", "aus",
+              "vor", "unter", "durch", "gegen", "seit", "ist", "hat", "sind", "haben", "war"}
+
+    def words(s):
+        return {w for w in re.findall(r"[a-zäöüß]+", (s or "").lower()) if len(w) >= 2}
+
+    supplied = words(fix) - words(student)
+    hint_words = words(hint)
+    quoted = " ".join(re.findall(r"[\"'«»„“”]([^\"'«»„“”]+)[\"'«»„“”]", hint or "")).lower()
+    quoted_words = words(quoted)
+
+    for w in supplied:
+        if w in CLOSED:
+            if w in quoted_words:
+                return True          # the hint quotes the answer back
+        elif w in hint_words:
+            return True              # a content word from the fix appears anywhere in the hint
+    return False
+
+
 def load_eval_texts() -> set:
+    """Every held-out sentence, from every suite in data/eval/, so generation can never
+    reproduce one.
+
+    Two shapes live here now: the grammar suites (v0 / v1_extra / v2_holdout) key on `input`,
+    and the naturalness bench (conversation_v0) carries a `history` of turns instead. Both are
+    held out — a training example that reproduces a bench prompt corrupts that measurement just
+    as surely as a grammar item — so pull text from whichever shape an item has rather than
+    assuming `input` exists. (Adding conversation_v0.json in Phase 0 broke this function; it
+    used to index `item["input"]` unconditionally.)
+    """
     texts = set()
     for f in (ROOT / "data" / "eval").glob("*.json"):
-        for item in json.loads(f.read_text())["items"]:
-            texts.add(norm(item["input"]))
+        for item in json.loads(f.read_text()).get("items", []):
+            if item.get("input"):
+                texts.add(norm(item["input"]))
+            for turn in item.get("history") or []:
+                content = (turn or {}).get("content")
+                if content:
+                    texts.add(norm(content))
+    texts.discard("")
     return texts
 
 
@@ -100,6 +168,12 @@ def validate_conversation(cand: dict, nlp, lt) -> tuple:
     msgs = cand.get("messages")
     if not isinstance(msgs, list) or len(msgs) < 5:
         return "conv: too few messages", []
+    # Reject malformed turns instead of trusting the shape. The teacher garbles keys often enough
+    # that this matters (`phenomenomenon`, `phenson`, and here a message with no `content` at all);
+    # an unguarded m["content"] raised KeyError and killed a whole 10,193-row validation chunk.
+    if not all(isinstance(m, dict) and isinstance(m.get("role"), str)
+               and isinstance(m.get("content"), str) and m["content"].strip() for m in msgs):
+        return "conv: malformed message (missing role/content)", []
     roles = [m.get("role") for m in msgs]
     if roles[0] != "assistant" or roles[-1] != "assistant" or any(
             roles[i] == roles[i + 1] for i in range(len(roles) - 1)):
@@ -201,7 +275,10 @@ def main() -> None:
         # route by task
         task = cand.get("task")
         if task == "conversation":
-            key = norm(cand["messages"][0]["content"]) if isinstance(cand.get("messages"), list) and cand["messages"] else ""
+            # Runs BEFORE validate_conversation, so it must not assume the shape either.
+            _m = cand.get("messages")
+            _first = _m[0] if isinstance(_m, list) and _m and isinstance(_m[0], dict) else {}
+            key = norm(_first.get("content") or "")
             if key in seen:
                 reject(cand, "duplicate"); continue
             seen.add(key)
@@ -223,6 +300,29 @@ def main() -> None:
             stats["valid"] += 1
             valid_f.write(json.dumps(cand, ensure_ascii=False) + "\n"); continue
 
+        if task == "native_instruction":
+            # v2 slice: general German instruction-following, replacing the machine-translated
+            # Alpaca mix-in. The whole point is that it reads as originally-German, so the gate is
+            # a well-formed user→assistant pair plus LanguageTool on the assistant turn.
+            msgs = cand.get("messages")
+            if not isinstance(msgs, list) or len(msgs) < 2:
+                reject(cand, "native: needs a user turn and an assistant turn"); continue
+            if [m.get("role") for m in msgs[:2]] != ["user", "assistant"]:
+                reject(cand, "native: first two turns must be user then assistant"); continue
+            user_t = (msgs[0].get("content") or "").strip()
+            asst_t = (msgs[1].get("content") or "").strip()
+            if len(user_t) < 10 or len(asst_t) < 40:
+                reject(cand, "native: turn too short"); continue
+            key = ("n", norm(user_t))
+            if key in seen:
+                reject(cand, "duplicate"); continue
+            seen.add(key)
+            m = [x for x in lt.check(asst_t) if "umgangssprachlich" not in x.message]
+            if m:
+                reject(cand, f"languagetool: {m[0].rule_id}: {m[0].message[:80]}"); continue
+            stats["valid"] += 1
+            valid_f.write(json.dumps(cand, ensure_ascii=False) + "\n"); continue
+
         # schema (correction task)
         if task != "correction" or cand.get("phenomenon") not in PHENOMENA:
             reject(cand, "schema: bad task/phenomenon"); continue
@@ -236,6 +336,21 @@ def main() -> None:
                 reject(cand, "content: fix identical to student"); continue
             if len(cand["why"].split()) > 20:
                 reject(cand, "content: WHY too long"); continue
+            # Optional HINT (FeedbackStyle.nudgeMe). The app asks for a SHORT German question that
+            # names the grammar category WITHOUT revealing the answer — a hint that contains the
+            # corrected wording defeats the entire feature, so that is a hard reject.
+            hint = cand.get("hint")
+            if hint is not None:
+                if not isinstance(hint, str) or not hint.strip():
+                    reject(cand, "schema: hint must be a non-empty string"); continue
+                hint = hint.strip()
+                if not hint.endswith("?"):
+                    reject(cand, "content: hint must be a question"); continue
+                if len(hint.split()) > 14:
+                    reject(cand, "content: hint too long"); continue
+                if leaks_answer(hint, student, fix):
+                    reject(cand, "content: hint reveals the correction"); continue
+                cand["hint"] = hint
         good = fix if verdict == "fix" else student
 
         # fix must be a complete sentence, not a corrected fragment

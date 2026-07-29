@@ -160,9 +160,22 @@ Teacher model (Claude/GPT) generates examples **in the app's exact prompt format
 - [ ] On-device eval pass + regression check on flashcard JSON parsing
 - [ ] Ship
 
+## Phase 7 — Low/mid tier (Gemma 4 E2B) ← full log in [`GEMMA_E2B_FINETUNING.md`](GEMMA_E2B_FINETUNING.md)
+
+- [x] **E2B fine-tuned + evaluated (2026-07-13)**: core 65→68%, miss 28→19%, but false corrections 34→59% → originally benched "do not ship".
+- [x] **Echo decomposition (2026-07-22): the 59% was a measurement artifact.** 18 of the 19 false corrections are the model echoing the input verbatim under `FIX:` — which `ConversationPrompts.parseCorrection` already discards. Re-scored app-equivalently: **core 83%, false-corr 3%, miss 19% — clears the ship bar and beats stock E2B on every axis.**
+- [x] Eval harness now models the app: `apply_app_guard()` + `--app-guard` on `run_baseline_eval.py` and `behavior_metrics.py`. Raw generations still saved unmodified.
+- [x] App guard hardened (`ConversationPrompts.echoNormalized`): dropped `.diacriticInsensitive` (it was swallowing real umlaut corrections — `Madchen`→`Mädchen`); added whitespace/trailing-punctuation folding (an echo plus a period used to leak through). Builds clean.
+- [x] **B1 refuted**: Gemma 3 4B as a smaller/better base — QAT 50% core raw / 73% guarded, ties *stock* E2B and loses to the tune by 10 pts (dawo 3/15, evasive rewrites). Naive 4-bit is 7 pts worse than QAT — use QAT builds when comparing.
+- [ ] **Ship tuned E2B for the 6–8 GB tier**: publish `kessenma/gemma4-e2b-german-tutor-4bit`, add the `ModelConfiguration` case, update the tier table
+- [ ] Restate ship criteria on the guarded scale and re-report `MODEL_SCOREBOARD.md` with both columns
+- [ ] A3-inverted: bias the verdict token *toward* `FIX` (the guard absorbs the downside) to attack the remaining 19% miss rate
+- [ ] Small DPO run targeting the 2 remaining real defects: `sep-c3` (`zumachen`→`zuschlagen`) and the sep regression (11→8)
+
 ## Writing
 
 - [ ] **Article draft**: `training/ARTICLE.md` — on-device tutor story + fine-tuning process, real numbers baked in; `[TODO]` sections await training results (latency comparison, loss curve, before/after eval table, ship status).
+- [ ] **Revise ARTICLE.md §"Round two" and §"The floor"** — both tell a capacity-cliff story that the echo decomposition contradicts (see `GEMMA_E2B_FINETUNING.md`). The 1B cliff is still real; E2B was never on it.
 
 ## Risks / cautions
 

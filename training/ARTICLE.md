@@ -3,6 +3,16 @@
 *Draft — remaining [TODO]s: on-device latency numbers, App Store link, and a few
 late-arriving baselines still running on the eval bench.*
 
+> **⚠️ Revision pending (2026-07-22).** The sections "Round two: the same recipe hits a different
+> wall" and "The floor — and who's still below it" are built on E2B's 59% false-correction rate.
+> That number turned out to be an artifact of the *eval*, not the model: 18 of the 19 false
+> corrections were the model echoing the student's sentence back under a `FIX:` header, which the
+> app has always discarded. Scored the way the app behaves, the tuned E2B lands at **83% core /
+> 3% false corrections** and is shippable — which moves the tutor floor down a hardware tier and
+> makes the "capacity cliff at 2B" reading wrong (the 1B cliff is still real). Full workings in
+> [`GEMMA_E2B_FINETUNING.md`](GEMMA_E2B_FINETUNING.md). The corrected story is a better one, and
+> these sections need rewriting around it.
+
 I've been building a German learning app with a turn-based AI tutor that runs entirely
 on the phone. No server, no API key, no network round trip — the model lives on the
 device, and you can practice spoken German with it on a plane. This is the story of why
@@ -255,6 +265,28 @@ other direction: EuroLLM-1.7B, pretrained on all 24 official EU languages, score
 not because it lacks German, but because it can't follow the correction-task *format*,
 answering in rambling English prose instead. Multilingual pretraining without
 instruction-following is worthless for a structured tutor task.
+
+A reader later handed me the cleanest possible confirmation of this: **BübleLM-2B**, a
+Gemma 2-2B *re-adapted for German* with a custom German tokenizer and 3.5B tokens of German
+pretraining — a model built for exactly this. On its own German benchmarks it looks strong
+(47.9% HellaSwag-DE). On the app's task it scored **7%**, below even EuroLLM: it never once
+said "OK", opened three-quarters of its answers with a bare reframed sentence and no verdict
+marker, and — tellingly — its actual German fixes were often *correct*. All the substrate,
+none of the discipline to deliver it in a parseable verdict. Forgiving the format entirely
+lifts it only to 25%, still less than half the ~55% floor below which fine-tuning adds
+confidence rather than skill. It's the whole thesis in one reader suggestion: the model card
+measures German; the eval measures the job. (Full workup:
+[`BUEBLE_LM_EVAL.md`](BUEBLE_LM_EVAL.md).)
+
+I ran the same test on three more small candidates hunting a lighter base than E4B —
+Granite 3.3 2B, Llama 3.2 3B, Salamandra 2B — and got the same wall from three new angles.
+Salamandra (35 EU languages) reprised EuroLLM's collapse almost exactly: 99 of 121 answers
+weren't even in the correction format. Llama 3.2 3B had the discipline (zero format errors) but
+not the German — it over-corrected half the *correct* sentences, a substrate deficit no
+instruction-tuning fixes. Only IBM's Granite 3.3 2B cleared the floor at all, and only by *tying*
+the 0.8 GB Gemma 3 1B it would have had to beat. Four models, four confirmations of the one finding
+that has held since the first bake-off: the German substrate is the ceiling, and Gemma is the only
+family that clears it. (Survey: [`BUDGET_BASE_SEARCH.md`](BUDGET_BASE_SEARCH.md).)
 
 **Model families have personalities, and they're inverse.** Every Gemma failed the same
 way: over-eager corrections of sentences that were already right (a *judgment* deficit) —

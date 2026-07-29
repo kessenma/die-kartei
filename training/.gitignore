@@ -4,9 +4,24 @@ __pycache__/
 data/raw/
 results/
 
-# Large training / conversion artifacts (model weights, CoreML bundles)
+# v2 generated corpora — too large for git (233 MB raw + 86 MB packed) and mostly derived.
+# The irreplaceable pieces (raw candidates ~$5.50 of GPU, the validated set ~5 h of CPU) live in
+# a private HF dataset; the rest regenerates:
+#   jobs*.jsonl      -> scripts/build_gen_jobs.py --target 40000 --size-by-measured-yield --seed 11
+#   corpus_v2.jsonl  -> concat of candidates.jsonl (minus correction) + corr_full.jsonl
+#   packed-v2*/      -> scripts/pack_dataset.py --source data/gen_v2/corpus_v2.valid.jsonl
+# NOTE: data/eval/*.json is deliberately NOT ignored — the frozen holdout and naturalness bench
+# are small, irreplaceable, and losing them would invalidate every baseline measured against them.
+data/gen_v2/
+data/packed-v2/
+data/packed-v2-nomixin/
+data/packed-nomixin/
+
+# Large training / conversion artifacts (model weights, CoreML bundles,
+# .litertlm bundles, the LiteRT-LM runtime dylib)
 imagegen/
 models/
+convert/
 runpod/e2b_artifacts/
 *.safetensors
 *.mlmodelc/

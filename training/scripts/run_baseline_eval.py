@@ -68,6 +68,26 @@ def strip_channels(text: str) -> str:
     return text.split("<think>")[0].strip()
 
 
+def _guard_normalize(text: str) -> str:
+    """Fold the differences that don't constitute a correction: wrapping quotes, whitespace,
+    case, trailing sentence punctuation. Deliberately NOT diacritic-insensitive — for a German
+    tutor an umlaut fix (Madchen → Mädchen) is a real correction, not an echo."""
+    t = text.strip().strip('"“”„«»\'')
+    t = re.sub(r"\s+", " ", t).strip()
+    return t.rstrip(".!?").strip().casefold()
+
+
+def apply_app_guard(response: str, item: dict) -> str:
+    """Mirror the app's echo guard (ConversationPrompts.parseCorrection): a FIX line that
+    restates the student's sentence verbatim is not a correction — the app shows nothing,
+    so the honest eval verdict is OK. Pure post-process; can only ever turn a spurious FIX
+    into OK, never the reverse."""
+    m = re.search(r"FIX:\s*(.+)", response)
+    if m and _guard_normalize(m.group(1)) == _guard_normalize(item["input"]):
+        return "OK"
+    return response
+
+
 def matches(needle: str, haystack: str) -> bool:
     """Case-insensitive; word-boundary for single words, substring for phrases."""
     haystack = haystack.lower()
@@ -134,10 +154,21 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--tag", default="baseline")
     ap.add_argument("--eval-file", default=str(EVAL_FILE))
+    ap.add_argument("--app-guard", action="store_true",
+                    help="score as the app behaves: drop FIX lines that echo the input verbatim "
+                         "(mirrors ConversationPrompts.parseCorrection). Raw generation is unchanged "
+                         "and still saved, so a run can be re-scored either way.")
     ap.add_argument("--responses", default=None,
                     help="score a pre-generated responses JSON (e.g. from eval_apple_intelligence.swift) "
                          "instead of running an MLX model; uses the identical scorer")
     args = ap.parse_args()
+
+    def score_response(item: dict, raw: str) -> dict:
+        """Score a raw generation, optionally through the app's echo guard. The saved
+        `response` stays the model's real output either way."""
+        r = score(item, apply_app_guard(raw, item) if args.app_guard else raw)
+        r["response"] = raw
+        return r
 
     items = json.loads(Path(args.eval_file).read_text())["items"]
     if args.limit:
@@ -162,7 +193,7 @@ def main() -> None:
         payload = json.loads(Path(args.responses).read_text())
         resp_map = {r["id"]: r["response"] for r in payload["results"]}
         missing = [item["id"] for item in items if item["id"] not in resp_map]
-        results = [score(item, strip_channels(resp_map.get(item["id"], ""))) for item in items]
+        results = [score_response(item, strip_channels(resp_map.get(item["id"], ""))) for item in items]
         for i, r in enumerate(results, 1):
             print(f"[{i}/{len(items)}] {r['id']}: {'PASS' if r['pass'] else 'FAIL'}")
         if missing:
@@ -197,7 +228,7 @@ def main() -> None:
                 prompt = tokenizer.apply_chat_template(merged, add_generation_prompt=True, enable_thinking=False)
             max_tokens = 150 if item["mode"] == "cloze" else 400  # headroom in case thinking still fires
             response = strip_channels(generate(model, tokenizer, prompt=prompt, max_tokens=max_tokens, verbose=False))
-            r = score(item, response)
+            r = score_response(item, response)
             results.append(r)
             print(f"[{i}/{len(items)}] {item['id']}: {'PASS' if r['pass'] else 'FAIL'}")
 
@@ -205,7 +236,8 @@ def main() -> None:
     RESULTS_DIR.mkdir(exist_ok=True)
     shortname = args.model.rstrip("/").split("/")[-1]
     out = RESULTS_DIR / f"{args.tag}_{shortname}.json"
-    out.write_text(json.dumps({"model": args.model, "summary": summary, "results": results},
+    out.write_text(json.dumps({"model": args.model, "app_guard": args.app_guard,
+                               "summary": summary, "results": results},
                               ensure_ascii=False, indent=1), encoding="utf-8")
 
     print("\n=== summary ===")

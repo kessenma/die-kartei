@@ -6,85 +6,107 @@
 - Renders each example with the app's EXACT prompt strings (ConversationPrompts.swift,
   MLXGenerationService.buildJSONPrompt, ConversationConfig prompt instructions)
 - Blends in general-German mix-in (alpaca-gpt4-deutsch + sharegpt-deutsch, Apache 2.0)
-- Writes data/packed/train.jsonl + val.jsonl as {"messages":[{role,content},...]}
+- Writes data/packed/train.jsonl + val.jsonl as
+  {"messages":[{role,content},...], "meta":{...}}
 
-Usage: .venv/bin/python scripts/pack_dataset.py [--mixin-frac 0.35] [--val-frac 0.02] [--seed 7]
+The `meta` block (v2, 2026-07-28) carries the labels the source .valid.jsonl files already
+had and this script used to discard: task, phenomenon, level, formality, plus a derived
+`template_family` used for the *grouped* train/val split. Without it every downstream
+question — rebalancing, per-slice eval, leakage-safe splitting — needs a regeneration.
+
+The split is grouped on `template_family`, so every example built from the same verb /
+preposition / scenario lands on the same side. A random split puts `warten auf` in train and
+`warten auf` in val, and val stops measuring generalisation. See DATA_V2_DISTILL_PLAN.md.
+
+Usage:
+  .venv/bin/python scripts/pack_dataset.py [--mixin-frac 0.35] [--val-frac 0.05] [--seed 7]
+  .venv/bin/python scripts/pack_dataset.py --no-mixin --out-dir data/packed-nomixin
+    → the 1B-student build: the machine-translated Alpaca mix-in is regularisation a 4B-class
+      model absorbs and a 1B cannot afford. See DATA_V2_DISTILL_PLAN.md finding 3.
 """
 
 import argparse
 import json
 import random
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "packed"
 
-# ---- exact strings from the app ----
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+# The app's prompt strings, parsed out of the Swift at import time. These used to be hand-copied
+# here and had silently drifted to the 2026-07-09 shape — see app_prompts.py's module docstring
+# and DATA_V2_DISTILL_PLAN.md. `scripts/check_prompt_sync.py` fails the build if they diverge again.
+import app_prompts as ap
 
-LEVEL_INSTR = {
-    "A1": "The learner is a beginner (A1). Use only the most common words and short, simple sentences in the present tense. Keep each reply to one or two short sentences.",
-    "A2": "The learner is at A2 (elementary). Use simple everyday vocabulary and mostly short sentences. You may use basic past tense (Perfekt) occasionally.",
-    "B1": "The learner is at B1 (intermediate). Use everyday vocabulary and a natural mix of tenses, but keep sentences reasonably clear.",
-    "B2": "The learner is at B2 (upper-intermediate). Use natural German with varied sentence structures and richer vocabulary.",
-    "C1": "The learner is at C1 (advanced). Use fluent, idiomatic German with complex structures and nuanced vocabulary.",
-}
-FORMALITY_INSTR = {
-    "du": 'Address the learner informally using the "du" form.',
-    "Sie": 'Address the learner formally using the "Sie" form.',
-}
-STRICTNESS = {
-    "gentle": "Only point out mistakes that genuinely obscure meaning or are clear grammatical errors. Ignore minor style or punctuation issues.",
-    "balanced": "Point out grammar, case, word-order, and clear vocabulary mistakes. Ignore tiny stylistic issues.",
-    "strict": "Point out every grammatical, case, word-order, spelling, and word-choice mistake, even small ones.",
+SCENARIO_KEYS = set(ap.SCENARIOS)
+
+# v1 data overloaded `scenario`: it is a ROLE the assistant plays for these exact strings, and a
+# mere generation TOPIC ("morning routine", "fixing a bike") for the other ~73 values, which
+# rendered as plain Lena chats. Keep the list so v1 rows still render byte-identically.
+# v2 data should set `role_scenario` to an app scenario key instead of relying on this.
+LEGACY_ROLE_SCENARIOS = {
+    "waiter in a restaurant", "doctor in a medical practice", "receptionist at a hotel front desk",
+    "sales assistant in a clothing boutique", "landlord discussing an apartment with a new tenant",
+    "pharmacist at a pharmacy counter", "train conductor checking tickets on a train",
+    "hairdresser with a regular customer at a hair salon", "personal trainer with a regular client at a gym",
+    "vendor at a local market with a regular customer", "neighbor chatting with someone who just moved in",
+    "instructor leading an evening course", "apartment viewing with a landlord", "bank appointment",
+    "job fair", "course registration", "hotel reception chat", "taxi ride conversation",
+    "official appointment at a government office", "parent-teacher meeting", "neighborly introduction",
 }
 
 
-def correction_system(level: str, formality: str, strictness: str) -> str:
-    s = "You are a meticulous German teacher reviewing one line a student said during a spoken conversation. "
-    s += f"The student's level is {level}. "
-    s += STRICTNESS[strictness] + " "
-    s += f"The student uses the {formality} form. "
-    s += "They may have mixed in an English word they didn't know — in your correction, replace it with the correct German word.\n\n"
-    s += "If the sentence is already correct and natural German, reply with exactly:\nOK\n\n"
-    s += "Otherwise reply in EXACTLY this format and nothing else:\n"
-    s += "FIX: <the full corrected sentence in natural German>\n"
-    s += "WHY: <one short explanation in English, at most 18 words>"
-    return s
+def clean_focus(focus_areas) -> list:
+    """Keep only real GrammarFocus keys.
+
+    The teacher invents its own values — 152 distinct ones in the v2 run ('Wochenendpläne',
+    'Präteritum/Perfekt', 'Wortschatz Freizeit'). They are topic labels, not the app's enum, and
+    they have no steering hint, so rendering them raises KeyError. Drop silently: the row is still
+    good training data, it just carries no focus steering.
+    """
+    return [f for f in (focus_areas or []) if f in ap.FOCUS_HINTS]
+
+
+def correction_system(level: str, formality: str, strictness: str,
+                      focus_areas=None, feedback_style: str = "tellMe") -> str:
+    return ap.correction_system({"level": level, "formality": formality,
+                                 "strictness": strictness,
+                                 "focus_areas": clean_focus(focus_areas),
+                                 "feedback_style": feedback_style})
 
 
 def correction_user(partner, student: str) -> str:
-    if partner:
-        return f'The conversation partner just said: "{partner}"\nThe student replied: "{student}"\n\nEvaluate only the student\'s reply.'
-    return f'The student said: "{student}"\n\nEvaluate the student\'s sentence.'
+    return ap.correction_user(partner, student)
 
 
 def conversation_system(d: dict) -> str:
-    parts = []
+    """Build the app's conversation system prompt for a generated example.
+
+    Role resolution, most specific first:
+      1. `role_scenario` = an app scenario key (`bakery`, `doctor`, …) → the typed roleInstruction
+         the app actually sends. This is what v2 data uses.
+      2. `scenario` in LEGACY_ROLE_SCENARIOS → the generic `.custom` role-play sentence, as v1 did.
+      3. anything else (including a free-text topic) → Lena.
+
+    Case 3 matters: v1's `scenario` is a topic for ~73 of its 94 conversations, and those trained
+    as ordinary Lena chats. Routing them through the role-play sentence would silently rewrite 73
+    existing training examples.
+    """
+    cfg = {"level": d["level"], "formality": d["formality"],
+           "deck_words": d.get("deck_words"), "focus_areas": clean_focus(d.get("focus_areas"))}
+    role_key = (d.get("role_scenario") or "").strip()
     scenario = (d.get("scenario") or "").strip()
-    # exact scenario strings where the assistant plays a character (not Lena)
-    ROLE_SCENARIOS = {
-        "waiter in a restaurant", "doctor in a medical practice", "receptionist at a hotel front desk",
-        "sales assistant in a clothing boutique", "landlord discussing an apartment with a new tenant",
-        "pharmacist at a pharmacy counter", "train conductor checking tickets on a train",
-        "hairdresser with a regular customer at a hair salon", "personal trainer with a regular client at a gym",
-        "vendor at a local market with a regular customer", "neighbor chatting with someone who just moved in",
-        "instructor leading an evening course", "apartment viewing with a landlord", "bank appointment",
-        "job fair", "course registration", "hotel reception chat", "taxi ride conversation",
-        "official appointment at a government office", "parent-teacher meeting", "neighborly introduction",
-    }
-    if scenario.lower() in ROLE_SCENARIOS:
-        parts.append(f"You are role-playing the following situation with a German learner: {scenario}. Stay fully in character and set the scene.")
-    else:
-        parts.append("You are Lena, a warm and patient German conversation partner helping someone practice spoken German.")
-    parts.append("Speak ONLY in German. " + LEVEL_INSTR[d["level"]] + " " + FORMALITY_INSTR[d["formality"]])
-    parts.append("Keep your replies short — usually one to three sentences — and end most replies with a question so the conversation keeps flowing.")
-    parts.append("The learner is speaking out loud, so their words may contain small transcription glitches and they may mix in an English word when they don't know the German one. Understand them charitably and simply continue the conversation in natural German.")
-    parts.append("Do NOT correct the learner, and do NOT add translations, explanations, or any English in your replies. Just have a natural conversation.")
-    if d.get("deck_words"):
-        sample = ", ".join(d["deck_words"])
-        parts.append(f"The learner is studying these German words; weave a few of them naturally into your questions and replies, and encourage the learner to use them: {sample}.")
-    return "\n\n".join(parts)
+    if role_key:
+        if role_key not in SCENARIO_KEYS:
+            raise KeyError(f"role_scenario {role_key!r} is not an app scenario; "
+                           f"known: {sorted(SCENARIO_KEYS)}")
+        cfg["scenario"] = role_key
+    elif scenario.lower() in LEGACY_ROLE_SCENARIOS:
+        cfg["custom_scenario"] = scenario
+    return ap.conversation_system(cfg)
 
 
 EXAMPLE_CARD = {
@@ -134,6 +156,67 @@ def norm(s: str) -> str:
     return re.sub(r"[^a-zäöüß ]", "", (s or "").lower()).strip()
 
 
+def template_family(d: dict) -> str:
+    """The group an example belongs to for splitting purposes.
+
+    Two examples share a family when they drill the same underlying item — the same verb, the
+    same preposition, the same role-play scenario. Those must not straddle train and val, or
+    val measures memorisation instead of generalisation.
+
+    Falls back to a per-phenomenon bucket when there's no finer label (notably the 245 `verdict`
+    items, which carry empty meta). That is coarse but safe: a coarser group can only ever keep
+    *more* related examples together.
+    """
+    task = d.get("task")
+    meta = d.get("meta") or {}
+    phen = d.get("phenomenon") or "none"
+
+    if task == "correction":
+        if meta.get("verb"):
+            return f"{phen}:verb:{norm(meta['verb'])}"
+        if meta.get("prep"):
+            return f"{phen}:prep:{norm(meta['prep'])}"
+        if meta.get("aux"):
+            return f"{phen}:aux:{norm(meta['aux'])}"
+        if meta.get("subtype"):
+            return f"{phen}:sub:{norm(str(meta['subtype']))}"
+        return f"{phen}:general"
+    if task == "conversation":
+        return f"conv:{norm(d.get('scenario') or 'lena')}"
+    if task == "flashcards":
+        return f"cards:{norm(d.get('topic') or 'none')}"
+    return f"mixin:{d.get('_mixin_source', 'unknown')}"
+
+
+def grouped_split(rows: list, val_frac: float, rng) -> tuple:
+    """Split whole families, not rows, so no family straddles train and val.
+
+    Families are shuffled and drawn until the val quota is met; a family that would overshoot
+    the quota by more than one row is skipped rather than split. Mix-in rows are singleton
+    families, so they distribute freely and fill any remainder.
+    """
+    by_family = {}
+    for r in rows:
+        by_family.setdefault(r["meta"]["template_family"], []).append(r)
+
+    families = sorted(by_family)          # sort first so the shuffle is seed-reproducible
+    rng.shuffle(families)
+    target = int(len(rows) * val_frac)
+
+    val, val_families = [], set()
+    for fam in families:
+        if len(val) >= target:
+            break
+        group = by_family[fam]
+        if len(val) + len(group) > target + 1 and val:
+            continue                      # would overshoot — leave this family in train
+        val.extend(group)
+        val_families.add(fam)
+
+    train = [r for r in rows if r["meta"]["template_family"] not in val_families]
+    return train, val, len(val_families)
+
+
 def load_mixin(n: int, rng) -> list:
     """Sample n chat examples from the Apache-2.0 German mix-in datasets."""
     from datasets import load_dataset
@@ -166,7 +249,19 @@ def load_mixin(n: int, rng) -> list:
             total_len = sum(len(m["content"]) for m in msgs)
             if total_len > 4000 or total_len < 40:
                 continue
-            out.append({"messages": msgs, "_source": name.split("/")[-1]})
+            src = name.split("/")[-1]
+            out.append({
+                "messages": msgs,
+                "_source": src,
+                "meta": {
+                    "task": "mixin",
+                    "phenomenon": None,
+                    "level": None,
+                    "formality": None,
+                    "source": src,
+                    "template_family": f"mixin:{src}:{len(out)}",
+                },
+            })
             taken += 1
     return out
 
@@ -174,20 +269,82 @@ def load_mixin(n: int, rng) -> list:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--mixin-frac", type=float, default=0.35)
-    ap.add_argument("--val-frac", type=float, default=0.02)
+    ap.add_argument("--val-frac", type=float, default=0.05)
     ap.add_argument("--seed", type=int, default=7)
+    ap.add_argument("--no-mixin", action="store_true",
+                    help="omit the translated general-German mix-in (1B-student build)")
+    ap.add_argument("--out-dir", default=None,
+                    help="output directory (default data/packed)")
+    ap.add_argument("--source", action="append", default=None,
+                    help="validated .jsonl to pack (repeatable). Default: data/generated/*.valid.jsonl")
+    ap.add_argument("--slice-mix", default=None,
+                    help='subsample to a target mix, e.g. '
+                         '"correction=0.40,conversation=0.30,flashcards=0.15,recovery=0.10,'
+                         'native_instruction=0.05". Slices generate at very different yields — the '
+                         'v2 correction slice over-produced 83%% against target — so without this '
+                         'the corpus is skewed toward whatever generated most easily.')
+    ap.add_argument("--nudge-ok-frac", type=float, default=0.25,
+                    help="share of verdict=ok rows rendered under the nudgeMe system prompt, so "
+                         "the model learns OK is still a valid nudgeMe reply (default 0.25)")
     args = ap.parse_args()
     rng = random.Random(args.seed)
+    out_dir = Path(args.out_dir) if args.out_dir else OUT
+    if not out_dir.is_absolute():
+        out_dir = ROOT / out_dir
+
+    sources = ([Path(s) if Path(s).is_absolute() else ROOT / s for s in args.source]
+               if args.source else sorted((ROOT / "data" / "generated").glob("*.valid.jsonl")))
+
+    # Optional subsample to a target slice mix. Applied to the RAW rows before rendering, so the
+    # dedup and grouped-split logic below sees the final population.
+    raw = []
+    for f in sources:
+        for line in f.read_text().splitlines():
+            if line.strip():
+                raw.append(json.loads(line))
+
+    if args.slice_mix:
+        want = {}
+        for part in args.slice_mix.split(","):
+            k, v = part.split("=")
+            want[k.strip()] = float(v)
+        by_slice = {}
+        for d in raw:
+            s = (d.get("_gen") or {}).get("slice") or d.get("task")
+            by_slice.setdefault(s, []).append(d)
+        # The binding slice is the one furthest below its share; scale everything to it so we
+        # keep as much data as possible without inventing any.
+        total_cap = min((len(by_slice.get(s, [])) / frac
+                         for s, frac in want.items() if frac > 0 and by_slice.get(s)),
+                        default=0)
+        picked, mix_stats = [], {}
+        for s, frac in want.items():
+            pool = by_slice.get(s, [])
+            take = min(len(pool), int(round(total_cap * frac)))
+            rng.shuffle(pool)
+            picked.extend(pool[:take])
+            mix_stats[s] = {"available": len(pool), "taken": take}
+        for s, pool in by_slice.items():          # slices with no target keep everything
+            if s not in want:
+                picked.extend(pool)
+                mix_stats[s] = {"available": len(pool), "taken": len(pool), "no_target": True}
+        stats_mix = mix_stats
+        raw = picked
+    else:
+        stats_mix = None
 
     seen, examples, stats = set(), [], {}
-    for f in sorted((ROOT / "data" / "generated").glob("*.valid.jsonl")):
-        for line in f.read_text().splitlines():
-            d = json.loads(line)
+    if stats_mix:
+        stats["slice_mix"] = stats_mix
+    for _src in [None]:
+        for d in raw:
             task = d["task"]
             if task == "correction":
                 key = ("c", norm(d["student"]), norm(d.get("fix") or ""))
             elif task == "conversation":
                 key = ("v", norm(d["messages"][0]["content"]))
+            elif task == "native_instruction":
+                key = ("n", norm(d["messages"][0]["content"]))
             else:
                 key = ("f", norm(d["topic"] + d["response"]["cards"][0]["germanWord"]))
             if key in seen:
@@ -197,11 +354,34 @@ def main() -> None:
 
             if task == "correction":
                 strictness = rng.choices(["balanced", "gentle", "strict"], weights=[60, 20, 20])[0]
-                sys_p = correction_system(d["level"], d["formality"], strictness)
+                # FeedbackStyle.nudgeMe asks for a third HINT: line. A row that carries a validated
+                # `hint` trains that format. `ok` rows are ALSO sampled into nudgeMe at the same
+                # rate — otherwise the model only ever sees the nudgeMe system prompt alongside a
+                # FIX and learns that nudgeMe means "always correct something".
+                hint = d.get("hint") if d["verdict"] == "fix" else None
+                if hint:
+                    style = "nudgeMe"
+                elif d["verdict"] == "ok" and rng.random() < args.nudge_ok_frac:
+                    style = "nudgeMe"
+                else:
+                    style = "tellMe"
+                sys_p = correction_system(d["level"], d["formality"], strictness,
+                                          focus_areas=d.get("focus_areas"), feedback_style=style)
                 usr = correction_user(d.get("partner"), d["student"])
-                asst = "OK" if d["verdict"] == "ok" else f"FIX: {d['fix']}\nWHY: {d['why']}"
+                if d["verdict"] == "ok":
+                    asst = "OK"
+                else:
+                    asst = f"FIX: {d['fix']}\nWHY: {d['why']}"
+                    if hint:
+                        asst += f"\nHINT: {hint}"
+                stats["nudgeMe"] = stats.get("nudgeMe", 0) + (style == "nudgeMe")
                 msgs = [{"role": "system", "content": sys_p}, {"role": "user", "content": usr},
                         {"role": "assistant", "content": asst}]
+            elif task == "native_instruction":
+                # No system prompt: this slice exists purely to keep general German ability alive
+                # during fine-tuning, the role the machine-translated Alpaca mix-in used to play
+                # badly. Bare user→assistant, same shape the mix-in had.
+                msgs = [{"role": m["role"], "content": m["content"]} for m in d["messages"]]
             elif task == "conversation":
                 # the app sends a hidden user seed turn that prompts the model's opener
                 # (ConversationPrompts.openerSeed) — required for user/assistant alternation
@@ -211,24 +391,47 @@ def main() -> None:
                 usr = flashcards_user(d)
                 asst = json.dumps({"cards": d["response"]["cards"]}, ensure_ascii=False, separators=(",", ":"))
                 msgs = [{"role": "user", "content": usr}, {"role": "assistant", "content": asst}]
-            examples.append({"messages": msgs, "_source": task})
+            examples.append({
+                "messages": msgs,
+                "_source": task,
+                "meta": {
+                    "task": task,
+                    "phenomenon": d.get("phenomenon"),
+                    "level": d.get("level"),
+                    "formality": d.get("formality"),
+                    "source": "synthetic",
+                    "template_family": template_family(d),
+                },
+            })
             stats[task] = stats.get(task, 0) + 1
 
-    n_mixin = int(len(examples) * args.mixin_frac / (1 - args.mixin_frac))
-    mixin = load_mixin(n_mixin, rng)
-    stats["mixin"] = len(mixin)
+    if args.no_mixin:
+        mixin = []
+        stats["mixin"] = 0
+    else:
+        n_mixin = int(len(examples) * args.mixin_frac / (1 - args.mixin_frac))
+        mixin = load_mixin(n_mixin, rng)
+        stats["mixin"] = len(mixin)
     all_ex = examples + mixin
     rng.shuffle(all_ex)
 
-    n_val = max(1, int(len(all_ex) * args.val_frac))
-    val, train = all_ex[:n_val], all_ex[n_val:]
-    OUT.mkdir(parents=True, exist_ok=True)
+    train, val, n_val_families = grouped_split(all_ex, args.val_frac, rng)
+    out_dir.mkdir(parents=True, exist_ok=True)
     for name, rows in (("train", train), ("val", val)):
-        with open(OUT / f"{name}.jsonl", "w", encoding="utf-8") as fh:
+        with open(out_dir / f"{name}.jsonl", "w", encoding="utf-8") as fh:
             for r in rows:
-                fh.write(json.dumps({"messages": r["messages"]}, ensure_ascii=False) + "\n")
-    stats.update(train=len(train), val=len(val), total=len(all_ex))
-    (OUT / "meta.json").write_text(json.dumps(stats, indent=2))
+                fh.write(json.dumps({"messages": r["messages"], "meta": r["meta"]},
+                                    ensure_ascii=False) + "\n")
+
+    # A family present on both sides means the split leaked; there is no valid reason for it.
+    tf = lambda rows: {r["meta"]["template_family"] for r in rows}
+    straddling = tf(train) & tf(val)
+    assert not straddling, f"template_family straddles the split: {sorted(straddling)[:5]}"
+
+    stats.update(train=len(train), val=len(val), total=len(all_ex),
+                 val_families=n_val_families,
+                 train_families=len(tf(train)), no_mixin=args.no_mixin)
+    (out_dir / "meta.json").write_text(json.dumps(stats, indent=2))
     print(json.dumps(stats, indent=2))
 
 

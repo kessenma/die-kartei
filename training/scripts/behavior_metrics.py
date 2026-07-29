@@ -19,19 +19,31 @@ import json
 import sys
 from pathlib import Path
 
-from run_baseline_eval import score, strip_channels  # reuse the exact scorer
+from run_baseline_eval import apply_app_guard, score, strip_channels  # reuse the exact scorer
 
 ROOT = Path(__file__).resolve().parent.parent
 EVAL_FILES = [ROOT / "data/eval/grammar_eval_v0.json", ROOT / "data/eval/grammar_eval_v1_extra.json"]
 
 
 def main() -> None:
-    resp_files = sys.argv[1:]
+    argv = sys.argv[1:]
+    app_guard = "--app-guard" in argv
+    argv = [a for a in argv if a != "--app-guard"]
+
+    # --eval-file <path> (repeatable) overrides the default v0+v1 pair, so the same two metrics
+    # can be computed on the v2 holdout. Denominators change with the suite — always report them.
+    eval_files, resp_files, i = [], [], 0
+    while i < len(argv):
+        if argv[i] == "--eval-file":
+            eval_files.append(argv[i + 1]); i += 2
+        else:
+            resp_files.append(argv[i]); i += 1
     if not resp_files:
-        sys.exit("usage: behavior_metrics.py <responses-or-results.json> [more ...]")
+        sys.exit("usage: behavior_metrics.py [--app-guard] [--eval-file <suite.json>] "
+                 "<responses-or-results.json> [more ...]")
 
     items = {}
-    for f in EVAL_FILES:
+    for f in (eval_files or EVAL_FILES):
         for it in json.loads(Path(f).read_text())["items"]:
             items[it["id"]] = it
 
@@ -45,7 +57,8 @@ def main() -> None:
     err_items = [it for it in corr if not it.get("expect_ok")]
 
     def passed(it):
-        return score(it, strip_channels(resp.get(it["id"], "")))["pass"]
+        raw = strip_channels(resp.get(it["id"], ""))
+        return score(it, apply_app_guard(raw, it) if app_guard else raw)["pass"]
 
     false_corr = [it["id"] for it in ok_items if not passed(it)]   # returned FIX instead of OK
     missed = [it["id"] for it in err_items if not passed(it)]      # missed OR wrongly fixed
