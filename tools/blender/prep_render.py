@@ -83,6 +83,25 @@ SPHERE_R = 0.55
 # The table top sits at z=0, so "resting on the table" is always z = SPHERE_R.
 TABLE = ("table", {"size": (2.5, 1.5, 1.25), "at": (0, 0, 0.0)})
 
+# MARK: - Stage conventions (die Figur führt vor)
+#
+# One design language across all 36 scenes: die Figur appears in every one — the actor in
+# the human/relational words (walks with the dog, waits by the clock, sits at the table),
+# the demonstrator in the purely spatial ones. The demonstrator always takes the same mark:
+# back-left, clear of the subject's travel lane, yawed toward the action, far enough out
+# that the subject stays the biggest thing in a 168pt drill canvas. One constant, so "same
+# mark" is enforced by construction rather than by review.
+
+FIGUR_HEIGHT = 1.7
+FIGUR_MARK = (-2.35, 1.05, -0.75)   # back-left in x/y, standing on the figure ground
+
+
+def demonstrator(pose="zeig", yaw=24.0, ground=FIGUR_MARK[2]):
+    """The (kind, spec) pair a spatial scene appends to its ref list. Scenes whose ground
+    is not the figure default (table scenes bottom out deeper) pass their own."""
+    return ("figur", {"at": (FIGUR_MARK[0], FIGUR_MARK[1], ground),
+                      "height": FIGUR_HEIGHT, "pose": pose, "yaw": yaw})
+
 RELATIONS = {
     "auf": {
         "ref": TABLE,
@@ -802,6 +821,18 @@ def build_reference(kind, spec, mat):
         prop.name = f"reference.{spec['file']}"
         return [prop]
 
+    if kind == "figur":
+        # Die Figur — the Bauhaus figure (figur.py), posed and placed. Six flat parts named
+        # figur_*, so the runtime flies them in as pieces and `movers: "figur"` strolls all
+        # of them together; nesting them under an empty would hide them from the runtime's
+        # piece walk, which only visits the scene root's direct children.
+        figur._LOD = _LOD                     # dense for stills, light for the shipped USDZ
+        parts, p = figur.build_figure(spec.get("preset", "standard"),
+                                      spec.get("height", FIGUR_HEIGHT), mat=mat)
+        figur.apply_pose(parts, p, spec.get("pose", "steh"))
+        figur.place(parts, spec["at"], spec.get("yaw", 0.0))
+        return parts
+
     if kind == "frame":
         # A thin picture frame — an's subject, hung on the wall kind.
         w, h = spec.get("size", (1.0, 0.8))
@@ -830,6 +861,9 @@ REF_PROBES = {
     # The imported-prop path, exercised with the doghouse (aus/nach's reference).
     "mesh": ({"file": "huette", "at": (-0.8, 0, -0.75), "height": 1.5, "yaw": 0},
              (1.4, 0, -0.2)),
+    # Die Figur at the demonstrator's mark, pointing at the resting ball.
+    "figur": ({"at": FIGUR_MARK, "height": FIGUR_HEIGHT, "pose": "zeig", "yaw": 24},
+              (0.9, 0, -0.2)),
 }
 
 
@@ -1177,19 +1211,76 @@ def ascii_name(word):
                 .replace("ä", "ae").replace("ß", "ss"))
 
 
-def export_usdz(path):
+def bake_ambient(specs):
+    """Keyframe case-neutral idle motion into the built scene before an animated export.
+
+    Ambient clips auto-play on BOTH sides of a drill question — the runtime plays every
+    baked clip it finds, on `.repeat()` — so they may only touch prims the choreography
+    never moves: never the subject, never a `movers` target. `--verify` enforces exactly
+    that against the `.usda` twin, which is why an animated scene must ship one.
+
+    Ops: `rotate_<axis>` is a continuous revolution (a clock hand); `swing_<axis>`
+    oscillates by ±`amplitude` degrees (a tail). Each spec runs exactly one period over
+    the exported range, so the repeat closes seamlessly.
+    """
+    scene = bpy.context.scene
+    scene.render.fps = 24
+    longest = max(int(spec.get("period", 4.0) * 24) for spec in specs)
+    scene.frame_start, scene.frame_end = 1, longest + 1
+
+    for spec in specs:
+        obj = bpy.data.objects.get(spec["prim"])
+        if obj is None:
+            raise ValueError(f"ambient: no object named {spec['prim']!r} in the scene")
+        op, _, axis = spec["op"].partition("_")
+        index = "xyz".index(axis)
+        obj.rotation_mode = "XYZ"
+        period = int(spec.get("period", 4.0) * 24)
+        base = obj.rotation_euler[index]
+
+        if op == "rotate":
+            beats = [(1, 0.0), (period + 1, math.tau)]
+            interpolation = "LINEAR"
+        elif op == "swing":
+            amplitude = math.radians(spec.get("amplitude", 18.0))
+            beats = [(1 + int(step * period / 4), angle)
+                     for step, angle in enumerate((0.0, amplitude, 0.0, -amplitude, 0.0))]
+            interpolation = "BEZIER"
+        else:
+            raise ValueError(f"ambient: unknown op {spec['op']!r}")
+
+        for frame, angle in beats:
+            obj.rotation_euler[index] = base + angle
+            obj.keyframe_insert("rotation_euler", index=index, frame=frame)
+        obj.rotation_euler[index] = base
+        for curve in figur.fcurves_of(obj.animation_data.action):
+            for point in curve.keyframe_points:
+                point.interpolation = interpolation
+
+
+def export_usdz(path, animated=False, twin=None):
     """Export the built scene for RealityKit. Materials come across as USD Preview Surface,
     so the app can re-tint them per case and per theme at runtime instead of shipping a
-    render per color."""
+    render per color.
+
+    `animated` writes keyframes as USD TimeSamples (figur.py's idiom). `twin` additionally
+    writes a plain-text .usda from the same scene immediately before the .usdz, because
+    Blender's importer drops transform animation on re-import — the twin is the only honest
+    record of which prims actually move, and `verify()` reads it.
+    """
     # Geometry only: the app builds its own camera and light rig, and stowaway cameras in a
     # USDZ can hijack or crash the device renderer (three of them inside prep3d-story-fuer
     # trapped RealityKit on iPhone, 2026-07-30).
     for obj in [o for o in bpy.data.objects if o.type in ("CAMERA", "LIGHT")]:
         bpy.data.objects.remove(obj, do_unlink=True)
+    if twin:
+        os.makedirs(os.path.dirname(os.path.abspath(twin)), exist_ok=True)
+        bpy.ops.wm.usd_export(filepath=twin, export_materials=True,
+                              export_animation=animated, convert_orientation=True)
     bpy.ops.wm.usd_export(
         filepath=path,
         export_materials=True,
-        export_animation=False,
+        export_animation=animated,
         # RealityKit expects Y-up; Blender authors Z-up.
         convert_orientation=True,
     )
@@ -1300,7 +1391,15 @@ def main():
         global _LOD
         _LOD = "low"
         build(args.prep, args.state, args.look, args.size)
-        export_usdz(args.out)
+        # A scene with an `ambient` spec exports animated and leaves a .usda twin behind
+        # for --verify; everything else stays a static pose.
+        ambient = RELATIONS[args.prep].get("ambient")
+        twin = None
+        if ambient:
+            bake_ambient(ambient)
+            twin = os.path.join(os.path.dirname(os.path.abspath(__file__)), "renders",
+                                "prep", "prep3d-" + ascii_name(args.prep) + ".usda")
+        export_usdz(args.out, animated=bool(ambient), twin=twin)
     else:
         build(args.prep, args.state, args.look, args.size, ghost=args.ghost)
         render_to(args.out)

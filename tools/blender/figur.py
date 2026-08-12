@@ -33,7 +33,7 @@ import os
 import sys
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 # MARK: - Palette
 #
@@ -301,6 +301,67 @@ def build_figure(preset, height, part="all", mat=None, override=None):
     for kind in kinds:
         objects += BUILDERS[kind](p, mat)
     return objects, p
+
+
+# MARK: - Poses (die Figur führt vor)
+#
+# Static stances for the preposition scenes: the figure acts in the relational words (walks
+# with the dog, waits by the clock, sits at the table) and demonstrates in the spatial ones
+# (stands at its mark, arm raised toward the subject). A pose is rotations about the joints
+# the part origins already sit at, plus a derived root drop — data, not new geometry, so the
+# whole vocabulary is judged with `--pose <name>` renders and tuned in one table.
+#
+# Angles are (x, y, z) degrees, in the figure's own frame: the hip line runs along X, so the
+# figure faces ±Y and a stride swings about X. A scene whose travel runs along world X yaws
+# the walker ±90° via `place` so it faces where it is going — swinging the legs along the
+# hip line instead just scissors them into each other (first geh probe, 2026-08-12).
+
+POSES = {
+    # Rest — exactly what build_figure produces.
+    "steh": {},
+    # Mid-stride: legs counter-swung fore/aft, arms swinging opposite. The runtime slides the
+    # whole figure (movers: "figur"); this pose is what keeps the slide reading as a walk.
+    "geh": {"figur_leg_l": (18, 0, 0), "figur_leg_r": (-18, 0, 0),
+            "figur_arm_l": (-15, 0, 0), "figur_arm_r": (15, 0, 0)},
+    # Seated, legs straight out toward +Y — the rig has no knees, and a Bauhaus figure sits
+    # like a doll on a ledge. The hips drop most of a leg length (see apply_pose).
+    "sitz": {"figur_leg_l": (82, 0, 0), "figur_leg_r": (82, 0, 0)},
+    # The demonstrator: right arm raised toward the action (+X), the museum-guide gesture.
+    "zeig": {"figur_arm_r": (0, -105, 0)},
+}
+
+
+def apply_pose(objects, p, pose):
+    """Rotate parts about their joints into a named stance.
+
+    Location changes derive from the pose rather than living in the table: sitz drops every
+    part by most of the leg length, because the legs no longer hold the body up. Applied
+    before `place`, while the figure still stands at the origin.
+    """
+    rotations = POSES[pose]
+    for obj in objects:
+        if spec := rotations.get(obj.name):
+            obj.rotation_mode = "XYZ"
+            obj.rotation_euler = [math.radians(a) for a in spec]
+    if pose == "sitz":
+        for obj in objects:
+            obj.location.z -= p["leg_len"] * 0.88
+    return objects
+
+
+def place(objects, at, yaw=0.0):
+    """Move a built figure to a scene position, yawed about its own vertical axis.
+
+    The parts are flat on purpose (no parent — see build_figure), so the yaw spins each
+    part's joint location around the figure's axis and composes onto its own rotation;
+    a parent empty would hide the parts from the runtime's piece walk.
+    """
+    spin = Matrix.Rotation(math.radians(yaw), 4, "Z")
+    offset = Vector(at)
+    for obj in objects:
+        obj.location = spin @ obj.location + offset
+        obj.rotation_euler = (spin @ obj.rotation_euler.to_matrix().to_4x4()).to_euler()
+    return objects
 
 
 def report(preset, height, p):
@@ -875,6 +936,8 @@ def main():
     ap.add_argument("--parts", action="store_true", help="every part alone, rendered + exported")
     ap.add_argument("--scale-check", action="store_true", help="beside hund.usdz and the table")
     ap.add_argument("--aufbau", action="store_true", help="bake the self-assembly clip")
+    ap.add_argument("--pose", default="steh", choices=sorted(POSES),
+                    help="stance for the default render/export path (probe with --pose sitz)")
     ap.add_argument("--verify", help="re-import a USDZ and print what is actually in it")
     args = ap.parse_args(argv)
 
@@ -904,12 +967,15 @@ def main():
         _LOD = "low"
     clear_scene()
     stage(args.size, *VIEWS[args.view], args.ortho, args.target_z)
-    _, p = build_figure(args.preset, args.height, part=args.part)
+    objects, p = build_figure(args.preset, args.height, part=args.part)
+    apply_pose(objects, p, args.pose)
     report(args.preset, args.height, p)
+    pose_tag = "" if args.pose == "steh" else f"-{args.pose}"
     if args.usdz:
         export_usdz(args.out or os.path.join(args.out_dir, "figur.usdz"))
     else:
-        render_to(args.out or os.path.join(args.out_dir, f"figur-{args.preset}-{args.view}.png"))
+        render_to(args.out or os.path.join(
+            args.out_dir, f"figur-{args.preset}{pose_tag}-{args.view}.png"))
 
 
 if __name__ == "__main__":
