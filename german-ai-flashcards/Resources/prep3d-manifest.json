@@ -417,7 +417,12 @@
         -0.0
       ],
       "motion": {
-        "kind": "idle"
+        "kind": "orbit",
+        "center": [
+          -0.5,
+          0,
+          0
+        ]
       }
     },
     "außerhalb": {
@@ -428,7 +433,12 @@
         -0.0
       ],
       "motion": {
-        "kind": "idle"
+        "kind": "orbit",
+        "center": [
+          -0.55,
+          0,
+          0
+        ]
       }
     },
     "oberhalb": {
@@ -439,7 +449,13 @@
         -0.0
       ],
       "motion": {
-        "kind": "idle"
+        "kind": "shuttle",
+        "from": [
+          -1.4,
+          0,
+          0
+        ],
+        "dur": 2.6
       }
     },
     "unterhalb": {
@@ -450,7 +466,13 @@
         -0.0
       ],
       "motion": {
-        "kind": "idle"
+        "kind": "shuttle",
+        "from": [
+          -1.4,
+          0,
+          0
+        ],
+        "dur": 2.6
       }
     },
     "diesseits": {
@@ -461,11 +483,34 @@
         -0.0
       ],
       "motion": {
-        "kind": "idle"
+        "kind": "shuttle",
+        "from": [
+          -1.3,
+          0,
+          0
+        ],
+        "dur": 2.8
       }
     },
     "jenseits": {
       "asset": "prep3d-jenseits",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "shuttle",
+        "from": [
+          1.2,
+          0,
+          0
+        ],
+        "dur": 2.8
+      }
+    },
+    "beiderseits": {
+      "asset": "prep3d-beiderseits",
       "akkOffset": [
         0.0,
         0.0,

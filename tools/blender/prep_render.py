@@ -457,50 +457,92 @@ RELATIONS = {
 
     # MARK: Formal Genitiv locatives (Settings ▸ include formal)
     #
-    # Static *regions*, not journeys: innerhalb/außerhalb/oberhalb/unterhalb/jenseits describe
-    # where something sits relative to a boundary, so their scenes hold still and idle. What
-    # separates them from in/aus/über/unter is exactly the absence of an event.
+    # Regions, not journeys — but regions with life in them since the 2026-08-12 rework:
+    # the ball roams its region (small orbit or slow patrol) instead of parking, which is
+    # what separates "where something is" from a still. What separates them from
+    # in/aus/über/unter is still the absence of an *event*: nothing enters, exits or lands.
 
     "innerhalb": {
+        # „Der Ball rollt innerhalb der Kiste." — roams the inside, never leaves.
         "governs": "genitiv",
-        "ref": ("openbox", {"size": (2.3, 1.5, 1.3), "at": (0, 0, 0.0)}),
-        "dat": {"subject": (0, 0, 0.0)},
-        "motion": {"kind": "idle"},
+        "ref": [
+            ("openbox", {"size": (2.6, 1.7, 1.3), "at": (0, 0, 0.0)}),
+            demonstrator(ground=-0.65),
+        ],
+        "dat": {"subject": (0.5, 0, 0.0)},
+        "motion": {"kind": "orbit", "center": (-0.5, 0, 0)},
     },
     "außerhalb": {
+        # „Der Ball rollt außerhalb der Kiste." — roams a patch outside; no arrow and no
+        # exit motion, which is what keeps it from collapsing into `aus`. The box's flaps
+        # own the upstage-left, so the Mann watches from downstage-left (aus's solution).
         "governs": "genitiv",
-        # The same container as innerhalb, with the ball simply elsewhere — no arrow and no
-        # exit motion, which is what keeps it from collapsing into `aus`.
-        "ref": ("openbox", {"size": (1.9, 1.4, 1.3), "at": (-1.05, 0, 0.0)}),
-        "dat": {"subject": (1.35, 0, -0.1)},
-        "motion": {"kind": "idle"},
+        "ref": [
+            ("openbox", {"size": (1.9, 1.4, 1.3), "at": (-1.05, 0, 0.0)}),
+            demonstrator(ground=-0.65, depth=-1.0),
+        ],
+        "dat": {"subject": (1.5, 0, -0.1)},
+        "motion": {"kind": "orbit", "center": (-0.55, 0, 0)},
     },
     "oberhalb": {
+        # „Der Ball schwebt oberhalb des Blocks." — a slow patrol above the slab.
         "governs": "genitiv",
-        "ref": ("slab", {"size": (2.6, 1.5, 0.3), "at": (0, 0, -0.65)}),
-        "dat": {"subject": (0, 0, 1.05)},
-        "motion": {"kind": "idle"},
+        "ref": [
+            ("slab", {"size": (2.6, 1.5, 0.3), "at": (0, 0, -0.65)}),
+            demonstrator(ground=-0.8),
+        ],
+        "dat": {"subject": (0.7, 0, 1.05)},
+        "motion": {"kind": "shuttle", "from": (-1.4, 0, 0), "dur": 2.6},
     },
     "unterhalb": {
+        # „Der Ball rollt unterhalb des Blocks." — the same patrol, under the floating slab.
         "governs": "genitiv",
-        "ref": ("slab", {"size": (2.6, 1.5, 0.3), "at": (0, 0, 1.15)}),
-        "dat": {"subject": (0, 0, -0.55)},
-        "motion": {"kind": "idle"},
+        "ref": [
+            ("slab", {"size": (2.6, 1.5, 0.3), "at": (0, 0, 1.15)}),
+            demonstrator(ground=-1.1),
+        ],
+        "dat": {"subject": (0.7, 0, -0.55)},
+        "motion": {"kind": "shuttle", "from": (-1.4, 0, 0), "dur": 2.6},
     },
     "diesseits": {
+        # „Diesseits des Flusses sitzt der Hund." — a band across the frame reads as a
+        # river at this camera. The Hund on the viewer's side, the Mann beside him: for
+        # dies-/jenseits the Figur MUST share the near bank — its side is the meaning —
+        # so no demonstrator mark here.
         "governs": "genitiv",
-        # A band across the frame — a river, read at this camera as near/far. diesseits: the
-        # ball on the viewer's side, in front of the band in screen space.
-        "ref": ("slab", {"size": (3.6, 0.8, 0.2), "at": (0, 0.45, -0.68)}),
-        "dat": {"subject": (0.0, -1.05, -0.35)},
-        "motion": {"kind": "idle"},
+        "ref": [
+            ("slab", {"size": (3.6, 0.8, 0.2), "at": (0, 0.45, -0.68)}),
+            ("figur", {"at": (-1.95, -0.85, -0.9), "pose": "steh", "yaw": -55}),
+        ],
+        "subject_mesh": {"file": "hund", "height": 0.95, "yaw": 0},
+        "dat": {"subject": (0.35, -1.05, -0.9)},
+        "motion": {"kind": "shuttle", "from": (-1.3, 0, 0), "dur": 2.8},
     },
     "jenseits": {
+        # „Jenseits des Flusses sitzt der Hund." — the same river, the Hund on the far
+        # bank (clipped by the band — hinter's occlusion trick), the Mann on the near one
+        # looking across. The gap between them IS the word.
         "governs": "genitiv",
-        # The same river, ball on the far bank. Sunk low enough that the band clips its base —
-        # hinter's occlusion trick; without the overlap, near/far reads as above/below.
-        "ref": ("slab", {"size": (3.6, 0.8, 0.2), "at": (0, 0.45, -0.68)}),
-        "dat": {"subject": (-0.15, 1.6, -0.5)},
+        "ref": [
+            ("slab", {"size": (3.6, 0.8, 0.2), "at": (0, 0.45, -0.68)}),
+            ("figur", {"at": (-2.0, -1.0, -0.9), "pose": "steh", "yaw": -35}),
+        ],
+        "subject_mesh": {"file": "hund", "height": 0.95, "yaw": 25},
+        "dat": {"subject": (-0.15, 1.6, -0.85)},
+        "motion": {"kind": "shuttle", "from": (1.2, 0, 0), "dur": 2.8},
+    },
+    "beiderseits": {
+        # „Beiderseits des Zauns stehen der Mann und der Hund." — the set's last word to
+        # get a scene at all. The fence divides near from far; the Mann stands behind it
+        # (head and torso above the rails), the Hund sits in front. Nothing travels —
+        # being on both sides is the whole meaning.
+        "governs": "genitiv",
+        "ref": [
+            ("fence", {"at": (0, 0.35, -0.75), "length": 3.4, "height": 1.1}),
+            ("figur", {"at": (-0.9, 1.5, -0.75), "pose": "steh", "yaw": -25}),
+        ],
+        "subject_mesh": {"file": "hund", "height": 0.95, "yaw": -15},
+        "dat": {"subject": (0.85, -0.8, -0.75)},
         "motion": {"kind": "idle"},
     },
 }

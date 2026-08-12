@@ -24,7 +24,7 @@ SIZE="${SIZE:-512}"
 # `wohinwo` is the synthetic rules-sheet demo — not a real preposition, but it ships
 # three states like the two-way words it explains.
 TWO_WAY=(auf in unter über neben zwischen an vor hinter entlang wohinwo)
-FIXED=(durch um gegen bis aus bei mit nach zu von gegenüber für ohne außer seit statt trotz während wegen innerhalb außerhalb oberhalb unterhalb diesseits jenseits)
+FIXED=(durch um gegen bis aus bei mit nach zu von gegenüber für ohne außer seit statt trotz während wegen innerhalb außerhalb oberhalb unterhalb diesseits jenseits beiderseits)
 
 ascii() { printf '%s' "$1" | sed 's/ü/ue/g; s/ö/oe/g; s/ä/ae/g; s/ß/ss/g'; }
 
