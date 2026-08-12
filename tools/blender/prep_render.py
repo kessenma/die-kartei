@@ -24,10 +24,17 @@ AppTheme ground without a baked-in background.
 
 import argparse
 import math
+import os
 import sys
 
 import bpy
 from mathutils import Matrix, Vector
+
+# figur.py lives beside this file, but Blender does not reliably put a --python script's
+# directory on sys.path. The figure rig owns the .usda-twin animation parsing this file's
+# verifier reads (and, later, the figure builders the scenes pose).
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import figur
 
 # MARK: - Palette (exact hex from Models/Preposition.swift)
 
@@ -1227,6 +1234,71 @@ def export_usdz(path):
     )
 
 
+def verify(path):
+    """Re-import a shipped USDZ and check the contract the runtime depends on.
+
+    Lifted from figur.py's verifier, which owns the reasoning about `merge_parent_xform=False`
+    and the plain-text `.usda` twin; this checks the preposition scene contract instead of the
+    six figure parts:
+
+      - a prim named *subject* is present — the runtime tints and moves exactly that prim,
+        and without it the canvas silently poses nothing,
+      - zero stowaway cameras/lights (three cameras inside prep3d-story-fuer trapped
+        RealityKit on iPhone, 2026-07-30),
+      - if a `.usda` twin exists, its TimeSamples sit ONLY on prims the relation's `ambient`
+        spec whitelists — never on the subject or anything the runtime itself moves, because
+        a baked clip auto-plays on the question side and would fight the choreography.
+        Blender's importer drops USD transform animation, so the twin is the only honest
+        witness (see figur.usda_animation). A scene with no twin is assumed static, and an
+        animated scene MUST write one.
+
+    A render proves the picture; only this proves the file.
+    """
+    clear_scene()
+    bpy.ops.wm.usd_import(filepath=os.path.abspath(path), merge_parent_xform=False)
+    print(f"VERIFY {path} ({os.path.getsize(path)} bytes)")
+
+    problems = []
+    subject_found = False
+    for obj in sorted(bpy.context.scene.objects, key=lambda o: o.name):
+        detail = ""
+        if obj.type == "MESH":
+            detail = f" verts={len(obj.data.vertices)} polys={len(obj.data.polygons)}"
+        flag = ""
+        if obj.type in ("CAMERA", "LIGHT"):
+            problems.append(f"stowaway {obj.type.lower()} '{obj.name}'")
+            flag = "  ← STOWAWAY"
+        if "subject" in obj.name.lower():
+            subject_found = True
+        print(f"  {obj.name:24s} {obj.type:8s}{detail}{flag}")
+    if not subject_found:
+        problems.append("no prim named *subject*")
+
+    stem = os.path.splitext(os.path.basename(path))[0]
+    word = {ascii_name(w): w for w in RELATIONS}.get(stem.removeprefix("prep3d-"))
+    allowed = {spec["prim"] for spec in (RELATIONS.get(word) or {}).get("ambient", [])}
+
+    twin = os.path.join(os.path.dirname(os.path.abspath(__file__)), "renders", "prep",
+                        stem + ".usda")
+    if os.path.exists(twin):
+        ops, span = figur.usda_animation(twin)
+        sampled = {p: sorted(v) for p, v in ops.items() if p and p != "root"}
+        print(f"  animation: {len(sampled)} prims, frames {span[0]}..{span[1]}" if span
+              else "  animation: twin carries no TimeSamples")
+        for prim in sorted(sampled):
+            ok = prim in allowed and "subject" not in prim.lower()
+            print(f"    {prim:24s} {','.join(sampled[prim])}"
+                  + ("" if ok else "  ← NOT WHITELISTED"))
+            if not ok:
+                problems.append(f"TimeSamples on non-ambient prim '{prim}'")
+    else:
+        print("  animation: no .usda twin — static export assumed (an animated scene must "
+              "write a twin; Blender's importer cannot see USD transform animation)")
+
+    print("  result:", "OK" if not problems else "FAILED — " + "; ".join(problems))
+    return not problems
+
+
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     ap = argparse.ArgumentParser()
@@ -1243,9 +1315,15 @@ def main():
     ap.add_argument("--manifest", action="store_true", help="write the per-relation pose manifest")
     ap.add_argument("--refprobe", choices=sorted(REF_PROBES),
                     help="render a canned probe of one reference kind, with a resting ball")
+    ap.add_argument("--verify", metavar="USDZ",
+                    help="re-import a shipped USDZ and check the scene contract "
+                         "(run Blender with --python-exit-code 1 to gate on the result)")
     args = ap.parse_args(argv)
 
-    if args.refprobe:
+    if args.verify:
+        if not verify(args.verify):
+            sys.exit(1)
+    elif args.refprobe:
         clear_scene()
         setup_render(args.look, args.size)
         spec, ball_at = REF_PROBES[args.refprobe]
