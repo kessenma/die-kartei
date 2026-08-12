@@ -96,15 +96,22 @@ FIGUR_HEIGHT = 1.7
 FIGUR_MARK = (-2.35, 1.05, -0.75)   # back-left in x/y, standing on the figure ground
 
 
-def demonstrator(pose="zeig", yaw=24.0, ground=FIGUR_MARK[2]):
-    """The (kind, spec) pair a spatial scene appends to its ref list. Scenes whose ground
-    is not the figure default (table scenes bottom out deeper) pass their own."""
-    return ("figur", {"at": (FIGUR_MARK[0], FIGUR_MARK[1], ground),
+def demonstrator(pose="zeig", yaw=None, ground=FIGUR_MARK[2], side=-1, depth=FIGUR_MARK[1]):
+    """The (kind, spec) pair a spatial scene appends to its ref list.
+
+    Scenes whose ground is not the figure default (table scenes bottom out deeper) pass
+    their own. `side=+1` mirrors the mark to back-right when the action owns the left
+    lane (unter/über enter from the left; aus pops out of a left-standing box), and the
+    default yaw flips with it so the raised arm keeps pointing at the action. `depth`
+    pushes the mark further upstage for scenes whose subject sweeps the full width."""
+    if yaw is None:
+        yaw = 24.0 if side < 0 else 156.0
+    return ("figur", {"at": (side * abs(FIGUR_MARK[0]), depth, ground),
                       "height": FIGUR_HEIGHT, "pose": pose, "yaw": yaw})
 
 RELATIONS = {
     "auf": {
-        "ref": TABLE,
+        "ref": [TABLE, demonstrator(ground=-1.36)],
         # "Das Buch liegt auf dem Tisch." Wohin: mid-flight above. Wo: resting on the top.
         "akk": {"subject": (0, 0, 1.75), "arrow": "down"},
         "dat": {"subject": (0, 0, 0.11 + SPHERE_R)},
@@ -114,33 +121,39 @@ RELATIONS = {
         # The cardboard box, sized so a seated dog peeks over the rim (floor top -0.62,
         # wall top 0.45, dog 1.3 tall). Promoted from the story set 2026-08-12; the
         # ball-in-box original retired with the style toggle.
-        "ref": ("openbox", {"size": (2.4, 1.7, 0.95), "at": (0, 0, -0.275), "flaps": True}),
+        "ref": [
+            ("openbox", {"size": (2.4, 1.7, 0.95), "at": (0, 0, -0.275), "flaps": True}),
+            demonstrator(ground=-0.75),
+        ],
         "subject_mesh": {"file": "hund", "height": 1.05, "yaw": 0},
         "akk": {"subject": (0, 0, 1.0), "arrow": "down"},
         "dat": {"subject": (0, 0, -0.62)},
     },
     "unter": {
-        # "Die Katze schläft unter dem Tisch." The table earns its legs here — a floating bar
-        # can't show "underneath" as a place you'd actually be.
-        "ref": TABLE,
+        # The table earns its legs here — a floating bar can't show "underneath" as a
+        # place you'd actually be. The ball enters from the left, so the mark mirrors.
+        "ref": [TABLE, demonstrator(ground=-1.36, side=+1)],
         "akk": {"subject": (-2.0, 0, -0.72), "arrow": "right"},
         "dat": {"subject": (0, 0, -0.72)},
     },
     "über": {
-        "ref": TABLE,
+        "ref": [TABLE, demonstrator(ground=-1.36, side=+1)],
         # Tight to the table: too much air and it reads as "in the sky", not "above the table".
         "akk": {"subject": (-2.2, 0, 1.02), "arrow": "right"},
         "dat": {"subject": (0, 0, 1.02)},
     },
     "neben": {
-        "ref": TABLE,
+        "ref": [TABLE, demonstrator(ground=-1.36)],
         # On the floor beside the table, not floating at table-top height — at top height the
         # sphere merges into the corner of the top and the relation stops reading.
         "akk": {"subject": (2.72, 0, -0.81), "arrow": "left"},
         "dat": {"subject": (2.05, 0, -0.81)},
     },
     "zwischen": {
-        "ref": ("twobars", {"size": (0.42, 1.2, 1.7), "gap": 1.5, "at": (0, 0, 0.0)}),
+        "ref": [
+            ("twobars", {"size": (0.42, 1.2, 1.7), "gap": 1.5, "at": (0, 0, 0.0)}),
+            demonstrator(ground=-0.85),
+        ],
         "akk": {"subject": (0, 0, 2.0), "arrow": "down"},
         "dat": {"subject": (0, 0, 0.0)},
     },
@@ -160,14 +173,20 @@ RELATIONS = {
     "vor": {
         # Wider and lower than an `an` wall, so the sphere can overlap it in screen space —
         # depth only reads if the two shapes actually cross.
-        "ref": ("wall", {"size": (2.4, 0.28, 1.9), "at": (0, 0, 0.35)}),
+        "ref": [
+            ("wall", {"size": (2.4, 0.28, 1.9), "at": (0, 0, 0.35)}),
+            demonstrator(ground=-0.52),
+        ],
         "akk": {"subject": (0, -2.9, -0.15), "arrow": "toward"},
         "dat": {"subject": (0, -1.25, -0.15)},
     },
     "hinter": {
         # Same wall. The whole read is occlusion: the sphere sits *behind* it and is partly
         # hidden, which is the only honest way to say "behind" in a single frame.
-        "ref": ("wall", {"size": (2.4, 0.28, 1.9), "at": (0, 0, 0.35)}),
+        "ref": [
+            ("wall", {"size": (2.4, 0.28, 1.9), "at": (0, 0, 0.35)}),
+            demonstrator(ground=-0.52),
+        ],
         # Parked at the wall's right edge in *screen* space (screen_x ≈ 0.93·X + 0.36·Y at this
         # camera), so it is half-occluded. Fully behind reads as absent; fully clear reads as
         # "beside". Half is the only pose that says "behind".
@@ -175,7 +194,10 @@ RELATIONS = {
         "dat": {"subject": (0.72, 1.25, -0.15)},
     },
     "entlang": {
-        "ref": ("path", {"at": (0, 0, -0.55), "length": 3.6, "count": 7}),
+        "ref": [
+            ("path", {"at": (0, 0, -0.55), "length": 3.6, "count": 7}),
+            demonstrator(ground=-0.55),
+        ],
         "akk": {"subject": (-1.7, 0, 0.0), "arrow": "right"},
         "dat": {"subject": (0.9, 0, 0.0)},
     },
@@ -214,7 +236,10 @@ RELATIONS = {
 
     "durch": {
         "governs": "akkusativ",
-        "ref": ("portal", {"size": (3.0, 0.4, 2.6), "at": (0, 0, 0.4), "opening": (1.35, 1.5)}),
+        "ref": [
+            ("portal", {"size": (2.6, 0.4, 2.4), "at": (0.15, 0, 0.3), "opening": (1.35, 1.5)}),
+            demonstrator(ground=-0.9, depth=1.4),
+        ],
         # Left-to-right through the opening: a "toward" arrow points down the view
         # axis and foreshortens to a stub.
         "dat": {"subject": (0, 0, 0.25), "arrow": "right"},
@@ -240,7 +265,10 @@ RELATIONS = {
         "governs": "akkusativ",
         # A side-on wall like `an`'s, so the impact can be shown across the frame rather than
         # into it — depth arrows foreshorten at this camera.
-        "ref": ("wall", {"size": (0.3, 2.4, 2.2), "at": (0.95, 0, 0.5)}),
+        "ref": [
+            ("wall", {"size": (0.3, 2.4, 2.2), "at": (0.95, 0, 0.5)}),
+            demonstrator(ground=-0.52),
+        ],
         # The resting pose already touches the wall, so the strike is authored as a wind-up
         # *back* from it; the impact point is the rest contact itself.
         "dat": {"subject": (0.25, 0, 0.75), "arrow": "right"},
@@ -248,7 +276,10 @@ RELATIONS = {
     },
     "bis": {
         "governs": "akkusativ",
-        "ref": ("goal", {"at": (0, 0, -0.55), "length": 3.0, "count": 6}),
+        "ref": [
+            ("goal", {"at": (0, 0, -0.55), "length": 3.0, "count": 6}),
+            demonstrator(ground=-0.55),
+        ],
         "dat": {"subject": (0.2, 0, 0.0), "arrow": "right"},
         # Travels the path and STOPS at the marker — arriving and staying is the meaning.
         "motion": {"kind": "shuttle", "from": (-1.8, 0, 0), "to": (1.05, 0, 0)},
@@ -256,7 +287,10 @@ RELATIONS = {
     "aus": {
         "governs": "dativ",
         # Flaps make it a cardboard box — "moving out" — without a texture in sight.
-        "ref": ("openbox", {"size": (1.9, 1.4, 1.5), "at": (-0.9, 0, 0.0), "flaps": True}),
+        "ref": [
+            ("openbox", {"size": (1.9, 1.4, 1.5), "at": (-0.9, 0, 0.0), "flaps": True}),
+            demonstrator(ground=-0.75, depth=-1.0),
+        ],
         "dat": {"subject": (1.15, 0, 0.55), "arrow": "right"},
         # Starts inside the cavity and arcs over the wall (top z=0.75, ball r=0.55). The
         # runtime's arc path rises before it drifts, so the ball clears the wall instead of
@@ -379,30 +413,42 @@ RELATIONS = {
         "governs": "genitiv",
         # One thing inside another's span: the ball travels within the slab's extent and never
         # leaves it — "during" as containment in time.
-        "ref": ("slab", {"size": (3.5, 1.3, 0.26), "at": (0, 0, -0.5)}),
+        "ref": [
+            ("slab", {"size": (3.5, 1.3, 0.26), "at": (0, 0, -0.5)}),
+            demonstrator(ground=-0.63),
+        ],
         "dat": {"subject": (1.15, 0, 0.2)},
         "motion": {"kind": "shuttle", "from": (-2.3, 0, 0), "dur": 2.4},
     },
     "trotz": {
         "governs": "genitiv",
         # An obstacle cleared and carried on past — proceeding regardless is the meaning.
-        "ref": ("wall", {"size": (0.3, 2.0, 1.3), "at": (-0.35, 0, 0.05)}),
+        "ref": [
+            ("wall", {"size": (0.3, 2.0, 1.3), "at": (-0.35, 0, 0.05)}),
+            demonstrator(ground=-0.75),
+        ],
         "dat": {"subject": (1.25, 0, -0.2), "arrow": "right"},
         "motion": {"kind": "shuttle", "from": (-2.55, 0, 0), "arc": 1.9},
     },
     "wegen": {
         "governs": "genitiv",
         # Cause and effect: the block shoves, and the ball rolls off *because* of it.
-        "ref": ("slab", {"size": (0.85, 0.85, 0.85), "at": (-1.6, 0, -0.33)}),
-        "dat": {"subject": (-0.35, 0, -0.2), "arrow": "right"},
+        "ref": [
+            ("slab", {"size": (0.85, 0.85, 0.85), "at": (-1.25, 0, -0.33)}),
+            demonstrator(ground=-0.75, depth=-1.2),
+        ],
+        "dat": {"subject": (0.0, 0, -0.2), "arrow": "right"},
         "motion": {"kind": "cause", "push": (0.35, 0, 0), "delta": (1.6, 0, 0)},
     },
     "statt": {
         "governs": "genitiv",
         # Substitution as a scene: the pedestal is the role, the displaced block is what held
         # it, the ball takes its place. The first Genitiv-slate subject in the set.
-        "ref": ("pedestal", {"size": (1.7, 1.3, 0.26), "at": (-0.5, 0, 0.0),
-                             "out": (0.72, 0.72, 0.72), "out_at": (1.45, 0, 0.36)}),
+        "ref": [
+            ("pedestal", {"size": (1.7, 1.3, 0.26), "at": (-0.5, 0, 0.0),
+                          "out": (0.72, 0.72, 0.72), "out_at": (1.45, 0, 0.36)}),
+            demonstrator(ground=-0.75, depth=0.6),
+        ],
         "dat": {"subject": (-0.5, 0, 0.68), "arrow": "right", "arrow_base": (1.45, 0, 1.15)},
         # The ball arcs in as the block slides out — one beat, a swap.
         "motion": {"kind": "swap", "from": (-1.7, 0, 0), "arc": 0.8,

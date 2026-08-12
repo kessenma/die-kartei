@@ -13,6 +13,11 @@
       "note": "Usually pairs with a second preposition, which then sets the case — „bis zum Bahnhof“ (zu → Dativ). Standing alone, before a bare time or place, it takes the Akkusativ.",
       "examples": [
         {
+          "german": "Der Ball rollt bis ans Ziel.",
+          "english": "The ball rolls all the way to the finish.",
+          "caseUsed": "akkusativ"
+        },
+        {
           "german": "Wir bleiben bis nächsten Freitag.",
           "english": "We're staying until next Friday.",
           "caseUsed": "akkusativ"
@@ -34,6 +39,11 @@
       ],
       "tier": "core",
       "examples": [
+        {
+          "german": "Der Ball rollt durch das Tor.",
+          "english": "The ball rolls through the gate.",
+          "caseUsed": "akkusativ"
+        },
         {
           "german": "Wir gehen durch den Park.",
           "english": "We're walking through the park.",
@@ -78,6 +88,11 @@
       "contractions": [],
       "tier": "core",
       "examples": [
+        {
+          "german": "Der Ball rollt gegen die Wand.",
+          "english": "The ball rolls into the wall.",
+          "caseUsed": "akkusativ"
+        },
         {
           "german": "Das Auto fuhr gegen einen Baum.",
           "english": "The car drove into a tree.",
@@ -143,6 +158,11 @@
       "contractions": [],
       "tier": "core",
       "examples": [
+        {
+          "german": "Der Ball kommt aus der Kiste.",
+          "english": "The ball comes out of the box.",
+          "caseUsed": "dativ"
+        },
         {
           "german": "Sie kommt aus der Schweiz.",
           "english": "She comes from Switzerland.",
@@ -397,6 +417,16 @@
       "tier": "core",
       "examples": [
         {
+          "german": "Der Ball fällt auf den Tisch.",
+          "english": "The ball falls onto the table.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Der Ball liegt auf dem Tisch.",
+          "english": "The ball is lying on the table.",
+          "caseUsed": "dativ"
+        },
+        {
           "german": "Ich lege das Buch auf den Tisch.",
           "english": "I put the book on the table.",
           "caseUsed": "akkusativ"
@@ -418,6 +448,11 @@
       "tier": "advanced",
       "note": "In practice entlang usually follows its noun and takes the Akkusativ — „die Straße entlang“. Placed in front, it takes the Dativ.",
       "examples": [
+        {
+          "german": "Der Ball rollt den Weg entlang.",
+          "english": "The ball rolls along the path.",
+          "caseUsed": "akkusativ"
+        },
         {
           "german": "Wir gehen die Straße entlang.",
           "english": "We're walking along the street.",
@@ -448,6 +483,16 @@
       ],
       "tier": "core",
       "examples": [
+        {
+          "german": "Der Ball rollt hinter die Wand.",
+          "english": "The ball rolls behind the wall.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Der Ball liegt hinter der Wand.",
+          "english": "The ball is lying behind the wall.",
+          "caseUsed": "dativ"
+        },
         {
           "german": "Ich stelle das Fahrrad hinter das Haus.",
           "english": "I put the bike behind the house.",
@@ -514,6 +559,16 @@
       "tier": "core",
       "examples": [
         {
+          "german": "Der Ball rollt neben den Tisch.",
+          "english": "The ball rolls next to the table.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Der Ball liegt neben dem Tisch.",
+          "english": "The ball is lying next to the table.",
+          "caseUsed": "dativ"
+        },
+        {
           "german": "Ich stelle den Stuhl neben das Sofa.",
           "english": "I put the chair next to the sofa.",
           "caseUsed": "akkusativ"
@@ -546,6 +601,16 @@
       "tier": "core",
       "examples": [
         {
+          "german": "Der Ball fliegt über den Tisch.",
+          "english": "The ball flies over the table.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Der Ball schwebt über dem Tisch.",
+          "english": "The ball hovers above the table.",
+          "caseUsed": "dativ"
+        },
+        {
           "german": "Das Flugzeug fliegt über die Stadt.",
           "english": "The plane flies over the city.",
           "caseUsed": "akkusativ"
@@ -576,6 +641,16 @@
       ],
       "tier": "core",
       "examples": [
+        {
+          "german": "Der Ball rollt unter den Tisch.",
+          "english": "The ball rolls under the table.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Der Ball liegt unter dem Tisch.",
+          "english": "The ball is lying under the table.",
+          "caseUsed": "dativ"
+        },
         {
           "german": "Die Katze läuft unter den Tisch.",
           "english": "The cat runs under the table.",
@@ -609,6 +684,16 @@
       "tier": "core",
       "examples": [
         {
+          "german": "Der Ball rollt vor die Wand.",
+          "english": "The ball rolls in front of the wall.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Der Ball liegt vor der Wand.",
+          "english": "The ball is lying in front of the wall.",
+          "caseUsed": "dativ"
+        },
+        {
           "german": "Ich stelle das Auto vor die Garage.",
           "english": "I park the car in front of the garage.",
           "caseUsed": "akkusativ"
@@ -629,6 +714,16 @@
       "contractions": [],
       "tier": "core",
       "examples": [
+        {
+          "german": "Der Ball fällt zwischen die Blöcke.",
+          "english": "The ball falls between the blocks.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Der Ball liegt zwischen den Blöcken.",
+          "english": "The ball is lying between the blocks.",
+          "caseUsed": "dativ"
+        },
         {
           "german": "Ich stelle die Lampe zwischen die Sessel.",
           "english": "I put the lamp between the armchairs.",
@@ -652,6 +747,11 @@
       "note": "Also written anstatt — same meaning, same case. Casual speech often uses the Dativ.",
       "examples": [
         {
+          "german": "Statt des Blocks liegt der Ball auf dem Sockel.",
+          "english": "Instead of the block, the ball is on the pedestal.",
+          "caseUsed": "genitiv"
+        },
+        {
           "german": "Statt eines Autos kaufte er ein Fahrrad.",
           "english": "Instead of a car he bought a bicycle.",
           "caseUsed": "genitiv"
@@ -670,6 +770,11 @@
       "note": "You'll hear the Dativ in casual speech — „trotz dem Regen“ — but the Genitiv is the written standard.",
       "examples": [
         {
+          "german": "Trotz der Wand rollt der Ball weiter.",
+          "english": "Despite the wall, the ball rolls on.",
+          "caseUsed": "genitiv"
+        },
+        {
           "german": "Trotz des Regens gehen wir spazieren.",
           "english": "Despite the rain we're going for a walk.",
           "caseUsed": "genitiv"
@@ -686,6 +791,11 @@
       "tier": "core",
       "note": "Casual speech often switches to the Dativ — „während dem Essen“.",
       "examples": [
+        {
+          "german": "Während des Spiels rollt der Ball.",
+          "english": "During the game, the ball keeps rolling.",
+          "caseUsed": "genitiv"
+        },
         {
           "german": "Während der Woche arbeite ich viel.",
           "english": "During the week I work a lot.",
@@ -704,6 +814,11 @@
       "note": "„wegen dem Wetter“ is everywhere in speech; „wegen des Wetters“ is what an exam wants.",
       "examples": [
         {
+          "german": "Wegen des Blocks rollt der Ball weg.",
+          "english": "Because of the block, the ball rolls away.",
+          "caseUsed": "genitiv"
+        },
+        {
           "german": "Wegen des Wetters bleiben wir zu Hause.",
           "english": "Because of the weather we're staying home.",
           "caseUsed": "genitiv"
@@ -720,6 +835,11 @@
       "tier": "advanced",
       "note": "Genitiv only — this group has no Dativ fallback.",
       "examples": [
+        {
+          "german": "Der Ball rollt außerhalb der Kiste.",
+          "english": "The ball rolls around outside the box.",
+          "caseUsed": "genitiv"
+        },
         {
           "german": "Sie wohnt außerhalb der Stadt.",
           "english": "She lives outside the city.",
@@ -739,6 +859,11 @@
       "note": "Genitiv only — this group has no Dativ fallback.",
       "examples": [
         {
+          "german": "Der Ball rollt innerhalb der Kiste.",
+          "english": "The ball rolls around inside the box.",
+          "caseUsed": "genitiv"
+        },
+        {
           "german": "Innerhalb einer Woche ist alles fertig.",
           "english": "Within a week everything will be done.",
           "caseUsed": "genitiv"
@@ -755,6 +880,11 @@
       "tier": "advanced",
       "note": "Genitiv only — this group has no Dativ fallback.",
       "examples": [
+        {
+          "german": "Der Ball schwebt oberhalb des Blocks.",
+          "english": "The ball hovers above the block.",
+          "caseUsed": "genitiv"
+        },
         {
           "german": "Oberhalb des Dorfes steht eine Burg.",
           "english": "Above the village stands a castle.",
@@ -773,6 +903,11 @@
       "note": "Genitiv only — this group has no Dativ fallback.",
       "examples": [
         {
+          "german": "Der Ball rollt unterhalb des Blocks.",
+          "english": "The ball rolls below the block.",
+          "caseUsed": "genitiv"
+        },
+        {
           "german": "Unterhalb des Fensters steht ein Tisch.",
           "english": "Below the window stands a table.",
           "caseUsed": "genitiv"
@@ -789,6 +924,11 @@
       "tier": "advanced",
       "note": "Genitiv only — this group has no Dativ fallback.",
       "examples": [
+        {
+          "german": "Diesseits des Flusses sitzt der Hund.",
+          "english": "On this side of the river sits the dog.",
+          "caseUsed": "genitiv"
+        },
         {
           "german": "Diesseits der Grenze spricht man Deutsch.",
           "english": "On this side of the border people speak German.",
@@ -808,6 +948,11 @@
       "note": "Genitiv only — this group has no Dativ fallback.",
       "examples": [
         {
+          "german": "Jenseits des Flusses sitzt der Hund.",
+          "english": "Beyond the river sits the dog.",
+          "caseUsed": "genitiv"
+        },
+        {
           "german": "Jenseits des Flusses beginnt der Wald.",
           "english": "Beyond the river the forest begins.",
           "caseUsed": "genitiv"
@@ -824,6 +969,11 @@
       "tier": "advanced",
       "note": "Genitiv only — this group has no Dativ fallback.",
       "examples": [
+        {
+          "german": "Beiderseits des Zauns stehen der Mann und der Hund.",
+          "english": "The man and the dog stand on either side of the fence.",
+          "caseUsed": "genitiv"
+        },
         {
           "german": "Beiderseits der Straße stehen Bäume.",
           "english": "Trees stand on both sides of the street.",
