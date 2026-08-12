@@ -240,11 +240,13 @@ RELATIONS = {
             ("portal", {"size": (2.6, 0.4, 2.4), "at": (0.15, 0, 0.3), "opening": (1.35, 1.5)}),
             demonstrator(ground=-0.9, depth=1.4),
         ],
-        # Left-to-right through the opening: a "toward" arrow points down the view
-        # axis and foreshortens to a stub.
-        "dat": {"subject": (0, 0, 0.25), "arrow": "right"},
+        # Through the OPENING: the hole's axis runs in depth, so the travel does too —
+        # along the wall's width the ball shears through the solid frame "against the
+        # grain" (Kyle, 2026-08-12). The swung "toward" arrow says depth without
+        # foreshortening to a stub.
+        "dat": {"subject": (0, 0, 0.25), "arrow": "toward"},
         # Ping-pong through the opening — a pass in either direction is still "durch".
-        "motion": {"kind": "through", "from": (-2.3, 0, 0)},
+        "motion": {"kind": "through", "from": (0, -2.4, 0)},
     },
     "um": {
         # „Der Ball rollt um den Tisch." — the orbit around a real table instead of the old
@@ -314,10 +316,19 @@ RELATIONS = {
         # Figur walks in the geh stride, yawed to face the travel (+X); the runtime slides
         # every figur_* piece in step with the dog, off-beat bob and all.
         "governs": "dativ",
-        "ref": ("figur", {"at": (-0.75, 0, -0.75), "pose": "geh", "yaw": -90}),
+        "ref": ("figur", {"at": (-0.75, 0, -0.75), "pose": "steh", "yaw": -90}),
         "subject_mesh": {"file": "hund", "height": 0.95, "yaw": 140},
         "dat": {"subject": (0.75, 0, -0.75), "arrow": "right", "arrow_base": (1.9, 0, -0.2)},
         "motion": {"kind": "carry", "delta": (0.9, 0, 0)},
+        # The stride itself: baked counter-swing on the legs and arms (children of the
+        # `figur` group — the runtime translates only the parent, so nothing fights).
+        # Plays on the reveal only; see playsClips in PrepositionSceneView.
+        "ambient": [
+            {"prim": "figur_leg_l", "op": "swing_x", "amplitude": 20, "period": 0.9},
+            {"prim": "figur_leg_r", "op": "swing_x", "amplitude": 20, "period": 0.9, "phase": 0.5},
+            {"prim": "figur_arm_l", "op": "swing_x", "amplitude": 15, "period": 0.9, "phase": 0.5},
+            {"prim": "figur_arm_r", "op": "swing_x", "amplitude": 15, "period": 0.9},
+        ],
     },
     "nach": {
         # „Der Hund läuft nach Hause." — a destination that is a *place*: the house, with
@@ -378,10 +389,16 @@ RELATIONS = {
         # would say the dog is going somewhere, which is exactly what ohne denies.
         # Die Figur strides away in geh, facing where it is going.
         "governs": "akkusativ",
-        "ref": ("figur", {"at": (0.95, 0, -0.75), "pose": "geh", "yaw": -90}),
+        "ref": ("figur", {"at": (0.95, 0, -0.75), "pose": "steh", "yaw": -90}),
         "subject_mesh": {"file": "hund", "height": 0.95, "yaw": 172},
         "dat": {"subject": (-1.55, 0, -0.75), "arrow": "right", "arrow_base": (1.8, 0, -0.1)},
         "motion": {"kind": "abandon", "delta": (1.1, 0, 0)},
+        "ambient": [
+            {"prim": "figur_leg_l", "op": "swing_x", "amplitude": 20, "period": 0.9},
+            {"prim": "figur_leg_r", "op": "swing_x", "amplitude": 20, "period": 0.9, "phase": 0.5},
+            {"prim": "figur_arm_l", "op": "swing_x", "amplitude": 15, "period": 0.9, "phase": 0.5},
+            {"prim": "figur_arm_r", "op": "swing_x", "amplitude": 15, "period": 0.9},
+        ],
     },
     "außer": {
         # „Alle Bälle sind da außer einem." — a cluster of like balls, and the subject
@@ -431,14 +448,17 @@ RELATIONS = {
         "motion": {"kind": "shuttle", "from": (-2.55, 0, 0), "arc": 1.9},
     },
     "wegen": {
+        # „Wegen des Hügels rollt der Ball hinunter." — cause as visible physics (Kyle's
+        # call, 2026-08-12, replacing the shove-block): the ball starts on the slope and
+        # comes down BECAUSE of the hill. The straight shuttle chord from the slope's top
+        # stays above the wedge face (convex), so nothing clips.
         "governs": "genitiv",
-        # Cause and effect: the block shoves, and the ball rolls off *because* of it.
         "ref": [
-            ("slab", {"size": (0.85, 0.85, 0.85), "at": (-1.25, 0, -0.33)}),
-            demonstrator(ground=-0.75, depth=-1.2),
+            ("huegel", {"size": (2.0, 1.2, 1.35), "at": (-1.7, 0, -0.75)}),
+            demonstrator(ground=-0.75, side=+1, depth=1.05),
         ],
-        "dat": {"subject": (0.0, 0, -0.2), "arrow": "right"},
-        "motion": {"kind": "cause", "push": (0.35, 0, 0), "delta": (1.6, 0, 0)},
+        "dat": {"subject": (0.7, 0, -0.2)},
+        "motion": {"kind": "shuttle", "from": (-3.0, 0, 0.8), "dur": 1.5},
     },
     "statt": {
         "governs": "genitiv",
@@ -946,16 +966,25 @@ def build_reference(kind, spec, mat):
         return [prop]
 
     if kind == "figur":
-        # Die Figur — the Bauhaus figure (figur.py), posed and placed. Six flat parts named
-        # figur_*, so the runtime flies them in as pieces and `movers: "figur"` strolls all
-        # of them together; nesting them under an empty would hide them from the runtime's
-        # piece walk, which only visits the scene root's direct children.
+        # Die Figur — the Bauhaus figure (figur.py), posed and placed under ONE parent
+        # Xform named `figur`. The runtime's piece walk sees a single unit to fly in, and
+        # `movers: "figur"` translates the parent — which leaves the six children free to
+        # carry baked walk-cycle clips (mit/ohne) without fighting the runtime: the prim
+        # the clip rotates and the prim the choreography translates differ by construction.
+        # (Changed from flat parts 2026-08-12 to unlock the walk; the standalone figur.usdz
+        # for FigurSceneView stays flat — its contract is figur.py's.)
         figur._LOD = _LOD                     # dense for stills, light for the shipped USDZ
         parts, p = figur.build_figure(spec.get("preset", "standard"),
                                       spec.get("height", FIGUR_HEIGHT), mat=mat)
         figur.apply_pose(parts, p, spec.get("pose", "steh"))
-        figur.place(parts, spec["at"], spec.get("yaw", 0.0))
-        return parts
+        bpy.ops.object.empty_add(type="PLAIN_AXES", location=(0, 0, 0))
+        group = bpy.context.active_object
+        group.name = "figur"
+        for part in parts:
+            part.parent = group
+        group.rotation_euler = (0, 0, math.radians(spec.get("yaw", 0.0)))
+        group.location = Vector(spec["at"])
+        return [group]
 
     if kind == "frame":
         # A thin picture frame — kept as a *reference* variant; an's tintable subject is
@@ -969,6 +998,32 @@ def build_reference(kind, spec, mat):
             add_box((t, 0.08, h - 2 * t), (x - w / 2 + t / 2, y, z), mat, "reference.fl"),
             add_box((t, 0.08, h - 2 * t), (x + w / 2 - t / 2, y, z), mat, "reference.fr"),
         ]
+
+    if kind == "huegel":
+        # A wedge ramp — cause as visible physics: wegen's ball is up there, and the hill
+        # is why it comes down. Tall face on the left, slope descending to +X; built from
+        # explicit vertices because none of the primitives make a right wedge cleanly.
+        w, d, h = spec.get("size", (2.0, 1.2, 1.35))
+        x, y, z = spec["at"]
+        verts = [(x - w / 2, y - d / 2, z), (x + w / 2, y - d / 2, z),
+                 (x - w / 2, y - d / 2, z + h),
+                 (x - w / 2, y + d / 2, z), (x + w / 2, y + d / 2, z),
+                 (x - w / 2, y + d / 2, z + h)]
+        faces = [(0, 1, 2), (3, 5, 4), (0, 2, 5, 3), (0, 3, 4, 1), (1, 4, 5, 2)]
+        mesh = bpy.data.meshes.new("reference.huegel")
+        mesh.from_pydata(verts, [], faces)
+        mesh.update()
+        obj = bpy.data.objects.new("reference.huegel", mesh)
+        bpy.context.collection.objects.link(obj)
+        obj.data.materials.append(mat)
+        bpy.ops.object.select_all(action="DESELECT")
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.normals_make_consistent(inside=False)
+        bpy.ops.object.mode_set(mode="OBJECT")
+        return [obj]
 
     raise ValueError(f"unknown reference kind: {kind}")
 
@@ -1452,8 +1507,12 @@ def bake_ambient(specs):
             interpolation = "LINEAR"
         elif op == "swing":
             amplitude = math.radians(spec.get("amplitude", 18.0))
+            # phase 0.5 starts the swing on the opposite beat — legs and arms counter-swing.
+            shape = (0.0, amplitude, 0.0, -amplitude, 0.0)
+            if spec.get("phase", 0.0) >= 0.5:
+                shape = (0.0, -amplitude, 0.0, amplitude, 0.0)
             beats = [(1 + int(step * period / 4), angle)
-                     for step, angle in enumerate((0.0, amplitude, 0.0, -amplitude, 0.0))]
+                     for step, angle in enumerate(shape)]
             interpolation = "BEZIER"
         else:
             raise ValueError(f"ambient: unknown op {spec['op']!r}")

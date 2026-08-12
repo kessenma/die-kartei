@@ -135,7 +135,8 @@ struct PrepositionSceneView: View {
                             moverOffset: moverOffset(pose, at: t),
                             moverFilter: pose.motion?.movers,
                             tint: tint(at: t),
-                            assembly: assembly(at: t)
+                            assembly: assembly(at: t),
+                            playsClips: isResolved
                         )
                     }
                 }
@@ -448,8 +449,15 @@ private struct PrepositionRealityScene: View {
     var moverFilter: String?
     var tint: Color
     var assembly: Float
+    /// Whether baked clips (the Figur's walk cycle, the Standuhr's hand) run. Driven by the
+    /// resolved state: the question side holds still — a Mann marching in place before the
+    /// answer would be noise at best and a motion hint at worst — and the scene comes alive
+    /// on the reveal, which is the same beat the tint and choreography already play on.
+    var playsClips: Bool
 
     @State private var root = Entity()
+    /// The loaded scene entity, kept so clips can start and stop as `playsClips` changes.
+    @State private var loadedScene: Entity?
     /// The entity carrying the authored name — an Xform, whose mesh is a child.
     @State private var subject: Entity?
     /// The mesh under it, which is what actually holds the material.
@@ -459,7 +467,25 @@ private struct PrepositionRealityScene: View {
     @State private var pieces: [(entity: Entity, home: SIMD3<Float>, away: SIMD3<Float>)] = []
 
     var body: some View {
-        canvas.task(id: asset) { await load(asset) }
+        canvas
+            .task(id: asset) { await load(asset) }
+            .onChange(of: playsClips) { syncClips() }
+    }
+
+    /// Start or stop the asset's baked clips to match the resolved state. Clips carry the
+    /// motion the runtime cannot write itself — rotation: the walk cycle on the Figur's legs,
+    /// the Standuhr's hand — authored only on prims the choreography never translates (child
+    /// prims of the subject, children of the `figur` group), which is what `--verify` enforces
+    /// against the .usda twin. Playing them is safe *because* of that contract.
+    private func syncClips() {
+        guard let scene = loadedScene else { return }
+        if playsClips {
+            for animation in scene.availableAnimations {
+                scene.playAnimation(animation.repeat())
+            }
+        } else {
+            scene.stopAllAnimations()
+        }
     }
 
     /// Swap in a new relation under the existing camera and lights.
@@ -467,6 +493,7 @@ private struct PrepositionRealityScene: View {
         subject = nil
         subjectModel = nil
         pieces = []
+        loadedScene = nil
         root.children.removeAll()
 
         guard let scene = try? await Entity(named: name, in: .main) else { return }
@@ -475,15 +502,8 @@ private struct PrepositionRealityScene: View {
         // early story USDZ) can hijack or crash the device renderer.
         scene.stripCamerasAndLights()
         root.addChild(scene)
-
-        // Baked clips ride along: a prop authored with its own animation (a wagging tail, an
-        // opening lid — see tools/genprops) starts looping on load. Ambient life only — the
-        // case-teaching motion stays in the pose functions above, so a clip playing on the
-        // question side leaks nothing. Today's primitive scenes carry no clips; this is a no-op
-        // until an animated prop ships.
-        for animation in scene.availableAnimations {
-            scene.playAnimation(animation.repeat())
-        }
+        loadedScene = scene
+        syncClips()
 
         // USD wraps each mesh in an Xform that carries the authored name — `def Xform "subject"
         // { def Mesh "Sphere" }` — so the name lives on the parent, not on the ModelEntity.

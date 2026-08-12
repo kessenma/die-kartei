@@ -98,9 +98,9 @@
       "motion": {
         "kind": "through",
         "from": [
-          -2.3,
           0,
-          0
+          0,
+          2.4
         ]
       }
     },
@@ -373,17 +373,13 @@
         -0.0
       ],
       "motion": {
-        "kind": "cause",
-        "delta": [
-          1.6,
-          0,
+        "kind": "shuttle",
+        "from": [
+          -3.0,
+          0.8,
           0
         ],
-        "push": [
-          0.35,
-          0,
-          0
-        ]
+        "dur": 1.5
       }
     },
     "statt": {

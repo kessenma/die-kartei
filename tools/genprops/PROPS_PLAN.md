@@ -16,15 +16,16 @@ Sofa, des Baches…) — that's where the case shows, so that's where the variet
    `convert_prop.py`. One material per prop or runtime tinting breaks.
 4. **Rigging tiers:** ambient clips (tail wag) bake into the USDZ and just play; event
    animations (gift lid on reveal) need the runtime-hinge extension — decide per prop.
-5. **The ball set stays.** (Kyle's call, 2026-07-30.) The story scenes are a second *style*,
-   not a replacement: the manifest grows a per-word `variants` block — `classic` (today's
-   entries, byte-identical) and `story` — and a learner-facing "Scene style" option (next to
-   the picture-mode setting) picks which one screens load. Classic remains the default until
-   the story set is complete.
-6. **Sentences append, never replace.** A word's story sentence joins its `examples` array in
-   `prepositions.json` in the same commit its story scene lands; when the style is set to
-   story, that example sorts first so the scene always depicts the sentence on screen. The
-   classic sentences stay listed either way.
+5. ~~**The ball set stays.**~~ **Superseded 2026-08-12 (Kyle's call, reversing his
+   2026-07-30 one):** the styles merged into one curated set per word — the four authored
+   story scenes became canonical, `PrepositionSceneStyle`/`storyRelations`/the pickers were
+   deleted, and the whole 36-word set was reworked in one pass under the „Die Figur führt
+   vor" design language (see docs/PREPOSITION_3D.md, 2026-08-12 section). There is no
+   variants block and no style option.
+6. **Sentences append, never replace — and order is the contract.** A word's scene sentence
+   joins its `examples` array in `prepositions.json` **first** in the same commit its scene
+   lands; array position, not a style field, is what makes it the primary the drill reveal
+   and gallery show. The other sentences stay listed as extras.
 
 ## The table
 
