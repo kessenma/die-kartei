@@ -122,6 +122,11 @@
       "tier": "core",
       "examples": [
         {
+          "german": "Der Ball rollt um den Tisch.",
+          "english": "The ball rolls around the table.",
+          "caseUsed": "akkusativ"
+        },
+        {
           "german": "Wir sitzen um den Tisch.",
           "english": "We're sitting around the table.",
           "caseUsed": "akkusativ"
@@ -156,6 +161,11 @@
       "tier": "core",
       "examples": [
         {
+          "german": "Alle Bälle sind da außer einem.",
+          "english": "All the balls are there except one.",
+          "caseUsed": "dativ"
+        },
+        {
           "german": "Alle sind da außer meinem Bruder.",
           "english": "Everyone is here except my brother.",
           "caseUsed": "dativ"
@@ -179,6 +189,11 @@
       "tier": "core",
       "examples": [
         {
+          "german": "Der Hund ist beim Mann.",
+          "english": "The dog is with the man.",
+          "caseUsed": "dativ"
+        },
+        {
           "german": "Ich wohne bei meinen Eltern.",
           "english": "I live with my parents.",
           "caseUsed": "dativ"
@@ -198,6 +213,11 @@
       "note": "Usually follows its noun, and always follows a pronoun — „mir gegenüber“.",
       "examples": [
         {
+          "german": "Der Hund steht dem Mann gegenüber.",
+          "english": "The dog stands opposite the man.",
+          "caseUsed": "dativ"
+        },
+        {
           "german": "Die Bank liegt dem Bahnhof gegenüber.",
           "english": "The bank is across from the train station.",
           "caseUsed": "dativ"
@@ -215,8 +235,8 @@
       "tier": "core",
       "examples": [
         {
-          "german": "Das Kind geht mit dem Hund spazieren.",
-          "english": "The child walks with the dog.",
+          "german": "Der Mann geht mit dem Hund spazieren.",
+          "english": "The man goes for a walk with the dog.",
           "caseUsed": "dativ"
         },
         {
@@ -238,6 +258,11 @@
       "tier": "core",
       "examples": [
         {
+          "german": "Der Hund läuft nach Hause.",
+          "english": "The dog runs home.",
+          "caseUsed": "dativ"
+        },
+        {
           "german": "Nach dem Essen gehen wir spazieren.",
           "english": "After the meal we go for a walk.",
           "caseUsed": "dativ"
@@ -254,6 +279,11 @@
       "contractions": [],
       "tier": "core",
       "examples": [
+        {
+          "german": "Der Mann wartet seit einer Stunde.",
+          "english": "The man has been waiting for an hour.",
+          "caseUsed": "dativ"
+        },
         {
           "german": "Ich lerne seit einem Jahr Deutsch.",
           "english": "I've been learning German for a year.",
@@ -277,6 +307,11 @@
       ],
       "tier": "core",
       "examples": [
+        {
+          "german": "Der Ball rollt vom Mann weg.",
+          "english": "The ball rolls away from the man.",
+          "caseUsed": "dativ"
+        },
         {
           "german": "Das ist ein Geschenk von meiner Schwester.",
           "english": "That's a present from my sister.",
@@ -302,6 +337,11 @@
       ],
       "tier": "core",
       "examples": [
+        {
+          "german": "Der Hund läuft zum Mann.",
+          "english": "The dog runs to the man.",
+          "caseUsed": "dativ"
+        },
         {
           "german": "Ich gehe zum Arzt.",
           "english": "I'm going to the doctor.",
@@ -330,8 +370,8 @@
       "tier": "core",
       "examples": [
         {
-          "german": "Ich hänge das Bild an die Wand.",
-          "english": "I hang the picture on the wall.",
+          "german": "Der Mann hängt das Bild an die Wand.",
+          "english": "The man hangs the picture on the wall.",
           "caseUsed": "akkusativ"
         },
         {

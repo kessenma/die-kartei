@@ -114,8 +114,8 @@ RELATIONS = {
         # The cardboard box, sized so a seated dog peeks over the rim (floor top -0.62,
         # wall top 0.45, dog 1.3 tall). Promoted from the story set 2026-08-12; the
         # ball-in-box original retired with the style toggle.
-        "ref": ("openbox", {"size": (2.4, 1.7, 1.2), "at": (0, 0, -0.15), "flaps": True}),
-        "subject_mesh": {"file": "hund", "height": 1.3, "yaw": 0},
+        "ref": ("openbox", {"size": (2.4, 1.7, 0.95), "at": (0, 0, -0.275), "flaps": True}),
+        "subject_mesh": {"file": "hund", "height": 1.05, "yaw": 0},
         "akk": {"subject": (0, 0, 1.0), "arrow": "down"},
         "dat": {"subject": (0, 0, -0.62)},
     },
@@ -145,11 +145,17 @@ RELATIONS = {
         "dat": {"subject": (0, 0, 0.0)},
     },
     "an": {
-        # "Ich hänge das Bild an die Wand." Against a vertical boundary, not on top of one.
-        # Tangent to the wall face (x = -0.75 + r), not embedded in it.
-        "ref": ("wall", {"size": (0.3, 2.4, 2.2), "at": (-0.9, 0, 0.5)}),
-        "akk": {"subject": (1.6, 0, 0.75), "arrow": "left"},
-        "dat": {"subject": (-0.20, 0, 0.75)},
+        # „Der Mann hängt das Bild an die Wand." / „Das Bild hängt an der Wand." — the
+        # picture (one joined, tintable mesh) travels onto the wall face and hangs there,
+        # with die Figur reaching toward it. The frame sits proud of the face (x = wall
+        # face + frame depth), not embedded in it.
+        "ref": [
+            ("wall", {"size": (0.3, 2.4, 2.2), "at": (-0.9, 0, 0.5)}),
+            ("figur", {"at": (0.9, 0.55, -0.52), "pose": "zeig", "yaw": 180}),
+        ],
+        "subject_build": "bild",
+        "akk": {"subject": (1.3, 0, 0.6), "arrow": "left"},
+        "dat": {"subject": (-0.68, 0, 0.75)},
     },
     "vor": {
         # Wider and lower than an `an` wall, so the sphere can overlap it in screen space —
@@ -216,11 +222,19 @@ RELATIONS = {
         "motion": {"kind": "through", "from": (-2.3, 0, 0)},
     },
     "um": {
+        # „Der Ball rollt um den Tisch." — the orbit around a real table instead of the old
+        # abstract ring, with the Mann seated at it on a stool (the „Wir sitzen um den
+        # Tisch" sentence stays as the extra, and the picture now shows the sitting too).
+        # No arrow: a straight one cannot say "around", and the orbit already does.
+        # Table legs bottom out at z=-1.36, so the ground ball sits at -0.81 (like neben).
         "governs": "akkusativ",
-        "ref": ("ring", {"at": (0, 0, 0.0), "radius": 1.7, "count": 14, "core": (1.0, 1.0, 1.2)}),
-        # No arrow: a straight one cannot say "around", and the ring already does.
-        "dat": {"subject": (1.7, 0, -0.05)},
-        "motion": {"kind": "orbit", "center": (-1.7, 0, 0)},
+        "ref": [
+            TABLE,
+            ("slab", {"size": (0.78, 0.78, 1.22), "at": (0, 1.45, -0.75)}),
+            ("figur", {"at": (0, 1.45, -0.21), "pose": "sitz", "yaw": 180}),
+        ],
+        "dat": {"subject": (2.3, 0, -0.81)},
+        "motion": {"kind": "orbit", "center": (-2.3, 0, 0)},
     },
     "gegen": {
         "governs": "akkusativ",
@@ -250,51 +264,64 @@ RELATIONS = {
         "motion": {"kind": "shuttle", "from": (-2.05, 0, -0.62), "arc": 1.6},
     },
     "bei": {
+        # „Der Hund ist beim Mann." — side by side, both facing out, at rest. `mit` is the
+        # same pair in motion, which is the actual difference between "at someone's place"
+        # and "along with someone"; `gegenüber` is the same pair facing each other across
+        # a gap.
         "governs": "dativ",
-        "ref": ("figure", {"at": (-0.7, 0, -0.75), "scale": 1.15}),
-        # At rest beside the figure. `mit` is the same arrangement in motion — which is the
-        # actual difference between "at someone's place" and "along with someone".
-        "dat": {"subject": (0.85, 0, -0.2)},
+        "ref": ("figur", {"at": (-0.55, 0, -0.75), "pose": "steh", "yaw": 0}),
+        "subject_mesh": {"file": "hund", "height": 0.95, "yaw": 0},
+        "dat": {"subject": (0.9, 0, -0.75)},
         # Being somewhere is the whole meaning; the idle bob only keeps the scene alive.
         "motion": {"kind": "idle"},
     },
     "mit": {
-        # „Der Mann geht mit dem Hund spazieren." — the pair stroll together (carry).
-        # Promoted from the story set 2026-08-12.
+        # „Der Mann geht mit dem Hund spazieren." — the pair stroll together (carry). Die
+        # Figur walks in the geh stride, yawed to face the travel (+X); the runtime slides
+        # every figur_* piece in step with the dog, off-beat bob and all.
         "governs": "dativ",
-        "ref": ("figure", {"at": (-0.75, 0, -0.75), "scale": 1.1}),
-        "subject_mesh": {"file": "hund", "height": 1.25, "yaw": 0},
+        "ref": ("figur", {"at": (-0.75, 0, -0.75), "pose": "geh", "yaw": -90}),
+        "subject_mesh": {"file": "hund", "height": 0.95, "yaw": 140},
         "dat": {"subject": (0.75, 0, -0.75), "arrow": "right", "arrow_base": (1.9, 0, -0.2)},
         "motion": {"kind": "carry", "delta": (0.9, 0, 0)},
     },
     "nach": {
+        # „Der Hund läuft nach Hause." — a destination that is a *place*: the house, with
+        # the Mann waiting at the door. The dog arrives and stays; arriving is the meaning.
         "governs": "dativ",
-        # A destination that is a *place* — the marker at the end of the path.
-        "ref": ("goal", {"at": (0, 0, -0.55), "length": 3.0, "count": 6}),
-        "dat": {"subject": (-0.4, 0, 0.0), "arrow": "right"},
-        # Arrives at the marker (goal face x≈1.85, ball r 0.55 → center 1.25 = rest+1.65).
-        "motion": {"kind": "shuttle", "from": (-1.4, 0, 0), "to": (1.65, 0, 0)},
+        "ref": [
+            ("mesh", {"file": "house", "at": (2.45, 0.9, -0.75), "height": 3.0, "yaw": -14}),
+            ("figur", {"at": (1.15, -0.7, -0.75), "pose": "steh", "yaw": 90}),
+        ],
+        "subject_mesh": {"file": "hund", "height": 0.95, "yaw": 140},
+        "dat": {"subject": (-1.35, 0, -0.75), "arrow": "right"},
+        "motion": {"kind": "shuttle", "from": (-1.2, 0, 0), "to": (1.5, 0, 0)},
     },
     "zu": {
+        # „Der Hund läuft zum Mann." — a destination that is a *someone*. Same idea as
+        # nach, different target: the dog runs right up to die Figur and stays.
         "governs": "dativ",
-        # A destination that is a *someone* — "zum Arzt". Same idea as nach, different target.
-        "ref": ("figure", {"at": (1.5, 0, -0.75), "scale": 1.15}),
-        "dat": {"subject": (-1.0, 0, -0.2), "arrow": "right"},
-        # Right up to the person (body r 0.35 + ball r 0.55 → center x≈0.6 = rest+1.6).
-        "motion": {"kind": "shuttle", "from": (-1.2, 0, 0), "to": (1.6, 0, 0)},
+        "ref": ("figur", {"at": (1.75, 0, -0.75), "pose": "steh", "yaw": 90}),
+        "subject_mesh": {"file": "hund", "height": 0.95, "yaw": 140},
+        "dat": {"subject": (-1.0, 0, -0.75), "arrow": "right"},
+        "motion": {"kind": "shuttle", "from": (-1.2, 0, 0), "to": (1.35, 0, 0)},
     },
     "von": {
+        # „Der Ball rollt vom Mann weg." — the mirror of zu: leaving the someone, ending
+        # at rest away from him. Departure, not arrival.
         "governs": "dativ",
-        # The mirror of nach: leaving the marker rather than arriving at it.
-        "ref": ("goal", {"at": (0, 0, -0.55), "length": 3.0, "count": 6}),
-        "dat": {"subject": (1.0, 0, 0.0), "arrow": "left"},
-        # Slides away from the marker, ending at rest — departure, not arrival.
-        "motion": {"kind": "shuttle", "from": (0.8, 0, 0)},
+        "ref": ("figur", {"at": (-1.7, 0, -0.75), "pose": "steh", "yaw": -90}),
+        "dat": {"subject": (0.95, 0, -0.2), "arrow": "right"},
+        "motion": {"kind": "shuttle", "from": (-1.75, 0, 0)},
     },
     "gegenüber": {
+        # „Der Hund steht dem Mann gegenüber." — facing each other across a clear gap.
+        # The gap and the facing are what separate this from bei; nothing travels, the
+        # standoff is the meaning.
         "governs": "dativ",
-        "ref": ("wall", {"size": (1.6, 0.28, 1.9), "at": (-1.5, 0, 0.35)}),
-        "dat": {"subject": (1.35, 0, -0.15)},
+        "ref": ("figur", {"at": (-1.65, 0, -0.75), "pose": "steh", "yaw": -90}),
+        "subject_mesh": {"file": "hund", "height": 0.95, "yaw": 0},
+        "dat": {"subject": (1.35, 0, -0.75)},
         "motion": {"kind": "idle"},
     },
     "für": {
@@ -303,8 +330,8 @@ RELATIONS = {
         # Promoted from the story set 2026-08-12.
         "governs": "akkusativ",
         "ref": [
-            ("figure", {"at": (-2.05, 0, -0.75), "scale": 1.1}),
-            ("mesh", {"file": "hund", "at": (1.55, 0, -0.75), "height": 1.25, "yaw": 12}),
+            ("figur", {"at": (-2.05, 0, -0.75), "pose": "zeig", "yaw": 0}),
+            ("mesh", {"file": "hund", "at": (1.55, 0, -0.75), "height": 0.95, "yaw": 12}),
         ],
         "subject_mesh": {"file": "gift", "height": 0.85, "yaw": 0},
         "dat": {"subject": (0.3, 0, -0.75), "arrow": "right", "arrow_base": (-1.05, 0, -0.15)},
@@ -315,29 +342,38 @@ RELATIONS = {
         # The dog is the object of ohne and wears the case color. The arrow belongs to the
         # *figure* (it is the one leaving), hence the base override — hung on the dog it
         # would say the dog is going somewhere, which is exactly what ohne denies.
-        # Promoted from the story set 2026-08-12.
+        # Die Figur strides away in geh, facing where it is going.
         "governs": "akkusativ",
-        "ref": ("figure", {"at": (0.95, 0, -0.75), "scale": 1.05}),
-        "subject_mesh": {"file": "hund", "height": 1.25, "yaw": -8},
+        "ref": ("figur", {"at": (0.95, 0, -0.75), "pose": "geh", "yaw": -90}),
+        "subject_mesh": {"file": "hund", "height": 0.95, "yaw": 172},
         "dat": {"subject": (-1.55, 0, -0.75), "arrow": "right", "arrow_base": (1.8, 0, -0.1)},
         "motion": {"kind": "abandon", "delta": (1.1, 0, 0)},
     },
     "außer": {
+        # „Alle Bälle sind da außer einem." — a cluster of like balls, and the subject
+        # plucked out of it and set apart. The loop plucks it again and again — always the
+        # one left out. Die Figur presents the cluster from its mark.
         "governs": "dativ",
-        # "Alle sind da außer meinem Bruder": a cluster of like balls, and the subject plucked
-        # out of it and set apart. The loop plucks it again and again — always the one left out.
-        "ref": ("cluster", {"at": [(1.02, 0.34), (1.85, 0.24), (1.38, -0.44)], "z": -0.33, "r": 0.42}),
-        "dat": {"subject": (-1.55, 0, -0.2)},
+        "ref": [
+            ("cluster", {"at": [(1.02, 0.34), (1.85, 0.24), (1.38, -0.44)], "z": -0.33, "r": 0.42}),
+            demonstrator(),
+        ],
+        "dat": {"subject": (-0.95, 0, -0.2)},
         # from = nestled in the cluster's gap; the arc is the pluck.
-        "motion": {"kind": "shuttle", "from": (2.85, 0, -0.12), "arc": 1.0},
+        "motion": {"kind": "shuttle", "from": (2.3, 0, -0.12), "arc": 1.0},
     },
     "seit": {
+        # „Der Mann wartet seit einer Stunde." — the man waits, the street clock's hand
+        # keeps turning. The hand is the set's one baked clip (rotation is beyond the
+        # runtime's translate-only choreography); it also spins on the question side,
+        # which is safe because a turning clock answers nothing. The clock is the
+        # subject — the time phrase is what wears the dative color.
         "governs": "dativ",
-        # Time as the path already travelled: the trail runs back, the ball keeps inching
-        # forward. The slow crawl (dur) is the point — "seit" is still going on.
-        "ref": ("path", {"at": (0, 0, -0.55), "length": 3.4, "count": 7}),
-        "dat": {"subject": (1.35, 0, 0.0), "arrow": "right"},
-        "motion": {"kind": "shuttle", "from": (-1.1, 0, 0), "dur": 2.8},
+        "ref": ("figur", {"at": (-1.15, 0, -0.75), "pose": "steh", "yaw": -55}),
+        "subject_build": "uhr",
+        "dat": {"subject": (1.05, 0, -0.75)},
+        "motion": {"kind": "idle"},
+        "ambient": [{"prim": "uhr_zeiger", "op": "rotate_y", "period": 6.0}],
     },
     "während": {
         "governs": "genitiv",
@@ -834,7 +870,8 @@ def build_reference(kind, spec, mat):
         return parts
 
     if kind == "frame":
-        # A thin picture frame — an's subject, hung on the wall kind.
+        # A thin picture frame — kept as a *reference* variant; an's tintable subject is
+        # the joined `add_subject_bild` below.
         w, h = spec.get("size", (1.0, 0.8))
         x, y, z = spec["at"]
         t = 0.1
@@ -846,6 +883,88 @@ def build_reference(kind, spec, mat):
         ]
 
     raise ValueError(f"unknown reference kind: {kind}")
+
+
+# MARK: - Built subjects
+#
+# Subjects that are neither the sphere nor an imported prop: primitive constructions that
+# must end up as ONE mesh named `subject`, because the runtime tints and travels exactly one
+# prim. Each takes (at, mat, ref_mat) — the second material is for parts that stay charcoal.
+
+
+def _join_as_subject(parts, origin):
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in parts:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = parts[0]
+    if len(parts) > 1:
+        bpy.ops.object.join()
+    subject = bpy.context.view_layer.objects.active
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    bpy.context.scene.cursor.location = Vector(origin)
+    bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
+    bpy.context.scene.cursor.location = (0, 0, 0)
+    subject.name = "subject"
+    subject.data.name = "subject"
+    return subject
+
+
+def add_subject_uhr(at, mat, ref_mat):
+    """Die Standuhr — seit's subject. A street clock: pole and face joined into one teal
+    mesh, the hand parented *under* it as `uhr_zeiger`. A child of the subject rides the
+    idle bob and is exempt from the runtime's fly-in piece walk; it keeps the reference
+    charcoal (the tint touches only the subject mesh), and `bake_ambient` spins it about
+    the face normal — the one baked clip in the set."""
+    x, y, z = at
+    pole_h, face_r, face_t = 1.35, 0.62, 0.16
+    centre = (x, y, z + pole_h + face_r * 0.85)
+
+    bpy.ops.mesh.primitive_cylinder_add(radius=0.07, depth=pole_h,
+                                        location=(x, y, z + pole_h / 2))
+    pole = bpy.context.active_object
+    pole.data.materials.append(mat)
+    bpy.ops.mesh.primitive_cylinder_add(radius=face_r, depth=face_t, location=centre,
+                                        rotation=(math.radians(90), 0, 0))
+    face = bpy.context.active_object
+    face.data.materials.append(mat)
+    bpy.ops.object.shade_smooth()
+    subject = _join_as_subject([face, pole], (x, y, z))
+
+    # The hand: pivot exactly at the face centre, blade reaching up. Slightly proud of the
+    # face toward the camera so it never z-fights.
+    bpy.ops.mesh.primitive_cube_add(
+        size=1.0, location=(centre[0], centre[1] - face_t * 0.75, centre[2] + 0.2))
+    hand = bpy.context.active_object
+    hand.scale = Vector((0.07, 0.05, 0.44))
+    hand.data.materials.append(ref_mat)
+    bpy.ops.object.transform_apply(scale=True)
+    bpy.context.scene.cursor.location = Vector((centre[0], centre[1] - face_t * 0.75, centre[2]))
+    bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
+    bpy.context.scene.cursor.location = (0, 0, 0)
+    hand.name = "uhr_zeiger"
+    hand.data.name = "uhr_zeiger"
+    hand.parent = subject
+    hand.matrix_parent_inverse = subject.matrix_world.inverted()
+    return subject
+
+
+def add_subject_bild(at, mat, ref_mat=None):
+    """Das Bild — an's subject. The picture frame joined into one tintable mesh; four loose
+    frame sides would leave three behind when the runtime travels the subject to the wall.
+    Thin in x, because it hangs on an `an`-style wall (whose face is a y–z plane).
+    `at` is the frame's centre."""
+    w, h, t, d = 1.05, 0.8, 0.1, 0.09
+    x, y, z = at
+    parts = [
+        add_box((d, w, t), (x, y, z - (h - t) / 2), mat, "subject"),
+        add_box((d, w, t), (x, y, z + (h - t) / 2), mat, "subject"),
+        add_box((d, t, h - 2 * t), (x, y - (w - t) / 2, z), mat, "subject"),
+        add_box((d, t, h - 2 * t), (x, y + (w - t) / 2, z), mat, "subject"),
+    ]
+    return _join_as_subject(parts, (x, y, z))
+
+
+SUBJECT_BUILDERS = {"uhr": add_subject_uhr, "bild": add_subject_bild}
 
 
 # Canned specs for `--refprobe`: each new kind rendered with a resting ball, so a reference
@@ -1066,6 +1185,8 @@ def build(prep, state, look, size, ghost=False):
     pose = relation["dat"] if state == "neutral" else (relation.get(state) or relation["dat"])
     if mesh_spec := relation.get("subject_mesh"):
         add_subject_mesh(mesh_spec, pose["subject"], subject_mat)
+    elif builder := relation.get("subject_build"):
+        SUBJECT_BUILDERS[builder](pose["subject"], subject_mat, ref_mat)
     else:
         add_sphere(pose["subject"], subject_mat)
     if pose.get("arrow") and state != "neutral":
