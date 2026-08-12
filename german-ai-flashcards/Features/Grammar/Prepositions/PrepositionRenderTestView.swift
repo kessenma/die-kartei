@@ -112,22 +112,7 @@ struct PrepositionSceneGalleryView: View {
             // The sentence(s) the scene is acting out: one per case for a two-way word —
             // the same selection the drill reveal shows.
             VStack(spacing: 8) {
-                ForEach(prep.revealExamples()) { example in
-                    VStack(spacing: 2) {
-                        if prep.governs == .wechsel {
-                            Text(example.caseUsed == .akkusativ ? "Wohin? → Akkusativ" : "Wo? → Dativ")
-                                .font(.caption2.weight(.semibold))
-                                .foregroundStyle(example.caseUsed.color)
-                        }
-                        Text("„\(example.german)“")
-                            .font(.subheadline.weight(.medium))
-                            .multilineTextAlignment(.center)
-                        Text(example.english)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
-                }
+                PrepositionExampleRows(examples: prep.revealExamples(), governs: prep.governs)
             }
             .padding(.top, 10)
 

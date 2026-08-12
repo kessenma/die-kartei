@@ -56,15 +56,14 @@
       "tier": "core",
       "examples": [
         {
-          "german": "Das Geschenk ist für meinen Bruder.",
-          "english": "The present is for my brother.",
+          "german": "Das Geschenk ist für den Hund.",
+          "english": "The present is for the dog.",
           "caseUsed": "akkusativ"
         },
         {
-          "german": "Das Geschenk ist für den Hund.",
-          "english": "The present is for the dog.",
-          "caseUsed": "akkusativ",
-          "style": "story"
+          "german": "Das Geschenk ist für meinen Bruder.",
+          "english": "The present is for my brother.",
+          "caseUsed": "akkusativ"
         }
       ]
     },
@@ -96,15 +95,14 @@
       "tier": "core",
       "examples": [
         {
-          "german": "Ich fahre ohne meinen Bruder nach Berlin.",
-          "english": "I'm going to Berlin without my brother.",
+          "german": "Der Mann geht ohne den Hund spazieren.",
+          "english": "The man goes for a walk without the dog.",
           "caseUsed": "akkusativ"
         },
         {
-          "german": "Der Mann geht ohne den Hund spazieren.",
-          "english": "The man goes for a walk without the dog.",
-          "caseUsed": "akkusativ",
-          "style": "story"
+          "german": "Ich fahre ohne meinen Bruder nach Berlin.",
+          "english": "I'm going to Berlin without my brother.",
+          "caseUsed": "akkusativ"
         }
       ]
     },
@@ -217,15 +215,14 @@
       "tier": "core",
       "examples": [
         {
-          "german": "Ich fahre mit dem Bus zur Arbeit.",
-          "english": "I take the bus to work.",
+          "german": "Das Kind geht mit dem Hund spazieren.",
+          "english": "The child walks with the dog.",
           "caseUsed": "dativ"
         },
         {
-          "german": "Das Kind geht mit dem Hund spazieren.",
-          "english": "The child walks with the dog.",
-          "caseUsed": "dativ",
-          "style": "story"
+          "german": "Ich fahre mit dem Bus zur Arbeit.",
+          "english": "I take the bus to work.",
+          "caseUsed": "dativ"
         }
       ]
     },
@@ -444,6 +441,16 @@
       "tier": "core",
       "examples": [
         {
+          "german": "Der Hund springt in die Kiste.",
+          "english": "The dog jumps into the box.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Der Hund sitzt in der Kiste.",
+          "english": "The dog sits in the box.",
+          "caseUsed": "dativ"
+        },
+        {
           "german": "Ich gehe in die Stadt.",
           "english": "I'm going into town.",
           "caseUsed": "akkusativ"
@@ -452,18 +459,6 @@
           "german": "Ich bin in der Stadt.",
           "english": "I'm in town.",
           "caseUsed": "dativ"
-        },
-        {
-          "german": "Der Hund springt in die Kiste.",
-          "english": "The dog jumps into the box.",
-          "caseUsed": "akkusativ",
-          "style": "story"
-        },
-        {
-          "german": "Der Hund sitzt in der Kiste.",
-          "english": "The dog sits in the box.",
-          "caseUsed": "dativ",
-          "style": "story"
         }
       ]
     },

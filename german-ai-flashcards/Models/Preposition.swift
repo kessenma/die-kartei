@@ -115,19 +115,18 @@ nonisolated struct PrepositionContraction: Codable, Hashable, Identifiable {
 
 /// A worked sentence for one preposition. Two-way prepositions carry one of each case so the
 /// Wohin/Wo contrast is visible side by side.
+///
+/// Array order in prepositions.json is the contract: the sentence the word's 3D scene depicts
+/// comes first (for a two-way word, the first of each case), extra sentences follow. There is
+/// no marker field to keep in sync — reordering the JSON *is* changing the primary.
 nonisolated struct PrepositionExample: Codable, Hashable, Identifiable {
     var german: String
     var english: String
     /// The case this sentence actually uses. For a `wechsel` preposition this is `.akkusativ`
     /// or `.dativ` — never `.wechsel` — which is the whole point of the pair.
     var caseUsed: PrepositionCase
-    /// `"story"` on the Geschichte sentences (the ones the story scenes depict); nil on the
-    /// classic set. Ordering, not filtering — both styles stay listed everywhere.
-    var style: String?
 
     var id: String { german }
-
-    var isStory: Bool { style == "story" }
 }
 
 /// One German preposition and everything the exercises need to teach it.
@@ -157,23 +156,13 @@ nonisolated struct Preposition: Codable, Identifiable, Hashable {
         examples.first { $0.caseUsed == group }
     }
 
-    /// All examples, the sentence the on-screen scene depicts first; nothing is dropped.
-    /// (Interim ordering by the old story flag — A5 of the scene unification makes array
-    /// order in prepositions.json the contract and deletes the flag.)
-    func displayExamples() -> [PrepositionExample] {
-        let story = examples.filter(\.isStory)
-        let classic = examples.filter { !$0.isStory }
-        return story + classic
-    }
-
     /// What a drill reveal shows: one worked sentence per case for a two-way preposition, one
-    /// otherwise — the scene-depicting sentence, so it matches the canvas above it, without
-    /// the reveal ballooning as extra sentences are added.
+    /// otherwise — the scene-depicting sentence (first in file order), so it matches the
+    /// canvas above it, without the reveal ballooning as extra sentences are added.
     func revealExamples() -> [PrepositionExample] {
-        let ordered = displayExamples()
-        guard governs == .wechsel else { return Array(ordered.prefix(1)) }
+        guard governs == .wechsel else { return Array(examples.prefix(1)) }
         return [PrepositionCase.akkusativ, .dativ].compactMap { c in
-            ordered.first { $0.caseUsed == c }
+            examples.first { $0.caseUsed == c }
         }
     }
 }
