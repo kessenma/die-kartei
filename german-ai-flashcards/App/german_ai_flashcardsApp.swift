@@ -28,7 +28,16 @@ struct german_ai_flashcardsApp: App {
     @State private var coordinator: GenerationCoordinator
     @Environment(\.scenePhase) private var scenePhase
 
+    /// The app-wide visual identity. `klar` (the untouched baseline) by default, so shipping the
+    /// theme system is a no-op until the learner opts into another theme in Settings.
+    @AppStorage(AppTheme.defaultsKey) private var appTheme: AppTheme = .klar
+
     init() {
+        // The Klassisch/Geschichte scene-style toggle was removed 2026-08-12 (the sets merged
+        // into one curated scene per word); the key was user-visible in the preposition hub,
+        // so stale devices exist.
+        UserDefaults.standard.removeObject(forKey: "prepositions.sceneStyle")
+
         let schema = Schema([
             SavedDeck.self, SavedCard.self, QuizResult.self,
             ChatConversation.self, ChatMessage.self,
@@ -39,6 +48,7 @@ struct german_ai_flashcardsApp: App {
             StudyDay.self,
             MatchingPairStat.self, MatchingRound.self,
             ArticleWordStat.self, ArticleRound.self,
+            PrepositionStat.self, PrepositionRound.self,
             StoryReadingSession.self, StoryQuizAttempt.self,
             BatchJob.self
         ])
@@ -73,6 +83,7 @@ struct german_ai_flashcardsApp: App {
         WindowGroup {
             ContentView(coordinator: coordinator)
                 .environment(coordinator.mlxService)
+                .environment(\.appTheme, appTheme)
                 .onChange(of: scenePhase) { _, phase in
                     // A model download cut off while the user was in another app resumes
                     // from its saved partial files as soon as they come back.
