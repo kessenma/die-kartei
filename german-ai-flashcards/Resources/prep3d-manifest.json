@@ -1,0 +1,485 @@
+{
+  "relations": {
+    "auf": {
+      "asset": "prep3d-auf",
+      "akkOffset": [
+        0.0,
+        1.09,
+        -0.0
+      ]
+    },
+    "in": {
+      "asset": "prep3d-in",
+      "akkOffset": [
+        0.0,
+        1.62,
+        -0.0
+      ]
+    },
+    "unter": {
+      "asset": "prep3d-unter",
+      "akkOffset": [
+        -2.0,
+        0.0,
+        -0.0
+      ]
+    },
+    "über": {
+      "asset": "prep3d-ueber",
+      "akkOffset": [
+        -2.2,
+        0.0,
+        -0.0
+      ]
+    },
+    "neben": {
+      "asset": "prep3d-neben",
+      "akkOffset": [
+        0.67,
+        0.0,
+        -0.0
+      ]
+    },
+    "zwischen": {
+      "asset": "prep3d-zwischen",
+      "akkOffset": [
+        0.0,
+        2.0,
+        -0.0
+      ]
+    },
+    "an": {
+      "asset": "prep3d-an",
+      "akkOffset": [
+        1.8,
+        0.0,
+        -0.0
+      ]
+    },
+    "vor": {
+      "asset": "prep3d-vor",
+      "akkOffset": [
+        0.0,
+        0.0,
+        1.65
+      ]
+    },
+    "hinter": {
+      "asset": "prep3d-hinter",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -1.65
+      ]
+    },
+    "entlang": {
+      "asset": "prep3d-entlang",
+      "akkOffset": [
+        -2.6,
+        0.0,
+        -0.0
+      ]
+    },
+    "wohinwo": {
+      "asset": "prep3d-wohinwo",
+      "akkOffset": [
+        -3.9,
+        0.0,
+        -0.0
+      ]
+    },
+    "durch": {
+      "asset": "prep3d-durch",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "through",
+        "from": [
+          -2.3,
+          0,
+          0
+        ]
+      }
+    },
+    "um": {
+      "asset": "prep3d-um",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "orbit",
+        "center": [
+          -1.7,
+          0,
+          0
+        ]
+      }
+    },
+    "gegen": {
+      "asset": "prep3d-gegen",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "bounce",
+        "back": [
+          -0.9,
+          0,
+          0
+        ]
+      }
+    },
+    "bis": {
+      "asset": "prep3d-bis",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "shuttle",
+        "from": [
+          -1.8,
+          0,
+          0
+        ],
+        "to": [
+          1.05,
+          0,
+          0
+        ]
+      }
+    },
+    "aus": {
+      "asset": "prep3d-aus",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "shuttle",
+        "from": [
+          -2.05,
+          -0.62,
+          0
+        ],
+        "arc": 1.6
+      }
+    },
+    "bei": {
+      "asset": "prep3d-bei",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "idle"
+      }
+    },
+    "mit": {
+      "asset": "prep3d-mit",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "carry",
+        "delta": [
+          0.9,
+          0,
+          0
+        ]
+      }
+    },
+    "nach": {
+      "asset": "prep3d-nach",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "shuttle",
+        "from": [
+          -1.4,
+          0,
+          0
+        ],
+        "to": [
+          1.65,
+          0,
+          0
+        ]
+      }
+    },
+    "zu": {
+      "asset": "prep3d-zu",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "shuttle",
+        "from": [
+          -1.2,
+          0,
+          0
+        ],
+        "to": [
+          1.6,
+          0,
+          0
+        ]
+      }
+    },
+    "von": {
+      "asset": "prep3d-von",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "shuttle",
+        "from": [
+          0.8,
+          0,
+          0
+        ]
+      }
+    },
+    "gegenüber": {
+      "asset": "prep3d-gegenueber",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "idle"
+      }
+    },
+    "für": {
+      "asset": "prep3d-fuer",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "shuttle",
+        "from": [
+          -1.75,
+          0,
+          0
+        ],
+        "arc": 1.0
+      }
+    },
+    "ohne": {
+      "asset": "prep3d-ohne",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "abandon",
+        "delta": [
+          1.1,
+          0,
+          0
+        ]
+      }
+    },
+    "außer": {
+      "asset": "prep3d-ausser",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "shuttle",
+        "from": [
+          2.85,
+          -0.12,
+          0
+        ],
+        "arc": 1.0
+      }
+    },
+    "seit": {
+      "asset": "prep3d-seit",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "shuttle",
+        "from": [
+          -1.1,
+          0,
+          0
+        ],
+        "dur": 2.8
+      }
+    },
+    "während": {
+      "asset": "prep3d-waehrend",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "shuttle",
+        "from": [
+          -2.3,
+          0,
+          0
+        ],
+        "dur": 2.4
+      }
+    },
+    "trotz": {
+      "asset": "prep3d-trotz",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "shuttle",
+        "from": [
+          -2.55,
+          0,
+          0
+        ],
+        "arc": 1.9
+      }
+    },
+    "wegen": {
+      "asset": "prep3d-wegen",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "cause",
+        "delta": [
+          1.6,
+          0,
+          0
+        ],
+        "push": [
+          0.35,
+          0,
+          0
+        ]
+      }
+    },
+    "statt": {
+      "asset": "prep3d-statt",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "swap",
+        "from": [
+          -1.7,
+          0,
+          0
+        ],
+        "delta": [
+          0.85,
+          0,
+          0
+        ],
+        "arc": 0.8,
+        "movers": "swapout"
+      }
+    },
+    "innerhalb": {
+      "asset": "prep3d-innerhalb",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "idle"
+      }
+    },
+    "außerhalb": {
+      "asset": "prep3d-ausserhalb",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "idle"
+      }
+    },
+    "oberhalb": {
+      "asset": "prep3d-oberhalb",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "idle"
+      }
+    },
+    "unterhalb": {
+      "asset": "prep3d-unterhalb",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "idle"
+      }
+    },
+    "diesseits": {
+      "asset": "prep3d-diesseits",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "idle"
+      }
+    },
+    "jenseits": {
+      "asset": "prep3d-jenseits",
+      "akkOffset": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "motion": {
+        "kind": "idle"
+      }
+    }
+  }
+}

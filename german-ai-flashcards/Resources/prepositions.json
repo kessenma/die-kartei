@@ -1,0 +1,800 @@
+{
+  "prepositions": [
+    {
+      "word": "bis",
+      "governs": "akkusativ",
+      "meanings": [
+        "as far as",
+        "up to",
+        "until"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "note": "Usually pairs with a second preposition, which then sets the case — „bis zum Bahnhof“ (zu → Dativ). Standing alone, before a bare time or place, it takes the Akkusativ.",
+      "examples": [
+        {
+          "german": "Wir bleiben bis nächsten Freitag.",
+          "english": "We're staying until next Friday.",
+          "caseUsed": "akkusativ"
+        }
+      ]
+    },
+    {
+      "word": "durch",
+      "governs": "akkusativ",
+      "meanings": [
+        "through",
+        "by means of"
+      ],
+      "contractions": [
+        {
+          "long": "durch das",
+          "short": "durchs"
+        }
+      ],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Wir gehen durch den Park.",
+          "english": "We're walking through the park.",
+          "caseUsed": "akkusativ"
+        }
+      ]
+    },
+    {
+      "word": "für",
+      "governs": "akkusativ",
+      "meanings": [
+        "for"
+      ],
+      "contractions": [
+        {
+          "long": "für das",
+          "short": "fürs"
+        }
+      ],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Das Geschenk ist für meinen Bruder.",
+          "english": "The present is for my brother.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Das Geschenk ist für den Hund.",
+          "english": "The present is for the dog.",
+          "caseUsed": "akkusativ",
+          "style": "story"
+        }
+      ]
+    },
+    {
+      "word": "gegen",
+      "governs": "akkusativ",
+      "meanings": [
+        "against",
+        "into",
+        "around [time]"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Das Auto fuhr gegen einen Baum.",
+          "english": "The car drove into a tree.",
+          "caseUsed": "akkusativ"
+        }
+      ]
+    },
+    {
+      "word": "ohne",
+      "governs": "akkusativ",
+      "meanings": [
+        "without"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Ich fahre ohne meinen Bruder nach Berlin.",
+          "english": "I'm going to Berlin without my brother.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Der Mann geht ohne den Hund spazieren.",
+          "english": "The man goes for a walk without the dog.",
+          "caseUsed": "akkusativ",
+          "style": "story"
+        }
+      ]
+    },
+    {
+      "word": "um",
+      "governs": "akkusativ",
+      "meanings": [
+        "around",
+        "at [time]"
+      ],
+      "contractions": [
+        {
+          "long": "um das",
+          "short": "ums"
+        }
+      ],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Wir sitzen um den Tisch.",
+          "english": "We're sitting around the table.",
+          "caseUsed": "akkusativ"
+        }
+      ]
+    },
+    {
+      "word": "aus",
+      "governs": "dativ",
+      "meanings": [
+        "out of",
+        "from"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Sie kommt aus der Schweiz.",
+          "english": "She comes from Switzerland.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "außer",
+      "governs": "dativ",
+      "meanings": [
+        "except for",
+        "besides"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Alle sind da außer meinem Bruder.",
+          "english": "Everyone is here except my brother.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "bei",
+      "governs": "dativ",
+      "meanings": [
+        "at",
+        "near",
+        "at someone's place"
+      ],
+      "contractions": [
+        {
+          "long": "bei dem",
+          "short": "beim"
+        }
+      ],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Ich wohne bei meinen Eltern.",
+          "english": "I live with my parents.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "gegenüber",
+      "governs": "dativ",
+      "meanings": [
+        "opposite",
+        "across from",
+        "in relation to"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "note": "Usually follows its noun, and always follows a pronoun — „mir gegenüber“.",
+      "examples": [
+        {
+          "german": "Die Bank liegt dem Bahnhof gegenüber.",
+          "english": "The bank is across from the train station.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "mit",
+      "governs": "dativ",
+      "meanings": [
+        "with",
+        "by [transport]"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Ich fahre mit dem Bus zur Arbeit.",
+          "english": "I take the bus to work.",
+          "caseUsed": "dativ"
+        },
+        {
+          "german": "Das Kind geht mit dem Hund spazieren.",
+          "english": "The child walks with the dog.",
+          "caseUsed": "dativ",
+          "style": "story"
+        }
+      ]
+    },
+    {
+      "word": "nach",
+      "governs": "dativ",
+      "meanings": [
+        "to [places]",
+        "after",
+        "according to"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Nach dem Essen gehen wir spazieren.",
+          "english": "After the meal we go for a walk.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "seit",
+      "governs": "dativ",
+      "meanings": [
+        "since",
+        "for [time]"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Ich lerne seit einem Jahr Deutsch.",
+          "english": "I've been learning German for a year.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "von",
+      "governs": "dativ",
+      "meanings": [
+        "from",
+        "of",
+        "by"
+      ],
+      "contractions": [
+        {
+          "long": "von dem",
+          "short": "vom"
+        }
+      ],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Das ist ein Geschenk von meiner Schwester.",
+          "english": "That's a present from my sister.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "zu",
+      "governs": "dativ",
+      "meanings": [
+        "to"
+      ],
+      "contractions": [
+        {
+          "long": "zu dem",
+          "short": "zum"
+        },
+        {
+          "long": "zu der",
+          "short": "zur"
+        }
+      ],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Ich gehe zum Arzt.",
+          "english": "I'm going to the doctor.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "an",
+      "governs": "wechsel",
+      "meanings": [
+        "at",
+        "on",
+        "to [vertical surfaces]"
+      ],
+      "contractions": [
+        {
+          "long": "an das",
+          "short": "ans"
+        },
+        {
+          "long": "an dem",
+          "short": "am"
+        }
+      ],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Ich hänge das Bild an die Wand.",
+          "english": "I hang the picture on the wall.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Das Bild hängt an der Wand.",
+          "english": "The picture hangs on the wall.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "auf",
+      "governs": "wechsel",
+      "meanings": [
+        "on",
+        "onto [horizontal surfaces]"
+      ],
+      "contractions": [
+        {
+          "long": "auf das",
+          "short": "aufs"
+        }
+      ],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Ich lege das Buch auf den Tisch.",
+          "english": "I put the book on the table.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Das Buch liegt auf dem Tisch.",
+          "english": "The book is lying on the table.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "entlang",
+      "governs": "wechsel",
+      "meanings": [
+        "along"
+      ],
+      "contractions": [],
+      "tier": "advanced",
+      "note": "In practice entlang usually follows its noun and takes the Akkusativ — „die Straße entlang“. Placed in front, it takes the Dativ.",
+      "examples": [
+        {
+          "german": "Wir gehen die Straße entlang.",
+          "english": "We're walking along the street.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Entlang dem Fluss stehen alte Bäume.",
+          "english": "Old trees stand along the river.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "hinter",
+      "governs": "wechsel",
+      "meanings": [
+        "behind"
+      ],
+      "contractions": [
+        {
+          "long": "hinter das",
+          "short": "hinters"
+        },
+        {
+          "long": "hinter dem",
+          "short": "hinterm"
+        }
+      ],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Ich stelle das Fahrrad hinter das Haus.",
+          "english": "I put the bike behind the house.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Das Fahrrad steht hinter dem Haus.",
+          "english": "The bike is standing behind the house.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "in",
+      "governs": "wechsel",
+      "meanings": [
+        "in",
+        "into",
+        "to"
+      ],
+      "contractions": [
+        {
+          "long": "in das",
+          "short": "ins"
+        },
+        {
+          "long": "in dem",
+          "short": "im"
+        }
+      ],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Ich gehe in die Stadt.",
+          "english": "I'm going into town.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Ich bin in der Stadt.",
+          "english": "I'm in town.",
+          "caseUsed": "dativ"
+        },
+        {
+          "german": "Der Hund springt in die Kiste.",
+          "english": "The dog jumps into the box.",
+          "caseUsed": "akkusativ",
+          "style": "story"
+        },
+        {
+          "german": "Der Hund sitzt in der Kiste.",
+          "english": "The dog sits in the box.",
+          "caseUsed": "dativ",
+          "style": "story"
+        }
+      ]
+    },
+    {
+      "word": "neben",
+      "governs": "wechsel",
+      "meanings": [
+        "beside",
+        "next to",
+        "besides"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Ich stelle den Stuhl neben das Sofa.",
+          "english": "I put the chair next to the sofa.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Der Stuhl steht neben dem Sofa.",
+          "english": "The chair stands next to the sofa.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "über",
+      "governs": "wechsel",
+      "meanings": [
+        "over",
+        "above",
+        "about [topic]"
+      ],
+      "contractions": [
+        {
+          "long": "über das",
+          "short": "übers"
+        },
+        {
+          "long": "über dem",
+          "short": "überm"
+        }
+      ],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Das Flugzeug fliegt über die Stadt.",
+          "english": "The plane flies over the city.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Die Lampe hängt über dem Tisch.",
+          "english": "The lamp hangs above the table.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "unter",
+      "governs": "wechsel",
+      "meanings": [
+        "under",
+        "among"
+      ],
+      "contractions": [
+        {
+          "long": "unter das",
+          "short": "unters"
+        },
+        {
+          "long": "unter dem",
+          "short": "unterm"
+        }
+      ],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Die Katze läuft unter den Tisch.",
+          "english": "The cat runs under the table.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Die Katze schläft unter dem Tisch.",
+          "english": "The cat is sleeping under the table.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "vor",
+      "governs": "wechsel",
+      "meanings": [
+        "in front of",
+        "before",
+        "ago"
+      ],
+      "contractions": [
+        {
+          "long": "vor das",
+          "short": "vors"
+        },
+        {
+          "long": "vor dem",
+          "short": "vorm"
+        }
+      ],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Ich stelle das Auto vor die Garage.",
+          "english": "I park the car in front of the garage.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Das Auto steht vor der Garage.",
+          "english": "The car is standing in front of the garage.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "zwischen",
+      "governs": "wechsel",
+      "meanings": [
+        "between"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "examples": [
+        {
+          "german": "Ich stelle die Lampe zwischen die Sessel.",
+          "english": "I put the lamp between the armchairs.",
+          "caseUsed": "akkusativ"
+        },
+        {
+          "german": "Die Lampe steht zwischen den Sesseln.",
+          "english": "The lamp stands between the armchairs.",
+          "caseUsed": "dativ"
+        }
+      ]
+    },
+    {
+      "word": "statt",
+      "governs": "genitiv",
+      "meanings": [
+        "instead of"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "note": "Also written anstatt — same meaning, same case. Casual speech often uses the Dativ.",
+      "examples": [
+        {
+          "german": "Statt eines Autos kaufte er ein Fahrrad.",
+          "english": "Instead of a car he bought a bicycle.",
+          "caseUsed": "genitiv"
+        }
+      ]
+    },
+    {
+      "word": "trotz",
+      "governs": "genitiv",
+      "meanings": [
+        "despite",
+        "in spite of"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "note": "You'll hear the Dativ in casual speech — „trotz dem Regen“ — but the Genitiv is the written standard.",
+      "examples": [
+        {
+          "german": "Trotz des Regens gehen wir spazieren.",
+          "english": "Despite the rain we're going for a walk.",
+          "caseUsed": "genitiv"
+        }
+      ]
+    },
+    {
+      "word": "während",
+      "governs": "genitiv",
+      "meanings": [
+        "during"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "note": "Casual speech often switches to the Dativ — „während dem Essen“.",
+      "examples": [
+        {
+          "german": "Während der Woche arbeite ich viel.",
+          "english": "During the week I work a lot.",
+          "caseUsed": "genitiv"
+        }
+      ]
+    },
+    {
+      "word": "wegen",
+      "governs": "genitiv",
+      "meanings": [
+        "because of"
+      ],
+      "contractions": [],
+      "tier": "core",
+      "note": "„wegen dem Wetter“ is everywhere in speech; „wegen des Wetters“ is what an exam wants.",
+      "examples": [
+        {
+          "german": "Wegen des Wetters bleiben wir zu Hause.",
+          "english": "Because of the weather we're staying home.",
+          "caseUsed": "genitiv"
+        }
+      ]
+    },
+    {
+      "word": "außerhalb",
+      "governs": "genitiv",
+      "meanings": [
+        "outside of"
+      ],
+      "contractions": [],
+      "tier": "advanced",
+      "note": "Genitiv only — this group has no Dativ fallback.",
+      "examples": [
+        {
+          "german": "Sie wohnt außerhalb der Stadt.",
+          "english": "She lives outside the city.",
+          "caseUsed": "genitiv"
+        }
+      ]
+    },
+    {
+      "word": "innerhalb",
+      "governs": "genitiv",
+      "meanings": [
+        "inside of",
+        "within"
+      ],
+      "contractions": [],
+      "tier": "advanced",
+      "note": "Genitiv only — this group has no Dativ fallback.",
+      "examples": [
+        {
+          "german": "Innerhalb einer Woche ist alles fertig.",
+          "english": "Within a week everything will be done.",
+          "caseUsed": "genitiv"
+        }
+      ]
+    },
+    {
+      "word": "oberhalb",
+      "governs": "genitiv",
+      "meanings": [
+        "above"
+      ],
+      "contractions": [],
+      "tier": "advanced",
+      "note": "Genitiv only — this group has no Dativ fallback.",
+      "examples": [
+        {
+          "german": "Oberhalb des Dorfes steht eine Burg.",
+          "english": "Above the village stands a castle.",
+          "caseUsed": "genitiv"
+        }
+      ]
+    },
+    {
+      "word": "unterhalb",
+      "governs": "genitiv",
+      "meanings": [
+        "below"
+      ],
+      "contractions": [],
+      "tier": "advanced",
+      "note": "Genitiv only — this group has no Dativ fallback.",
+      "examples": [
+        {
+          "german": "Unterhalb des Fensters steht ein Tisch.",
+          "english": "Below the window stands a table.",
+          "caseUsed": "genitiv"
+        }
+      ]
+    },
+    {
+      "word": "diesseits",
+      "governs": "genitiv",
+      "meanings": [
+        "on this side of"
+      ],
+      "contractions": [],
+      "tier": "advanced",
+      "note": "Genitiv only — this group has no Dativ fallback.",
+      "examples": [
+        {
+          "german": "Diesseits der Grenze spricht man Deutsch.",
+          "english": "On this side of the border people speak German.",
+          "caseUsed": "genitiv"
+        }
+      ]
+    },
+    {
+      "word": "jenseits",
+      "governs": "genitiv",
+      "meanings": [
+        "on the other side of",
+        "beyond"
+      ],
+      "contractions": [],
+      "tier": "advanced",
+      "note": "Genitiv only — this group has no Dativ fallback.",
+      "examples": [
+        {
+          "german": "Jenseits des Flusses beginnt der Wald.",
+          "english": "Beyond the river the forest begins.",
+          "caseUsed": "genitiv"
+        }
+      ]
+    },
+    {
+      "word": "beiderseits",
+      "governs": "genitiv",
+      "meanings": [
+        "on both sides of"
+      ],
+      "contractions": [],
+      "tier": "advanced",
+      "note": "Genitiv only — this group has no Dativ fallback.",
+      "examples": [
+        {
+          "german": "Beiderseits der Straße stehen Bäume.",
+          "english": "Trees stand on both sides of the street.",
+          "caseUsed": "genitiv"
+        }
+      ]
+    }
+  ]
+}

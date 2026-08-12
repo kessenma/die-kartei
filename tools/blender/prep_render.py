@@ -69,6 +69,14 @@ def rgba(hex_value: int, alpha: float = 1.0):
 # Each entry describes the two states of a two-way preposition. `subject` is the sphere's
 # position; the reference form is built by `ref`. Units are Blender metres against an
 # ortho camera 4 units wide, so ~1.0 reads as a quarter of the frame.
+#
+# Two schema extensions (formerly the Geschichte variant's; canonical since the styles
+# merged, 2026-08-12):
+#   - `subject_mesh`: {"file", "height", "yaw"} replaces the sphere with a converted prop
+#     from tools/genprops/samples. Subject poses then place the prop's *base* (ground
+#     point), not a center. The prop keeps the subject material, so runtime tinting and
+#     the neutral-grey question side work exactly as for the ball.
+#   - `ref` may be a LIST of (kind, spec) pairs — für needs a giver figure AND the dog.
 
 SPHERE_R = 0.55
 
@@ -83,9 +91,14 @@ RELATIONS = {
         "dat": {"subject": (0, 0, 0.11 + SPHERE_R)},
     },
     "in": {
-        "ref": ("openbox", {"size": (1.9, 1.4, 1.5), "at": (0, 0, 0.0)}),
-        "akk": {"subject": (0, 0, 1.95), "arrow": "down"},
-        "dat": {"subject": (0, 0, 0.15)},
+        # „Der Hund springt in die Kiste." / „Der Hund sitzt in der Kiste."
+        # The cardboard box, sized so a seated dog peeks over the rim (floor top -0.62,
+        # wall top 0.45, dog 1.3 tall). Promoted from the story set 2026-08-12; the
+        # ball-in-box original retired with the style toggle.
+        "ref": ("openbox", {"size": (2.4, 1.7, 1.2), "at": (0, 0, -0.15), "flaps": True}),
+        "subject_mesh": {"file": "hund", "height": 1.3, "yaw": 0},
+        "akk": {"subject": (0, 0, 1.0), "arrow": "down"},
+        "dat": {"subject": (0, 0, -0.62)},
     },
     "unter": {
         # "Die Katze schläft unter dem Tisch." The table earns its legs here — a floating bar
@@ -227,10 +240,12 @@ RELATIONS = {
         "motion": {"kind": "idle"},
     },
     "mit": {
+        # „Der Mann geht mit dem Hund spazieren." — the pair stroll together (carry).
+        # Promoted from the story set 2026-08-12.
         "governs": "dativ",
-        "ref": ("figure", {"at": (-0.7, 0, -0.75), "scale": 1.15}),
-        "dat": {"subject": (0.85, 0, -0.2), "arrow": "right"},
-        # Figure and ball stroll out and back *together* — the movers make it "mit".
+        "ref": ("figure", {"at": (-0.75, 0, -0.75), "scale": 1.1}),
+        "subject_mesh": {"file": "hund", "height": 1.25, "yaw": 0},
+        "dat": {"subject": (0.75, 0, -0.75), "arrow": "right", "arrow_base": (1.9, 0, -0.2)},
         "motion": {"kind": "carry", "delta": (0.9, 0, 0)},
     },
     "nach": {
@@ -264,22 +279,28 @@ RELATIONS = {
         "motion": {"kind": "idle"},
     },
     "für": {
+        # „Das Geschenk ist für den Hund." — giver left, dog right, the gift between them
+        # wearing the case color. The gift is the object of für, so it is the subject.
+        # Promoted from the story set 2026-08-12.
         "governs": "akkusativ",
-        # A giver, a receiver, and the gift arcing from one to the other. The ball is the
-        # object of "für" — the thing intended for someone — so it wears the case color.
-        "ref": ("pair", {"a": (-2.0, 0, -0.75), "b": (1.45, 0, -0.75), "scale": 1.05}),
-        "dat": {"subject": (0.5, 0, -0.2), "arrow": "right", "arrow_base": (-1.05, 0, -0.1)},
-        "motion": {"kind": "shuttle", "from": (-1.6, 0, 0), "arc": 1.1},
+        "ref": [
+            ("figure", {"at": (-2.05, 0, -0.75), "scale": 1.1}),
+            ("mesh", {"file": "hund", "at": (1.55, 0, -0.75), "height": 1.25, "yaw": 12}),
+        ],
+        "subject_mesh": {"file": "gift", "height": 0.85, "yaw": 0},
+        "dat": {"subject": (0.3, 0, -0.75), "arrow": "right", "arrow_base": (-1.05, 0, -0.15)},
+        "motion": {"kind": "shuttle", "from": (-1.75, 0, 0), "arc": 1.0},
     },
     "ohne": {
+        # „Der Mann geht ohne den Hund spazieren." — the man walks off, the dog stays.
+        # The dog is the object of ohne and wears the case color. The arrow belongs to the
+        # *figure* (it is the one leaving), hence the base override — hung on the dog it
+        # would say the dog is going somewhere, which is exactly what ohne denies.
+        # Promoted from the story set 2026-08-12.
         "governs": "akkusativ",
-        # The inverse of mit: the figure walks off and the ball is left behind. The gap *is*
-        # the preposition — "Ich gehe ohne den Hund spazieren", and the ball is the dog.
         "ref": ("figure", {"at": (0.95, 0, -0.75), "scale": 1.05}),
-        # The arrow belongs to the *figure* here (it is the one leaving), hence the base
-        # override — hung on the ball it would say the ball is going somewhere, which is
-        # exactly what ohne denies.
-        "dat": {"subject": (-1.5, 0, -0.2), "arrow": "right", "arrow_base": (1.75, 0, -0.1)},
+        "subject_mesh": {"file": "hund", "height": 1.25, "yaw": -8},
+        "dat": {"subject": (-1.55, 0, -0.75), "arrow": "right", "arrow_base": (1.8, 0, -0.1)},
         "motion": {"kind": "abandon", "delta": (1.1, 0, 0)},
     },
     "außer": {
@@ -382,61 +403,6 @@ RELATIONS = {
         "motion": {"kind": "idle"},
     },
 }
-
-# MARK: - Story variant (tools/genprops/PROPS_PLAN.md)
-#
-# The Geschichte scene set: same schema as RELATIONS plus two extensions —
-#   - `subject_mesh`: {"file", "height", "yaw"} replaces the sphere with a converted prop
-#     from tools/genprops/samples. Subject poses then place the prop's *base* (ground
-#     point), not a center. The prop keeps the subject material, so runtime tinting and
-#     the neutral-grey question side work exactly as for the ball.
-#   - `ref` may be a LIST of (kind, spec) pairs — für needs a giver figure AND the dog.
-#
-# Assets render under `prep3d-story-<word>`; the classic set is untouched, and the
-# manifest publishes these as a sibling `storyRelations` block.
-
-STORY = {
-    "in": {
-        # „Der Hund springt in die Kiste." / „Der Hund sitzt in der Kiste."
-        # The cardboard box, sized so a seated dog peeks over the rim (floor top -0.62,
-        # wall top 0.45, dog 1.3 tall).
-        "ref": ("openbox", {"size": (2.4, 1.7, 1.2), "at": (0, 0, -0.15), "flaps": True}),
-        "subject_mesh": {"file": "hund", "height": 1.3, "yaw": 0},
-        "akk": {"subject": (0, 0, 1.0), "arrow": "down"},
-        "dat": {"subject": (0, 0, -0.62)},
-    },
-    "für": {
-        # „Das Geschenk ist für den Hund." — giver left, dog right, the gift between them
-        # wearing the case color. The gift is the object of für, so it is the subject.
-        "governs": "akkusativ",
-        "ref": [
-            ("figure", {"at": (-2.05, 0, -0.75), "scale": 1.1}),
-            ("mesh", {"file": "hund", "at": (1.55, 0, -0.75), "height": 1.25, "yaw": 12}),
-        ],
-        "subject_mesh": {"file": "gift", "height": 0.85, "yaw": 0},
-        "dat": {"subject": (0.3, 0, -0.75), "arrow": "right", "arrow_base": (-1.05, 0, -0.15)},
-        "motion": {"kind": "shuttle", "from": (-1.75, 0, 0), "arc": 1.0},
-    },
-    "ohne": {
-        # „Der Mann geht ohne den Hund spazieren." — the man walks off, the dog stays.
-        # The dog is the object of ohne and wears the case color.
-        "governs": "akkusativ",
-        "ref": ("figure", {"at": (0.95, 0, -0.75), "scale": 1.05}),
-        "subject_mesh": {"file": "hund", "height": 1.25, "yaw": -8},
-        "dat": {"subject": (-1.55, 0, -0.75), "arrow": "right", "arrow_base": (1.8, 0, -0.1)},
-        "motion": {"kind": "abandon", "delta": (1.1, 0, 0)},
-    },
-    "mit": {
-        # „Das Kind geht mit dem Hund spazieren." — the pair stroll together (carry).
-        "governs": "dativ",
-        "ref": ("figure", {"at": (-0.75, 0, -0.75), "scale": 1.1}),
-        "subject_mesh": {"file": "hund", "height": 1.25, "yaw": 0},
-        "dat": {"subject": (0.75, 0, -0.75), "arrow": "right", "arrow_base": (1.9, 0, -0.2)},
-        "motion": {"kind": "carry", "delta": (0.9, 0, 0)},
-    },
-}
-
-VARIANTS = {"classic": None, "story": STORY}   # None = RELATIONS, resolved in build()
 
 STATE_COLOR = {
     "akk": PALETTE["akkusativ"],
@@ -684,7 +650,7 @@ def build_reference(kind, spec, mat):
             ))
         return parts
 
-    # MARK: Story-set references (see tools/genprops/PROPS_PLAN.md)
+    # MARK: Cast references (see tools/genprops/PROPS_PLAN.md)
 
     if kind == "fence":
         # Posts + two rails. bis stops at it, trotz hops it, entlang runs along it,
@@ -1046,12 +1012,11 @@ def setup_render(look, size):
         scene.eevee.shadow_resolution_scale = 2.0
 
 
-def build(prep, state, look, size, ghost=False, variant="classic"):
+def build(prep, state, look, size, ghost=False):
     clear_scene()
     setup_render(look, size)
 
-    relations = VARIANTS.get(variant) or RELATIONS
-    relation = relations[prep]
+    relation = RELATIONS[prep]
     ref_mat = make_material("reference", PALETTE["reference"], look)
     subject_mat = make_material("subject", subject_color(relation, state), look)
 
@@ -1199,11 +1164,7 @@ def write_manifest(path):
         return out
 
     payload = {
-        # Classic stays byte-compatible: same key, same shapes, untouched by the story set.
         "relations": {w: entry(w, r, "prep3d-") for w, r in RELATIONS.items()},
-        # The Geschichte variant, word by word as scenes land; Swift falls back to classic
-        # for any word not present here.
-        "storyRelations": {w: entry(w, r, "prep3d-story-") for w, r in STORY.items()},
     }
     with open(path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
@@ -1302,9 +1263,7 @@ def verify(path):
 def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     ap = argparse.ArgumentParser()
-    ap.add_argument("--prep", default="auf", choices=sorted(set(RELATIONS) | set(STORY)))
-    ap.add_argument("--variant", default="classic", choices=sorted(VARIANTS),
-                    help="which scene set the word is built from")
+    ap.add_argument("--prep", default="auf", choices=sorted(RELATIONS))
     ap.add_argument("--state", default="dat", choices=["akk", "dat", "neutral"])
     ap.add_argument("--look", default="flat", choices=["flat", "dim"])
     ap.add_argument("--size", type=int, default=512)
@@ -1340,11 +1299,10 @@ def main():
     elif args.usdz:
         global _LOD
         _LOD = "low"
-        build(args.prep, args.state, args.look, args.size, variant=args.variant)
+        build(args.prep, args.state, args.look, args.size)
         export_usdz(args.out)
     else:
-        build(args.prep, args.state, args.look, args.size, ghost=args.ghost,
-              variant=args.variant)
+        build(args.prep, args.state, args.look, args.size, ghost=args.ghost)
         render_to(args.out)
 
 
