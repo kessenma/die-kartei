@@ -17,6 +17,8 @@ enum Activity: Identifiable {
     case matching(MatchingSession)
     /// The der/die/das article game, configured by an `ArticleGameSession`.
     case articleGame(ArticleGameSession)
+    /// The preposition Kasus drill, configured by a `PrepositionCaseSession`.
+    case prepositionCase(PrepositionCaseSession)
     /// Personalized fill-in-the-blank practice over the learner's own corrected sentences.
     case cloze(ClozeSession)
 
@@ -30,6 +32,8 @@ enum Activity: Identifiable {
             return "matching-\(session.id.uuidString)"
         case .articleGame(let session):
             return "articleGame-\(session.id.uuidString)"
+        case .prepositionCase(let session):
+            return "prepositionCase-\(session.id.uuidString)"
         case .cloze(let session):
             return "cloze-\(session.id.uuidString)"
         }

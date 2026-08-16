@@ -9,6 +9,14 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
+
+/// One entry in the board's color legend (see `MatchingSession.germanTileTints`).
+struct MatchingTintLegendItem: Identifiable, Hashable {
+    var label: String
+    var color: Color
+    var id: String { label }
+}
 
 struct MatchingSession: Identifiable {
     let id = UUID()
@@ -25,6 +33,16 @@ struct MatchingSession: Identifiable {
     var generatorRaw: String = ""
     /// Label stamped onto the saved `QuizResult` (e.g. "Matching · 8 pairs").
     var subDeckLabel: String?
+
+    /// Optional color coding for the **German column only**, keyed by the lowercased German word.
+    /// The preposition round uses it to tint each word by the case it governs, so the color link
+    /// built in the Kasus drill carries over here.
+    ///
+    /// German-only on purpose: tinting both columns would let a learner pair tiles by color
+    /// without reading them, which is the one thing this game exists to make you do.
+    var germanTileTints: [String: Color] = [:]
+    /// What those colors mean. Shown as a compact legend above the board when non-empty.
+    var tintLegend: [MatchingTintLegendItem] = []
 
     /// The model that generated this deck, when known — used for the deck's brand tint.
     var generatorModel: MLXModel? { MLXModel(rawValue: generatorRaw) }

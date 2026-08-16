@@ -115,6 +115,10 @@ final class ConversationEngine: WordInspecting {
     // Timer
     private var appearedAt: Date?
     private var baseDuration: Int
+    /// How much of `conversation.durationSeconds` has already been banked into the day log. Seeded
+    /// from the stored duration so re-opening an old chat replays none of its history; only the
+    /// seconds added in this sitting get logged.
+    private var loggedSeconds: Int
 
     var isRecording: Bool { speechRecognizer.isRecording }
     var liveTranscript: String { speechRecognizer.transcript }
@@ -163,6 +167,7 @@ final class ConversationEngine: WordInspecting {
         self.config = cfg
         self.systemPrompt = ConversationPrompts.systemPrompt(for: cfg)
         self.baseDuration = conversation.durationSeconds
+        self.loggedSeconds = conversation.durationSeconds
     }
 
     // MARK: - Lifecycle
@@ -183,6 +188,7 @@ final class ConversationEngine: WordInspecting {
         conversation.durationSeconds = elapsedSeconds()
         baseDuration = conversation.durationSeconds
         if appearedAt != nil { appearedAt = Date() }
+        bankStudyTime()
         save()
     }
 
@@ -192,7 +198,18 @@ final class ConversationEngine: WordInspecting {
         baseDuration += Int(Date().timeIntervalSince(appearedAt))
         self.appearedAt = nil
         conversation.durationSeconds = baseDuration
+        bankStudyTime()
         save()
+    }
+
+    /// Hand the seconds added since the last commit to the day log. Done as a running delta rather
+    /// than once at the end so time still lands on the calendar for a chat that's abandoned, never
+    /// summarized, or spread over several sittings — and never double-counts a resummarized one.
+    private func bankStudyTime() {
+        let delta = conversation.durationSeconds - loggedSeconds
+        guard delta > 0 else { return }
+        loggedSeconds = conversation.durationSeconds
+        StudyLogService.recordTime(.conversation, seconds: delta, in: modelContext)
     }
 
     /// Resume counting when the user returns to the foreground.
@@ -666,21 +683,33 @@ final class ConversationEngine: WordInspecting {
             word: word,
             translation: nil,
             loading: true,
+            loadingModel: !SingleWordTranslator.isReady(config.model, in: mlxService),
             saved: conversation.isVocabSaved(german: word)
         )
         Task {
-            let translation = await translateSingleWord(word)
+            let translation = await translateSingleWord(word) { [weak self] in
+                guard let self, inspectedWord?.word == word else { return }
+                inspectedWord?.loadingModel = false
+            }
             // Only apply if the inspector is still showing the same word.
             if inspectedWord?.word == word {
                 inspectedWord?.translation = translation
                 inspectedWord?.loading = false
+                inspectedWord?.loadingModel = false
             }
         }
     }
 
-    private func translateSingleWord(_ word: String) async -> String? {
+    /// `onModelReady` fires once the weights are in memory, so the sheet can stop explaining the
+    /// load wait and say it's translating.
+    private func translateSingleWord(
+        _ word: String,
+        onModelReady: (@MainActor () -> Void)? = nil
+    ) async -> String? {
         guard await ensureModelLoaded() else { return nil }
-        return await SingleWordTranslator.translate(word, mlxService: mlxService, model: config.model)
+        return await SingleWordTranslator.translate(
+            word, mlxService: mlxService, model: config.model, onModelReady: onModelReady
+        )
     }
 
     /// Save the currently-inspected word to the conversation's vocabulary library.

@@ -229,8 +229,9 @@ struct DeckStore {
         ankiRatings: [Int: AnkiRating]?, subDeckLabel: String? = nil
     ) {
         // Count the review toward today's streak even for cross-deck "Daily Review" sessions,
-        // which carry no deckID and would otherwise bail before recording anything.
-        StudyLogService.record(.cards(total), in: modelContext)
+        // which carry no deckID and would otherwise bail before recording anything. The same is
+        // true of its time — banked here so it lands whether or not there's a deck to attach to.
+        StudyLogService.record(.cards(total), seconds: durationSeconds, in: modelContext)
 
         guard let deckID, let deck = modelContext.model(for: deckID) as? SavedDeck else { return }
         let result = QuizResult(
@@ -251,14 +252,16 @@ struct DeckStore {
         }
     }
 
-    func saveGrammarQuizResult(correct: Int, total: Int, category: GrammarCategory) {
-        StudyLogService.record(.grammar(total), in: modelContext)
+    func saveGrammarQuizResult(
+        correct: Int, total: Int, category: GrammarCategory, durationSeconds: Int = 0
+    ) {
+        StudyLogService.record(.grammar(total), seconds: durationSeconds, in: modelContext)
         guard let deck = fetchOrCreateGrammarStatsDeck(for: category.title) else { return }
         let result = QuizResult(
             totalCards: total,
             correctCount: correct,
             incorrectCardIndices: [],
-            durationSeconds: 0,
+            durationSeconds: durationSeconds,
             studyMode: .default,
             ankiRatings: nil,
             subDeckLabel: "\(total) exercises · \(category.subtitle)"

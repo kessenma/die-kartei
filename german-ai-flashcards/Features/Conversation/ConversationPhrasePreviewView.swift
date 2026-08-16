@@ -41,6 +41,7 @@ struct ConversationPhrasePreviewView: View {
                     Image(systemName: "ear.badge.waveform").foregroundStyle(.tint)
                 }
             }
+            .themedListRow()
 
             Section {
                 ForEach(phrases) { phrase in
@@ -48,7 +49,7 @@ struct ConversationPhrasePreviewView: View {
                 }
             } header: {
                 HStack {
-                    Text("Phrases you'll hear")
+                    Text("Phrases you'll hear").themedSectionHeader()
                     Spacer()
                     Button(revealGerman ? "Hide German" : "Reveal German") {
                         withAnimation { revealGerman.toggle() }
@@ -57,7 +58,9 @@ struct ConversationPhrasePreviewView: View {
                     .textCase(nil)
                 }
             }
+            .themedListRow()
         }
+        .themedListScreen()
         .navigationTitle("Before you start")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {

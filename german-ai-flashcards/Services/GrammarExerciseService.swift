@@ -14,15 +14,18 @@ enum GrammarExerciseService {
     }
 
     /// The multiple-choice drill category matching a grammar focus, if one ships in the bundle.
-    /// Only Akkusativ and Dativ have exercises today; every other structure returns `nil` (its
-    /// just-in-time lesson falls back to the explanation + a conversation nudge). `rotation`
-    /// (e.g. a day index) picks among the categories for that case so repeated practice varies.
+    /// Akkusativ, Dativ and the two preposition focuses have exercises today; every other
+    /// structure returns `nil` (its just-in-time lesson falls back to the explanation + a
+    /// conversation nudge). `rotation` (e.g. a day index) picks among the categories for that
+    /// key so repeated practice varies.
     static func category(for focus: GrammarFocus, rotation: Int = 0) -> GrammarCategory? {
         let caseKey: String
         switch focus {
-        case .akkusativ: caseKey = "akkusativ"
-        case .dativ:     caseKey = "dativ"
-        default:         return nil
+        case .akkusativ:             caseKey = "akkusativ"
+        case .dativ:                 caseKey = "dativ"
+        case .praepositionen:        caseKey = "praepositionen"
+        case .wechselpraepositionen: caseKey = "wechselpraepositionen"
+        default:                     return nil
         }
         let categories = loadCategories().filter { $0.grammaticalCase == caseKey }
         guard !categories.isEmpty else { return nil }

@@ -57,6 +57,7 @@ struct TodaySection: View {
                 Text("Your short, personalized plan — just do the next thing. Picked from what's due and what's shaky.")
                     .font(.caption2)
             }
+            .themedListRow()
 
         case .hero:
             Section {
@@ -69,12 +70,16 @@ struct TodaySection: View {
                 Text("Picked for you from your coach's memory, what's due, and your streak.")
                     .font(.caption2)
             }
+            .themedListRow()
             if recommendations.count > 1 {
-                Section("Also good right now") {
+                Section {
                     ForEach(recommendations.dropFirst()) { rec in
                         row(rec)
                     }
+                } header: {
+                    Text("Also good right now").themedSectionHeader()
                 }
+                .themedListRow()
             }
         }
     }
@@ -84,10 +89,11 @@ struct TodaySection: View {
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
             Text(style == .hero ? "Up Next" : "Today")
+                .themedSectionHeader()
             Spacer()
             if streak > 0 {
                 Label("\(streak)", systemImage: "flame.fill")
-                    .font(.caption.weight(.bold))
+                    .themedLabel(.caption.weight(.bold), size: 13)
                     .foregroundStyle(.orange)
                     .labelStyle(.titleAndIcon)
             }
@@ -273,16 +279,21 @@ private struct TodayRow: View {
     /// Button-driven rows draw their own chevron; `NavigationLink` rows get the system one.
     var showsChevron: Bool = false
 
+    @Environment(\.appTheme) private var theme
+
     var body: some View {
         HStack(spacing: 12) {
+            // `rec.accent` is content, not chrome — it's how the plan tells one kind of exercise
+            // from another — so the theme reshapes the chip without recoloring it.
             Image(systemName: rec.systemImage)
                 .font(.title3)
                 .foregroundStyle(rec.accent)
                 .frame(width: 38, height: 38)
-                .background(rec.accent.opacity(0.14), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                .background(rec.accent.opacity(0.14),
+                            in: RoundedRectangle(cornerRadius: theme.innerRadius(9), style: .continuous))
             VStack(alignment: .leading, spacing: 2) {
                 Text(rec.title)
-                    .font(.subheadline)
+                    .themedLabel(.subheadline, size: 15)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                 Text(rec.subtitle)
@@ -308,6 +319,8 @@ private struct TodayRow: View {
 private struct TodayHeroRow: View {
     let rec: TodayRecommendation
 
+    @Environment(\.appTheme) private var theme
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
@@ -315,25 +328,29 @@ private struct TodayHeroRow: View {
                     .font(.title2)
                     .foregroundStyle(.white)
                     .frame(width: 46, height: 46)
-                    .background(rec.accent, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .background(rec.accent,
+                                in: RoundedRectangle(cornerRadius: theme.innerRadius(12), style: .continuous))
                 VStack(alignment: .leading, spacing: 3) {
                     Text(rec.title)
-                        .font(.headline)
+                        .themedLabel(.headline, size: 18)
                         .foregroundStyle(.primary)
                     Text(rec.subtitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
             }
+            // The Start affordance: a pill everywhere but Grundform, which squares it off. Uppercase
+            // there too, so the app's loudest button carries the loudest part of that theme.
             HStack(spacing: 6) {
                 Text("Start")
                 Image(systemName: "arrow.right")
             }
-            .font(.subheadline.weight(.semibold))
+            .themedLabel(.subheadline.weight(.semibold), size: 16)
+            .textCase(theme.uppercaseSectionHeaders ? .uppercase : nil)
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
-            .background(rec.accent, in: Capsule())
+            .background(rec.accent, in: theme.pillShape)
         }
         .padding(.vertical, 10)
         .contentShape(Rectangle())

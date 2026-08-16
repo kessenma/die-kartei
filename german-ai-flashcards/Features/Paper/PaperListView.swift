@@ -12,6 +12,7 @@ struct PaperListView: View {
 
     @Query(sort: \StudyPaper.createdAt, order: .reverse) private var papers: [StudyPaper]
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var appTheme
 
     @State private var showImporter = false
     @State private var showURLImport = false
@@ -45,6 +46,7 @@ struct PaperListView: View {
                 Text("Upload a German paper or paste a link. The AI extracts a summary, a vocabulary deck, and questions — then you can discuss it.")
                     .font(.caption2)
             }
+            .themedListRow()
 
             ChatModelPickerSection(
                 selected: $modelManager.selectedPaperModel,
@@ -53,12 +55,14 @@ struct PaperListView: View {
                 footerText: "Used to generate the summary, deck, and questions, and to discuss the paper. \(PaperStudyService.requiredModel.rawValue) is recommended for its German quality, but any downloaded model works.",
                 emphasizeHero: false
             )
+            .themedListRow()
 
             if let importError {
                 Section {
                     Label(importError, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption).foregroundStyle(.orange)
                 }
+                .themedListRow()
             }
 
             if regularPapers.isEmpty {
@@ -69,8 +73,9 @@ struct PaperListView: View {
                         description: Text("Import a German PDF to study and discuss it.")
                     )
                 }
+                .themedListRow()
             } else {
-                Section("Your papers") {
+                Section {
                     ForEach(regularPapers) { paper in
                         NavigationLink {
                             PaperDetailView(paper: paper, modelManager: modelManager, mlxService: mlxService)
@@ -81,9 +86,13 @@ struct PaperListView: View {
                             Button(role: .destructive) { delete(paper) } label: { Label("Delete", systemImage: "trash") }
                         }
                     }
+                } header: {
+                    Text("Your papers").themedSectionHeader()
                 }
+                .themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("Study a Paper")
         .navigationBarTitleDisplayMode(.inline)
         .contentMargins(.bottom, 120, for: .scrollContent)
@@ -146,7 +155,7 @@ struct PaperListView: View {
                 .foregroundStyle(accent)
                 .frame(width: 30, height: 30)
                 .background(accent.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
             VStack(alignment: .leading, spacing: 2) {
                 Text(paper.title).lineLimit(1)
                 HStack(spacing: 8) {
@@ -264,6 +273,8 @@ private struct PaperGeneratingView: View {
     let paper: StudyPaper
     let onClose: () -> Void
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -288,6 +299,9 @@ private struct PaperGeneratingView: View {
             }
             .padding()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
+            }
             .navigationTitle("Studying paper")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -305,6 +319,7 @@ private struct URLImportView: View {
     var accent: Color = .accentColor
     var onFetched: (_ title: String, _ text: String, _ url: String) -> Void
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     @State private var urlText = ""
     @State private var loading = false
@@ -347,16 +362,18 @@ private struct URLImportView: View {
                         }
                     }
                 } header: {
-                    Text("Link")
+                    Text("Link").themedSectionHeader()
                 } footer: {
                     Text("Tested on German Reddit posts and the AI Factory Austria news page (ai-at.eu/news). Other sites may work too. but... lots of sites have bot protection. and this feature can be fickle. You can also save pages as PDFs in Safari and then upload the PDF if you're having trouble.")
                 }
+                .themedListRow()
 
                 if let error {
                     Section {
                         Label(error, systemImage: "exclamationmark.triangle.fill")
                             .font(.caption).foregroundStyle(.orange)
                     }
+                    .themedListRow()
                 }
 
                 Section {
@@ -375,7 +392,9 @@ private struct URLImportView: View {
                 } footer: {
                     Text("Reddit often blocks direct fetches. If the quick fetch fails, open the page in the in-app browser, log in or navigate to the post, then tap “Use this page”.")
                 }
+                .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("Study a link")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -426,4 +445,17 @@ private struct URLImportView: View {
             }
         }
     }
+}
+
+#Preview("Papers · 4 themes") {
+    ForEach(AppTheme.allCases) { theme in
+        NavigationStack {
+            PaperListView(
+                modelManager: MLXModelManager(),
+                mlxService: MLXGenerationService()
+            )
+        }
+        .environment(\.appTheme, theme)
+    }
+    .modelContainer(for: StudyPaper.self, inMemory: true)
 }

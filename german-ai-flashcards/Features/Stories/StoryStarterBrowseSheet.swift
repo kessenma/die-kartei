@@ -8,12 +8,13 @@ struct StoryStarterBrowseSheet: View {
     var onSelect: (String) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
         NavigationStack {
             List {
                 ForEach(StoryStarters.categories, id: \.self) { category in
-                    Section(Self.englishCategory[category] ?? category) {
+                    Section {
                         ForEach(StoryStarters.starters(in: category)) { starter in
                             Button {
                                 choose(starter.en)
@@ -28,12 +29,18 @@ struct StoryStarterBrowseSheet: View {
                             }
                             .buttonStyle(.plain)
                         }
+                    } header: {
+                        Text(Self.englishCategory[category] ?? category).themedSectionHeader()
                     }
+                    .themedListRow()
                 }
             }
+            // Innermost so it wins over `.themedListScreen()`'s tint: Klar keeps the caller's brand
+            // accent (pixel-identical to the old `.tint(accent)`); the identity themes take their own.
+            .tint(appTheme == .klar ? accent : appTheme.accent(model: nil))
+            .themedListScreen()
             .navigationTitle("Story Ideas")
             .navigationBarTitleDisplayMode(.inline)
-            .tint(accent)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

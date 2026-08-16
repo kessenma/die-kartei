@@ -13,13 +13,28 @@ struct GeneratingStoryView: View {
     var imageSlot: Int = 0
     var imageStep: Double = 0
     var imageStage: StoryStudyService.ImageStage = .planning
+    /// The picture as it's being drawn, on devices that can decode it (see ``ImageGenPreview``).
+    /// Nil everywhere else, which is what falls back to the drawn animation.
+    var imagePreview: CGImage?
+    var imagePreviewID: Int = 0
+    var imageThumbs: [CGImage?] = []
     var onStop: (() -> Void)?
+
+    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
         ZStack {
-            Color(.systemBackground)
-                .opacity(0.95)
-                .ignoresSafeArea()
+            // Klar keeps the plain dimmed system backdrop; identity themes paint their ground so the
+            // overlay belongs to the same world as the story behind it.
+            Group {
+                if appTheme == .klar {
+                    Color(.systemBackground)
+                } else {
+                    ThemedBackground()
+                }
+            }
+            .opacity(0.95)
+            .ignoresSafeArea()
 
             VStack(spacing: 22) {
                 StoryPhaseAnimation(
@@ -28,7 +43,10 @@ struct GeneratingStoryView: View {
                     imageSlot: imageSlot,
                     imageTotal: imageTarget,
                     imageStep: imageStep,
-                    imageStage: imageStage
+                    imageStage: imageStage,
+                    imagePreview: imagePreview,
+                    imagePreviewID: imagePreviewID,
+                    imageThumbs: imageThumbs
                 )
                 .frame(height: 210)
 

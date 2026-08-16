@@ -31,6 +31,7 @@ struct StoryProgressView: View {
                     levelSection
                     recentSection
                 }
+                .themedListScreen()
             } else {
                 ContentUnavailableView(
                     "No story study yet",
@@ -60,10 +61,12 @@ struct StoryProgressView: View {
             }
         } header: {
             Text("Time")
+                .themedSectionHeader()
         } footer: {
             Text("Days with any story activity: \(s.activeDays). Reading time is measured only while a story is open and the app is in front.")
                 .font(.caption2)
         }
+        .themedListRow()
     }
 
     private var comprehensionSection: some View {
@@ -90,16 +93,18 @@ struct StoryProgressView: View {
             }
         } header: {
             Text("Comprehension")
+                .themedSectionHeader()
         } footer: {
             Text("Words you save while reading — and the fixes on written answers — flow into the coach's memory when that hand-off is on.")
                 .font(.caption2)
         }
+        .themedListRow()
     }
 
     @ViewBuilder
     private var levelSection: some View {
         if levels.count > 1 || (levels.first?.questionsAnswered ?? 0) > 0 {
-            Section("By level") {
+            Section {
                 ForEach(levels) { slice in
                     HStack(spacing: 12) {
                         CEFRLevelChip(level: slice.level)
@@ -116,14 +121,18 @@ struct StoryProgressView: View {
                     }
                     .padding(.vertical, 2)
                 }
+            } header: {
+                Text("By level")
+                    .themedSectionHeader()
             }
+            .themedListRow()
         }
     }
 
     @ViewBuilder
     private var recentSection: some View {
         if !sessions.isEmpty {
-            Section("Recent sessions") {
+            Section {
                 ForEach(sessions.prefix(15)) { session in
                     HStack(spacing: 12) {
                         Image(systemName: session.wasListening ? "ear" : "book.pages")
@@ -142,7 +151,11 @@ struct StoryProgressView: View {
                     }
                     .padding(.vertical, 2)
                 }
+            } header: {
+                Text("Recent sessions")
+                    .themedSectionHeader()
             }
+            .themedListRow()
         }
     }
 

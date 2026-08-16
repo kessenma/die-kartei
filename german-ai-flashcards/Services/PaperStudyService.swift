@@ -2,13 +2,16 @@ import Foundation
 import SwiftData
 
 /// Generates German study materials (summary, vocab deck, questions) from a paper's text.
-/// Pinned to the Gemma 4 model, which the user validated for this task.
+/// Pinned to the German tutor, matching `StoryStudyService`.
 @Observable
 @MainActor
 final class PaperStudyService {
 
-    /// The recommended default model for this feature (Gemma 4 — strong German, multimodal-capable).
-    static let requiredModel: MLXModel = .gemma4_E4B
+    /// The recommended default model for this feature. Was stock Gemma 4 E4B; that model is no
+    /// longer offered, since the tutor is the same base at the same 8 GB tier, a smaller download,
+    /// and scores 90% against its 80% on the app's grammar suite (guarded). This path is text-only (the PDF
+    /// and web extractors hand it plain text), so nothing here depended on the stock model's vision.
+    static let requiredModel: MLXModel = .hero
 
     enum Phase: Equatable {
         case idle

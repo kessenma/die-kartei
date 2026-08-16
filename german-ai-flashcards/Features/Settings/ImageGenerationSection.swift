@@ -5,6 +5,8 @@ import SwiftUI
 /// models also appear in the Storage section below this one; bumping `cacheRefreshID` after a
 /// download or delete is what keeps that section's bar and totals in sync.
 struct ImageGenerationSection: View {
+    @Environment(\.appTheme) private var appTheme
+
     /// Bumped after download/delete so size labels and `isDownloaded` reads refresh.
     @Binding var cacheRefreshID: UUID
 
@@ -17,6 +19,10 @@ struct ImageGenerationSection: View {
     /// Shares `ImageGenModel.current`'s UserDefaults key, so picking here switches the model that
     /// Stories and flashcards draw with.
     @AppStorage(ImageGenModel.selectionDefaultsKey) private var selectedModel: ImageGenModel = .bkSdmTiny
+
+    /// Same key and same default as `ImageGenPreview.isEnabled`, which is what the generation
+    /// path reads.
+    @AppStorage(ImageGenPreview.defaultsKey) private var livePreview = true
 
     private var imageService: StoryImageService { .shared }
     private var model: ImageGenModel { selectedModel }
@@ -46,7 +52,7 @@ struct ImageGenerationSection: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 30, height: 30)
-                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                    .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(7)))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(model.displayName)
                         .fontWeight(.medium)
@@ -68,6 +74,7 @@ struct ImageGenerationSection: View {
 
             if model.isDownloaded {
                 qualityPicker
+                livePreviewToggle
             }
 
             if imageService.isDownloading {
@@ -97,10 +104,12 @@ struct ImageGenerationSection: View {
             }
         } header: {
             Text("Image generation")
+                .themedSectionHeader()
         } footer: {
             Text("Used by Short Stories when \u{201C}Illustrate this story\u{201D} is on, and by flashcards when AI pictures are on. Pictures are drawn fully on-device.")
                 .font(.caption2)
         }
+        .themedListRow()
         .sheet(isPresented: $showingInfo) {
             ImageModelInfoSheet(model: model, onDelete: { confirmingDelete = true })
         }
@@ -128,6 +137,21 @@ struct ImageGenerationSection: View {
             }
             .pickerStyle(.segmented)
             Text(quality.caption)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
+    }
+
+    /// Shown on every device rather than hidden where it can't run, so the reason is visible
+    /// instead of the row just not being there.
+    private var livePreviewToggle: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Toggle("Watch pictures being drawn", isOn: $livePreview)
+                .disabled(!ImageGenPreview.isAvailable)
+            Text(ImageGenPreview.isAvailable
+                 ? "The generating screen shows the real picture appearing instead of a stand-in animation. Costs a few seconds a picture."
+                 : "Needs more memory than this iPhone has to spare while drawing. The generating screen shows an animation instead.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

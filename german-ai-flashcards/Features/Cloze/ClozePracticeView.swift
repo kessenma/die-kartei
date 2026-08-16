@@ -15,8 +15,8 @@ import SwiftUI
 
 struct ClozePracticeView: View {
     let session: ClozeSession
-    /// Called once when the round ends — (mastered slip ids, missed slip ids).
-    var onComplete: (_ mastered: [String], _ missed: [String]) -> Void
+    /// Called once when the round ends — (mastered slip ids, missed slip ids, seconds spent).
+    var onComplete: (_ mastered: [String], _ missed: [String], _ durationSeconds: Int) -> Void
     var onDismiss: () -> Void
 
     @State private var index = 0
@@ -25,6 +25,8 @@ struct ClozePracticeView: View {
     @State private var missedIDs: [String] = []
     @State private var showSummary = false
     @State private var didReport = false
+    /// When the round opened — its time on task, banked into the day log on finish.
+    @State private var startedAt = Date()
 
     private var cards: [ClozeCard] { session.cards }
     private var currentCard: ClozeCard? { cards.indices.contains(index) ? cards[index] : nil }
@@ -32,7 +34,7 @@ struct ClozePracticeView: View {
 
     var body: some View {
         ZStack {
-            Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
+            ThemedBackground().ignoresSafeArea()
 
             if cards.isEmpty {
                 emptyState
@@ -88,7 +90,7 @@ struct ClozePracticeView: View {
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color(uiColor: .systemGray5))
                     Capsule()
-                        .fill(Color.accentColor)
+                        .fill(.tint)
                         .frame(width: geo.size.width * progressFraction)
                 }
             }
@@ -131,10 +133,7 @@ struct ClozePracticeView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(24)
-        .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(uiColor: .secondarySystemGroupedBackground))
-        )
+        .themedCard()
         .padding(.horizontal)
     }
 
@@ -150,7 +149,7 @@ struct ClozePracticeView: View {
                 } label: {
                     Image(systemName: "speaker.wave.2.fill")
                         .font(.title3)
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(.tint)
                 }
                 .buttonStyle(.plain)
             }
@@ -288,6 +287,6 @@ struct ClozePracticeView: View {
     private func reportIfNeeded() {
         guard !didReport, answeredCount > 0 else { return }
         didReport = true
-        onComplete(masteredIDs, missedIDs)
+        onComplete(masteredIDs, missedIDs, max(0, Int(Date().timeIntervalSince(startedAt))))
     }
 }

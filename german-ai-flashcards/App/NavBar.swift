@@ -47,15 +47,17 @@ struct DownloadBadge: View {
         ZStack {
             Circle().fill(Color.secondary.opacity(0.35))
             if let p = progress {
-                // Determinate download — pie fill that tracks progress.
+                // Determinate download — pie fill that tracks progress. Drawn in the ambient tint
+                // (rather than a hard-coded accent) so it picks up the app theme and the loaded
+                // model's color wherever the badge is shown.
                 PieProgress(progress: max(p, 0.06))
-                    .fill(Color.accentColor)
+                    .fill(.tint)
                     .animation(.easeInOut, value: p)
             } else {
                 // Indeterminate (connecting / loading into memory) — a spinning arc.
                 Circle()
                     .trim(from: 0, to: 0.3)
-                    .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .stroke(.tint, style: StrokeStyle(lineWidth: 2, lineCap: .round))
                     .padding(1.5)
                     .rotationEffect(.degrees(spin ? 360 : 0))
             }
@@ -96,6 +98,8 @@ struct NavBar: View {
     var modelTheme: ModelTheme? = nil
     var onReselect: ((MenuTab) -> Void)? = nil
 
+    @Environment(\.appTheme) private var theme
+
     var body: some View {
         HStack {
             navButton(tab: .home, icon: "house", selectedIcon: "house.fill", label: "Home") {
@@ -115,22 +119,76 @@ struct NavBar: View {
                 }
             }
         }
-        .tint(modelTheme?.accent)
+        .tint(theme.accent(model: modelTheme))
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .shadow(radius: 10)
-        .padding(.bottom, 16)
+        .padding(.top, 10)
+        // Docked against the very bottom of the display (ContentView lets the bar's column run
+        // through the bottom safe area), so this padding — not the home-indicator inset — is what
+        // sets how high the tabs sit. Enough to clear the indicator, no more.
+        .padding(.bottom, 20)
+        .background(barBackground)
         .animation(.easeInOut(duration: 0.3), value: modelTheme?.accent)
     }
 
-    /// Fill for the selected tab's highlight pill: the model's brand gradient when a model is loaded,
-    /// otherwise the standard faint tint wash.
+    // MARK: - Theming
+    //
+    // The bar is a slab docked to the bottom edge, not a grouped card, so it sizes its own geometry
+    // through `innerRadius(20)` rather than the card `cornerRadius`. Klar returns every value the
+    // bar already used, which is what keeps the baseline theme untouched.
+
+    /// How far the background runs past the bottom safe area. Enough to carry the shape's bottom
+    /// edge — and its border — off-screen, so the bar reads as rising from the screen edge rather
+    /// than as a slab with a hairline drawn along the bottom of the display.
+    private static let bottomBleed: CGFloat = 8
+
+    /// Only the top corners are rounded: the bar meets the bottom of the screen, so there is no
+    /// bottom edge left to round.
+    private var barShape: UnevenRoundedRectangle {
+        UnevenRoundedRectangle(
+            topLeadingRadius: theme.innerRadius(20),
+            bottomLeadingRadius: 0,
+            bottomTrailingRadius: 0,
+            topTrailingRadius: theme.innerRadius(20),
+            style: .continuous
+        )
+    }
+
+    /// Klar keeps the frosted material it has today; the identity themes take their own opaque
+    /// surface (plus Kritzel's ink line and Grundform's black rule) so the bar reads as part of
+    /// the theme instead of a system component floating above it.
+    ///
+    /// The whole background — fill, border, and shadow — bleeds down through the home-indicator
+    /// strip, which is what closes the gap content used to scroll into underneath the bar. The
+    /// shadow has to be drawn here rather than on the composed bar: applied outside, its silhouette
+    /// would be the button row alone and it would cast a line across the middle of the bar.
+    private var barBackground: some View {
+        Group {
+            if theme == .klar {
+                barShape.fill(.ultraThinMaterial)
+            } else {
+                barShape
+                    .fill(theme.surface)
+                    .overlay(barShape.strokeBorder(theme.cardBorderColor, lineWidth: theme.cardBorderWidth))
+            }
+        }
+        .shadow(color: barShadow.color, radius: barShadow.radius, y: barShadow.y)
+        .padding(.bottom, -Self.bottomBleed)
+        .ignoresSafeArea(edges: .bottom)
+    }
+
+    /// Klar's tuple is SwiftUI's own `.shadow(radius: 10)` default, spelled out so the bar renders
+    /// identically while the other themes drop in their card shadow (Grundform: none, by design).
+    private var barShadow: (color: Color, radius: CGFloat, y: CGFloat) {
+        theme == .klar ? (Color(.sRGBLinear, white: 0, opacity: 0.33), 10, 0) : theme.cardShadow
+    }
+
+    /// Fill for the selected tab's highlight pill: the model's brand gradient when a model is loaded
+    /// *and* the theme defers to it, otherwise a faint wash of the theme's own tint.
     private var selectedTabFill: AnyShapeStyle {
-        if let modelTheme {
+        if theme.usesModelAccent, let modelTheme {
             AnyShapeStyle(modelTheme.linear.opacity(0.18))
         } else {
-            AnyShapeStyle(.tint.opacity(0.12))
+            AnyShapeStyle(.tint.opacity(theme == .grundform ? 0.20 : 0.12))
         }
     }
 
@@ -158,8 +216,12 @@ struct NavBar: View {
                         badge()
                             .offset(x: 6, y: -6)
                     }
+                // Grundform sets its labels in condensed Futura caps, the way it sets section
+                // headers; the other themes leave the caption as it is.
                 Text(label)
-                    .font(.caption)
+                    .font(theme == .grundform ? theme.titleFont(11) : .caption)
+                    .textCase(theme.uppercaseSectionHeaders ? .uppercase : nil)
+                    .tracking(theme.uppercaseSectionHeaders ? 0.8 : 0)
                     .fontWeight(isSelected ? .semibold : .regular)
             }
             .foregroundStyle(isSelected ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
@@ -167,11 +229,33 @@ struct NavBar: View {
             .padding(.vertical, 8)
             .background {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: theme.innerRadius(12), style: .continuous)
                         .fill(selectedTabFill)
                 }
             }
         }
         .animation(.easeInOut(duration: 0.2), value: isSelected)
+    }
+}
+
+// MARK: - Preview
+
+/// The bar on all four themes, each over its own ground, with the download badge showing.
+#Preview("NavBar · four themes") {
+    // Spaced by the background's bleed so the stacked bars don't draw over each other; in the app
+    // that bleed runs off the bottom of the screen.
+    VStack(spacing: 8) {
+        ForEach(AppTheme.allCases) { theme in
+            NavBar(
+                selectedTab: .constant(.home),
+                isGenerating: true,
+                isDownloading: true,
+                downloadProgress: 0.45
+            )
+            .padding(.horizontal)
+            .frame(maxWidth: .infinity)
+            .background(ThemedBackground())
+            .environment(\.appTheme, theme)
+        }
     }
 }

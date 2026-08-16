@@ -56,20 +56,22 @@ struct ConversationSettingsView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
         } header: {
-            Text("Corrections")
+            Text("Corrections").themedSectionHeader()
         } footer: {
             Text(correctionsFooter)
                 .font(.caption2)
         }
+        .themedListRow()
 
         Section {
             Toggle("Auto-play AI replies", isOn: $modelManager.autoPlayReplies)
         } header: {
-            Text("Voice")
+            Text("Voice").themedSectionHeader()
         } footer: {
             Text("Replies are spoken aloud automatically. You can always replay them with the play / slow buttons.")
                 .font(.caption2)
         }
+        .themedListRow()
 
         Section {
             Picker("Hints per request", selection: $modelManager.chatHintCount) {
@@ -85,11 +87,12 @@ struct ConversationSettingsView: View {
                 Toggle("Auto-show translations", isOn: $modelManager.chatAutoShowTranslation)
             }
         } header: {
-            Text("Learning aids")
+            Text("Learning aids").themedSectionHeader()
         } footer: {
             Text(learningAidsFooter)
                 .font(.caption2)
         }
+        .themedListRow()
 
         Section {
             Toggle("Personalized coaching", isOn: $modelManager.chatPersonalizedCoaching)
@@ -99,11 +102,12 @@ struct ConversationSettingsView: View {
                 Label("Coach's Notes", systemImage: "brain.head.profile")
             }
         } header: {
-            Text("Coaching")
+            Text("Coaching").themedSectionHeader()
         } footer: {
             Text("The coach quietly remembers what you struggle with and the words you're learning, and uses that to steer and sharpen future conversations. Everything it remembers stays on your device.")
                 .font(.caption2)
         }
+        .themedListRow()
 
         Section {
             Toggle("Spaced review in conversation", isOn: $modelManager.chatSpacedReview)
@@ -115,13 +119,14 @@ struct ConversationSettingsView: View {
                 }
             }
         } header: {
-            Text("Spaced review")
+            Text("Spaced review").themedSectionHeader()
         } footer: {
             Text(modelManager.chatSpacedReview
                  ? "When a flashcard is due, the coach steers the chat so its word comes up. Use it correctly and that counts as a review — the card's schedule advances, no flip needed. " + modelManager.spacedReviewScope.footer
                  : "Off — conversations won't resurface due flashcards or advance their schedule.")
                 .font(.caption2)
         }
+        .themedListRow()
 
         Section {
             NavigationLink {
@@ -130,11 +135,12 @@ struct ConversationSettingsView: View {
                 Label("Phrase library", systemImage: "ear.badge.waveform")
             }
         } header: {
-            Text("Phrases")
+            Text("Phrases").themedSectionHeader()
         } footer: {
             Text("Save German phrases you hear in the wild but don't understand. The AI weaves the active ones into matching scenario chats.")
                 .font(.caption2)
         }
+        .themedListRow()
     }
 
     private var correctionsFooter: String {

@@ -27,6 +27,7 @@ struct HomeView: View {
 
     @FocusState private var isTopicFieldFocused: Bool
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
     @State private var topic = ""
     @State private var isOptionsExpanded = false
     @State private var showingTenseInfo: TenseInfo?
@@ -104,10 +105,13 @@ struct HomeView: View {
                         Label(error, systemImage: "exclamationmark.triangle")
                             .foregroundStyle(.red)
                     }
+                    .themedListRow()
                 }
             }
             .navigationTitle("Create")
-            .tint(activeTheme?.accent)
+            // Was `.tint(activeTheme?.accent)`; the theme resolves the same model accent on Klar
+            // and asserts its own everywhere else.
+            .themedListScreen()
             .scrollDismissesKeyboard(.interactively)
             .contentMargins(.bottom, 120)
             .overlay {
@@ -169,7 +173,7 @@ struct HomeView: View {
             }
         } header: {
             HStack {
-                Text("What do you want to learn?")
+                Text("What do you want to learn?").themedSectionHeader()
                 Spacer()
                 Button {
                     showingTopicInfo = true
@@ -184,13 +188,14 @@ struct HomeView: View {
                 Text("Pick a suggestion or type your own topic.")
             }
         }
+        .themedListRow()
         .alert("How Topics Work", isPresented: $showingTopicInfo) {
             Button("Got it") {}
         } message: {
             Text("Enter any topic — a theme, situation, or category — and the AI generates vocabulary flashcards tailored to it.\n\nExamples: \"kitchen items\", \"travel phrases\", \"animals\", \"business German\".")
         }
         .sheet(isPresented: $showingTopicBrowser) {
-            FlashcardTopicBrowseSheet(accent: activeTheme?.accent) { picked in
+            FlashcardTopicBrowseSheet { picked in
                 topic = picked
             }
         }
@@ -208,7 +213,7 @@ struct HomeView: View {
                             .font(.subheadline)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(Capsule().fill(Color(.tertiarySystemFill)))
+                            .background(Color(.tertiarySystemFill), in: theme.pillShape)
                     }
                     .buttonStyle(.plain)
                 }
@@ -372,6 +377,7 @@ struct HomeView: View {
                 wordTypeFooter
             }
         }
+        .themedListRow()
         .alert(item: $showingTenseInfo) { tense in
             Alert(
                 title: Text("\(tense.german) — \(tense.english)"),
@@ -403,7 +409,8 @@ struct HomeView: View {
         Section {
             Button(action: generate) {
                 Label("Generate \(wordCount) Flashcards", systemImage: "sparkles")
-                    .font(.headline)
+                    .themedLabel(.headline, size: 17)
+                    .textCase(theme.uppercaseSectionHeaders ? .uppercase : nil)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
                     .foregroundStyle(activeTheme == nil ? AnyShapeStyle(.tint) : AnyShapeStyle(.white))
@@ -412,7 +419,7 @@ struct HomeView: View {
             .listRowBackground(generateRowBackground)
         } footer: {
             // Same setup, but queued for later instead of generated now (runs from
-            // Home ▸ All Activities ▸ Batch Queue). Doesn't need the model loaded.
+            // Home ▸ All Activities ▸ Batch). Doesn't need the model loaded.
             Button(action: addToQueue) {
                 Label(
                     justQueued ? "Added to the Batch Queue" : "Add to Batch Queue instead",
@@ -495,13 +502,14 @@ struct HomeView: View {
     }
 
     /// A brand-gradient fill for the Generate button once a model is loaded (it's only enabled then),
-    /// dimmed while disabled; falls back to the standard grouped-cell color otherwise.
+    /// dimmed while disabled; falls back to the theme's own surface otherwise. The gradient is the
+    /// model's, deliberately: the app theme owns the chrome, `ModelTheme` still owns this button.
     @ViewBuilder
     private var generateRowBackground: some View {
         if let activeTheme {
             activeTheme.linear.opacity(generateDisabled ? 0.4 : 1)
         } else {
-            Color(.secondarySystemGroupedBackground)
+            theme.surface
         }
     }
 

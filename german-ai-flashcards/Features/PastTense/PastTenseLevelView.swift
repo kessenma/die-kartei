@@ -45,11 +45,13 @@ struct PastTenseLevelView: View {
                         Spacer()
                     }
                 }
+                .themedListRow()
             } else {
                 studySection
                 verbListSection
             }
         }
+        .themedListScreen()
         .contentMargins(.bottom, 120, for: .scrollContent)
         .searchable(text: $searchText, prompt: "Search verbs or translations")
         .navigationTitle("\(level.rawValue) Past Tense")
@@ -110,18 +112,23 @@ struct PastTenseLevelView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            .themedSectionHeader()
         } footer: {
             Text("Front shows infinitive · Back reveals auxiliary (sein/haben), past participle, and example sentence.")
         }
+        .themedListRow()
     }
 
     @ViewBuilder
     private var verbListSection: some View {
-        Section("Verb List") {
+        Section {
             ForEach(filteredEntries) { entry in
                 PastTenseVerbRow(entry: entry)
             }
+        } header: {
+            Text("Verb List").themedSectionHeader()
         }
+        .themedListRow()
     }
 
     private func startStudy() {
@@ -136,6 +143,7 @@ struct PastTenseLevelView: View {
 
 private struct PastTenseVerbRow: View {
     let entry: PastTenseVerbEntry
+    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -165,7 +173,7 @@ private struct PastTenseVerbRow: View {
                         .foregroundStyle(.orange)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
-                        .overlay(Capsule().stroke(Color.orange.opacity(0.5), lineWidth: 1))
+                        .overlay(appTheme.pillShape.stroke(Color.orange.opacity(0.5), lineWidth: 1))
                 }
 
                 if !entry.isRegular {
@@ -174,7 +182,7 @@ private struct PastTenseVerbRow: View {
                         .foregroundStyle(.red)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
-                        .overlay(Capsule().stroke(Color.red.opacity(0.5), lineWidth: 1))
+                        .overlay(appTheme.pillShape.stroke(Color.red.opacity(0.5), lineWidth: 1))
                 }
             }
         }
@@ -182,13 +190,15 @@ private struct PastTenseVerbRow: View {
     }
 
     private var auxiliaryBadge: some View {
+        // Green (sein) / blue (haben) are the auxiliary-verb code, not der/die/das gender — kept as-is;
+        // only the shape follows the theme (a block on Bauhaus).
         Text(entry.auxiliary)
             .font(.caption2)
             .fontWeight(.semibold)
             .foregroundStyle(.white)
             .padding(.horizontal, 7)
             .padding(.vertical, 2)
-            .background(entry.auxiliary == "sein" ? Color.green : Color.blue, in: Capsule())
+            .background(entry.auxiliary == "sein" ? Color.green : Color.blue, in: appTheme.pillShape)
     }
 }
 
@@ -203,5 +213,14 @@ enum PastTenseFilter: CaseIterable {
         case .separable: return "Trennbar"
         case .irregular: return "Unreg."
         }
+    }
+}
+
+#Preview("Past tense · 4 themes") {
+    ForEach(AppTheme.allCases) { theme in
+        NavigationStack {
+            PastTenseLevelView(level: .a1) { _, _, _, _ in }
+        }
+        .environment(\.appTheme, theme)
     }
 }

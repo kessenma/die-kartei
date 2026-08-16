@@ -23,8 +23,10 @@ struct DialogueVoicesInfoSheet: View {
                     }
                     .padding(.vertical, 2)
                 }
+                .themedListRow()
 
                 DialogueVoicePickerSection(modelManager: modelManager)
+                    .themedListRow()
 
                 Section {
                     Button {
@@ -38,7 +40,9 @@ struct DialogueVoicesInfoSheet: View {
                         Label("How to download natural German voices", systemImage: "arrow.down.circle")
                     }
                 }
+                .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("Voices")
             .navigationBarTitleDisplayMode(.inline)
             .tint(accent)

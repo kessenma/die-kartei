@@ -286,7 +286,7 @@ final class BatchQueueService {
         modelContext: ModelContext,
         mlxService: MLXGenerationService
     ) async {
-        guard DeviceCapability.canRunHero, StoryStudyService.requiredModel.isDownloaded else {
+        guard DeviceCapability.mayRunHero, StoryStudyService.requiredModel.isDownloaded else {
             fail(job, "Stories need the \(StoryStudyService.requiredModel.rawValue) downloaded first.", in: modelContext)
             return
         }

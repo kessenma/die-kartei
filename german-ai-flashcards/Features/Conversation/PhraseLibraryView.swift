@@ -15,6 +15,7 @@ struct PhraseLibraryView: View {
 
     @Query(sort: \LearnedPhrase.createdAt, order: .reverse) private var phrases: [LearnedPhrase]
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var appTheme
 
     @State private var showingAdd = false
     @State private var editing: LearnedPhrase?
@@ -33,6 +34,7 @@ struct PhraseLibraryView: View {
                         .foregroundStyle(.tint)
                 }
             }
+            .themedListRow()
 
             if phrases.isEmpty {
                 Section {
@@ -42,6 +44,7 @@ struct PhraseLibraryView: View {
                         description: Text("Tap + to save a phrase you heard in the wild.")
                     )
                 }
+                .themedListRow()
             } else {
                 Section {
                     ForEach(phrases) { phrase in
@@ -57,7 +60,7 @@ struct PhraseLibraryView: View {
                             } label: {
                                 Label("Flashcards", systemImage: "rectangle.stack.badge.plus")
                             }
-                            .tint(.accentColor)
+                            .tint(appTheme == .klar ? .accentColor : appTheme.accent(model: nil))
                         }
                         .swipeActions(edge: .trailing) {
                             Button(role: .destructive) { delete(phrase) } label: {
@@ -66,18 +69,23 @@ struct PhraseLibraryView: View {
                         }
                     }
                 } header: {
-                    Text("Your phrases")
+                    Text("Your phrases").themedSectionHeader()
                 } footer: {
                     Text("Toggle a phrase off to take it out of rotation without deleting it. Swipe to delete. The logo shows which model checked the phrase.")
                         .font(.caption2)
                 }
+                .themedListRow()
             }
         }
         // Clear both the floating FAB and the app's global NavBar (a ZStack overlay in
         // ContentView that sits on top of this view), so the last row is fully reachable.
         .contentMargins(.bottom, 170, for: .scrollContent)
-        // Pick up the loaded model's brand color, mirroring Home's per-model tint.
-        .tint(activeTheme?.accent)
+        // Pick up the loaded model's brand color, mirroring Home's per-model tint. Innermost so it
+        // wins over `.themedListScreen()`'s own tint: on Klar this resolves to the loaded model's
+        // brand accent (pixel-identical to the old `.tint(activeTheme?.accent)`); identity themes
+        // assert their own accent.
+        .tint(appTheme.accent(model: activeTheme))
+        .themedListScreen()
         .navigationTitle(embedded ? "Library" : "Phrase library")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -208,6 +216,7 @@ struct AddEditPhraseSheet: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     @State private var inputIsGerman: Bool
     @State private var inputText: String
@@ -302,15 +311,22 @@ struct AddEditPhraseSheet: View {
                         footer: "This model checks your phrase. Pick a capable model for the most reliable results — tiny models sometimes can't read the phrase cleanly.",
                         present: $showingModelPicker
                     )
-                    inputSection
-                    if let result = checkResult { resultSection(result) }
+                    .themedListRow()
+                    inputSection.themedListRow()
+                    if let result = checkResult { resultSection(result).themedListRow() }
                     scenarioSection
                         .id(Self.scenarioAnchorID)
+                        .themedListRow()
                     GrammarFocusPickerSection(selected: $selectedFocus)
-                    activeSection
+                        .themedListRow()
+                    activeSection.themedListRow()
                 }
                 .scrollDismissesKeyboard(.interactively)
-                .tint(activeTheme?.accent)
+                // Innermost so it wins over `.themedListScreen()`'s own tint: on Klar this resolves
+                // to the loaded model's brand accent (pixel-identical to the old
+                // `.tint(activeTheme?.accent)`); identity themes assert their own accent.
+                .tint(appTheme.accent(model: activeTheme))
+                .themedListScreen()
                 .navigationTitle(phrase == nil ? "New phrase" : "Edit phrase")
                 .navigationBarTitleDisplayMode(.inline)
                 // Reuse a model that's already resident in memory (e.g. loaded on Home) so the
@@ -415,7 +431,7 @@ struct AddEditPhraseSheet: View {
                     .foregroundStyle(.orange)
             }
         } header: {
-            Text("Phrase")
+            Text("Phrase").themedSectionHeader()
         } footer: {
             Text("These are phrases you hear out in the wild — usually things said to you. We'll confirm the natural German before saving. Turn on the toggles to let the AI also fill in the scenario and grammar tags below.")
                 .font(.caption2)
@@ -452,7 +468,7 @@ struct AddEditPhraseSheet: View {
                 }
             }
         } header: {
-            Text("Checked")
+            Text("Checked").themedSectionHeader()
         }
     }
 
@@ -477,7 +493,7 @@ struct AddEditPhraseSheet: View {
             .padding(.vertical, 2)
         } header: {
             HStack {
-                Text("Where you might hear it")
+                Text("Where you might hear it").themedSectionHeader()
                 if scenarioPromptActive {
                     Spacer()
                     Text("Required")
@@ -529,7 +545,7 @@ struct AddEditPhraseSheet: View {
             .padding(.vertical, 3)
             .background(color.opacity(0.14))
             .foregroundStyle(color)
-            .clipShape(Capsule())
+            .clipShape(appTheme.pillShape)
     }
 
     private func scenarioChip(_ scenario: ConversationScenario) -> some View {
@@ -550,8 +566,8 @@ struct AddEditPhraseSheet: View {
             .padding(.vertical, 6)
             .background(on ? Color.accentColor.opacity(0.18) : Color(.secondarySystemBackground))
             .foregroundStyle(on ? AnyShapeStyle(.tint) : AnyShapeStyle(.primary))
-            .overlay(Capsule().strokeBorder(on ? Color.accentColor.opacity(0.5) : .clear, lineWidth: 1))
-            .clipShape(Capsule())
+            .overlay(appTheme.pillShape.stroke(on ? Color.accentColor.opacity(0.5) : .clear, lineWidth: 1))
+            .clipShape(appTheme.pillShape)
         }
         .buttonStyle(.plain)
     }

@@ -12,9 +12,13 @@ struct GrammarCategoryDetailView: View {
     var body: some View {
         List {
             ruleSection
+                .themedListRow()
             studyOptionsSection
+                .themedListRow()
             exerciseListSection
+                .themedListRow()
         }
+        .themedListScreen()
         .navigationTitle(category.title)
         .navigationBarTitleDisplayMode(.large)
     }
@@ -29,6 +33,7 @@ struct GrammarCategoryDetailView: View {
             .padding(.vertical, 4)
         } header: {
             Text("Rule")
+                .themedSectionHeader()
         }
     }
 
@@ -65,6 +70,7 @@ struct GrammarCategoryDetailView: View {
         } header: {
             HStack {
                 Text("Study")
+                    .themedSectionHeader()
                 Spacer()
                 Text("\(category.exercises.count) exercises")
                     .font(.caption)
@@ -84,7 +90,7 @@ struct GrammarCategoryDetailView: View {
     }
 
     private var exerciseListSection: some View {
-        Section("Exercises") {
+        Section {
             ForEach(category.exercises) { exercise in
                 VStack(alignment: .leading, spacing: 3) {
                     Text(exercise.sentence)
@@ -103,6 +109,9 @@ struct GrammarCategoryDetailView: View {
                 }
                 .padding(.vertical, 2)
             }
+        } header: {
+            Text("Exercises")
+                .themedSectionHeader()
         }
     }
 

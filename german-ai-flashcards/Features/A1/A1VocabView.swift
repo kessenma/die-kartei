@@ -21,7 +21,7 @@ struct GoetheLevelPickerView: View {
                     .listRowBackground(Color.clear)
                 }
 
-                Section("Select Level") {
+                Section {
                     ForEach(GoetheLevel.allCases) { level in
                         Button {
                             selectedLevel = level
@@ -47,7 +47,10 @@ struct GoetheLevelPickerView: View {
                             .padding(.vertical, 4)
                         }
                     }
+                } header: {
+                    Text("Select Level").themedSectionHeader()
                 }
+                .themedListRow()
 
                 Section {
                     NavigationLink {
@@ -56,7 +59,9 @@ struct GoetheLevelPickerView: View {
                         Label("Browse \(selectedLevel.rawValue) Words", systemImage: "text.magnifyingglass")
                     }
                 }
+                .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("Goethe Vocabulary")
             .navigationBarTitleDisplayMode(.large)
         }
@@ -69,6 +74,7 @@ struct GoetheVocabListView: View {
     var onStartPastTenseStudy: ((_ cards: [VocabCard], _ topic: String, _ style: FlashcardStyle, _ subDeckLabel: String) -> Void)? = nil
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var appTheme
     @State private var searchText = ""
     @State private var selectedWordType: A1WordTypeFilter = .all
     @State private var cardCount = 20
@@ -116,6 +122,7 @@ struct GoetheVocabListView: View {
                         Spacer()
                     }
                 }
+                .themedListRow()
             } else {
                 Section {
                     HStack {
@@ -133,6 +140,7 @@ struct GoetheVocabListView: View {
                 wordListSection
             }
         }
+        .themedListScreen()
         .contentMargins(.bottom, 120, for: .scrollContent)
         .searchable(text: $searchText, prompt: "Search words or translations")
         .navigationTitle("\(level.rawValue) Vocabulary")
@@ -223,9 +231,11 @@ struct GoetheVocabListView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            .themedSectionHeader()
         } footer: {
             Text("Official Goethe-Institut \(level.rawValue) word list (\(level.examName)).")
         }
+        .themedListRow()
     }
 
     @ViewBuilder
@@ -255,19 +265,23 @@ struct GoetheVocabListView: View {
                 .padding(.vertical, 2)
             }
         } header: {
-            Text("Perfekt Verbs")
+            Text("Perfekt Verbs").themedSectionHeader()
         } footer: {
             Text("Practice auxiliary verbs (sein/haben), past participles, and separable prefixes.")
         }
+        .themedListRow()
     }
 
     @ViewBuilder
     private var wordListSection: some View {
-        Section("Word List") {
+        Section {
             ForEach(filteredEntries, id: \.word) { entry in
                 A1EntryRow(entry: entry)
             }
+        } header: {
+            Text("Word List").themedSectionHeader()
         }
+        .themedListRow()
     }
 
     private func loadPausedSession() {
@@ -361,12 +375,14 @@ struct GoetheVocabListView: View {
                 }
             }
         }
+        .background { if appTheme != .klar { ThemedBackground().ignoresSafeArea() } }
         .presentationDetents([.medium])
     }
 }
 
 private struct A1EntryRow: View {
     let entry: A1Entry
+    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -387,7 +403,7 @@ private struct A1EntryRow: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(wordTypeColor(wordType), in: Capsule())
+                        .background(wordTypeColor(wordType), in: appTheme.pillShape)
                 }
             }
             if let translation = entry.translation {
@@ -399,13 +415,10 @@ private struct A1EntryRow: View {
         .padding(.vertical, 2)
     }
 
+    // der/die/das from the shared GenderPalette (der=blue, die=RED, das=green) so the article
+    // colors match the flashcards, correction sheet, and article game — one gender code app-wide.
     private func articleColor(_ article: String) -> Color {
-        switch article {
-        case "der": .blue
-        case "die": .pink
-        case "das": .green
-        default: .secondary
-        }
+        Gender(article: article)?.color ?? .secondary
     }
 
     private func wordTypeColor(_ type: String) -> Color {

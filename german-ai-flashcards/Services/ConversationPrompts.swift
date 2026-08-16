@@ -170,9 +170,11 @@ enum ConversationPrompts {
         }
         corrected = stripWrappingQuotes(corrected)
 
-        // If the "correction" is identical to what the student said, treat as clean.
-        if corrected.compare(original.trimmingCharacters(in: .whitespacesAndNewlines),
-                             options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame {
+        // If the "correction" is identical to what the student said, treat as clean. Small models
+        // echo the input under a FIX: header and confabulate a reason for it — the single biggest
+        // source of spurious corrections (18 of tuned E2B's 19 in the eval). Note this is
+        // deliberately diacritic-SENSITIVE: "Madchen" → "Mädchen" is a real correction, not an echo.
+        if echoNormalized(corrected) == echoNormalized(original) {
             return CorrectionResult(correctedText: nil, note: nil)
         }
 
@@ -183,6 +185,18 @@ enum ConversationPrompts {
             note: (note?.isEmpty == false) ? note : nil,
             hint: hintText.isEmpty ? nil : hintText
         )
+    }
+
+    /// Folds the differences that don't amount to a correction — surrounding quotes, whitespace,
+    /// case, trailing sentence punctuation — so an echoed sentence is recognised even when the
+    /// model adds a period. Umlauts and ß are preserved: fixing those *is* the lesson.
+    private static func echoNormalized(_ s: String) -> String {
+        let unquoted = stripWrappingQuotes(s.trimmingCharacters(in: .whitespacesAndNewlines))
+        let collapsed = unquoted.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+        return collapsed
+            .trimmingCharacters(in: CharacterSet(charactersIn: ".!?…"))
+            .trimmingCharacters(in: .whitespaces)
+            .lowercased()
     }
 
     // MARK: - Translation

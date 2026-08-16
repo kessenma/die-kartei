@@ -13,6 +13,7 @@ struct GrammarLessonSheet: View {
     let focus: GrammarFocus
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
         NavigationStack {
@@ -37,6 +38,9 @@ struct GrammarLessonSheet: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
             }
             .navigationTitle("Quick lesson")
             .navigationBarTitleDisplayMode(.inline)

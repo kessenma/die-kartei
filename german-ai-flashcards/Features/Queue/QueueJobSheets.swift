@@ -43,14 +43,17 @@ struct QueueFlashcardJobSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Topic") {
+                Section {
                     TextField("e.g. kitchen items, travel phrases...", text: $topic)
                         .textInputAutocapitalization(.never)
                         .focused($topicFocused)
                         .onSubmit { topicFocused = false }
+                } header: {
+                    Text("Topic").themedSectionHeader()
                 }
+                .themedListRow()
 
-                Section("Cards") {
+                Section {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Number of cards")
                         Picker("Number of cards", selection: $wordCount) {
@@ -81,7 +84,10 @@ struct QueueFlashcardJobSheet: View {
                             }
                         }
                     }
+                } header: {
+                    Text("Cards").themedSectionHeader()
                 }
+                .themedListRow()
 
                 Section {
                     Button {
@@ -95,7 +101,9 @@ struct QueueFlashcardJobSheet: View {
                 } footer: {
                     Text("Generates with \(modelManager.selectedMLXModel.rawValue). The whole deck is saved to your Library when it finishes.")
                 }
+                .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("Queue a Deck")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -154,25 +162,27 @@ struct QueueStoryJobSheet: View {
 
     private var hero: MLXModel { StoryStudyService.requiredModel }
     private var trimmedTopic: String { topic.trimmingCharacters(in: .whitespaces) }
-    private var heroReady: Bool { DeviceCapability.canRunHero && hero.isDownloaded }
+    private var heroReady: Bool { DeviceCapability.mayRunHero && hero.isDownloaded }
 
     var body: some View {
         NavigationStack {
             Form {
-                if !DeviceCapability.canRunHero {
+                if !DeviceCapability.mayRunHero {
                     Section {
                         Label("Stories need the \(hero.rawValue), and this device doesn't have enough memory to run it.", systemImage: "book.pages")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                    .themedListRow()
                 } else if !hero.isDownloaded {
                     Section {
                         Label("Stories are written by the \(hero.rawValue). Download it once on the story screen (Reading ▸ Read a Short Story), then queue as many as you like.", systemImage: "arrow.down.circle")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                    .themedListRow()
                 } else {
-                    Section("Topic") {
+                    Section {
                         TextField("e.g. a trip to Berlin, at the doctor's...", text: $topic)
                             .focused($topicFocused)
                             .onSubmit { topicFocused = false }
@@ -184,9 +194,12 @@ struct QueueStoryJobSheet: View {
                         } label: {
                             Label("Surprise me", systemImage: "die.face.5.fill")
                         }
+                    } header: {
+                        Text("Topic").themedSectionHeader()
                     }
+                    .themedListRow()
 
-                    Section("Story") {
+                    Section {
                         Picker("Style", selection: $genre) {
                             ForEach(StoryGenre.allCases) { g in
                                 Label(g.label, systemImage: g.systemImage).tag(g)
@@ -212,10 +225,13 @@ struct QueueStoryJobSheet: View {
                             .pickerStyle(.segmented)
                         }
                         .padding(.vertical, 4)
+                    } header: {
+                        Text("Story").themedSectionHeader()
                     }
+                    .themedListRow()
 
                     if ImageGenModel.current.isDownloaded {
-                        Section("Illustrations") {
+                        Section {
                             Toggle("Illustrate this story", isOn: $withImages)
                             if withImages {
                                 VStack(alignment: .leading, spacing: 8) {
@@ -229,7 +245,10 @@ struct QueueStoryJobSheet: View {
                                 }
                                 .padding(.vertical, 4)
                             }
+                        } header: {
+                            Text("Illustrations").themedSectionHeader()
                         }
+                        .themedListRow()
                     }
 
                     Section {
@@ -244,8 +263,10 @@ struct QueueStoryJobSheet: View {
                     } footer: {
                         Text("Question types follow your story settings. The finished story lands in Library ▸ Reading.")
                     }
+                    .themedListRow()
                 }
             }
+            .themedListScreen()
             .navigationTitle("Queue a Story")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -310,12 +331,14 @@ struct QueueDeckPicturesSheet: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                    .themedListRow()
                 } else if candidates.isEmpty {
                     Section {
                         Label("Every deck already has pictures for all its cards. Nice.", systemImage: "checkmark.circle")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                    .themedListRow()
                 } else {
                     Section {
                         ForEach(candidates, id: \.deck.id) { candidate in
@@ -355,10 +378,11 @@ struct QueueDeckPicturesSheet: View {
                             .buttonStyle(.plain)
                         }
                     } header: {
-                        Text("Decks Missing Pictures")
+                        Text("Decks Missing Pictures").themedSectionHeader()
                     } footer: {
                         Text("Each job draws pictures only for the cards that don't have one, so rerunning a deck never redraws what's there.")
                     }
+                    .themedListRow()
 
                     Section {
                         Button {
@@ -378,8 +402,10 @@ struct QueueDeckPicturesSheet: View {
                         }
                         .disabled(selected.isEmpty)
                     }
+                    .themedListRow()
                 }
             }
+            .themedListScreen()
             .navigationTitle("Queue Deck Pictures")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

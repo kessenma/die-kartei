@@ -4,9 +4,9 @@
 //
 //  The Home tab. Two modes, switched by the segmented control at the top:
 //  "For You" surfaces one recommended next exercise (from TodayPlanner + the learner profile)
-//  so there's nothing to decide; "All Activities" is the full launcher grouped by language
-//  skill (the hub in hub-and-spoke). Card-producing launchers route into the shared flashcard
-//  player via `ActivityRouter`; reading/speaking/listening tools are pushed directly.
+//  so there's nothing to decide; "All Activities" is a six-tile grid of language-skill categories
+//  — the hub in hub-and-spoke. Each tile pushes its `ActivityCategoryDestination`: a category page
+//  listing the tools where there are several, or the tool itself where the category holds only one.
 //
 
 import SwiftUI
@@ -20,204 +20,134 @@ struct HomeHubView: View {
     /// popping any pushed screens so the Home button always lands on this hub.
     var resetToken: Int = 0
 
-    @Environment(ActivityRouter.self) private var router
-    @Environment(\.modelContext) private var modelContext
-
-    /// Off = "For You" (one picked next exercise), on = the full activity catalog.
+    /// Off = "For You" (one picked next exercise), on = the six-tile activity hub.
     @AppStorage("home.showAllActivities") private var showAllActivities = false
 
-    private var deckStore: DeckStore { DeckStore(modelContext: modelContext) }
+    /// Feeds the gamification triggers (goal met / level up / streak milestone). All three
+    /// dedupe in `CelebrationCenter`, so re-evaluating on every log change is cheap and safe.
+    @Query private var studyDays: [StudyDay]
+
+    /// Two columns; each tile sizes itself (`ActivityCategoryTile`), giving a 3×2 grid.
+    private let tileColumns = [
+        GridItem(.flexible(), spacing: 14),
+        GridItem(.flexible(), spacing: 14),
+    ]
+
+    /// Matches the inset a grouped `List` gives its section cards, so the mode picker doesn't jump
+    /// sideways when you switch between the two modes.
+    private let hubInset: CGFloat = 20
 
     var body: some View {
         NavigationStack {
-            List {
-                modeSection
-
-                if showAllActivities {
-                    vocabularySection
-                    grammarSection
-                    readingSection
-                    speakingSection
-                    listeningSection
-                    batchSection
-                } else {
-                    StreakCalendarSection()
-                    WeekInReviewSection(coordinator: coordinator)
-                    TodaySection(
-                        coordinator: coordinator,
-                        onGenerationComplete: onGenerationComplete,
-                        style: .hero
-                    )
-                }
+            if showAllActivities {
+                activityHub
+            } else {
+                forYouList
             }
-            .navigationTitle("Home")
-            .contentMargins(.bottom, 120, for: .scrollContent)
         }
         .id(resetToken)
     }
 
-    // MARK: - Sections
+    // MARK: - For You
 
-    private var modeSection: some View {
-        Section {
-            Picker("Home mode", selection: $showAllActivities) {
-                Text("For You").tag(false)
-                Text("All Activities").tag(true)
+    private var forYouList: some View {
+        List {
+            Section {
+                modePicker
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
             }
-            .pickerStyle(.segmented)
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets())
+
+            if coordinator.modelManager.gamificationEnabled {
+                LevelCardSection(coordinator: coordinator)
+            }
+            StreakCalendarSection()
+            WeekInReviewSection(coordinator: coordinator)
+            TodaySection(
+                coordinator: coordinator,
+                onGenerationComplete: onGenerationComplete,
+                style: .hero
+            )
         }
+        .navigationTitle("Home")
+        .contentMargins(.bottom, 120, for: .scrollContent)
+        .themedListScreen()
+        .onAppear { evaluateGamification() }
+        .onChange(of: studyDays) { evaluateGamification() }
     }
 
-    private var vocabularySection: some View {
-        Section {
-            NavigationLink {
-                HomeView(service: coordinator, onGenerationComplete: onGenerationComplete)
-            } label: {
-                hubRow("Generate Flashcards", "Create AI vocabulary on any topic", "sparkles")
-            }
-            ForEach(GoetheLevel.allCases) { level in
-                NavigationLink {
-                    GoetheVocabListView(
-                        level: level,
-                        onStartStudy: launchGoethe,
-                        onStartPastTenseStudy: launchPastTense
-                    )
-                } label: {
-                    hubRow("Goethe \(level.rawValue) Vocabulary", level.examName, "text.book.closed")
+    private func evaluateGamification() {
+        CelebrationCenter.shared.evaluate(studyDays: studyDays, manager: coordinator.modelManager)
+    }
+
+    // MARK: - All Activities — the six-tile hub
+
+    /// Six categories, one screenful, instead of the thirteen-row scroll this replaces. A
+    /// `ScrollView` rather than a `List` on purpose: the grid is the point, and stepping outside
+    /// grouped chrome is also what lets Grundform's tiles keep genuinely square corners (a grouped
+    /// section clips its rows to a rounded rect we don't control — see docs/theme-upgrade.md §3).
+    private var activityHub: some View {
+        ScrollView {
+            VStack(spacing: 18) {
+                modePicker
+
+                LazyVGrid(columns: tileColumns, spacing: 14) {
+                    ForEach(ActivityCategory.allCases) { category in
+                        NavigationLink {
+                            ActivityCategoryDestination(
+                                category: category,
+                                coordinator: coordinator,
+                                onGenerationComplete: onGenerationComplete
+                            )
+                        } label: {
+                            ActivityCategoryTile(category: category)
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
-            NavigationLink {
-                MatchingDeckPickerView(modelManager: coordinator.modelManager)
-            } label: {
-                hubRow("Card Matching", "Fast form ↔ meaning warm-up", "square.grid.2x2.fill")
-            }
-        } header: {
-            Text("Vocabulary")
+            .padding(.horizontal, hubInset)
+            .padding(.top, 8)
         }
+        .navigationTitle("Home")
+        .contentMargins(.bottom, 120, for: .scrollContent)
+        .themedScreen()
     }
 
-    private var grammarSection: some View {
-        Section {
-            NavigationLink {
-                GrammarHubView(
-                    modelManager: coordinator.modelManager,
-                    mlxService: coordinator.mlxService,
-                    onStartFlipCards: launchGrammarFlip,
-                    onStartMultipleChoice: launchGrammarMC,
-                    onStartPastTenseStudy: launchPastTense
-                )
-            } label: {
-                hubRow("Grammar Exercises", "Akkusativ · Dativ · Perfekt · create your own with AI", "checklist")
-            }
-            NavigationLink {
-                ArticleGameSetupView(
-                    modelManager: coordinator.modelManager,
-                    mlxService: coordinator.mlxService
-                )
-            } label: {
-                hubRow("Der · Die · Das", "The article game — guess each noun's gender", "textformat.abc")
-            }
-        } header: {
-            Text("Grammar")
+    // MARK: - Shared
+
+    private var modePicker: some View {
+        Picker("Home mode", selection: $showAllActivities) {
+            Text("For You").tag(false)
+            Text("All Activities").tag(true)
         }
+        .pickerStyle(.segmented)
     }
+}
 
-    private var readingSection: some View {
-        Section {
-            NavigationLink {
-                StoryListView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
-            } label: {
-                hubRow("Read a Short Story", "The AI writes at your level, then quizzes you", "book.pages")
-            }
-            NavigationLink {
-                PaperListView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
-            } label: {
-                hubRow("Study a Paper or Link", "Import a PDF or web page to study", "doc.text.magnifyingglass")
-            }
-            NavigationLink {
-                PhotoScanListView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
-            } label: {
-                hubRow("Scan a Photo", "Extract German text from an image", "camera.viewfinder")
-            }
-        } header: {
-            Text("Reading")
-        }
-    }
+// MARK: - Previews
 
-    private var speakingSection: some View {
-        Section {
-            NavigationLink {
-                ConversationListView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
-            } label: {
-                hubRow("Conversation Practice", "Talk with the on-device AI", "bubble.left.and.bubble.right")
-            }
-        } header: {
-            Text("Speaking")
-        }
-    }
+/// The Home hub under one theme. Separate `#Preview`s rather than one that loops, because each
+/// carries a full `NavigationStack` and they're easier to read side by side in the canvas.
+@MainActor
+private func homeHubPreview(_ theme: AppTheme) -> some View {
+    HomeHubView(
+        coordinator: GenerationCoordinator(modelManager: MLXModelManager()),
+        onGenerationComplete: {}
+    )
+    .environment(ActivityRouter())
+    .environment(\.appTheme, theme)
+    .modelContainer(
+        for: [SavedDeck.self, SavedCard.self, StudyDay.self, LearnerProfile.self,
+              ChatConversation.self, PrepositionStat.self, StoryQuizAttempt.self],
+        inMemory: true
+    )
+}
 
-    private var listeningSection: some View {
-        Section {
-            NavigationLink {
-                PhraseLibraryView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
-            } label: {
-                hubRow("Phrase Library", "Phrases you've heard in the wild", "ear.badge.waveform")
-            }
-        } header: {
-            Text("Listening")
-        }
-    }
-
-    private var batchSection: some View {
-        Section {
-            NavigationLink {
-                BatchQueueView(coordinator: coordinator)
-            } label: {
-                hubRow("Batch Queue", "Line up decks, stories, and pictures; run them all at once", "moon.stars.fill")
-            }
-        } header: {
-            Text("Batch")
-        }
-    }
-
-    @ViewBuilder
-    private func hubRow(_ title: String, _ subtitle: String, _ icon: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundStyle(.tint)
-                .frame(width: 34, height: 34)
-                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 4)
-    }
-
-    // MARK: - Launch helpers (card-producing → router)
-
-    private func launchGoethe(_ cards: [VocabCard], _ topic: String, _ style: FlashcardStyle, _ label: String) {
-        router.launch(.cardDeck(deckStore.goetheSession(cards: cards, topic: topic, style: style, label: label)))
-    }
-
-    private func launchPastTense(_ cards: [VocabCard], _ topic: String, _ style: FlashcardStyle, _ label: String) {
-        router.launch(.cardDeck(deckStore.pastTenseSession(cards: cards, topic: topic, style: style, label: label)))
-    }
-
-    private func launchGrammarFlip(_ cards: [VocabCard], _ topic: String, _ style: FlashcardStyle, _ label: String) {
-        router.launch(.cardDeck(deckStore.grammarFlipSession(cards: cards, topic: topic, style: style, label: label)))
-    }
-
-    private func launchGrammarMC(_ category: GrammarCategory, _ hints: Bool) {
-        router.launch(.grammarMultipleChoice(category: category, showHints: hints))
-    }
+#Preview("For You · System")   { homeHubPreview(.klar) }
+#Preview("For You · Soft")     { homeHubPreview(.sanft) }
+#Preview("For You · Notebook") { homeHubPreview(.kritzel) }
+#Preview("For You · Bauhaus")  { homeHubPreview(.grundform) }
+#Preview("For You · Bauhaus dark") {
+    homeHubPreview(.grundform).preferredColorScheme(.dark)
 }

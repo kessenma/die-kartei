@@ -23,6 +23,7 @@ struct ConversationView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.appTheme) private var appTheme
 
     @State private var engine: ConversationEngine?
     @State private var summary: ConversationSummary?
@@ -82,7 +83,11 @@ struct ConversationView: View {
         }
         .background {
             ZStack(alignment: .top) {
-                Color(.systemBackground)
+                if appTheme == .klar {
+                    Color(.systemBackground)
+                } else {
+                    ThemedBackground()
+                }
                 // An animated brand wash at the top, echoing the model sheet styling. It gently
                 // intensifies while the model is generating a reply.
                 ModelBrandWash(palette: theme.palette, animated: !reduceMotion)
@@ -540,6 +545,8 @@ private struct UserMessageView: View {
     /// Called with German text the user selected from the correction to save as a phrase.
     let onSavePhrase: (String) -> Void
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         VStack(alignment: .trailing, spacing: 6) {
             // The corrected sentence stays hidden while an elicitation nudge is active for this turn
@@ -573,7 +580,7 @@ private struct UserMessageView: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(18), style: .continuous))
             }
 
             HStack(spacing: 8) {
@@ -603,6 +610,8 @@ private struct CorrectionCard: View {
     let engine: ConversationEngine
     /// Called with selected German text to save it to the phrase library.
     let onSavePhrase: (String) -> Void
+
+    @Environment(\.appTheme) private var appTheme
 
     private var corrected: String { message.correctedText ?? "" }
     private var note: String? { message.correctionNote }
@@ -645,10 +654,10 @@ private struct CorrectionCard: View {
             .padding(12)
             .background(tint.opacity(0.10))
             .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: appTheme.innerRadius(14), style: .continuous)
                     .strokeBorder(tint.opacity(0.35), lineWidth: 1)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(14), style: .continuous))
         }
         // Fill in the English meaning lazily for reopened chats once the model is ready.
         .task(id: meaningTaskID) { engine.ensureCorrectionTranslation(message) }
@@ -787,6 +796,8 @@ struct RecordingControls: View {
     let onQuestion: () -> Void
     let onRestart: () -> Void
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         HStack(spacing: 12) {
             PunctuationButton(symbol: ".", action: onPeriod)
@@ -797,7 +808,7 @@ struct RecordingControls: View {
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 16)
                     .frame(height: 44)
-                    .background(Color(.secondarySystemBackground), in: Capsule())
+                    .background(Color(.secondarySystemBackground), in: appTheme.pillShape)
             }
             .buttonStyle(.plain)
         }
@@ -846,6 +857,8 @@ private struct ActionIcon: View {
     var tint: Color = .accentColor
     let action: () -> Void
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         Button(action: action) {
             Image(systemName: system)
@@ -853,7 +866,7 @@ private struct ActionIcon: View {
                 .foregroundStyle(tint)
                 .frame(width: 34, height: 30)
                 .background(tint.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -921,6 +934,8 @@ private struct SavedWordsButton: View {
     let count: Int
     let action: () -> Void
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         Button(action: action) {
             Image(systemName: "bookmark.fill")
@@ -935,7 +950,7 @@ private struct SavedWordsButton: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
-                        .background(Capsule().fill(.red))
+                        .background(appTheme.pillShape.fill(.red))
                         .offset(x: 6, y: -4)
                 }
         }
@@ -991,6 +1006,8 @@ private struct ErrorBanner: View {
     /// When set, a "Try again" button is shown to re-trigger the AI response.
     var onRetry: (() -> Void)? = nil
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Label(text, systemImage: "exclamationmark.triangle.fill")
@@ -1009,7 +1026,7 @@ private struct ErrorBanner: View {
         }
         .padding(10)
         .background(Color.orange.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(10)))
     }
 }
 
@@ -1022,6 +1039,8 @@ private struct HintCard: View {
     var onTapWord: (String) -> Void = { _ in }
     /// Select a span in a hint to save it as a phrase.
     var onSavePhrase: (String) -> Void = { _ in }
+
+    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -1077,10 +1096,10 @@ private struct HintCard: View {
         .padding(12)
         .background(Color.yellow.opacity(0.10))
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: appTheme.innerRadius(14), style: .continuous)
                 .strokeBorder(Color.yellow.opacity(0.35), lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(14), style: .continuous))
         .padding(.horizontal, 16)
     }
 }
@@ -1095,6 +1114,8 @@ private struct SayItPromptCard: View {
     let onHearSlow: () -> Void
     let onUseAnyway: () -> Void
     let onClose: () -> Void
+
+    @Environment(\.appTheme) private var appTheme
 
     private var missed: Bool { prompt.matched == false }
     private var tint: Color { missed ? .orange : accent }
@@ -1156,10 +1177,10 @@ private struct SayItPromptCard: View {
         .padding(12)
         .background(tint.opacity(0.10))
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: appTheme.innerRadius(14), style: .continuous)
                 .strokeBorder(tint.opacity(0.35), lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(14), style: .continuous))
         .padding(.horizontal, 16)
     }
 }
@@ -1175,6 +1196,8 @@ private struct NudgePromptCard: View {
     let onReveal: () -> Void
     let onSkip: () -> Void
     let onClose: () -> Void
+
+    @Environment(\.appTheme) private var appTheme
 
     private var missed: Bool { prompt.matched == false }
     private var revealed: Bool { prompt.revealed }
@@ -1250,10 +1273,10 @@ private struct NudgePromptCard: View {
         .padding(12)
         .background(tint.opacity(0.10))
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: appTheme.innerRadius(14), style: .continuous)
                 .strokeBorder(tint.opacity(0.35), lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(14), style: .continuous))
         .padding(.horizontal, 16)
     }
 }
@@ -1266,6 +1289,8 @@ private struct AssistPill: View {
     let disabled: Bool
     let action: () -> Void
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         Button(action: action) {
             Label(title, systemImage: icon)
@@ -1274,7 +1299,7 @@ private struct AssistPill: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .background(Color(.secondarySystemBackground))
-                .clipShape(Capsule())
+                .clipShape(appTheme.pillShape)
         }
         .buttonStyle(.plain)
         .disabled(disabled)
@@ -1317,16 +1342,27 @@ private struct ModelAvatar: View {
     }
 }
 
+/// Wraps content in a soft, model-colored chat bubble. A `ViewModifier` (not a plain method) so it
+/// can read `\.appTheme` and reshape the bubble's corners per theme while keeping the model-brand fill.
+private struct ModelBubble: ViewModifier {
+    let theme: ModelTheme
+    @Environment(\.appTheme) private var appTheme
+
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(theme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(18), style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: appTheme.innerRadius(18), style: .continuous)
+                    .strokeBorder(theme.accent.opacity(0.20), lineWidth: 1)
+            )
+    }
+}
+
 private extension View {
     /// Wraps content in a soft, model-colored chat bubble.
     func modelBubble(_ theme: ModelTheme) -> some View {
-        self
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(theme.accent.opacity(0.10), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .strokeBorder(theme.accent.opacity(0.20), lineWidth: 1)
-            )
+        modifier(ModelBubble(theme: theme))
     }
 }

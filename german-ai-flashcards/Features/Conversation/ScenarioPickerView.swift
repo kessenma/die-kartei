@@ -16,15 +16,19 @@ struct ScenarioPickerView: View {
                     }
                 } header: {
                     Label("\(category.germanTitle) · \(category.englishTitle)", systemImage: category.systemImage)
+                        .themedSectionHeader()
                 }
+                .themedListRow()
             }
 
             Section {
                 row(.custom)
             } header: {
-                Text("Your own")
+                Text("Your own").themedSectionHeader()
             }
+            .themedListRow()
         }
+        .themedListScreen()
         .navigationTitle("Scenarios")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

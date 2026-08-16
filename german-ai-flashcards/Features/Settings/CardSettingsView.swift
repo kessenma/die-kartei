@@ -1,20 +1,18 @@
 import SwiftUI
-import AVFoundation
+import UIKit   // VoiceGuideSheet (below) uses UIImage / UIApplication
 
-/// The "Cards" tab of the Settings screen: flashcard study style, pronunciation/voice, and the
-/// app's sources/attributions.
+/// Learning ▸ Flashcards settings: flashcard study style plus the game-mechanic toggles (haptics,
+/// card matching, der/die/das coaching). Voice, reminders, and sources each moved to their own
+/// App/About screen in the theme-upgrade Settings IA.
 struct CardSettingsView: View {
     @Bindable var modelManager: MLXModelManager
 
     /// Shared with the same picker in the deck-creation options.
     @AppStorage(CardImageTiming.defaultsKey) private var imageTiming: CardImageTiming = .keptCards
 
-    @State private var germanVoices: [AVSpeechSynthesisVoice] = []
-    @State private var showVoiceGuide = false
-
     var body: some View {
         Group {
-            Section("Flashcard Style") {
+            Section {
                 Picker("Style", selection: $modelManager.flashcardStyle) {
                     ForEach(FlashcardStyle.allCases, id: \.self) { style in
                         Text(style.rawValue).tag(style)
@@ -55,27 +53,12 @@ struct CardSettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+            } header: {
+                Text("Flashcard Style").themedSectionHeader()
             }
+            .themedListRow()
 
-            Section("Reminders") {
-                NavigationLink {
-                    ReminderSettingsView(modelManager: modelManager)
-                } label: {
-                    Label {
-                        HStack {
-                            Text("Practice Reminders")
-                            Spacer()
-                            Text(reminderSummary)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    } icon: {
-                        Image(systemName: "bell.badge")
-                    }
-                }
-            }
-
-            Section("Haptics") {
+            Section {
                 Picker("Game vibrations", selection: $modelManager.hapticFeedbackMode) {
                     ForEach(HapticFeedbackMode.allCases) { mode in
                         Text(mode.rawValue).tag(mode)
@@ -86,9 +69,12 @@ struct CardSettingsView: View {
                 Text(modelManager.hapticFeedbackMode.description + " Applies to the matching, der/die/das, and grammar drills — never stories, chat, or flashcards.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            } header: {
+                Text("Haptics").themedSectionHeader()
             }
+            .themedListRow()
 
-            Section("Card Matching") {
+            Section {
                 Picker("Pairs per round", selection: $modelManager.matchingPairCount) {
                     ForEach([6, 8, 10, 12], id: \.self) { count in
                         Text("\(count)").tag(count)
@@ -104,110 +90,30 @@ struct CardSettingsView: View {
                 Text("Words you keep missing join the coach's memory, so conversations work them in and they show up in Coach's Notes.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            } header: {
+                Text("Card Matching").themedSectionHeader()
             }
+            .themedListRow()
 
-            Section("Der · Die · Das") {
+            Section {
                 Toggle("Share missed nouns with the coach", isOn: $modelManager.articleFeedsCoach)
                 Text("Nouns whose article keeps tripping you up join the coach's memory too, and every round nudges the profile's Artikel skill.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            } header: {
+                Text("Der · Die · Das").themedSectionHeader()
             }
+            .themedListRow()
 
-            Section("Pronunciation") {
-                Picker("German Voice", selection: Binding(
-                    get: { modelManager.selectedVoiceIdentifier ?? "" },
-                    set: { modelManager.selectedVoiceIdentifier = $0.isEmpty ? nil : $0 }
-                )) {
-                    Text("System Default").tag("")
-                    ForEach(germanVoices, id: \.identifier) { voice in
-                        Text(voiceName(voice)).tag(voice.identifier)
-                    }
-                }
-
-                Button {
-                    SpeechService.shared.speak("Guten Tag! Wie geht es Ihnen?")
-                } label: {
-                    Label("Preview Voice", systemImage: "speaker.wave.2")
-                }
-
-                // Shows which natural German voices the user has downloaded. Compact
-                // voices ship with iOS; an Enhanced or Premium voice only exists
-                // because the user downloaded it, so quality is a reliable
-                // "did I download this myself?" signal.
-                if downloadedGermanVoices.isEmpty {
-                    Label {
-                        Text("No natural German voices downloaded yet — every option above is a basic (robotic) voice. Tap below to add an Enhanced or Premium one.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    } icon: {
-                        Image(systemName: "exclamationmark.circle")
-                            .foregroundStyle(.orange)
-                    }
-                } else {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Label("You downloaded these", systemImage: "checkmark.seal.fill")
-                            .font(.caption)
-                            .foregroundStyle(.green)
-                        ForEach(downloadedGermanVoices, id: \.identifier) { voice in
-                            Text("•  \(voiceName(voice))")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-
-                Button {
-                    showVoiceGuide = true
-                } label: {
-                    Label("How to download natural German voices", systemImage: "info.circle")
-                }
+            Section {
+                Toggle("Share tricky prepositions with the coach", isOn: $modelManager.prepositionsFeedCoach)
+                Text("Prepositions whose case keeps tripping you up join the coach's memory, and every round nudges the profile's Präpositionen skill.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text("Präpositionen").themedSectionHeader()
             }
-
-            DialogueVoicePickerSection(modelManager: modelManager)
-
-            Section("About") {
-                NavigationLink(destination: SourcesView()) {
-                    Label("Sources & Attributions", systemImage: "doc.text.magnifyingglass")
-                }
-            }
-        }
-        .onAppear {
-            germanVoices = AVSpeechSynthesisVoice.speechVoices()
-                .filter { $0.language.hasPrefix("de") }
-                .sorted { lhs, rhs in
-                    // Natural (Premium/Enhanced) voices first, then by name.
-                    if lhs.quality != rhs.quality {
-                        return lhs.quality.rawValue > rhs.quality.rawValue
-                    }
-                    return lhs.name < rhs.name
-                }
-        }
-        .sheet(isPresented: $showVoiceGuide) {
-            VoiceGuideSheet()
-        }
-    }
-
-    /// Trailing summary on the Practice Reminders row: "Off", or the enabled checkpoints shortest-first.
-    private var reminderSummary: String {
-        guard modelManager.practiceRemindersEnabled else { return "Off" }
-        let checkpoints = modelManager.practiceReminderCheckpoints
-        guard !checkpoints.isEmpty else { return "On" }
-        return checkpoints.sorted().map(\.title).joined(separator: " · ")
-    }
-
-    /// German voices the user downloaded (Enhanced/Premium). Compact voices are
-    /// pre-installed with iOS, so anything above compact quality was added by
-    /// the user — we use that as the "you downloaded this" signal.
-    private var downloadedGermanVoices: [AVSpeechSynthesisVoice] {
-        germanVoices.filter { $0.quality == .enhanced || $0.quality == .premium }
-    }
-
-    private func voiceName(_ voice: AVSpeechSynthesisVoice) -> String {
-        switch voice.quality {
-        case .premium: return "\(voice.name) (Premium)"
-        case .enhanced: return "\(voice.name) (Enhanced)"
-        default: return "\(voice.name) (Basic)"
+            .themedListRow()
         }
     }
 }
@@ -217,6 +123,7 @@ struct CardSettingsView: View {
 struct VoiceGuideSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
+    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
         NavigationStack {
@@ -226,6 +133,7 @@ struct VoiceGuideSheet: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
+                .themedListRow()
 
                 Section {
                     Label {
@@ -243,6 +151,7 @@ struct VoiceGuideSheet: View {
                             .foregroundStyle(.orange)
                     }
                 }
+                .themedListRow()
 
                 Section {
                     stepRow(1, "Open the Settings app and tap the search bar at the bottom.",
@@ -250,8 +159,9 @@ struct VoiceGuideSheet: View {
                     stepRow(2, "Type “voice”, then tap Voices under Accessibility → Live Speech.",
                             image: "voice-guide-voice-search")
                 } header: {
-                    Text("Quickest: search Settings")
+                    Text("Quickest: search Settings").themedSectionHeader()
                 }
+                .themedListRow()
 
                 Section {
                     stepRow(1, "Or open Settings and tap Accessibility.",
@@ -259,8 +169,9 @@ struct VoiceGuideSheet: View {
                     stepRow(2, "Under Speech, tap Live Speech.",
                             image: "voice-guide-live-speech")
                 } header: {
-                    Text("Or browse to it")
+                    Text("Or browse to it").themedSectionHeader()
                 }
+                .themedListRow()
 
                 Section {
                     stepRow(1, "Scroll to Preferred Voices and tap Add Preferred Voice…",
@@ -270,10 +181,11 @@ struct VoiceGuideSheet: View {
                     stepRow(3, "Tap the cloud icon next to a voice to download its Enhanced or Premium version. Skip the Siri voices (crossed out) — apps can't use those.",
                             image: "voice-guide-voice-picker")
                 } header: {
-                    Text("Download a German voice")
+                    Text("Download a German voice").themedSectionHeader()
                 } footer: {
                     Text("Good picks: Yannick, Petra, Viktor, or Anna. After it downloads, force-quit this app and reopen it, then choose the voice in Pronunciation above.")
                 }
+                .themedListRow()
 
                 Section {
                     Label {
@@ -286,6 +198,7 @@ struct VoiceGuideSheet: View {
                             .foregroundStyle(.blue)
                     }
                 }
+                .themedListRow()
 
                 Section {
                     Button {
@@ -301,7 +214,9 @@ struct VoiceGuideSheet: View {
                 } footer: {
                     Text("Opens this app's page in Settings. Tap back to reach the main list, then Accessibility — or pull down and search “voice”.")
                 }
+                .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("Download Voices")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -334,9 +249,9 @@ struct VoiceGuideSheet: View {
                     .resizable()
                     .scaledToFit()
                     .frame(maxWidth: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(12)))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: appTheme.innerRadius(12))
                             .stroke(Color(uiColor: .separator), lineWidth: 0.5)
                     )
                     .padding(.leading, 32)

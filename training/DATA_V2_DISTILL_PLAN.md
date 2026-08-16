@@ -176,6 +176,19 @@ The instinct to switch base families should be resisted, on this project's own e
 - Switching families **forfeits the tokenizer alignment above**, which is the only reason logit
   distillation is cheap here.
 
+> **⚠️ This argument was wrong, and switching families is what worked (2026-07-30).**
+>
+> The first bullet rests on the 58% anchor, which was a scoring artifact — stock Gemma 3 1B is
+> **34%**. Granite was never "tying at 2× the size"; it was **beating the incumbent by 21 points**
+> before any training. Staying in-family produced the 25% collapse; switching produced **72%**.
+>
+> The fourth bullet, however, came true exactly as written, just as a *cost paid later* rather
+> than a reason not to switch: Granite's 49k BPE vocabulary shares nothing with Gemma's 262k
+> SentencePiece, which is precisely what blocks Phase 4 (see the block notice below) and makes
+> German cost ~1.9× the tokens. **The tokenizer objection was the right objection for the wrong
+> conclusion** — it should have been priced as a known downstream cost, not used to rule the
+> option out up front.
+
 Gemma 3 1B is the only student that is simultaneously 1B-class, above the substrate floor, and
 logit-compatible with the teacher. Keep Granite 3.3 2B parked as the non-Gemma fallback.
 
@@ -368,6 +381,31 @@ finding 4.
 | ◽ partial | 60–70% | ≤ 20% | real but marginal; Phase 4 decides |
 | ❌ cliff confirmed | < 58% or FC > 30% | | capacity is genuinely the wall. Publish the negative result and stop |
 
+> **⚠️ These thresholds are anchored to a number that was wrong.** Stock Gemma 3 1B is **34%
+> guarded, not 58%** — the scorer credited `OK\nFIX:…` replies the app discards. Read the gate
+> as: win ≥ 70%, cliff < 34%.
+
+#### Phase 3 OUTCOME (2026-07-30)
+
+Ran as specified on Gemma 3 1B, then extended to a base sweep when it failed.
+
+| student | stock | tuned on v2 | read |
+|---|---|---|---|
+| Gemma 3 1B | 34% | **26%** | ❌ cliff confirmed — the same collapse as v1, 28× the data |
+| **Granite 3.3 2B** | 55% | **72%** | 🎯 win on the corrected gate |
+
+**Finding 4 is settled: data volume does not rescue a 1B.** 1,400 → 40,000 on-task examples
+changed nothing about the direction of travel for Gemma 3 1B; it still gets worse. The capacity
+cliff is real and is not a data-starvation artifact.
+
+The tier is nonetheless upgraded, by switching bases rather than by scaling data. Granite 3.3 2B
+absorbed the same corpus for +17 points. A LoRA rank test (r=8 → r=32) then confirmed the result
+is not tuning-limited: 4× trainable params, val loss 0.89 → 0.71, benchmark +4/82, **McNemar
+p = 0.42**. Full detail in §3 of [`training-v2.md`](training-v2.md).
+
+**Track paused after Phase 3.** Open before shipping: peak RAM on a real 4 GB device, and the
+`relpron` regression that hit E4B and Granite identically (6/6 → 4/6).
+
 #### What the 1B is actually for — and what it is not
 
 App-equivalent (guarded, i.e. how the app really behaves) numbers for reference:
@@ -401,6 +439,29 @@ SFT + reverse-KL against teacher logits on student-generated tokens, with the 24
 remap. Anneal the on-policy fraction 0 → 0.5.
 
 **Gate:** +5 pts core *or* FC halved vs Phase 3. Otherwise stop — the remaining gap is capacity.
+
+> **🚫 BLOCKED as written (2026-07-30) — this design assumes a Gemma student.**
+>
+> Token-level reverse-KL requires teacher and student to share a vocabulary. That held for the
+> planned Gemma 3 1B student: Gemma 3 ↔ Gemma 4 match on 255,938 of 262,144 IDs, all mismatches
+> being special tokens, which is what "the 24-token control remap" refers to. The student that
+> actually won Phase 3 does not share it:
+>
+> | | vocab | tokenizer |
+> |---|---|---|
+> | Gemma 4 E4B (teacher) | 262,144 | SentencePiece |
+> | Granite 3.3 2B (student) | 49,159 | byte-level BPE |
+>
+> There is no token-level distribution to take a KL against. Reviving this needs either a
+> cross-tokenizer method (ULD-style optimal transport) or a sequence-level variant where the
+> teacher scores whole student responses — a redesign, so **the ~$20–40 estimate no longer
+> applies**.
+>
+> Phase 3 also weakened the motive: the rank test says Granite isn't training-limited, and its
+> tokenizer needs ~1.9× the tokens for the same German sentence (`gelesen` → `ge|les|en`), which
+> costs speed and context on the weakest hardware in the lineup regardless of how it's trained.
+> **Not recommended.** Revisit if a small base with Gemma's vocabulary and Granite's body ratio
+> appears.
 
 ### Phase 5 — human voice (goal 3), cheapest version first
 

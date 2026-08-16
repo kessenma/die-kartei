@@ -14,10 +14,13 @@ struct CorrectionSheetView: View {
     private let articles = ["der", "die", "das"]
 
     private func genderInfo(for article: String) -> (symbol: String, color: Color) {
+        // Colors come from GenderPalette so this correction UI matches der/die/das on the cards
+        // (blue/red/green) — the old blue/pink/purple read as a second, conflicting gender code.
+        // Symbols match FlashCardView's gender badge.
         switch article.lowercased() {
-        case "der": return ("figure.stand", .blue)
-        case "die": return ("figure.stand.dress", Color(.systemPink))
-        case "das": return ("figure.stand.dress.line.vertical.figure", .purple)
+        case "der": return ("figure.stand", GenderPalette.color(.der))
+        case "die": return ("figure.stand.dress", GenderPalette.color(.die))
+        case "das": return ("figure.stand.dress.line.vertical.figure", GenderPalette.color(.das))
         default: return ("questionmark", .secondary)
         }
     }
@@ -36,6 +39,7 @@ struct CorrectionSheetView: View {
                     EmptyView()
                 }
             }
+            .themedListScreen()
             .navigationTitle("Correct \u{201C}\(germanWord)\u{201D}")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

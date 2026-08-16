@@ -206,7 +206,9 @@ enum ArticleGameService {
 
         // Streak + coach memory: a round is grammar practice, and its score moves the
         // profile's Artikel skill exactly like a finished multiple-choice drill.
-        StudyLogService.record(.grammar(result.questionCount), in: context)
+        StudyLogService.record(
+            .grammar(result.questionCount), seconds: result.durationSeconds, in: context
+        )
         LearnerMemoryService.applyDrillResult(
             focus: .artikel,
             correct: result.firstTryCount,

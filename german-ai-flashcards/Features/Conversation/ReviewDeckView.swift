@@ -11,6 +11,7 @@ struct ReviewDeckView: View {
     @Query(sort: \SavedDeck.createdAt, order: .reverse) private var allDecks: [SavedDeck]
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     @State private var source: WordSource = .aiReview
     @State private var count: Int = 10
@@ -58,13 +59,15 @@ struct ReviewDeckView: View {
                         .foregroundStyle(.green)
                     Button("Done") { dismiss() }
                 }
+                .themedListRow()
             } else {
-                sourceSection
-                wordsSection
-                destinationSection
-                saveSection
+                sourceSection.themedListRow()
+                wordsSection.themedListRow()
+                destinationSection.themedListRow()
+                saveSection.themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("Review deck")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: "\(source.rawValue)-\(count)") {
@@ -91,7 +94,7 @@ struct ReviewDeckView: View {
                 .pickerStyle(.segmented)
             }
         } header: {
-            Text("Where words come from")
+            Text("Where words come from").themedSectionHeader()
         }
     }
 
@@ -126,7 +129,7 @@ struct ReviewDeckView: View {
             }
         } header: {
             HStack {
-                Text("Words (\(selectedCount) selected)")
+                Text("Words (\(selectedCount) selected)").themedSectionHeader()
                 Spacer()
                 if !words.isEmpty {
                     Button(allSelected ? "Deselect all" : "Select all") { toggleAll() }
@@ -160,7 +163,7 @@ struct ReviewDeckView: View {
                 }
             }
         } header: {
-            Text("Destination")
+            Text("Destination").themedSectionHeader()
         } footer: {
             Text("Merging skips words already in the deck. Growing existing decks keeps your library tidy.")
                 .font(.caption2)

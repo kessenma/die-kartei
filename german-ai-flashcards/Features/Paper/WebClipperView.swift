@@ -14,6 +14,7 @@ struct WebClipperView: View {
     var onCapture: (_ title: String, _ text: String, _ url: String) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
     @State private var model = WebClipperModel()
     @State private var address = ""
     @State private var capturing = false
@@ -105,6 +106,9 @@ struct WebClipperView: View {
                     .disabled(capturing || model.isLoading)
                 }
                 .padding()
+            }
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
             }
             .navigationTitle("Open & log in if needed")
             .navigationBarTitleDisplayMode(.inline)

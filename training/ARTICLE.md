@@ -3,15 +3,24 @@
 *Draft — remaining [TODO]s: on-device latency numbers, App Store link, and a few
 late-arriving baselines still running on the eval bench.*
 
-> **⚠️ Revision pending (2026-07-22).** The sections "Round two: the same recipe hits a different
-> wall" and "The floor — and who's still below it" are built on E2B's 59% false-correction rate.
-> That number turned out to be an artifact of the *eval*, not the model: 18 of the 19 false
-> corrections were the model echoing the student's sentence back under a `FIX:` header, which the
-> app has always discarded. Scored the way the app behaves, the tuned E2B lands at **83% core /
-> 3% false corrections** and is shippable — which moves the tutor floor down a hardware tier and
-> makes the "capacity cliff at 2B" reading wrong (the 1B cliff is still real). Full workings in
-> [`GEMMA_E2B_FINETUNING.md`](GEMMA_E2B_FINETUNING.md). The corrected story is a better one, and
-> these sections need rewriting around it.
+> **⚠️ Two scoring corrections are folded into this draft — both worth reading before the
+> numbers below.**
+>
+> **2026-07-22 — E2B was never on the cliff.** "Round two" and "The floor" were built on E2B's
+> 59% false-correction rate, which was an artifact of the *eval*, not the model: 18 of the 19
+> false corrections were the model echoing the student's sentence back under a `FIX:` header,
+> which the app has always discarded. Scored as the app behaves, the tuned E2B lands at **83%
+> core / 3% false corrections** and shipped on 2026-07-22. The 1B cliff is still real.
+>
+> **2026-07-30 — stock Gemma 3 1B was never 58%.** The same guard was missing
+> `parseCorrection`'s `hasPrefix("OK\n")` clause, so a reply opening `OK` and then appending a
+> real `FIX:` got credited twice over. That model emits exactly that shape on nearly every
+> input and the app shows **none** of it: true score **34% core, 100% miss**, not 58%/55%. It
+> is not the cautious floor this article described. See the correction note in "The floor" and
+> the new section "Round three".
+>
+> Full workings: [`GEMMA_E2B_FINETUNING.md`](GEMMA_E2B_FINETUNING.md) and
+> [`training-v2.md`](training-v2.md) §3.2. Gemma 4 numbers are unaffected throughout.
 
 I've been building a German learning app with a turn-based AI tutor that runs entirely
 on the phone. No server, no API key, no network round trip — the model lives on the
@@ -456,10 +465,18 @@ the KV cache and the app around it. What this project mapped almost by accident 
 Every model small enough to leave real headroom on a modest phone fails the task, by one
 of two routes. Some can't do it at baseline — Llama 3.2 1B waved through all 69 errors as
 fine; EuroLLM-1.7B couldn't hold the output format. Others are made *worse* by the same
-fine-tune that lifts the big models: Gemma 3 1B collapsed (58% → 32% core, false
-corrections 0% → 56%), and Gemma 4 E2B teetered (better at catching errors, but "fixing"
-59% of already-correct sentences). The smallest model I found that is a genuinely
-*trustworthy* tutor — fixes real mistakes, doesn't invent fake ones — is Gemma 4 E4B.
+fine-tune that lifts the big models: Gemma 3 1B collapsed, and Gemma 4 E2B teetered
+(better at catching errors, but "fixing" 59% of already-correct sentences). The smallest
+model I found that is a genuinely *trustworthy* tutor — fixes real mistakes, doesn't
+invent fake ones — is Gemma 4 E4B.
+
+> **Correction (2026-07-30).** The stock-Gemma-3-1B numbers in this section were wrong, and
+> flattering. My scorer credited a reply that opens `OK` *and then* appends a `FIX:` line —
+> which is what that model emits on essentially every input. The app shows the learner
+> nothing for those replies. Scored the way the app actually behaves, stock Gemma 3 1B is
+> **34%, not 58%**, and its real miss rate is **100%, not 55%**. It is not "safe but
+> limited"; it is silent. Everything below about the 4 GB floor is revised accordingly, and
+> the Gemma 4 numbers are unaffected — they emit a clean `OK` or a clean `FIX`.
 
 Is that just "bigger is better"? Roughly, but the precise version is more useful. The task
 needs three things at once: German grammar *knowledge* (hundreds of specific
@@ -478,12 +495,12 @@ parameters (E2B, teetering) and ~4B (E4B, comfortable).
 Line that up against the hardware and the deployment story writes itself. E4B's ~5 GB,
 against that ~8 GB per-app ceiling, wants a device with roughly 8 GB of RAM — an iPhone 15
 Pro-class phone or newer. Below that you can still put *a* tutor on the device — the app
-falls back to a stock small model — but not *the* tutor. And those fallbacks are honest
-downgrades: stock Gemma 3 1B is *safe but limited* (it never falsely corrects, so it won't
-teach a wrong rule, but it catches under half of real errors), while stock E2B is merely
-mediocre (a third of its "corrections" are spurious). The one thing that doesn't help is
-the obvious thing — fine-tuning those small models to close the gap — because that is
-exactly what tips them over the cliff.
+falls back to a stock small model — but not *the* tutor. And that fallback is a worse
+downgrade than I originally reported: stock Gemma 3 1B isn't cautious, it's mute, wrapping
+a real correction inside a reply the app discards. Stock E2B is merely mediocre (a third of
+its "corrections" are spurious). The one thing that doesn't help is the obvious thing —
+fine-tuning those small models to close the gap — because that is exactly what tips them
+over the cliff.
 
 So the honest headline is narrower than "on-device German tutoring works": *good*
 on-device German tutoring, today, is a recent-device feature. A 4 GB phone can run a small
@@ -498,6 +515,109 @@ its usable quality in a year at the same footprint. The model that barely define
 floor today may be comfortably mid-range next year, and whatever plays E2B's role a
 generation out may clear the bar this one just missed. On-device German tutoring is viable
 now on a recent phone; "recent" is the only word in that sentence I expect to expire.
+
+## Round three: 40,000 examples at the floor, and why it still doesn't clear
+
+The floor section above ends on a guess — that more data might rescue a small model. I
+built the data and tested it. The answer is interesting enough to be worth the detour.
+
+The second dataset is ~40,000 validated examples generated by a 26B teacher, against
+~1,400 in the first. Two students got the same corpus: Gemma 3 1B, which has the best
+German substrate available under a gigabyte, and IBM's Granite 3.3 2B, which has the
+worst German of anything I'd consider but a very different shape.
+
+```
+                          stock    tuned on 40k
+Gemma 3 1B                 34%   →   26%    (worse, again)
+Granite 3.3 2B             55%   →   72%
+────────────────────────────────────────────
+Gemma 4 E2B (6 GB tier)              84%
+Gemma 4 E4B (8 GB tier)              91%
+```
+
+Granite absorbed the data cleanly and more than doubled what the app ships to a 4 GB
+phone. It also stopped well short of the 6 GB model, and a rank test says that isn't a
+tuning problem: quadrupling the adapter's trainable parameters drove validation loss down
+hard (0.89 → 0.71) and moved the actual benchmark by four items out of 82, which on an
+exact McNemar test is p = 0.42. Nothing. The model had already extracted what it could.
+
+### Two ways to spend a small budget, neither of which works
+
+The split between those two students is the whole story, and it's architectural.
+
+A language model's parameters go into two pots: the vocabulary table that maps text to
+tokens, and the body that does the thinking. In a large model the table is a rounding
+error. In a small one it's the dominant cost, and the two families made opposite bets:
+
+| | Gemma 3 1B | Granite 3.3 2B |
+|---|---|---|
+| vocabulary | 262,144 | 49,159 |
+| body params | 396M (~40%) | 2,399M (~96%) |
+| bet | know German | be able to learn |
+
+Gemma buys a huge multilingual vocabulary, which is exactly why it starts ahead on German
+and why the family dominates this entire project. But at 1B that table consumes most of
+the model, leaving a body too small to hold grammar knowledge *and* the judgment to know
+when a sentence needs nothing. Train the correction behavior into it and the judgment gets
+crowded out. That's the collapse, and it's why the same data that lifts a 4B model breaks
+a 1B one.
+
+Granite spends almost everything on body. It learns well, as the +17 points show. What it
+can't do is read German efficiently:
+
+```
+"Ich habe gestern das Buch gelesen."
+
+Gemma 4  (7)  ['Ich', '▁habe', '▁gestern', '▁das', '▁Buch', '▁gelesen', '.']
+Granite (13)  ['I','ch','Ġh','abe','Ġgest','ern','Ġdas','ĠB','uch','Ġge','les','en','.']
+```
+
+Roughly twice the tokens for the same sentence, because a 49k vocabulary trained mostly on
+English and code has no room to store German words whole. `habe`, `gestern`, `Buch`,
+`gelesen` all arrive in pieces. That costs generation speed on the slowest hardware in the
+lineup, halves the effective context, and plausibly spends body capacity on reassembling
+words that Gemma simply reads. I can measure the first two; the third is inference.
+
+So: a model that knows German but can't learn, or a model that can learn but reads German
+in fragments. Under 4 GB those were the only two options I found, and the ceiling sits at
+72% either way.
+
+### Why nobody is building the model that would fix this
+
+The obvious fix is a small model with Gemma's multilingual vocabulary and Granite's body
+ratio. It doesn't exist, and the reason is economic rather than technical.
+
+German is around 2% of the world's speakers. It's a much larger share of European software
+spending, but that's not the number a frontier lab optimizes against — they optimize a
+benchmark average across many languages, and multilingual capacity is bought with
+vocabulary and data mix, both of which cost English performance at small sizes. A German-
+first 1B is a rounding error in every market a lab measures. TII's Falcon models are the
+clean illustration: a well-funded lab producing genuinely capable open models, aimed
+squarely at Arabic and English because that's who funded them. Nobody is wrong here, and
+nothing in the incentives points at German.
+
+What exists instead is community and academic work, and I tested it: BübleLM 2B, SauerkrautLM
+gemma-2-2b, Salamandra 2B, EuroLLM. They lift general German *fluency* and none of them
+survive contact with this task, because a German chat tune is not a German grammar-
+correction model. They lose the instruction discipline that makes the verdict format work
+at all.
+
+### Where the 4 GB tier lands
+
+It doubles, and stops. Granite 3.3 2B tuned on the v2 corpus is the best 4 GB result this
+project produced, and it's a real one: 34% → 72% against what the app ships today. It is
+also slower per German word than anything else here, unshipped pending a real device
+memory measurement, and short of the 84% a 6 GB phone already gets.
+
+I've paused it there rather than pushing further. The remaining lever was on-policy
+distillation, and that turns out to need a redesign for this pairing anyway: teacher and
+student have incompatible vocabularies, so there's no token-level distribution to distill
+against without a cross-tokenizer method the plan never scoped. The cost-benefit stopped
+making sense against a shrinking population of 4 GB devices.
+
+The floor section above said the edge is moving quickly, and that remains the most useful
+thing to know. Every result here is a statement about one generation of small models. The
+next one gets to reset it.
 
 ## The same question, in pixels: on-device image generation
 
@@ -555,10 +675,13 @@ Next up:
 
 - The four grammar areas become selectable focus topics in the app's conversation settings.
 - A second data wave targeting reflexives — the one area that resisted the first pass.
-- A smaller tier for older devices: the Gemma 4 E2B fine-tune is **done, evaluated, and
-  benched** (see "Round two" above). It teetered on the capacity cliff — better at catching
-  errors, but a runaway over-corrector (false corrections 34% → 59%) — so the low/mid tier
-  ships **stock E2B** and the tune stays a private reference. The same call the 1B forced.
+- A smaller tier for older devices: **superseded**. The E2B tune looked like a runaway
+  over-corrector (false corrections 34% → 59%) until the echo decomposition showed 18 of
+  its 19 false corrections were the app already discarding them. Scored the way the app
+  behaves it's **83%**, and it shipped on 2026-07-22 as the 6 GB tier. The v2 corpus took
+  it to 84% and E4B to 91%.
+- The 4 GB tier: **paused at 72%** with a tuned Granite 3.3 2B (see "Round three"). Real,
+  unshipped, and waiting on a better small base rather than more training.
 - On-device latency numbers for this article. [TODO]
 
 [TODO: App Store link.]

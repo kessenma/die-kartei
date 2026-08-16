@@ -109,10 +109,12 @@ struct UnifiedLibraryView: View {
                         }
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 0))
+                    .themedListRow()
                 }
                 .onDelete(perform: deleteDecks)
             }
         }
+        .themedListScreen()
         .contentMargins(.bottom, 120, for: .scrollContent)
     }
 
@@ -153,7 +155,9 @@ struct UnifiedLibraryView: View {
             } footer: {
                 Text("AI-written stories at your level, plus German texts you've imported or scanned. Open one to study its vocabulary and practice questions, or discuss it with the AI.")
             }
+            .themedListRow()
         }
+        .themedListScreen()
         .contentMargins(.bottom, 120, for: .scrollContent)
     }
 
@@ -284,6 +288,7 @@ private struct DeckStatsSheet: View {
     let deck: SavedDeck
     let sortedResults: [QuizResult]
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     private var averageScore: Int? {
         guard !sortedResults.isEmpty else { return nil }
@@ -297,7 +302,7 @@ private struct DeckStatsSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Overview") {
+                Section {
                     LabeledContent("Cards", value: "\(deck.cards.count)")
                     LabeledContent("Quizzes taken", value: "\(sortedResults.count)")
                     if let avg = averageScore {
@@ -306,9 +311,12 @@ private struct DeckStatsSheet: View {
                     if let best = bestScore {
                         LabeledContent("Best score", value: "\(best)%")
                     }
+                } header: {
+                    Text("Overview").themedSectionHeader()
                 }
+                .themedListRow()
 
-                Section("Quiz History") {
+                Section {
                     ForEach(sortedResults, id: \.id) { result in
                         HStack(spacing: 10) {
                             ModeIcon(mode: result.studyMode)
@@ -336,8 +344,12 @@ private struct DeckStatsSheet: View {
                         }
                         .padding(.vertical, 2)
                     }
+                } header: {
+                    Text("Quiz History").themedSectionHeader()
                 }
+                .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle(deck.topic)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

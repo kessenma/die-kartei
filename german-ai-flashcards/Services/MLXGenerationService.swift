@@ -155,6 +155,11 @@ struct CodableGrammarExercise: Codable {
     let gender: String?
     let verb: String?
     let verbForm: String?
+    /// The sentence in English, blank filled in — the round's Translation button.
+    let english: String?
+    /// The clause after "The answer is X because …". A missing one falls back to
+    /// `GrammarExplanation`, so the model dropping it costs the wording, not the feature.
+    let why: String?
 }
 
 struct CodableGrammarExerciseResponse: Codable {
@@ -254,6 +259,26 @@ class MLXGenerationService {
         return kr == KERN_SUCCESS ? Int(info.phys_footprint) / 1_048_576 : -1
     }
 
+    /// Generation parameters with the memory governors applied. Every generation path builds its
+    /// parameters through here, so a model running over this device's budget stays bounded no
+    /// matter which feature started the run. A no-op when Memory Saver isn't active.
+    private func tunedParameters(maxTokens: Int, temperature: Float) -> GenerateParameters {
+        var parameters = GenerateParameters(maxTokens: maxTokens, temperature: temperature)
+        MemorySaver.tune(&parameters, for: currentModel)
+        return parameters
+    }
+
+    /// How often the token loops check headroom. Cheap enough to do often, rare enough not to
+    /// show up in generation speed.
+    private static let memoryCheckInterval = 32
+
+    /// True when the run should stop to stay inside the memory budget. Callers keep whatever text
+    /// they already have — an answer that ends early beats the app being killed mid-sentence.
+    private func shouldStopForMemory(at tokenCount: Int) -> Bool {
+        guard tokenCount > 0, tokenCount % Self.memoryCheckInterval == 0 else { return false }
+        return MemoryPressureMonitor.shared.sample(model: currentModel)
+    }
+
     /// Load a model into memory. Downloads from HuggingFace Hub on first use.
     func loadModel(_ model: MLXModel) async {
         guard !isLoading else { return }
@@ -295,9 +320,19 @@ class MLXGenerationService {
 
         let physicalMB = Int(ProcessInfo.processInfo.physicalMemory / 1_048_576)
         let footprintBefore = memFootprintMB()
-        logger.info("[\(model.rawValue, privacy: .public)] Load started — Device RAM: \(physicalMB, privacy: .public) MB, App footprint: \(footprintBefore, privacy: .public) MB, Model size: \(model.approximateSizeMB, privacy: .public) MB, Already cached: \(model.isDownloaded, privacy: .public)")
+        let budgetMB = MemoryBudget.totalMB
+        let neededMB = MemoryBudget.requiredMB(for: model)
+        logger.info("[\(model.rawValue, privacy: .public)] Load started — Device RAM: \(physicalMB, privacy: .public) MB, App budget: \(budgetMB, privacy: .public) MB, App footprint: \(footprintBefore, privacy: .public) MB, Model size: \(model.approximateSizeMB, privacy: .public) MB, Model needs: \(neededMB, privacy: .public) MB, Memory Saver: \(MemorySaver.isActive(for: model), privacy: .public), Already cached: \(model.isDownloaded, privacy: .public)")
 
-        Memory.cacheLimit = 20 * 1024 * 1024
+        // Start from as much headroom as we can get: drop MLX's reuse cache before pulling several
+        // GB of weights in, and size the allocator for what this model costs on this device.
+        MemorySaver.releaseCaches()
+        MemorySaver.applyAllocatorLimits(for: model)
+        MemoryPressureMonitor.shared.startMonitoring()
+
+        // Survives the process, so a load that gets the app killed is visible on the next launch
+        // (see `takeInterruptedLoad()`) instead of silently repeating.
+        UserDefaults.standard.set(model.rawValue, forKey: Self.loadInFlightKey)
 
         let task = Task {
             do {
@@ -360,6 +395,9 @@ class MLXGenerationService {
                 isModelLoaded = false
             }
 
+            // Reached on success, failure, and cancellation alike — anything but the app dying.
+            UserDefaults.standard.removeObject(forKey: Self.loadInFlightKey)
+
             downloadProgress = nil
             downloadInfo = nil
             downloadBytesInfo = nil
@@ -369,6 +407,20 @@ class MLXGenerationService {
         }
         loadTask = task
         await task.value
+    }
+
+    // MARK: - Interrupted loads
+
+    private static let loadInFlightKey = "modelLoadInFlight"
+
+    /// A model whose load was still running when the app last stopped — which, for a model that
+    /// runs over this device's budget, usually means iOS killed the app for memory. Read once at
+    /// launch so the UI can offer something that fits instead of walking into the same wall.
+    /// Reading it clears it.
+    static func takeInterruptedLoad() -> MLXModel? {
+        guard let raw = UserDefaults.standard.string(forKey: loadInFlightKey) else { return nil }
+        UserDefaults.standard.removeObject(forKey: loadInFlightKey)
+        return MLXModel(rawValue: raw)
     }
 
     /// True for failures where the transfer stopped but saved partial files can resume it
@@ -507,7 +559,7 @@ class MLXGenerationService {
         MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
 
         let lmInput = try await container.prepare(input: userInput)
-        let parameters = GenerateParameters(maxTokens: 4096, temperature: 0.6)
+        let parameters = tunedParameters(maxTokens: 4096, temperature: 0.6)
 
         let footprintBeforeGen = memFootprintMB()
         genLogger.info("[\(model.rawValue, privacy: .public)] Generation start — batch excludeWords=\(excludeWords.count, privacy: .public), count=\(count, privacy: .public), footprint=\(footprintBeforeGen, privacy: .public) MB")
@@ -519,6 +571,7 @@ class MLXGenerationService {
         var exitedEarly = false
         streamingTokenCount = 0
         lastBatchEndedEarly = false
+        MemoryPressureMonitor.shared.beginRun()
         let batchStartTime = Date()
 
         for try await generation in stream {
@@ -530,6 +583,11 @@ class MLXGenerationService {
                 let elapsed = Int(Date().timeIntervalSince(batchStartTime))
                 let elapsedVal = elapsed
                 genLogger.warning("[\(model.rawValue, privacy: .public)] Batch timeout after \(elapsedVal, privacy: .public)s (\(tokenCount, privacy: .public) tokens) — attempting partial parse")
+                exitedEarly = true
+                break
+            }
+            if shouldStopForMemory(at: tokenCount) {
+                genLogger.warning("[\(model.rawValue, privacy: .public)] Memory floor reached after \(tokenCount, privacy: .public) tokens (available=\(MemoryBudget.availableMB, privacy: .public) MB) — stopping early, parsing what arrived")
                 exitedEarly = true
                 break
             }
@@ -597,14 +655,21 @@ class MLXGenerationService {
 
         MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
         let lmInput = try await container.prepare(input: userInput)
-        let parameters = GenerateParameters(maxTokens: maxTokens, temperature: 0.1)
+        let parameters = tunedParameters(maxTokens: maxTokens, temperature: 0.1)
         let stream = try await container.generate(input: lmInput, parameters: parameters)
 
         var output = ""
+        var tokenCount = 0
+        MemoryPressureMonitor.shared.beginRun()
         for try await generation in stream {
             try Task.checkCancellation()
+            if shouldStopForMemory(at: tokenCount) {
+                genLogger.warning("[\(model.rawValue, privacy: .public)] Memory floor reached after \(tokenCount, privacy: .public) tokens — returning partial text")
+                break
+            }
             if let chunk = generation.chunk {
                 output += chunk
+                tokenCount += 1
             }
         }
         return output.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -651,7 +716,7 @@ class MLXGenerationService {
 
         MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
         let lmInput = try await container.prepare(input: userInput)
-        let parameters = GenerateParameters(maxTokens: maxTokens, temperature: temperature)
+        let parameters = tunedParameters(maxTokens: maxTokens, temperature: temperature)
         let stream = try await container.generate(input: lmInput, parameters: parameters)
 
         var output = ""
@@ -660,6 +725,7 @@ class MLXGenerationService {
         streamingTokenCount = 0
         lastBatchEndedEarly = false
         isStopRequested = false
+        MemoryPressureMonitor.shared.beginRun()
         let startTime = Date()
 
         for try await generation in stream {
@@ -669,6 +735,11 @@ class MLXGenerationService {
                 break
             }
             if Date().timeIntervalSince(startTime) > timeoutSeconds {
+                exitedEarly = true
+                break
+            }
+            if shouldStopForMemory(at: tokenCount) {
+                genLogger.warning("[\(model.rawValue, privacy: .public)] Memory floor reached after \(tokenCount, privacy: .public) tokens — ending this answer early")
                 exitedEarly = true
                 break
             }
@@ -733,7 +804,7 @@ class MLXGenerationService {
 
         MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
         let lmInput = try await container.prepare(input: userInput)
-        let parameters = GenerateParameters(maxTokens: 3072, temperature: 0.6)
+        let parameters = tunedParameters(maxTokens: 3072, temperature: 0.6)
 
         genLogger.info("[\(model.rawValue, privacy: .public)] Grammar exercise generation start — focus=\(focus.rawValue, privacy: .public), count=\(count, privacy: .public)")
 
@@ -745,6 +816,7 @@ class MLXGenerationService {
         streamingTokenCount = 0
         lastBatchEndedEarly = false
         isStopRequested = false
+        MemoryPressureMonitor.shared.beginRun()
         let startTime = Date()
 
         for try await generation in stream {
@@ -754,6 +826,11 @@ class MLXGenerationService {
             }
             if Date().timeIntervalSince(startTime) > timeoutSeconds {
                 genLogger.warning("[\(model.rawValue, privacy: .public)] Grammar exercise timeout (\(tokenCount, privacy: .public) tokens) — attempting partial parse")
+                exitedEarly = true
+                break
+            }
+            if shouldStopForMemory(at: tokenCount) {
+                genLogger.warning("[\(model.rawValue, privacy: .public)] Memory floor reached after \(tokenCount, privacy: .public) tokens — parsing the exercises that arrived")
                 exitedEarly = true
                 break
             }
@@ -796,6 +873,8 @@ class MLXGenerationService {
             - "options" lists 3 choices: the correct answer plus 2 plausible wrong forms of the same kind.
             - Keep sentences short and simple (A2 level, 5-10 words). Every sentence must be different.
             - "noun" is the noun the blank refers to and "gender" its gender (maskulin/feminin/neutrum/plural); use "" when not relevant. "verb" is the main verb's infinitive, "verbForm" its form in the sentence.
+            - "english" is the whole sentence in natural English with the blank filled in.
+            - "why" completes the sentence "The answer is <correctAnswer> because …" — one clause, starting lowercase, ending with a period. Name what decides it (the noun's gender, the verb, the preposition), not just the rule's name.
             """
         if !learnerWords.isEmpty {
             prompt += "\nWhere it fits naturally, build sentences with these words the learner is studying: \(learnerWords.joined(separator: ", "))."
@@ -865,6 +944,13 @@ class MLXGenerationService {
 
     /// Clean, validate, and dedupe model-produced exercises so every survivor is playable:
     /// exactly one `______` blank, an answer, and ≥2 options that include the answer.
+    /// Trimmed, or nil when the model returned nothing usable — an empty string would show as a
+    /// Translation button that opens onto blank space.
+    private func cleaned(_ value: String?) -> String? {
+        let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
     private func normalizeGrammarExercises(
         _ raw: [CodableGrammarExercise],
         focus: GrammarFocus,
@@ -920,7 +1006,9 @@ class MLXGenerationService {
                 gender: exercise.gender ?? "",
                 verb: exercise.verb ?? "",
                 options: options,
-                verbForm: exercise.verbForm
+                verbForm: exercise.verbForm,
+                english: cleaned(exercise.english),
+                why: cleaned(exercise.why)
             ))
             if result.count >= count { break }
         }
@@ -999,7 +1087,7 @@ class MLXGenerationService {
 
         let userInput = UserInput(chat: messages)
         MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
-        let parameters = GenerateParameters(maxTokens: maxTokens, temperature: temperature)
+        let parameters = tunedParameters(maxTokens: maxTokens, temperature: temperature)
 
         // Run the decode as a cancellable child task so a stall watchdog can abort it. Without this,
         // a GPU that never yields a token leaves `for try await generation in stream` suspended
@@ -1007,15 +1095,22 @@ class MLXGenerationService {
         // the task if no token arrives within `stallTimeout`; the loop stops at its next
         // `checkCancellation()` and we surface `generationTimedOut` (shown with "Try again").
         let activity = GenerationActivity()
+        MemoryPressureMonitor.shared.beginRun()
         let decode = Task { @MainActor in
             let lmInput = try await container.prepare(input: userInput)
             let stream = try await container.generate(input: lmInput, parameters: parameters)
             var full = ""
+            var tokenCount = 0
             for try await generation in stream {
                 try Task.checkCancellation()
                 activity.recordProgress()
+                if self.shouldStopForMemory(at: tokenCount) {
+                    self.genLogger.warning("Memory floor reached after \(tokenCount, privacy: .public) tokens — cutting the reply short")
+                    break
+                }
                 if let chunk = generation.chunk {
                     full += chunk
+                    tokenCount += 1
                     let visible = ConversationPrompts.stripThinkBlocks(full)
                         .trimmingCharacters(in: .whitespacesAndNewlines)
                     onPartial(visible)
@@ -1530,67 +1625,73 @@ extension GrammarFocus {
         case .artikel:
             GrammarExerciseSeed(
                 blankInstruction: "The blank replaces the definite article (der, die, or das — Nominativ) directly before a noun.",
-                exampleJSON: #"{"sentence":"______ Hund schläft im Garten.","correctAnswer":"Der","options":["Der","Die","Das"],"noun":"Hund","gender":"maskulin","verb":"schlafen","verbForm":"schläft"}"#,
+                exampleJSON: #"{"sentence":"______ Hund schläft im Garten.","correctAnswer":"Der","options":["Der","Die","Das"],"noun":"Hund","gender":"maskulin","verb":"schlafen","verbForm":"schläft","english":"The dog is sleeping in the garden.","why":"Hund is masculine, so the Nominativ article is der."}"#,
                 fallbackOptions: ["der", "die", "das"]
             )
         case .akkusativ:
             GrammarExerciseSeed(
                 blankInstruction: "The blank replaces the Akkusativ article or determiner of the direct object.",
-                exampleJSON: #"{"sentence":"Ich sehe ______ Hund im Park.","correctAnswer":"den","options":["den","die","das"],"noun":"Hund","gender":"maskulin","verb":"sehen","verbForm":"sehe"}"#,
+                exampleJSON: #"{"sentence":"Ich sehe ______ Hund im Park.","correctAnswer":"den","options":["den","die","das"],"noun":"Hund","gender":"maskulin","verb":"sehen","verbForm":"sehe","english":"I see the dog in the park.","why":"Hund is masculine and the direct object of sehe, so der becomes den."}"#,
                 fallbackOptions: ["den", "die", "das"]
             )
         case .dativ:
             GrammarExerciseSeed(
                 blankInstruction: "The blank replaces the Dativ article or determiner of the indirect object (or after a Dativ verb/preposition).",
-                exampleJSON: #"{"sentence":"Ich helfe ______ Frau mit den Taschen.","correctAnswer":"der","options":["der","dem","den"],"noun":"Frau","gender":"feminin","verb":"helfen","verbForm":"helfe"}"#,
+                exampleJSON: #"{"sentence":"Ich helfe ______ Frau mit den Taschen.","correctAnswer":"der","options":["der","dem","den"],"noun":"Frau","gender":"feminin","verb":"helfen","verbForm":"helfe","english":"I am helping the woman with the bags.","why":"helfen always takes the Dativ, and Frau is feminine: der Frau."}"#,
                 fallbackOptions: ["dem", "der", "den"]
             )
         case .genitiv:
             GrammarExerciseSeed(
                 blankInstruction: "The blank replaces the Genitiv article showing possession.",
-                exampleJSON: #"{"sentence":"Das ist das Auto ______ Mannes.","correctAnswer":"des","options":["des","der","dem"],"noun":"Mann","gender":"maskulin","verb":"sein","verbForm":"ist"}"#,
+                exampleJSON: #"{"sentence":"Das ist das Auto ______ Mannes.","correctAnswer":"des","options":["des","der","dem"],"noun":"Mann","gender":"maskulin","verb":"sein","verbForm":"ist","english":"That is the man's car.","why":"the Genitiv shows possession, and masculine nouns take des plus an -s: des Mannes."}"#,
                 fallbackOptions: ["des", "der", "dem"]
             )
         case .perfekt:
             GrammarExerciseSeed(
                 blankInstruction: "The blank replaces the auxiliary (haben or sein form) of a Perfekt sentence — the past participle stays visible.",
-                exampleJSON: #"{"sentence":"Ich ______ gestern nach Hause gegangen.","correctAnswer":"bin","options":["bin","habe","ist"],"noun":"","gender":"","verb":"gehen","verbForm":"gegangen"}"#,
+                exampleJSON: #"{"sentence":"Ich ______ gestern nach Hause gegangen.","correctAnswer":"bin","options":["bin","habe","ist"],"noun":"","gender":"","verb":"gehen","verbForm":"gegangen","english":"I went home yesterday.","why":"gehen is a verb of motion, and those form the Perfekt with sein."}"#,
                 fallbackOptions: []
             )
         case .praeteritum:
             GrammarExerciseSeed(
                 blankInstruction: "The blank replaces the verb in Präteritum (simple past) form.",
-                exampleJSON: #"{"sentence":"Gestern ______ ich sehr müde.","correctAnswer":"war","options":["war","bin","wäre"],"noun":"","gender":"","verb":"sein","verbForm":"war"}"#,
+                exampleJSON: #"{"sentence":"Gestern ______ ich sehr müde.","correctAnswer":"war","options":["war","bin","wäre"],"noun":"","gender":"","verb":"sein","verbForm":"war","english":"Yesterday I was very tired.","why":"sein in the Präteritum is war for ich."}"#,
                 fallbackOptions: []
             )
         case .futur:
             GrammarExerciseSeed(
                 blankInstruction: "The blank replaces the conjugated form of werden in a Futur I sentence — the infinitive stays at the end.",
-                exampleJSON: #"{"sentence":"Wir ______ nächsten Sommer nach Berlin fahren.","correctAnswer":"werden","options":["werden","wird","werdet"],"noun":"","gender":"","verb":"fahren","verbForm":"fahren"}"#,
+                exampleJSON: #"{"sentence":"Wir ______ nächsten Sommer nach Berlin fahren.","correctAnswer":"werden","options":["werden","wird","werdet"],"noun":"","gender":"","verb":"fahren","verbForm":"fahren","english":"We will go to Berlin next summer.","why":"wir takes werden, and the infinitive fahren stays at the end."}"#,
                 fallbackOptions: []
             )
         case .konjunktiv2:
             GrammarExerciseSeed(
                 blankInstruction: "The blank replaces the Konjunktiv II form (würde, hätte, wäre, könnte, …) in a hypothetical or polite sentence.",
-                exampleJSON: #"{"sentence":"Wenn ich Zeit hätte, ______ ich mehr lesen.","correctAnswer":"würde","options":["würde","werde","will"],"noun":"","gender":"","verb":"lesen","verbForm":"lesen"}"#,
+                exampleJSON: #"{"sentence":"Wenn ich Zeit hätte, ______ ich mehr lesen.","correctAnswer":"würde","options":["würde","werde","will"],"noun":"","gender":"","verb":"lesen","verbForm":"lesen","english":"If I had time, I would read more.","why":"Konjunktiv II for lesen is normally würde plus the infinitive."}"#,
                 fallbackOptions: []
             )
         case .modalverben:
             GrammarExerciseSeed(
                 blankInstruction: "The blank replaces the conjugated modal verb — the main verb stays as an infinitive at the end.",
-                exampleJSON: #"{"sentence":"Ich ______ heute noch einkaufen gehen.","correctAnswer":"muss","options":["muss","musst","müssen"],"noun":"","gender":"","verb":"müssen","verbForm":"muss"}"#,
+                exampleJSON: #"{"sentence":"Ich ______ heute noch einkaufen gehen.","correctAnswer":"muss","options":["muss","musst","müssen"],"noun":"","gender":"","verb":"müssen","verbForm":"muss","english":"I still have to go shopping today.","why":"ich takes muss, and the main verb gehen stays an infinitive at the end."}"#,
+                fallbackOptions: []
+            )
+        case .praepositionen:
+            GrammarExerciseSeed(
+                blankInstruction: "The blank replaces the preposition itself. Each sentence must make exactly one preposition correct, and the article after the blank must already show that preposition's case (durch/für/ohne/um → Akkusativ; aus/bei/mit/nach/seit/von/zu → Dativ; trotz/während/wegen → Genitiv). Distractors must be other prepositions.",
+                exampleJSON: #"{"sentence":"Ich fahre ______ dem Bus zur Arbeit.","correctAnswer":"mit","options":["mit","für","ohne"],"noun":"Bus","gender":"maskulin","verb":"fahren","verbForm":"fahre","english":"I take the bus to work.","why":"dem is Dativ, and going by a vehicle takes mit."}"#,
                 fallbackOptions: []
             )
         case .wechselpraepositionen:
             GrammarExerciseSeed(
                 blankInstruction: "Each sentence uses a two-way preposition (in, an, auf, über, unter, vor, hinter, neben, zwischen); the blank replaces the article after it — Akkusativ for movement, Dativ for location.",
-                exampleJSON: #"{"sentence":"Ich gehe in ______ Stadt.","correctAnswer":"die","options":["die","der","das"],"noun":"Stadt","gender":"feminin","verb":"gehen","verbForm":"gehe"}"#,
+                exampleJSON: #"{"sentence":"Ich gehe in ______ Stadt.","correctAnswer":"die","options":["die","der","das"],"noun":"Stadt","gender":"feminin","verb":"gehen","verbForm":"gehe","english":"I am going into town.","why":"gehen is movement, so in answers Wohin? and takes the Akkusativ: die Stadt."}"#,
                 fallbackOptions: ["die", "der", "dem"]
             )
         case .adjektivendungen:
             GrammarExerciseSeed(
                 blankInstruction: "The blank replaces an adjective directly before a noun — the options differ only in their ending.",
-                exampleJSON: #"{"sentence":"Das ist ein ______ Wein.","correctAnswer":"guter","options":["guter","gute","gutes"],"noun":"Wein","gender":"maskulin","verb":"sein","verbForm":"ist"}"#,
+                exampleJSON: #"{"sentence":"Das ist ein ______ Wein.","correctAnswer":"guter","options":["guter","gute","gutes"],"noun":"Wein","gender":"maskulin","verb":"sein","verbForm":"ist","english":"That is a good wine.","why":"Wein is masculine after ein, so the adjective takes -er: guter."}"#,
                 fallbackOptions: []
             )
         }
@@ -1649,7 +1750,7 @@ extension MLXGenerationService {
 
         MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
         let lmInput = try await container.prepare(input: userInput)
-        let parameters = GenerateParameters(maxTokens: 1536, temperature: 0.6)
+        let parameters = tunedParameters(maxTokens: 1536, temperature: 0.6)
 
         genLogger.info("[\(model.rawValue, privacy: .public)] Article-noun generation start — topic length=\(topic.count, privacy: .public), count=\(count, privacy: .public)")
 
@@ -1660,10 +1761,12 @@ extension MLXGenerationService {
         streamingTokenCount = 0
         lastBatchEndedEarly = false
         isStopRequested = false
+        MemoryPressureMonitor.shared.beginRun()
         let startTime = Date()
 
         for try await generation in stream {
-            if isStopRequested || Date().timeIntervalSince(startTime) > timeoutSeconds {
+            if isStopRequested || Date().timeIntervalSince(startTime) > timeoutSeconds
+                || shouldStopForMemory(at: tokenCount) {
                 lastBatchEndedEarly = true
                 break
             }

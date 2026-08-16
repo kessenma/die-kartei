@@ -62,13 +62,15 @@ struct DrillDeckView: View {
                     Label(savedSummary, systemImage: "checkmark.circle.fill").foregroundStyle(.green)
                     Button("Done") { dismiss() }
                 }
+                .themedListRow()
             } else {
-                sourceSection
-                wordsSection
-                destinationSection
-                saveSection
+                sourceSection.themedListRow()
+                wordsSection.themedListRow()
+                destinationSection.themedListRow()
+                saveSection.themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("Drill deck")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: initOnce)
@@ -87,7 +89,7 @@ struct DrillDeckView: View {
             }
             Text(source.subtitle).font(.caption).foregroundStyle(.secondary)
         } header: {
-            Text("What to drill")
+            Text("What to drill").themedSectionHeader()
         }
     }
 
@@ -125,6 +127,7 @@ struct DrillDeckView: View {
                         .font(.caption).textCase(nil)
                 }
             }
+            .themedSectionHeader()
         }
     }
 
@@ -140,7 +143,7 @@ struct DrillDeckView: View {
                 TextField("Deck name", text: $newDeckName)
             }
         } header: {
-            Text("Destination")
+            Text("Destination").themedSectionHeader()
         } footer: {
             Text("Merging skips words already in the deck.")
                 .font(.caption2)

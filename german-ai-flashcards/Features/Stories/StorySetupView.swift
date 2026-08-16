@@ -11,6 +11,7 @@ struct StorySetupView: View {
     var mlxService: MLXGenerationService
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var appTheme
     @FocusState private var topicFocused: Bool
     @State private var service: StoryStudyService?
     @State private var topic = ""
@@ -20,6 +21,8 @@ struct StorySetupView: View {
     @State private var showStyleSheet = false
     /// Briefly true after "Add to Batch Queue", to flash the confirmation state.
     @State private var justQueued = false
+    /// Presents the memory check on a device the story model doesn't comfortably fit.
+    @State private var showMemoryCheck = false
 
     private var hero: MLXModel { StoryStudyService.requiredModel }
     private var theme: ModelTheme { hero.theme }
@@ -27,29 +30,34 @@ struct StorySetupView: View {
 
     var body: some View {
         Form {
-            if !DeviceCapability.canRunHero {
-                deviceTooSmallSection
+            if !DeviceCapability.mayRunHero {
+                deviceTooSmallSection.themedListRow()
             } else if !hero.isDownloaded {
-                downloadSection
+                downloadSection.themedListRow()
             } else {
                 heroSection
-                topicSection
-                storySection
-                questionSection
-                illustrationSection
-                translationSection
+                topicSection.themedListRow()
+                storySection.themedListRow()
+                questionSection.themedListRow()
+                illustrationSection.themedListRow()
+                translationSection.themedListRow()
                 generateSection
                 if case .failed(let message) = service?.phase {
                     Section {
                         Label(message, systemImage: "exclamationmark.triangle")
                             .foregroundStyle(.red)
                     }
+                    .themedListRow()
                 }
             }
         }
+        // Innermost so it wins over `.themedListScreen()`'s own tint: on Klar this resolves to the
+        // story hero's brand accent (pixel-identical to the old `.tint(theme.accent)`); on the
+        // identity themes it becomes the theme's accent.
+        .tint(appTheme.accent(model: theme))
+        .themedListScreen()
         .navigationTitle("New Story")
         .navigationBarTitleDisplayMode(.inline)
-        .tint(theme.accent)
         .scrollDismissesKeyboard(.interactively)
         .contentMargins(.bottom, 120, for: .scrollContent)
         .overlay {
@@ -85,11 +93,26 @@ struct StorySetupView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Label("Stories need the \(hero.rawValue)", systemImage: "book.pages")
                     .font(.headline)
-                Text("Writing a level-controlled German story and grading your answers takes the German Tutor model, and it needs a device with more memory than this one has. Everything else in the app still works here.")
+                Text("Writing a level-controlled German story and grading your answers takes the German Tutor model, and it needs more memory than this iPhone gives an app. Everything else in the app runs normally here.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                Button {
+                    showMemoryCheck = true
+                } label: {
+                    Label("Run it here anyway", systemImage: "memorychip")
+                        .font(.subheadline)
+                }
+                .padding(.top, 2)
             }
             .padding(.vertical, 4)
+        }
+        .sheet(isPresented: $showMemoryCheck) {
+            MemoryCheckSheet(
+                model: hero,
+                alternative: hero,   // stories have no smaller stand-in: it's this model or nothing
+                onUseAnyway: {},     // the sheet records the opt-in; this screen unlocks on redraw
+                onUseAlternative: { _ in }
+            )
         }
     }
 
@@ -139,7 +162,7 @@ struct StorySetupView: View {
             }
             .padding(.vertical, 4)
         } header: {
-            Text("Model Needed")
+            Text("Model Needed").themedSectionHeader()
         }
     }
 
@@ -188,7 +211,7 @@ struct StorySetupView: View {
                 Label("Browse 100 ideas", systemImage: "square.grid.2x2.fill")
             }
         } header: {
-            Text("What should the story be about?")
+            Text("What should the story be about?").themedSectionHeader()
         }
     }
 
@@ -228,7 +251,7 @@ struct StorySetupView: View {
             }
             .padding(.vertical, 4)
         } header: {
-            Text("Story")
+            Text("Story").themedSectionHeader()
         } footer: {
             let level = modelManager.storyLevel
             Text("\(level.rawValue) · \(level.englishLabel) — about \(level.storyWordRange.lowerBound)–\(level.storyWordRange.upperBound) words.")
@@ -265,7 +288,7 @@ struct StorySetupView: View {
                 }
             }
         } header: {
-            Text("Questions")
+            Text("Questions").themedSectionHeader()
         } footer: {
             Text("Pick one or more question types; the questions are split across them.")
         }
@@ -307,12 +330,16 @@ struct StorySetupView: View {
                 imageModelDownloadRow
             }
         } header: {
-            Text("Illustrations")
+            Text("Illustrations").themedSectionHeader()
         } footer: {
             if !ImageGenModel.current.isDownloaded {
                 Text("Optional: AI-drawn pictures for your stories, generated fully on-device.")
             } else if modelManager.storyIllustrationsEnabled {
-                Text("The first picture heads the story; the rest appear between paragraphs. Each takes a minute or two after the story is written — the story itself is never blocked by them.")
+                if modelManager.storyImageCount > 1 {
+                    Text("The first picture heads the story; the rest appear between paragraphs. Anyone who turns up in more than one picture gets a fixed look first, so they stay the same character throughout. Each takes a minute or two after the story is written, and the story itself is never blocked by them.")
+                } else {
+                    Text("The picture heads the story. It takes a minute or two after the story is written, and the story itself is never blocked by it.")
+                }
             }
         }
     }
@@ -331,7 +358,7 @@ struct StorySetupView: View {
                 }
             }
         } header: {
-            Text("Translation")
+            Text("Translation").themedSectionHeader()
         } footer: {
             if modelManager.storyTranslationEnabled {
                 Text("The story opens as soon as it's written; the English is added in the background and appears under Englisch when it's ready. Leave this off and the translation is written the first time you ask for it.")
@@ -415,7 +442,7 @@ struct StorySetupView: View {
             .listRowBackground(theme.linear.opacity(generateDisabled ? 0.4 : 1))
         } footer: {
             // Same settings, but queued for later instead of written now (runs from
-            // Home ▸ All Activities ▸ Batch Queue).
+            // Home ▸ All Activities ▸ Batch).
             Button(action: addToQueue) {
                 Label(
                     justQueued ? "Added to the Batch Queue" : "Add to Batch Queue instead",
@@ -541,6 +568,9 @@ struct StorySetupView: View {
             imageSlot: service?.imageSlot ?? 0,
             imageStep: service?.imageStep ?? 0,
             imageStage: service?.imageStage ?? .planning,
+            imagePreview: service?.imagePreview,
+            imagePreviewID: service?.imagePreviewID ?? 0,
+            imageThumbs: service?.imageThumbs ?? [],
             onStop: { service?.stop() }
         )
     }

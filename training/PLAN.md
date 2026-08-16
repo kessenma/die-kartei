@@ -151,7 +151,7 @@ Teacher model (Claude/GPT) generates examples **in the app's exact prompt format
 - [ ] Wave 5 (optional iteration): reflexive-focused top-up + guard slices for wo/k2
 - [x] **Multi-model baselines (2026-07-09, app's exact 4-bit repos)** — core / extension: Llama-3.2-1B **17/60 / 20/61**; Mistral-7B **26/60 / 30/61** (dawo 1/15, artikel 2/8 — drop as "high tier"; slow AND weakest-per-byte at German); Qwen3-4B **29/60 / 35/61**; Gemma-4-E4B stock **43/60 / 53/61**; Gemma-4-E4B fine-tuned **51/60 / 55/61**. Lesson: size ≠ German quality; Gemma's multilingual training dominates. Tier implication: fine-tuned E4B = mid+high tier.
 - [x] **Gemma-3-1B baseline (qat-4bit, the app's repo): core 35/60 (58%), extension 36/61 (59%) — beats Qwen3-4B AND Mistral-7B.** Behavior: 0% false corrections, catches 45% of real errors (vs Llama-1B 0%); ndekl 6/6, refl corrections 9/12. Ideal fine-tune candidate for the entry tier (~800 MB): knowledge-recall deficit + perfect verdict discipline = low-risk training target. Llama-1B verdict: NOT salvageable (answered OK to all 69 error items).
-- [x] **Gemma-3-1B fine-tune (2026-07-09): NEGATIVE RESULT — do not ship.** Core 19/60 (32%) vs 35/60 baseline; false-corrections 0%→56%. The 1B learned the FIX-producing *behavior* without the knowledge to aim it (train loss plateaued ~1.5 vs E4B's 0.21) — capacity cliff. Same dataset: E4B +13 pts, Qwen +14 pts, 1B −26 pts. **Entry tier = STOCK gemma-3-1b-qat** (58% core, 0% false corrections). Model kept at `kessenma/gemma3-1b-german-tutor` for reference only.
+- [x] **Gemma-3-1B fine-tune (2026-07-09): NEGATIVE RESULT — do not ship.** Core 19/60 (32%) vs 35/60 baseline; false-corrections 0%→56%. The 1B learned the FIX-producing *behavior* without the knowledge to aim it (train loss plateaued ~1.5 vs E4B's 0.21) — capacity cliff. Same dataset: E4B +13 pts, Qwen +14 pts, 1B −26 pts. **Entry tier = STOCK gemma-3-1b-qat** (~~58% core, 0% false corrections~~ → **corrected 2026-07-30: 34% core, 100% miss** — the 0% FC was a scoring artifact, it shows the learner nothing; see the banner in [`MODEL_SCOREBOARD.md`](MODEL_SCOREBOARD.md)). Model kept at `kessenma/gemma3-1b-german-tutor` for reference only. The negative result itself stands and was re-confirmed on 40k examples (25% core).
 
 ## Phase 6 — Ship in the app
 
@@ -167,15 +167,29 @@ Teacher model (Claude/GPT) generates examples **in the app's exact prompt format
 - [x] Eval harness now models the app: `apply_app_guard()` + `--app-guard` on `run_baseline_eval.py` and `behavior_metrics.py`. Raw generations still saved unmodified.
 - [x] App guard hardened (`ConversationPrompts.echoNormalized`): dropped `.diacriticInsensitive` (it was swallowing real umlaut corrections — `Madchen`→`Mädchen`); added whitespace/trailing-punctuation folding (an echo plus a period used to leak through). Builds clean.
 - [x] **B1 refuted**: Gemma 3 4B as a smaller/better base — QAT 50% core raw / 73% guarded, ties *stock* E2B and loses to the tune by 10 pts (dawo 3/15, evasive rewrites). Naive 4-bit is 7 pts worse than QAT — use QAT builds when comparing.
-- [ ] **Ship tuned E2B for the 6–8 GB tier**: publish `kessenma/gemma4-e2b-german-tutor-4bit`, add the `ModelConfiguration` case, update the tier table
-- [ ] Restate ship criteria on the guarded scale and re-report `MODEL_SCOREBOARD.md` with both columns
+- [x] **Ship tuned E2B for the 6–8 GB tier** (2026-07-22): `kessenma/gemma4-e2b-german-tutor-4bit` public, `ModelConfiguration` case wired, tier table updated
+- [x] Restate ship criteria on the guarded scale and re-report `MODEL_SCOREBOARD.md` with both columns
 - [ ] A3-inverted: bias the verdict token *toward* `FIX` (the guard absorbs the downside) to attack the remaining 19% miss rate
 - [ ] Small DPO run targeting the 2 remaining real defects: `sep-c3` (`zumachen`→`zuschlagen`) and the sep regression (11→8)
+
+## Phase 8 — v2 corpus + the 4 GB tier ← full log in [`training-v2.md`](training-v2.md)
+
+Plan and gates in [`DATA_V2_DISTILL_PLAN.md`](DATA_V2_DISTILL_PLAN.md).
+
+- [x] **v2 corpus** (2026-07-28): ~40k validated teacher-generated examples, ~1,400 → 40,000. Private at `kessenma/gemma4-german-tutor-data-v2`
+- [x] **E4B v2 (2026-07-29): 91% core / 0% FC** — beats the shipped v1 (85%/8%) on both headline metrics, and on naturalness (modal particles 5.1×)
+- [x] **E2B v2: 84% core / 4% FC** — a trade vs v1, not a win (miss 10% → 20%)
+- [x] **4 GB tier (2026-07-30)**: Gemma 3 1B collapses again at 28× the data (25%); **Granite 3.3 2B tuned reaches 72% core / 0% FC** vs a 34% incumbent
+- [x] LoRA rank test r=8 → r=32: core p=0.42 (no measurable gain), FC 8% → 0%. SFT exhausted
+- [ ] **SHIP E4B v2** — public HF push + one-line `ModelConfiguration` change. The one user-facing win still sitting unshipped
+- [ ] **`relpron` regressed 6/6 → 4/6 on both E4B v2 and Granite r=32** — same phenomenon, two unrelated architectures. Data-side defect in the v2 corpus; investigate before training anything else on it
+- [ ] Peak RAM for Granite on a real 4 GB device — only if the tier is revived
+- ⏸️ **4 GB track PAUSED.** Under 4 GB the choice is a model that knows German (big vocab, no body — Gemma 3 1B) or one that can learn (big body, fragmenting tokenizer — Granite). Neither clears E2B's 84%. Phase 4 on-policy KD is blocked anyway: teacher and student have incompatible vocabularies
 
 ## Writing
 
 - [ ] **Article draft**: `training/ARTICLE.md` — on-device tutor story + fine-tuning process, real numbers baked in; `[TODO]` sections await training results (latency comparison, loss curve, before/after eval table, ship status).
-- [ ] **Revise ARTICLE.md §"Round two" and §"The floor"** — both tell a capacity-cliff story that the echo decomposition contradicts (see `GEMMA_E2B_FINETUNING.md`). The 1B cliff is still real; E2B was never on it.
+- [x] **Revise ARTICLE.md §"Round two" and §"The floor"** (2026-07-30) — corrected the stock-Gemma-3-1B numbers (58% → 34%, "never falsely corrects" → shows nothing at all) and added §"Round three" on the 4 GB result, the vocabulary-vs-body tradeoff, and why no lab builds the model that would fix it.
 
 ## Risks / cautions
 

@@ -79,7 +79,9 @@ enum StoryProgressService {
             writtenCount: writtenCount
         )
         context.insert(attempt)
-        StudyLogService.record(.storyQuestions(questionCount), in: context)
+        StudyLogService.record(
+            .storyQuestions(questionCount), seconds: durationSeconds, in: context
+        )
         try? context.save()
         return attempt
     }

@@ -72,9 +72,10 @@ struct ValidationInfoSheet: View {
                 } header: {
                     Text("A note on accuracy")
                 } footer: {
-                    Text("Larger models (Gemma 3n, Gemma 4, Qwen3 4B) produce fewer warnings in practice because they have a stronger grasp of formal German grammar.")
+                    Text("The German tutors produce the fewest warnings in practice, since they were trained on this app's grammar tasks. Size matters less than you'd expect here: some of the larger general-purpose models flag more often than much smaller ones.")
                 }
             }
+            .themedListScreen()
             .navigationTitle("Dictionary Validation")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

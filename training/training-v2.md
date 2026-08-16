@@ -359,6 +359,218 @@ project has been assuming an answer to since v1.
 
 ---
 
+## Phase 2 — retrain and measure (2026-07-29)
+
+Recipe changes from v1, both forced by the data and both justified:
+
+| | v1 | v2 | why |
+|---|---|---|---|
+| epochs | 2 | **1** | 31,546 rows at 1 epoch = **10.9× v1's total step count**. Two would be 21.8× and invite overfitting at double the cost. |
+| `MAX_SEQ_LEN` | 2048 | **1024** | measured p50 284 / p99 840 / **max 1000** — nothing truncates, attention cost halves |
+| batch / accum | 2 / 4 | **8 / 1** | identical effective batch of 8, one forward/backward instead of four |
+
+Training was clean: E2B ended train 0.981 / **eval 1.004**, with eval loss still declining and
+tracking train loss almost exactly. No overfitting gap at 1 epoch — if anything there was headroom,
+which validates cutting epochs rather than raising them.
+
+⚠️ **Do not compare eval_loss across the two builds.** `packed-v2/val.jsonl` contains 33% translated
+Alpaca rows; `packed-v2-nomixin/val.jsonl` contains none. The no-mixin run reported eval_loss 0.398
+against the mixin run's 1.004 purely because its validation set is easier. Only the shared frozen
+holdout is comparable.
+
+### 2.1 E2B results — v2 holdout, all guarded
+
+| model | core | false-corr | miss |
+|---|---|---|---|
+| **v1 shipped** | 69/82 = **84%** | 12% | **10%** |
+| **v2 (with mix-in)** | 69/82 = **84%** | **4%** | 20% |
+| v2 (no mix-in) | 63/82 = 77% | 4% | 39% |
+
+**22× more data did not raise core accuracy.** 84% both times. What changed is disposition: the model
+became markedly more cautious — false corrections 12% → **4%** (3× better on the metric the
+scoreboard calls the trust-killer), missed errors 10% → **20%**.
+
+Passes the Phase 2 gate (FC ≤ 12% ✅ at 4%; core ≥ 80% ✅ at 84%), but the core/miss trade is a
+judgement call, not a free win.
+
+A plausible mechanism: v1 was 56% correction data by task row; v2 is 47%. The corpus got *broader*
+(conversation, recovery, native instruction) rather than deeper on grammar — so grammar held flat
+while naturalness moved a lot. That is exactly what the slice mix predicts.
+
+### 2.2 Naturalness — the axis that actually moved
+
+| metric | v1 | v2 mix-in | better |
+|---|---|---|---|
+| **modal particles /100 tok** | 2.94 | **12.44** | up |
+| repeat-4gram share | 0.26 | **0.12** | down |
+| top-opener share | 0.325 | **0.158** | down |
+| question variety | 0.400 | **0.474** | up |
+| type-token ratio | 0.747 | **0.778** | up |
+| sentences per reply | 2.06 | 1.44 | — |
+| English leakage | 0.00 | 0.00 | — |
+
+Modal particles **4.2×** — the single biggest defect Phase 0 identified, and the clearest
+spoken-vs-textbook marker. Canned-phrase repetition halved; the one-opener tic broken.
+
+Watch item: replies shortened 2.06 → 1.44 sentences. Still within the prompt's "one to three," but
+worth a human read for terseness.
+
+### 2.3 §1.10 ANSWERED — the mix-in earns its place, and my prediction was wrong
+
+Phase 1 asserted the machine-translated Alpaca data was harmful, on the strength of
+`Funktionieren Sie als Softwareingenieur` being the register the model saw 35% of the time.
+**Measurement says the opposite:** removing it cost **7 points of core** (84% → 77%) and **doubled
+the miss rate** (20% → 39%), while naturalness was statistically unchanged (12.12 vs 12.44
+particles).
+
+So it is not contributing register — it is contributing general language-modelling signal that keeps
+grammar capability from narrowing under a task-heavy fine-tune. The comparison is clean: both builds
+carry nearly identical task-row counts (20,931 vs 20,505), so the mix-in is the only real variable.
+
+**Decision: keep the mix-in.** And note the shape of the error — an argument from a vivid example
+(`Funktionieren Sie…`) lost to a measurement. Worth remembering next time a bad-looking sample
+suggests a data slice should go.
+
+### 2.4 E4B results — the headline
+
+| model | core | false-corr | miss |
+|---|---|---|---|
+| E4B v1 (shipped) | 70/82 (85%) | 8% | **12%** |
+| **E4B v2** | **75/82 (91%)** | **0%** | 15% |
+
+**+6 points core, false corrections eliminated.** Unlike E2B, E4B converted the extra data into
+actual capability rather than caution. Both Phase 2 gates clear with room (FC ≤ 8% → 0%;
+core ≥ 85% → 91%).
+
+Per-phenomenon, the gains land exactly where v1 was weak:
+
+| phenomenon | v1 | v2 | |
+|---|---|---|---|
+| **dawo** | 6/10 | **9/10** | +3 — the app's hardest target area |
+| adjend | 4/6 | 6/6 | +2 |
+| k2 | 3/4 | 4/4 | +1 |
+| refl | 8/10 | 9/10 | +1 |
+| wechsel | 3/5 | 4/5 | +1 |
+| wo | 4/5 | 5/5 | +1 |
+| **relpron** | 6/6 | **4/6** | −2 ⚠️ |
+| aux | 6/6 | 5/6 | −1 |
+| sep | 10/10 | 9/10 | −1 |
+
+Watch item: **relpron regressed 6/6 → 4/6.** Relative pronouns were never a v2 generation target —
+the manifest has no relpron slice — so this is plausibly drift from a corpus weighted elsewhere
+rather than damage. Worth a slice in a future generation round.
+
+Naturalness moved even more than on E2B: modal particles **2.82 → 14.49 (5.1×)**, repeat-4gram
+0.30 → 0.12, top-opener share 0.231 → 0.130, opening variety 0.70 → 0.78, TTR 0.780 → 0.806,
+follow-up rate 0.78 → 0.90, replies longer (11.3 → 13.9 tokens). English leakage stayed at zero.
+
+**So the trade this whole phase was designed to let you judge never had to be made for E4B** — it is
+better on grammar *and* better on every naturalness proxy.
+
+### 2.5 Operational note: the E4B HF push stalls
+
+The training script's `push_to_hub_merged` **hangs** for E4B-sized models. Unsloth stops at
+`Copying 1 files from cache` — a local 15 GB copy on the pod's network filesystem, before uploading.
+Measured: **0 bytes moved in 90 s**, on disk and on the wire. Both E2B pushes (10.3 GB) worked, so
+this is specific to E4B's single 15 GB safetensors shard.
+
+**Workaround, now the recommended default above ~10 GB:** `scp` the merged directory off the pod
+(~11 MB/s, ~23 min for 15 GB) and run `mlx_vlm convert --hf-path <local dir>`. It also removes HF as
+a dependency for getting the result at all.
+
+---
+
+## 2.6 ⛔ §2.4 RETRACTED — E4B v2 is worse where the app actually works (2026-08-12)
+
+Found while wiring v2 into the app. **The ship decision in §2.4 was made on the v2 holdout alone.
+Scored on the other two suites, v2 is significantly worse than the model it would replace, and on
+the core suite it is worse than the untuned base.** All guarded, all reproducible from
+`results/guarded-*.json`:
+
+| suite | stock E4B | E4B v1 (shipped) | E4B v2 |
+|---|---|---|---|
+| **core v0** (60) — the app's four target areas | 48 (80%) | **54 (90%)** | **42 (70%)** |
+| ext v1 (61) | 57 (93%) | 57 (93%) | 55 (90%) |
+| holdout v2 (82) | 64 (78%) | 70 (85%) | **75 (91%)** |
+| miss rate (v0+v1, /69) | 11 (16%) | **6 (9%)** | 19 (**28%**) |
+| false corrections (/32) | 2 (6%) | 2 (6%) | **1 (3%)** |
+
+Methodology check: this harness reproduces the recorded numbers exactly — stock E4B at 48/60 = 80%
+matches the guarded table at the top of `MODEL_SCOREBOARD.md`, and v1's 90%/93% match too.
+
+**Two corrections to §2.4:**
+
+1. **The regression is significant; the "win" is not.** Core suite: +2/−14 discordant, exact
+   McNemar **p = 0.0042**. Holdout: +10/−5, **p = 0.30**. The 85% → 91% headline that drove
+   "✅ SHIP — better on both headline metrics" does not survive a significance test on an 82-item
+   bench, while the core-suite loss does.
+2. **Per phenomenon, the loss lands exactly on the app's targets**: `refl` 11/15 → 7/15,
+   `sep` 14/15 → 11/15, `vmp` 15/15 → 12/15, `dawo` 14/15 → 12/15.
+
+### The cause: verdict imbalance, per phenomenon
+
+`pack_dataset.py` took whatever verdict mix the generator produced. It is not uniform, and nothing
+checked it:
+
+| phenomenon | v1 packed (fix share) | **v2 packed (fix share)** | v2 core-suite change |
+|---|---|---|---|
+| sep | 110 rows, **100%** | 779 rows, **20%** | 14/15 → 11/15 |
+| refl | 101 rows, **100%** | 1,911 rows, **39%** | 11/15 → **7/15** |
+| dawo | 116 rows, **100%** | 1,454 rows, 56% | 14/15 → 12/15 |
+| vmp | 130 rows, **100%** | 3,021 rows, 59% | 15/15 → 12/15 |
+| **whole correction slice** | 789 rows, **69% fix** | 9,791 rows, **44% fix** | — |
+
+v1 taught "a sentence tagged with a phenomenon has an error in it" (its `OK` examples came from a
+separate 245-row `verdict` bucket). v2 taught the opposite for `sep`: **four out of five separable-verb
+examples said nothing was wrong.** The model learned the prior, and it shows in the failure mode —
+**8 of the 14 items v1 got right and v2 got wrong are answered with a bare `OK`**, and 50% of all v2
+core-suite failures are a bare `OK` against 33% for v1:
+
+```
+sep-e1   v2: OK                              ← "Ich stehe auf jeden Tag um sieben Uhr" is wrong
+sep-e5   v2: FIX: Er hat das Licht gemacht.
+             WHY: 'ausmachen' is used for making noise, not for turning off a light.   ← invented
+         v1: FIX: Er hat das Licht ausgemacht.
+```
+
+The remaining 6 of 14 are wrong `FIX`es, so the imbalance is the dominant cause but not the only one.
+
+**This also explains §3.4**, which flagged as an unexplained mystery that `relpron` regressed 6/6 → 4/6
+on *both* E4B v2 and Granite r=32. There are **zero** `relpron` rows in the v2 corpus, so it was never
+about relpron data — both models were trained on the same OK-heavy corpus, both shifted their prior
+toward "no error", and `relpron` holdout items are mostly error items. One cause, two architectures.
+
+**§1.9's composition gate passed this.** It recorded "correction 22,342 — **43.9% fix**" as healthy
+because it was checking that fix rows *existed at all* (after the `repair_json` bug of §1.5b
+destroyed them). Nobody compared 43.9% against v1's 69%, and nothing looked per-phenomenon. That is
+the same lesson as §1.5b one level up: a gate that proves data is *present* does not prove it is
+*shaped right*.
+
+### The fix, and what it costs
+
+`pack_dataset.py` gained **`--fix-frac`**, which balances verdict per phenomenon (never dropping
+`fix` rows — they're the scarce half — only surplus `ok`). Balancing per phenomenon rather than
+globally matters: a global ratio would let `vmp` supply all the fixes while `sep` stayed at 19%.
+
+```bash
+.venv/bin/python scripts/pack_dataset.py --source data/gen_v2/corpus_v2.valid.jsonl \
+    --fix-frac 0.70 --val-frac 0.05 --out-dir data/packed-v2-balanced
+```
+
+`data/packed-v2-balanced/` — **44,211 train rows, 14,045 correction rows at 62% fix**
+(vmp/refl/dawo at 70%, sep 67%), against v2's 9,791 at 44%. That is **43% more correction data and
+the right balance, from data that already exists** — no regeneration, no teacher GPU.
+
+**Open: `sep` is thin at the source.** Only 379 `fix` rows were ever generated for it against 1,605
+`ok`, so a balanced `sep` slice is 471 rows (v2 packed 779, v1 packed 110). The correction-slice
+generation prompt under-produces separable-verb errors and should be fixed before any future run.
+
+**Not yet done: the retrain.** ~$2–3, same recipe as §2. Until then **v1 stays shipped**, and the
+app-side migration machinery is built but inert (`ModelSupersession.valid` drops any row whose
+retired repo ID still equals the live one).
+
+---
+
 ## PICK UP HERE (state as of 2026-07-29)
 
 ### Done
@@ -713,3 +925,197 @@ Resumable: completed `job_id`s append to `candidates.jsonl.done` and a rerun ski
 **Actual throughput measured:** 40 jobs in ~0.5 min of generation (~724 output tok/s at batch),
 model load ~2–3 min from the warm volume cache. vLLM 0.26.0 loads `gemma-4-26B-A4B-it` cleanly on
 the **TRITON Unquantized MoE** backend — the one architectural unknown, resolved in smoke round 1.
+
+## Phase 3 — the 4 GB tier (2026-07-29 → 2026-07-30)
+
+Goal: beat what the app actually ships to 4 GB devices (iPhone XR / 11 / SE 2–3 / 12 mini class).
+
+### 3.1 Base sweep, guarded, on the frozen v2 holdout
+
+Nine candidates converted to MLX 4-bit and scored identically (`--app-guard`, 82 items):
+
+| base | core |
+|---|---|
+| Granite 3.3 2B instruct | 45/82 = 55% |
+| Granite 4.1 3B | 41/82 = 50% |
+| Granite 4.0-H 1B | 33/82 = 40% |
+| Granite 4.0-H 350M | 24/82 = 29% |
+| Gemma 3 1B stock | 28/82 = 34% |
+
+**Structural finding.** German capability lives in large multilingual vocabularies, which consume
+the parameter budget; body capacity requires small vocabularies, which mean weaker multilingual
+pretraining. Gemma 3 1B is ~60% vocabulary table (396M body); Granite 3.3 2B is ~4% (2,399M body).
+At 4 GB you normally cannot have both — Granite 3.3 2B is the one model tested that threads it.
+
+### 3.2 The incumbent was never 58%
+
+`apply_app_guard` implemented only the echo rule, not the full `parseCorrection` contract — it was
+missing `upper.hasPrefix("OK\n")`. Stock Gemma 3 1B answers **every** item with:
+
+```
+OK
+FIX: <a real correction>
+WHY: <...>
+```
+
+The old scorer credited both branches (`expect_ok` items passed on the leading `OK`, error items
+passed on the `FIX`), scoring it 49/82 = 59%. The app shows the learner *nothing* for those replies.
+True score **28/82 = 34%**, true miss rate **100%**, not 49%. That inflated number sat on
+`MODEL_SCOREBOARD.md` as the 4 GB incumbent for weeks and made the whole budget-base search look
+like a failure. Every Gemma 4 tune is unaffected — they emit a clean `OK` or a clean `FIX`.
+
+**Second-order damage: the saved result files were poisoned too.** `results/*.json` stores
+`app_guard: true` alongside a `pass` field computed at *run time*, so every file scored before the
+fix carried the old verdict while advertising itself as guarded. Re-scoring all 16
+`v2holdout-guarded_*.json` from their (unchanged) raw responses found **3 stale**:
+
+| file | stored | corrected |
+|---|---|---|
+| `gemma-3-1b-it-4bit` | 49/82 | **28/82** |
+| `granite-3.3-2b-instruct-4bit` | 47/82 | **45/82** |
+| `Falcon-H1-1.5B-Instruct-4bit` | 11/82 | **10/82** |
+
+The other 13 — every Gemma 4 model, both tuned Granites — were already correct, which is the
+predicted signature. All three have been rewritten in place with a `rescored_note`. **Lesson: a
+scorer fix must be replayed over saved results, not just applied going forward.** Raw generations
+are the durable artifact; scores are derived and must be treated as cache.
+
+### 3.3 LoRA rank test — is 67% a capacity ceiling or an absorption limit?
+
+Single variable changed from the run that produced 67%: `r=8 → r=32` (`alpha=2r`), same corpus,
+same 1 epoch, same chat template, same quantization (4 bit / group 64 / 4.501 bpw).
+
+```
+r=8    14.1M trainable (0.50%)   final eval_loss ~0.89   55/82 = 67%
+r=32   56.4M trainable (2.18%)   final eval_loss  0.708  59/82 = 72%
+```
+
+**The loss moved a lot; the holdout core did not move measurably.**
+
+```
+gained 9   lost 5   net +4
+exact McNemar, 14 discordant: two-sided p = 0.424
+```
+
+**But the behavioral metrics did move, in the direction that matters most:**
+
+| | core | false-corr | miss |
+|---|---|---|---|
+| stock | 45/82 (55%) | 4/24 (17%) | 27/41 (66%) |
+| r=8 | 55/82 (67%) | 2/24 (8%) | 19/41 (46%) |
+| **r=32** | 59/82 (72%) | **0/24 (0%)** | 18/41 (44%) |
+
+False corrections went 8% → **0%**. This scoreboard has treated FC as the trust-killer since the
+E2B work, and on that metric r=32 is a clean win even though core is a coin flip. Read the rank
+test as: *more adapter capacity bought verdict discipline, not knowledge* — consistent with the
+capacity-cliff model, where judgment is what small students lose first.
+
+An 82-item bench cannot distinguish 67% from 72%. Read this as *rank was not the binding
+constraint* — r=64 or a second epoch is unlikely to pay. The remaining lever is on-policy KD.
+
+Per phenomenon it is a reshuffle, not a lift:
+
+```
+UP    wechsel 2/5→4/5   dawo 6/10→8/10   sep 4/10→5/10   k2 2/4→3/4   adjend 3/6→4/6
+DOWN  relpron 6/6→4/6   aux 6/6→5/6
+```
+
+Naturalness is a wash (r=8 → r=32): repeat-4gram 0.18→0.14, top-opener 0.182→0.143,
+modal particles 12.34→12.02, TTR 0.806→0.797, English leakage 0.0, stutters 0.0.
+`followup_rate` rose 0.86→0.98 — nearly every reply now ends in a question, which is worth a
+listen; that can read as interrogative rather than conversational.
+
+### 3.4 ⚠️ Carry forward: `relpron` regressed identically on two architectures
+
+E4B v2 went `relpron` 6/6 → 4/6. Granite r=32 went `relpron` 6/6 → 4/6. Same phenomenon, same
+magnitude, two unrelated model families, two separate training runs. That is not model noise —
+it points at the relative-pronoun data in the v2 corpus. **Investigate before training anything
+else on this corpus.**
+
+### 3.5 Operational: the failsafe failed a second time, in the opposite direction
+
+Round 1 (fixed 2026-07-30 morning): `grep -c … || echo 0` emits *two* lines on no-match, so the
+process count read as `0` → "training died" → it stopped a **healthy** pod 90 s after arming.
+
+Round 2 (this run): the failsafe never fired at all. `ConnectTimeout=20` bounds only *connection
+setup*, not command execution — an `ssh` that connects and then hangs blocks forever, so the poll
+loop froze inside a child and sailed past its own 16:55 deadline. Two copies were wedged this way.
+The pod idled ~6 h at $0.53/hr ≈ **$3.20**. The model was never at risk: the HF push completed
+before the hang.
+
+**Fix for the next one:** `-o ServerAliveInterval=10 -o ServerAliveCountMax=3`, wrap every poll in
+`timeout 60`, and make the deadline a backstop that a wedged child cannot block.
+
+### 3.6 Unsloth drops `rope_theta` on Granite merges — every time
+
+Both the r=8 and r=32 merges came back missing `rope_theta` (`10000000.0`) and `rope_scaling`, and
+`mlx_lm` refuses to convert without them. Restore from `ibm-granite/granite-3.3-2b-instruct`
+before converting. This is now scripted, not remembered.
+
+### 3.7 Where the 4 GB tier stands
+
+```
+Gemma 3 1B stock  (ships today)   34%
+Granite 3.3-2b tuned r=8          67%
+Granite 3.3-2b tuned r=32         72%   (noise-equivalent to r=8)
+──────────────────────────────────────
+E2B v2 (6 GB)                     84%
+E4B v2 (8 GB)                     91%
+```
+
+Roughly **double** the incumbent, short of E2B. Artifacts: `kessenma/granite33-2b-german-v2-r32`
+(private), local `models/granite33-2b-r32-4bit` (1.3 GB).
+
+**Open before shipping:** measure peak RAM on a real 4 GB device, and resolve §3.4.
+
+### 3.8 Granite's tokenizer reads German in fragments
+
+Found while scoping Phase 4. The teacher and the student do not share a vocabulary, and the
+student's is poorly matched to the language:
+
+```
+"Ich habe gestern das Buch gelesen."
+
+Gemma 4  (7)  ['Ich', '▁habe', '▁gestern', '▁das', '▁Buch', '▁gelesen', '.']
+Granite (13)  ['I','ch','Ġh','abe','Ġgest','ern','Ġdas','ĠB','uch','Ġge','les','en','.']
+```
+
+| | vocab | tokenizer | German cost |
+|---|---|---|---|
+| Gemma 4 E4B | 262,144 | SentencePiece | 1 token/word |
+| Granite 3.3 2B | 49,159 | byte-level BPE | ~1.9× |
+
+Three consequences, in descending order of how well established they are:
+
+1. **~2× slower generation per German word**, on the weakest hardware in the lineup. Measured.
+2. **Effectively halved context** for German text. Follows directly.
+3. **Plausibly part of the 72% ceiling** — body capacity spent reassembling subwords rather than
+   on grammar. This is a hypothesis, consistent with a model whose body is 6× Gemma 3 1B's yet
+   plateaus, but it is *not measured* and should not be quoted as a finding.
+
+It also blocks Phase 4 as designed (no shared vocabulary → no token-level KL). See the block
+notice in [`DATA_V2_DISTILL_PLAN.md`](DATA_V2_DISTILL_PLAN.md).
+
+### 3.9 Status: 4 GB track PAUSED (2026-07-30)
+
+The tier doubles and stops.
+
+```
+Gemma 3 1B stock (ships today)    34%
+Granite 3.3-2b tuned r=32         72%
+E2B v2 (6 GB)                     84%
+```
+
+Paused rather than pursued further, because every remaining lever is weak: SFT is exhausted
+(§3.3), on-policy KD needs a redesign for this pairing (§3.8), the tokenizer penalty is
+structural, and the 4 GB device population is shrinking. The structural read is that under 4 GB
+you choose between a model that knows German (large vocabulary, no body left — Gemma 3 1B) and
+one that can learn (large body, fragmenting tokenizer — Granite); neither wins. Reopen when a
+small base offers both.
+
+**Not blocked by this pause, and still open:**
+
+- Ship E4B v2 (91% core / 0% FC) — public HF push + one-line `ModelConfiguration` change.
+- The `relpron` regression, 6/6 → 4/6 on **both** E4B v2 and Granite r=32 (§3.4). Data-side,
+  free to investigate, currently taxing every model trained on this corpus.
+- Peak RAM for Granite on a real 4 GB device, if the tier is ever revived.

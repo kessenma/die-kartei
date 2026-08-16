@@ -283,6 +283,13 @@ def main() -> None:
                          'native_instruction=0.05". Slices generate at very different yields — the '
                          'v2 correction slice over-produced 83%% against target — so without this '
                          'the corpus is skewed toward whatever generated most easily.')
+    ap.add_argument("--fix-frac", type=float, default=None,
+                    help="target share of verdict=fix rows WITHIN EACH correction phenomenon "
+                         "(e.g. 0.70). Surplus `ok` rows are dropped; `fix` rows are always kept. "
+                         "Unset = take whatever the generator produced, which is how v2 shipped "
+                         "at 44%% fix against v1's 69%% and taught the model to answer OK. See the "
+                         "2026-08-12 entry in training-v2.md — sep arrived at 19%% fix and "
+                         "regressed hardest on the core suite.")
     ap.add_argument("--nudge-ok-frac", type=float, default=0.25,
                     help="share of verdict=ok rows rendered under the nudgeMe system prompt, so "
                          "the model learns OK is still a valid nudgeMe reply (default 0.25)")
@@ -333,9 +340,43 @@ def main() -> None:
     else:
         stats_mix = None
 
+    # Verdict balance, per phenomenon.
+    #
+    # The generator decides how many of its correction rows carry a real error, and it is not
+    # uniform: for v2 it produced 60% fix on `vmp` but only 19% on `sep`. Packed as-is that is what
+    # the model learns — under a "separable verb" prompt, four out of five examples said nothing was
+    # wrong — and E4B v2 duly answered a bare OK to textbook separable-verb errors, dropping the
+    # core suite 54/60 -> 42/60 (p=0.004) with the miss rate going 9% -> 28%.
+    #
+    # Balancing per phenomenon rather than globally is the point: a global ratio would still let a
+    # well-covered phenomenon supply all the fixes while a thin one stayed almost entirely `ok`.
+    # `fix` rows are never dropped — they're the scarce half — so this only ever discards surplus
+    # `ok` rows, and a phenomenon that can't reach the target simply contributes what it has.
+    stats_fix = None
+    if args.fix_frac is not None:
+        by_phen = {}
+        for d in raw:
+            if d.get("task") == "correction" and d.get("phenomenon") != "verdict":
+                by_phen.setdefault(d.get("phenomenon", "?"), []).append(d)
+        drop = set()
+        stats_fix = {}
+        for phen, rows in by_phen.items():
+            fix = [d for d in rows if d.get("verdict") == "fix"]
+            ok = [d for d in rows if d.get("verdict") != "fix"]
+            if not fix:
+                continue                      # nothing to balance against; leave the slice alone
+            keep_ok = min(len(ok), round(len(fix) * (1 - args.fix_frac) / args.fix_frac))
+            rng.shuffle(ok)
+            drop.update(id(d) for d in ok[keep_ok:])
+            stats_fix[phen] = {"fix": len(fix), "ok_available": len(ok), "ok_kept": keep_ok,
+                               "fix_share": round(len(fix) / (len(fix) + keep_ok), 3)}
+        raw = [d for d in raw if id(d) not in drop]
+
     seen, examples, stats = set(), [], {}
     if stats_mix:
         stats["slice_mix"] = stats_mix
+    if stats_fix:
+        stats["fix_balance"] = stats_fix
     for _src in [None]:
         for d in raw:
             task = d["task"]

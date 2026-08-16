@@ -45,15 +45,16 @@ struct CoachNotesView: View {
                 )
             } else {
                 List {
-                    statsSection
-                    drillSection
-                    clozeSection
-                    grammarSection
-                    vocabSection
-                    slipsSection
-                    archiveSection
-                    resetSection
+                    statsSection.themedListRow()
+                    drillSection.themedListRow()
+                    clozeSection.themedListRow()
+                    grammarSection.themedListRow()
+                    vocabSection.themedListRow()
+                    slipsSection.themedListRow()
+                    archiveSection.themedListRow()
+                    resetSection.themedListRow()
                 }
+                .themedListScreen()
             }
         }
         .navigationTitle("Coach's Notes")
@@ -119,10 +120,12 @@ struct CoachNotesView: View {
 
     @ViewBuilder private var grammarSection: some View {
         if !grammarRows.isEmpty {
-            Section("Grammar") {
+            Section {
                 ForEach(grammarRows, id: \.focus) { row in
                     GrammarConfidenceRow(focus: row.focus, skill: row.skill)
                 }
+            } header: {
+                Text("Grammar").themedSectionHeader()
             }
         }
     }
@@ -158,7 +161,7 @@ struct CoachNotesView: View {
                     }
                 }
             } header: {
-                Text("Words you're building")
+                Text("Words you're building").themedSectionHeader()
             } footer: {
                 Text("Words the coach weaves back into future chats. Swipe to pin (never forgotten) or remove.")
                     .font(.caption2)
@@ -207,7 +210,7 @@ struct CoachNotesView: View {
                     }
                 }
             } header: {
-                Text("Slip-ups it's watching")
+                Text("Slip-ups it's watching").themedSectionHeader()
             } footer: {
                 Text("Repeated word-level mistakes. The coach pays extra attention to these when correcting, and drops one automatically once you use it correctly.")
                     .font(.caption2)
@@ -428,7 +431,9 @@ struct MemoryArchiveView: View {
                             }
                         }
                     }
+                    .themedListRow()
                 }
+                .themedListScreen()
             }
         }
         .navigationTitle("Archive")

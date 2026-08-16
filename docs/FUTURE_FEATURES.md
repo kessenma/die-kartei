@@ -300,11 +300,17 @@ You already have `SpeechService` (TTS) and `SpeechRecognitionService`. Two compl
 - **Dictation / listening:** the coach speaks a sentence, the learner types or repeats it — trains the
   ear, which conversation-by-text under-exercises.
 
-### 11. CEFR "can-do" goal spine  🔨 M
+### 11. CEFR "can-do" goal spine  🔨 M  — ✅ Shipped (as die Lernpyramide)
 A light curriculum of "I can…" statements ("order food", "describe my weekend", "handle a phone
 call") mapped onto your existing `ConversationScenario`s. Gives the learner *direction* and a sense
 of *completion* — the motivational scaffold a free-form app lacks. Progress is inferred from which
 scenarios they've handled well (from the profile).
+
+> **Shipped differently:** the motivational spine landed as **die Lernpyramide** (see
+> `docs/GAMIFICATION.md`) — a six-layer 3D learning path (prepositions → A1 words → A1 stories →
+> grammar core → A2 → conversation peak), each layer filled from real mastery signals, with tappable
+> layers routing into the matching activity. The scenario-mapped "I can…" checklist remains a valid
+> future addition *inside* the Spitze layer, but the direction/completion need is served.
 
 ### 12. Persona continuity  🔨 S
 Lena (the freestyle partner) greeting the learner with a genuine callback — *"Letztes Mal hast du von

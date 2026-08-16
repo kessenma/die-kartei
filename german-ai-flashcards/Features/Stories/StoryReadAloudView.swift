@@ -16,6 +16,7 @@ struct StoryReadAloudView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var appTheme
 
     @State private var segments: [SpeechService.Segment] = []
     @State private var isPlaying = false
@@ -25,6 +26,11 @@ struct StoryReadAloudView: View {
     @State private var spokenRange: NSRange?
     @State private var slow = false
     @State private var showVoicePicker = false
+    /// A one-time nudge, the first time a story is played aloud, pointing out the voice control —
+    /// the tester couldn't find where to switch voices. Anchored to the voice button in the transport
+    /// bar, shown once, then never again. (Voice choice was previously only obvious in Settings.)
+    @State private var showVoiceTip = false
+    @AppStorage("readAloud.seenVoiceTip") private var seenVoiceTip = false
 
     // Word/phrase gestures, mirroring `StoryDetailView`.
     @State private var inspector: WordInspectorModel?
@@ -45,6 +51,10 @@ struct StoryReadAloudView: View {
                 storyScroll
                 Divider()
                 transportBar
+            }
+            // Identity themes paint their ground behind the reader; Klar keeps its system background.
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
             }
             .navigationTitle(story.title)
             .navigationBarTitleDisplayMode(.inline)
@@ -88,7 +98,23 @@ struct StoryReadAloudView: View {
                 imagesBySegment = Self.imageAnchors(story: story, segments: segments)
             }
             if inspector == nil {
-                inspector = StoryWordInspector.make(story: story, mlxService: mlxService, context: modelContext)
+                // The glossary isn't listed on this screen, but it still answers a double-tap on any
+                // word it covers, without loading the model mid-playback.
+                var known = StoryGlossaryHighlighter
+                    .highlight(for: story.glossary, in: story.storyText).wordTranslations
+                // Words looked up on the reading screen answer here too, and vice versa — the list
+                // lives on the story, not the screen.
+                for entry in story.lookups where known[entry.german.lowercased()] == nil {
+                    known[entry.german.lowercased()] = KnownTranslation(
+                        german: entry.german, english: entry.english, source: .earlierLookup
+                    )
+                }
+                inspector = StoryWordInspector.make(
+                    story: story,
+                    mlxService: mlxService,
+                    knownTranslations: known,
+                    context: modelContext
+                )
             }
         }
         // Leaving this screen stops playback; backgrounding the app does not (Now Playing continues).
@@ -110,6 +136,7 @@ struct StoryReadAloudView: View {
                             textStyle: .title3,
                             highlightRange: highlight(for: index),
                             savedWords: savedWords,
+                            lookedUpWords: lookedUpWords,
                             onTapWord: { inspector?.inspect($0) },
                             onTranslateSelection: { inspector?.inspect($0) },
                             onSavePhrase: { phraseDraft = PhraseDraft(german: $0) },
@@ -118,7 +145,7 @@ struct StoryReadAloudView: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
                         .background(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            RoundedRectangle(cornerRadius: appTheme.innerRadius(12), style: .continuous)
                                 .fill(index == currentIndex && isPlaying ? theme.accent.opacity(0.10) : .clear)
                         )
                         .id(index)
@@ -149,6 +176,11 @@ struct StoryReadAloudView: View {
     /// Lowercased German words already saved to this story's deck — highlighted in the text.
     private var savedWords: Set<String> {
         StoryDeckStore.savedWords(for: story, context: modelContext)
+    }
+
+    /// Lowercased forms of the words looked up in this story — marked in red while following along.
+    private var lookedUpWords: Set<String> {
+        Set(story.lookups.map { $0.german.lowercased() })
     }
 
     /// Map each inline illustration onto the segment it should follow, by matching the paragraph's
@@ -232,6 +264,24 @@ struct StoryReadAloudView: View {
                 }
                 .buttonStyle(.bordered)
                 .tint(theme.accent)
+                .popover(isPresented: $showVoiceTip) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Change the reading voice", systemImage: "person.wave.2.fill")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Tap here to pick who reads the story. Natural German voices sound far better than the basic one.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Button("Choose a voice") {
+                            showVoiceTip = false
+                            showVoicePicker = true
+                        }
+                        .font(.caption.weight(.semibold))
+                        .padding(.top, 2)
+                    }
+                    .padding(14)
+                    .frame(width: 240)
+                    .presentationCompactAdaptation(.popover)
+                }
             }
         }
         .padding(.horizontal, 20)
@@ -288,6 +338,12 @@ struct StoryReadAloudView: View {
         )
         isPlaying = true
         isPaused = false
+
+        // First time a learner ever plays a story aloud, point out the voice control once.
+        if !seenVoiceTip {
+            seenVoiceTip = true
+            showVoiceTip = true
+        }
     }
 
     private func goNext() {
@@ -354,7 +410,9 @@ private struct ReadAloudVoiceSheet: View {
                 } footer: {
                     Text("Add natural German voices in iOS Settings ▸ Accessibility ▸ Spoken Content ▸ Voices. Basic voices sound robotic.")
                 }
+                .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("Reading voice")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

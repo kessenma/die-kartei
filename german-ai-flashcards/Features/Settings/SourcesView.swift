@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SourcesView: View {
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         List {
             // MARK: - Goethe-Institut Word Lists
@@ -10,7 +12,7 @@ struct SourcesView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 40, height: 40)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
 
                     Text(
                         "The A1, A2, and B1 vocabulary decks are built from the official word lists published by the Goethe-Institut for their German language certification exams. These lists define the vocabulary expected at each CEFR level."
@@ -40,7 +42,9 @@ struct SourcesView: View {
                 )
             } header: {
                 Text("Goethe-Institut Word Lists")
+                    .themedSectionHeader()
             }
+            .themedListRow()
 
             // MARK: - Wiktionary / Kaikki
             Section {
@@ -49,7 +53,7 @@ struct SourcesView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 40, height: 40)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
 
                     Text(
                         "AI-generated flashcards are validated against a dictionary derived from Wiktionary data. The raw data is provided by Kaikki.org and processed into a compact SQLite database bundled with the app. Gender, part of speech, and English translations are cross-checked after each generation."
@@ -78,7 +82,9 @@ struct SourcesView: View {
                 .padding(.vertical, 2)
             } header: {
                 Text("Wiktionary (via Kaikki.org / Wiktextract)")
+                    .themedSectionHeader()
             }
+            .themedListRow()
 
             // MARK: - Correcting Issues
             Section {
@@ -108,9 +114,11 @@ struct SourcesView: View {
                 .padding(.vertical, 4)
             } header: {
                 Label("Correcting Validation Issues", systemImage: "pencil.circle")
+                    .themedSectionHeader()
             } footer: {
                 Text("Corrections are saved immediately. Re-opening the deck from the library will show the updated articles.")
             }
+            .themedListRow()
 
             // MARK: - AI Generation
             Section {
@@ -137,8 +145,11 @@ struct SourcesView: View {
                 .padding(.vertical, 4)
             } header: {
                 Label("AI-Generated Content", systemImage: "sparkles")
+                    .themedSectionHeader()
             }
+            .themedListRow()
         }
+        .themedListScreen()
         .navigationTitle("Sources")
         .contentMargins(.bottom, 120, for: .scrollContent)
     }
@@ -153,7 +164,7 @@ struct SourcesView: View {
                 .fontWeight(.semibold)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
-                .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 5))
+                .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(5)))
                 .foregroundStyle(.tint)
                 .frame(width: 40, alignment: .center)
 

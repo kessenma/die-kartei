@@ -50,8 +50,10 @@ struct TrickyPairsView: View {
                 } footer: {
                     Text("Match a pair first-try \(MatchingStatsService.graduationStreak) rounds in a row and it graduates off this list. Swipe to remove one yourself.")
                 }
+                .themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("Tricky Pairs")
         .navigationBarTitleDisplayMode(.inline)
         .contentMargins(.bottom, 120, for: .scrollContent)
@@ -82,8 +84,13 @@ struct TrickyPairsView: View {
     private func row(_ stat: MatchingPairStat) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
-                Text("\(stat.displayGerman) — \(stat.english)")
-                    .font(.subheadline.weight(.medium))
+                // Article colored by gender (der blue / die red / das green); the rest stays default.
+                // Two Texts in an HStack rather than `Text + Text` (deprecated on iOS 26).
+                HStack(spacing: 4) {
+                    Text.gendered(stat.german, article: stat.article)
+                    Text("— \(stat.english)")
+                }
+                .font(.subheadline.weight(.medium))
                 Spacer()
                 Text("missed ×\(stat.timesMissed)")
                     .font(.caption2.weight(.semibold))

@@ -7,6 +7,8 @@ import SwiftUI
 struct RecommendedBadge: View {
     var text: String = "Recommended"
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         HStack(spacing: 3) {
             Image(systemName: "star.fill")
@@ -19,7 +21,7 @@ struct RecommendedBadge: View {
         .padding(.vertical, 2)
         .background(MLXModel.hero.theme.accent.opacity(0.16))
         .foregroundStyle(MLXModel.hero.theme.accent)
-        .clipShape(Capsule())
+        .clipShape(appTheme.pillShape)
     }
 }
 

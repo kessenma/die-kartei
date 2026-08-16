@@ -16,6 +16,7 @@ struct BatchQueueView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(ActivityRouter.self) private var router
+    @Environment(\.appTheme) private var appTheme
     @Query(sort: \BatchJob.sortOrder) private var jobs: [BatchJob]
 
     @State private var showingPlanner = false
@@ -38,23 +39,24 @@ struct BatchQueueView: View {
     var body: some View {
         List {
             if jobs.isEmpty {
-                introSection
+                introSection.themedListRow()
             }
             if queue.isRunning || runningJob != nil {
-                runningSection
+                runningSection.themedListRow()
             }
-            plannerSection
+            plannerSection.themedListRow()
             if !queuedJobs.isEmpty {
-                upNextSection
+                upNextSection.themedListRow()
             }
-            addSection
+            addSection.themedListRow()
             if !queuedJobs.isEmpty, !queue.isRunning {
-                runSection
+                runSection.themedListRow()
             }
             if !finishedJobs.isEmpty {
-                finishedSection
+                finishedSection.themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("Batch Queue")
         .navigationBarTitleDisplayMode(.inline)
         .contentMargins(.bottom, 120, for: .scrollContent)
@@ -140,6 +142,7 @@ struct BatchQueueView: View {
             }
         } header: {
             Text("Job \(min(queue.jobsFinishedThisRun + 1, max(queue.jobsTotalThisRun, 1))) of \(max(queue.jobsTotalThisRun, 1))")
+                .themedSectionHeader()
         } footer: {
             Text("Pause finishes the current job and holds the rest. Stop abandons the current job; it stays queued for next time.")
         }
@@ -153,7 +156,7 @@ struct BatchQueueView: View {
             .onDelete(perform: deleteQueued)
             .onMove(perform: moveQueued)
         } header: {
-            Text("Up Next")
+            Text("Up Next").themedSectionHeader()
         } footer: {
             if queuedJobs.count > 1 {
                 Text("Jobs run top to bottom. Use Edit to reorder.")
@@ -171,7 +174,7 @@ struct BatchQueueView: View {
                         .font(.title3)
                         .foregroundStyle(.tint)
                         .frame(width: 34, height: 34)
-                        .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Plan It for Me")
                             .font(.subheadline)
@@ -205,7 +208,7 @@ struct BatchQueueView: View {
                 Label("Add Pictures for Existing Decks", systemImage: "photo.on.rectangle.angled")
             }
         } header: {
-            Text("Add Jobs")
+            Text("Add Jobs").themedSectionHeader()
         }
     }
 
@@ -251,7 +254,7 @@ struct BatchQueueView: View {
             }
             .foregroundStyle(.secondary)
         } header: {
-            Text("Finished")
+            Text("Finished").themedSectionHeader()
         } footer: {
             Text("Tap a finished job to open what it made.")
         }
@@ -370,13 +373,15 @@ struct BatchQueueView: View {
 struct QueueJobRow: View {
     let job: BatchJob
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: job.systemImage)
                 .font(.title3)
                 .foregroundStyle(.tint)
                 .frame(width: 34, height: 34)
-                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(job.topic)

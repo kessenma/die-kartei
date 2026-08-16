@@ -122,6 +122,7 @@ struct CardImageStyleSheet: View {
                 }
                 .padding(16)
             }
+            .themedListScreen()
             .navigationTitle("Picture Style")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

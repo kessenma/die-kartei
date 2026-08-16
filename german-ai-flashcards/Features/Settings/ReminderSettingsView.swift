@@ -22,6 +22,7 @@ struct ReminderSettingsView: View {
                 Text("A gentle nudge to keep your German going. Off by default, and every reminder resets the moment you practice.")
                     .font(.caption2)
             }
+            .themedListRow()
 
             if modelManager.practiceRemindersEnabled {
                 if systemNotificationsDenied {
@@ -48,6 +49,7 @@ struct ReminderSettingsView: View {
                             Label("Open Settings", systemImage: "arrow.up.right.square")
                         }
                     }
+                    .themedListRow()
                 }
 
                 Section {
@@ -55,13 +57,15 @@ struct ReminderSettingsView: View {
                         Toggle(checkpoint.title, isOn: checkpointBinding(checkpoint))
                     }
                 } header: {
-                    Text("Remind me if I haven't practiced in…")
+                    Text("Remind me if I haven't practiced in…").themedSectionHeader()
                 } footer: {
                     Text(checkpointsFooter)
                         .font(.caption2)
                 }
+                .themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("Practice Reminders")
         .navigationBarTitleDisplayMode(.inline)
         .task { await refreshAuthorizationState() }

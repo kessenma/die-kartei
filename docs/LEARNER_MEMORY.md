@@ -273,6 +273,38 @@ those questions were logged as if they were flashcards. (2026-07-21)
 - ⬜ (next) Let the Today plan recommend a story — reading is now measurable, so "keep reading
   <title>" can be a first-class next action alongside due cards and a weak-grammar drill.
 
+## Phase 10 — Preposition exercises read *and* write the profile  ✅
+
+`Features/Grammar/Prepositions/` (hub / Kasus drill / cards / rules sheet) + `Models/Preposition.swift`,
+`PrepositionStats.swift` + `Services/PrepositionService.swift` + `Resources/prepositions.json`.
+The third non-conversation writer (2026-07-28), and the second to move a *grammar* skill from a game.
+Content is the full Michigan preposition list (36 entries, 28 `core` / 8 `advanced`).
+
+- ✅ New `GrammarFocus.praepositionen` key (alongside the existing `.wechselpraepositionen`).
+  **Four surfaces write to it through one rail — `applyDrillResult`:** the Kasus drill
+  (first-try accuracy = the drill score, via `PrepositionService.recordRound`) and all four bundled
+  fill-in-the-blank sets, whose `grammaticalCase` carries the focus raw value so the existing
+  `ContentView` hook moves the skill with no new wiring. Wechsel exercises move
+  `.wechselpraepositionen`; the rest move `.praepositionen`.
+- ✅ Vocab hand-off mirrors Phases 5/8: a preposition missed in ≥2 rounds (until 3 first-try rounds
+  in a row) flows into `LearnerProfile.vocab` via `noteVocabEncounters`, gated by
+  Settings → Cards → Präpositionen → "Share tricky prepositions with the coach" (default on).
+  The matching round rides the *existing* `MatchingStatsService` rail instead, so preposition pairs
+  land in Tricky Pairs like any other word pair.
+- ✅ Read direction: shaky prepositions surface as a Coach's Pick that routes to the hub, and the
+  Grammar hub's Präpositionen section takes the "Needs work" flame. The AI exercise creator can
+  generate preposition exercises (new `GrammarExerciseSeed` for the focus).
+- ✅ Own stats mirror `ArticleStats`: `PrepositionStat` (misses + *which wrong case keeps being
+  picked*) and `PrepositionRound` history; tricky prepositions bias round sampling; both registered
+  in the app schema.
+- ✅ Streak: rounds record as `.grammar(n)` through `StudyLogService` (→ `StudyDay` → flame +
+  calendar shading), and `PrepositionRound` rows appear in the streak calendar's day-detail timeline.
+- **No "your words" round source here, by design.** The article game can drill *the learner's own*
+  nouns because nouns are open-ended; prepositions are a closed set of 36, so the personalization
+  that matters is *which* ones keep being missed (tricky bias) rather than which ones are theirs.
+- ⬜ Verify on device: a finished round moves a Präpositionen bar in Coach's Notes, a preposition
+  missed twice reaches the coach's vocabulary, and the round shows on the tapped calendar day.
+
 ---
 
 ## Feature complete (Phases 1–3)

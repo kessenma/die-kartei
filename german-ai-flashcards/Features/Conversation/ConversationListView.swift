@@ -36,6 +36,7 @@ struct ConversationListView: View {
                     Text("Have a spoken German conversation with the on-device AI. Pick a topic, deck, or scenario, choose a grammar focus, and talk — it corrects you as you go.")
                         .font(.caption2)
                 }
+                .themedListRow()
             }
 
             if conversations.isEmpty {
@@ -46,8 +47,9 @@ struct ConversationListView: View {
                         description: Text("Tap “New Conversation” to start talking.")
                     )
                 }
+                .themedListRow()
             } else {
-                Section("Saved conversations") {
+                Section {
                     ForEach(conversations) { convo in
                         Button {
                             activeChat = ActiveChat(conversation: convo, config: makeConfig(for: convo))
@@ -71,9 +73,13 @@ struct ConversationListView: View {
                             }
                         }
                     }
+                } header: {
+                    Text("Saved conversations").themedSectionHeader()
                 }
+                .themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle(showsCreateActions ? "Conversation Practice" : "Library")
         .navigationBarTitleDisplayMode(.inline)
         .contentMargins(.bottom, 120, for: .scrollContent)
@@ -171,6 +177,8 @@ struct ActiveChat: Identifiable {
 private struct ConversationRow: View {
     let conversation: ChatConversation
 
+    @Environment(\.appTheme) private var appTheme
+
     private var hintsUsed: Int {
         conversation.summary?.hintsUsed ?? conversation.messages.filter { $0.usedHint }.count
     }
@@ -185,7 +193,7 @@ private struct ConversationRow: View {
                 .foregroundStyle(.tint)
                 .frame(width: 32, height: 32)
                 .background(Color.accentColor.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(conversation.title)
@@ -223,7 +231,7 @@ private struct ConversationRow: View {
             if let model = conversation.model {
                 model.logoImage.resizable().scaledToFit()
                     .frame(width: 22, height: 22)
-                    .clipShape(RoundedRectangle(cornerRadius: 5))
+                    .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(5)))
             }
             Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
         }
@@ -243,5 +251,15 @@ private struct ConversationRow: View {
             parts.append(focus.map(\.germanLabel).joined(separator: ", "))
         }
         return parts.joined(separator: " · ")
+    }
+}
+
+#Preview("Conversations · 4 themes") {
+    ForEach(AppTheme.allCases) { theme in
+        NavigationStack {
+            ConversationListView(modelManager: MLXModelManager(), mlxService: MLXGenerationService())
+        }
+        .environment(\.appTheme, theme)
+        .modelContainer(for: [ChatConversation.self, SavedDeck.self], inMemory: true)
     }
 }

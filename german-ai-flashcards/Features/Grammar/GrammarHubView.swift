@@ -18,6 +18,7 @@ struct GrammarHubView: View {
     let onStartPastTenseStudy: (_ cards: [VocabCard], _ topic: String, _ style: FlashcardStyle, _ subDeckLabel: String) -> Void
 
     @Query private var profiles: [LearnerProfile]
+    @Environment(\.appTheme) private var appTheme
 
     @State private var categories: [GrammarCategory] = []
     @State private var isLoading = true
@@ -34,16 +35,25 @@ struct GrammarHubView: View {
                     ProgressView().padding()
                     Spacer()
                 }
+                .themedListRow()
             } else {
                 coachSection
+                    .themedListRow()
                 aiSection
+                    .themedListRow()
                 articleSection
+                    .themedListRow()
+                prepositionSection
+                    .themedListRow()
                 ForEach(caseOrder.filter { grouped[$0] != nil }, id: \.self) { caseKey in
                     categorySection(caseKey)
+                        .themedListRow()
                 }
                 perfektSection
+                    .themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("Grammar Exercises")
         .navigationBarTitleDisplayMode(.large)
         .contentMargins(.bottom, 120, for: .scrollContent)
@@ -93,6 +103,7 @@ struct GrammarHubView: View {
                 }
             } header: {
                 Text("Coach's Picks")
+                    .themedSectionHeader()
             } footer: {
                 Text("Spots your conversations keep tripping on. Drilling them here updates what the coach remembers.")
             }
@@ -108,6 +119,13 @@ struct GrammarHubView: View {
                     ArticleGameSetupView(modelManager: modelManager, mlxService: mlxService)
                 } label: {
                     coachRowLabel(focus, subtitle: "Needs work · play a der/die/das round", chevron: false)
+                }
+            } else if focus == .praepositionen || focus == .wechselpraepositionen {
+                // The preposition hub carries every drill for both focuses.
+                NavigationLink {
+                    PrepositionHubView(modelManager: modelManager)
+                } label: {
+                    coachRowLabel(focus, subtitle: "Needs work · drill the cases", chevron: false)
                 }
             } else if let category = GrammarExerciseService.category(for: focus, rotation: dayIndex) {
                 Button {
@@ -140,7 +158,7 @@ struct GrammarHubView: View {
                 .font(.title3)
                 .foregroundStyle(.orange)
                 .frame(width: 34, height: 34)
-                .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
             VStack(alignment: .leading, spacing: 2) {
                 Text(focus.germanLabel)
                     .font(.subheadline)
@@ -173,7 +191,7 @@ struct GrammarHubView: View {
                         .font(.title3)
                         .foregroundStyle(.tint)
                         .frame(width: 34, height: 34)
-                        .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Create with AI")
                             .font(.subheadline)
@@ -187,6 +205,7 @@ struct GrammarHubView: View {
             }
         } header: {
             Text("Make Your Own")
+                .themedSectionHeader()
         }
     }
 
@@ -211,7 +230,7 @@ struct GrammarHubView: View {
                         .font(.title3)
                         .foregroundStyle(.tint)
                         .frame(width: 34, height: 34)
-                        .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Der · Die · Das")
                             .font(.subheadline)
@@ -225,6 +244,35 @@ struct GrammarHubView: View {
             }
         } header: {
             sectionHeader("Artikel · Noun Gender", focus: .artikel)
+        }
+    }
+
+    // MARK: - Prepositions
+
+    private var prepositionSection: some View {
+        Section {
+            NavigationLink {
+                PrepositionHubView(modelManager: modelManager)
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "arrow.triangle.branch")
+                        .font(.title3)
+                        .foregroundStyle(.tint)
+                        .frame(width: 34, height: 34)
+                        .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Präpositionen")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        Text("Which case each preposition takes — drill, fill in the blank, or flip the cards")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+        } header: {
+            sectionHeader("Präpositionen · Cases", focus: .praepositionen)
         }
     }
 
@@ -282,6 +330,7 @@ struct GrammarHubView: View {
     private func sectionHeader(_ title: String, focus: GrammarFocus?) -> some View {
         HStack {
             Text(title)
+                .themedSectionHeader()
             Spacer()
             if let focus, isWeak(focus) {
                 Label("Needs work", systemImage: "flame.fill")
@@ -312,4 +361,25 @@ private struct GrammarCategoryRow: View {
         }
         .padding(.vertical, 2)
     }
+}
+
+// MARK: - Previews
+
+#Preview("Grammar hub · 4 themes") {
+    ForEach(AppTheme.allCases) { theme in
+        NavigationStack {
+            GrammarHubView(
+                modelManager: MLXModelManager(),
+                mlxService: MLXGenerationService(),
+                onStartFlipCards: { _, _, _, _ in },
+                onStartMultipleChoice: { _, _ in },
+                onStartPastTenseStudy: { _, _, _, _ in }
+            )
+        }
+        .environment(\.appTheme, theme)
+    }
+    .modelContainer(
+        for: [SavedDeck.self, StudyDay.self, LearnerProfile.self, ChatConversation.self],
+        inMemory: true
+    )
 }

@@ -18,6 +18,7 @@ struct FullscreenCardView: View {
     var onApplyCorrection: ((Int, String?) -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
     @State private var dragOffset: CGFloat = 0
     @State private var isRotated = false
     @State private var showCorrectionSheet = false
@@ -34,7 +35,12 @@ struct FullscreenCardView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                Color(.systemBackground).ignoresSafeArea()
+                // Klar keeps the plain system background; the identity themes paint their ground.
+                if appTheme == .klar {
+                    Color(.systemBackground).ignoresSafeArea()
+                } else {
+                    ThemedBackground().ignoresSafeArea()
+                }
 
                 VStack(spacing: 0) {
                     // Top bar — always stays upright, never rotated

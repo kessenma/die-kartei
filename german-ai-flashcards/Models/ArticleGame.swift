@@ -23,13 +23,20 @@ enum GermanArticle: String, CaseIterable, Codable, Identifiable {
 
     var id: String { rawValue }
 
-    var color: Color {
+    /// This article as a `Gender`, so the game shares one palette with the flashcards, the card
+    /// corner tab, and the theme picker rather than keeping a second set of near-miss colors.
+    var gender: Gender {
         switch self {
-        case .der: .blue
-        case .die: .red
-        case .das: .green
+        case .der: .der
+        case .die: .die
+        case .das: .das
         }
     }
+
+    /// The fixed identity color. Delegates to `GenderPalette` — previously this was plain
+    /// `.blue`/`.red`/`.green`, which read *close* to the flashcard colors without matching them,
+    /// so the same noun could be two different blues in two screens.
+    var color: Color { gender.color }
 
     /// "maskulin" — the German gender name, for compact labels.
     var genderGerman: String {

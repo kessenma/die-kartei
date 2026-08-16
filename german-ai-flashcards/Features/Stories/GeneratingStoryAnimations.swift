@@ -81,6 +81,9 @@ struct StoryPhaseAnimation: View {
     var imageTotal: Int
     var imageStep: Double
     var imageStage: StoryStudyService.ImageStage
+    var imagePreview: CGImage?
+    var imagePreviewID: Int = 0
+    var imageThumbs: [CGImage?] = []
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -121,7 +124,10 @@ struct StoryPhaseAnimation: View {
                 slot: imageSlot,
                 total: imageTotal,
                 step: imageStep,
-                stage: imageStage
+                stage: imageStage,
+                preview: imagePreview,
+                previewID: imagePreviewID,
+                thumbs: imageThumbs
             )
         default:
             WritingAnimation(palette: palette)
@@ -476,6 +482,11 @@ private struct IllustratingAnimation: View {
     var total: Int
     var step: Double
     var stage: StoryStudyService.ImageStage
+    /// The real picture, part-drawn. Present only on devices with the memory to decode it; the
+    /// stand-in scene below covers everywhere else.
+    var preview: CGImage?
+    var previewID: Int = 0
+    var thumbs: [CGImage?] = []
 
     @State private var noiseFlip = false
     @State private var scan = false
@@ -509,13 +520,28 @@ private struct IllustratingAnimation: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(palette.card)
 
-            scene
-                .opacity(reveal)
-                .blur(radius: 14 * (1 - reveal))
-                .saturation(0.25 + 0.75 * reveal)
+            if let preview {
+                // The real thing. No blur or desaturation ramp on top of it: an early diffusion
+                // step already *is* a soft, low-contrast image, and faking that twice would show
+                // less of the picture than there actually is.
+                ZStack {
+                    Image(decorative: preview, scale: 1)
+                        .resizable()
+                        .scaledToFill()
+                        .id(previewID)
+                        .transition(.opacity)
+                }
+                .animation(.easeInOut(duration: 0.5), value: previewID)
+            } else {
+                scene
+                    .opacity(reveal)
+                    .blur(radius: 14 * (1 - reveal))
+                    .saturation(0.25 + 0.75 * reveal)
+            }
 
+            // Holds the frame until the first real preview arrives, then clears out of its way.
             noiseField
-                .opacity(1 - reveal * 0.95)
+                .opacity(preview == nil ? 1 - reveal * 0.95 : 0)
 
             if isRendering {
                 scanLine
@@ -528,9 +554,11 @@ private struct IllustratingAnimation: View {
         )
         .overlay(cornerBrackets)
         .animation(.easeOut(duration: 0.4), value: reveal)
+        .animation(.easeInOut(duration: 0.5), value: preview == nil)
     }
 
     /// A generic landscape standing in for whatever is being drawn: sky, sun, two hills.
+    /// Used on devices that can't spare the memory to decode the picture mid-run.
     private var scene: some View {
         GeometryReader { geo in
             let w = geo.size.width
@@ -631,15 +659,24 @@ private struct IllustratingAnimation: View {
     private func slotThumb(at index: Int) -> some View {
         let shape = RoundedRectangle(cornerRadius: 5, style: .continuous)
         if index < slot {
-            // Finished picture
-            shape
-                .fill(palette.accent)
-                .frame(width: 30, height: 22)
-                .overlay(
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(.white)
-                )
+            if let thumb = thumbs.indices.contains(index) ? thumbs[index] : nil {
+                // Finished picture, shown as itself
+                Image(decorative: thumb, scale: 1)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 30, height: 22)
+                    .clipShape(shape)
+                    .overlay(shape.stroke(palette.accent, lineWidth: 1.5))
+            } else {
+                shape
+                    .fill(palette.accent)
+                    .frame(width: 30, height: 22)
+                    .overlay(
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(.white)
+                    )
+            }
         } else if index == slot, isRendering {
             // In progress: fills left to right with the diffusion steps
             shape
@@ -688,3 +725,62 @@ private struct CornerBracket: Shape {
         return p
     }
 }
+
+// MARK: - Previews
+
+#if DEBUG
+/// Stands in for a decoded latent: a diffusion step at `sharpness` 0…1, blocky early and detailed
+/// late. The real ones need a device that can run the pipeline, which no preview or simulator can.
+private func previewDecode(sharpness: Double) -> CGImage? {
+    let side = 256
+    let cells = max(2, Int(2 + sharpness * 30))
+    guard let context = CGContext(
+        data: nil, width: side, height: side, bitsPerComponent: 8, bytesPerRow: 0,
+        space: CGColorSpaceCreateDeviceRGB(),
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    ) else { return nil }
+    let cell = CGFloat(side) / CGFloat(cells)
+    for row in 0..<cells {
+        for col in 0..<cells {
+            let x = Double(col) / Double(cells)
+            let y = Double(row) / Double(cells)
+            context.setFillColor(
+                red: 0.35 + 0.5 * x * sharpness,
+                green: 0.30 + 0.55 * (1 - y),
+                blue: 0.55 + 0.35 * y,
+                alpha: 1
+            )
+            context.fill(CGRect(
+                x: CGFloat(col) * cell, y: CGFloat(row) * cell, width: cell, height: cell
+            ))
+        }
+    }
+    return context.makeImage()
+}
+
+/// The illustrating phase both ways: three decoded steps as a roomy device shows them, then the
+/// stand-in scene every other device keeps.
+#Preview("Illustrating") {
+    ScrollView {
+        VStack(spacing: 28) {
+            ForEach([0.15, 0.55, 1.0], id: \.self) { sharpness in
+                StoryPhaseAnimation(
+                    phase: .illustrating, accent: .orange,
+                    imageSlot: 1, imageTotal: 3, imageStep: sharpness, imageStage: .rendering,
+                    imagePreview: previewDecode(sharpness: sharpness),
+                    imagePreviewID: Int(sharpness * 100),
+                    imageThumbs: [previewDecode(sharpness: 1), nil, nil]
+                )
+                .frame(height: 210)
+            }
+
+            StoryPhaseAnimation(
+                phase: .illustrating, accent: .orange,
+                imageSlot: 1, imageTotal: 3, imageStep: 0.55, imageStage: .rendering
+            )
+            .frame(height: 210)
+        }
+        .padding(.vertical, 24)
+    }
+}
+#endif

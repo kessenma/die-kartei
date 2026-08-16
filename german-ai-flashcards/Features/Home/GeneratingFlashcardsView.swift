@@ -23,6 +23,8 @@ struct GeneratingFlashcardsView: View {
     var imageProgress: Double = 0
     var onStopImages: (() -> Void)? = nil
 
+    @Environment(\.appTheme) private var theme
+
     private var tokenFill: Double {
         guard currentBatchSize > 0, progress < 1.0 else { return 0 }
         let estimatedTokensPerBatch = max(currentBatchSize * 180, 100)
@@ -50,16 +52,23 @@ struct GeneratingFlashcardsView: View {
 
     var body: some View {
         ZStack {
-            Color(.systemBackground)
-                .opacity(0.95)
-                .ignoresSafeArea()
+            // The overlay covers a screen that's still there underneath, so it stays near-opaque;
+            // which ground it paints is the theme's call.
+            Group {
+                if theme == .klar {
+                    Color(.systemBackground).opacity(0.95)
+                } else {
+                    ThemedBackground().opacity(0.97)
+                }
+            }
+            .ignoresSafeArea()
 
             VStack(spacing: 24) {
                 AnimatedCardStack(accent: model.theme.accent)
                     .frame(height: 200)
 
                 Text(isDrawingImages ? "Drawing Pictures" : "Generating Flashcards")
-                    .font(.title3)
+                    .themedLabel(.title3, size: 20)
                     .fontWeight(.semibold)
 
                 VStack(spacing: 8) {
@@ -186,12 +195,16 @@ private struct AnimatedCardStack: View {
     var accent: Color = .accentColor
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.appTheme) private var theme
 
     @State private var isFlipped = false
     @State private var currentCardIndex = 0
 
+    /// Klar keeps the hand-tuned card paper this animation shipped with; the identity themes draw
+    /// the blank cards on their own surface, so the placeholder deck matches the real one.
     private var cardColor: Color {
-        colorScheme == .dark
+        if theme != .klar { return theme.surface }
+        return colorScheme == .dark
             ? Color(red: 0.18, green: 0.18, blue: 0.20)
             : Color(red: 0.98, green: 0.96, blue: 0.93)
     }
@@ -250,9 +263,9 @@ private struct AnimatedCardStack: View {
 
     private var blankCard: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: theme.innerRadius(12), style: .continuous)
                 .fill(cardColor)
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: theme.innerRadius(12), style: .continuous)
                 .stroke(borderColor, lineWidth: 1)
 
             // Ruled lines to match FlashCardView style
@@ -263,7 +276,7 @@ private struct AnimatedCardStack: View {
                     .padding(.top, 36)
                 Spacer()
             }
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: theme.innerRadius(12), style: .continuous))
 
             VStack(spacing: 16) {
                 ForEach(0..<3, id: \.self) { _ in
@@ -274,7 +287,7 @@ private struct AnimatedCardStack: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 42)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: theme.innerRadius(12), style: .continuous))
         }
     }
 
@@ -293,3 +306,27 @@ private struct AnimatedCardStack: View {
         }
     }
 }
+
+// MARK: - Previews
+
+@MainActor
+private func generatingPreview(_ theme: AppTheme) -> some View {
+    GeneratingFlashcardsView(
+        progress: 0.45,
+        cardsGenerated: 4,
+        cardsRequested: 10,
+        isValidating: false,
+        topic: "kitchen items",
+        startTime: Date(),
+        model: .hero,
+        generatedWords: ["the pot", "the spoon", "the plate"],
+        currentBatchSize: 5,
+        currentBatchIndex: 0
+    )
+    .environment(\.appTheme, theme)
+}
+
+#Preview("Generating · System")   { generatingPreview(.klar) }
+#Preview("Generating · Soft")     { generatingPreview(.sanft) }
+#Preview("Generating · Notebook") { generatingPreview(.kritzel) }
+#Preview("Generating · Bauhaus")  { generatingPreview(.grundform) }

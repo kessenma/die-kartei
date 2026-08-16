@@ -16,6 +16,11 @@ nonisolated enum ImageGenConstants {
     /// The palettized repo ships no SafetyChecker model, so safety stays disabled and the
     /// negative prompt does the steering.
     static let negativePrompt = "text, watermark, signature, letters, words, blurry, lowres, deformed, distorted, disfigured, bad anatomy, extra limbs, mutated hands, ugly, duplicate, jpeg artifacts, nsfw"
+
+    /// How many mid-diffusion previews to decode per picture when live preview is on. Each one is
+    /// a full VAE decode inside the denoise loop, so this is the whole cost knob: five reads as
+    /// continuous progress while adding only a few seconds to a minute-long picture.
+    static let previewsPerImage = 5
 }
 
 // MARK: - Cross-thread plumbing
@@ -188,13 +193,18 @@ final class StoryImageService {
     /// `stepCount` and `seed` default to the learner's quality tier and a random seed. The style
     /// picker overrides both: fewer steps so a sample isn't a two-minute wait, and a fixed seed so
     /// switching style changes the look and not the whole composition.
+    ///
+    /// `onPreview` (optional) receives the picture partway drawn, a handful of times per image, so
+    /// a waiting screen can show the real thing instead of standing in for it. Passing it costs a
+    /// VAE decode per preview; passing nil is exactly the old behaviour.
     func generateImage(
         prompt: String,
         negativePrompt: String = ImageGenConstants.negativePrompt,
         saveTo destination: URL,
         stepCount: Int? = nil,
         seed: UInt32? = nil,
-        onStepProgress: @escaping @MainActor @Sendable (Double) -> Void
+        onStepProgress: @escaping @MainActor @Sendable (Double) -> Void,
+        onPreview: (@MainActor @Sendable (CGImage) -> Void)? = nil
     ) async throws -> Bool {
         guard let box else { return false }
         cancelFlag.set(false)
@@ -203,29 +213,38 @@ final class StoryImageService {
         // Snapshotted per image on the MainActor, so a mid-run tier change takes effect on the
         // next picture rather than being read from a background thread.
         let stepCount = stepCount ?? ImageGenQuality.current.stepCount
+        // Both halves of the preview gate are read here, on the MainActor, for the same reason.
+        let previews = ImageGenPreview.isActive ? onPreview : nil
         return try await Task.detached(priority: .userInitiated) {
             try Self.runGeneration(
                 box: box, prompt: prompt, negativePrompt: negativePrompt,
                 seed: seed, stepCount: stepCount,
                 destination: destination,
-                cancel: cancel, onStepProgress: onStepProgress
+                cancel: cancel, onStepProgress: onStepProgress, onPreview: previews
             )
         }.value
     }
 
     /// Story-shaped wrapper: writes into the story's image directory as `00.png`, `01.png`, …
     /// Returns the saved file name, or nil if nothing was written.
+    ///
+    /// Stories pass one `seed` for all of their pictures, so the set shares a palette and
+    /// rendering feel on top of the repeated character wording.
     func generateImage(
         prompt: String,
         storyID: UUID,
         index: Int,
-        onStepProgress: @escaping @MainActor @Sendable (Double) -> Void
+        seed: UInt32? = nil,
+        onStepProgress: @escaping @MainActor @Sendable (Double) -> Void,
+        onPreview: (@MainActor @Sendable (CGImage) -> Void)? = nil
     ) async throws -> String? {
         let fileName = String(format: "%02d.png", index)
         let written = try await generateImage(
             prompt: prompt,
             saveTo: StoryImageStore.url(fileName: fileName, storyID: storyID),
-            onStepProgress: onStepProgress
+            seed: seed,
+            onStepProgress: onStepProgress,
+            onPreview: onPreview
         )
         return written ? fileName : nil
     }
@@ -254,7 +273,8 @@ final class StoryImageService {
         stepCount: Int,
         destination: URL,
         cancel: CancelFlag,
-        onStepProgress: @escaping @MainActor @Sendable (Double) -> Void
+        onStepProgress: @escaping @MainActor @Sendable (Double) -> Void,
+        onPreview: (@MainActor @Sendable (CGImage) -> Void)? = nil
     ) throws -> Bool {
         var config = StableDiffusionPipeline.Configuration(prompt: prompt)
         config.negativePrompt = negativePrompt
@@ -264,10 +284,22 @@ final class StoryImageService {
         config.seed = seed
         config.disableSafety = true
         config.imageCount = 1
+        // Report the denoised prediction rather than the still-noisy latent. Both are already
+        // computed by the loop, so this costs nothing and is the difference between a preview
+        // that resolves out of a blur and one that looks like static until the last step.
+        config.useDenoisedIntermediates = onPreview != nil
+
+        let previewStride = onPreview == nil ? 0 : max(stepCount / ImageGenConstants.previewsPerImage, 1)
 
         let images = try box.pipeline.generateImages(configuration: config) { progress in
             let fraction = Double(progress.step) / Double(max(progress.stepCount, 1))
             Task { @MainActor in onStepProgress(fraction) }
+            // Cancel first: a stop shouldn't wait out a decode that's only there to be looked at.
+            if !cancel.isSet, let onPreview, let preview = Self.preview(
+                for: progress, stride: previewStride, config: config, box: box
+            ) {
+                Task { @MainActor in onPreview(preview) }
+            }
             return !cancel.isSet
         }
         guard !cancel.isSet, let image = images.compactMap({ $0 }).first,
@@ -275,6 +307,33 @@ final class StoryImageService {
         else { return false }
         try data.write(to: destination, options: .atomic)
         return true
+    }
+
+    /// The picture as it stands at this step, or nil if this step isn't a preview step.
+    ///
+    /// Runs on the pipeline's own thread, inside the denoise loop, so the decode blocks the next
+    /// UNet step rather than racing it — which is what keeps the memory spike to one decode at a
+    /// time. Skipped entirely while headroom is short: a preview is a nicety, and the picture
+    /// itself still has a final decode to survive.
+    ///
+    /// Deliberately not `progress.currentImages`, which decodes with `try!` and would turn a
+    /// decoder hiccup into a crash on the one path that exists purely for looks.
+    nonisolated private static func preview(
+        for progress: StableDiffusionPipeline.Progress,
+        stride: Int,
+        config: StableDiffusionPipeline.Configuration,
+        box: PipelineBox
+    ) -> CGImage? {
+        guard stride > 0 else { return nil }
+        // Last step included on purpose: at that point the denoised latents *are* the final
+        // picture, so the preview lands on the real result instead of stopping a few steps short.
+        let isLast = progress.step == progress.stepCount - 1
+        guard isLast || (progress.step + 1) % stride == 0 else { return nil }
+        guard MemoryBudget.pressure == .normal else { return nil }
+        return try? box.pipeline
+            .decodeToImages(progress.currentLatentSamples, configuration: config)
+            .compactMap { $0 }
+            .first
     }
 
     // MARK: - Materialized fallback

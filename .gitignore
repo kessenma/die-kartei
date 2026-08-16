@@ -44,3 +44,21 @@ AuthKey_*.p8
 build-logs/
 # Commit the .env template even though the `.env*` rule above would hide it.
 !fastlane/.env.example
+
+# App Store Connect CLI (asc)
+# Build artifacts only — .asc/ itself may later hold a committed workflow.json.
+.asc/artifacts/
+# Signing material pulled by `asc signing sync pull` — never commit.
+signing/
+*.p12
+*.mobileprovision
+
+# Training run outputs too big or too disposable for GitHub.
+# Generation logs and pod tarballs are regenerable; the packed train.jsonl
+# files exceed GitHub's 50 MB warning threshold (the bakeoff log hit the
+# hard 100 MB limit). Smaller jsonl datasets (val, salvage, generated_*)
+# stay tracked.
+training/**/*.log
+training/runpod/*.tar.gz
+training/data/packed-v2-balanced/train.jsonl
+training/data/packed-v4/train.jsonl

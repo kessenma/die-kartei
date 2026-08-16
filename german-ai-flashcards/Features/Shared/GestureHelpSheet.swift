@@ -9,6 +9,7 @@ struct GestureHelpSheet: View {
     /// Context line above the demos, e.g. "Two quick gestures help you learn while you chat."
     let intro: String
     var accent: Color = .accentColor
+    @Environment(\.appTheme) private var appTheme
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -48,6 +49,9 @@ struct GestureHelpSheet: View {
                 }
                 .padding()
             }
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
+            }
             .navigationTitle("Tips")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -68,6 +72,7 @@ private struct GestureDemoCard<Content: View>: View {
     let caption: String
     let accent: Color
     @ViewBuilder var content: Content
+    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -87,7 +92,7 @@ private struct GestureDemoCard<Content: View>: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(16), style: .continuous))
     }
 }
 

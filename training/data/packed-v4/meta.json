@@ -1,0 +1,101 @@
+{
+  "fix_balance": {
+    "adjend": {
+      "fix": 160,
+      "ok_available": 85,
+      "ok_kept": 69,
+      "fix_share": 0.699
+    },
+    "artikel": {
+      "fix": 155,
+      "ok_available": 102,
+      "ok_kept": 66,
+      "fix_share": 0.701
+    },
+    "dawo": {
+      "fix": 2149,
+      "ok_available": 1579,
+      "ok_kept": 921,
+      "fix_share": 0.7
+    },
+    "k2": {
+      "fix": 201,
+      "ok_available": 119,
+      "ok_kept": 86,
+      "fix_share": 0.7
+    },
+    "imperativ": {
+      "fix": 93,
+      "ok_available": 49,
+      "ok_kept": 40,
+      "fix_share": 0.699
+    },
+    "negation": {
+      "fix": 118,
+      "ok_available": 72,
+      "ok_kept": 51,
+      "fix_share": 0.698
+    },
+    "aux": {
+      "fix": 159,
+      "ok_available": 47,
+      "ok_kept": 47,
+      "fix_share": 0.772
+    },
+    "ndekl": {
+      "fix": 179,
+      "ok_available": 92,
+      "ok_kept": 77,
+      "fix_share": 0.699
+    },
+    "wechsel": {
+      "fix": 226,
+      "ok_available": 154,
+      "ok_kept": 97,
+      "fix_share": 0.7
+    },
+    "refl": {
+      "fix": 814,
+      "ok_available": 320,
+      "ok_kept": 320,
+      "fix_share": 0.718
+    },
+    "relpron": {
+      "fix": 273,
+      "ok_available": 166,
+      "ok_kept": 117,
+      "fix_share": 0.7
+    },
+    "wo": {
+      "fix": 146,
+      "ok_available": 93,
+      "ok_kept": 63,
+      "fix_share": 0.699
+    },
+    "sep": {
+      "fix": 689,
+      "ok_available": 399,
+      "ok_kept": 295,
+      "fix_share": 0.7
+    },
+    "vmp": {
+      "fix": 4227,
+      "ok_available": 2715,
+      "ok_kept": 1812,
+      "fix_share": 0.7
+    }
+  },
+  "nudgeMe": 4170,
+  "correction": 13758,
+  "conversation": 11799,
+  "deduped": 7863,
+  "flashcards": 1570,
+  "native_instruction": 2506,
+  "mixin": 15462,
+  "train": 42841,
+  "val": 2254,
+  "total": 45095,
+  "val_families": 1191,
+  "train_families": 15203,
+  "no_mixin": false
+}

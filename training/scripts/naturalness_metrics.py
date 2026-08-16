@@ -89,6 +89,36 @@ def ngrams(toks: list, n: int) -> list:
     return [tuple(toks[i:i + n]) for i in range(len(toks) - n + 1)]
 
 
+# Words German legitimately repeats without it being a defect, plus clause-level noise.
+_STUTTER_SKIP = {"ja", "nein", "so", "sehr", "nur", "auch", "noch", "mal", "doch",
+                 "und", "die", "der", "das", "sie", "du", "wir", "ich"}
+_REAL_WORD = re.compile(r"^[a-zäöüß]{2,}$")
+# Clause boundaries, NOT just sentence boundaries. German repeats words across a comma constantly —
+# "eingefügt wird, wird es platziert", "entwerfen würde, würde ich", "Meinst du, du schaffst es" —
+# and a splitter that only breaks on .!? reports all of those as stutters. That false-positive rate
+# was ~100%: it made the training corpus look 8.6% defective when the real rate is ~0.
+_CLAUSE = re.compile(r"[.!?:;,\n]+|```|\bund\b|\baber\b|\bdass\b|\bweil\b|\bwenn\b")
+
+
+def stutters(text: str) -> list:
+    """Adjacent word repeats WITHIN a clause — the 'erst mal erst mal' defect class.
+
+    Measured separately from `repeat_4gram_share`, which compares ACROSS replies and therefore
+    cannot see a reply that stutters internally. E4B v2 had exactly one (1/50) and the bench
+    scored it clean, which is what prompted adding this.
+    """
+    out = []
+    for clause in _CLAUSE.split(text or ""):
+        toks = [t for t in re.findall(r"[a-zäöüßA-ZÄÖÜ]+", (clause or "").lower())]
+        for n in (1, 2, 3):
+            for i in range(len(toks) - 2 * n + 1):
+                a, b = toks[i:i + n], toks[i + n:i + 2 * n]
+                if a == b and all(_REAL_WORD.match(t) for t in a) \
+                        and not (n == 1 and a[0] in _STUTTER_SKIP):
+                    out.append(" ".join(a + b))
+    return out
+
+
 def compute(results: list) -> dict:
     replies = [r["response"].strip() for r in results if r.get("response", "").strip()]
     n = len(replies)
@@ -128,6 +158,7 @@ def compute(results: list) -> dict:
 
     sent_counts = [len(sentences(r)) for r in replies]
     leak = sum(1 for r in replies if any(t in ENGLISH_MARKERS for t in tokens(r))) / n
+    stut = [r for r in replies if stutters(r)]
 
     return {
         "n": n,
@@ -143,6 +174,8 @@ def compute(results: list) -> dict:
         "mean_tokens_per_reply": round(len(all_toks) / n, 1),
         "type_token_ratio": round(msttr(all_toks), 3),
         "english_leakage": round(leak, 3),
+        "stutter_rate": round(len(stut) / n, 3),
+        "_stutters": [f"{stutters(r)[0]!r} in: {r[:70]}" for r in stut[:3]],
         "_top_repeated_4grams": [" ".join(g) + f" ×{c}" for g, c in four.most_common(5) if c > 1],
     }
 
@@ -152,7 +185,7 @@ BETTER = {
     "opening_variety": "up", "modal_particle_rate": "up", "question_variety": "up",
     "top_opener_share": "down", "repeat_4gram_share": "down", "english_leakage": "down",
     "followup_rate": None, "wh_question_share": None, "sentences_per_reply": None,
-    "type_token_ratio": "up",
+    "type_token_ratio": "up", "stutter_rate": "down",
 }
 
 
@@ -191,6 +224,10 @@ def main() -> None:
             print(f"  {k:<24} {v}{arrow}")
         if s.get("_top_repeated_4grams"):
             print(f"  most repeated 4-grams: {s['_top_repeated_4grams']}")
+        if s.get("_stutters"):
+            print("  within-clause stutters:")
+            for x in s["_stutters"]:
+                print(f"    {x}")
         if args.by_kind:
             kinds = sorted({r.get("kind", "?") for r in res})
             print("  --- by kind ---")

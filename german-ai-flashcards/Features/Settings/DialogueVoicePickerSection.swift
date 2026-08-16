@@ -23,9 +23,11 @@ struct DialogueVoicePickerSection: View {
             }
         } header: {
             Text("Dialogue Voices")
+                .themedSectionHeader()
         } footer: {
             Text("Give each speaker their own voice in Dialogue and E-Mail stories. Set just one and that voice reads everyone. Add natural German voices in iOS Settings ▸ Accessibility ▸ Spoken Content ▸ Voices.")
         }
+        .themedListRow()
         .onAppear { voices = GermanVoiceCatalog.sorted() }
     }
 

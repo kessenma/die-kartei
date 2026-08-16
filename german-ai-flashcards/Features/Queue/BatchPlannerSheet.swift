@@ -16,6 +16,7 @@ struct BatchPlannerSheet: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     private enum Step: Int, CaseIterable {
         case level, stories, decks, review
@@ -127,7 +128,7 @@ struct BatchPlannerSheet: View {
     }
 
     private var heroReady: Bool {
-        DeviceCapability.canRunHero && StoryStudyService.requiredModel.isDownloaded
+        DeviceCapability.mayRunHero && StoryStudyService.requiredModel.isDownloaded
     }
     private var imagesReady: Bool { ImageGenModel.current.isDownloaded }
     private var effectiveStoryCount: Int { heroReady ? storyCount : 0 }
@@ -138,13 +139,14 @@ struct BatchPlannerSheet: View {
         NavigationStack {
             Form {
                 switch step {
-                case .level: levelStep
-                case .stories: storiesStep
-                case .decks: decksStep
-                case .review: reviewStep
+                case .level: levelStep.themedListRow()
+                case .stories: storiesStep.themedListRow()
+                case .decks: decksStep.themedListRow()
+                case .review: reviewStep.themedListRow()
                 }
                 navigationSection
             }
+            .themedListScreen()
             .navigationTitle(step.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -175,7 +177,7 @@ struct BatchPlannerSheet: View {
             .pickerStyle(.segmented)
             .padding(.vertical, 4)
         } header: {
-            Text("What level should the stories be?")
+            Text("What level should the stories be?").themedSectionHeader()
         } footer: {
             Text("\(level.rawValue) · \(level.englishLabel). Flashcard decks aren't leveled; only the stories use this.")
         }
@@ -198,7 +200,7 @@ struct BatchPlannerSheet: View {
                 }
                 Toggle("Let the coach steer this batch", isOn: $coachSteering)
             } header: {
-                Text("Your Coach's Notes")
+                Text("Your Coach's Notes").themedSectionHeader()
             } footer: {
                 Text("Steering aims one deck at your shakiest grammar spot and weaves words you're learning into the stories.")
             }
@@ -212,7 +214,7 @@ struct BatchPlannerSheet: View {
         if !heroReady {
             Section {
                 Label(
-                    DeviceCapability.canRunHero
+                    DeviceCapability.mayRunHero
                         ? "Stories need the \(StoryStudyService.requiredModel.rawValue) downloaded first (Reading ▸ Read a Short Story). Skipping stories for this plan."
                         : "This device can't run the story model, so this plan is decks only.",
                     systemImage: "book.pages"
@@ -224,7 +226,7 @@ struct BatchPlannerSheet: View {
             Section {
                 countPicker("Stories", selection: $storyCount)
             } header: {
-                Text("How many stories?")
+                Text("How many stories?").themedSectionHeader()
             } footer: {
                 Text("Each is a full story with questions and a glossary, written at \(level.rawValue).")
             }
@@ -240,7 +242,7 @@ struct BatchPlannerSheet: View {
                     Toggle("Random styles", isOn: $randomStyles)
                     Toggle("Mix up question types", isOn: $randomQuestionKinds)
                 } header: {
-                    Text("How random?")
+                    Text("How random?").themedSectionHeader()
                 } footer: {
                     Text(randomStoryTopics
                          ? "Topics come from the 100 bundled story ideas; styles and question types are shuffled per story when those are on."
@@ -260,7 +262,7 @@ struct BatchPlannerSheet: View {
                         }
                         .padding(.vertical, 4)
                     } header: {
-                        Text("Illustrations")
+                        Text("Illustrations").themedSectionHeader()
                     } footer: {
                         Text("Each picture adds a minute or two per story.")
                     }
@@ -276,7 +278,7 @@ struct BatchPlannerSheet: View {
         Section {
             countPicker("Decks", selection: $deckCount)
         } header: {
-            Text("How many flashcard decks?")
+            Text("How many flashcard decks?").themedSectionHeader()
         } footer: {
             Text("Generated with \(modelManager.selectedMLXModel.rawValue) and saved straight to your Library.")
         }
@@ -310,7 +312,7 @@ struct BatchPlannerSheet: View {
                     }
                 }
             } header: {
-                Text("Deck setup")
+                Text("Deck setup").themedSectionHeader()
             } footer: {
                 if coachSteering, let target = deckTarget {
                     Text("Coach steering: the first deck becomes a \(target.wordType == .nouns ? "noun" : "verb") deck aimed at \(weakFocusLabelForTarget).")
@@ -345,7 +347,7 @@ struct BatchPlannerSheet: View {
                     plannedRow(planned)
                 }
             } header: {
-                Text("\(plan.count) job\(plan.count == 1 ? "" : "s")")
+                Text("\(plan.count) job\(plan.count == 1 ? "" : "s")").themedSectionHeader()
             } footer: {
                 Text("Rough estimate: about \(timeLabel(planEstimateSeconds)).")
             }
@@ -388,7 +390,7 @@ struct BatchPlannerSheet: View {
                 .font(.title3)
                 .foregroundStyle(.tint)
                 .frame(width: 34, height: 34)
-                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
             VStack(alignment: .leading, spacing: 2) {
                 Text(planned.topic)
                     .font(.subheadline)

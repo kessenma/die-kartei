@@ -14,13 +14,23 @@ struct IllustratingDeckView: View {
     var model: MLXModel
     var onStudyNow: () -> Void
 
+    @Environment(\.appTheme) private var appTheme
     private var service: DeckIllustrationService { .shared }
 
     var body: some View {
         ZStack {
-            Color(.systemBackground)
-                .opacity(0.95)
-                .ignoresSafeArea()
+            // Klar keeps the plain dimmed system backdrop; identity themes paint their ground so the
+            // overlay belongs to the same world as the deck behind it. The icon/progress keep the
+            // generating model's brand accent — this is the model's moment.
+            Group {
+                if appTheme == .klar {
+                    Color(.systemBackground)
+                } else {
+                    ThemedBackground()
+                }
+            }
+            .opacity(0.95)
+            .ignoresSafeArea()
 
             VStack(spacing: 20) {
                 Image(systemName: "photo.on.rectangle.angled")

@@ -14,6 +14,7 @@ struct PhotoScanListView: View {
 
     @Query(sort: \StudyPaper.createdAt, order: .reverse) private var allPapers: [StudyPaper]
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var appTheme
 
     @State private var showCamera = false
     @State private var photoPickerItem: PhotosPickerItem?
@@ -32,8 +33,8 @@ struct PhotoScanListView: View {
 
     var body: some View {
         List {
-            tipBannerSection
-            importSection
+            tipBannerSection.themedListRow()
+            importSection.themedListRow()
 
             ChatModelPickerSection(
                 selected: $modelManager.selectedPaperModel,
@@ -42,12 +43,14 @@ struct PhotoScanListView: View {
                 footerText: "Used to tidy up the scanned text and to generate the summary, deck, and questions. Any downloaded model works.",
                 emphasizeHero: false
             )
+            .themedListRow()
 
             if let importError {
                 Section {
                     Label(importError, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption).foregroundStyle(.orange)
                 }
+                .themedListRow()
             }
 
             if photoScans.isEmpty {
@@ -58,8 +61,9 @@ struct PhotoScanListView: View {
                         description: Text("Take a photo or import one from your library to extract German vocabulary.")
                     )
                 }
+                .themedListRow()
             } else {
-                Section("Your photo scans") {
+                Section {
                     ForEach(photoScans) { paper in
                         NavigationLink {
                             PaperDetailView(paper: paper, modelManager: modelManager, mlxService: mlxService)
@@ -72,9 +76,13 @@ struct PhotoScanListView: View {
                             }
                         }
                     }
+                } header: {
+                    Text("Your photo scans").themedSectionHeader()
                 }
+                .themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("Scan German Text")
         .navigationBarTitleDisplayMode(.inline)
         .contentMargins(.bottom, 120, for: .scrollContent)
@@ -186,7 +194,7 @@ struct PhotoScanListView: View {
                 .foregroundStyle(accent)
                 .frame(width: 30, height: 30)
                 .background(accent.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
             VStack(alignment: .leading, spacing: 2) {
                 Text(paper.title).lineLimit(1)
                 HStack(spacing: 8) {
@@ -288,6 +296,8 @@ private struct PhotoScanGeneratingView: View {
     let paper: StudyPaper
     let onClose: () -> Void
 
+    @Environment(\.appTheme) private var appTheme
+
     private var isRunning: Bool { ocrService.isRunning || studyService.isRunning }
 
     private var displayPhase: String {
@@ -338,6 +348,9 @@ private struct PhotoScanGeneratingView: View {
             }
             .padding()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
+            }
             .navigationTitle("Scanning photo")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -389,3 +402,16 @@ private struct CameraPickerView: UIViewControllerRepresentable {
     }
 }
 #endif
+
+#Preview("Photo scans · 4 themes") {
+    ForEach(AppTheme.allCases) { theme in
+        NavigationStack {
+            PhotoScanListView(
+                modelManager: MLXModelManager(),
+                mlxService: MLXGenerationService()
+            )
+        }
+        .environment(\.appTheme, theme)
+    }
+    .modelContainer(for: StudyPaper.self, inMemory: true)
+}

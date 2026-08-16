@@ -49,10 +49,11 @@ struct SayItView: View {
                         Text(authError).font(.caption).foregroundStyle(.orange)
                     }
                 } header: {
-                    Text("In English")
+                    Text("In English").themedSectionHeader()
                 } footer: {
                     Text("Type or speak what you’d like to say. The AI will show you how to say it in German — then you can hear it or use it as your turn.")
                 }
+                .themedListRow()
 
                 Section {
                     Button {
@@ -66,9 +67,10 @@ struct SayItView: View {
                     }
                     .disabled(!canTranslate)
                 }
+                .themedListRow()
 
                 if let german {
-                    Section("In German") {
+                    Section {
                         Text(german).font(.title3)
                         Button { SpeechService.shared.speak(german) } label: {
                             Label("Hear it", systemImage: "speaker.wave.2.fill")
@@ -81,9 +83,13 @@ struct SayItView: View {
                         } label: {
                             Label("Let me say it", systemImage: "mic.fill")
                         }
+                    } header: {
+                        Text("In German").themedSectionHeader()
                     }
+                    .themedListRow()
                 }
             }
+            .themedListScreen()
             .navigationTitle("Say it in German")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

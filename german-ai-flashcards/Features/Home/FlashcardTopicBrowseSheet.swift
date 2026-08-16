@@ -3,7 +3,6 @@ import SwiftUI
 /// Browse the 100 bundled flashcard topics, grouped by category. Tap one to drop it into the
 /// topic field; the dice picks a random idea. Presented from the Create screen.
 struct FlashcardTopicBrowseSheet: View {
-    var accent: Color?
     /// Called with the chosen English topic; the sheet dismisses itself afterward.
     var onSelect: (String) -> Void
 
@@ -22,7 +21,9 @@ struct FlashcardTopicBrowseSheet: View {
             .searchable(text: $query, prompt: "Search topics")
             .navigationTitle("Topic Ideas")
             .navigationBarTitleDisplayMode(.inline)
-            .tint(accent)
+            // The tint used to be passed in as the loaded model's accent; it now comes from the
+            // theme (which resolves the model accent itself on Klar) via `.themedListScreen()`.
+            .themedListScreen()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -40,11 +41,14 @@ struct FlashcardTopicBrowseSheet: View {
 
     private var groupedTopics: some View {
         ForEach(FlashcardTopics.categories, id: \.self) { category in
-            Section(Self.englishCategory[category] ?? category) {
+            Section {
                 ForEach(FlashcardTopics.topics(in: category)) { topic in
                     row(topic)
                 }
+            } header: {
+                Text(Self.englishCategory[category] ?? category).themedSectionHeader()
             }
+            .themedListRow()
         }
     }
 
@@ -55,9 +59,11 @@ struct FlashcardTopicBrowseSheet: View {
             Text("No topics match that. You can still type your own — any topic works.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .themedListRow()
         } else {
             ForEach(matches) { topic in
                 row(topic, showCategory: true)
+                    .themedListRow()
             }
         }
     }
@@ -68,6 +74,7 @@ struct FlashcardTopicBrowseSheet: View {
         } label: {
             VStack(alignment: .leading, spacing: 2) {
                 Text(topic.en)
+                    .themedLabel(.body, size: 17)
                     .foregroundStyle(.primary)
                 Text(showCategory
                      ? "\(topic.de) · \(Self.englishCategory[topic.category] ?? topic.category)"

@@ -78,10 +78,29 @@ def _guard_normalize(text: str) -> str:
 
 
 def apply_app_guard(response: str, item: dict) -> str:
-    """Mirror the app's echo guard (ConversationPrompts.parseCorrection): a FIX line that
-    restates the student's sentence verbatim is not a correction — the app shows nothing,
-    so the honest eval verdict is OK. Pure post-process; can only ever turn a spurious FIX
-    into OK, never the reverse."""
+    """Mirror ConversationPrompts.parseCorrection IN FULL — not just the echo rule.
+
+    The app treats a reply as "nothing to show" under any of these, in this order:
+        cleaned.isEmpty || upper == "OK" || upper.hasPrefix("OK\\n") || upper == "OK."
+    ...and only then looks for a FIX: line, discarding it if it echoes the input.
+
+    The `hasPrefix("OK\\n")` clause matters enormously and was missing here until 2026-07-30.
+    Stock Gemma 3 1B answers EVERY item with:
+            OK
+            FIX: <a real correction>
+            WHY: <...>
+    The old guard credited both branches — expect_ok items passed on the leading OK, error items
+    passed on the FIX — scoring it 49/82 (59%). The app shows the learner *nothing* for those
+    replies, so its true score is 28/82 (34%) and its real miss rate is 100%, not 49%.
+    That inflated number sat on MODEL_SCOREBOARD.md as the 4 GB incumbent for weeks.
+
+    Returning "OK" here is exactly right: it is what the app displays (i.e. no correction).
+    Models that emit a clean OK or a clean FIX — every Gemma 4 tune measured — are unaffected.
+    """
+    cleaned = response.strip()
+    upper = cleaned.upper()
+    if not cleaned or upper == "OK" or upper.startswith("OK\n") or upper == "OK.":
+        return "OK"
     m = re.search(r"FIX:\s*(.+)", response)
     if m and _guard_normalize(m.group(1)) == _guard_normalize(item["input"]):
         return "OK"

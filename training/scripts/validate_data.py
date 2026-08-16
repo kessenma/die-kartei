@@ -41,7 +41,21 @@ DAWO_RE = re.compile(
 # "recovery" (v2): deliberately broken spoken input — English word mixed in, transcription
 # glitches. Kept distinct from "verdict" (which means "correct sentence, tests verdict discipline")
 # so the phenomenon stats stay meaningful. Neither carries a structural requirement.
-PHENOMENA = {"vmp", "sep", "refl", "dawo", "aux", "verdict", "adjend", "artikel", "recovery"}
+PHENOMENA = {
+    # Generated since v1; each has a structural check in `structural_check` below.
+    "vmp", "sep", "refl", "dawo", "aux", "verdict", "adjend", "artikel", "recovery",
+    # Added 2026-08-15. The eval suites test all of these (relpron 12 items, wo 13, ndekl 11,
+    # wechsel 11, k2 10, imperativ 4, negation 4) but no generation run had ever produced them,
+    # so they were never whitelisted — and a row carrying one was rejected as
+    # "schema: bad task/phenomenon". That silently drops exactly the rows written to fill a
+    # coverage gap, which is the worst time for a whitelist to be stale.
+    #
+    # None carries a structural check: unlike a reflexive pronoun or a da-compound there is no
+    # single token whose presence proves the phenomenon, so they are validated on the gold
+    # sentence's grammaticality (LanguageTool + spaCy) alone. Shape is enforced separately by
+    # `check_hard_case_share.py`.
+    "relpron", "wo", "ndekl", "wechsel", "k2", "imperativ", "negation",
+}
 
 
 def norm(s: str) -> str:

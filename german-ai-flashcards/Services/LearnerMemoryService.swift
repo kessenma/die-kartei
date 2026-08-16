@@ -155,7 +155,9 @@ enum LearnerMemoryService {
     /// archived as `.mastered` (restorable), not deleted. A missed slip stays put; its `lastSeen`
     /// is refreshed so it doesn't age out while it's still fresh. The round also counts toward the
     /// per-day streak, like any other batch of card reviews.
-    static func applyClozeResults(mastered: [String], missed: [String], in context: ModelContext) {
+    static func applyClozeResults(
+        mastered: [String], missed: [String], seconds: Int = 0, in context: ModelContext
+    ) {
         let answered = mastered.count + missed.count
         guard answered > 0 else { return }
         let p = profile(in: context)
@@ -177,7 +179,7 @@ enum LearnerMemoryService {
         }
         p.slips = list
 
-        StudyLogService.record(.cards(answered), in: context)
+        StudyLogService.record(.cards(answered), seconds: seconds, in: context)
     }
 
     // MARK: Grammar

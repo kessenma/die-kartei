@@ -41,6 +41,12 @@ model, tokenizer = FastModel.from_pretrained(
     full_finetuning=False,
 )
 
+# LoRA rank. Default 8 matches v1/v2 so results stay comparable; raise it to test whether a small
+# base is absorption-limited rather than capacity-limited. alpha tracks 2*r, the usual convention.
+LORA_R = int(os.environ.get("LORA_R", 8))
+LORA_ALPHA = int(os.environ.get("LORA_ALPHA", 2 * LORA_R))
+print(f"== LoRA r={LORA_R} alpha={LORA_ALPHA} ==")
+
 try:
     model = FastModel.get_peft_model(
         model,
@@ -48,19 +54,35 @@ try:
         finetune_language_layers=True,
         finetune_attention_modules=True,
         finetune_mlp_modules=True,
-        r=8, lora_alpha=16, lora_dropout=0, bias="none",
+        r=LORA_R, lora_alpha=LORA_ALPHA, lora_dropout=0, bias="none",
         use_gradient_checkpointing="unsloth", random_state=7,
     )
 except TypeError:  # text-only architectures take classic target_modules
     model = FastModel.get_peft_model(
         model,
-        r=8, lora_alpha=16, lora_dropout=0, bias="none",
+        r=LORA_R, lora_alpha=LORA_ALPHA, lora_dropout=0, bias="none",
         target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
         use_gradient_checkpointing="unsloth", random_state=7,
     )
 
+# GUARD: CHAT_TEMPLATE defaults to "gemma-4" because that is what this script was written for.
+# Applying it to any other family silently rewrites the turn markers — training on `<|turn>` while
+# the app sends `<start_of_turn>` (Gemma 3) or `<|start_of_role|>` (Granite). The run completes, the
+# loss looks normal, and the resulting model is broken at inference. That happened on 2026-07-30
+# with Gemma 3 1B and was only caught by reading the rendered-sample line in the log.
+# Fail loudly instead: for anything that isn't Gemma 4, pass CHAT_TEMPLATE=native explicitly.
+_fam = MODEL_NAME.lower()
+if CHAT_TEMPLATE == "gemma-4" and not ("gemma-4" in _fam or "gemma4" in _fam):
+    raise SystemExit(
+        f"\nREFUSING TO TRAIN: CHAT_TEMPLATE='gemma-4' but MODEL_NAME='{MODEL_NAME}'.\n"
+        f"Forcing the Gemma-4 chat template onto another family rewrites the turn markers and\n"
+        f"produces a model that is broken at inference while training cleanly.\n"
+        f"Set CHAT_TEMPLATE=native to use the model's own template (and pass\n"
+        f"INSTRUCTION_PART / RESPONSE_PART if auto-detection can't find its markers).\n")
+
 if CHAT_TEMPLATE != "native":
     tokenizer = get_chat_template(tokenizer, chat_template=CHAT_TEMPLATE)
+print(f"== chat template: {CHAT_TEMPLATE} ==")
 
 print("== preparing dataset ==")
 ds = load_dataset("json", data_files={"train": "train.jsonl", "val": "val.jsonl"})

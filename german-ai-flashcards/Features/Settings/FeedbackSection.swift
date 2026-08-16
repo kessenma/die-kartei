@@ -58,10 +58,12 @@ struct FeedbackSection: View {
                     .scaledToFit()
                     .frame(width: 16, height: 16)
             }
+            .themedSectionHeader()
         } footer: {
             Text("Opens GitHub in your browser to file a bug or feature request — a free GitHub account is required. Some device info is added to help with debugging; you can edit or remove it before posting.")
                 .font(.caption2)
         }
+        .themedListRow()
     }
 
     // MARK: URL building

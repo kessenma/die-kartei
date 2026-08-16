@@ -2,62 +2,57 @@ import SwiftUI
 
 struct ModelGuideSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    GuideRow(model: .hero, badge: "Recommended", badgeColor: MLXModel.hero.theme.accent)
+                    GuideRow(model: .gemma4_E4B_german, badge: "Best", badgeColor: MLXModel.hero.theme.accent)
+                    GuideRow(model: .gemma4_E2B_german, badge: "Lighter", badgeColor: MLXModel.gemma4_E2B_german.theme.accent)
                 } header: {
-                    Text("Our recommendation")
+                    Text("Built for this app")
+                        .themedSectionHeader()
                 } footer: {
-                    Text("Gemma 4 E4B, fine-tuned on German grammar specifically for this app, built on Google's Gemma and its years of translation research. It's measurably better at verbs with prepositions, separable and reflexive verbs, da-/wo-compounds, and haben/sein, with fewer false corrections. On a capable device (6 GB RAM, iPhone 14 Pro or iPhone 15 and newer) it's the top pick. The other models below are solid alternatives if you'd rather not download it, or if your device can't run it.")
+                    Text("Short version: if your device runs one of these, use it. Both are Google's Gemma 4 fine-tuned on German grammar for this app, on the parts learners actually get wrong: verbs with prepositions, separable and reflexive verbs, da-/wo-compounds, and haben/sein. On the app's own grammar test the E4B tutor scores 90% and the E2B tutor 83%. The best general-purpose model below scores 58%. The tutors are also the only models here trained to correct you without inventing mistakes you didn't make, which is what makes conversation practice trustworthy.")
                 }
+                .themedListRow()
 
                 Section {
-                    GuideRow(model: .qwen3_8B, badge: "Best Overall", badgeColor: .purple)
-                    GuideRow(model: .mistral7B, badge: "Best Multilingual", badgeColor: .blue)
-                } header: {
-                    Text("Premium (6–8 GB RAM)")
-                } footer: {
-                    Text("These 7–8B models produce the most accurate German flashcards — better grammar annotations, more natural sentences, and fewer validation warnings than the 4B models.")
-                }
-
-                Section {
-                    GuideRow(model: .gemma4_E4B, badge: "Best Quality", badgeColor: .purple)
-                    GuideRow(model: .gemma3n_E4B, badge: "Efficient", badgeColor: .blue)
-                } header: {
-                    Text("Best for German (6 GB Devices)")
-                } footer: {
-                    Text("Google's stock Gemma 4 models for 6 GB devices like iPhone 14 Pro or iPhone 15. Strong German quality, but for this app the fine-tuned version above is the better pick.")
-                }
-
-                Section {
+                    GuideRow(model: .qwen3_8B, badge: nil, badgeColor: nil)
+                    GuideRow(model: .mistral7B, badge: nil, badgeColor: nil)
                     GuideRow(model: .qwen3_4B, badge: nil, badgeColor: nil)
                     GuideRow(model: .phi4Mini, badge: nil, badgeColor: nil)
                 } header: {
-                    Text("Mid-range")
+                    Text("Large, but weaker at German")
+                        .themedSectionHeader()
                 } footer: {
-                    Text("Good choices if your device can't handle the 4 GB+ Gemma models but you still want reliable grammar accuracy beyond what the 1B models offer.")
+                    Text("These have strong general reputations and all four underperformed on German grammar here. Qwen3 8B scores 58% and misses about half of a learner's real mistakes. Mistral 7B scores 48%, is worst on da-/wo-compounds, 'fixes' 59% of sentences that were already correct, and is the slowest model in the app. Qwen3 4B scores 52%; Phi-4 Mini scores 47% and misses 77% of real mistakes. They're listed for completeness, not as recommendations.")
                 }
+                .themedListRow()
 
                 Section {
+                    GuideRow(model: .granite2B_german, badge: "Best small", badgeColor: .green)
                     GuideRow(model: .gemma3_1B, badge: nil, badgeColor: nil)
                     GuideRow(model: .qwen3_0_6B, badge: "Fastest", badgeColor: .orange)
                     GuideRow(model: .llama3_2_1B, badge: nil, badgeColor: nil)
                 } header: {
-                    Text("Lightweight (iPhone 12+)")
+                    Text("Small devices (iPhone 12+)")
+                        .themedSectionHeader()
                 } footer: {
-                    Text("At 1B parameters or fewer, all models struggle with German's complex grammar. Noun genders (der/die/das), grammatical cases, and separable verbs may be unreliable — review output carefully.")
+                    Text("If your device can't run a Gemma tutor, the Granite tutor is the pick: 62% on the app's grammar test, higher than both 7–8B models above at a fraction of the size, and it never flagged a correct sentence as wrong. It is slower per word than its size suggests. The two models below it can write vocabulary cards but cannot correct you. Gemma 3 1B scores 33% and missed all 69 real mistakes it was shown; LLaMA 3.2 1B scores 28% and did the same. Neither will catch anything, so don't read their silence as approval.")
                 }
+                .themedListRow()
 
                 Section {
-                    Text("German has one of the more complex grammars among European languages: four grammatical cases, three noun genders, separable verbs, and long compound words. Smaller models are trained on fewer tokens and have less capacity to internalize these patterns reliably.\n\nThe 4B-class models (Gemma 3n and Gemma 4) produce significantly more accurate flashcards — better definitions, natural example sentences, and trustworthy grammar annotations.\n\nThe premium 7–8B models (Mistral 7B, Qwen3 8B) go further still, with richer vocabularies and more nuanced grammar notes. If your device has 6–8 GB RAM, these are worth downloading.")
+                    Text("Not reliably. Parameter count turned out to be a poor predictor of German quality in testing.\n\nOn the app's grammar test, a fine-tuned 2B Granite (62%) beat Mistral 7B (48%), a model three times its size, and Qwen3 8B (58%), four times its size. Qwen3 8B is the same download size as the E4B tutor and scored 58% against the tutor's 90%. German is unusually demanding, with four cases, three genders, separable verbs, and long compounds, and a model either picked those patterns up in training or it didn't.\n\nWhat matters more is what a model was trained on, and whether it was trained for this particular job. The E2B tutor is the smallest capable model here at around 2B parameters, and it outscores every general-purpose model tested, including the 8B ones, because it was fine-tuned on the exact correction format this app uses. The same holds one size up: the E4B tutor scores 90% where that model untuned scores 80%, so the training alone is worth about 10 points.\n\nThat gap is also why the app checks every flashcard against a dictionary instead of trusting the model.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 } header: {
-                    Text("Why does model size matter?")
+                    Text("Does a bigger model mean better German?")
+                        .themedSectionHeader()
                 }
+                .themedListRow()
 
                 Section {
                     HStack(alignment: .top, spacing: 12) {
@@ -65,7 +60,7 @@ struct ModelGuideSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 36, height: 36)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
 
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Every flashcard is validated on-device")
@@ -82,9 +77,11 @@ struct ModelGuideSheet: View {
                     .padding(.vertical, 4)
                 } header: {
                     Text("Built-in validation")
+                        .themedSectionHeader()
                 } footer: {
                     Text("This safety net makes smaller models more usable in practice — gender errors are caught automatically rather than silently ending up on your cards.")
                 }
+                .themedListRow()
 
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
@@ -105,8 +102,11 @@ struct ModelGuideSheet: View {
                     .padding(.vertical, 4)
                 } header: {
                     Text("Try them yourself")
+                        .themedSectionHeader()
                 }
+                .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("Which Model Should I Use?")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -123,6 +123,7 @@ struct ModelGuideSheet: View {
 // MARK: - Subviews
 
 private struct GuideRow: View {
+    @Environment(\.appTheme) private var appTheme
     let model: MLXModel
     let badge: String?
     let badgeColor: Color?
@@ -134,7 +135,7 @@ private struct GuideRow: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 36, height: 36)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
@@ -148,7 +149,7 @@ private struct GuideRow: View {
                                 .padding(.vertical, 2)
                                 .background(color.opacity(0.15))
                                 .foregroundStyle(color)
-                                .clipShape(Capsule())
+                                .clipShape(appTheme.pillShape)
                         }
                     }
 

@@ -146,14 +146,53 @@ Grammatik-Kategorie, z. B. "Welcher Fall kommt nach 'mit'?" oder "Wo steht das V
 Nebensatz?". Das korrigierte Wort darf NICHT im Hint vorkommen. Bei allen anderen Zeilen \
 "hint":null."""
 
+# The `refl` and `sep` entries carry worked examples and an explicit self-check. That is not
+# decoration: the terse one-line versions (kept below in the comments) named the right error type
+# and still produced 12% hard-case reflexives and 26% word-order rows mislabelled as separable
+# verbs — see TEACHER_GENERATION_FIX.md §2-3. Those two phenomena are the ones where a teacher has
+# to decide *which* subtle thing is wrong, and the terse description let it default to the easy
+# reading. The expanded versions were measured at 100% correct shape on gemma-4-31B.
+#
+# Previous terse versions, for reference:
+#   "sep":  "trennbares Verb falsch getrennt (Präfix nicht abgetrennt im Hauptsatz, oder
+#            fälschlich getrennt im Nebensatz)"
+#   "refl": "fehlendes oder falsches Reflexivpronomen (auch Akkusativ statt Dativ)"
 PHEN_DESC = {
     "vmp": "falsche Präposition bei einem Verb mit fester Präposition",
-    "sep": "trennbares Verb falsch getrennt (Präfix nicht abgetrennt im Hauptsatz, oder fälschlich getrennt im Nebensatz)",
-    "refl": "fehlendes oder falsches Reflexivpronomen (auch Akkusativ statt Dativ)",
-    "dawo": "Präposition + Pronomen statt Da-Kompositum, oder 'Präposition + was' statt Wo-Kompositum",
+
+    "sep": """Fehler in der VERBFORM eines trennbaren oder untrennbaren Verbs.
+
+ENTSCHEIDEND: Der Fehler MUSS in der Verbform liegen — Präfix falsch angehängt, falsch abgetrennt, \
+oder Partizip falsch gebildet. NIEMALS eine reine Umstellung anderer Satzglieder.
+SELBSTPRÜFUNG: sortiert(Wörter von "student") darf NICHT gleich sortiert(Wörter von "fix") sein.
+RICHTIG:  "Ich aufstehe jeden Tag um sieben."  -> "Ich stehe jeden Tag um sieben auf."
+RICHTIG:  "Er hat das Licht ausmachen."        -> "Er hat das Licht ausgemacht."
+RICHTIG:  "Wir haben den Stau gevermieden."    -> "Wir haben den Stau vermieden."
+VERBOTEN: "Du machst das Licht aus im Zimmer." -> "Du machst das Licht im Zimmer aus."  (nur verschoben)
+VERBOTEN: "Warum du rufst mich an?"            -> "Warum rufst du mich an?"  (V2-Inversion, falsches Phänomen)""",
+
+    "refl": """Fehler beim REFLEXIVPRONOMEN.
+
+ENTSCHEIDEND: Der Satz des Lerners MUSS BEREITS ein Reflexivpronomen enthalten, und die Korrektur \
+MUSS dieses Pronomen ÄNDERN (Kasus oder Person). Niemals nur ein fehlendes Pronomen EINFÜGEN.
+SELBSTPRÜFUNG: die Menge aus {mich, mir, dich, dir, sich, uns, euch} in "student" und in "fix" \
+muss BEIDE nicht leer und VERSCHIEDEN sein.
+RICHTIG:  "Ich wasche mich die Hände."      -> "Ich wasche mir die Hände."   (Kasus)
+RICHTIG:  "Wir treffen sich morgen."        -> "Wir treffen uns morgen."     (Person)
+VERBOTEN: "Ich interessiere für Musik."     -> "Ich interessiere mich für Musik."  (nur eingefügt)
+Hinweis: uns/euch/sich sind in Akkusativ und Dativ gleich — Kasusfehler brauchen ich/du als Subjekt.""",
+
+    "dawo": "Präposition + Pronomen statt Da-Kompositum, oder 'Präposition + was' statt Wo-Kompositum. Der Bezug muss eine SACHE sein — bei Personen ist 'Präposition + Pronomen' korrekt und darf nicht 'korrigiert' werden",
     "aux": "falsches Perfekt-Hilfsverb (haben statt sein oder umgekehrt)",
     "adjend": "falsche Adjektivendung",
     "artikel": "falscher Artikel (Genus)",
+    "relpron": "falsches Relativpronomen — falscher Kasus (der Kasus richtet sich nach der Rolle IM Relativsatz) oder falsches Genus/Numerus",
+    "wo": "'Präposition + was' statt Wo-Kompositum in einer FRAGE (Mit was -> Womit). Bei Personen ist 'Präposition + wen/wem' korrekt und darf nicht 'korrigiert' werden",
+    "ndekl": "N-Deklination: maskulines Nomen der schwachen Klasse ohne -n/-en in Akkusativ, Dativ oder Genitiv (der Student -> den Studenten). Im Nominativ Singular steht KEINE Endung",
+    "wechsel": "Wechselpräposition mit falschem Kasus — Akkusativ bei Bewegung zu einem Ziel, Dativ bei Position",
+    "k2": "Konjunktiv II falsch gebildet oder fehlend (Indikativ statt hätte/wäre/könnte/würde)",
+    "imperativ": "falsche Imperativform (du-Form behält kein -st, starke Verben mit e->i behalten den Wechsel, Sie-Form behält das Pronomen)",
+    "negation": "falsche Negation — 'nicht ein' statt 'kein', falsche Stellung von 'nicht', oder falsche kein-Endung",
     "verdict": "KEIN Fehler — alle Sätze sind korrekt und natürlich",
 }
 
@@ -256,8 +295,18 @@ def pick(rng, xs, ws=None):
 def correction_jobs(rng, n_items: int, verbs: list) -> list:
     """Seeded correction jobs. Phenomenon mix mirrors the app's four target areas plus the
     extension areas the v2 holdout showed are weak (wechsel/artikel via adjend/artikel)."""
-    phen_mix = [("vmp", 22), ("sep", 18), ("refl", 16), ("dawo", 16),
-                ("aux", 8), ("adjend", 7), ("artikel", 5), ("verdict", 8)]
+    # Weighted against what the corpus already HAS, not evenly. As of 2026-08-15:
+    #   vmp   3,989 + dawo 1,918 usable rows survive from the v2/gemma-26B run — that teacher is
+    #         98%/90% correctly shaped on those two, so they need almost no top-up.
+    #   refl / sep  must be REPLACED wholesale (26B managed 12% and 74%).
+    #   relpron, wo, ndekl, wechsel, k2, imperativ, negation  had ZERO rows in any corpus until
+    #         the Sonnet batch, and between them the eval suites spend 65 items on them.
+    # See TEACHER_GENERATION_FIX.md §6c.
+    phen_mix = [("refl", 20), ("sep", 20), ("verdict", 12),
+                ("relpron", 8), ("wechsel", 8), ("ndekl", 7), ("wo", 6), ("k2", 6),
+                ("adjend", 5), ("artikel", 5),
+                ("imperativ", 3), ("negation", 3), ("aux", 3),
+                ("vmp", 2), ("dawo", 2)]
     phens, weights = zip(*phen_mix)
     per = PER_JOB["correction"]
     jobs = []
@@ -284,6 +333,31 @@ def correction_jobs(rng, n_items: int, verbs: list) -> list:
             target = ("Alle Sätze sind KORREKT. Baue bewusst Sätze, die auf den ersten Blick "
                       "verdächtig aussehen (Da-Komposita, trennbare Verben, Reflexivpronomen, "
                       "Konjunktiv), aber vollkommen richtig sind.")
+        elif phen == "ndekl":
+            noun = pick(rng, ["der Student", "der Praktikant", "der Kollege", "der Kunde",
+                              "der Junge", "der Herr", "der Nachbar", "der Zeuge",
+                              "der Architekt", "der Polizist", "der Journalist", "der Mensch",
+                              "der Name", "der Experte", "der Patient", "der Soldat"])
+            meta = {"noun": noun}
+            target = (f'Zielnomen: "{noun}" (N-Deklination). Zeige die -n/-en-Endung in Akkusativ, '
+                      f'Dativ oder Genitiv. KEINE Fehler im Nominativ Singular.')
+        elif phen == "wechsel":
+            prep = pick(rng, ["an", "auf", "hinter", "in", "neben", "über", "unter", "vor",
+                              "zwischen"])
+            meta = {"prep": prep}
+            target = (f'Zielpräposition: "{prep}". Baue je zur Hälfte Bewegungssätze (Akkusativ '
+                      f'nötig) und Positionssätze (Dativ nötig). Nutze Verbpaare wie '
+                      f'stellen/stehen, legen/liegen, setzen/sitzen, hängen.')
+        elif phen == "relpron":
+            case = pick(rng, ["Nominativ", "Akkusativ", "Dativ", "Genitiv",
+                              "Präposition + Relativpronomen"])
+            meta = {"subtype": case}
+            target = (f'Schwerpunkt: {case}. Der Kasus des Relativpronomens richtet sich nach '
+                      f'seiner Rolle IM Relativsatz, Genus und Numerus nach dem Bezugswort.')
+        elif phen == "wo":
+            target = ("Baue FRAGEN, in denen ein Wo-Kompositum nötig ist (Mit was -> Womit). "
+                      "Der Bezug muss eine SACHE sein — 'Auf wen wartest du?' ist korrekt "
+                      "und darf nicht als Fehler auftauchen.")
         n_fix = 0 if phen == "verdict" else round(per * 0.65)
         n_ok = per - n_fix
         n_hint = round(n_fix * 0.4)

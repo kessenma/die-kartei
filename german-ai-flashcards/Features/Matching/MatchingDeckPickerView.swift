@@ -23,6 +23,7 @@ struct MatchingDeckPickerView: View {
     @Query private var pairStats: [MatchingPairStat]
     @Environment(ActivityRouter.self) private var router
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var appTheme
 
     private var deckStore: DeckStore { DeckStore(modelContext: modelContext) }
 
@@ -60,13 +61,14 @@ struct MatchingDeckPickerView: View {
                     .buttonStyle(.plain)
                 }
             } header: {
-                Text("Goethe Vocabulary")
+                Text("Goethe Vocabulary").themedSectionHeader()
             } footer: {
                 Text("A quick recognition warm-up — match each German word to its English meaning against the clock.")
             }
+            .themedListRow()
 
             if !playableDecks.isEmpty {
-                Section("Your Decks") {
+                Section {
                     ForEach(playableDecks, id: \.id) { deck in
                         Button {
                             router.launch(.matching(deckStore.matchingSession(
@@ -79,9 +81,13 @@ struct MatchingDeckPickerView: View {
                         }
                         .buttonStyle(.plain)
                     }
+                } header: {
+                    Text("Your Decks").themedSectionHeader()
                 }
+                .themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("Card Matching")
         .navigationBarTitleDisplayMode(.inline)
         .contentMargins(.bottom, 120, for: .scrollContent)
@@ -111,8 +117,9 @@ struct MatchingDeckPickerView: View {
                 .font(.subheadline)
             }
         } header: {
-            Text("Your Progress")
+            Text("Your Progress").themedSectionHeader()
         }
+        .themedListRow()
     }
 
     private func progressStat(_ value: String, _ caption: String) -> some View {
@@ -133,7 +140,7 @@ struct MatchingDeckPickerView: View {
                 .font(.title3)
                 .foregroundStyle(.tint)
                 .frame(width: 34, height: 34)
-                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline)

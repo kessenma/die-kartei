@@ -13,6 +13,26 @@ Companion to [`MODEL_SCOREBOARD.md`](MODEL_SCOREBOARD.md), [`ARTICLE.md`](ARTICL
 [`GEMMA_E2B_FINETUNING.md`](GEMMA_E2B_FINETUNING.md), and the detailed BübleLM writeup in
 [`BUEBLE_LM_EVAL.md`](BUEBLE_LM_EVAL.md).
 
+> ## ⚠️ Verdict revised 2026-07-30 — read this first
+>
+> **The anchor this whole survey measured against was wrong.** Stock Gemma 3 1B was recorded at
+> 58% core / 0% false corrections. The scorer credited replies that open `OK` and then append a
+> `FIX:` line, which is what that model emits on nearly every input and which the app renders as
+> *nothing*. Scored as the app behaves, stock Gemma 3 1B is **34% core with a 100% miss rate**.
+>
+> Two conclusions below invert:
+>
+> - **"No candidate clears the bar" is false.** Granite 3.3 2B was never tying the incumbent at
+>   57% vs 58% — on the v2 holdout it beats it by 21 points, 55% vs 34%.
+> - **"Not obviously worth a training run" is false.** That run happened (2026-07-30, ~40k v2
+>   examples) and landed **72% guarded**, more than double the incumbent. See §3 of
+>   [`training-v2.md`](training-v2.md).
+>
+> What survives, and is worth keeping: this doc's projection that a Granite fine-tune would land
+> "around ~70% guarded" was **accurate**. So was the substrate rule — Granite still finishes
+> below tuned E2B (84%), and no non-Gemma model reached the 6 GB tier. The error was in the
+> comparison point, not the method.
+
 ## The four candidates and why each was picked
 
 Filtered from the mid-2026 sub-3B field (Phi-4-mini, Qwen3-3B, SmolLM3, Granite, Llama 3.2 3B,
@@ -108,16 +128,21 @@ mixed 3-bit reaches only ~5.3 bpw (3.2 GB, barely under the 4-bit's 3.4 GB) *and
 63% guarded — below stock E2B. Full detail in [`GEMMA_E2B_FINETUNING.md`](GEMMA_E2B_FINETUNING.md).
 There is no quantization path to a smaller tier for this architecture.
 
-So the honest state of the budget tier:
+So the honest state of the budget tier (**updated 2026-07-30 — see the banner at the top**):
 
-1. **The 4 GB tier stays on stock Gemma 3 1B (58%, safe: never falsely corrects).** Nothing measured
-   beats it there, and Gemma 4 can't be shrunk into it.
-2. **The 6–8 GB tier gets the shipped tuned E2B (83%).** That remains the real budget win of this work.
-3. **Granite 3.3 2B is the only card worth keeping** — if a future need demands a non-Gemma,
-   Apache-2.0, sub-2 GB base, it's the one that clears the floor. Park it, don't pursue it.
-4. **The only lever left for the 4 GB tier is more training, not a smaller model or quant** — a
-   Granite fine-tune (~70% projected) or a fresh Gemma-3-1B data wave — and both are uncertain bets
-   against a 58% incumbent that at least never misleads.
+1. ~~**The 4 GB tier stays on stock Gemma 3 1B (58%, safe: never falsely corrects).**~~ The
+   incumbent is **34% with a 100% miss rate**, and it is not safe, it is silent. **Tuned Granite
+   3.3 2B beats it at 72%** and is the tier's best available answer, pending a device memory
+   measurement.
+2. **The 6–8 GB tier gets the shipped tuned E2B (83%, 84% on the v2 corpus).** Unchanged, and
+   still the real budget win of this work.
+3. **Granite 3.3 2B was the card worth playing, not parking.** Corrected: it was the only
+   candidate above the true floor, and the fine-tune this doc declined to recommend is the one
+   that produced the tier's best result.
+4. **The lever that's now exhausted is more SFT.** A LoRA rank test (r=8 → r=32, 4× trainable
+   params) cut validation loss 0.89 → 0.71 and moved the benchmark by 4 items in 82,
+   McNemar p = 0.42. Granite's ceiling on this corpus is ~70%, and the gap to E2B is substrate
+   and tokenizer, not training. Track paused there.
 
 The full sweep cost ~2 hours of Mac time (five converts + eleven eval runs + two quant experiments)
 and settled five "maybe this one?" model questions plus the 3-bit path the model cards couldn't.

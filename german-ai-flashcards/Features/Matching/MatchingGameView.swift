@@ -24,6 +24,8 @@ struct MatchingGameView: View {
     var onComplete: (MatchingRoundResult) -> MatchingRoundFeedback
     var onDismiss: () -> Void
 
+    @Environment(\.appTheme) private var appTheme
+
     // Tiles for each column, shuffled independently so the two sides never line up.
     @State private var germanTiles: [MatchTile] = []
     @State private var englishTiles: [MatchTile] = []
@@ -39,20 +41,31 @@ struct MatchingGameView: View {
     @State private var confusionLog: [Int: [String]] = [:] // pairID → wrong English picks this round
     @State private var feedback: MatchingRoundFeedback = .empty
 
-    // Timing.
+    // Timing. The clock runs from the moment the board appears, not from the first tap — the
+    // thinking time before that first tap is part of the round.
     @State private var sessionStart: Date?
     @State private var finishedAt: Date?
     @State private var displaySeconds = 0
     @State private var showSummary = false
+    /// Swaps the "how to play" hint for the match counter once the learner is under way.
+    @State private var hasTapped = false
 
-    private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    /// `@State`, not `let`: a stored property would be rebuilt every time `ContentView` re-renders
+    /// the cover, and `onReceive` would resubscribe to the fresh publisher and restart its interval
+    /// — which is how the clock ends up stuck. As state it's created once per round view.
+    @State private var ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     /// The generating model's accent, or the app accent for bundled decks with no model.
     private var brandAccent: Color { session.generatorModel?.theme.accent ?? .accentColor }
 
     var body: some View {
         ZStack {
-            Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
+            // Klar keeps the exact system ground; the identity themes paint their own.
+            if appTheme == .klar {
+                Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
+            } else {
+                ThemedBackground().ignoresSafeArea()
+            }
 
             if session.cards.isEmpty {
                 emptyState
@@ -122,14 +135,37 @@ struct MatchingGameView: View {
             }
             .frame(height: 6)
 
-            Text(sessionStart == nil
-                 ? "Tap a German word, then its English match."
-                 : "\(matched.count) / \(session.pairCount) matched")
+            Text(hasTapped
+                 ? "\(matched.count) / \(session.pairCount) matched"
+                 : "Tap a German word, then its English match.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+
+            if !session.tintLegend.isEmpty {
+                tintLegend
+            }
         }
         .padding(.horizontal)
         .padding(.bottom, 8)
+    }
+
+    /// What the German tiles' colors mean, when the session color-codes them.
+    private var tintLegend: some View {
+        HStack(spacing: 10) {
+            ForEach(session.tintLegend) { item in
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(item.color)
+                        .frame(width: 7, height: 7)
+                    Text(item.label)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+            }
+        }
+        .padding(.top, 2)
     }
 
     private var progressFraction: CGFloat {
@@ -165,7 +201,7 @@ struct MatchingGameView: View {
         return Button {
             handleTap(tile)
         } label: {
-            Text(tile.text)
+            tileLabel(tile)
                 .font(.callout.weight(.medium))
                 .multilineTextAlignment(.center)
                 .foregroundStyle(visual.foreground)
@@ -173,15 +209,21 @@ struct MatchingGameView: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 8)
                 .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    RoundedRectangle(cornerRadius: appTheme.innerRadius(14), style: .continuous)
                         .fill(visual.fill)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    RoundedRectangle(cornerRadius: appTheme.innerRadius(14), style: .continuous)
                         .strokeBorder(visual.stroke, lineWidth: visual.strokeWidth)
                 )
         }
         .buttonStyle(.plain)
+    }
+
+    /// German tiles color their article by gender (der blue / die red / das green) via `Text.gendered`
+    /// — the noun still follows the tile's state foreground. English tiles stay plain.
+    private func tileLabel(_ tile: MatchTile) -> Text {
+        tile.side == .german ? Text.gendered(tile.text, article: tile.article) : Text(tile.text)
     }
 
     private struct TileVisual {
@@ -198,12 +240,27 @@ struct MatchingGameView: View {
         if selectedGerman?.id == tile.id || selectedEnglish?.id == tile.id {
             return TileVisual(fill: brandAccent.opacity(0.18), stroke: brandAccent, strokeWidth: 2, foreground: brandAccent)
         }
+        if let tint = tint(for: tile) {
+            return TileVisual(
+                fill: tint.opacity(0.14),
+                stroke: tint.opacity(0.55),
+                strokeWidth: 1.5,
+                foreground: .primary
+            )
+        }
         return TileVisual(
             fill: Color(uiColor: .secondarySystemGroupedBackground),
             stroke: Color(uiColor: .systemGray4),
             strokeWidth: 1,
             foreground: .primary
         )
+    }
+
+    /// The session's color coding for this tile, if any. German column only — see
+    /// `MatchingSession.germanTileTints`.
+    private func tint(for tile: MatchTile) -> Color? {
+        guard tile.side == .german else { return nil }
+        return session.germanTileTints[tile.text.lowercased()]
     }
 
     // MARK: - Empty state
@@ -330,7 +387,7 @@ struct MatchingGameView: View {
 
     private func startRound() {
         let pairs = session.cards.enumerated().map { ($0.offset, $0.element) }
-        germanTiles = pairs.map { MatchTile(pairID: $0.0, text: germanText($0.1), side: .german) }.shuffled()
+        germanTiles = pairs.map { MatchTile(pairID: $0.0, text: germanText($0.1), side: .german, article: $0.1.article) }.shuffled()
         englishTiles = pairs.map { MatchTile(pairID: $0.0, text: $0.1.englishTranslation, side: .english) }.shuffled()
         matched = []
         taintedPairs = []
@@ -340,7 +397,8 @@ struct MatchingGameView: View {
         firstTryMatches = 0
         confusionLog = [:]
         feedback = .empty
-        sessionStart = nil
+        hasTapped = false
+        sessionStart = Date()
         finishedAt = nil
         displaySeconds = 0
         showSummary = false
@@ -349,7 +407,7 @@ struct MatchingGameView: View {
     private func handleTap(_ tile: MatchTile) {
         // Ignore taps on cleared tiles or while a wrong pair is still flashing.
         guard !matched.contains(tile.pairID), wrongPair == nil else { return }
-        if sessionStart == nil { sessionStart = Date() }
+        hasTapped = true
 
         switch tile.side {
         case .german:
@@ -421,6 +479,23 @@ private struct MatchTile: Identifiable, Equatable {
     let pairID: Int
     let text: String
     let side: Side
+    /// The noun's article on a german tile, so the board can color der/die/das. `nil` on english
+    /// tiles and on german words that aren't articled nouns.
+    var article: String? = nil
 
     enum Side { case german, english }
+}
+
+#Preview("Matching game · 4 themes") {
+    let cards = [
+        VocabCard(germanWord: "Hund", englishTranslation: "dog", wordType: "noun", article: "der"),
+        VocabCard(germanWord: "Blume", englishTranslation: "flower", wordType: "noun", article: "die"),
+        VocabCard(germanWord: "Haus", englishTranslation: "house", wordType: "noun", article: "das"),
+        VocabCard(germanWord: "Katze", englishTranslation: "cat", wordType: "noun", article: "die"),
+    ]
+    let session = MatchingSession(cards: cards, topic: "Preview Deck")
+    return ForEach(AppTheme.allCases) { theme in
+        MatchingGameView(session: session, onComplete: { _ in .empty }, onDismiss: {})
+            .environment(\.appTheme, theme)
+    }
 }

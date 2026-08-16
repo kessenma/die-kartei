@@ -131,6 +131,7 @@ struct WordListSheet: View {
                 }
             }
             .listStyle(.plain)
+            .themedListScreen()
             .navigationTitle("Word List (\(cards.count))")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

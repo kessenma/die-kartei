@@ -23,6 +23,10 @@ struct SelectableGermanText: UIViewRepresentable {
     var highlightRange: NSRange? = nil
     /// Lowercased German words already saved (shown with a subtle background).
     var savedWords: Set<String> = []
+    /// Words explained in a glossary shown below the text (marked with a dotted underline).
+    var glossary: GlossaryHighlight = .none
+    /// Lowercased words this learner looked up in this text (marked with a red dashed underline).
+    var lookedUpWords: Set<String> = []
     /// A single tapped word.
     var onTapWord: (String) -> Void
     /// A multi-word selection the learner asked to translate 1:1.
@@ -72,32 +76,69 @@ struct SelectableGermanText: UIViewRepresentable {
         context.coordinator.parent = self
         let base = UIFont.systemFont(ofSize: UIFont.preferredFont(forTextStyle: textStyle).pointSize, weight: weight)
         let font = UIFontMetrics(forTextStyle: textStyle).scaledFont(for: base)
-        tv.attributedText = Self.attributed(text, font: font, savedWords: savedWords, highlightRange: highlightRange)
+        tv.attributedText = Self.attributed(text, font: font, savedWords: savedWords,
+                                            glossary: glossary, lookedUpWords: lookedUpWords,
+                                            highlightRange: highlightRange)
     }
 
-    /// Build the styled string: base label color, an accent wash on saved words, and a read-along
-    /// tint + underline on the spoken word. Mirrors `TappableText`'s decorations.
+    /// Build the styled string: base label color, an accent wash on saved words, a dotted underline
+    /// on words the glossary below explains, a red dashed underline on words this learner looked up,
+    /// and a read-along tint + solid underline on the spoken word. Mirrors `TappableText`'s
+    /// decorations.
     private static func attributed(_ text: String,
                                    font: UIFont,
                                    savedWords: Set<String>,
+                                   glossary: GlossaryHighlight,
+                                   lookedUpWords: Set<String>,
                                    highlightRange: NSRange?) -> NSAttributedString {
         let result = NSMutableAttributedString(string: text, attributes: [
             .font: font,
             .foregroundColor: UIColor.label
         ])
         let ns = text as NSString
-        if !savedWords.isEmpty {
+        let dotted: [NSAttributedString.Key: Any] = [
+            .underlineStyle: NSUnderlineStyle.single.rawValue | NSUnderlineStyle.patternDot.rawValue,
+            .underlineColor: UIColor.tintColor.withAlphaComponent(0.75)
+        ]
+        // Dashed rather than dotted, and red rather than the tint: a word this learner needed help
+        // with reads differently from one the story shipped a translation for.
+        let dashed: [NSAttributedString.Key: Any] = [
+            .underlineStyle: NSUnderlineStyle.single.rawValue | NSUnderlineStyle.patternDash.rawValue,
+            .underlineColor: UIColor.systemRed.withAlphaComponent(0.8)
+        ]
+        if !savedWords.isEmpty || !glossary.words.isEmpty || !lookedUpWords.isEmpty {
             ns.enumerateSubstrings(in: NSRange(location: 0, length: ns.length), options: .byWords) { word, range, _, _ in
-                if let word, savedWords.contains(word.lowercased()) {
+                guard let key = word?.lowercased() else { return }
+                if savedWords.contains(key) {
                     result.addAttribute(.backgroundColor, value: UIColor.tintColor.withAlphaComponent(0.16), range: range)
                 }
+                // The glossary's marking wins when a word is in both — it's the better answer, and
+                // it's the one the list below the story explains.
+                if glossary.words[key] != nil {
+                    result.addAttributes(dotted, range: range)
+                } else if lookedUpWords.contains(key) {
+                    result.addAttributes(dashed, range: range)
+                }
+            }
+        }
+        for phrase in glossary.phrases {
+            var searched = 0
+            while searched < ns.length {
+                let found = ns.range(of: phrase, options: .caseInsensitive,
+                                     range: NSRange(location: searched, length: ns.length - searched))
+                guard found.location != NSNotFound else { break }
+                result.addAttributes(dotted, range: found)
+                searched = max(NSMaxRange(found), searched + 1)
             }
         }
         if let highlightRange, highlightRange.location != NSNotFound,
            NSMaxRange(highlightRange) <= ns.length {
+            // Solid, so a glossary word being read aloud reads as the spoken word rather than
+            // keeping its dotted marking.
             result.addAttributes([
                 .foregroundColor: UIColor.tintColor,
-                .underlineStyle: NSUnderlineStyle.single.rawValue
+                .underlineStyle: NSUnderlineStyle.single.rawValue,
+                .underlineColor: UIColor.tintColor
             ], range: highlightRange)
         }
         return result

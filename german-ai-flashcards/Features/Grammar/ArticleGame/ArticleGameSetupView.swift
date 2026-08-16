@@ -21,6 +21,7 @@ struct ArticleGameSetupView: View {
     @Query private var wordStats: [ArticleWordStat]
     @Environment(ActivityRouter.self) private var router
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var appTheme
 
     @AppStorage("articleGame.questionCount") private var questionCount = 10
     @AppStorage("articleGame.trickyFirst") private var trickyFirst = true
@@ -52,26 +53,28 @@ struct ArticleGameSetupView: View {
     var body: some View {
         List {
             if !rounds.isEmpty {
-                progressSection
+                progressSection.themedListRow()
             }
-            optionsSection
-            goetheSection
-            dictionarySection
+            optionsSection.themedListRow()
+            goetheSection.themedListRow()
+            dictionarySection.themedListRow()
             if !learnerQuestions.isEmpty {
-                learnerSection
+                learnerSection.themedListRow()
             }
             if !deckPools.isEmpty {
-                deckSection
+                deckSection.themedListRow()
             }
-            aiSection
+            aiSection.themedListRow()
 
             if let errorMessage {
                 Section {
                     Label(errorMessage, systemImage: "exclamationmark.triangle")
                         .foregroundStyle(.red)
                 }
+                .themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("Der · Die · Das")
         .navigationBarTitleDisplayMode(.inline)
         .scrollDismissesKeyboard(.interactively)
@@ -365,7 +368,7 @@ struct ArticleGameSetupView: View {
                 .font(.title3)
                 .foregroundStyle(.tint)
                 .frame(width: 34, height: 34)
-                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline)

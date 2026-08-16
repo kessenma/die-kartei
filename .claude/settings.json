@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod +x tools/blender/figur_all.sh)",
+      "Bash(./tools/blender/figur_all.sh)",
+      "Bash(git commit -m 'tools: commit Blender rig + genprops pipeline to version control *)",
+      "Bash(git commit -m 'prep scenes wave 2: die Figur demonstrates every spatial word *)",
+      "Bash(scp -r -i /Users/ke/.runpod/ssh/runpodctl-ssh-key -P 22095 -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 root@194.68.245.122:/root/train/gemma4-e4b-german-v2balanced-lora models/gemma4-e4b-german-v3-lora)",
+      "Bash(scp -i /Users/ke/.runpod/ssh/runpodctl-ssh-key -P 22095 -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 root@194.68.245.122:/workspace/train.log models/gemma4-e4b-german-v3-train.log)",
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(.venv/bin/python scripts/validate_data.py data/generated_sonnet_v2/batch_hardcase.jsonl)",
+      "mcp__runpod__get-gpu-type",
+      "mcp__XcodeBuildMCP__stop_app_sim"
+    ]
+  }
+}

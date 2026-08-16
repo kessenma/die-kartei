@@ -17,6 +17,8 @@ struct CardSelectionView: View {
     @State private var selected: Set<Int>
     @State private var showingDiscardConfirm = false
 
+    @Environment(\.appTheme) private var theme
+
     private let validationByWord: [String: ValidationResult]
 
     init(
@@ -59,9 +61,12 @@ struct CardSelectionView: View {
                     }
                 } header: {
                     Text("\(selected.count) of \(cards.count) selected")
+                        .themedSectionHeader()
                 }
+                .themedListRow()
             }
             .listStyle(.insetGrouped)
+            .themedListScreen()
             .navigationTitle("Keep Which Cards?")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -102,7 +107,7 @@ struct CardSelectionView: View {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
-                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
+                    .foregroundStyle(isSelected ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
 
                 if let draftImageID, let fileName = draftImages[card.germanWord.lowercased()] {
                     DraftCardThumbnail(fileName: fileName, draftImageID: draftImageID)
@@ -111,14 +116,14 @@ struct CardSelectionView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
                         Text(germanDisplay(card))
-                            .font(.headline)
+                            .themedLabel(.headline, size: 17)
                         if let type = card.wordType, !type.isEmpty {
                             Text(type)
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(Color.secondary.opacity(0.12), in: Capsule())
+                                .background(Color.secondary.opacity(0.12), in: theme.pillShape)
                         }
                     }
 
@@ -155,7 +160,8 @@ struct CardSelectionView: View {
                 onSave(selectedCards)
             } label: {
                 Text(saveButtonTitle)
-                    .font(.headline)
+                    .themedLabel(.headline, size: 17)
+                    .textCase(theme.uppercaseSectionHeaders ? .uppercase : nil)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
             }
@@ -205,6 +211,7 @@ private struct DraftCardThumbnail: View {
     let draftImageID: UUID
 
     @State private var image: UIImage?
+    @Environment(\.appTheme) private var theme
 
     var body: some View {
         Group {
@@ -216,15 +223,17 @@ private struct DraftCardThumbnail: View {
                 Color.secondary.opacity(0.12)
             }
         }
+        // Chrome-vs-content: the picture itself is untouched, only the frame around it is themed.
         .frame(width: 48, height: 48)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: theme.innerRadius(8), style: .continuous))
         .task(id: fileName) {
             image = CardImageStore.loadImage(fileName: fileName, deckID: draftImageID)
         }
     }
 }
 
-#Preview {
+@MainActor
+private func cardSelectionPreview(_ theme: AppTheme) -> some View {
     CardSelectionView(
         cards: [
             VocabCard(germanWord: "Hund", englishTranslation: "dog", wordType: "noun", article: "der", exampleSentence: "Der Hund schläft."),
@@ -236,4 +245,10 @@ private struct DraftCardThumbnail: View {
         onSave: { _ in },
         onCancel: {}
     )
+    .environment(\.appTheme, theme)
 }
+
+#Preview("Keep which cards · System")   { cardSelectionPreview(.klar) }
+#Preview("Keep which cards · Soft")     { cardSelectionPreview(.sanft) }
+#Preview("Keep which cards · Notebook") { cardSelectionPreview(.kritzel) }
+#Preview("Keep which cards · Bauhaus")  { cardSelectionPreview(.grundform) }

@@ -27,6 +27,8 @@ struct ArticleGameView: View {
     var onComplete: (ArticleRoundResult) -> ArticleRoundFeedback
     var onDismiss: () -> Void
 
+    @Environment(\.appTheme) private var appTheme
+
     private enum Phase {
         case answering
         /// A wrong tap revealed the answer; waiting for "Weiter".
@@ -58,7 +60,9 @@ struct ArticleGameView: View {
 
     var body: some View {
         ZStack {
-            Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
+            // Already the systemGroupedBackground Klar uses, so ThemedBackground is a no-op there
+            // and paints each identity theme's ground (Kritzel's ruled paper, etc.) elsewhere.
+            ThemedBackground().ignoresSafeArea()
 
             if session.questions.isEmpty {
                 emptyState
@@ -94,6 +98,9 @@ struct ArticleGameView: View {
         .sheet(isPresented: $showRules) {
             ArticleRulesSheet()
         }
+        // No model here, so on Klar this is `.accentColor` (identical); the identity themes assert
+        // their own accent for the progress bar and the "Weiter" button.
+        .tint(appTheme.accent(model: nil))
     }
 
     // MARK: - Chrome
@@ -133,7 +140,7 @@ struct ArticleGameView: View {
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color(uiColor: .systemGray5))
                     Capsule()
-                        .fill(Color.accentColor)
+                        .fill(.tint)   // follows the themed tint (accentColor on Klar)
                         .frame(width: geo.size.width * progressFraction)
                 }
             }
@@ -168,7 +175,8 @@ struct ArticleGameView: View {
     private func questionCard(_ question: ArticleQuestion) -> some View {
         VStack(spacing: 12) {
             Text(revealedArticlePrefix + question.noun)
-                .font(.system(size: 40, weight: .bold, design: .rounded))
+                // Klar/Sanft keep the rounded display; Kritzel/Grundform take their own face.
+                .themedLabel(.system(size: 40, weight: .bold, design: .rounded), size: 40)
                 .minimumScaleFactor(0.5)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
@@ -573,5 +581,24 @@ private struct ShakeEffect: GeometryEffect {
 
     func effectValue(size: CGSize) -> ProjectionTransform {
         ProjectionTransform(CGAffineTransform(translationX: sin(shakes * .pi * 6) * 6, y: 0))
+    }
+}
+
+#Preview("Article game · 4 themes") {
+    // Swipe the tabs to compare the four grounds/faces; der/die/das keep their GenderPalette colors.
+    let session = ArticleGameSession(
+        questions: [
+            ArticleQuestion(noun: "Tisch", article: .der, english: "table"),
+            ArticleQuestion(noun: "Blume", article: .die, english: "flower"),
+            ArticleQuestion(noun: "Haus", article: .das, english: "house"),
+        ],
+        topic: "Preview"
+    )
+    return TabView {
+        ForEach(AppTheme.allCases) { theme in
+            ArticleGameView(session: session, onComplete: { _ in .empty }, onDismiss: {})
+                .environment(\.appTheme, theme)
+                .tabItem { Text(theme.label) }
+        }
     }
 }

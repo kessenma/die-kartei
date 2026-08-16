@@ -6,6 +6,7 @@ struct StoryStyleSheet: View {
     @Binding var selected: StoryGenre
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     private let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
 
@@ -21,6 +22,11 @@ struct StoryStyleSheet: View {
                     }
                 }
                 .padding(16)
+            }
+            // Non-Klar only: paint the theme's ground so the gallery belongs to the same world.
+            // Klar keeps the default sheet background untouched.
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
             }
             .navigationTitle("Story Style")
             .navigationBarTitleDisplayMode(.inline)
@@ -39,6 +45,8 @@ private struct StyleCard: View {
     let isSelected: Bool
     let action: () -> Void
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 10) {
@@ -55,7 +63,7 @@ private struct StyleCard: View {
                 Spacer(minLength: 8)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(genre.label)
-                        .font(.headline)
+                        .themedLabel(.headline, size: 17)
                         .lineLimit(1)
                     Text(genre.englishSubtitle)
                         .font(.caption)
@@ -66,9 +74,9 @@ private struct StyleCard: View {
             .foregroundStyle(.white)
             .padding(14)
             .frame(maxWidth: .infinity, minHeight: 132, alignment: .topLeading)
-            .background(genre.styleGradient, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .background(genre.styleGradient, in: RoundedRectangle(cornerRadius: appTheme.innerRadius(18), style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: appTheme.innerRadius(18), style: .continuous)
                     .stroke(.white, lineWidth: isSelected ? 3 : 0)
             }
             .shadow(color: genre.styleAccent.opacity(0.35), radius: 6, y: 3)

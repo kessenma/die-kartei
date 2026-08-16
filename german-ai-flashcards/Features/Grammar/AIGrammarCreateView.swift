@@ -34,6 +34,7 @@ struct AIGrammarCreateView: View {
     }
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var appTheme
     @Query private var profiles: [LearnerProfile]
 
     @FocusState private var isTopicFieldFocused: Bool
@@ -53,18 +54,25 @@ struct AIGrammarCreateView: View {
     var body: some View {
         Form {
             modelSection
+                .themedListRow()
             structureSection
+                .themedListRow()
             topicSection
+                .themedListRow()
             optionsSection
+                .themedListRow()
             generateSection
+                .themedListRow()
 
             if let errorMessage {
                 Section {
                     Label(errorMessage, systemImage: "exclamationmark.triangle")
                         .foregroundStyle(.red)
                 }
+                .themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("AI Exercises")
         .navigationBarTitleDisplayMode(.large)
         .scrollDismissesKeyboard(.interactively)
@@ -140,6 +148,7 @@ struct AIGrammarCreateView: View {
         } header: {
             HStack {
                 Text("What to practice")
+                    .themedSectionHeader()
                 Spacer()
                 Button {
                     showingLesson = true
@@ -174,6 +183,7 @@ struct AIGrammarCreateView: View {
             }
         } header: {
             Text("Topic")
+                .themedSectionHeader()
         } footer: {
             Text("Type your own, scroll the ideas, or let the dice pick one.")
         }
@@ -220,7 +230,8 @@ struct AIGrammarCreateView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 5)
             .background(
-                Capsule().fill(isSelected ? Color.accentColor : Color(.tertiarySystemFill))
+                isSelected ? AnyShapeStyle(.tint) : AnyShapeStyle(Color(.tertiarySystemFill)),
+                in: appTheme.pillShape
             )
             .foregroundStyle(isSelected ? Color.white : Color.primary)
         }
@@ -258,6 +269,7 @@ struct AIGrammarCreateView: View {
             }
         } header: {
             Text("Options")
+                .themedSectionHeader()
         } footer: {
             if !learnerWords.isEmpty && useLearnerWords {
                 Text("Weaves in words from your conversations, like \(learnerWords.prefix(3).joined(separator: ", ")).")

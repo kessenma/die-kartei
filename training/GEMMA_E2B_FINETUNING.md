@@ -233,6 +233,22 @@ run can be re-scored either way and the historical raw numbers stay reproducible
 - [x] **Budget switched to measured peaks**, with `hasSlimHeadroom` keeping the governors on where
       the fit is tight.
 
+### Retrained on the v2 corpus (2026-07-29) — a trade, not an upgrade
+
+~40k teacher-generated examples vs v1's ~1,400, scored on the frozen v2 holdout, all guarded:
+
+| | core | false-corr | miss |
+|---|---|---|---|
+| E2B v1 (shipped) | 69/82 (84%) | 12% | **10%** |
+| E2B v2 | 69/82 (84%) | **4%** | 20% |
+
+Core is flat; the model traded 3× fewer false corrections for 2× more missed errors. It became
+more *cautious*, not more capable — which is a defensible ship for a tutor but is not the
+improvement 28× the data was supposed to buy. **E4B v2, on the same corpus, went 85% → 91% with
+false corrections eliminated (8% → 0%)**, so the corpus is fine; this is the capacity gradient
+showing up again one tier down. E2B v1 stays shipped pending a call on the trade.
+Full workup: [`training-v2.md`](training-v2.md) §2.
+
 ## Next
 
 1. **Verify on device** — the one thing standing between this and a supported 6 GB tier. Load E2B,
@@ -247,9 +263,14 @@ run can be re-scored either way and the historical raw numbers stay reproducible
 4. **A3 inverted** — with FC at 3%, bias the first token toward `FIX` and see how far the 19% miss
    rate falls before false corrections become real ones.
 5. **A small DPO run (C3)** aimed at the two remaining defects: `sep-c3` and the sep regression.
-6. **Revise `ARTICLE.md`** — "Round two" and "The floor" currently tell a capacity-cliff story that
-   the echo decomposition contradicts. The honest version is a better story: *the measurement was
-   wrong, the fix was two lines, and the tutor floor drops a hardware tier.*
+6. ~~**Revise `ARTICLE.md`**~~ **Done 2026-07-30.** And the pattern repeated: a *second* scoring
+   artifact turned up in the same guard, this time flattering stock Gemma 3 1B. `apply_app_guard`
+   implemented the echo rule but not `parseCorrection`'s `hasPrefix("OK\n")` clause, so a reply
+   that opens `OK` and then appends a real `FIX:` was credited on both branches. That model emits
+   exactly that shape on nearly every input, and the app displays none of it. **Stock Gemma 3 1B
+   is 34% guarded with a 100% miss rate, not 58%/55%** — it had been the recorded 4 GB incumbent
+   for weeks. Same lesson as the E2B echo decomposition, opposite direction: *implement the app's
+   parse contract in full, or the bench measures a model the user never meets.*
 7. ~~**A 3-bit E2B** would drop peak to ~2 GB and open the 4–6 GB tier.~~ **Tested 2026-07-23 —
    dead end, see below.**
 

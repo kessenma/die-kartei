@@ -20,6 +20,7 @@ struct CardDeckView: View {
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.appTheme) private var appTheme
     /// Injected at the app root. Needed so an illustrate-this-deck run can free the language
     /// model before loading the diffusion pipeline.
     @Environment(MLXGenerationService.self) var mlxService
@@ -156,6 +157,11 @@ struct CardDeckView: View {
             }
             .navigationTitle(hasStarted ? "" : "Flashcards")
             .navigationBarTitleDisplayMode(.inline)
+            // The identity themes paint their ground behind the whole player; Klar keeps the exact
+            // system background it has always had, so this is a no-op there.
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
+            }
             .tint(brandAccent)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {

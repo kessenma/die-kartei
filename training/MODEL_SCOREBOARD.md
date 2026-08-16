@@ -27,6 +27,113 @@ dataset (`data/packed/`), QLoRA r=8, lr 2e-4, 2 epochs unless noted.
 > diacritic-sensitive, so `Madchen → Mädchen` still counts as a real correction. Tier table
 > revised 2026-07-28; the per-model rows below remain raw.
 
+> 🛑 **2026-07-30 — "stock Gemma 3 1B = 58% core, 0% false corrections" is WRONG everywhere it
+> appears in this repo.** The guard above implemented `parseCorrection`'s echo rule but not its
+> `hasPrefix("OK\n")` clause. Stock Gemma 3 1B answers nearly every item with `OK` followed by a
+> real `FIX:` line; the old scorer credited `expect_ok` items for the leading `OK` *and* error
+> items for the `FIX`, while the app displays **nothing** for that reply shape.
+>
+> | stock Gemma 3 1B | recorded | actual (app-equivalent) |
+> |---|---|---|
+> | core | 58% | **34%** |
+> | false corrections | 0% | 0% (it shows nothing at all) |
+> | miss rate | 55% | **100%** |
+>
+> Its 0% FC was never caution, it was silence. **Any conclusion of the form "X doesn't beat the
+> 58% incumbent" needs rereading** — this includes [`BUDGET_BASE_SEARCH.md`](BUDGET_BASE_SEARCH.md)'s
+> headline verdict and several bullets in [`PLAN.md`](PLAN.md) and
+> [`DATA_V2_DISTILL_PLAN.md`](DATA_V2_DISTILL_PLAN.md), all annotated in place. **Gemma 4 numbers
+> are unaffected** — those models emit a clean `OK` or a clean `FIX`. Where a `58%` survives below
+> and refers to a *different* model (Qwen3-8B) or to an explicitly *raw* column, it is correct.
+> Detail: §3.2 of [`training-v2.md`](training-v2.md).
+
+> ⛔ **2026-08-12 — the "✅ SHIP E4B v2" verdict below is RETRACTED. v2 is NOT shipped; v1 still is.**
+> The v2 table was scored on the v2 holdout only. On the other two suites, guarded:
+>
+> | suite | stock E4B | **E4B v1 (shipped)** | **E4B v2** |
+> |---|---|---|---|
+> | core v0 (60) — the app's four target areas | 48 (80%) | **54 (90%)** | **42 (70%)** |
+> | ext v1 (61) | 57 (93%) | 57 (93%) | 55 (90%) |
+> | holdout v2 (82) | 64 (78%) | 70 (85%) | 75 (91%) |
+> | miss rate (v0+v1, /69) | 11 (16%) | **6 (9%)** | 19 (**28%**) |
+>
+> **v2 loses 20 points on the core suite (exact McNemar p = 0.0042) and lands below the untuned
+> base, while its holdout gain is not significant (p = 0.30).** Cause: `pack_dataset.py` never
+> checked verdict balance, so the correction slice shipped at **44% fix against v1's 69%** — and
+> `sep` at **20% fix**, i.e. four of five separable-verb examples said nothing was wrong. Half of
+> v2's core-suite failures are a bare `OK`. Fixed by `--fix-frac`; `data/packed-v2-balanced/`
+> (14,045 correction rows at 62% fix) is packed and awaiting a retrain. This also explains the
+> two-architecture `relpron` regression in §3.4. Full workup: **[`training-v2.md`](training-v2.md) §2.6.**
+
+## 🎉 v2 RESULTS (2026-07-29) — retrained on 45k teacher-generated examples
+
+All on the frozen `grammar_eval_v2_holdout.json`, all guarded. Full workup:
+[`training-v2.md`](training-v2.md) §2.
+
+| model | core | false-corr | miss | verdict |
+|---|---|---|---|---|
+| E4B v1 (shipped today) | 70/82 (85%) | 8% | **12%** | the incumbent |
+| **E4B v2** | **75/82 (91%)** | **0%** | 15% | ✅ **SHIP — better on both headline metrics** |
+| E2B v1 (shipped today) | 69/82 (84%) | 12% | **10%** | the incumbent |
+| E2B v2 | 69/82 (84%) | **4%** | 20% | ◽ a trade, not a win — your call |
+| E2B v2, no mix-in | 63/82 (76%) | 4% | 39% | ❌ mix-in earns its place |
+
+**E4B v2 is an unambiguous improvement: +6 points core and false corrections eliminated entirely
+(8% → 0%).** Per-phenomenon, the gains land exactly where v1 was weakest —
+**dawo 6/10 → 9/10** (the app's hardest target area), adjend 4/6 → 6/6, k2 3/4 → 4/4,
+wechsel 3/5 → 4/5, wo 4/5 → 5/5, refl 8/10 → 9/10. Regressions: relpron 6/6 → 4/6, aux 6/6 → 5/6,
+sep 10/10 → 9/10. Net +5 items.
+
+**E2B v2 is a genuine trade**, not an improvement: core flat at 84%, false corrections 12% → 4%
+(3× better), missed errors 10% → 20% (2× worse). The model became more cautious rather than more
+capable.
+
+### The 4 GB tier (2026-07-30) — doubled, then paused
+
+Same holdout, same guard. Full workup: [`training-v2.md`](training-v2.md) §3.
+
+| model | core | false-corr | miss | verdict |
+|---|---|---|---|---|
+| Gemma 3 1B stock — **ships today** | 28/82 (34%) | 0/24 (0%) | 41/41 (**100%**) | ⚠️ the 0% FC is not caution, it's silence — it answers `OK\nFIX:…` and the app shows nothing |
+| Gemma 3 1B tuned on v2 | 21/82 (26%) | 7/24 (29%) | 41/41 (100%) | ❌ capacity cliff, re-confirmed at 28× the data |
+| Granite 3.3 2B stock | 45/82 (55%) | 4/24 (17%) | 27/41 (66%) | the real floor |
+| Granite 3.3 2B tuned r=8 | 55/82 (67%) | 2/24 (8%) | 19/41 (46%) | +10 on core |
+| **Granite 3.3 2B tuned r=32** | **59/82 (72%)** | **0/24 (0%)** | 18/41 (44%) | ◽ **best 4 GB result; unshipped** |
+
+**The tier more than doubles (34% → 72%) and still loses to a 6 GB phone (84%).** Two caveats on
+the r=32 row, in both directions:
+
+- The core gain over r=8 is **not significant** — 9 items gained, 5 lost, exact McNemar p = 0.42.
+  An 82-item bench can't separate 67% from 72%, and 4× the trainable adapter params cut val loss
+  0.89 → 0.71 without moving it. SFT is exhausted here.
+- The **false-correction rate is the honest win**: 8% → 0%, on the metric this scoreboard treats
+  as the trust-killer. Whatever the core number is, the model stopped inventing corrections.
+
+**Paused, not shipped.** Open: peak RAM on a real 4 GB device, and Granite's tokenizer needs
+~1.9× the tokens for the same German sentence (49k BPE vocab vs Gemma's 262k SentencePiece), so
+it generates ~2× slower per word on the weakest hardware in the lineup. See `training-v2.md` §3.8.
+
+### Naturalness (`conversation_v0.json`, 50 items, greedy)
+
+| metric | E4B v1 | **E4B v2** | E2B v1 | E2B v2 |
+|---|---|---|---|---|
+| **modal particles /100 tok** | 2.82 | **14.49** | 2.94 | 12.44 |
+| repeat-4gram share | 0.30 | **0.12** | 0.26 | 0.12 |
+| top-opener share | 0.231 | **0.130** | 0.325 | 0.158 |
+| opening variety | 0.70 | **0.78** | 0.70 | 0.64 |
+| type-token ratio | 0.780 | **0.806** | 0.747 | 0.778 |
+| follow-up rate | 0.78 | **0.90** | 0.80 | 0.74 |
+| tokens per reply | 11.3 | 13.9 | 11.6 | 12.1 |
+| sentences per reply | 2.00 | 1.74 | 2.06 | 1.44 |
+| English leakage | 0.00 | 0.00 | 0.00 | 0.00 |
+
+**Modal particles rose 5.1× on E4B** — the single largest defect the Phase 0 baseline identified, and
+the clearest spoken-vs-textbook marker. Canned-phrase repetition halved, replies got longer and
+lexically richer, and follow-up questions rose to 90%.
+
+So E4B v2 is better on grammar **and** better on naturalness — the "slightly worse but more human"
+trade never had to be made.
+
 ## Eval suites
 
 - **Core** (`data/eval/grammar_eval_v0.json`, 60 items): the app's four target areas —
@@ -61,7 +168,7 @@ dataset (`data/packed/`), QLoRA r=8, lr 2e-4, 2 epochs unless noted.
 | Model | Size (4-bit) | Core base | Core tuned | Ext base | Ext tuned | False-corr (base→tuned) | Miss (base→tuned) | License | Verdict |
 |---|---|---|---|---|---|---|---|---|---|
 | **Gemma 4 E4B** | 4.9 GB | 43/60 (72%) | **51/60 (85%)** | 53/61 (87%) | **55/61 (90%)** | 34% → **22%** | 17% → **9%** | Apache 2.0 | ✅ **SHIPPED** — app case "Gemma 4 E4B German Tutor", repo `kessenma/gemma4-e4b-german-tutor-4bit` |
-| Gemma 3 1B (QAT) | 0.8 GB | 35/60 (58%) | ❌ 19/60 (32%) | 36/61 (59%) | ❌ 22/61 (36%) | 0% → 56% | 55% → 72% | Gemma | **Ship STOCK as entry tier.** Fine-tune = capacity cliff (behavior without knowledge); tuned model kept for reference only |
+| Gemma 3 1B (QAT) | 0.8 GB | ~~35/60 (58%)~~ **34% guarded** | ❌ 19/60 (32%) / 25% on v2 | 36/61 (59%) | ❌ 22/61 (36%) | 0% → 56% | **100%** → 100% | Gemma | ⚠️ **the 58% was a scoring artifact** (credited `OK\nFIX:…` replies the app discards — corrected 2026-07-30). True guarded core **34%, miss 100%**: it shows the learner nothing. Still the entry tier by default, but **tuned Granite 3.3 2B (72%) beats it and is the better answer** if the 4 GB tier is revived. Fine-tune = capacity cliff at both 1.4k and 40k examples |
 | Qwen3-4B | 2.3 GB | 29/60 (48%) | 37/60 (62%) | 35/61 (57%) | 39/61 (64%) | 19% → — | 61% → — | Apache 2.0 | Tuned still below *stock* E4B — not shipped. `kessenma/qwen3-4b-german-tutor` |
 | Mistral 7B v0.3 | 4.1 GB | 26/60 (43%) | — | 30/61 (49%) | — | — | — | Apache 2.0 | ❌ dropped: dawo 1/15, artikel 2/8, slowest in app |
 | Llama 3.2 1B | 0.7 GB | 17/60 (28%) | — | 20/61 (33%) | — | 0% (trivial) | **100%** | Llama license | ❌ unsalvageable — answered OK to all 69 errors |
@@ -72,7 +179,7 @@ dataset (`data/packed/`), QLoRA r=8, lr 2e-4, 2 epochs unless noted.
 | Aya Expanse 8B | 4.2 GB | 34/60 (57%) | — | 39/61 (64%) | — | **100%** (!!) | 12% | ⚠️ CC-BY-NC | ❌ research footnote: corrected ALL 32 correct sentences — zero verdict discipline, the exact mirror of Llama 1B (which OK'd all 69 errors). Decent knowledge, no judgment |
 | EuroLLM-1.7B Instruct | ~1 GB | 8/60 (**13%**) | — | 4/61 (**7%**) | — | 100% | 97% | Apache 2.0 | ❌ **DEAD LAST** — can't follow the correction format (26–29 format failures per suite; rambles in English prose). EU-24-languages pretraining without instruction-following is useless for a structured tutor task. Local convert at `models/eurollm-1.7b-4bit` |
 | BübleLM-2B-SFT (Gemma 2-2B, German) | 1.1 GB | 4/60 (**7%**) / 25% lenient | — | 3/61 (5%) | — | **100%** (0 bare OK) | 100% | Apache 2.0 | ❌ **below the fine-tune floor.** German-specialised Gemma 2-2B (HellaSwag-DE 47.9%) but never renders a verdict — 77% open `: "<sentence>"`, 0% emit `OK`, 7% emit `FIX:`. Even forgiving format entirely: 25% core ≪ 55% floor. The EuroLLM pattern again — strong-ish German, no task discipline. Full workup: [`BUEBLE_LM_EVAL.md`](BUEBLE_LM_EVAL.md). Local convert at `models/bueble-lm-2b-sft-4bit` |
-| **Granite 3.3 2B Instruct** (IBM) | 1.5 GB | 30/60 (50%) → **34/60 (57%) guarded** | — | 27/61 (44%) → 62% guarded | — | 66% → **19% guarded** | 43% | Apache 2.0 | ◽ **at the floor, best non-Gemma tested.** Clean license, good verdict discipline (guarded FC 19% < Gemma's 34%), catches more errors than Gemma-3-1B (miss 43% vs 55%) — but only *ties* stock Gemma-3-1B (58%) on core while being ~2× the size, and a fine-tune would land ~70% (< tuned E2B 83%). Only worth it as a fine-tune base if avoiding the 3-bit-E2B path. See [`BUDGET_BASE_SEARCH.md`](BUDGET_BASE_SEARCH.md) |
+| **Granite 3.3 2B Instruct** (IBM) | 1.5 GB | 30/60 (50%) → **34/60 (57%) guarded** | **72% (v2 holdout, tuned)** | 27/61 (44%) → 62% guarded | — | 66% → **19%** base → **0% tuned** | 43% base → 44% tuned | Apache 2.0 | ◽ **fine-tuned 2026-07-30 — best 4 GB result, unshipped.** This row previously read "only *ties* stock Gemma-3-1B (58%)"; that anchor was wrong (true 34%), so Granite was **beating** it by 21 points (55% vs 34%), not tying. Its own projection that a fine-tune would land ~70% proved accurate: **72% guarded, 0% FC**. Ceiling is real though — a rank test (r=8→r=32) moved core by p=0.42, and its 49k BPE vocab needs ~1.9× the tokens for German. [`training-v2.md`](training-v2.md) §3, [`BUDGET_BASE_SEARCH.md`](BUDGET_BASE_SEARCH.md) |
 | Llama 3.2 3B Instruct | 2.0 GB | 16/60 (27%) → 35% guarded | — | 33/61 (54%) → 70% guarded | — | 100% → 53% guarded | 43% | Llama 3.2 (700M MAU) | ❌ **below floor.** Strong generalist (ext 70% guarded, 0 format errors) but weak German *grammar* — over-corrects half the correct sentences even guarded. Substrate ceiling: German MMLU 53.3 ≪ Gemma. The 1B's bigger sibling still can't do the hard areas. [`BUDGET_BASE_SEARCH.md`](BUDGET_BASE_SEARCH.md) |
 | Salamandra 2B Instruct (BSC) | 1.2 GB | 4/60 (**7%**) | — | 8/61 (13%) | — | 100% | 100% | Apache 2.0 | ❌ **EuroLLM redux — dead last tier.** 99/121 format failures; rambles in English, translates instead of correcting, confabulates (*'the correct form is "er" instead of "er"'*). 35-EU-language pretraining tuned for Catalan/Spanish → no German task discipline. Local convert at `models/salamandra-2b-instruct-4bit` |
 | SauerkrautLM-gemma-2-2b-it (VAGO) | 1.4 GB | 20/60 (33%) → **32/60 (53%) guarded** | — | 28/61 (46%) → 64% guarded | — | 97% → **25% guarded** | 46% | Gemma | ❌ **best-behaved existing German fine-tune, still below floor.** German Spectrum-tune of Gemma 2 2B — kept instruction-following (only 5/121 format errors, unlike BübleLM's collapse) but Gemma-2 substrate on the hard grammar lands *below* stock Gemma-3-1B (58%) and under the 55% floor. Confirms: an off-the-shelf German chat tune ≠ this task. [`BUDGET_BASE_SEARCH.md`](BUDGET_BASE_SEARCH.md) |
@@ -152,12 +259,12 @@ protection that public INT4 quantizers don't provide. Full workup + reopen crite
 
 > **Read the RAM column as the model's minimum, not a range.** The authoritative floors live in
 > `MLXModel+Descriptors.swift:150-152` (`minimumRAMGB`): Gemma 3 1B = **4**, E2B = **6**, E4B = **8**.
-> A 6 GB device therefore runs the **83% E2B tune**, not the 58% entry model. Only 4 GB devices
+> A 6 GB device therefore runs the **83% E2B tune**, not the 34% entry model. Only 4 GB devices
 > (iPhone XR / 11 / SE 2–3 / 12 mini class) fall back to Gemma 3 1B.
 
 | Device RAM | Tier | Current pick | Challenger on the bench |
 |---|---|---|---|
-| 4 GB only | entry | Gemma 3 1B stock (58% core — fine-tune proven harmful) | — no smaller model beats it; 3-bit E2B **can't reach this tier** (PLE blocks quantization below ~5 bpw, and quality craters 83→63% — see [`GEMMA_E2B_FINETUNING.md`](GEMMA_E2B_FINETUNING.md)). Budget-base search (Granite/Llama/Salamandra/SauerkrautLM/BübleLM) found nothing above the floor: [`BUDGET_BASE_SEARCH.md`](BUDGET_BASE_SEARCH.md). **Open: distill a 1B on 30k+ on-task examples** — the capacity-cliff run never tested that ([`DATA_V2_DISTILL_PLAN.md`](DATA_V2_DISTILL_PLAN.md)) |
+| 4 GB only | entry | ⚠️ ships Gemma 3 1B stock = **34% core guarded** (not the 58% this table claimed until 2026-07-30 — that number came from a scorer that credited `OK\nFIX:…` replies the app renders as *nothing*; see §3.2 of [`training-v2.md`](training-v2.md)) | ✅ **Granite 3.3 2B tuned on the v2 corpus — 72% core / 0 format errors**, more than double the incumbent. Blocked on one measurement: peak RAM on a real 4 GB device (1.3 GB weights clears the floor, but it lands above `slimHeadroomFraction` so `MemorySaver` would cap the KV cache). 3-bit E2B still **can't reach this tier** (PLE blocks <~5 bpw; 83→63% — [`GEMMA_E2B_FINETUNING.md`](GEMMA_E2B_FINETUNING.md)). The "budget-base search found nothing above the floor" verdict in [`BUDGET_BASE_SEARCH.md`](BUDGET_BASE_SEARCH.md) is **superseded** — it tested *stock* bases against an inflated incumbent |
 | 6 GB+ | low/mid | ✅ **Gemma 4 E2B German Tutor** — 83% core / 3% FC scored as the app behaves; measured 2.71 GB peak, fits a 6 GB device's ~3.4 GB budget. ⚠️ Runs *governed* there — 2,710+250 MB exceeds `slimHeadroomFraction` 0.75, so `MemorySaver` caps the KV cache on exactly the devices that just barely fit it. Public at `kessenma/gemma4-e2b-german-tutor-4bit` (2026-07-22). *Supersedes the earlier "ship stock, the tune is harmful" call — see [`GEMMA_E2B_FINETUNING.md`](GEMMA_E2B_FINETUNING.md).* **On-device confirmation still open.** | stock E2B (73% core) as the fallback |
 | 8 GB+ | high | ✅ **Gemma 4 E4B German Tutor** — 85% raw / **90% guarded** | — nothing measured comes close |
 | ≥11 GB (iPhone 17 Pro class) | max | **E4B German Tutor is the ceiling** — iOS's per-app memory cap (~8 GB) rules out 12B-class models regardless of device RAM (user-tested) | EuroLLM-9B ~5 GB might *just* fit (round 2, needs convert) |

@@ -16,23 +16,29 @@ struct ConversationSummaryView: View {
     var body: some View {
         NavigationStack {
             List {
-                statsSection
+                statsSection.themedListRow()
 
                 if !summary.strengths.isEmpty {
-                    section("What you did well", systemImage: "hand.thumbsup.fill", tint: .green, items: summary.strengths)
+                    section("What you did well", systemImage: "hand.thumbsup.fill", tint: .green, items: summary.strengths).themedListRow()
                 }
                 if !summary.improvements.isEmpty {
-                    section("Room to improve", systemImage: "arrow.up.forward.circle.fill", tint: .orange, items: summary.improvements)
+                    section("Room to improve", systemImage: "arrow.up.forward.circle.fill", tint: .orange, items: summary.improvements).themedListRow()
                 }
                 if !summary.patternNote.isEmpty {
-                    Section("Pattern noticed") {
+                    Section {
                         Text(summary.patternNote).font(.callout)
+                    } header: {
+                        Text("Pattern noticed").themedSectionHeader()
                     }
+                    .themedListRow()
                 }
                 if let raw = summary.rawText, summary.strengths.isEmpty, summary.improvements.isEmpty {
-                    Section("Coach's notes") {
+                    Section {
                         Text(raw).font(.callout)
+                    } header: {
+                        Text("Coach's notes").themedSectionHeader()
                     }
+                    .themedListRow()
                 }
 
                 if let reviews = summary.spacedReviews, !reviews.isEmpty {
@@ -40,16 +46,21 @@ struct ConversationSummaryView: View {
                         FlowChips(items: reviews)
                     } header: {
                         Label("Reviewed in conversation (\(reviews.count))", systemImage: "arrow.triangle.2.circlepath")
+                            .themedSectionHeader()
                     } footer: {
                         Text("You used these due words correctly, so their flashcard review has been pushed further out — spaced repetition, straight from the chat.")
                             .font(.caption2)
                     }
+                    .themedListRow()
                 }
 
                 if !summary.wordsPracticed.isEmpty {
-                    Section("Vocabulary you used") {
+                    Section {
                         FlowChips(items: summary.wordsPracticed)
+                    } header: {
+                        Text("Vocabulary you used").themedSectionHeader()
                     }
+                    .themedListRow()
                 }
 
                 if !conversation.savedVocab.isEmpty {
@@ -64,14 +75,17 @@ struct ConversationSummaryView: View {
                         }
                     } header: {
                         Label("Words you saved (\(conversation.savedVocab.count))", systemImage: "bookmark.fill")
+                            .themedSectionHeader()
                     } footer: {
                         Text("Add these to a deck below.")
                             .font(.caption2)
                     }
+                    .themedListRow()
                 }
 
-                deckSection
+                deckSection.themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("Your report")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -112,6 +126,7 @@ struct ConversationSummaryView: View {
             .padding(.vertical, 4)
         } header: {
             Text(conversation.createdAt.formatted(date: .abbreviated, time: .shortened))
+                .themedSectionHeader()
         }
     }
 
@@ -133,7 +148,7 @@ struct ConversationSummaryView: View {
                 }
             }
         } header: {
-            Text(title)
+            Text(title).themedSectionHeader()
         }
     }
 
@@ -161,6 +176,8 @@ struct ConversationSummaryView: View {
 struct FlowChips: View {
     let items: [String]
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         FlexibleWrap(items: items) { item in
             Text(item)
@@ -168,7 +185,7 @@ struct FlowChips: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .background(Color(.secondarySystemBackground))
-                .clipShape(Capsule())
+                .clipShape(appTheme.pillShape)
         }
     }
 }

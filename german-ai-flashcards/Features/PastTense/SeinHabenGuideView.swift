@@ -14,8 +14,9 @@ struct SeinHabenGuideView: View {
                     }
                     .padding(.vertical, 4)
                 } header: {
-                    Text("The 80/20 Rule")
+                    Text("The 80/20 Rule").themedSectionHeader()
                 }
+                .themedListRow()
 
                 Section {
                     RuleRow(
@@ -43,9 +44,11 @@ struct SeinHabenGuideView: View {
                             .foregroundStyle(.green)
                         Text("verbs — when to use it")
                     }
+                    .themedSectionHeader()
                 } footer: {
                     Text("If the verb describes movement or a change in state, it's likely sein.")
                 }
+                .themedListRow()
 
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
@@ -61,10 +64,11 @@ struct SeinHabenGuideView: View {
                     }
                     .padding(.vertical, 4)
                 } header: {
-                    Text("Regional Variation")
+                    Text("Regional Variation").themedSectionHeader()
                 } footer: {
                     Text("Austria uses sein; Germany uses haben for these three verbs.")
                 }
+                .themedListRow()
 
                 Section {
                     VStack(alignment: .leading, spacing: 6) {
@@ -74,9 +78,11 @@ struct SeinHabenGuideView: View {
                     }
                     .padding(.vertical, 4)
                 } header: {
-                    Text("Extra Tips")
+                    Text("Extra Tips").themedSectionHeader()
                 }
+                .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("sein vs. haben")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {

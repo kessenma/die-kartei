@@ -5,8 +5,11 @@ struct GrammarMultipleChoiceView: View {
     var showHints: Bool = false
     /// Gates the right/wrong vibrations (Settings ▸ Cards ▸ Haptics).
     var hapticMode: HapticFeedbackMode = .all
-    var onComplete: ((_ correct: Int, _ total: Int) -> Void)?
+    /// Called once when the round ends — (correct, total, seconds spent on the round).
+    var onComplete: ((_ correct: Int, _ total: Int, _ durationSeconds: Int) -> Void)?
     var onDismiss: (() -> Void)?
+
+    @Environment(\.appTheme) private var appTheme
 
     @State private var exercises: [GrammarExercise] = []
     @State private var currentIndex = 0
@@ -15,6 +18,11 @@ struct GrammarMultipleChoiceView: View {
     @State private var wrongCount = 0
     @State private var missedExercises: [GrammarExercise] = []
     @State private var sessionComplete = false
+    /// Per-question, and reset on advance: the translation is a hint you ask for each time, not a
+    /// mode you switch on once and then read the whole round in English.
+    @State private var showTranslation = false
+    /// When this round's first question went on screen — the round's time on task.
+    @State private var startedAt = Date()
 
     private var current: GrammarExercise? {
         guard currentIndex < exercises.count else { return nil }
@@ -34,6 +42,9 @@ struct GrammarMultipleChoiceView: View {
                     exerciseView(exercise)
                 }
             }
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
+            }
             .navigationTitle(category.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -44,6 +55,7 @@ struct GrammarMultipleChoiceView: View {
         }
         .onAppear {
             exercises = category.exercises.shuffled()
+            startedAt = Date()
         }
         .sensoryFeedback(.success, trigger: correctCount) { old, new in
             new > old && hapticMode.playsSuccess
@@ -114,10 +126,18 @@ struct GrammarMultipleChoiceView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                    // Only on a miss: after a correct pick this is the learner telling you the
+                    // rule, and repeating it back is noise.
+                    if !isCorrect {
+                        whyLine(exercise)
+                            .padding(.top, 4)
+                    }
+                    translationControl(exercise)
+                        .padding(.top, 2)
                 }
                 .padding(24)
                 .frame(maxWidth: .infinity)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: appTheme.innerRadius(16)))
             } else {
                 VStack(spacing: 10) {
                     if showHints {
@@ -135,12 +155,59 @@ struct GrammarMultipleChoiceView: View {
                     if showHints && !exercise.gender.isEmpty && !exercise.noun.isEmpty {
                         genderBadge(exercise.gender)
                     }
+
+                    translationControl(exercise)
+                        .padding(.top, 2)
                 }
                 .padding(24)
                 .frame(maxWidth: .infinity)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: appTheme.innerRadius(16)))
             }
         }
+    }
+
+    /// Tap to read the sentence in English. Hidden by default, and hidden entirely for an
+    /// exercise with no translation (AI-generated rounds, where the model may not supply one) —
+    /// a button that reveals nothing is worse than no button.
+    @ViewBuilder
+    private func translationControl(_ exercise: GrammarExercise) -> some View {
+        let english = exercise.english?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !english.isEmpty {
+            VStack(spacing: 8) {
+                if showTranslation {
+                    Text(english)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { showTranslation.toggle() }
+                } label: {
+                    Label(
+                        showTranslation ? "Hide translation" : "Translation",
+                        systemImage: "character.book.closed"
+                    )
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.tint)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    /// "The answer is den because Apfel is masculine and the direct object of isst, so der
+    /// becomes den." One `Text`, so it wraps as a sentence rather than as stacked fragments.
+    private func whyLine(_ exercise: GrammarExercise) -> some View {
+        let clause = GrammarExplanation.because(exercise, in: category)
+        return (
+            Text("The answer is ")
+            + Text(exercise.correctAnswer).fontWeight(.semibold)
+            + Text(" because \(clause)")
+        )
+        .font(.callout)
+        .foregroundStyle(.secondary)
+        .multilineTextAlignment(.center)
     }
 
     private func hintSentenceText(_ exercise: GrammarExercise) -> Text {
@@ -175,7 +242,7 @@ struct GrammarMultipleChoiceView: View {
             .foregroundStyle(.white)
             .padding(.horizontal, 10)
             .padding(.vertical, 4)
-            .background(.orange, in: Capsule())
+            .background(.orange, in: appTheme.pillShape)
     }
 
     private func optionButtons(_ exercise: GrammarExercise) -> some View {
@@ -198,9 +265,9 @@ struct GrammarMultipleChoiceView: View {
                         .padding(.vertical, 14)
                         .background(buttonBackground(option: option, exercise: exercise))
                         .foregroundStyle(buttonForeground(option: option, exercise: exercise))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(12)))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: appTheme.innerRadius(12))
                                 .stroke(buttonBorder(option: option, exercise: exercise), lineWidth: 1.5)
                         )
                 }
@@ -241,7 +308,7 @@ struct GrammarMultipleChoiceView: View {
                 .padding(.vertical, 14)
                 .background(Color.blue)
                 .foregroundStyle(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(12)))
         }
         .buttonStyle(.plain)
     }
@@ -249,10 +316,11 @@ struct GrammarMultipleChoiceView: View {
     private func advance() {
         if currentIndex + 1 >= exercises.count {
             sessionComplete = true
-            onComplete?(correctCount, exercises.count)
+            onComplete?(correctCount, exercises.count, max(0, Int(Date().timeIntervalSince(startedAt))))
         } else {
             currentIndex += 1
             selectedAnswer = nil
+            showTranslation = false
         }
     }
 
@@ -318,10 +386,16 @@ struct GrammarMultipleChoiceView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                    // The reason travels with the sentence: a review list of answers you already
+                    // got wrong teaches nothing without the rule behind them.
+                    Text(GrammarExplanation.because(exercise, in: category))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 1)
                 }
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.red.opacity(0.07), in: RoundedRectangle(cornerRadius: 10))
+                .background(Color.red.opacity(0.07), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(10)))
             }
         }
     }
@@ -337,7 +411,7 @@ struct GrammarMultipleChoiceView: View {
                     .padding(.vertical, 14)
                     .background(Color.blue)
                     .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(12)))
             }
             .buttonStyle(.plain)
 
@@ -350,7 +424,7 @@ struct GrammarMultipleChoiceView: View {
                     .padding(.vertical, 14)
                     .background(Color(uiColor: .secondarySystemBackground))
                     .foregroundStyle(.primary)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(12)))
             }
             .buttonStyle(.plain)
         }
@@ -360,8 +434,10 @@ struct GrammarMultipleChoiceView: View {
         exercises = category.exercises.shuffled()
         currentIndex = 0
         selectedAnswer = nil
+        showTranslation = false
         correctCount = 0
         missedExercises = []
         sessionComplete = false
+        startedAt = Date()
     }
 }

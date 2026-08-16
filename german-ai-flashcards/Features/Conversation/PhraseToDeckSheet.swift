@@ -11,6 +11,7 @@ struct PhraseToDeckSheet: View {
     @Query(sort: \SavedDeck.createdAt, order: .reverse) private var allDecks: [SavedDeck]
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     @State private var selected: Set<UUID> = []
     @State private var selectedDeckID: UUID?          // nil == new deck
@@ -35,12 +36,14 @@ struct PhraseToDeckSheet: View {
                             .foregroundStyle(.green)
                         Button("Done") { dismiss() }
                     }
+                    .themedListRow()
                 } else {
-                    phrasesSection
-                    destinationSection
-                    saveSection
+                    phrasesSection.themedListRow()
+                    destinationSection.themedListRow()
+                    saveSection.themedListRow()
                 }
             }
+            .themedListScreen()
             .navigationTitle("Add to flashcards")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -74,7 +77,7 @@ struct PhraseToDeckSheet: View {
             }
         } header: {
             HStack {
-                Text("Phrases (\(selectedCount) selected)")
+                Text("Phrases (\(selectedCount) selected)").themedSectionHeader()
                 Spacer()
                 if !phrases.isEmpty {
                     Button(allSelected ? "Deselect all" : "Select all") { toggleAll() }
@@ -98,7 +101,7 @@ struct PhraseToDeckSheet: View {
                 TextField("Deck name", text: $newDeckName)
             }
         } header: {
-            Text("Destination")
+            Text("Destination").themedSectionHeader()
         } footer: {
             Text("Each phrase becomes one card. Merging skips phrases already in the deck.")
                 .font(.caption2)

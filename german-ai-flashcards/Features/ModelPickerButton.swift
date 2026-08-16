@@ -25,6 +25,7 @@ struct ModelPickerButton: View {
     /// top-level screens like Home that aren't nested in a sheet.
     var present: Binding<Bool>? = nil
 
+    @Environment(\.appTheme) private var appTheme
     @State private var ownShowing = false
 
     private var isReady: Bool { mlxService.isModelLoaded && mlxService.currentModel == selection }
@@ -41,12 +42,13 @@ struct ModelPickerButton: View {
                 ModelLoadingPanel(mlxService: mlxService)
             }
         } header: {
-            Label("Model", systemImage: "cpu")
+            Label("Model", systemImage: "cpu").themedSectionHeader()
         } footer: {
             if let footer {
                 Text(footer).font(.caption2)
             }
         }
+        .themedListRow()
         // Self-present only when the host hasn't taken over. When `present` is provided the host
         // attaches its own `.sheet` to a stable anchor, so this one stays inert (never opens).
         .sheet(isPresented: present == nil ? $ownShowing : .constant(false)) {
@@ -59,6 +61,7 @@ struct ModelPickerButton: View {
                     .font(.caption)
                     .foregroundStyle(.red)
             }
+            .themedListRow()
         }
     }
 
@@ -71,7 +74,7 @@ struct ModelPickerButton: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 28, height: 28)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(6)))
             }
 
             VStack(alignment: .leading, spacing: 2) {
@@ -112,6 +115,7 @@ struct ModelPickerSheet: View {
     var mlxService: MLXGenerationService
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
     /// The model whose detail sheet is open. Presented over the picker (a second, nested sheet). Its
     /// `.sheet` is attached to the `List` container — a single instance, so it doesn't hit the
     /// duplicate-presentation trap that a `Section`-level `.sheet` would.
@@ -132,7 +136,7 @@ struct ModelPickerSheet: View {
                     Section {
                         modelRow(.hero, lastLoaded: lastLoaded, isHero: true)
                     } header: {
-                        Text("Recommended")
+                        Text("Recommended").themedSectionHeader()
                     } footer: {
                         Text(MLXModel.hero.heroTagline)
                     }
@@ -153,7 +157,7 @@ struct ModelPickerSheet: View {
                         }
                     }
                 } header: {
-                    Text(heroFeatured ? "Other models" : "MLX Models")
+                    Text(heroFeatured ? "Other models" : "MLX Models").themedSectionHeader()
                 } footer: {
                     if suggestHero {
                         Text("Tip: download the recommended \(MLXModel.hero.rawValue) in Settings → Model for the best German quality on this device.")
@@ -161,7 +165,9 @@ struct ModelPickerSheet: View {
                         Text("Download more models in Settings → Model.")
                     }
                 }
+                .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("Select Model")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -190,7 +196,7 @@ struct ModelPickerSheet: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 28, height: 28)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(6)))
 
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 6) {
@@ -238,7 +244,7 @@ struct ModelPickerSheet: View {
             .padding(.vertical, 2)
             .background(Color.secondary.opacity(0.12))
             .foregroundStyle(.secondary)
-            .clipShape(Capsule())
+            .clipShape(appTheme.pillShape)
     }
 
     /// Sets the binding, dismisses the picker, then loads the chosen model. The load (and its

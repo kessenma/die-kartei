@@ -1,0 +1,535 @@
+{
+  "version": 1,
+  "anchors": ["pg-a2-perfaux-01", "pg-a2-weil-01"],
+  "items": [
+    {
+      "id": "pg-a1-artikel-01",
+      "level": "A1",
+      "construct": "artikel-definit",
+      "sentence": "Das ist ______ Lampe.",
+      "options": ["die", "der", "das"],
+      "correct": "die",
+      "english": "That is the lamp.",
+      "why": "Lampe is feminine: die Lampe."
+    },
+    {
+      "id": "pg-a1-artikel-02",
+      "level": "A1",
+      "construct": "artikel-indefinit",
+      "sentence": "Ich brauche ______ neuen Stift.",
+      "options": ["einen", "eine", "ein"],
+      "correct": "einen",
+      "english": "I need a new pen.",
+      "why": "Stift is masculine and the object of brauchen: einen (Akkusativ)."
+    },
+    {
+      "id": "pg-a1-kein-01",
+      "level": "A1",
+      "construct": "kein-nicht",
+      "sentence": "Ich habe ______ Zeit.",
+      "options": ["keine", "nicht", "kein"],
+      "correct": "keine",
+      "english": "I have no time.",
+      "why": "Nouns are negated with kein-; Zeit is feminine, so keine."
+    },
+    {
+      "id": "pg-a1-konj-01",
+      "level": "A1",
+      "construct": "praesens-konjugation",
+      "sentence": "Wir ______ in Berlin.",
+      "options": ["wohnen", "wohnt", "wohne"],
+      "correct": "wohnen",
+      "english": "We live in Berlin.",
+      "why": "wir takes the -en form: wir wohnen."
+    },
+    {
+      "id": "pg-a1-vokal-01",
+      "level": "A1",
+      "construct": "vokalwechsel",
+      "sentence": "Du ______ sehr gut Deutsch.",
+      "options": ["sprichst", "sprechst", "spricht"],
+      "correct": "sprichst",
+      "english": "You speak German very well.",
+      "why": "sprechen changes its vowel: du sprichst."
+    },
+    {
+      "id": "pg-a1-trenn-01",
+      "level": "A1",
+      "construct": "trennbare-verben",
+      "sentence": "Ich stehe jeden Tag um sieben Uhr ______.",
+      "options": ["auf", "aus", "an"],
+      "correct": "auf",
+      "english": "I get up at seven every day.",
+      "why": "aufstehen splits: ich stehe … auf."
+    },
+    {
+      "id": "pg-a1-seinhaben-01",
+      "level": "A1",
+      "construct": "sein-haben",
+      "sentence": "______ ihr heute Abend zu Hause?",
+      "options": ["Seid", "Sind", "Habt"],
+      "correct": "Seid",
+      "english": "Are you (all) at home tonight?",
+      "why": "ihr → seid: Seid ihr zu Hause?"
+    },
+    {
+      "id": "pg-a1-modal-01",
+      "level": "A1",
+      "construct": "modalverb-semantik",
+      "sentence": "Hier ______ man nicht parken.",
+      "options": ["darf", "muss", "will"],
+      "correct": "darf",
+      "english": "You are not allowed to park here.",
+      "why": "A prohibition uses dürfen: man darf nicht."
+    },
+    {
+      "id": "pg-a1-v2-01",
+      "level": "A1",
+      "construct": "v2-stellung",
+      "sentence": "Morgen ______ nach München.",
+      "options": ["fahre ich", "ich fahre", "fahren ich"],
+      "correct": "fahre ich",
+      "english": "Tomorrow I am going to Munich.",
+      "why": "A fronted time word keeps the verb in second position: Morgen fahre ich."
+    },
+    {
+      "id": "pg-a1-poss-01",
+      "level": "A1",
+      "construct": "possessiv",
+      "sentence": "Das ist ______ Bruder.",
+      "options": ["mein", "meine", "meinen"],
+      "correct": "mein",
+      "english": "That is my brother.",
+      "why": "Bruder is masculine and Nominativ here: mein Bruder."
+    },
+
+    {
+      "id": "pg-a2-perfaux-01",
+      "level": "A2",
+      "construct": "perfekt-aux",
+      "sentence": "Gestern ______ wir nach Hause gelaufen.",
+      "options": ["sind", "haben", "waren"],
+      "correct": "sind",
+      "english": "Yesterday we walked home.",
+      "why": "laufen is a motion verb, so the Perfekt takes sein."
+    },
+    {
+      "id": "pg-a2-weil-01",
+      "level": "A2",
+      "construct": "weil-order",
+      "sentence": "Ich bleibe heute zu Hause, weil ich ______.",
+      "options": ["krank bin", "bin krank", "krank sein"],
+      "correct": "krank bin",
+      "english": "I am staying home today because I am ill.",
+      "why": "weil sends the conjugated verb to the end: weil ich krank bin."
+    },
+    {
+      "id": "pg-a2-perfaux-02",
+      "level": "A2",
+      "construct": "perfekt-aux",
+      "sentence": "Sie ______ das Fenster geöffnet.",
+      "options": ["hat", "ist", "wird"],
+      "correct": "hat",
+      "english": "She opened the window.",
+      "why": "öffnen takes an object, so the Perfekt uses haben."
+    },
+    {
+      "id": "pg-a2-part-01",
+      "level": "A2",
+      "construct": "partizip2",
+      "sentence": "Wir haben am Samstag viel ______.",
+      "options": ["eingekauft", "einkauft", "eingekaufen"],
+      "correct": "eingekauft",
+      "english": "We did a lot of shopping on Saturday.",
+      "why": "Separable verbs take -ge- inside: ein-ge-kauft."
+    },
+    {
+      "id": "pg-a2-part-02",
+      "level": "A2",
+      "construct": "partizip2",
+      "sentence": "Er hat mir ein Foto ______.",
+      "options": ["gezeigt", "zeigt", "gezeigen"],
+      "correct": "gezeigt",
+      "english": "He showed me a photo.",
+      "why": "zeigen is regular: ge- + zeig + -t."
+    },
+    {
+      "id": "pg-a2-pmodal-01",
+      "level": "A2",
+      "construct": "praeteritum-modal",
+      "sentence": "Als Kind ______ ich um acht Uhr ins Bett gehen.",
+      "options": ["musste", "muss", "müsste"],
+      "correct": "musste",
+      "english": "As a child I had to go to bed at eight.",
+      "why": "Past habit → Präteritum of müssen: musste."
+    },
+    {
+      "id": "pg-a2-wechsel-01",
+      "level": "A2",
+      "construct": "wechselpraeposition",
+      "sentence": "Die Tasche steht ______ Tisch.",
+      "options": ["auf dem", "auf den", "auf der"],
+      "correct": "auf dem",
+      "english": "The bag is on the table.",
+      "why": "Wo? (location) → Dativ: auf dem Tisch."
+    },
+    {
+      "id": "pg-a2-wechsel-02",
+      "level": "A2",
+      "construct": "wechselpraeposition",
+      "sentence": "Er hängt das Bild ______ Wand.",
+      "options": ["an die", "an der", "an das"],
+      "correct": "an die",
+      "english": "He hangs the picture on the wall.",
+      "why": "Wohin? (movement) → Akkusativ: an die Wand."
+    },
+    {
+      "id": "pg-a2-fest-01",
+      "level": "A2",
+      "construct": "feste-praeposition",
+      "sentence": "Sie kommt gerade ______ Arzt.",
+      "options": ["vom", "zum", "beim"],
+      "correct": "vom",
+      "english": "She is just coming from the doctor.",
+      "why": "Coming from a person: von + Dativ, contracted to vom."
+    },
+    {
+      "id": "pg-a2-dassord-01",
+      "level": "A2",
+      "construct": "dass-ob-order",
+      "sentence": "Ich weiß nicht, ______ der Kurs heute stattfindet.",
+      "options": ["ob", "dass", "weil"],
+      "correct": "ob",
+      "english": "I don't know whether the course takes place today.",
+      "why": "An indirect yes/no question takes ob."
+    },
+    {
+      "id": "pg-a2-komp-01",
+      "level": "A2",
+      "construct": "komparativ",
+      "sentence": "Mein neues Handy ist ______ als das alte.",
+      "options": ["besser", "gut", "am besten"],
+      "correct": "besser",
+      "english": "My new phone is better than the old one.",
+      "why": "Comparison with als takes the comparative: besser."
+    },
+    {
+      "id": "pg-a2-refl-01",
+      "level": "A2",
+      "construct": "reflexivpronomen",
+      "sentence": "Ich wasche ______ die Hände.",
+      "options": ["mir", "mich", "sich"],
+      "correct": "mir",
+      "english": "I wash my hands.",
+      "why": "With a body part as the object, the reflexive is Dativ: ich wasche mir die Hände."
+    },
+
+    {
+      "id": "pg-b1-k2-01",
+      "level": "B1",
+      "construct": "konjunktiv2",
+      "sentence": "Wenn ich mehr Zeit ______, würde ich öfter kochen.",
+      "options": ["hätte", "habe", "hatte"],
+      "correct": "hätte",
+      "english": "If I had more time, I would cook more often.",
+      "why": "Irreal condition → Konjunktiv II: hätte."
+    },
+    {
+      "id": "pg-b1-passiv-01",
+      "level": "B1",
+      "construct": "passiv-werden",
+      "sentence": "Das Formular ______ vom Amt geprüft.",
+      "options": ["wird", "ist", "hat"],
+      "correct": "wird",
+      "english": "The form is being checked by the office.",
+      "why": "Vorgangspassiv: werden + Partizip II."
+    },
+    {
+      "id": "pg-b1-passiv-02",
+      "level": "B1",
+      "construct": "passiv-werden",
+      "sentence": "Die Brücke ______ letztes Jahr repariert.",
+      "options": ["wurde", "würde", "war"],
+      "correct": "wurde",
+      "english": "The bridge was repaired last year.",
+      "why": "Passive in the past: wurde + Partizip II."
+    },
+    {
+      "id": "pg-b1-rel-01",
+      "level": "B1",
+      "construct": "relativpronomen",
+      "sentence": "Der Kollege, ______ ich das Paket gegeben habe, ist heute krank.",
+      "options": ["dem", "den", "der"],
+      "correct": "dem",
+      "english": "The colleague I gave the parcel to is ill today.",
+      "why": "geben takes a Dativ object → dem."
+    },
+    {
+      "id": "pg-b1-obwennals-01",
+      "level": "B1",
+      "construct": "ob-wenn-als",
+      "sentence": "______ ich in Wien wohnte, hatte ich keinen Balkon.",
+      "options": ["Als", "Wenn", "Ob"],
+      "correct": "Als",
+      "english": "When I lived in Vienna, I had no balcony.",
+      "why": "A single period in the past takes als."
+    },
+    {
+      "id": "pg-b1-obwohl-01",
+      "level": "B1",
+      "construct": "obwohl-trotzdem",
+      "sentence": "Sie geht joggen, ______ es stark regnet.",
+      "options": ["obwohl", "trotzdem", "deshalb"],
+      "correct": "obwohl",
+      "english": "She goes jogging although it is raining hard.",
+      "why": "The subordinate clause needs the conjunction obwohl; trotzdem is an adverb."
+    },
+    {
+      "id": "pg-b1-verbprep-01",
+      "level": "B1",
+      "construct": "verb-praeposition",
+      "sentence": "Er interessiert sich sehr ______ alte Autos.",
+      "options": ["für", "auf", "an"],
+      "correct": "für",
+      "english": "He is very interested in old cars.",
+      "why": "sich interessieren für + Akkusativ."
+    },
+    {
+      "id": "pg-b1-prepadv-01",
+      "level": "B1",
+      "construct": "praepositionaladverb",
+      "sentence": "______ wartest du denn noch?",
+      "options": ["Worauf", "Wofür", "Woran"],
+      "correct": "Worauf",
+      "english": "What are you still waiting for?",
+      "why": "warten auf → Worauf."
+    },
+    {
+      "id": "pg-b1-umzu-01",
+      "level": "B1",
+      "construct": "um-zu-damit",
+      "sentence": "Ich spreche langsam, ______ mich alle verstehen.",
+      "options": ["damit", "um zu", "dass"],
+      "correct": "damit",
+      "english": "I speak slowly so that everyone understands me.",
+      "why": "Different subjects → damit; um … zu needs the same subject."
+    },
+    {
+      "id": "pg-b1-gen-01",
+      "level": "B1",
+      "construct": "genitiv-praeposition",
+      "sentence": "Wegen ______ Staus kommen wir später.",
+      "options": ["des", "dem", "den"],
+      "correct": "des",
+      "english": "Because of the traffic jam we will arrive later.",
+      "why": "wegen takes the Genitiv: wegen des Staus."
+    },
+
+    {
+      "id": "pg-b2-k2v-01",
+      "level": "B2",
+      "construct": "konjunktiv2-vergangenheit",
+      "sentence": "Du ______ mich gestern anrufen sollen.",
+      "options": ["hättest", "wärst", "hast"],
+      "correct": "hättest",
+      "english": "You should have called me yesterday.",
+      "why": "Konjunktiv II der Vergangenheit with a modal: hättest … anrufen sollen."
+    },
+    {
+      "id": "pg-b2-k2v-02",
+      "level": "B2",
+      "construct": "konjunktiv2-vergangenheit",
+      "sentence": "Ohne deine Hilfe ______ ich den Umzug nie geschafft.",
+      "options": ["hätte", "wäre", "würde"],
+      "correct": "hätte",
+      "english": "Without your help I would never have managed the move.",
+      "why": "Irreal past: hätte + Partizip II (schaffen → geschafft takes haben)."
+    },
+    {
+      "id": "pg-b2-ersatz-01",
+      "level": "B2",
+      "construct": "passiversatz",
+      "sentence": "Das Problem ______ sich leicht lösen.",
+      "options": ["lässt", "kann", "wird"],
+      "correct": "lässt",
+      "english": "The problem can easily be solved.",
+      "why": "Passiversatz: lässt sich lösen = kann gelöst werden."
+    },
+    {
+      "id": "pg-b2-ersatz-02",
+      "level": "B2",
+      "construct": "passiversatz",
+      "sentence": "Der Antrag ist bis Freitag ______.",
+      "options": ["einzureichen", "eingereicht", "einreichbar"],
+      "correct": "einzureichen",
+      "english": "The application must be submitted by Friday.",
+      "why": "sein + zu + Infinitiv: ist einzureichen = muss eingereicht werden."
+    },
+    {
+      "id": "pg-b2-partattr-01",
+      "level": "B2",
+      "construct": "partizipialattribut",
+      "sentence": "Das im letzten Jahr ______ Gesetz sorgt weiter für Diskussionen.",
+      "options": ["verabschiedete", "verabschiedende", "verabschiedet"],
+      "correct": "verabschiedete",
+      "english": "The law passed last year is still causing debate.",
+      "why": "Partizip II as an attribute with an adjective ending: das verabschiedete Gesetz."
+    },
+    {
+      "id": "pg-b2-modal-01",
+      "level": "B2",
+      "construct": "modalverb-subjektiv",
+      "sentence": "Er ist nicht am Platz, er ______ schon im Feierabend sein.",
+      "options": ["dürfte", "musste", "möchte"],
+      "correct": "dürfte",
+      "english": "He is not at his desk; he has probably left for the day.",
+      "why": "dürfte expresses an assumption (subjective modal use)."
+    },
+    {
+      "id": "pg-b2-konn-01",
+      "level": "B2",
+      "construct": "nominal-konnektor",
+      "sentence": "______ der anhaltenden Verspätungen wechseln viele Pendler aufs Rad.",
+      "options": ["Infolge", "Dennoch", "Sofern"],
+      "correct": "Infolge",
+      "english": "As a result of the ongoing delays, many commuters are switching to bikes.",
+      "why": "Infolge + Genitiv states the cause in nominal style; the others cannot govern a noun phrase."
+    },
+    {
+      "id": "pg-b2-zustand-01",
+      "level": "B2",
+      "construct": "zustandspassiv",
+      "sentence": "Du kommst zu spät, das Büro ______ schon geschlossen.",
+      "options": ["ist", "wird", "hat"],
+      "correct": "ist",
+      "english": "You are too late; the office is already closed.",
+      "why": "A state, not a process: sein + Partizip II (Zustandspassiv)."
+    },
+    {
+      "id": "pg-b2-konn-02",
+      "level": "B2",
+      "construct": "nominal-konnektor",
+      "sentence": "Er hat kaum geübt; ______ hat er die Prüfung bestanden.",
+      "options": ["dennoch", "deshalb", "sofern"],
+      "correct": "dennoch",
+      "english": "He hardly practised; nevertheless he passed the exam.",
+      "why": "A concessive contrast between the clauses: dennoch."
+    },
+    {
+      "id": "pg-b2-modal-02",
+      "level": "B2",
+      "construct": "modalverb-subjektiv",
+      "sentence": "Sie ______ die Nachricht schon gelesen haben, sie war den ganzen Tag online.",
+      "options": ["dürfte", "sollte", "wollte"],
+      "correct": "dürfte",
+      "english": "She has probably read the message; she was online all day.",
+      "why": "dürfte + Infinitiv Perfekt marks a confident assumption about the past."
+    }
+  ],
+  "cloze": [
+    {
+      "id": "pg-cloze-a1-01",
+      "level": "A1",
+      "title": "Ich stelle mich vor",
+      "text": "Ich heiße Lena und {0} aus Österreich. Ich habe {1} Auto, ich fahre mit dem Bus. Am Abend {2} ich gern Musik.",
+      "gaps": [
+        {
+          "construct": "praesens-konjugation",
+          "options": ["komme", "kommt", "kommen"],
+          "correct": "komme",
+          "why": "ich → komme."
+        },
+        {
+          "construct": "kein-nicht",
+          "options": ["kein", "nicht", "keine"],
+          "correct": "kein",
+          "why": "Auto is neuter and negated with kein-: kein Auto."
+        },
+        {
+          "construct": "praesens-konjugation",
+          "options": ["höre", "hörst", "hört"],
+          "correct": "höre",
+          "why": "ich → höre."
+        }
+      ]
+    },
+    {
+      "id": "pg-cloze-a2-01",
+      "level": "A2",
+      "title": "Ein Wochenende in Freiburg",
+      "text": "Am Wochenende {0} wir nach Freiburg gefahren. Zuerst haben wir die Altstadt besucht, {1} wir dort viele Fotos machen wollten. Danach haben wir Geschenke {2}.",
+      "gaps": [
+        {
+          "construct": "perfekt-aux",
+          "options": ["sind", "haben", "waren"],
+          "correct": "sind",
+          "why": "fahren is a motion verb: sind … gefahren."
+        },
+        {
+          "construct": "weil-order",
+          "options": ["weil", "denn", "dass"],
+          "correct": "weil",
+          "why": "The verb-final clause needs weil; denn would keep verb-second order."
+        },
+        {
+          "construct": "partizip2",
+          "options": ["gekauft", "kauft", "gekaufen"],
+          "correct": "gekauft",
+          "why": "kaufen is regular: ge- + kauf + -t."
+        }
+      ]
+    },
+    {
+      "id": "pg-cloze-b1-01",
+      "level": "B1",
+      "title": "Eine Nachricht an den Vermieter",
+      "text": "Sehr geehrter Herr Weber, ich schreibe Ihnen, weil die Heizung seit Montag nicht funktioniert. Ich {0} Ihnen sehr dankbar, wenn Sie bald einen Techniker schicken könnten. Die Wohnung, {1} Fenster auch schlecht schließen, wird abends sehr kalt. Ich freue mich {2} Ihre Antwort.",
+      "gaps": [
+        {
+          "construct": "konjunktiv2",
+          "options": ["wäre", "würde", "war"],
+          "correct": "wäre",
+          "why": "Polite irrealis: ich wäre dankbar, wenn …"
+        },
+        {
+          "construct": "relativpronomen",
+          "options": ["deren", "dessen", "denen"],
+          "correct": "deren",
+          "why": "Genitiv relative pronoun for die Wohnung: deren Fenster."
+        },
+        {
+          "construct": "verb-praeposition",
+          "options": ["auf", "über", "für"],
+          "correct": "auf",
+          "why": "sich freuen auf + Akkusativ for something ahead."
+        }
+      ]
+    },
+    {
+      "id": "pg-cloze-b2-01",
+      "level": "B2",
+      "title": "Aus dem Stadtanzeiger",
+      "text": "Die kürzlich {0} Studie zeigt, dass sich das Problem nicht kurzfristig lösen {1}. Die Stadt hätte deutlich früher reagieren {2}.",
+      "gaps": [
+        {
+          "construct": "partizipialattribut",
+          "options": ["veröffentlichte", "veröffentlichende", "veröffentlicht"],
+          "correct": "veröffentlichte",
+          "why": "Partizip II as an attribute: die veröffentlichte Studie."
+        },
+        {
+          "construct": "passiversatz",
+          "options": ["lässt", "kann", "wird"],
+          "correct": "lässt",
+          "why": "sich lösen lässt = kann gelöst werden."
+        },
+        {
+          "construct": "konjunktiv2-vergangenheit",
+          "options": ["sollen", "gesollt", "sollte"],
+          "correct": "sollen",
+          "why": "After hätte + infinitive the modal stays an infinitive (Ersatzinfinitiv): hätte reagieren sollen."
+        }
+      ]
+    }
+  ]
+}

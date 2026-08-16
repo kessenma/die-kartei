@@ -938,6 +938,10 @@ def main():
     ap.add_argument("--aufbau", action="store_true", help="bake the self-assembly clip")
     ap.add_argument("--pose", default="steh", choices=sorted(POSES),
                     help="stance for the default render/export path (probe with --pose sitz)")
+    ap.add_argument("--color", default=None, metavar="RRGGBB",
+                    help="override the charcoal REFERENCE ink, e.g. ECE7DA for the dark-theme "
+                         "still. Only the shipped flat stills need this: the live canvas re-tints "
+                         "the USDZ at runtime, so an exported asset stays charcoal.")
     ap.add_argument("--verify", help="re-import a USDZ and print what is actually in it")
     args = ap.parse_args(argv)
 
@@ -967,7 +971,8 @@ def main():
         _LOD = "low"
     clear_scene()
     stage(args.size, *VIEWS[args.view], args.ortho, args.target_z)
-    objects, p = build_figure(args.preset, args.height, part=args.part)
+    ink = make_material("figur", int(args.color, 16)) if args.color else None
+    objects, p = build_figure(args.preset, args.height, part=args.part, mat=ink)
     apply_pose(objects, p, args.pose)
     report(args.preset, args.height, p)
     pose_tag = "" if args.pose == "steh" else f"-{args.pose}"

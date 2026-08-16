@@ -187,6 +187,11 @@ final class StudyStory {
     var speakersData: Data?
     /// Encoded `[StoryImageRecord]` — generated illustrations, if the learner asked for them.
     var imagesData: Data?
+    /// Encoded `[GlossaryEntry]` — words the learner double-tapped while reading, in the surface
+    /// form the story uses them in. Kept per story so the words this reader personally stumbled
+    /// over are listed under the glossary, marked in the text, and answer a second tap straight
+    /// from here instead of pulling the model back into memory.
+    var lookupsData: Data?
     /// The model that wrote the story (the hero, but stored like `StudyPaper.modelRaw`).
     var modelRaw: String?
     /// Linked deck of words saved while reading (`SavedDeck.id`), created on first save.
@@ -211,6 +216,7 @@ final class StudyStory {
         self.questionsData = nil
         self.speakersData = nil
         self.imagesData = nil
+        self.lookupsData = nil
         self.modelRaw = nil
         self.deckIDRaw = nil
         self.generationComplete = false
@@ -258,9 +264,39 @@ final class StudyStory {
         imagesData = try? JSONEncoder().encode(records)
     }
 
+    /// Words looked up while reading this story, newest first.
+    var lookups: [GlossaryEntry] {
+        guard let lookupsData else { return [] }
+        return (try? JSONDecoder().decode([GlossaryEntry].self, from: lookupsData)) ?? []
+    }
+
+    func setLookups(_ entries: [GlossaryEntry]) {
+        lookupsData = try? JSONEncoder().encode(entries)
+    }
+
+    /// Record a word the learner looked up. Case-insensitively deduplicated on the German form, with
+    /// a repeat lookup moving back to the top — the list stays "what I needed help with here",
+    /// not a tally.
+    func recordLookup(german: String, english: String) {
+        let trimmed = german.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !english.isEmpty else { return }
+        var entries = lookups.filter { $0.german.caseInsensitiveCompare(trimmed) != .orderedSame }
+        entries.insert(GlossaryEntry(german: trimmed, english: english), at: 0)
+        setLookups(entries)
+    }
+
     /// The hero image shown in the story header, if one was generated.
     var headerImage: StoryImageRecord? {
         images.first { $0.paragraphAnchorIndex == nil }
+    }
+
+    /// The picture that stands for the story in a list. Normally the header image — the header is
+    /// slot 0, so it's the one image every illustrated story has — but it falls back to the first
+    /// inline picture, so "has a picture" and "shows a picture" can't disagree when the header slot
+    /// is the one that failed to render.
+    var coverImage: StoryImageRecord? {
+        let all = images
+        return all.first { $0.paragraphAnchorIndex == nil } ?? all.first
     }
 
     var deckID: UUID? {

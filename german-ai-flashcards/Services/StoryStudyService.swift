@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import SwiftData
 
@@ -44,6 +45,15 @@ final class StoryStudyService {
     /// 0…1 progress of the current illustration's diffusion steps.
     private(set) var imageStep: Double = 0
     private(set) var imageStage: ImageStage = .planning
+    /// The picture being drawn right now, decoded mid-diffusion. Nil on devices without the
+    /// headroom for previews (see ``ImageGenPreview``) and between pictures.
+    private(set) var imagePreview: CGImage?
+    /// Bumped with every preview, so the overlay can cross-fade one into the next. A `CGImage`
+    /// gives SwiftUI nothing to compare, and there's no other signal that a *new* one arrived.
+    private(set) var imagePreviewID = 0
+    /// The last preview of each slot — the finished pictures, for the overlay's filmstrip.
+    /// Sized to the run's illustration count; entries stay nil when previews are off.
+    private(set) var imageThumbs: [CGImage?] = []
     /// True while the on-demand English translation is generating.
     private(set) var isTranslating = false
 
@@ -107,6 +117,8 @@ final class StoryStudyService {
         imageSlot = 0
         imageStep = 0
         imageStage = .planning
+        imagePreview = nil
+        imageThumbs = []
 
         guard await ensureModelReady() else {
             phase = .failed(mlxService.loadError ?? "Couldn’t load \(model.rawValue).")
@@ -174,24 +186,31 @@ final class StoryStudyService {
         imageStage = .planning
         imageSlot = 0
         imageStep = 0
+        imagePreview = nil
 
         let paragraphs = story.storyText.components(separatedBy: "\n\n")
         let anchors = StoryIllustrationPrompts.anchors(imageCount: count, paragraphCount: paragraphs.count)
         guard !anchors.isEmpty else { imageTarget = 0; return }
         imageTarget = anchors.count
+        imageThumbs = [CGImage?](repeating: nil, count: anchors.count)
 
         // Scene descriptions come from the still-loaded LLM (German story → English scenes).
         // Any unusable slot falls back to a deterministic topic-based scene.
         var scenes = [String?](repeating: nil, count: anchors.count)
+        // A single picture has nothing to stay consistent with, so it skips the cast sheet and
+        // spends its whole token budget on the scene itself.
+        let wantsCast = anchors.count > 1
+        var cast: [StoryCastMember] = []
         let request = StoryIllustrationPrompts.sceneRequest(
             title: story.title, storyText: story.storyText,
-            paragraphs: paragraphs, anchors: anchors
+            paragraphs: paragraphs, anchors: anchors, wantsCast: wantsCast
         )
         if let raw = try? await mlxService.generateText(
             system: request.system, user: request.user, model: model,
-            maxTokens: 80 + 45 * anchors.count
+            maxTokens: 80 + 45 * anchors.count + (wantsCast ? 60 : 0)
         ) {
             scenes = StoryIllustrationPrompts.parseScenes(raw, count: anchors.count)
+            if wantsCast { cast = StoryIllustrationPrompts.parseCast(raw) }
         }
         guard !stopRequested else { return }
 
@@ -206,6 +225,14 @@ final class StoryStudyService {
         guard await imageService.loadPipeline() else { return }
         defer { imageService.unloadPipeline() }
 
+        // One seed for the whole story. Identical character wording is what actually holds the
+        // cast together; a shared seed on top of it nudges palette and rendering to match too.
+        // Derived from the story's UUID rather than `random` so a rerun of the same story is
+        // reproducible. Drop back to `nil` here if the pictures come out too samey.
+        let idBytes = story.id.uuid
+        let seed = UInt32(idBytes.0) << 24 | UInt32(idBytes.1) << 16
+            | UInt32(idBytes.2) << 8 | UInt32(idBytes.3)
+
         var records = story.images
         for (slot, anchor) in anchors.enumerated() {
             guard !stopRequested else { break }
@@ -213,16 +240,27 @@ final class StoryStudyService {
             imageStage = .rendering
             imageSlot = slot
             imageStep = 0
+            imagePreview = nil
             let scene = scenes[slot] ?? StoryIllustrationPrompts.fallbackScene(topic: story.topic, slot: slot)
-            let prompt = StoryIllustrationPrompts.positivePrompt(scene: scene, genre: story.genre)
+            let prompt = StoryIllustrationPrompts.positivePrompt(scene: scene, genre: story.genre, cast: cast)
             let base = 0.92 + 0.08 * (Double(slot) / Double(anchors.count))
             let span = 0.08 / Double(anchors.count)
             do {
                 guard let fileName = try await imageService.generateImage(
-                    prompt: prompt, storyID: story.id, index: slot,
+                    prompt: prompt, storyID: story.id, index: slot, seed: seed,
                     onStepProgress: { [weak self] fraction in
                         self?.progress = base + span * fraction
                         self?.imageStep = fraction
+                    },
+                    onPreview: { [weak self] image in
+                        guard let self else { return }
+                        // Filed by the slot it was drawn for, not the current one: a preview
+                        // hopping to the main actor can land after the next picture has started,
+                        // and the last one to arrive for a slot is that picture's finished state.
+                        if slot < self.imageThumbs.count { self.imageThumbs[slot] = image }
+                        guard slot == self.imageSlot else { return }
+                        self.imagePreview = image
+                        self.imagePreviewID += 1
                     }
                 ) else { continue }
                 imageStep = 1

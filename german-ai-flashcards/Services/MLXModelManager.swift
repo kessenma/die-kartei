@@ -105,6 +105,19 @@ class MLXModelManager {
     var articleFeedsCoach: Bool {
         didSet { UserDefaults.standard.set(articleFeedsCoach, forKey: "articleFeedsCoach") }
     }
+    /// Same hand-off for the preposition Kasus drill: prepositions whose case keeps being
+    /// missed flow into the learner profile as words being built.
+    var prepositionsFeedCoach: Bool {
+        didSet { UserDefaults.standard.set(prepositionsFeedCoach, forKey: "prepositionsFeedCoach") }
+    }
+    /// How much of the preposition 3D scene is shown, and when. See `PrepositionPictureMode` —
+    /// `teaching` is the one mode whose answers are discounted for mastery.
+    var prepositionPictureMode: PrepositionPictureMode {
+        didSet {
+            UserDefaults.standard.set(prepositionPictureMode.rawValue,
+                                      forKey: PrepositionPictureMode.defaultsKey)
+        }
+    }
     /// How much the games vibrate (matching + der/die/das): all feedback, mistakes only, or off.
     var hapticFeedbackMode: HapticFeedbackMode {
         didSet { UserDefaults.standard.set(hapticFeedbackMode.rawValue, forKey: "hapticFeedbackMode") }
@@ -247,6 +260,32 @@ class MLXModelManager {
         }
     }
 
+    // MARK: - Gamification Settings
+
+    /// Master switch for the game layer (level card, goal ring, badges, pyramid). On by default;
+    /// turning it off hides every gamified surface but nothing stops accruing — XP, streaks and
+    /// stats are all derived from the study log, so switching back on restores the full picture.
+    var gamificationEnabled: Bool {
+        didSet { UserDefaults.standard.set(gamificationEnabled, forKey: "gamificationEnabled") }
+    }
+    /// The daily study goal in minutes behind the Tagesziel ring. One of
+    /// `ExperienceService.dailyGoalOptions`.
+    var dailyGoalMinutes: Int {
+        didSet { UserDefaults.standard.set(dailyGoalMinutes, forKey: "dailyGoalMinutes") }
+    }
+    /// Confetti + level-up sheets. Off keeps the badges and numbers, loses the spectacle.
+    var gamificationCelebrationsEnabled: Bool {
+        didSet { UserDefaults.standard.set(gamificationCelebrationsEnabled, forKey: "gamificationCelebrationsEnabled") }
+    }
+    /// The Abzeichen (badge) grid on the Fortschritt screen.
+    var gamificationBadgesEnabled: Bool {
+        didSet { UserDefaults.standard.set(gamificationBadgesEnabled, forKey: "gamificationBadgesEnabled") }
+    }
+    /// The Lernpyramide — the 3D learning path — on Home and Fortschritt.
+    var gamificationPyramidEnabled: Bool {
+        didSet { UserDefaults.standard.set(gamificationPyramidEnabled, forKey: "gamificationPyramidEnabled") }
+    }
+
     // MARK: - Practice Reminder Settings
 
     /// Master switch for the "come back and practice" local notifications. Off by default — the app
@@ -310,6 +349,10 @@ class MLXModelManager {
         self.matchingTrickyFirst = (UserDefaults.standard.object(forKey: "matchingTrickyFirst") as? Bool) ?? true
         self.matchingFeedsCoach = (UserDefaults.standard.object(forKey: "matchingFeedsCoach") as? Bool) ?? true
         self.articleFeedsCoach = (UserDefaults.standard.object(forKey: "articleFeedsCoach") as? Bool) ?? true
+        self.prepositionsFeedCoach = (UserDefaults.standard.object(forKey: "prepositionsFeedCoach") as? Bool) ?? true
+        self.prepositionPictureMode = PrepositionPictureMode(
+            rawValue: UserDefaults.standard.string(forKey: PrepositionPictureMode.defaultsKey) ?? ""
+        ) ?? .on
         self.hapticFeedbackMode = HapticFeedbackMode(rawValue: UserDefaults.standard.string(forKey: "hapticFeedbackMode") ?? "") ?? .all
 
         // Conversation settings — default the chat model to the selected card model.
@@ -332,7 +375,7 @@ class MLXModelManager {
         self.chatSpacedReview = (UserDefaults.standard.object(forKey: "chatSpacedReview") as? Bool) ?? true
         self.chatSpacedReviewScopeRaw = UserDefaults.standard.string(forKey: "chatSpacedReviewScopeRaw") ?? SpacedReviewScope.everywhere.rawValue
         let paperModelRaw = UserDefaults.standard.string(forKey: "selectedPaperModel") ?? ""
-        self.selectedPaperModel = MLXModel(rawValue: paperModelRaw) ?? .gemma4_E4B
+        self.selectedPaperModel = MLXModel(rawValue: paperModelRaw) ?? PaperStudyService.requiredModel
 
         // Story settings — the level follows the conversation level until changed.
         self.storyLevelRaw = UserDefaults.standard.string(forKey: "storyLevelRaw")
@@ -349,6 +392,15 @@ class MLXModelManager {
         self.storyTranslationEnabled = (UserDefaults.standard.object(forKey: "storyTranslationEnabled") as? Bool) ?? false
         self.storyTimeCountsTowardStreak = (UserDefaults.standard.object(forKey: "storyTimeCountsTowardStreak") as? Bool) ?? true
         self.storyFeedsCoach = (UserDefaults.standard.object(forKey: "storyFeedsCoach") as? Bool) ?? true
+
+        // Gamification — on by default; the study log it's derived from exists either way.
+        self.gamificationEnabled = (UserDefaults.standard.object(forKey: "gamificationEnabled") as? Bool) ?? true
+        let storedGoal = UserDefaults.standard.integer(forKey: "dailyGoalMinutes")
+        self.dailyGoalMinutes = ExperienceService.dailyGoalOptions.contains(storedGoal)
+            ? storedGoal : ExperienceService.defaultDailyGoalMinutes
+        self.gamificationCelebrationsEnabled = (UserDefaults.standard.object(forKey: "gamificationCelebrationsEnabled") as? Bool) ?? true
+        self.gamificationBadgesEnabled = (UserDefaults.standard.object(forKey: "gamificationBadgesEnabled") as? Bool) ?? true
+        self.gamificationPyramidEnabled = (UserDefaults.standard.object(forKey: "gamificationPyramidEnabled") as? Bool) ?? true
 
         // Practice reminders — opt-in, so the master switch defaults off (nothing is scheduled while
         // it's off). The checkpoint set is pre-seeded with a gentle escalating ladder so flipping the

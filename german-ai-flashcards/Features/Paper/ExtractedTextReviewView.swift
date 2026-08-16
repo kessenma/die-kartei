@@ -16,6 +16,7 @@ struct ExtractedTextReviewView: View {
     var onGenerate: (_ deckCount: Int, _ selectedWords: [String]?) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     @State private var deckCount = 15
     @State private var pickWords = false
@@ -41,11 +42,12 @@ struct ExtractedTextReviewView: View {
         NavigationStack {
             Form {
                 if collectDeckOptions {
-                    deckSizeSection
-                    wordPickerSection
+                    deckSizeSection.themedListRow()
+                    wordPickerSection.themedListRow()
                 }
-                extractedTextSection
+                extractedTextSection.themedListRow()
             }
+            .themedListScreen()
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -82,7 +84,7 @@ struct ExtractedTextReviewView: View {
             }
             .disabled(pickWords && !selectedKeys.isEmpty)
         } header: {
-            Text("Vocabulary deck")
+            Text("Vocabulary deck").themedSectionHeader()
         } footer: {
             if pickWords && !selectedKeys.isEmpty {
                 Text("The deck will contain your \(selectedKeys.count) hand-picked words — the count above is ignored.")
@@ -109,11 +111,14 @@ struct ExtractedTextReviewView: View {
                 .padding(.vertical, 4)
             }
         } header: {
-            if pickWords {
-                Text("Words (\(selectedKeys.count) selected of \(words.count) unique)")
-            } else {
-                Text("Words")
+            Group {
+                if pickWords {
+                    Text("Words (\(selectedKeys.count) selected of \(words.count) unique)")
+                } else {
+                    Text("Words")
+                }
             }
+            .themedSectionHeader()
         } footer: {
             if pickWords {
                 Text("Repeated forms are listed once. Each picked word becomes one card; picking many words takes longer to translate.")
@@ -123,10 +128,12 @@ struct ExtractedTextReviewView: View {
     }
 
     private var extractedTextSection: some View {
-        Section("Extracted text · \(totalWordCount) words") {
+        Section {
             Text(text)
                 .font(.callout)
                 .textSelection(.enabled)
+        } header: {
+            Text("Extracted text · \(totalWordCount) words").themedSectionHeader()
         }
     }
 
@@ -142,7 +149,7 @@ struct ExtractedTextReviewView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .frame(maxWidth: .infinity)
-                .background(isSelected ? accent : Color.gray.opacity(0.15), in: Capsule())
+                .background(isSelected ? accent : Color.gray.opacity(0.15), in: appTheme.pillShape)
                 .foregroundStyle(isSelected ? .white : .primary)
         }
         .buttonStyle(.plain)

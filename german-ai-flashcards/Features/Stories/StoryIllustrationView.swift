@@ -10,6 +10,7 @@ struct StoryIllustrationView: View {
     var maxHeight: CGFloat = 200
 
     @State private var image: UIImage?
+    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
         ZStack {
@@ -18,7 +19,7 @@ struct StoryIllustrationView: View {
                     .resizable()
                     .scaledToFill()
             } else {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: appTheme.innerRadius(12), style: .continuous)
                     .fill(accent.opacity(0.12))
                 Image(systemName: "photo")
                     .font(.title2)
@@ -27,7 +28,13 @@ struct StoryIllustrationView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: maxHeight)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(12), style: .continuous))
+        // `scaledToFill` renders a square picture far taller than this frame, and `clipShape` hides
+        // that overflow without shrinking the hit region — so the invisible band would land on top
+        // of the paragraph above (drawn earlier, so it loses the hit test) and swallow the
+        // double-tap-to-translate and drag-to-select gestures there. The picture isn't interactive,
+        // so keep it out of hit testing entirely.
+        .allowsHitTesting(false)
         .accessibilityLabel("Story illustration")
         .task(id: record.fileName) {
             image = StoryImageStore.loadImage(fileName: record.fileName, storyID: storyID)

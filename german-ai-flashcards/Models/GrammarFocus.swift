@@ -15,10 +15,30 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
     case dativ
     case genitiv
     case modalverben
+    case praepositionen
     case wechselpraepositionen
     case adjektivendungen
 
     var id: String { rawValue }
+
+    /// The CEFR level at which this structure is normally introduced.
+    ///
+    /// Two jobs: picking placement items that actually discriminate between levels, and keeping an
+    /// A1 learner from being handed a B1 drill. Which level owns a structure is a fact about the
+    /// Goethe curriculum, so it's recorded here rather than guessed at runtime.
+    ///
+    /// Two deliberate judgment calls: `konjunktiv2` shows up at A2 for politeness ("könnten Sie…")
+    /// but is filed at B1, where hypotheticals make it a real structure; `adjektivendungen` starts
+    /// after definite articles at A2 but is filed at B1, because the full table is what a drill
+    /// actually tests. Both err upward on purpose — over-levelling only delays a structure, while
+    /// under-levelling hands a beginner an exercise they cannot do.
+    var introducedAt: CEFRLevel {
+        switch self {
+        case .artikel, .akkusativ, .modalverben, .perfekt, .praepositionen: .a1
+        case .dativ, .praeteritum, .futur, .wechselpraepositionen:          .a2
+        case .genitiv, .konjunktiv2, .adjektivendungen:                     .b1
+        }
+    }
 
     /// The German name shown as the primary label.
     var germanLabel: String {
@@ -32,6 +52,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .dativ:                "Dativ"
         case .genitiv:              "Genitiv"
         case .modalverben:          "Modalverben"
+        case .praepositionen:       "Präpositionen"
         case .wechselpraepositionen: "Wechselpräpositionen"
         case .adjektivendungen:     "Adjektivendungen"
         }
@@ -49,6 +70,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .dativ:                "Indirect-object case"
         case .genitiv:              "Possessive case"
         case .modalverben:          "Modal verbs"
+        case .praepositionen:       "Prepositions & the case they take"
         case .wechselpraepositionen: "Two-way prepositions"
         case .adjektivendungen:     "Adjective endings"
         }
@@ -75,6 +97,8 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
             "Shows possession (“of”). Articles become des / der and masculine/neuter nouns often add -s. “das Auto des Mannes.”"
         case .modalverben:
             "können, müssen, wollen, sollen, dürfen, mögen — they push the main verb to the end of the sentence as an infinitive. “Ich muss heute arbeiten.”"
+        case .praepositionen:
+            "Every German preposition fixes the case of the noun after it. Some always take the Akkusativ (durch, für, ohne, um…), some always the Dativ (aus, bei, mit, nach, von, zu…), some the Genitiv (trotz, während, wegen…), and the two-way ones switch between Akkusativ and Dativ. Learning the preposition means learning its case."
         case .wechselpraepositionen:
             "Prepositions like in, an, auf, über that take the Akkusativ for movement/direction and the Dativ for a fixed location. “Ich gehe in die Stadt” vs. “Ich bin in der Stadt”."
         case .adjektivendungen:
@@ -95,6 +119,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .dativ:                "Dativ: dem (m) · der (f) · dem (n) · den (Pl.)"
         case .genitiv:              "Genitiv: des …s (m/n) · der (f/Pl.)"
         case .modalverben:          "Modalverb konjugiert, Hauptverb als Infinitiv ans Satzende"
+        case .praepositionen:       "Die Präposition bestimmt den Fall — durch/für/ohne/um → Akk. · aus/bei/mit/nach/von/zu → Dat."
         case .wechselpraepositionen: "Wohin? (movement) → Akkusativ · Wo? (location) → Dativ"
         case .adjektivendungen:     "Endings follow case, gender & article — „ein guter Wein“"
         }
@@ -112,6 +137,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .dativ:                 "nutze Dativ-Verben und -Präpositionen, z. B. „Wem hilfst du?“, „Mit wem gehst du?“"
         case .genitiv:               "nutze den Genitiv, z. B. „Wessen Idee war das?“"
         case .modalverben:           "stelle Fragen mit Modalverben, z. B. „Was möchtest du machen?“, „Was musst du heute tun?“"
+        case .praepositionen:        "stelle Fragen, die Präpositionen erzwingen, z. B. „Mit wem fährst du?“, „Für wen ist das?“, „Seit wann lernst du Deutsch?“"
         case .wechselpraepositionen: "frage nach Ort und Richtung, z. B. „Wohin gehst du?“ und „Wo bist du?“"
         case .adjektivendungen:      "rege Beschreibungen mit Adjektiven an, z. B. „Was für ein Auto möchtest du?“"
         }

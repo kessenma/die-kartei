@@ -20,6 +20,7 @@ struct ArticleRulesSheet: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
+                .themedListRow()
 
                 ForEach(GermanArticle.allCases) { article in
                     Section {
@@ -34,6 +35,7 @@ struct ArticleRulesSheet: View {
                             Text("\(article.rawValue) — \(article.genderGerman)")
                         }
                     }
+                    .themedListRow()
                 }
 
                 Section {
@@ -44,7 +46,9 @@ struct ArticleRulesSheet: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                 }
+                .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("Der, die or das?")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

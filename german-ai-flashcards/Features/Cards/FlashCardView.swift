@@ -42,6 +42,8 @@ struct FlashCardView: View {
     var imageDeckID: UUID? = nil
 
     @Environment(\.colorScheme) private var colorScheme
+    /// Named `appTheme` because `theme` is already this view's `ModelTheme` (the two coexist by design).
+    @Environment(\.appTheme) private var appTheme
     @AppStorage(FlashcardImageStyle.defaultsKey) private var imageStyle: FlashcardImageStyle = .immersive
 
     /// Loaded from disk by the card itself, so a picture that finishes generating mid-session
@@ -59,11 +61,27 @@ struct FlashCardView: View {
         return nil
     }
 
+    /// Klar keeps the hand-tuned index-card paper; the identity themes draw the card on their own
+    /// surface so it belongs to the same world as the chrome around it. The ruled lines stay in
+    /// every theme — they're the index-card motif, not chrome.
     private var cardColor: Color {
-        colorScheme == .dark
+        if appTheme != .klar { return appTheme.surface }
+        return colorScheme == .dark
             ? Color(red: 0.18, green: 0.18, blue: 0.20)
             : Color(red: 0.98, green: 0.96, blue: 0.93)
     }
+
+    private var cardRadius: CGFloat { appTheme.innerRadius(16) }
+
+    /// Klar keeps the model's brand hairline (or plain grey); the bordered themes assert their own
+    /// ink line / black rule, which is stronger than a 35%-opacity accent would be.
+    private var cardStroke: Color {
+        if appTheme.cardBorderWidth > 0 { return appTheme.cardBorderColor }
+        return theme?.accent.opacity(0.35) ?? Color.gray.opacity(colorScheme == .dark ? 0.5 : 0.3)
+    }
+
+    /// This card's grammatical gender, when it's a noun with a readable article.
+    private var gender: Gender? { article.flatMap(Gender.init(article:)) }
     private var lineColor: Color {
         colorScheme == .dark
             ? Color(red: 0.35, green: 0.38, blue: 0.45).opacity(0.3)
@@ -156,25 +174,48 @@ struct FlashCardView: View {
         .padding(.horizontal, 8)
     }
 
+    /// The figure glyph stays, but its color now comes from `GenderPalette` instead of the old
+    /// blue/pink/purple — those read as a *third* gender coding next to the article text and the
+    /// corner tab. One palette, three places.
     private var genderBadge: (symbol: String, color: Color)? {
-        guard isShowingGerman else { return nil }
-        switch article?.lowercased() {
-        case "der": return ("figure.stand", .blue)
-        case "die": return ("figure.stand.dress", Color(.systemPink))
-        case "das": return ("figure.stand.dress.line.vertical.figure", .purple)
-        default: return nil
+        guard isShowingGerman, let gender else { return nil }
+        switch gender {
+        case .der:    return ("figure.stand", gender.color)
+        case .die:    return ("figure.stand.dress", gender.color)
+        case .das:    return ("figure.stand.dress.line.vertical.figure", gender.color)
+        case .plural: return nil
+        }
+    }
+
+    /// A slim colored tab down the card's leading edge — der blue, die red, das green — so gender is
+    /// legible at a glance even while the word itself is being read.
+    ///
+    /// German side only: on the answer side of an English→German card it would hand over half the
+    /// answer, which is the same reason `genderBadge` is gated.
+    @ViewBuilder
+    private var genderTab: some View {
+        if isShowingGerman, let gender {
+            HStack(spacing: 0) {
+                Rectangle()
+                    .fill(gender.color)
+                    .frame(width: 6)
+                Spacer(minLength: 0)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: cardRadius, style: .continuous))
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)   // the article is already spoken as part of the word
         }
     }
 
     var body: some View {
         ZStack {
             // Card background — the base for the ruled (text) face; the image face covers it.
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: cardRadius, style: .continuous)
                 .fill(cardColor)
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: cardRadius, style: .continuous)
                 .stroke(
-                    theme?.accent.opacity(0.35) ?? Color.gray.opacity(colorScheme == .dark ? 0.5 : 0.3),
-                    lineWidth: 1
+                    cardStroke,
+                    lineWidth: appTheme.cardBorderWidth > 0 ? appTheme.cardBorderWidth : 1
                 )
 
             // The two faces, counter-rotated together so text/word reads correctly on the flip.
@@ -186,6 +227,9 @@ struct FlashCardView: View {
                 }
             }
             .rotation3DEffect(.degrees(isFlipped ? 180 : 0), axis: (x: 0, y: 1, z: 0))
+
+            // Above both faces so it reads over the picture too.
+            genderTab
 
             // Maker badge in the top-right corner: the generating model's logo when known,
             // otherwise the deck's asset badge (e.g. Goethe).
@@ -223,7 +267,7 @@ struct FlashCardView: View {
             radius: theme == nil ? 8 : 12, x: 0, y: 4
         )
         .padding(.horizontal)
-        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: cardRadius, style: .continuous))
         .onTapGesture {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                 isFlipped.toggle()
@@ -250,9 +294,10 @@ struct FlashCardView: View {
 
                 scrim
 
-                // Word + pronunciation, floated over the picture.
+                // Word + pronunciation, floated over the picture. The article keeps its gender color
+                // here too — only the noun takes the white the photo needs.
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text(germanDisplay)
+                    Text.gendered(germanWord, article: article)
                         .font(.system(size: 32, weight: .bold, design: .serif))
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.55), radius: 4, x: 0, y: 1)
@@ -302,7 +347,7 @@ struct FlashCardView: View {
                 .padding(10)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: cardRadius, style: .continuous))
         }
     }
 
@@ -343,7 +388,7 @@ struct FlashCardView: View {
                     .padding(.top, 60)
                 Spacer()
             }
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: cardRadius, style: .continuous))
 
             VStack(spacing: 28) {
                 ForEach(0..<6, id: \.self) { _ in
@@ -354,7 +399,7 @@ struct FlashCardView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 70)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: cardRadius, style: .continuous))
 
             VStack(spacing: 0) {
                 Text(isFlipped ? backLabel : frontLabel)
@@ -370,7 +415,11 @@ struct FlashCardView: View {
                     verbBackContent
                 } else {
                     HStack(spacing: 10) {
-                        Text(isFlipped ? backText : frontText)
+                        // Only the German side carries an article to color; the English side is a
+                        // plain word, so it renders through the same helper unchanged.
+                        (isShowingGerman
+                            ? Text.gendered(germanWord, article: article)
+                            : Text(isFlipped ? backText : frontText))
                             .font(.system(size: 38, weight: .bold, design: .serif))
                             .foregroundStyle(.primary)
 
@@ -405,6 +454,35 @@ struct FlashCardView: View {
     }
 }
 
-#Preview {
+#Preview("Default") {
     FlashCardView(isFlipped: .constant(false))
+}
+
+#Preview("Gender colors · 4 themes") {
+    // One noun per theme so the four grounds/faces and the der(blue)/die(red)/das(green) article
+    // coloring + the leading gender tab all show at once.
+    let samples: [(de: String, en: String, article: String)] = [
+        ("Tisch", "table", "der"),
+        ("Blume", "flower", "die"),
+        ("Haus", "house", "das"),
+        ("Hund", "dog", "der"),
+    ]
+    return ScrollView {
+        VStack(spacing: 20) {
+            ForEach(Array(AppTheme.allCases.enumerated()), id: \.element) { i, appTheme in
+                VStack(spacing: 6) {
+                    Text(appTheme.label.uppercased())
+                        .font(.caption2).tracking(1).foregroundStyle(.secondary)
+                    FlashCardView(
+                        isFlipped: .constant(false),
+                        germanWord: samples[i].de,
+                        englishWord: samples[i].en,
+                        article: samples[i].article
+                    )
+                }
+                .environment(\.appTheme, appTheme)
+            }
+        }
+        .padding(.vertical)
+    }
 }

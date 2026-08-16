@@ -10,6 +10,7 @@ struct PaperDetailView: View {
     @Query private var allDecks: [SavedDeck]
     @Environment(\.modelContext) private var modelContext
     @Environment(ActivityRouter.self) private var router
+    @Environment(\.appTheme) private var appTheme
 
     @State private var activeChat: ActiveChat?
     @State private var regenService: PaperStudyService?
@@ -55,7 +56,7 @@ struct PaperDetailView: View {
                         model.logoImage
                             .resizable().scaledToFit()
                             .frame(width: 18, height: 18)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                            .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(4)))
                         Text(model.rawValue)
                             .font(.caption2)
                             .foregroundStyle(.secondary)
@@ -64,7 +65,7 @@ struct PaperDetailView: View {
             }
             .listRowBackground(theme.accent.opacity(0.06))
 
-            whatNextSection
+            whatNextSection.themedListRow()
 
             Section {
                 NavigationLink {
@@ -83,25 +84,32 @@ struct PaperDetailView: View {
                 Text("\(paper.wordCount) words extracted. Check it looks right — a little English mixed in is fine.")
                     .font(.caption2)
             }
+            .themedListRow()
 
             if let summary = paper.germanSummary, !summary.isEmpty {
-                Section("Zusammenfassung") {
+                Section {
                     Text(summary).font(.callout)
+                } header: {
+                    Text("Zusammenfassung").themedSectionHeader()
                 }
+                .themedListRow()
             }
 
             if !paper.keyPoints.isEmpty {
-                Section("Kernpunkte") {
+                Section {
                     ForEach(Array(paper.keyPoints.enumerated()), id: \.offset) { _, point in
                         Label(point, systemImage: "circle.fill")
                             .labelStyle(BulletLabelStyle())
                             .font(.callout)
                     }
+                } header: {
+                    Text("Kernpunkte").themedSectionHeader()
                 }
+                .themedListRow()
             }
 
             if !paper.questions.isEmpty {
-                Section("Fragen zum Üben") {
+                Section {
                     ForEach(paper.questions) { question in
                         DisclosureGroup {
                             if let answer = question.answer {
@@ -114,7 +122,10 @@ struct PaperDetailView: View {
                             Text(question.question).font(.callout)
                         }
                     }
+                } header: {
+                    Text("Fragen zum Üben").themedSectionHeader()
                 }
+                .themedListRow()
             }
 
             if !paper.generationComplete {
@@ -132,8 +143,10 @@ struct PaperDetailView: View {
                         }
                     }
                 }
+                .themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle(paper.title)
         .tint(theme.accent)
         .navigationBarTitleDisplayMode(.inline)
@@ -212,7 +225,7 @@ struct PaperDetailView: View {
                 chooserRow("Both: cards, then chat", "Study the words, then use them in conversation", "square.stack.3d.up.fill")
             }
         } header: {
-            Text("What next?")
+            Text("What next?").themedSectionHeader()
         } footer: {
             Text("Turn this text into vocabulary flashcards, discuss it with the AI, or do both.")
                 .font(.caption2)
@@ -318,6 +331,8 @@ private struct DeckGeneratingView: View {
     let paper: StudyPaper
     let onClose: () -> Void
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -342,6 +357,9 @@ private struct DeckGeneratingView: View {
             }
             .padding()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
+            }
             .navigationTitle("Making flashcards")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -358,6 +376,8 @@ private struct DeckGeneratingView: View {
 private struct SourceTextView: View {
     let paper: StudyPaper
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         ScrollView {
             Text(paper.fullText.isEmpty ? "No text was extracted." : paper.fullText)
@@ -365,6 +385,9 @@ private struct SourceTextView: View {
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
+        }
+        .background {
+            if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
         }
         .navigationTitle("Extracted text")
         .navigationBarTitleDisplayMode(.inline)

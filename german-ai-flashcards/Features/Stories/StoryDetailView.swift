@@ -10,6 +10,7 @@ struct StoryDetailView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.appTheme) private var appTheme
 
     enum StudyMode: String, CaseIterable {
         case read = "Lesen"
@@ -49,26 +50,35 @@ struct StoryDetailView: View {
     @State private var wordsSaved = 0
     /// Time already logged against this story before this visit, shown in the header.
     @State private var previousSeconds = 0
+    /// The story words the glossary below explains, marked in the text so the learner can see which
+    /// ones have a translation waiting. Recomputed when the glossary arrives.
+    @State private var glossaryHighlight = GlossaryHighlight.none
 
     private var hero: MLXModel { StoryStudyService.requiredModel }
     private var theme: ModelTheme { hero.theme }
 
     var body: some View {
         List {
-            headerSection
+            headerSection.themedListRow()
             modeSection
             if mode == .read {
-                readSection
+                readSection.themedListRow()
                 glossarySection
             } else {
-                listenSection
-                transcriptSection
+                listenSection.themedListRow()
+                transcriptSection.themedListRow()
             }
+            // Below both modes: words can be looked up from the transcript too.
+            lookupSection
             questionSection
         }
+        // Innermost so it wins over `.themedListScreen()`'s own tint: Klar keeps the story hero's
+        // brand accent (pixel-identical to the old `.tint(theme.accent)`); the identity themes take
+        // their own accent.
+        .tint(appTheme.accent(model: theme))
+        .themedListScreen()
         .navigationTitle(story.title)
         .navigationBarTitleDisplayMode(.inline)
-        .tint(theme.accent)
         .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -120,6 +130,14 @@ struct StoryDetailView: View {
             setUp()
             readingTimer.start()
         }
+        // Keyed on the stored glossary so a story still being generated picks its words up as soon
+        // as the glossary step finishes. Runs after `onAppear`, so the inspector already exists.
+        .task(id: story.glossaryData) {
+            glossaryHighlight = StoryGlossaryHighlighter.highlight(for: story.glossary, in: story.storyText)
+            // A marked word is one the glossary below already answers, so double-tapping it should
+            // read that answer off rather than run the model over it again.
+            inspector?.knownTranslations = knownTranslations
+        }
         .onDisappear {
             SpeechService.shared.stop()
             // Covers every way out: back, the quiz push, and the app being closed from here.
@@ -158,7 +176,7 @@ struct StoryDetailView: View {
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
-                        .background(Color(.tertiarySystemFill), in: Capsule())
+                        .background(Color(.tertiarySystemFill), in: appTheme.pillShape)
                     Spacer()
                     hero.logoImage
                         .resizable()
@@ -226,7 +244,7 @@ struct StoryDetailView: View {
             }
         } header: {
             HStack {
-                Text("Geschichte")
+                Text("Geschichte").themedSectionHeader()
                 Spacer()
                 Picker("Language", selection: $language) {
                     ForEach(StoryLanguage.allCases, id: \.self) { Text($0.rawValue).tag($0) }
@@ -257,7 +275,7 @@ struct StoryDetailView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 11)
                 .foregroundStyle(.white)
-                .background(theme.linear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(theme.linear, in: RoundedRectangle(cornerRadius: appTheme.innerRadius(12), style: .continuous))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Read the story aloud and follow along")
@@ -269,6 +287,7 @@ struct StoryDetailView: View {
             textStyle: .body,
             highlightRange: mode == .listen ? spokenRange : nil,
             savedWords: savedWords,
+            lookedUpWords: lookedUpWords,
             onTapWord: { inspect($0) },
             onTranslateSelection: { inspect($0) },
             onSavePhrase: { phraseDraft = PhraseDraft(german: $0) }
@@ -292,6 +311,8 @@ struct StoryDetailView: View {
                     textStyle: .body,
                     highlightRange: nil,
                     savedWords: savedWords,
+                    glossary: glossaryHighlight,
+                    lookedUpWords: lookedUpWords,
                     onTapWord: { inspect($0) },
                     onTranslateSelection: { inspect($0) },
                     onSavePhrase: { phraseDraft = PhraseDraft(german: $0) }
@@ -345,7 +366,7 @@ struct StoryDetailView: View {
     private var glossarySection: some View {
         let entries = story.glossary
         if !entries.isEmpty {
-            Section("Glossar") {
+            Section {
                 ForEach(entries) { entry in
                     HStack(spacing: 10) {
                         Text(entry.german)
@@ -362,8 +383,56 @@ struct StoryDetailView: View {
                     }
                     .font(.subheadline)
                 }
+            } header: {
+                Text("Glossar").themedSectionHeader()
+            } footer: {
+                if !glossaryHighlight.isEmpty {
+                    Text("The dotted words in the story above are the ones listed here.")
+                }
             }
+            .themedListRow()
         }
+    }
+
+    /// The words this learner double-tapped in this story, kept with it. Separate from the glossary
+    /// above: that one is what the model thought would be hard, this one is what actually was.
+    @ViewBuilder
+    private var lookupSection: some View {
+        let entries = story.lookups
+        if !entries.isEmpty {
+            Section {
+                ForEach(entries) { entry in
+                    HStack(spacing: 10) {
+                        Text(entry.german)
+                            .fontWeight(.medium)
+                        Spacer()
+                        Text(entry.english)
+                            .foregroundStyle(.secondary)
+                        Button {
+                            SpeechService.shared.speak(entry.german)
+                        } label: {
+                            Image(systemName: "speaker.wave.2")
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                    .font(.subheadline)
+                }
+                .onDelete(perform: removeLookups)
+            } header: {
+                Text("Unbekannte Wörter").themedSectionHeader()
+            } footer: {
+                Text("Words you looked up here, marked in the story with a red dashed underline. Double-tapping one again answers straight from this list, with no wait. Swipe to remove.")
+            }
+            .themedListRow()
+        }
+    }
+
+    private func removeLookups(at offsets: IndexSet) {
+        var entries = story.lookups
+        entries.remove(atOffsets: offsets)
+        story.setLookups(entries)
+        try? modelContext.save()
+        inspector?.knownTranslations = knownTranslations
     }
 
     // MARK: - Listen mode
@@ -409,7 +478,7 @@ struct StoryDetailView: View {
             }
             .padding(.vertical, 8)
         } header: {
-            Text("Hören")
+            Text("Hören").themedSectionHeader()
         } footer: {
             Text("Listen as often as you like. Tap Vorlesen & mitlesen to follow along with each word highlighted as it's read, or use the round button to just listen.")
         }
@@ -419,7 +488,7 @@ struct StoryDetailView: View {
         Section {
             interactiveStoryText
         } header: {
-            Text("Zum Text")
+            Text("Zum Text").themedSectionHeader()
         } footer: {
             Text("Double-tap a word to translate it; select a phrase to save it.")
         }
@@ -500,6 +569,9 @@ struct StoryDetailView: View {
                 context: modelContext
             )
         }
+        // The glossary task normally fills this in; assigning here too keeps the lookup wired
+        // whichever of the two runs first.
+        inspector?.knownTranslations = knownTranslations
         previousSeconds = StoryProgressService.secondsRead(storyID: story.id, in: modelContext)
     }
 
@@ -541,6 +613,24 @@ struct StoryDetailView: View {
         StoryDeckStore.savedWords(for: story, context: modelContext)
     }
 
+    /// Lowercased forms of the words looked up in this story — marked in red in the text.
+    private var lookedUpWords: Set<String> {
+        Set(story.lookups.map { $0.german.lowercased() })
+    }
+
+    /// Everything a double-tap can be answered with without the model: the story's glossary, plus
+    /// every word already looked up here (which survives app restarts, so the second tap on a word
+    /// never pays for a model load). The glossary wins a tie — it's the entry the list explains.
+    private var knownTranslations: [String: KnownTranslation] {
+        var known = glossaryHighlight.wordTranslations
+        for entry in story.lookups where known[entry.german.lowercased()] == nil {
+            known[entry.german.lowercased()] = KnownTranslation(
+                german: entry.german, english: entry.english, source: .earlierLookup
+            )
+        }
+        return known
+    }
+
     /// True while *anyone* is translating this story — either this screen or the background pass
     /// the setup screen starts when "Translate into English" was on.
     private var isTranslating: Bool {
@@ -562,17 +652,18 @@ struct StoryDetailView: View {
 /// Builds the word inspector both story screens use: double-tapped words are translated 1:1 and
 /// can be saved into the story's own deck.
 enum StoryWordInspector {
-    /// `feedsCoach` gates the learner-profile hand-off; `onSaved` lets the caller count saves
-    /// against the current reading session.
+    /// `feedsCoach` gates the learner-profile hand-off; `knownTranslations` lets glossary words
+    /// answer without the model; `onSaved` lets the caller count saves against the current session.
     @MainActor
     static func make(
         story: StudyStory,
         mlxService: MLXGenerationService,
         feedsCoach: Bool = true,
+        knownTranslations: [String: KnownTranslation] = [:],
         onSaved: @escaping () -> Void = {},
         context: ModelContext
     ) -> WordInspectorModel {
-        WordInspectorModel(
+        let model = WordInspectorModel(
             mlxService: mlxService,
             model: StoryStudyService.requiredModel,
             isWordSaved: { word in StoryDeckStore.isWordSaved(word, story: story, context: context) },
@@ -582,7 +673,50 @@ enum StoryWordInspector {
                     feedsCoach: feedsCoach, context: context
                 )
                 onSaved()
+            },
+            // Every word the model had to translate is kept with the story, so it's listed under
+            // "Unbekannte Wörter", marked in the text, and answered without a model load next time.
+            onLookup: { german, english in
+                story.recordLookup(german: german, english: english)
+                try? context.save()
             }
         )
+        model.knownTranslations = knownTranslations
+        return model
     }
 }
+
+// MARK: - Preview
+
+/// The reader across all four themes. A bare `StudyStory` (with a little text) is enough to show the
+/// header chips, the story card, and the section headers restyle per theme. The glossary and a
+/// couple of looked-up words are filled in so both markings in the text — dotted for the glossary,
+/// red dashes for the lookups — and the two lists below show up too.
+@MainActor
+private func storyDetailThemePreview() -> some View {
+    let story = StudyStory(topic: "Ein Tag in Berlin", level: .a2, genre: .alltag)
+    story.title = "Ein Tag in Berlin"
+    story.storyText = "Anna fährt mit dem Zug nach Berlin. Sie besucht den Zoo und isst eine Currywurst.\n\nAm Abend geht sie ins Theater und trifft eine alte Freundin."
+    story.setGlossary([
+        GlossaryEntry(german: "der Zug", english: "train"),
+        GlossaryEntry(german: "besuchen", english: "to visit"),
+        GlossaryEntry(german: "treffen", english: "to meet")
+    ])
+    story.setLookups([
+        GlossaryEntry(german: "Currywurst", english: "curried sausage"),
+        GlossaryEntry(german: "Abend", english: "evening")
+    ])
+    return ForEach(AppTheme.allCases) { theme in
+        NavigationStack {
+            StoryDetailView(
+                story: story,
+                modelManager: MLXModelManager(),
+                mlxService: MLXGenerationService()
+            )
+        }
+        .environment(\.appTheme, theme)
+        .modelContainer(for: [StudyStory.self, StoryReadingSession.self], inMemory: true)
+    }
+}
+
+#Preview("Story detail · 4 themes") { storyDetailThemePreview() }

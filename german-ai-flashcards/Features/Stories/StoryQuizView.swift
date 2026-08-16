@@ -13,6 +13,7 @@ struct StoryQuizView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     private struct MissedQuestion: Identifiable {
         let question: StoryQuestion
@@ -62,6 +63,9 @@ struct StoryQuizView: View {
             } else {
                 ContentUnavailableView("No questions", systemImage: "questionmark.circle")
             }
+        }
+        .background {
+            if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
         }
         .navigationTitle(isListening ? "Hören · Fragen" : "Fragen")
         .navigationBarTitleDisplayMode(.inline)
@@ -142,7 +146,7 @@ struct StoryQuizView: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: appTheme.innerRadius(16)))
     }
 
     /// After answering, blank kinds show the filled sentence.
@@ -200,9 +204,9 @@ struct StoryQuizView: View {
                         .padding(.vertical, 14)
                         .background(optionBackground(index, question: question))
                         .foregroundStyle(optionForeground(index, question: question))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(12)))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: appTheme.innerRadius(12))
                                 .stroke(optionBorder(index, question: question), lineWidth: 1.5)
                         )
                 }
@@ -293,7 +297,7 @@ struct StoryQuizView: View {
             TextEditor(text: $freeAnswer)
                 .frame(minHeight: 90)
                 .padding(8)
-                .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+                .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(12)))
                 .disabled(answered || isGrading)
 
             if !answered {
@@ -339,7 +343,7 @@ struct StoryQuizView: View {
                 }
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
+                .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(12)))
             }
         }
     }
@@ -392,7 +396,7 @@ struct StoryQuizView: View {
                 .font(.subheadline)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
-                .background(theme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+                .background(theme.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(12)))
         }
     }
 
@@ -404,7 +408,7 @@ struct StoryQuizView: View {
                 .padding(.vertical, 14)
                 .foregroundStyle(.white)
                 .background(theme.accent)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(12)))
         }
         .buttonStyle(.plain)
     }
@@ -492,6 +496,9 @@ struct StoryQuizView: View {
                     }
                 }
             }
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
+            }
             .navigationTitle(isListening && story.bestScore == nil ? "Nochmal hören" : "Zum Text")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -574,7 +581,7 @@ struct StoryQuizView: View {
                 }
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.red.opacity(0.07), in: RoundedRectangle(cornerRadius: 10))
+                .background(Color.red.opacity(0.07), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(10)))
             }
         }
     }
@@ -598,7 +605,7 @@ struct StoryQuizView: View {
                     .padding(.vertical, 14)
                     .foregroundStyle(.white)
                     .background(theme.accent)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(12)))
             }
             .buttonStyle(.plain)
 
@@ -611,7 +618,7 @@ struct StoryQuizView: View {
                     .padding(.vertical, 14)
                     .background(Color(uiColor: .secondarySystemBackground))
                     .foregroundStyle(.primary)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(12)))
             }
             .buttonStyle(.plain)
         }
@@ -624,5 +631,43 @@ struct StoryQuizView: View {
         missed = []
         sessionComplete = false
         resetQuestionState()
+    }
+}
+
+#Preview("Story quiz · 4 themes") {
+    let container = try! ModelContainer(
+        for: StudyStory.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    let story = StudyStory(topic: "Ein Tag im Park", level: .a2, genre: .alltag)
+    story.title = "Ein Tag im Park"
+    story.storyText = "Anna geht in den Park. Dort sieht sie einen kleinen Hund."
+    story.setQuestions([
+        StoryQuestion(
+            kind: .multipleChoice,
+            question: "Wohin geht Anna?",
+            options: ["In den Park", "Nach Hause", "Zur Schule"],
+            correctIndex: 0,
+            answer: "In den Park",
+            evidence: "Anna geht in den Park."
+        ),
+        StoryQuestion(
+            kind: .fillInBlankChoices,
+            question: "Dort sieht sie einen kleinen ______.",
+            options: ["Hund", "Katze", "Vogel"],
+            correctIndex: 0,
+            answer: "Hund",
+            evidence: "Dort sieht sie einen kleinen Hund."
+        )
+    ])
+    let service = StoryStudyService(
+        mlxService: MLXGenerationService(),
+        modelContext: ModelContext(container)
+    )
+    return ForEach(AppTheme.allCases) { theme in
+        NavigationStack {
+            StoryQuizView(story: story, service: service, modelManager: MLXModelManager())
+        }
+        .environment(\.appTheme, theme)
     }
 }

@@ -13,12 +13,9 @@ enum ArticleStyle {
     }
 
     static func color(for article: String) -> Color {
-        switch article.lowercased() {
-        case "der": return .blue
-        case "die": return Color(.systemPink)
-        case "das": return .purple
-        default: return .secondary
-        }
+        // The signature der/die/das palette (blue/red/green) via GenderPalette, shared with the
+        // cards and the article game — replaces the old blue/pink/purple so all gender coding matches.
+        Gender(article: article).map(GenderPalette.color) ?? .secondary
     }
 
     static let all = ["der", "die", "das"]
@@ -61,6 +58,7 @@ struct ValidationReviewView: View {
                     }
                 }
             }
+            .themedListScreen()
             .navigationTitle("Dictionary Check")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)

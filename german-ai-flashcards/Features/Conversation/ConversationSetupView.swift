@@ -58,26 +58,30 @@ struct ConversationSetupView: View {
     var body: some View {
         NavigationStack {
             Form {
-                modeSection
+                modeSection.themedListRow()
 
                 if mode == .decks {
                     DeckMultiSelectSection(decks: decks, selectedIDs: $selectedDeckIDs)
+                        .themedListRow()
                 }
 
                 if mode == .scenario {
-                    scenarioSection
+                    scenarioSection.themedListRow()
                 }
 
                 if mode == .interview {
-                    interviewSection
+                    interviewSection.themedListRow()
                 }
 
                 GrammarFocusPickerSection(selected: $focus)
+                    .themedListRow()
 
-                levelSection
+                levelSection.themedListRow()
 
                 ChatModelPickerSection(selected: $model, cacheRefreshID: UUID())
+                    .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("New Conversation")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -122,7 +126,7 @@ struct ConversationSetupView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         } header: {
-            Text("Conversation type")
+            Text("Conversation type").themedSectionHeader()
         }
     }
 
@@ -173,7 +177,7 @@ struct ConversationSetupView: View {
                     .lineLimit(2...4)
             }
         } header: {
-            Text("Scenario")
+            Text("Scenario").themedSectionHeader()
         } footer: {
             Text("A random scenario is picked for you — tap Surprise me to reroll, or browse the full list. The AI stays in character and sets the scene. Add phrases you've heard in the wild and the AI will work them in.")
                 .font(.caption2)
@@ -235,7 +239,7 @@ struct ConversationSetupView: View {
 
             TextField("Job title (used as the chat name)", text: $jobTitleText)
         } header: {
-            Text("Job posting")
+            Text("Job posting").themedSectionHeader()
         } footer: {
             Text("Paste or fetch the posting — German or English both work; the interview itself is in German. The AI plays the recruiter and asks about your experience for this role.")
                 .font(.caption2)
@@ -260,7 +264,7 @@ struct ConversationSetupView: View {
             }
             .pickerStyle(.segmented)
         } header: {
-            Text("Level & formality")
+            Text("Level & formality").themedSectionHeader()
         }
     }
 

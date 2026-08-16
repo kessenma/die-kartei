@@ -43,7 +43,7 @@ extension MLXModel {
                 accent: Color(hex: 0xBF5AF2)
             )
 
-        case .gemma3_1B, .gemma3n_E4B, .gemma4_E4B, .gemma4_E4B_german:
+        case .gemma3_1B, .gemma4_E4B_german, .gemma4_E2B_german:
             // Google / Gemma soft blue.
             ModelTheme(
                 palette: [
@@ -92,6 +92,16 @@ extension MLXModel {
                 ],
                 accent: Color(hex: 0x00A4EF)
             )
+
+        case .granite2B_german:
+            // IBM blue, darker and cooler than Meta's so the two don't read as the same brand.
+            ModelTheme(
+                palette: [
+                    Color(hex: 0x78A9FF), Color(hex: 0x4589FF),
+                    Color(hex: 0x0F62FE), Color(hex: 0x0043CE),
+                ],
+                accent: Color(hex: 0x0F62FE)
+            )
         }
     }
 }
@@ -100,7 +110,8 @@ extension MLXModel {
 
 extension Color {
     /// Build a color from a 24-bit RGB hex literal, e.g. `Color(hex: 0xFF6B00)`.
-    init(hex: UInt) {
+    /// `nonisolated` so `nonisolated` value types (e.g. `AppTheme`) can build color tokens off-main.
+    nonisolated init(hex: UInt) {
         self.init(
             .sRGB,
             red: Double((hex >> 16) & 0xFF) / 255,
