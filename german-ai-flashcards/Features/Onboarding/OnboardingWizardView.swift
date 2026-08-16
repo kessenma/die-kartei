@@ -183,13 +183,23 @@ struct OnboardingWizardView: View {
 
     private func finish(_ session: PlacementSession) {
         guard session.isFinished, result == nil else { return }
-        apply(session.result())
+        apply(session.result(), session: session)
     }
 
     /// Stores the estimate and adopts it as the content level. Never writes `LearnerProfile` —
     /// same rule as the standalone sheet, for the same reason.
-    private func apply(_ scored: PlacementResult) {
+    ///
+    /// The guard used to live only in `finish`, which was enough while `save` was idempotent. It
+    /// has to be here now: the beginner door calls this directly with no `finish` in front of it,
+    /// and an *append* store turns a double-tap into two recorded attempts.
+    private func apply(_ scored: PlacementResult, session: PlacementSession?) {
+        guard result == nil else { return }
         PlacementService.save(scored)
+        PlacementAttemptStore.record(
+            result: scored,
+            answers: session?.answers ?? [],
+            cloze: session?.finishedCloze
+        )
         if !scored.declaredBeginner {
             modelManager.chatLevelRaw = scored.estimatedLevelRaw
             modelManager.storyLevelRaw = scored.estimatedLevelRaw

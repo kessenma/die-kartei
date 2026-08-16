@@ -23,7 +23,7 @@
 
 import Foundation
 
-nonisolated enum PlacementAttemptStore {
+enum PlacementAttemptStore {
 
     /// Roughly 6 KB per attempt, so the cap is ~240 KB on disk. This is a runaway backstop, not a
     /// product limit: a learner retaking monthly for three years lands at 36.

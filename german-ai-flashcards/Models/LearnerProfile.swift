@@ -25,6 +25,11 @@ struct VocabTouch: Codable, Identifiable, Hashable {
     var timesUsed: Int
     /// Pinned items are exempt from automatic cleaning.
     var pinned: Bool = false
+    /// Where this came from, when it wasn't a conversation — currently only
+    /// `MemorySource.placement`. Optional so items stored before it existed decode unchanged, and
+    /// deliberately *not* part of `id`: a word is the same word however the learner met it, so a
+    /// placement miss should merge with a matching-game touch rather than sit beside it.
+    var source: String? = nil
     var id: String { german.lowercased() }
 }
 
@@ -43,10 +48,31 @@ struct LexicalSlip: Codable, Identifiable, Hashable {
     var sentence: String? = nil
     /// Word index (into `sentence` split on spaces) of the token to blank — the corrected form.
     var blankIndex: Int? = nil
-    var id: String { (wrong + "→" + right).lowercased() }
+    /// Where this came from, when it wasn't the learner's own production — currently only
+    /// `MemorySource.placement`. Optional so items stored before it existed decode unchanged.
+    var source: String? = nil
+
+    /// Unlike `VocabTouch`, the source **is** part of the identity here, and it has to be.
+    ///
+    /// Placement distractors are generic function words — "der", "die", "kein" — so a placement
+    /// `die→der` would otherwise share an id with a real conversation `die→der`, and the merge
+    /// branch in `LearnerMemoryService` overwrites `sentence`/`blankIndex`. That would replace the
+    /// learner's own corrected sentence (and the personalized cloze card built from it) with a
+    /// bank sentence. Existing slips have `source == nil`, so their ids stay byte-identical and
+    /// pins, archives and self-heal keep working untouched.
+    var id: String {
+        (wrong + "→" + right + (source.map { "@" + $0 } ?? "")).lowercased()
+    }
 
     /// True when this slip carries enough context to build a fill-in-the-blank card.
     var isClozeReady: Bool { sentence != nil && blankIndex != nil }
+}
+
+/// Where a memory came from, when it wasn't the learner's own conversation. Absent means the
+/// ordinary path — a chat turn, a saved word, a story lookup.
+enum MemorySource {
+    /// Handed over from the placement check by the explicit button on the review screen.
+    static let placement = "placement"
 }
 
 // MARK: - Active profile (bounded; the only thing ever shown to the model)

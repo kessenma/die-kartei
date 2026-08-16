@@ -151,6 +151,15 @@ struct PyramidView: View {
             }
             .buttonStyle(.plain)
 
+            if !PlacementAttemptStore.isEmpty {
+                NavigationLink {
+                    PlacementReviewView()
+                } label: {
+                    Label(reviewLabel, systemImage: "list.bullet.rectangle")
+                        .font(.subheadline)
+                }
+            }
+
             if PlacementService.current != nil {
                 Button("Remove the estimate", role: .destructive) {
                     PlacementService.clear()
@@ -161,10 +170,15 @@ struct PyramidView: View {
         } header: {
             Text("Einstufung · Placement").themedSectionHeader()
         } footer: {
-            Text("An estimate only outlines a layer. Removing it clears the outlines and leaves everything you've actually proven untouched.")
+            Text("An estimate only outlines a layer. Removing it clears the outlines and leaves everything you've actually proven untouched. Your past answers are kept separately — review or delete them under “See what you missed”.")
                 .font(.caption2)
         }
         .themedListRow()
+    }
+
+    private var reviewLabel: String {
+        let count = PlacementAttemptStore.attempts().count
+        return count > 1 ? "See what you missed · \(count) checks" : "See what you missed"
     }
 
     private var placementTitle: String {

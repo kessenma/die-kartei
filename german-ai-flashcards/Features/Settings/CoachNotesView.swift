@@ -138,7 +138,14 @@ struct CoachNotesView: View {
                         if item.pinned {
                             Image(systemName: "pin.fill").font(.caption2).foregroundStyle(.orange)
                         }
-                        Text(item.german).font(.callout)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(item.german).font(.callout)
+                            if item.source == MemorySource.placement {
+                                Text("from your placement check")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            }
+                        }
                         Spacer()
                         if !item.english.isEmpty {
                             Text(item.english).font(.caption).foregroundStyle(.secondary)
@@ -186,6 +193,14 @@ struct CoachNotesView: View {
                             .font(.callout)
                             if !slip.note.isEmpty {
                                 Text(slip.note).font(.caption2).foregroundStyle(.secondary)
+                            }
+                            // A placement slip is a form they *picked* from three on screen, not
+                            // one they wrote. Saying so keeps the screen from overstating what
+                            // happened — and these never reach the coach's correction prompt.
+                            if slip.source == MemorySource.placement {
+                                Text("you picked this in your placement check")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
                             }
                         }
                         Spacer()

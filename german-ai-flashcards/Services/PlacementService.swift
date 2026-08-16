@@ -160,6 +160,65 @@ enum PlacementService {
             clozeCorrect: clozeGaps
         ))
     }
+
+    /// Seeds N synthetic *attempts* — the review screen's only route onto a simulator, which runs
+    /// the probe fine but can't be tapped through twenty-nine questions, let alone four times over
+    /// to make a repeat offender appear.
+    ///
+    ///     xcrun simctl launch <udid> <bundle-id> -placement.debugAttempts 4 -placement.debugAccuracy 0.6
+    ///
+    /// Drives a **real** `PlacementSession`, so the questions, the staircases and the explanations
+    /// are the real ones rather than a fixture that could drift from them. The generator is seeded,
+    /// so a given run is reproducible and repeats actually repeat. Note that repeats are guaranteed
+    /// by construction: the two anchors open every run, and the bank holds 10–12 items per level
+    /// against 8 grammar questions, so grammar ids recur heavily across a few attempts. Vocabulary
+    /// repeats stay rare — it samples 585/1209/2358-word lists — and that asymmetry is real, not a
+    /// flaw in the seeder.
+    static func seedDebugAttempts(count: Int, accuracy: Double) {
+        var rng = SeededGenerator(seed: 42)
+        let skipRate = 0.05
+
+        for offset in 0..<count {
+            let session = PlacementSession()
+            while let item = session.current {
+                let roll = Double.random(in: 0..<1, using: &rng)
+                if roll < skipRate {
+                    session.answer(nil)
+                } else if roll < skipRate + accuracy {
+                    session.answer(item.correctIndex)
+                } else {
+                    let wrong = (0..<item.choices.count).filter { $0 != item.correctIndex }
+                    session.answer(wrong.randomElement(using: &rng))
+                }
+            }
+            if let cloze = session.currentCloze {
+                session.answerCloze(cloze.gaps.map { gap in
+                    Double.random(in: 0..<1, using: &rng) < accuracy
+                        ? gap.correctIndex
+                        : (0..<gap.choices.count).filter { $0 != gap.correctIndex }.randomElement(using: &rng)
+                })
+            }
+            // Backdated a week apart so the attempt list, the date pills and the calendar-style
+            // ordering all have something real to sort.
+            let takenAt = Date().addingTimeInterval(-Double(offset) * 7 * 24 * 3600)
+            PlacementAttemptStore.record(
+                result: session.result(at: takenAt),
+                answers: session.answers,
+                cloze: session.finishedCloze
+            )
+        }
+    }
+
+    static func applyDebugAttemptsLaunchArgumentIfNeeded() {
+        let count = UserDefaults.standard.integer(forKey: "placement.debugAttempts")
+        guard count > 0 else { return }
+        let accuracy = UserDefaults.standard.object(forKey: "placement.debugAccuracy") as? Double ?? 0.6
+        PlacementAttemptStore.deleteAll()
+        PlacementCoachExport.resetHighWaterMark()
+        seedDebugAttempts(count: min(count, attemptCapForDebug), accuracy: accuracy)
+    }
+
+    private static var attemptCapForDebug: Int { PlacementAttemptStore.cap }
 #endif
 
     // MARK: - Item generation

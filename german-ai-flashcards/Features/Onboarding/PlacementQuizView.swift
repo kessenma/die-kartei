@@ -28,12 +28,16 @@ struct PlacementQuizView: View {
 
     @State private var session: PlacementSession?
     @State private var result: PlacementResult?
+    /// The attempt just recorded, so the review link opens pre-filtered to this run.
+    @State private var recordedAttemptID: UUID?
 
     var body: some View {
         NavigationStack {
             Group {
                 if let result {
-                    PlacementResultStage(result: result) { dismiss() }
+                    PlacementResultStage(result: result, onDone: { dismiss() }) {
+                        reviewLink
+                    }
                 } else if let session {
                     quizContent(session)
                 } else {
@@ -57,6 +61,22 @@ struct PlacementQuizView: View {
             }
         }
         .interactiveDismissDisabled(session != nil && result == nil)
+    }
+
+    /// The one place the probe is allowed to show right-and-wrong: after it's over. Offered here
+    /// because this is the moment a learner most wants it — they just answered twenty-nine
+    /// questions and were deliberately told nothing about any of them.
+    @ViewBuilder
+    private var reviewLink: some View {
+        if let recordedAttemptID {
+            NavigationLink {
+                PlacementReviewView(initialAttemptID: recordedAttemptID)
+            } label: {
+                Label("See what you missed", systemImage: "list.bullet.rectangle")
+                    .font(.subheadline.weight(.medium))
+            }
+            .buttonStyle(.bordered)
+        }
     }
 
     // MARK: - Quiz
@@ -89,18 +109,31 @@ struct PlacementQuizView: View {
     /// whichever arrives first wins, and scoring must not run (or save) twice.
     private func finish(_ session: PlacementSession) {
         guard session.isFinished, result == nil else { return }
-        apply(session.result())
+        apply(session.result(), session: session)
     }
 
     private func finishAsBeginner() {
-        apply(.beginner())
+        apply(.beginner(), session: nil)
     }
 
     /// Stores the estimate and adopts it as the content level. Note what this does *not* do: it
     /// never writes to `LearnerProfile`. The coach's briefing has to stay measured-in-app-only, or
-    /// an estimate would launder itself into the record the AI treats as fact.
-    private func apply(_ scored: PlacementResult) {
+    /// an estimate would launder itself into the record the AI treats as fact. Recording the
+    /// answers doesn't change that — `PlacementAttemptStore` is a file the review screen reads and
+    /// nothing else does; only the explicit hand-off button ever crosses into the profile.
+    ///
+    /// The guard used to live only in `finish`, which was enough while `save` was idempotent. It
+    /// has to be here now: `finishAsBeginner` calls this directly, and an *append* store turns a
+    /// double-tap into two recorded attempts.
+    private func apply(_ scored: PlacementResult, session: PlacementSession?) {
+        guard result == nil else { return }
         PlacementService.save(scored)
+        PlacementAttemptStore.record(
+            result: scored,
+            answers: session?.answers ?? [],
+            cloze: session?.finishedCloze
+        )
+        recordedAttemptID = PlacementAttemptStore.attempts().first?.id
         if !scored.declaredBeginner {
             modelManager.chatLevelRaw = scored.estimatedLevelRaw
             modelManager.storyLevelRaw = scored.estimatedLevelRaw

@@ -159,38 +159,9 @@ struct StoryFilterBar: View {
 
 // MARK: - Pills
 
-/// One filter pill: tinted when off, filled when on, with an ✕ that reads as "tap to clear".
-private struct FilterPill: View {
-    let label: String
-    var systemImage: String?
-    let tint: Color
-    let isOn: Bool
-    let action: () -> Void
-
-    @Environment(\.appTheme) private var appTheme
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                }
-                Text(label)
-                if isOn {
-                    Image(systemName: "xmark")
-                        .font(.caption2.weight(.bold))
-                }
-            }
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(isOn ? .white : tint)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(isOn ? tint : tint.opacity(0.12), in: appTheme.pillShape)
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
-    }
-}
+// `FilterPill` now lives in `Features/Shared/FilterPill.swift` — the placement review bar uses the
+// same pill, and two copies of a themed control is exactly the drift the theme modifiers exist to
+// prevent. `StyleFilterPill` stays here: it's story-genre art, not a general control.
 
 /// A style pill in the style's own gradient, so the filter row reads as the same family of art as
 /// the style gallery. Once a style is picked the others sit back rather than disappear.

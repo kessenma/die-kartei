@@ -56,6 +56,13 @@ struct GamificationSettingsView: View {
                     Button(PlacementService.current == nil ? "Take the placement check" : "Retake the placement check") {
                         showPlacement = true
                     }
+                    if !PlacementAttemptStore.isEmpty {
+                        NavigationLink {
+                            PlacementReviewView()
+                        } label: {
+                            Label("See what you missed", systemImage: "list.bullet.rectangle")
+                        }
+                    }
                     if PlacementService.current != nil {
                         Button("Remove the estimate", role: .destructive) {
                             PlacementService.clear()
@@ -85,6 +92,6 @@ struct GamificationSettingsView: View {
             return "You said you're starting from zero, so nothing is estimated. Take the check whenever that changes."
         }
         let when = placement.takenAt.formatted(date: .abbreviated, time: .omitted)
-        return "Placed at \(placement.estimatedLevel.rawValue) on \(when). An estimate only outlines a layer — removing it leaves everything you've proven untouched."
+        return "Placed at \(placement.estimatedLevel.rawValue) on \(when). An estimate only outlines a layer — removing it leaves everything you've proven untouched, and your past answers are kept separately."
     }
 }

@@ -80,7 +80,14 @@ enum LearnerMemoryService {
         let weak = sortedGrammar(p, minStruggle: 0.25).prefix(3).map(\.label)
         if !weak.isEmpty { bits.append("often struggles with \(weak.joined(separator: ", "))") }
 
-        let slipForms = p.slips.sorted { $0.timesSeen > $1.timesSeen }.prefix(3).map(\.wrong)
+        // Production only. A placement-sourced slip's `wrong` side is an authored *distractor* —
+        // a form the app put on screen and the learner tapped, never one they produced. Telling the
+        // coach to watch for it would be inventing a mistake they've never made.
+        let slipForms = p.slips
+            .filter { $0.source == nil }
+            .sorted { $0.timesSeen > $1.timesSeen }
+            .prefix(3)
+            .map(\.wrong)
         if !slipForms.isEmpty { bits.append("has repeatedly slipped on \(slipForms.joined(separator: ", "))") }
 
         guard !bits.isEmpty else { return "" }
@@ -356,6 +363,47 @@ enum LearnerMemoryService {
         p.slips = list
     }
 
+    // MARK: - Pre-built slips (placement hand-off)
+
+    /// Merge already-formed slips into the profile.
+    ///
+    /// Unlike `noteWrittenCorrections`, the caller has done the extraction — the placement bank
+    /// already knows the wrong form, the right form and why, so there's nothing to diff. Same
+    /// restraint otherwise: no self-heal pass, and no `sessionCount` bump, because a quiz is not a
+    /// coaching session.
+    ///
+    /// Slips carrying a `source` are a different id namespace from production slips (see
+    /// `LexicalSlip.id`), so nothing here can overwrite a sentence the learner wrote themselves.
+    static func noteSlips(_ slips: [LexicalSlip], in context: ModelContext) {
+        guard !slips.isEmpty else { return }
+        let p = profile(in: context)
+        let now = Date()
+        var list = p.slips
+
+        for slip in slips {
+            if let i = list.firstIndex(where: { $0.id == slip.id }) {
+                list[i].lastSeen = now
+                list[i].timesSeen += 1
+                if list[i].note.isEmpty, !slip.note.isEmpty { list[i].note = slip.note }
+                if list[i].sentence == nil { list[i].sentence = slip.sentence }
+                if list[i].blankIndex == nil { list[i].blankIndex = slip.blankIndex }
+            } else {
+                var fresh = slip
+                fresh.lastSeen = now
+                list.append(fresh)
+            }
+        }
+
+        list = evict(list, cap: LearnerProfile.slipCap, in: context) { dropped in
+            ArchivedMemoryItem(
+                kind: .slip, reason: .replacedByLRU,
+                title: "\(dropped.wrong) → \(dropped.right)", subtitle: dropped.note,
+                payload: try? JSONEncoder().encode(dropped)
+            )
+        }
+        p.slips = list
+    }
+
     // MARK: - Vocabulary encounters (matching game, story reading)
 
     /// Matching-game hand-off — see `noteVocabEncounters`.
@@ -367,14 +415,26 @@ enum LearnerMemoryService {
     /// into conversations and they show up (and are drillable) in Coach's Notes. Used for words
     /// the learner keeps missing in the matching game, words they save or miss while reading a
     /// story, and similar "a word they're building" moments — never production slips.
-    static func noteVocabEncounters(_ words: [(german: String, english: String)], in context: ModelContext) {
+    ///
+    /// `source` tags where the word came from when that isn't the ordinary path, so Coach's Notes
+    /// can say so. It never affects merging: a word is the same word however the learner met it,
+    /// so a placement miss folds into an existing matching-game touch rather than sitting beside it
+    /// (and an existing untagged touch keeps its untagged provenance — the earlier, stronger claim).
+    static func noteVocabEncounters(
+        _ words: [(german: String, english: String)],
+        source: String? = nil,
+        in context: ModelContext
+    ) {
         guard !words.isEmpty else { return }
         let p = profile(in: context)
         let now = Date()
         var list = p.vocab
 
         for word in words {
-            let touch = VocabTouch(german: word.german, english: word.english, lastSeen: now, timesUsed: 1)
+            let touch = VocabTouch(
+                german: word.german, english: word.english,
+                lastSeen: now, timesUsed: 1, source: source
+            )
             if let i = list.firstIndex(where: { $0.id == touch.id }) {
                 list[i].lastSeen = now
                 list[i].timesUsed += 1

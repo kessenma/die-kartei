@@ -217,10 +217,15 @@ struct ContentView: View {
                 UserDefaults.standard.removeObject(forKey: "hasSeenHeroModelIntro")
                 UserDefaults.standard.removeObject(forKey: PlacementService.seenKey)
                 PlacementService.clear()
+                // The recorded answers are a separate store, and "fresh install" has to mean both
+                // — otherwise a reset leaves the review screen full of history and the sim lies.
+                PlacementAttemptStore.deleteAll()
+                PlacementCoachExport.resetHighWaterMark()
                 hasSeenOnboardingWizard = false
                 hasSeenHeroModelIntro = false
             }
             PlacementService.applyDebugLaunchArgumentIfNeeded()
+            PlacementService.applyDebugAttemptsLaunchArgumentIfNeeded()
             #endif
 
             // One-time roll-up of historical activity durations into the per-day log, so the

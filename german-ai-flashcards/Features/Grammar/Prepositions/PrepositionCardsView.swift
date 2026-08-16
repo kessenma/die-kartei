@@ -486,22 +486,8 @@ private struct PrepositionCard: View {
     }
 }
 
-// MARK: - Deterministic shuffle
-
-/// A tiny seeded PRNG so "shuffle" produces a stable order for a given seed — the deck is a
-/// computed property, and re-deriving it must not reshuffle on every redraw.
-private struct SeededGenerator: RandomNumberGenerator {
-    private var state: UInt64
-
-    init(seed: UInt64) { state = seed &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407 }
-
-    mutating func next() -> UInt64 {
-        state ^= state << 13
-        state ^= state >> 7
-        state ^= state << 17
-        return state
-    }
-}
+// `SeededGenerator` moved to `Models/SeededGenerator.swift` when the placement debug seeder needed
+// the same deterministic shuffle.
 
 #Preview("Preposition cards · 4 themes") {
     TabView {
