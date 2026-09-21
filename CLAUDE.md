@@ -12,6 +12,7 @@ German for identity words and headings, plain English for explanation.
 - `docs/LEARNER_MEMORY.md` — the persistent learner profile and coaching memory.
 - `docs/SHORT_STORIES.md` — story mode and on-device illustrations.
 - `docs/JOB_PREP.md` — job-posting capture and interview prep.
+- `docs/CLASS_NOTES.md` — Deutschkurs: courses, class entries, handouts, homework, the per-course deck.
 - `docs/WORTSCHATZ.md` — the Goethe word box: merged index, one SRS deck, sessions, status, debug args.
 - `docs/PREPOSITION_3D.md` — the 3D preposition scenes and die Figur.
 - `docs/theme-upgrade.md` — the AppTheme system and its invariants.

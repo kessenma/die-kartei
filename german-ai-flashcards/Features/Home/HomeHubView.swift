@@ -97,7 +97,8 @@ struct HomeHubView: View {
     // MARK: - All Activities — the six-tile hub
 
     /// Six categories, one screenful, instead of the thirteen-row scroll this replaces, plus the
-    /// wide Job prep card beneath them (a goal, not a seventh skill — see `JobPrepTile`). A
+    /// wide Job prep and Deutschkurs cards beneath them (goals, not a seventh skill — see
+    /// `JobPrepTile` and `ClassNotesTile`). A
     /// `ScrollView` rather than a `List` on purpose: the grid is the point, and stepping outside
     /// grouped chrome is also what lets Grundform's tiles keep genuinely square corners (a grouped
     /// section clips its rows to a rounded rect we don't control — see docs/theme-upgrade.md §3).
@@ -131,6 +132,16 @@ struct HomeHubView: View {
                         )
                     } label: {
                         JobPrepTile()
+                    }
+                    .buttonStyle(.plain)
+
+                    NavigationLink {
+                        ClassNotesHubView(
+                            modelManager: coordinator.modelManager,
+                            mlxService: coordinator.mlxService
+                        )
+                    } label: {
+                        ClassNotesTile()
                     }
                     .buttonStyle(.plain)
                 }
@@ -168,7 +179,8 @@ private func homeHubPreview(_ theme: AppTheme) -> some View {
     .environment(\.appTheme, theme)
     .modelContainer(
         for: [SavedDeck.self, SavedCard.self, StudyDay.self, LearnerProfile.self,
-              ChatConversation.self, PrepositionStat.self, StoryQuizAttempt.self, JobPosting.self],
+              ChatConversation.self, PrepositionStat.self, StoryQuizAttempt.self, JobPosting.self,
+              ClassCourse.self, ClassEntry.self, ClassMaterial.self],
         inMemory: true
     )
 }

@@ -1,5 +1,8 @@
 import Foundation
 import PDFKit
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Extracts text from a PDF on-device (no model needed). Mirrors the proven approach in
 /// rag-mobile: per-page `PDFDocument.page(at:).string` with `[Seite N]` markers so later
@@ -30,6 +33,24 @@ enum PDFTextExtractor {
         }
         return Result(text: out, pageCount: doc.pageCount)
     }
+
+    #if canImport(UIKit)
+    /// The first `limit` pages rendered as images, `width` points wide, for OCR of a PDF that has
+    /// no text layer (see `ScannedPDFReader`). Takes the file's bytes rather than its URL so the
+    /// caller reads a security-scoped file once.
+    static func pageImages(from data: Data, limit: Int = 12, width: CGFloat = 1400) -> [UIImage] {
+        guard let doc = PDFDocument(data: data) else { return [] }
+        var images: [UIImage] = []
+        for index in 0..<min(doc.pageCount, limit) {
+            guard let page = doc.page(at: index) else { continue }
+            let bounds = page.bounds(for: .mediaBox)
+            guard bounds.width > 0, bounds.height > 0 else { continue }
+            let size = CGSize(width: width, height: width * bounds.height / bounds.width)
+            images.append(page.thumbnail(of: size, for: .mediaBox))
+        }
+        return images
+    }
+    #endif
 
     /// Split text into character chunks (~`maxChars`) without spanning `[Seite N]` markers,
     /// breaking on paragraph/sentence boundaries where possible.

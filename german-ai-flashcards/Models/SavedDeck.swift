@@ -85,8 +85,8 @@ final class SavedDeck {
         case pastTense, pastTenseSRS
         case grammar
         /// Real saved-word content built from the phrase library / a conversation / a paper / a story
-        /// / a job posting the learner studied.
-        case phrase, conversation, paper, story, job
+        /// / a job posting the learner studied / a class the learner is taking.
+        case phrase, conversation, paper, story, job, classNotes
     }
 
     var kind: Kind {
@@ -101,6 +101,7 @@ final class SavedDeck {
         case "paper": .paper
         case "story": .story
         case "job": .job
+        case "class": .classNotes
         default: .generated // "" or an MLXModel.rawValue
         }
     }
@@ -110,6 +111,7 @@ final class SavedDeck {
     var kindSymbol: String? {
         switch kind {
         case .job: "briefcase.fill"
+        case .classNotes: "graduationcap.fill"
         case .story: "book.pages"
         case .paper: "doc.text"
         case .conversation: "bubble.left.and.bubble.right"
@@ -123,7 +125,7 @@ final class SavedDeck {
     /// not standalone content) — fixing the empty-`grammar`-deck leak the old string filter missed.
     var isBrowsableContent: Bool {
         switch kind {
-        case .generated, .phrase, .conversation, .paper, .story, .job: true
+        case .generated, .phrase, .conversation, .paper, .story, .job, .classNotes: true
         case .goethe, .goetheSRS, .pastTense, .pastTenseSRS, .grammar: false
         }
     }

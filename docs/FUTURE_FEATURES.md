@@ -282,6 +282,21 @@ tiles (decoupled from the old Talk tab), but their *output* is still conversatio
   `ActivityRouter`/`DeckStore` (launch flashcards), `ConversationView` (`.paper` mode), optionally
   `DrillDeckView`/`LearnerProfile` for the follow-up drill.
 
+### 16. Class companion (Deutschkurs)  💎💎  🔨 M  — 🚧 capture side shipped
+Learners enrolled somewhere (a semester course, a private tutor) log what each class covered,
+keep the handouts, track the homework, and build one deck per course. See `docs/CLASS_NOTES.md`.
+
+> **Shipped (skeleton):** `ClassCourse` / `ClassEntry` / `ClassMaterial`, the Home tile and hub,
+> editors, the handout import (PDF incl. scans, photo, paste) and reader, the per-course deck.
+
+Still to build, in order of payoff:
+- **Tutors read the class:** `ConversationConfig.classContext` from the last fortnight's
+  `ClassEntry.tutorContext`, plus a briefing line; gated like `storyFeedsCoach`.
+- **Today plan:** "review this week's class words" and "practise <grammar covered in class>".
+- **Weekly recap** (#7) seeded from the course's entries.
+- **Tutor course ↔ Job prep:** a job-search goal feeds interview practice.
+- 🔗 `ClassEntry.tutorContext`, `ConversationPrompts`, `TodayPlanner`, `GrammarExerciseService`.
+
 ---
 
 ## Tier 3 — Bigger bets / longer horizon

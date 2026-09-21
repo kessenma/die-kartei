@@ -54,6 +54,9 @@ struct ContentView: View {
     /// `-stories.debugOpen 1`: the reader sits several taps deep and needs a story that has
     /// pictures, which normally means running diffusion. See `StoryDebugSeeder`.
     @State private var debugStory: StudyStory?
+    /// `-classNotes.debugOpen <screen>`: the Deutschkurs screens sit two or more taps into Home
+    /// and need seeded courses to show anything. See `ClassNotesDebugSeeder`.
+    @State private var classNotesDebugScreen: ClassNotesDebugScreen?
     #endif
     @Environment(\.modelContext) private var modelContext
 
@@ -295,6 +298,21 @@ struct ContentView: View {
             .environment(router)
             .environment(settingsRouter)
         }
+        .sheet(item: $classNotesDebugScreen) { screen in
+            NavigationStack {
+                ClassNotesDebugScreenView(
+                    screen: screen,
+                    modelManager: coordinator.modelManager,
+                    mlxService: coordinator.mlxService
+                )
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { classNotesDebugScreen = nil }
+                    }
+                }
+            }
+            .environment(router)
+        }
         #endif
         .memoryPressureBanner()
         .memoryReadoutOverlay()
@@ -408,6 +426,19 @@ struct ContentView: View {
             }
             if UserDefaults.standard.bool(forKey: "stories.debugOpen") {
                 debugStory = StoryDebugSeeder.seed(in: modelContext)
+            }
+            // `-classNotes.debugSeed 1` / `-classNotes.debugOpen 1` / `-classNotes.debugRemove 1`:
+            // two courses (a dated semester course, an undated tutor) with entries and handouts,
+            // so the Deutschkurs screens can be checked on a simulator that can't tap.
+            if UserDefaults.standard.bool(forKey: "classNotes.debugRemove") {
+                print("[classNotes] removed: \(ClassNotesDebugSeeder.remove(in: modelContext))")
+            }
+            if UserDefaults.standard.bool(forKey: "classNotes.debugSeed") {
+                print("[classNotes] " + ClassNotesDebugSeeder.seed(in: modelContext))
+            }
+            if let raw = UserDefaults.standard.string(forKey: "classNotes.debugOpen") {
+                classNotesDebugScreen = ClassNotesDebugSeeder.screen(named: raw, in: modelContext)
+                print("[classNotes] open \(raw): \(classNotesDebugScreen == nil ? "no such screen" : "ok")")
             }
             if UserDefaults.standard.bool(forKey: "wortschatz.debugLegacyDecks") {
                 print("[wortschatz] " + WortschatzDebugSeeder.createLegacyDecks(in: modelContext))

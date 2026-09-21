@@ -76,7 +76,8 @@ struct german_ai_flashcardsApp: App {
             PrepositionStat.self, PrepositionRound.self,
             StoryReadingSession.self, StoryQuizAttempt.self,
             BatchJob.self,
-            JobPosting.self
+            JobPosting.self,
+            ClassCourse.self, ClassEntry.self, ClassMaterial.self
         ])
         let config = SwiftData.ModelConfiguration(schema: schema)
 

@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "unreleased",
+      "highlights": [
+        {
+          "title": "Deutschkurs · Class notes",
+          "detail": "Taking a German class? Log what each session covered, keep the handouts, track the homework, and turn the new words into flashcards for that course.",
+          "symbol": "graduationcap.fill"
+        }
+      ]
+    },
+    {
       "version": "1.6",
       "date": "2026-09-16",
       "highlights": [

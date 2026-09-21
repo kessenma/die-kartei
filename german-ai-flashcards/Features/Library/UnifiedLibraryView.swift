@@ -157,8 +157,13 @@ struct UnifiedLibraryView: View {
                 } label: {
                     Label("Job Postings", systemImage: "briefcase.fill")
                 }
+                NavigationLink {
+                    ClassMaterialListView(modelManager: modelManager, mlxService: mlxService)
+                } label: {
+                    Label("Class Handouts", systemImage: "graduationcap.fill")
+                }
             } footer: {
-                Text("AI-written stories at your level, German texts you've imported or scanned, and the job ads you're studying. Open one to study its vocabulary and practice questions, or discuss it with the AI.")
+                Text("AI-written stories at your level, German texts you've imported or scanned, the job ads you're studying, and the handouts from your German class. Open one to study its vocabulary and practice questions, or discuss it with the AI.")
             }
             .themedListRow()
         }
