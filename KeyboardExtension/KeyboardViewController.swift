@@ -10,13 +10,16 @@ import UIKit
 final class KeyboardViewController: UIInputViewController {
 
     private let log = ProbeLog()
+    private let writer = GermanWriter()
+    private let tracker = DraftTracker()
     private lazy var runner = ProbeRunner(log: log) { [weak self] in self?.textDocumentProxy }
 
     private var heightConstraint: NSLayoutConstraint?
+    private var lastDocument: UUID?
 
-    /// Tall enough for the grid plus a readable log. A real transform bar would be roughly half
-    /// this; the probe trades height for legibility because the log is the deliverable.
-    private let panelHeight: CGFloat = 320
+    /// Four key rows at 44pt plus the transform bar. Matches the system keyboard closely enough
+    /// that switching to this one doesn't move the host's text.
+    private let panelHeight: CGFloat = 268
 
     private static let loadCountKey = "probe.loadCount"
 
@@ -33,9 +36,12 @@ final class KeyboardViewController: UIInputViewController {
 
         log.info("— load #\(loads) — \(ExtensionMemory.snapshot)")
 
-        let panel = ProbePanel(
+        let panel = WritingPanel(
+            writer: writer,
             log: log,
             runner: runner,
+            tracker: tracker,
+            proxy: { [weak self] in self?.textDocumentProxy },
             showsGlobe: needsInputModeSwitchKey,
             onGlobe: { [weak self] in self?.advanceToNextInputMode() }
         )
@@ -91,5 +97,17 @@ final class KeyboardViewController: UIInputViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         log.info("keyboard dismissed — \(ExtensionMemory.snapshot)")
+    }
+
+    /// A different field means a different draft. `documentIdentifier` changes when focus moves to
+    /// another document, which is the one stale-buffer case the content check in `DraftTracker`
+    /// can't catch on its own: a new field may legitimately already end with the same text.
+    override func textDidChange(_ textInput: UITextInput?) {
+        super.textDidChange(textInput)
+        let identifier = textDocumentProxy.documentIdentifier
+        if identifier != lastDocument {
+            lastDocument = identifier
+            tracker.invalidate()
+        }
     }
 }
