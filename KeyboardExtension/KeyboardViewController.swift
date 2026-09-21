@@ -11,6 +11,7 @@ final class KeyboardViewController: UIInputViewController {
 
     private let log = ProbeLog()
     private let writer = GermanWriter()
+    private let coach = SpellingCoach()
     private let tracker = DraftTracker()
     private lazy var runner = ProbeRunner(log: log) { [weak self] in self?.textDocumentProxy }
 
@@ -19,7 +20,7 @@ final class KeyboardViewController: UIInputViewController {
 
     /// Four key rows at 44pt plus the transform bar. Matches the system keyboard closely enough
     /// that switching to this one doesn't move the host's text.
-    private let panelHeight: CGFloat = 268
+    private let panelHeight: CGFloat = 306
 
     private static let loadCountKey = "probe.loadCount"
 
@@ -38,6 +39,7 @@ final class KeyboardViewController: UIInputViewController {
 
         let panel = WritingPanel(
             writer: writer,
+            coach: coach,
             log: log,
             runner: runner,
             tracker: tracker,

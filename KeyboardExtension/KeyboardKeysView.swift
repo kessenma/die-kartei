@@ -99,7 +99,10 @@ struct KeyboardKeysView: View {
                 background: Color(.systemBackground),
                 action: { type(" ") }
             ) {
-                Text("Deutsch").font(.system(size: 13)).foregroundStyle(.secondary)
+                // Blank on purpose. It said "Deutsch" before, which read as a translate button
+                // sitting where the space bar belongs. Which language is being corrected is shown
+                // on the suggestion strip instead, where it can also be changed.
+                Color.clear
             }
 
         case .return:

@@ -8,6 +8,7 @@ import UIKit
 struct WritingPanel: View {
 
     @ObservedObject var writer: GermanWriter
+    @ObservedObject var coach: SpellingCoach
     @ObservedObject var log: ProbeLog
     @ObservedObject var runner: ProbeRunner
 
@@ -62,6 +63,7 @@ struct WritingPanel: View {
         if showingDiagnostics {
             ProbePanel(log: log, runner: runner, showsGlobe: false, onGlobe: {})
         } else {
+            SuggestionStrip(coach: coach, onPick: apply)
             KeyboardKeysView(
                 onType: type,
                 onBackspace: backspace,
@@ -74,13 +76,47 @@ struct WritingPanel: View {
     // MARK: - Typing
 
     private func type(_ text: String) {
-        proxy()?.insertText(text)
+        guard let proxy = proxy() else { return }
+
+        // Finishing a word is the moment to correct it. Space and punctuation both end one, and
+        // correcting on punctuation means "teh." gets the same treatment as "teh ".
+        let endsWord = text == " " || text == "\n" || text.rangeOfCharacter(from: .punctuationCharacters) != nil
+        if endsWord, let fix = coach.autocorrection(for: textBeforeCursor) {
+            for _ in 0..<fix.word.count { proxy.deleteBackward() }
+            proxy.insertText(fix.replacement)
+            tracker.replaceTail(fix.word.count, with: fix.replacement)
+            log.info("autocorrect (\(coach.language.rawValue)): \(fix.word) → \(fix.replacement)")
+        }
+
+        proxy.insertText(text)
         tracker.record(text)
+        refreshSuggestions()
     }
 
     private func backspace() {
         proxy()?.deleteBackward()
         tracker.recordBackspace()
+        refreshSuggestions()
+    }
+
+    /// Swap the word being typed for a suggestion the user tapped.
+    private func apply(_ suggestion: SpellingCoach.Suggestion) {
+        guard let proxy = proxy() else { return }
+        let word = SpellingCoach.trailingWord(of: textBeforeCursor)
+        for _ in 0..<word.count { proxy.deleteBackward() }
+        proxy.insertText(suggestion.text)
+        tracker.replaceTail(word.count, with: suggestion.text)
+        coach.clear()
+    }
+
+    private func refreshSuggestions() {
+        coach.update(for: textBeforeCursor)
+    }
+
+    /// Prefer the host's own view of the document — it is right even for text typed with another
+    /// keyboard — and fall back to what we typed when the host reports nothing.
+    private var textBeforeCursor: String {
+        proxy()?.documentContextBeforeInput ?? tracker.typed
     }
 
     // MARK: - Running a transform
@@ -102,6 +138,12 @@ struct WritingPanel: View {
             let started = Date()
             guard let result = await writer.run(job, on: source.text, address: address) else {
                 return fail(writer.lastError.map { "Failed: \($0)" } ?? "No result came back.")
+            }
+            // Generation takes a few seconds, and nothing stops you typing during them. Replacing
+            // now would delete backwards over whatever was added in the meantime, landing the
+            // German in the middle of a newer sentence. Your text wins; the work is discarded.
+            guard tracker.canStillReplace(source, in: proxy()) else {
+                return fail("You kept typing, so nothing was replaced. Tap \(job.title) again when you're done.")
             }
             tracker.replace(source, with: result, in: proxy())
             undoStep = Undo(inserted: result, original: source.text)

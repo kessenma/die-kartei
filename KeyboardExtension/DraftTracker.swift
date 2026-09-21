@@ -90,6 +90,29 @@ final class DraftTracker {
         return false
     }
 
+    /// Is it still safe to replace `source`, some seconds after it was resolved?
+    ///
+    /// A transform takes a few seconds and the keys stay live throughout, so the document can have
+    /// moved on. Deleting `source.text.count` characters back from a cursor that has since
+    /// advanced would eat text the user typed while waiting.
+    func canStillReplace(_ source: Source, in proxy: UITextDocumentProxy?) -> Bool {
+        guard let proxy else { return false }
+        switch source.origin {
+        case .selection:
+            return proxy.selectedText == source.text
+        case .typed, .paragraph:
+            guard let before = proxy.documentContextBeforeInput else { return typed == source.text }
+            return before.hasSuffix(source.text)
+        }
+    }
+
+    /// Record a correction applied to the tail of the buffer, keeping it in step with the document.
+    func replaceTail(_ count: Int, with replacement: String) {
+        guard count <= typed.count else { return invalidate() }
+        typed.removeLast(count)
+        typed += replacement
+    }
+
     /// Swap `source` for `replacement` in the host document.
     func replace(_ source: Source, with replacement: String, in proxy: UITextDocumentProxy?) {
         guard let proxy else { return }
