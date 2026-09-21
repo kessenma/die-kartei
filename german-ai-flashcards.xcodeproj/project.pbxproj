@@ -82,6 +82,7 @@
 				8AB65FE42FB65EFD0052F4F4 /* Sources */,
 				8AB65FE52FB65EFD0052F4F4 /* Frameworks */,
 				8AB65FE62FB65EFD0052F4F4 /* Resources */,
+				8AB660602FB7A0000052F4F4 /* Stamp release macOS build */,
 			);
 			buildRules = (
 			);
@@ -156,6 +157,28 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		8AB660602FB7A0000052F4F4 /* Stamp release macOS build */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Stamp release macOS build";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Rewrites BuildMachineOSBuild when archiving on a beta macOS, so App Store Connect\n# doesn't reject the build with ITMS-90111. Must stay the LAST phase (runs before code signing).\n# See scripts/stamp-release-os.sh and docs/DEPLOY_SETUP.md.\n/bin/bash \"${SRCROOT}/scripts/stamp-release-os.sh\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		8AB65FE42FB65EFD0052F4F4 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -206,7 +229,7 @@
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -270,7 +293,7 @@
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -340,57 +363,57 @@
 			name = Debug;
 		};
 		8AB65FF52FB65EFF0052F4F4 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "german-ai-flashcards/german-ai-flashcards.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = RHPLRY9X9P;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Die Kartei uses the camera to scan photos of German vocabulary and text for study.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Die Kartei uses the microphone so you can speak German out loud in AI voice conversations.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Die Kartei uses your photo library to import photos of German text for vocabulary study.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Speech recognition turns your spoken German into text so the AI can reply and correct you.";
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
-				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
-				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.2;
-				PRODUCT_BUNDLE_IDENTIFIER = "kyle-essenmacher.german-ai-flashcards";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
-				SDKROOT = auto;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "german-ai-flashcards/Interop/german-ai-flashcards-Bridging-Header.h";
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				XROS_DEPLOYMENT_TARGET = 26.2;
-			};
-			name = Release;
-		};
+	buildSettings = {
+		"ASSETCATALOG_COMPILER_APPICON_NAME" = AppIcon;
+		"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = AccentColor;
+		"CODE_SIGN_ENTITLEMENTS" = "german-ai-flashcards/german-ai-flashcards.entitlements";
+		"CODE_SIGN_STYLE" = Automatic;
+		"CURRENT_PROJECT_VERSION" = 2;
+		"DEAD_CODE_STRIPPING" = YES;
+		"DEVELOPMENT_TEAM" = RHPLRY9X9P;
+		"ENABLE_APP_SANDBOX" = YES;
+		"ENABLE_HARDENED_RUNTIME" = YES;
+		"ENABLE_PREVIEWS" = YES;
+		"ENABLE_USER_SELECTED_FILES" = readonly;
+		"GENERATE_INFOPLIST_FILE" = YES;
+		"INFOPLIST_FILE" = "Info.plist";
+		"INFOPLIST_KEY_NSCameraUsageDescription" = "Die Kartei uses the camera to scan photos of German vocabulary and text for study.";
+		"INFOPLIST_KEY_NSMicrophoneUsageDescription" = "Die Kartei uses the microphone so you can speak German out loud in AI voice conversations.";
+		"INFOPLIST_KEY_NSPhotoLibraryUsageDescription" = "Die Kartei uses your photo library to import photos of German text for vocabulary study.";
+		"INFOPLIST_KEY_NSSpeechRecognitionUsageDescription" = "Speech recognition turns your spoken German into text so the AI can reply and correct you.";
+		"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+		"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+		"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+		"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+		"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+		"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+		"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+		"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+		"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad" = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+		"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone" = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+		"IPHONEOS_DEPLOYMENT_TARGET" = "26.2";
+		"LD_RUNPATH_SEARCH_PATHS" = "@executable_path/Frameworks";
+		"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+		"MACOSX_DEPLOYMENT_TARGET" = "26.2";
+		"MARKETING_VERSION" = "1.6";
+		"PRODUCT_BUNDLE_IDENTIFIER" = "kyle-essenmacher.german-ai-flashcards";
+		"PRODUCT_NAME" = "$(TARGET_NAME)";
+		"REGISTER_APP_GROUPS" = YES;
+		SDKROOT = auto;
+		"STRING_CATALOG_GENERATE_SYMBOLS" = YES;
+		"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator macosx xros xrsimulator";
+		"SWIFT_APPROACHABLE_CONCURRENCY" = YES;
+		"SWIFT_DEFAULT_ACTOR_ISOLATION" = MainActor;
+		"SWIFT_EMIT_LOC_STRINGS" = YES;
+		"SWIFT_OBJC_BRIDGING_HEADER" = "german-ai-flashcards/Interop/german-ai-flashcards-Bridging-Header.h";
+		"SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY" = YES;
+		"SWIFT_VERSION" = "5.0";
+		"TARGETED_DEVICE_FAMILY" = "1,2,7";
+		"XROS_DEPLOYMENT_TARGET" = "26.2";
+	};
+	isa = XCBuildConfiguration;
+	name = Release;
+};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */

@@ -67,7 +67,7 @@ struct ClozeSession: Identifiable {
         let cards = slips
             .filter(\.isClozeReady)
             .sorted { $0.timesSeen > $1.timesSeen }
-            .compactMap(ClozeCard.make)
+            .compactMap { ClozeCard.make(from: $0) }
             .prefix(limit)
         return ClozeSession(cards: Array(cards))
     }

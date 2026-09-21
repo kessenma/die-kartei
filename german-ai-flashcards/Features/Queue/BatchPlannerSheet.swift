@@ -63,7 +63,7 @@ struct BatchPlannerSheet: View {
     init(coordinator: GenerationCoordinator) {
         self.coordinator = coordinator
         let mm = coordinator.modelManager
-        _level = State(initialValue: mm.storyLevel)
+        _level = State(initialValue: mm.germanLevel)
         let imagesReady = ImageGenModel.current.isDownloaded
         _imagesPerStory = State(initialValue: (imagesReady && mm.storyIllustrationsEnabled) ? mm.storyImageCount : 0)
         _deckImages = State(initialValue: imagesReady && mm.flashcardIllustrationsEnabled)
@@ -127,11 +127,11 @@ struct BatchPlannerSheet: View {
         return nil
     }
 
-    private var heroReady: Bool {
-        DeviceCapability.mayRunHero && StoryStudyService.requiredModel.isDownloaded
-    }
+    /// Whether a queued story could actually run here — a German Tutor this device can hold, and
+    /// already downloaded, since the queue can't fetch one on its own.
+    private var storyModelReady: Bool { StoryStudyService.unattendedModel != nil }
     private var imagesReady: Bool { ImageGenModel.current.isDownloaded }
-    private var effectiveStoryCount: Int { heroReady ? storyCount : 0 }
+    private var effectiveStoryCount: Int { storyModelReady ? storyCount : 0 }
 
     // MARK: - Body
 
@@ -211,12 +211,12 @@ struct BatchPlannerSheet: View {
 
     @ViewBuilder
     private var storiesStep: some View {
-        if !heroReady {
+        if !storyModelReady {
             Section {
                 Label(
-                    DeviceCapability.mayRunHero
-                        ? "Stories need the \(StoryStudyService.requiredModel.rawValue) downloaded first (Reading ▸ Read a Short Story). Skipping stories for this plan."
-                        : "This device can't run the story model, so this plan is decks only.",
+                    StoryStudyService.runnableModels.isEmpty
+                        ? "This device can't run any of the German Tutor models, so this plan is decks only."
+                        : "Stories need a German Tutor model downloaded first (Reading ▸ Read a Short Story). Skipping stories for this plan.",
                     systemImage: "book.pages"
                 )
                 .font(.subheadline)

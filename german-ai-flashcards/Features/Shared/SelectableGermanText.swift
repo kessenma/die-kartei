@@ -27,6 +27,16 @@ struct SelectableGermanText: UIViewRepresentable {
     var glossary: GlossaryHighlight = .none
     /// Lowercased words this learner looked up in this text (marked with a red dashed underline).
     var lookedUpWords: Set<String> = []
+    /// UTF-16 ranges to tint with a noun's der/die/das color. Range-based (not word-keyed) so a
+    /// sentence-initial instance of the same word can stay untinted.
+    var nounTints: [(range: NSRange, color: UIColor)] = []
+    /// Pictures the text should flow around (the story reader's „Umfluss" layout). Empty everywhere
+    /// else, which keeps those call sites on the plain layout path.
+    var wrappedImages: [WrappedImageSpec] = []
+    /// Whether this instance may be asked to wrap text around pictures. Set it up front — it picks
+    /// the text engine at view-creation time, and the pictures usually arrive a moment later, once
+    /// they've been read off disk.
+    var usesImageWrapping: Bool = false
     /// A single tapped word.
     var onTapWord: (String) -> Void
     /// A multi-word selection the learner asked to translate 1:1.
@@ -39,8 +49,12 @@ struct SelectableGermanText: UIViewRepresentable {
     /// "start reading from this sentence".
     var onSingleTap: (() -> Void)? = nil
 
+    // Deliberately `UITextView` and not `WrappingTextView`: only a text view that actually has to
+    // wrap around pictures is built from the subclass. Every other caller — chat, job prep, the
+    // listen-mode transcript, the `kompakt`/`ganz` story layouts — gets the same plain `UITextView`
+    // it always got, so the wrapping code cannot reach them at all.
     func makeUIView(context: Context) -> UITextView {
-        let tv = UITextView()
+        let tv: UITextView = usesImageWrapping ? WrappingTextView() : UITextView()
         tv.isEditable = false
         tv.isSelectable = true
         tv.isScrollEnabled = false
@@ -78,7 +92,9 @@ struct SelectableGermanText: UIViewRepresentable {
         let font = UIFontMetrics(forTextStyle: textStyle).scaledFont(for: base)
         tv.attributedText = Self.attributed(text, font: font, savedWords: savedWords,
                                             glossary: glossary, lookedUpWords: lookedUpWords,
+                                            nounTints: nounTints,
                                             highlightRange: highlightRange)
+        (tv as? WrappingTextView)?.wrappedImages = wrappedImages
     }
 
     /// Build the styled string: base label color, an accent wash on saved words, a dotted underline
@@ -90,6 +106,7 @@ struct SelectableGermanText: UIViewRepresentable {
                                    savedWords: Set<String>,
                                    glossary: GlossaryHighlight,
                                    lookedUpWords: Set<String>,
+                                   nounTints: [(range: NSRange, color: UIColor)],
                                    highlightRange: NSRange?) -> NSAttributedString {
         let result = NSMutableAttributedString(string: text, attributes: [
             .font: font,
@@ -131,6 +148,10 @@ struct SelectableGermanText: UIViewRepresentable {
                 searched = max(NSMaxRange(found), searched + 1)
             }
         }
+        // Gender colors sit under the read-along highlight, which is applied last and wins.
+        for tint in nounTints where NSMaxRange(tint.range) <= ns.length {
+            result.addAttribute(.foregroundColor, value: tint.color, range: tint.range)
+        }
         if let highlightRange, highlightRange.location != NSNotFound,
            NSMaxRange(highlightRange) <= ns.length {
             // Solid, so a glossary word being read aloud reads as the spoken word rather than
@@ -150,7 +171,10 @@ struct SelectableGermanText: UIViewRepresentable {
         let proposed = proposal.width ?? 320
         let maxWidth = (proposed.isFinite && proposed > 0) ? proposed : 320
         let fit = tv.sizeThatFits(CGSize(width: maxWidth, height: .greatestFiniteMagnitude))
-        return CGSize(width: min(ceil(fit.width), maxWidth), height: ceil(fit.height))
+        // Wrapped pictures are positioned against the full width, so the view has to take all of it
+        // rather than hugging the text it happens to contain.
+        let width = wrappedImages.isEmpty ? min(ceil(fit.width), maxWidth) : maxWidth
+        return CGSize(width: width, height: ceil(fit.height))
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }

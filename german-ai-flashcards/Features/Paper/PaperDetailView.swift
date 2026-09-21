@@ -247,19 +247,23 @@ struct PaperDetailView: View {
 
     private func startChat() {
         var config = ConversationConfig(model: paper.model ?? modelManager.selectedPaperModel)
+        config.learnerName = ConversationConfig.learnerName(from: modelManager.learnerName)
         config.mode = .paper
         config.paperTitle = paper.title
         config.paperContext = paper.conversationContext
-        config.level = CEFRLevel(rawValue: modelManager.chatLevelRaw) ?? .b1
+        config.level = modelManager.germanLevel
         config.formality = .sie  // an examiner addresses you formally
         config.correctionsEnabled = modelManager.chatCorrectionsEnabled
         config.correctionTranslationEnabled = modelManager.chatShowCorrectionTranslation
         config.strictness = CorrectionStrictness(rawValue: modelManager.chatStrictnessRaw) ?? .balanced
         config.feedbackStyle = FeedbackStyle(rawValue: modelManager.chatFeedbackStyleRaw) ?? .tellMe
         config.autoPlay = modelManager.autoPlayReplies
+        config.inputMode = modelManager.chatInputMode
         config.eagerAssist = modelManager.chatEagerAssist
         config.autoShowTranslation = modelManager.chatAutoShowTranslation
         config.hintCount = modelManager.chatHintCount
+        config.autoHints = modelManager.chatAutoHints
+        config.genderColors = modelManager.chatGenderColors
 
         let convo = ChatConversation(config: config)
         modelContext.insert(convo)

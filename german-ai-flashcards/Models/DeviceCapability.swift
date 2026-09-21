@@ -9,9 +9,12 @@ import Foundation
 /// separate: a live reading is the right thing to stop a generation with, and the wrong thing to
 /// show or hide a row with, since it falls as the app allocates.
 enum DeviceCapability {
-    /// Physical RAM rounded to the nearest GB.
+    /// Physical RAM in GB, as marketed. `physicalMemory` reports RAM minus the kernel/SoC
+    /// carveout — a 12 GB iPhone reads back around 11.2 GB — so rounding to nearest would
+    /// understate every device whose carveout tops half a GB. The carveout only ever subtracts,
+    /// so rounding *up* recovers the marketing number on every tier.
     static var ramGB: Int {
-        Int((Double(ProcessInfo.processInfo.physicalMemory) / 1_073_741_824).rounded())
+        Int((Double(ProcessInfo.processInfo.physicalMemory) / 1_073_741_824).rounded(.up))
     }
 
     /// Whether this device can comfortably run `model` — RAM for MLX models, Apple Intelligence
@@ -25,13 +28,17 @@ enum DeviceCapability {
     /// on devices that can't run it we don't lead with a download the hardware can't handle.
     static var canRunHero: Bool { canRun(.hero) }
 
-    /// Whether hero-only features (stories, story batch jobs) should be *offered* here — either the
-    /// device fits the model, or the user has read the memory check and chosen to run it anyway.
+    /// Whether `model` should be *offered* here — either the device fits it, or the user has read
+    /// the memory check and chosen to run oversized models anyway.
     ///
-    /// Deliberately looser than ``canRunHero``: that one decides what the app recommends, this one
+    /// Deliberately looser than ``canRun(_:)``: that one decides what the app recommends, this one
     /// decides what it permits. Nothing here is recommended to a device that can't hold it, but
-    /// nothing is locked away from someone willing to trade speed for it either.
-    static var mayRunHero: Bool { canRunHero || MemorySaver.allowsOversizedModels }
+    /// nothing is locked away from someone willing to trade speed for it either. Feature gates that
+    /// need a specific model (stories and their batch jobs) ask this one.
+    static func mayRun(_ model: MLXModel) -> Bool { canRun(model) || MemorySaver.allowsOversizedModels }
+
+    /// ``mayRun(_:)`` for the promoted hero model.
+    static var mayRunHero: Bool { mayRun(.hero) }
 
     /// App-memory budget a device needs before the generating screen decodes real diffusion
     /// previews. Roughly a 6 GB iPhone and up — see ``canPreviewImageGeneration``.

@@ -47,8 +47,9 @@ struct GamificationSettingsView: View {
                     Toggle("Celebrations", isOn: $modelManager.gamificationCelebrationsEnabled)
                     Toggle("Badges (Abzeichen)", isOn: $modelManager.gamificationBadgesEnabled)
                     Toggle("Learning pyramid", isOn: $modelManager.gamificationPyramidEnabled)
+                    Toggle("„Weißt du es noch?“", isOn: $modelManager.gamificationRememberProbeEnabled)
                 } footer: {
-                    Text("Celebrations off keeps the numbers and badges, loses the confetti.")
+                    Text("Celebrations off keeps the numbers and badges, loses the confetti. „Weißt du es noch?“ is the one-question check on Dein Weg that re-tests something you mastered a while ago.")
                 }
                 .themedListRow()
 
@@ -56,17 +57,14 @@ struct GamificationSettingsView: View {
                     Button(PlacementService.current == nil ? "Take the placement check" : "Retake the placement check") {
                         showPlacement = true
                     }
+                    // No "Remove the estimate" here either — switching, stopping and reviewing all
+                    // live on the history screen now, where they read as managing a list rather
+                    // than clearing a slot.
                     if !PlacementAttemptStore.isEmpty {
                         NavigationLink {
-                            PlacementReviewView()
+                            PlacementReviewView(modelManager: modelManager)
                         } label: {
-                            Label("See what you missed", systemImage: "list.bullet.rectangle")
-                        }
-                    }
-                    if PlacementService.current != nil {
-                        Button("Remove the estimate", role: .destructive) {
-                            PlacementService.clear()
-                            placementRevision += 1
+                            Label("Your checks", systemImage: "list.bullet.rectangle")
                         }
                     }
                 } header: {
@@ -86,12 +84,12 @@ struct GamificationSettingsView: View {
 
     private var placementFooter: String {
         guard let placement = PlacementService.current else {
-            return "A three-minute check that outlines what you already know on the pyramid, and sets the level for stories and conversations."
+            return "A three-minute check that drafts a blueprint of what you already know on the pyramid, and sets the level for stories and conversations."
         }
         if placement.declaredBeginner {
-            return "You said you're starting from zero, so nothing is estimated. Take the check whenever that changes."
+            return "You said you're starting from zero, so there's no blueprint. Take the check whenever that changes."
         }
         let when = placement.takenAt.formatted(date: .abbreviated, time: .omitted)
-        return "Placed at \(placement.estimatedLevel.rawValue) on \(when). An estimate only outlines a layer — removing it leaves everything you've proven untouched, and your past answers are kept separately."
+        return "Placed at \(placement.estimatedLevel.rawValue) on \(when). A blueprint is never counted as built. Every check is kept — compare them, switch which blueprint is applied, or put it away under Your checks."
     }
 }

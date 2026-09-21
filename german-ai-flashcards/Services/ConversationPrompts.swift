@@ -26,16 +26,42 @@ enum ConversationPrompts {
         } else if config.mode == .interview {
             let posting = (config.jobContext ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             let position = config.jobTitle.map { " for the position \"\($0)\"" } ?? ""
+            // "at Company in City" when the setup captured them; nothing when it didn't, so older
+            // chats keep the exact persona they were started with.
+            let employer = [config.jobCompany, config.jobLocation]
+                .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+                .joined(separator: " in ")
+            let workplace = employer.isEmpty ? "" : " at \(employer)"
+            let persona = config.interviewRound?.persona ?? "an experienced recruiter"
+            let opener = config.interviewFormat?.openerClause ?? "welcome the candidate in one sentence"
             parts.append("""
-            You are an experienced recruiter conducting a job interview\(position), and the learner is the candidate. \
+            You are \(persona)\(workplace) conducting a job interview\(position), and the learner is the candidate. \
             The job posting below is your knowledge of the role. It may be written in German or English, but you conduct the entire interview in German:
 
             \"\"\"
             \(posting)
             \"\"\"
 
-            Run a realistic interview: welcome the candidate and ask them to briefly introduce themselves, then ask about their experience and skills as they relate to the posting's requirements, their motivation for applying, and how they would handle typical situations in this role. Ask ONE question at a time, react briefly to each answer, and occasionally probe deeper with a follow-up. If the candidate asks about the job, answer from the posting. Stay in character as the interviewer for the whole session.
+            How to run the interview:
+            - Your first message: greet the candidate, \(opener), and in the SAME message ask them to introduce themselves briefly with regard to this role. Do not wait for a reply before asking that.
+            - After the greeting, never ask about scheduling, timing, whether they have time for the call, or any other logistics. Every question is about the candidate's experience, skills, motivation, or a point from the interview plan below.
+            - Work through the interview plan in order, one point per turn. Name the point in your question the way the posting phrases it, for example: „In der Ausschreibung steht ‚Kenntnisse in Webservice-Technologien‘. Wo haben Sie damit gearbeitet?"
+            - React to each answer in one short sentence, then ask the next question. When an answer is vague or interesting, ask one follow-up about it before moving on.
+            - When the plan is done, ask about their motivation for this role and company, then how they would handle a typical situation from the posting, then invite their own questions.
+            - If the candidate asks about the job, answer from the posting. Stay in character as the interviewer for the whole session.
             """)
+            let plan = interviewPlan(from: posting)
+            if !plan.isEmpty {
+                let numbered = plan.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
+                parts.append("Interview plan, taken from the posting:\n\(numbered)")
+            }
+            // Round and channel refine the script above; older chats have neither.
+            let steering = [config.interviewRound?.promptInstruction, config.interviewFormat?.promptInstruction]
+                .compactMap { $0 }
+            if !steering.isEmpty {
+                parts.append(steering.joined(separator: "\n"))
+            }
         } else if config.mode == .scenario {
             if config.scenario == .custom {
                 let custom = config.customScenario.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -49,6 +75,9 @@ enum ConversationPrompts {
 
         // Core conversational rules
         parts.append("Speak ONLY in German. " + config.level.promptInstruction + " " + config.formality.promptInstruction)
+        if let name = config.learnerName {
+            parts.append("The learner's name is „\(name)“. When you address them by name, use exactly that, as written, and never invent a different name, title, or surname for them.")
+        }
         parts.append("Keep your replies short — usually one to three sentences — and end most replies with a question so the conversation keeps flowing.")
         parts.append("The learner is speaking out loud, so their words may contain small transcription glitches and they may mix in an English word when they don't know the German one. Understand them charitably and simply continue the conversation in natural German.")
         parts.append("Do NOT correct the learner, and do NOT add translations, explanations, or any English in your replies. Just have a natural conversation.")
@@ -93,6 +122,94 @@ enum ConversationPrompts {
     /// The hidden seed turn that prompts the AI to open the conversation.
     static let openerSeed = "Beginne jetzt das Gespräch auf Deutsch mit einer kurzen, freundlichen Begrüßung und einer Frage an mich."
 
+    /// The seed for this conversation. An interview's opener carries the whole greeting in one
+    /// turn (greeting, the format's one-line check, and the request to introduce oneself) so the
+    /// model doesn't spend its first exchanges on logistics.
+    static func openerSeed(for config: ConversationConfig) -> String {
+        let naming = config.learnerName.map { " Sprich mich mit „\($0)“ an." } ?? ""
+        guard config.mode == .interview else { return openerSeed + naming }
+        let check = config.interviewFormat?.openerSeedClause ?? "begrüße mich in einem Satz"
+        return "Beginne jetzt das Vorstellungsgespräch auf Deutsch: begrüße mich kurz, \(check), und bitte mich im selben Beitrag, mich kurz vorzustellen und meinen bisherigen Werdegang in Bezug auf diese Stelle zu beschreiben." + naming
+    }
+
+    // MARK: - Interview plan
+
+    /// The points an interviewer would work through, pulled from the posting: bullet items and
+    /// short list lines under the tasks and profile headings first, other sections after, and
+    /// nothing from benefits, the application process, or the company blurb. Small models follow
+    /// a numbered list far better than "draw your questions from the posting".
+    static func interviewPlan(from posting: String, limit: Int = 8) -> [String] {
+        enum Section { case core, other, skip }
+        let coreHeading = try! NSRegularExpression(pattern: #"aufgaben|erwartet|tätigkeit|taetigkeit|responsibil|what you|your role|about the role|profil|anforderung|qualifikation|voraussetzung|bringst du|bringen sie|requirement|qualification|skills|what you bring|who you are"#, options: [.caseInsensitive])
+        let skipHeading = try! NSRegularExpression(pattern: #"wir bieten|bieten wir|benefit|vorteile|what we offer|why us|perks|bewerbung|dein weg|so geht|how to apply|application|kontakt|contact|über uns|ueber uns|das sind wir|unternehmen|about us|who we are|company"#, options: [.caseInsensitive])
+        let bulletPrefix = try! NSRegularExpression(pattern: #"^\s*(?:[✓✔•●▪◦∙·\-–—*]+|\d{1,2}[.)])\s*"#)
+        // The job title itself ("Senior iOS Developer (m/w/d)") is a short line, not a question.
+        let titleMarker = try! NSRegularExpression(pattern: #"\(?\b[mwdx]\s*/\s*[mwdx](?:\s*/\s*[mwdx])?\b\)?"#, options: [.caseInsensitive])
+
+        func matches(_ regex: NSRegularExpression, _ text: String) -> Bool {
+            regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil
+        }
+        func stripBullet(_ text: String) -> String? {
+            let range = NSRange(text.startIndex..., in: text)
+            guard let match = bulletPrefix.firstMatch(in: text, range: range), match.range.length > 0,
+                  let swiftRange = Range(match.range, in: text) else { return nil }
+            return String(text[swiftRange.upperBound...]).trimmingCharacters(in: .whitespaces)
+        }
+
+        var section: Section = .other
+        var core: [String] = []
+        var other: [String] = []
+        var seen: Set<String> = []
+
+        for rawLine in posting.components(separatedBy: .newlines) {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            guard !line.isEmpty else { continue }
+            let words = line.split(whereSeparator: \.isWhitespace).count
+
+            // A short line that names a section switches the bucket for what follows.
+            if line.count <= 60, words <= 8, stripBullet(line) == nil {
+                if matches(skipHeading, line) { section = .skip; continue }
+                if matches(coreHeading, line) { section = .core; continue }
+            }
+            guard section != .skip else { continue }
+
+            var item: String?
+            if let stripped = stripBullet(line), stripped.count >= 12 {
+                item = stripped
+            } else if words >= 4, words <= 14, line.count <= 110, !line.hasSuffix(":"),
+                      !line.hasSuffix("."), !line.hasSuffix("!"), !line.hasSuffix("?") {
+                item = line
+            }
+            guard var text = item, !matches(titleMarker, text) else { continue }
+            if text.count > 120 { text = String(text.prefix(117)) + "…" }
+            let key = text.lowercased()
+            guard !seen.contains(key) else { continue }
+            seen.insert(key)
+            if section == .core { core.append(text) } else { other.append(text) }
+        }
+
+        return Array((core + other).prefix(limit))
+    }
+
+    /// One line appended to the reply prompt each turn so the interviewer keeps moving through
+    /// the plan instead of circling. `candidateTurns` counts the candidate's answers so far,
+    /// including the one just given; the first answer is the self-introduction.
+    static func interviewProgressNote(for config: ConversationConfig, candidateTurns: Int) -> String? {
+        guard config.mode == .interview else { return nil }
+        let plan = interviewPlan(from: config.jobContext ?? "")
+        let next = candidateTurns - 1
+        if plan.isEmpty {
+            return "Progress: the candidate has answered \(candidateTurns) question(s). Ask about a concrete requirement or responsibility from the posting they have not covered yet, naming it as the posting phrases it."
+        }
+        if next < 0 {
+            return "Progress: the candidate has not answered anything yet. Ask them to introduce themselves with regard to the role."
+        }
+        if next < plan.count {
+            return "Progress: the candidate has answered \(candidateTurns) question(s). Plan point \(next + 1) is next: „\(plan[next])“. Ask about it now, unless their last answer needs one short follow-up first."
+        }
+        return "Progress: every plan point has been covered. Ask about their motivation for this role and company, then a typical situation from the posting, then invite their own questions."
+    }
+
     // MARK: - Correction
 
     static func correctionSystemPrompt(for config: ConversationConfig) -> String {
@@ -107,7 +224,8 @@ enum ConversationPrompts {
             s += config.correctionMemoryHint + " "
         }
         s += "The student uses the \(config.formality.rawValue) form. "
-        s += "They may have mixed in an English word they didn't know — in your correction, replace it with the correct German word.\n\n"
+        s += "They may have mixed in an English word they didn't know — in your correction, replace it with the correct German word. "
+        s += "Their line is a speech-recognition transcript, so punctuation is unreliable: NEVER correct punctuation. A missing or misplaced comma, period, or question mark is not a mistake — judge only the words.\n\n"
         s += "If the sentence is already correct and natural German, reply with exactly:\nOK\n\n"
         if config.feedbackStyle == .nudgeMe {
             // Elicitation: still give the fix (used to check the learner's retry and to reveal on
@@ -188,14 +306,17 @@ enum ConversationPrompts {
     }
 
     /// Folds the differences that don't amount to a correction — surrounding quotes, whitespace,
-    /// case, trailing sentence punctuation — so an echoed sentence is recognised even when the
-    /// model adds a period. Umlauts and ß are preserved: fixing those *is* the lesson.
+    /// case, and ALL punctuation — so a fix that only inserts a comma or a period is recognised as
+    /// an echo. The student's line is a speech transcript, so punctuation is never their mistake.
+    /// Umlauts and ß are preserved: fixing those *is* the lesson.
     private static func echoNormalized(_ s: String) -> String {
         let unquoted = stripWrappingQuotes(s.trimmingCharacters(in: .whitespacesAndNewlines))
-        let collapsed = unquoted.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
-        return collapsed
-            .trimmingCharacters(in: CharacterSet(charactersIn: ".!?…"))
-            .trimmingCharacters(in: .whitespaces)
+        let letters = unquoted.unicodeScalars.map { scalar -> Character in
+            CharacterSet.punctuationCharacters.contains(scalar) ? " " : Character(scalar)
+        }
+        return String(letters)
+            .split(whereSeparator: { $0.isWhitespace })
+            .joined(separator: " ")
             .lowercased()
     }
 

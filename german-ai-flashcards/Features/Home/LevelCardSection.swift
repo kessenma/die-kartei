@@ -52,7 +52,7 @@ struct LevelCardSection: View {
         let total = PyramidService.overallFill(layers)
         let built = "\(Int((earned * 100).rounded()))% built"
         guard total > earned + 0.005 else { return built }
-        return "\(built) · \(Int(((total - earned) * 100).rounded()))% estimated"
+        return "\(built) · blueprint from your check"
     }
 
     var body: some View {

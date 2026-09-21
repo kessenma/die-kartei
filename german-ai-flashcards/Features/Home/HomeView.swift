@@ -290,8 +290,10 @@ struct HomeView: View {
 
                 Toggle("Example sentences", isOn: $includeExamples)
 
-                // Only offered once the image model is on the device — there's nothing useful to
-                // promise otherwise, and the download lives in Settings.
+                // The toggle needs the model on disk. This used to be a silent hide, on the grounds
+                // that there was "nothing useful to promise otherwise" — but the result was that
+                // anyone making flashcards never learned the feature existed at all. So the space
+                // now carries the offer instead of nothing, and it is dismissible for good.
                 if ImageGenModel.current.isDownloaded {
                     Toggle(isOn: Binding(
                         get: { service.modelManager.flashcardIllustrationsEnabled },
@@ -323,6 +325,8 @@ struct HomeView: View {
 
                         CardImageStyleRow(mlxService: service.mlxService)
                     }
+                } else {
+                    ModelUpgradeNudge(kind: .pictures)
                 }
 
                 if wordTypeFilter.includesNouns {

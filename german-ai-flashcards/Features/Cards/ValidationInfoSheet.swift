@@ -72,7 +72,7 @@ struct ValidationInfoSheet: View {
                 } header: {
                     Text("A note on accuracy")
                 } footer: {
-                    Text("The German tutors produce the fewest warnings in practice, since they were trained on this app's grammar tasks. Size matters less than you'd expect here: some of the larger general-purpose models flag more often than much smaller ones.")
+                    Text("The tutors produce few warnings in practice, since they were trained on this app's grammar tasks. Size matters less than you'd expect: a smaller tutor doesn't necessarily flag more often than a larger one.")
                 }
             }
             .themedListScreen()

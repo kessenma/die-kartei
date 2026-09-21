@@ -41,8 +41,13 @@ struct StoryReadAloudView: View {
     /// Sticks across sessions so a learner who prefers plain text keeps it that way.
     @AppStorage("storyReadAloudShowImages") private var showImages = true
 
-    private var hero: MLXModel { StoryStudyService.requiredModel }
-    private var theme: ModelTheme { hero.theme }
+    /// The tutor this story belongs to — the one that wrote it where that's still usable here.
+    /// Same rule as `StoryDetailView`, so the player and the reader are always the same color and
+    /// look words up on the same model.
+    private var storyModel: MLXModel {
+        StoryStudyService.followUpModel(wrote: story.model, fallback: modelManager.selectedStoryModel)
+    }
+    private var theme: ModelTheme { storyModel.theme }
     private var hasImages: Bool { !story.images.isEmpty }
 
     var body: some View {
@@ -112,13 +117,23 @@ struct StoryReadAloudView: View {
                 inspector = StoryWordInspector.make(
                     story: story,
                     mlxService: mlxService,
+                    model: storyModel,
                     knownTranslations: known,
+                    onSaved: { savedWords = StoryDeckStore.savedWords(for: story, context: modelContext) },
                     context: modelContext
                 )
             }
+            savedWords = StoryDeckStore.savedWords(for: story, context: modelContext)
         }
+        .task(id: story.lookupsData) {
+            lookedUpWords = Set(story.lookups.map { $0.german.lowercased() })
+        }
+        .memoryContext("Read-aloud player")
         // Leaving this screen stops playback; backgrounding the app does not (Now Playing continues).
-        .onDisappear { SpeechService.shared.stop() }
+        .onDisappear {
+            SpeechService.shared.stop()
+            inspector?.tearDown()
+        }
     }
 
     // MARK: - Story text
@@ -173,15 +188,12 @@ struct StoryReadAloudView: View {
             .padding(.horizontal, 12)
     }
 
+    // Cached rather than computed: this screen redraws on every spoken word, and each of these
+    // was a SwiftData fetch or a JSON decode per redraw.
     /// Lowercased German words already saved to this story's deck — highlighted in the text.
-    private var savedWords: Set<String> {
-        StoryDeckStore.savedWords(for: story, context: modelContext)
-    }
-
+    @State private var savedWords: Set<String> = []
     /// Lowercased forms of the words looked up in this story — marked in red while following along.
-    private var lookedUpWords: Set<String> {
-        Set(story.lookups.map { $0.german.lowercased() })
-    }
+    @State private var lookedUpWords: Set<String> = []
 
     /// Map each inline illustration onto the segment it should follow, by matching the paragraph's
     /// UTF-16 range in the full story against the segment offsets the segmenter recorded.

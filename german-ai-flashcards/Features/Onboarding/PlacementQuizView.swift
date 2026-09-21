@@ -6,11 +6,11 @@
 //  retakes from the Lernpyramide and Settings. First launch runs the same stages inside
 //  `OnboardingWizardView`; the stages themselves live in `PlacementQuizStages.swift`.
 //
-//  Deliberately gives **no right/wrong feedback** between questions — and none on the cloze
-//  finale either. This is a measurement, not a lesson: feedback would turn a placement check into
-//  a teaching moment, slow it down, and let a learner tune their answers partway through. It also
-//  keeps a beginner from being told "wrong" twenty times in the first three minutes of using the
-//  app.
+//  Answers are marked right or wrong for half a second before the next question, and the switch
+//  for that sits at the top of every question (`PlacementFeedbackOption`, default on). Turning it
+//  off restores the older behaviour — silence from the first question through to the result —
+//  which is the purer measurement: no teaching moment mid-check, and no chance to tune answers as
+//  you go. What the switch never touches is the scoring; the marks are display only.
 //
 //  Every question comes from bundled JSON, so this runs on first launch with no model downloaded.
 //
@@ -28,32 +28,57 @@ struct PlacementQuizView: View {
 
     @State private var session: PlacementSession?
     @State private var result: PlacementResult?
-    /// The attempt just recorded, so the review link opens pre-filtered to this run.
-    @State private var recordedAttemptID: UUID?
+    /// Showing the hard-select door instead of the check. Reachable from the intro and from the
+    /// result stage, since "the estimate is wrong" is the other moment someone wants it.
+    ///
+    /// Starts true under `-placement.debugOpenDeclare 1` (DEBUG), because the door is one tap past
+    /// the intro and a simulator takes launch arguments but not taps.
+    @State private var declaring = {
+        #if DEBUG
+        return UserDefaults.standard.bool(forKey: "placement.debugOpenDeclare")
+        #else
+        return false
+        #endif
+    }()
+    /// The attempt just recorded, so the review link opens straight onto *this* run's results
+    /// rather than the whole history.
+    @State private var recordedAttempt: PlacementAttempt?
 
     var body: some View {
         NavigationStack {
             Group {
-                if let result {
+                if declaring {
+                    PlacementDeclareStage(
+                        initialLevel: modelManager.germanLevel,
+                        // Arriving here from a finished result, backing out returns to that
+                        // result — offering to "take the check" would be nonsense, it just ran.
+                        backLabel: result == nil ? "Take the check instead" : "Back to my result",
+                        onConfirm: { declare($0) },
+                        onBack: { withAnimation { declaring = false } },
+                        onDone: { dismiss() }
+                    )
+                } else if let result {
                     PlacementResultStage(result: result, onDone: { dismiss() }) {
-                        reviewLink
+                        resultFooter
                     }
                 } else if let session {
                     quizContent(session)
                 } else {
                     PlacementIntroStage(
                         onStart: { withAnimation { session = PlacementSession() } },
-                        onBeginner: { finishAsBeginner() }
+                        onBeginner: { finishAsBeginner() },
+                        onDeclareLevel: { withAnimation { declaring = true } }
                     )
                 }
             }
-            .navigationTitle(session == nil && result == nil ? "Wo stehst du?" : "Einstufung")
+            .navigationTitle(navigationTitle)
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(result == nil ? "Skip" : "Close") {
+                    // "Skip" only while there's a check to skip — picking a level isn't one.
+                    Button(result == nil && !declaring ? "Skip" : "Close") {
                         if result == nil { PlacementService.markOffered() }
                         dismiss()
                     }
@@ -63,19 +88,29 @@ struct PlacementQuizView: View {
         .interactiveDismissDisabled(session != nil && result == nil)
     }
 
-    /// The one place the probe is allowed to show right-and-wrong: after it's over. Offered here
-    /// because this is the moment a learner most wants it — they just answered twenty-nine
-    /// questions and were deliberately told nothing about any of them.
+    private var navigationTitle: String {
+        if declaring { return "Dein Niveau" }
+        return session == nil && result == nil ? "Wo stehst du?" : "Einstufung"
+    }
+
+    /// Two offers under a finished result. The review link is the whole answer sheet, which matters
+    /// most to someone who took the check with the marks switched off and so was told nothing about
+    /// any of it. The second is the escape hatch for the other reaction to a result: "that's not
+    /// right."
     @ViewBuilder
-    private var reviewLink: some View {
-        if let recordedAttemptID {
-            NavigationLink {
-                PlacementReviewView(initialAttemptID: recordedAttemptID)
-            } label: {
-                Label("See what you missed", systemImage: "list.bullet.rectangle")
-                    .font(.subheadline.weight(.medium))
+    private var resultFooter: some View {
+        VStack(spacing: 12) {
+            if let recordedAttempt, !recordedAttempt.records.isEmpty {
+                NavigationLink {
+                    PlacementAttemptDetailView(attempt: recordedAttempt)
+                } label: {
+                    Label("See what you missed", systemImage: "list.bullet.rectangle")
+                        .font(.subheadline.weight(.medium))
+                }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
+            Button("Set my level myself") { withAnimation { declaring = true } }
+                .font(.subheadline)
         }
     }
 
@@ -84,9 +119,17 @@ struct PlacementQuizView: View {
     @ViewBuilder
     private func quizContent(_ session: PlacementSession) -> some View {
         if session.current != nil {
-            PlacementQuestionStage(session: session, onAnswer: advance)
+            PlacementQuestionStage(
+                session: session,
+                hapticMode: modelManager.hapticFeedbackMode,
+                onAnswer: advance
+            )
         } else if let cloze = session.currentCloze {
-            PlacementClozeStage(cloze: cloze, progress: session.progress) { picks in
+            PlacementClozeStage(
+                cloze: cloze,
+                progress: session.progress,
+                hapticMode: modelManager.hapticFeedbackMode
+            ) { picks in
                 session.answerCloze(picks)
                 finish(session)
             }
@@ -133,13 +176,27 @@ struct PlacementQuizView: View {
             answers: session?.answers ?? [],
             cloze: session?.finishedCloze
         )
-        recordedAttemptID = PlacementAttemptStore.attempts().first?.id
-        if !scored.declaredBeginner {
-            modelManager.chatLevelRaw = scored.estimatedLevelRaw
-            modelManager.storyLevelRaw = scored.estimatedLevelRaw
-        }
+        recordedAttempt = PlacementAttemptStore.attempts().first
+        // The level anchor follows the estimate — including for the beginner door, which used to be
+        // skipped here and so left a self-declared beginner reading A2 content. `.beginner()`
+        // credits the pyramid nothing either way; that's what keeps it honest, not the level.
+        modelManager.germanLevel = scored.estimatedLevel
+        modelManager.germanLevelIsDeclared = scored.declaredBeginner
         onFinish?(scored)
         withAnimation { result = scored }
+    }
+
+    /// The hard-select door. Note what is absent and must stay absent: no `PlacementService.save`,
+    /// no `PlacementAttemptStore.record`. A declaration is a preference, not a measurement — it
+    /// credits no provisional fill and draws no Bauplan. `markOffered` only stops onboarding from
+    /// asking again; the check itself stays available from Your Level and the Lernpyramide.
+    ///
+    /// `onFinish` deliberately doesn't fire: every presenter uses it to re-read
+    /// `PlacementService.current`, and declaring leaves that untouched.
+    private func declare(_ level: CEFRLevel) {
+        modelManager.germanLevel = level
+        modelManager.germanLevelIsDeclared = true
+        PlacementService.markOffered()
     }
 }
 

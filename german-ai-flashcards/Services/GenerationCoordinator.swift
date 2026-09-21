@@ -146,6 +146,10 @@ class GenerationCoordinator {
         selectedTenses: [String] = [],
         model: MLXModel? = nil
     ) async {
+        // The Generate button disables on `isGenerating`, but that flag is set here, one actor hop
+        // after the tap — two taps in the same run-loop turn both got through and ran two batches
+        // over the same state. The guard belongs to the run, not the button.
+        guard !isGenerating else { return }
         let resolvedModel = model ?? modelManager.selectedMLXModel
         isGenerating = true
         errorMessage = nil

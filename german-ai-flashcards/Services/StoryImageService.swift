@@ -59,12 +59,28 @@ final class StoryImageService {
     var downloadBytesInfo: String?
     var loadError: String?
     private(set) var isPipelineLoaded = false
+    /// True while a picture is being drawn. With `isPipelineLoaded` it makes `isBusy`, which is
+    /// what stops a tutor from loading on top of the pipeline.
+    private(set) var isGenerating = false
+
+    /// Whether the drawing model is in memory or about to draw — the moment a multi-GB tutor must
+    /// not load. Every illustrate path unloads the tutor first; `MLXGenerationService.loadModel`
+    /// checks this so nothing loads it back mid-run.
+    var isBusy: Bool { isPipelineLoaded || isGenerating }
 
     private var box: PipelineBox?
     private var downloadTask: Task<Void, Never>?
     private let cancelFlag = CancelFlag()
 
-    private init() {}
+    private init() {
+        MemoryDiagnostics.register(
+            "drawingModel",
+            name: { "Drawing model · \(ImageGenModel.current.displayName)" },
+            // The pipeline's real footprint isn't queryable; the download size is close enough
+            // to say "the drawing model is what's holding this".
+            bytes: { [weak self] in self?.isPipelineLoaded == true ? ImageGenModel.current.approximateSizeMB * 1_048_576 : 0 }
+        )
+    }
 
     // MARK: Download
 
@@ -87,8 +103,8 @@ final class StoryImageService {
                 try await ResumableModelDownloader().download(
                     repoID: model.repoID,
                     matching: model.downloadPatterns
-                ) { [weak self] downloaded, total in
-                    guard let self, self.isDownloading else { return }
+                ) { [self] downloaded, total in
+                    guard self.isDownloading else { return }
                     self.downloadInfo = "Downloading \(model.displayName)…"
                     self.downloadBytesInfo = ByteCountFormatter.string(fromByteCount: downloaded, countStyle: .file)
                         + " / " + ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
@@ -147,6 +163,7 @@ final class StoryImageService {
             }.value
             box = loaded
             isPipelineLoaded = true
+            MemoryDiagnostics.record(.pipelineLoaded, title: "Loaded the drawing model · \(model.displayName)")
             return true
         } catch {
             // The hub cache stores snapshot files as symlinks into blobs/. CoreML resolves
@@ -159,6 +176,7 @@ final class StoryImageService {
                 }.value
                 box = copied
                 isPipelineLoaded = true
+                MemoryDiagnostics.record(.pipelineLoaded, title: "Loaded the drawing model · \(model.displayName)", detail: "From a materialized copy")
                 return true
             } catch {
                 logger.error("Pipeline load failed after materializing: \(String(describing: error), privacy: .public)")
@@ -169,14 +187,27 @@ final class StoryImageService {
     }
 
     func unloadPipeline() {
+        let wasLoaded = isPipelineLoaded
         box?.pipeline.unloadResources()
         box = nil
         isPipelineLoaded = false
+        if wasLoaded {
+            MemoryDiagnostics.record(.pipelineUnloaded, title: "Unloaded the drawing model")
+        }
     }
 
     /// Ask an in-flight `generateImage` call to stop at the next diffusion step.
     func requestStop() {
         cancelFlag.set(true)
+    }
+
+    /// The memory-warning path: stop the current picture so the run winds down and its `defer`
+    /// frees the pipeline. Only acts mid-run — an idle service holds nothing to give back.
+    func stopForMemoryPressure() {
+        guard isBusy else { return }
+        logger.warning("Memory warning while drawing — stopping the run to free the pipeline")
+        DeckIllustrationService.shared.stop()
+        requestStop()
     }
 
     // MARK: Generation
@@ -215,6 +246,8 @@ final class StoryImageService {
         let stepCount = stepCount ?? ImageGenQuality.current.stepCount
         // Both halves of the preview gate are read here, on the MainActor, for the same reason.
         let previews = ImageGenPreview.isActive ? onPreview : nil
+        isGenerating = true
+        defer { isGenerating = false }
         return try await Task.detached(priority: .userInitiated) {
             try Self.runGeneration(
                 box: box, prompt: prompt, negativePrompt: negativePrompt,
@@ -329,6 +362,8 @@ final class StoryImageService {
         // picture, so the preview lands on the real result instead of stopping a few steps short.
         let isLast = progress.step == progress.stepCount - 1
         guard isLast || (progress.step + 1) % stride == 0 else { return nil }
+        // Skipped at *elevated* too, not only critical: a preview's decoder spike on top of a
+        // resident UNet is exactly the allocation that turns "running low" into being killed.
         guard MemoryBudget.pressure == .normal else { return nil }
         return try? box.pipeline
             .decodeToImages(progress.currentLatentSamples, configuration: config)

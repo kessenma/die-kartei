@@ -62,6 +62,7 @@ struct GeneratingFlashcardsView: View {
                 }
             }
             .ignoresSafeArea()
+            .memoryContext(isDrawingImages ? "Creating cards · drawing pictures" : "Creating cards")
 
             VStack(spacing: 24) {
                 AnimatedCardStack(accent: model.theme.accent)
@@ -258,7 +259,16 @@ private struct AnimatedCardStack: View {
                     removal: .scale(scale: 1.05).combined(with: .opacity)
                 ))
         }
-        .onAppear { startAnimation() }
+        // A `.task`, not a `Timer`: SwiftUI cancels it when the overlay goes away. The repeating
+        // timer this replaced was never invalidated, so every generation left one behind, firing
+        // forever and mutating state nobody was showing.
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1.2))
+                guard !Task.isCancelled else { break }
+                advanceAnimation()
+            }
+        }
     }
 
     private var blankCard: some View {
@@ -291,17 +301,15 @@ private struct AnimatedCardStack: View {
         }
     }
 
-    private func startAnimation() {
-        Timer.scheduledTimer(withTimeInterval: 1.2, repeats: true) { _ in
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                isFlipped.toggle()
-            }
+    private func advanceAnimation() {
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+            isFlipped.toggle()
+        }
 
-            // After each full flip cycle (back to front), swap to a "new" card
-            if isFlipped == false {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                    currentCardIndex += 1
-                }
+        // After each full flip cycle (back to front), swap to a "new" card
+        if isFlipped == false {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                currentCardIndex += 1
             }
         }
     }

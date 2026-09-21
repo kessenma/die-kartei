@@ -3,7 +3,8 @@
 **What:** the German Tutor model writes a short German story at a chosen CEFR level (A1–C1), then
 generates comprehension questions about it. The learner either **reads** the story or **listens**
 to it (TTS, exam-style), answers the questions, gets graded, and the results feed the stats/streak
-system and the learner profile. Exclusive to the **Gemma 4 E4B German Tutor** (hero) model.
+system and the learner profile. Restricted to the in-house **German Tutor** models — any of them
+(Gemma 4 E4B/E2B, Granite 4.1 3B, Granite 2B), not the hero alone since 2026-08-20.
 
 The story text carries the app's signature reading gestures (double-tap a word to translate/save,
 select a phrase to save — the conversation's `SelectableGermanText`), and an on-demand **English
@@ -13,8 +14,8 @@ never the source.
 **Why:** reading and listening comprehension are full exam sections (*Lesen*, *Hören*) at every
 cert level, and neither is trained by the app yet. Flashcards train words, conversations train
 production; stories train *sustained input at level* — with difficulty controlled by us, not by
-whatever text the learner happens to import. Hero-exclusivity also gives the fine-tune a flagship
-feature where its prose quality is visibly the point.
+whatever text the learner happens to import. Keeping it to the in-house tutors also gives the
+fine-tunes a flagship feature where their prose quality is visibly the point.
 
 **Question types (user-selectable mix):**
 1. **Multiple choice** — question + 3–4 options (at A1/A2 this includes richtig/falsch statements,
@@ -49,26 +50,38 @@ Genuinely new ground (no precedent in the app): **free-text grading** (§ Free r
 
 ---
 
-## Gating: hero model only
+## Gating: the German Tutor family
 
-Stories are pinned to `.gemma4_E4B_german`, and unlike `PaperStudyService.requiredModel` (a
-recommendation the copy walks back), this is enforced:
+Stories are restricted to the in-house tutors, and unlike `PaperStudyService.requiredModel` (a
+recommendation the copy walks back), this is enforced. It was `.gemma4_E4B_german` alone until
+2026-08-20; every tutor is trained on the same German material, so the pick is about what the
+device can hold, not about whether the prose and answer keys can be trusted. Stock models stay out.
 
 ```swift
-// StoryStudyService.swift
-static let requiredModel: MLXModel = .hero   // the German Tutor fine-tune, and only it
+// StoryStudyService.swift — one place, as before
+static var eligibleModels: [MLXModel] { MLXModel.germanTutors }   // best first
+static var runnableModels: [MLXModel]                             // filtered by DeviceCapability.mayRun
+static var readyModel: MLXModel?                                  // best runnable one already downloaded
+static var defaultModel: MLXModel                                 // downloaded first, then best runnable
+static var unattendedModel: MLXModel?                             // batch queue: the pick, if downloaded
+static func resolve(_:) / followUpModel(wrote:fallback:)          // coercion + reader continuity
 ```
 
-- No model picker on the story setup screen at all — the feature *is* a hero feature. Show the
-  hero identity (theme, badge) instead of a chooser.
-- **Tile state ladder** on Home ▸ Reading:
-  - hero downloaded → straight into setup;
-  - device can run hero (`DeviceCapability.canRunHero`) but not downloaded → setup shows a
-    download card (reuse the suggest-hero flow, `Features/ModelPickerButton.swift:124-127`);
-  - device can't run hero → tile visible but explains it needs the German Tutor model, which
-    needs a device with more memory (mirror the `deviceNote` copy tone; no dead-end hidden tile).
-- Keep the gate in one place (`StoryStudyService.requiredModel` + a `storiesAvailable` computed)
-  so loosening it later (e.g. trialing Qwen3 8B) is a one-line change.
+- The pick lives on `MLXModelManager.selectedStoryModel` (key `selectedStoryModel`) and is offered
+  by `StoryModelPickerSection` / `StoryModelRow` — one row on the story setup screen and the same
+  row in Settings ▸ Stories, both pushing the same picker.
+- **Setup ladder** (`StorySetupView`):
+  - no tutor this device can run (`runnableModels.isEmpty`) → the "too small" card, whose memory
+    check names the *lightest* tutor and unlocks the screen once the user opts in;
+  - selected tutor not downloaded → model row + a download card sized from that model;
+  - otherwise → model row + the full setup form.
+- Tutors too big for the device are still listed in the picker; tapping one opens `MemoryCheckSheet`
+  instead of selecting it, with the best fitting tutor as the one-tap alternative.
+- An existing story keeps the tutor that wrote it (`StudyStory.modelRaw` → `followUpModel`) for
+  grading, translation, and word lookups — colors included — so reading never swaps gigabytes of
+  weights, and falls back to a downloaded tutor when that model is gone.
+- Batch story jobs run on `unattendedModel`: the learner's pick when it's on disk, else whichever
+  tutor is. A background job never starts a multi-gigabyte download on its own.
 - New prefs on `MLXModelManager` (same `didSet` pattern as the rest): `storyLevelRaw` (defaults
   from `chatLevelRaw` until changed), `storyQuestionTypesRaw` (comma-joined kinds, default
   `multipleChoice`), `storyQuestionCount`.
@@ -177,6 +190,79 @@ at A1/A2.
   shared gesture help sheet, and a Deutsch/Englisch toggle reveals the cached translation. "Start
   Questions" launches the quiz; footer offers regenerate-questions with a different mix (story
   stays, only step 2 reruns).
+- **Picture layout (`StoryReadingLayout`)** — a toolbar menu on `StoryDetailView`, shown only for
+  illustrated stories, with the pick kept in `@AppStorage("storyReadingLayout")` across stories:
+  - `ganz` (**default**) — every picture whole: full row width, height from the image's own
+    proportions. Nothing is cropped.
+  - `kompakt` — the old cropped banners between paragraphs, for less scrolling. Banner heights grow
+    with a regular horizontal size class (260/240 vs 200/180), because a fixed height across an iPad
+    row cuts a square picture down to a strip.
+  - `umfluss` — magazine style: the picture sits half-width in the corner of its paragraph and the
+    lines flow around it. Sides alternate down the story.
+  `StoryImageFit` (`.banner(height:)` / `.full`) is what `StoryIllustrationView` takes; the story
+  list rows and the read-aloud player stay on `.banner`.
+- **Text wrapping (`WrappingTextView`)** — `Features/Shared/WrappingTextView.swift`. Wrapping is
+  `NSTextContainer.exclusionPaths` plus plain `UIImageView` subviews positioned to match; an
+  `NSTextAttachment` cannot do it (it sits in the line like one very large character). Two rules to
+  keep:
+  - Exclusion paths are laid out by **TextKit 1**, so a wrapping text view is created with
+    `usingTextLayoutManager: false`. `SelectableGermanText` only does that when
+    `usesImageWrapping` is set, so every other call site (conversation, job prep, the transcript)
+    keeps the system default engine untouched.
+  - **Never build the subclass with `UITextView(usingTextLayoutManager:)`.** That convenience
+    initializer does not run a subclass's designated initializer, so every Swift stored property on
+    `WrappingTextView` is left uninitialized and the first read of `wrappedImages` faults
+    (`EXC_BAD_ACCESS … at 0x10`, inside `_ArrayBuffer.count`). It builds its TextKit 1 stack by hand
+    and calls `init(frame:textContainer:)`, which is the designated initializer.
+  - Subviews are **never** added or removed from the `wrappedImages` setter — `didSet` only sets a
+    flag and the rebuild happens in `layoutSubviews`. `addSubview` can drive layout straight back
+    into the view, which re-enters the setter mid-rebuild.
+  - The engine is chosen at view-creation time, so `StoryDetailView` hangs `.id(layout)` on the text
+    stack: switching layout rebuilds the views instead of updating them in place.
+  - **Never write `exclusionPaths` while measuring.** The setter invalidates layout *and* the
+    intrinsic content size, so a `sizeThatFits` that wrote would ask SwiftUI to measure again, and
+    measure and layout re-trigger each other until the app dies. `sizeThatFits` measures on a
+    detached `sizer` twin; only `layoutSubviews` writes to the live container, only from
+    `bounds.width`, and only when the rectangles actually changed.
+  - The overrides are **inert unless wrapping is in use** (`wrapsText`), and more importantly
+    `SelectableGermanText.makeUIView` only *instantiates* the subclass when `usesImageWrapping` is
+    set — its `UIViewType` stays `UITextView`. Chat, job prep, the listen-mode transcript and the
+    `kompakt`/`ganz` layouts get a plain `UITextView`, so the wrapping code cannot reach them at all.
+
+### Testing the reader without the model
+
+Illustrations come from on-device diffusion, which the simulator can't run, so the three layouts had
+nothing to be checked against. `StoryDebugSeeder` (DEBUG only) writes one story with a header image
+and three anchored inline pictures — drawn as flat shapes at the generator's own 768×768, through
+the same `StoryImageStore`, numbered so it's obvious which landed where.
+
+- `-stories.debugOpen 1` — seed (if needed) and open the reader straight away.
+- `-stories.debugSeed 1` / `-stories.debugRemove 1` — just create or delete it.
+- `-storyReadingLayout kompakt|ganz|umfluss` — the layout is `@AppStorage`, so a launch argument
+  picks it without tapping the toolbar menu.
+  `WrappedText` is the same wrapping without the gestures, used for the English translation (the
+  word gestures are deliberately German-only). `StoryImageCache` decodes the files up front, because
+  the text view needs the pictures' proportions before it can lay out around them — it only runs in
+  `umfluss`; the stacked layouts let each `StoryIllustrationView` read its own file.
+- **Picture memory.** An illustration is 512×512, which is 1 MB of RAM once decoded *however
+  small it is drawn*, and `MemoryBudget.reserveMB` leaves only 250 MB for everything that is not the
+  model. So:
+  - `StoryImageStore.loadImage(fileName:storyID:maxPixelSize:)` decodes through ImageIO at the size
+    actually drawn (clamped so it never upscales past the file). `StoryIllustrationView` asks for
+    its banner height or a reading-width cap; `StoryImageCache` asks for 700 px.
+  - `StoryImageCache.load` decides what to decode from `images` itself, never from a separate
+    "claimed" set, and it does **not** check `Task.isCancelled`. Its caller is a `.task(id:)` that
+    is cancelled by any change to its id, including ones that stay in Umfluss; a claim released on
+    that cancellation lost the race against the next caller, which saw the files as already loaded,
+    decoded nothing, and left the layout blank until a purge reset it. `generation` (bumped by
+    `purge`) is the only thing that invalidates a finished decode.
+  - `StoryIllustrationView` drops its bitmap in `onDisappear`, and `StoryImageCache.purge()` runs
+    when the reader leaves `umfluss`, when the screen goes away, and on a system memory warning.
+    Switching layout is the moment both layouts' pictures would otherwise be resident at once — the
+    purge on the layout change is what stops that, and it is load-bearing, not tidiness.
+  - The cache honours cancellation and a purge that lands mid-decode (a generation counter), and
+    only ever has one decode in flight; only crossing into or out of `umfluss` rebuilds the text
+    views (`.id(layout == .umfluss)`). The whole picture is in `docs/MEMORY.md`.
 - **`StoryQuizView`** — a sibling of `GrammarMultipleChoiceView` (same shuffle → answer → grade →
   missed-review → summary state machine), with per-kind answer surfaces:
   - *multipleChoice / fillInBlankChoices*: option buttons, green/red recolor, exact-index grading

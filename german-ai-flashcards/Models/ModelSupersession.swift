@@ -53,22 +53,44 @@ struct ModelSupersession: Identifiable {
 
     // MARK: - The table
 
+    /// THE STANDARD FOR RETIRING A MODEL BUILD, any model, any time:
+    /// 1. Swap the repo id in `ModelConfiguration.swift` (and `promoPageURL`).
+    /// 2. Paste ONE row here with the *old* slug and honest, measured "what changed" copy.
+    /// That's the whole procedure. The launch sheet, the Settings banner, the Storage "Old
+    /// version" row and its delete path all derive from the row, and every surface stays
+    /// invisible unless the retired snapshot is actually on the device — so rows cost nothing
+    /// for fresh installs and never nag anyone twice. Rows are safe to add pre-emptively: one
+    /// whose old slug equals the live config is filtered out by `valid` until the swap lands.
     static let all: [ModelSupersession] = [
         ModelSupersession(
             model: .gemma4_E4B_german,
             legacyRepoID: "kessenma/gemma4-e4b-german-tutor-4bit",
-            whatChanged: "Retrained on a much larger set of German examples. Same size, same "
-                       + "speed, sharper corrections.",
+            whatChanged: "Retrained on a much larger set of German examples. Same accuracy on "
+                       + "grammar, half the false alarms, and it finally talks like a person.",
             improvements: [
-                "Scores 91% on this app's German grammar test, up from 85%.",
-                "It no longer \"corrects\" sentences that were already right. On the 24 correct "
-                + "sentences in the test it invented nothing, where the old one flagged two.",
-                "Much better on da-/wo-compounds, the hardest of the areas it's trained for.",
-                "Sounds more like someone talking and less like a textbook.",
+                "Its best result yet on the hardest part of this app's German grammar test, and "
+                + "it now handles areas the old one was never trained on, like relative pronouns.",
+                "False corrections cut in half: shown 32 correct sentences, it flagged just one. "
+                + "When it corrects you, you can trust it.",
+                "Sounds like a conversation partner — natural little words like 'ach' and 'mal' — "
+                + "instead of a textbook.",
+                "The one trade: it lets slightly more small mistakes pass without comment.",
                 "Same download size and the same memory, so nothing changes about how it runs here.",
                 "Your decks, chats, stories and progress are untouched. Only the model changes.",
             ],
-            retiredOn: "2026-08-12"
+            retiredOn: "2026-08-18"
+        ),
+        ModelSupersession(
+            model: .granite2B_german,
+            legacyRepoID: "kessenma/granite33-2b-german-tutor-4bit",
+            whatChanged: "Replaced by a build trained on far better German examples.",
+            improvements: [
+                "Clearly better across the whole grammar test, and it catches noticeably more "
+                + "real mistakes than the build it replaces.",
+                "Same size, same speed, same memory.",
+                "Your decks, chats, stories and progress are untouched. Only the model changes.",
+            ],
+            retiredOn: "2026-08-18"
         ),
     ]
 

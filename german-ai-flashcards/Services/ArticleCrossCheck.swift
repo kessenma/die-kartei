@@ -18,9 +18,16 @@ final class ArticleCrossCheck {
 
     // MARK: - Model selection
 
-    /// Prefer whatever is already loaded; otherwise the first downloaded model.
+    /// Prefer whatever is already loaded; otherwise the best downloaded tutor, and only then the
+    /// built-in Apple model.
+    ///
+    /// The order is deliberate. This used to be `allCases.first { $0.isDownloaded }`, which
+    /// resolved to Apple Intelligence for no better reason than its being the first enum case —
+    /// so a phone with a tutor downloaded still cross-checked articles with the weakest German
+    /// in the app.
     func model(service: MLXGenerationService) -> MLXModel? {
         if service.isModelLoaded, let current = service.currentModel { return current }
+        if let tutor = MLXModel.germanTutors.first(where: \.isDownloaded) { return tutor }
         return MLXModel.allCases.first { $0.isDownloaded }
     }
 

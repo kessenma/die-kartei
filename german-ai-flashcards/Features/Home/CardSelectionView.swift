@@ -204,14 +204,17 @@ struct CardSelectionView: View {
 
 // MARK: - Draft thumbnail
 
-/// The picture a card was given before it had a deck, at row size. Loaded in a `.task` like
-/// `FlashCardView` does, so scrolling never waits on a PNG decode.
+/// The picture a card was given before it had a deck, at row size. Decoded off the main actor at
+/// the tile's own pixel size — a 48 pt tile from a full 512² decode was 1 MB per row, on the main
+/// thread — and released when the row scrolls away.
 private struct DraftCardThumbnail: View {
     let fileName: String
     let draftImageID: UUID
 
     @State private var image: UIImage?
     @Environment(\.appTheme) private var theme
+
+    private static let side: CGFloat = 48
 
     var body: some View {
         Group {
@@ -224,11 +227,17 @@ private struct DraftCardThumbnail: View {
             }
         }
         // Chrome-vs-content: the picture itself is untouched, only the frame around it is themed.
-        .frame(width: 48, height: 48)
+        .frame(width: Self.side, height: Self.side)
         .clipShape(RoundedRectangle(cornerRadius: theme.innerRadius(8), style: .continuous))
         .task(id: fileName) {
-            image = CardImageStore.loadImage(fileName: fileName, deckID: draftImageID)
+            let pixels = DownsampledImage.pixels(forPoints: Self.side)
+            let decoded = await Task.detached(priority: .userInitiated) {
+                CardImageStore.loadImage(fileName: fileName, deckID: draftImageID, maxPixelSize: pixels)
+            }.value
+            guard !Task.isCancelled else { return }
+            image = decoded
         }
+        .onDisappear { image = nil }
     }
 }
 

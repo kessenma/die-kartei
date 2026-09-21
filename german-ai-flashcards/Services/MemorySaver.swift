@@ -83,21 +83,41 @@ enum MemorySaver {
         parameters.prefillStepSize = 128   // smaller prompt chunks, so prefill doesn't spike
     }
 
+    // MARK: The MLX runtime gate
+
+    /// Whether MLX's Metal runtime may be touched. Every `Memory.*` call — a reading, a cache
+    /// clear, an allocator limit — constructs MLX's Metal device on first use, and that device
+    /// aborts the process where there is no Metal (the simulator) and is pointless work before a
+    /// model has ever loaded. `loadModel` flips this right before its first MLX call; until then,
+    /// and always in the simulator, the helpers below are no-ops and readings report zero.
+    private(set) static var mlxRuntimeReady = false
+
+    /// Call from the model-load path, just before the first MLX allocation of the process.
+    static func markRuntimeReady() {
+        #if targetEnvironment(simulator)
+        mlxRuntimeReady = false
+        #else
+        mlxRuntimeReady = true
+        #endif
+    }
+
     /// Size MLX's allocator for this model. The cache is memory MLX holds onto for reuse; on a
     /// device already at its limit that reuse is not worth the headroom it costs.
+    ///
+    /// The memory limit is set on *every* call, governed or not. MLX's own default is 1.5× the
+    /// GPU's recommended working set, which on iOS sits above the jetsam line — so without this,
+    /// an ungoverned model was free to allocate straight through the point where iOS kills the
+    /// app. A ceiling rather than a hard cap: allocations past it wait on scheduled work instead
+    /// of racing ahead of it, which is what keeps peaks from stacking.
     static func applyAllocatorLimits(for model: MLXModel?) {
-        if isActive(for: model) {
-            Memory.cacheLimit = 4 * 1024 * 1024
-            // A ceiling rather than a hard cap: allocations past it wait on scheduled work instead
-            // of racing ahead of it, which is what keeps peaks from stacking.
-            Memory.memoryLimit = max(512, MemoryBudget.totalMB - MemoryBudget.reserveMB) * 1_048_576
-        } else {
-            Memory.cacheLimit = 20 * 1024 * 1024
-        }
+        guard mlxRuntimeReady else { return }
+        Memory.memoryLimit = max(512, MemoryBudget.totalMB - MemoryBudget.reserveMB) * 1_048_576
+        Memory.cacheLimit = isActive(for: model) ? 4 * 1024 * 1024 : 20 * 1024 * 1024
     }
 
     /// Free everything droppable right now. Called before a load and on a memory warning.
     static func releaseCaches() {
+        guard mlxRuntimeReady else { return }
         Memory.clearCache()
     }
 }
@@ -128,6 +148,12 @@ final class MemoryPressureMonitor {
         /// an explanation of what the app is already doing.
         let isGoverned: Bool
     }
+
+    /// Called when the app has to give memory back immediately. Set by ``MLXGenerationService`` so
+    /// a system warning can shed the *weights*, which are nearly all of the footprint — clearing
+    /// MLX's reuse cache on its own frees a few MB against a model measured in gigabytes, which is
+    /// why warnings used to be followed by a termination anyway.
+    var onCriticalPressure: (() -> Void)?
 
     private var observer: NSObjectProtocol?
     private var highestThisRun: MemoryBudget.Pressure = .normal
@@ -174,6 +200,7 @@ final class MemoryPressureMonitor {
             break
         case .elevated:
             logger.notice("Memory elevated — available=\(MemoryBudget.availableMB, privacy: .public) MB")
+            MemoryDiagnostics.record(.pressureElevated, title: "Memory running low mid-generation")
             show(Notice(
                 level: .elevated,
                 title: governed ? "Managing memory" : "Memory is running low",
@@ -185,6 +212,7 @@ final class MemoryPressureMonitor {
         case .critical:
             logger.warning("Memory critical — available=\(MemoryBudget.availableMB, privacy: .public) MB")
             MemorySaver.releaseCaches()
+            MemoryDiagnostics.record(.pressureCritical, title: "Stopped generating to save memory")
             show(Notice(
                 level: .critical,
                 title: "Stopped early to save memory",
@@ -202,6 +230,11 @@ final class MemoryPressureMonitor {
     /// silently trying again is the one thing that reliably repeats it.
     func noteInterruptedLoad(of model: MLXModel) {
         logger.warning("[\(model.rawValue, privacy: .public)] Previous load never finished — likely terminated for memory")
+        MemoryDiagnostics.record(
+            .interruptedLoad,
+            title: "\(model.rawValue) never finished loading last time",
+            detail: "The app stopped while the weights were being read into memory — on a device this model is big for, that is iOS reclaiming the app."
+        )
         show(Notice(
             level: .elevated,
             title: "\(model.rawValue) didn't finish loading",
@@ -214,7 +247,18 @@ final class MemoryPressureMonitor {
     /// The system's own warning, which can arrive between samples.
     private func handleSystemWarning() {
         logger.warning("System memory warning — available=\(MemoryBudget.availableMB, privacy: .public) MB")
+        // Recorded before anything is freed, so the row shows what was being held at the moment
+        // iOS complained.
+        MemoryDiagnostics.record(.memoryWarning, title: "iOS memory warning")
         MemorySaver.releaseCaches()
+        // No-op mid-generation — a run in flight holds its own reference, so dropping ours frees
+        // nothing and only costs a reload. It's the idle case this is for: an app holding weights
+        // it isn't using is the one iOS kills.
+        onCriticalPressure?()
+        // The drawing model is the other multi-hundred-MB resident, and it only exists mid-run.
+        // Stopping the run keeps every picture already saved (every illustrate path is
+        // skip-existing) and frees the pipeline at the run's own `defer`.
+        StoryImageService.shared.stopForMemoryPressure()
         level = .critical
         highestThisRun = .critical
         show(Notice(

@@ -11,7 +11,7 @@ ceiling, and Gemma is the only family that clears it.**
 
 Companion to [`MODEL_SCOREBOARD.md`](MODEL_SCOREBOARD.md), [`ARTICLE.md`](ARTICLE.md),
 [`GEMMA_E2B_FINETUNING.md`](GEMMA_E2B_FINETUNING.md), and the detailed BübleLM writeup in
-[`BUEBLE_LM_EVAL.md`](BUEBLE_LM_EVAL.md).
+[`bueble.md`](data/german-first-models-writeups/bueble.md).
 
 > ## ⚠️ Verdict revised 2026-07-30 — read this first
 >
@@ -94,7 +94,7 @@ instead of 'er'"*). 35-EU-language pretraining tuned for Catalan/Spanish/Basque 
 depth nor task discipline. The exact failure the scoreboard first recorded for EuroLLM-1.7B (13%).
 
 **BübleLM 2B-SFT — German knowledge without verdict discipline.** Full writeup in
-[`BUEBLE_LM_EVAL.md`](BUEBLE_LM_EVAL.md): 7% strict / 25% lenient, never once emits a bare `OK`.
+[`bueble.md`](data/german-first-models-writeups/bueble.md): 7% strict / 25% lenient, never once emits a bare `OK`.
 Genuine German (its fixes are often correct) but no instruction-format discipline — the EuroLLM
 pattern with more German and even worse format.
 
@@ -147,6 +147,75 @@ So the honest state of the budget tier (**updated 2026-07-30 — see the banner 
 The full sweep cost ~2 hours of Mac time (five converts + eleven eval runs + two quant experiments)
 and settled five "maybe this one?" model questions plus the 3-bit path the model cards couldn't.
 Cheap, and exactly what the eval bench is for.
+
+## Addendum 2026-08-26 — Granite 4.2-3b: a newer base that is a *worse* base
+
+IBM released the Granite 4.2 family on 2026-08-25 (dense 3B/8B/30B "reasoning" models, Apache 2.0,
+German among 12 tested languages). Since granite-4.1-3b v4 is the standing 4 GB-tier favorite
+(164/203 tuned), the 3B was probed the same day. **Verdict: stock 4.2-3b scores below stock 4.1-3b
+on every suite; the fine-tune was declined.** Total cost: ~$0.25 (a pod was provisioned and
+terminated before training) plus ~1 h of Mac eval time.
+
+### Compatibility notes (all clean — the pipeline takes it unchanged)
+
+- `GraniteForCausalLM`, `model_type: granite`, dense, 40 layers, vocab **100,352** — same
+  architecture class and German-friendly vocab as 4.1; `mlx_lm`'s granite arch handles every 4.2
+  scaling field (`attention_multiplier` 0.015625, the rest 1.0).
+- **New ChatML-style template** (`<|im_start|>`, replacing 4.1's format) with `enable_thinking`
+  **defaulting to True**. The switch only changes the generation prompt: True primes
+  `<|im_start|>assistant\n<think>\n`, False primes `<think></think>`. `run_baseline_eval.py`
+  already passes `enable_thinking=False`; training rows would render with an empty
+  `<think></think>` prefix, consistent with that. **If this family is ever tuned: bake a template
+  with default False into the shipped checkpoint** — MLX Swift in the app can't pass the kwarg.
+- Harness traps checked per the standing rule: `<|im_start|>` encodes to a single id (100256),
+  EOS `<|im_end|>` (100257), 0 format errors across all 121 v0+v1 items.
+
+### Results (guarded, local MLX 4-bit convert at 4.5 bpw)
+
+| suite | 4.2-3b stock | 4.1-3b stock |
+|---|---|---|
+| core v0 (60) | **27** | 31 |
+| ext v1 (61) | **34** | 39 |
+| holdout v2 (82) | **39** | 41 |
+| **total /203** | **100** | **111** |
+| false corrections /32 | **9%** | 34% |
+| miss rate /69 | **67%** | 45% |
+
+Per-phenomenon the decline is scattered, not a collapse: core lost `dawo` 8→5 and `vmp` 12→10;
+ext lost `adjend` 6→3, `aux` 5→3, `wechsel` 4→2 while *gaining* `ndekl` 0→3 and `imperativ` 1→2.
+No cell moved the way a substrate change would.
+
+**The real finding is the behavior flip.** The reasoning retrain shifted the verdict prior hard
+toward "OK": false corrections 34% → 9%, misses 45% → 67%. With thinking disabled, 4.2 is a much
+more cautious model that waves half again as many real errors through — the Qwen/Phi failure mode,
+arriving via RL-for-reasoning rather than weak German. Same knowledge, worse judgment for a tutor.
+
+### Why the tune was declined
+
+The granite path's value was "base knows German but not correction behavior" — the v4 corpus adds
+the behavior. 4.2 starts 11 items lower with *less* verdict courage to build on, and by the
+substrate-sets-the-ceiling rule the tuned outcome projects at-or-below granite-4.1 v4's 164.
+$2.50 would most likely buy a "confirmed, slightly worse" row. Declined; 4.1 v4 keeps the bench spot.
+
+**Reopen criteria:** a granite-4.2-**1b** (would be a genuinely new size point for the 4 GB tier),
+or independent evidence that reasoning-SFT'd bases respond differently to grammar SFT (in which
+case the stock probe under-predicts). The 8B is moot — E4B owns that tier at 90% core.
+
+Artifacts: `models/granite42-3b-4bit` (local), `results/guarded-{v0,v1ext,v2}_granite42-3b-4bit.json`.
+Scoreboard row in the 2026-08-19 v4 block of [`MODEL_SCOREBOARD.md`](MODEL_SCOREBOARD.md).
+
+```bash
+# reproduce
+.venv/bin/python -m mlx_lm convert --hf-path ibm-granite/granite-4.2-3b -q --q-bits 4 \
+    --q-group-size 64 --mlx-path models/granite42-3b-4bit
+for EV in grammar_eval_v0:guarded-v0 grammar_eval_v1_extra:guarded-v1ext grammar_eval_v2_holdout:guarded-v2; do
+  f=${EV%%:*}; t=${EV##*:}
+  .venv/bin/python scripts/run_baseline_eval.py --model models/granite42-3b-4bit \
+      --eval-file data/eval/${f}.json --tag $t --app-guard
+done
+.venv/bin/python scripts/behavior_metrics.py --app-guard \
+    results/guarded-v0_granite42-3b-4bit.json results/guarded-v1ext_granite42-3b-4bit.json
+```
 
 ## Reproduce
 

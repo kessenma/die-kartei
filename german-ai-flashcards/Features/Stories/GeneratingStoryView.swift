@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Full-screen overlay shown while the hero model writes a story. Mirrors the flashcard
+/// Full-screen overlay shown while a German Tutor writes a story. Mirrors the flashcard
 /// generation overlay (`GeneratingFlashcardsView`) — same brand glow and card treatment — but with
 /// a per-phase animation (see `GeneratingStoryAnimations`), a phase rail, and phase-aware English
 /// copy instead of raw German status text.
@@ -35,6 +35,7 @@ struct GeneratingStoryView: View {
             }
             .opacity(0.95)
             .ignoresSafeArea()
+            .memoryContext("Writing a story")
 
             VStack(spacing: 22) {
                 StoryPhaseAnimation(

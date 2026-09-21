@@ -9,6 +9,12 @@ extension CardDeckView {
             for: currentIndex < savedCards.count ? savedCards[currentIndex] : savedCards[0]
         )
 
+        VStack(spacing: 8) {
+        Text("Only Didn't know counts as a miss. Hard, Good and Easy all mean you knew it.")
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal)
         HStack(spacing: 12) {
             ForEach(AnkiRating.allCases, id: \.rawValue) { rating in
                 let preview = previews.first { $0.rating == rating }
@@ -42,6 +48,7 @@ extension CardDeckView {
             }
         }
         .padding(.horizontal)
+        }
     }
 
     func ankiButtonColor(_ rating: AnkiRating) -> Color {
@@ -55,8 +62,19 @@ extension CardDeckView {
 
     func ankiAdvance() {
         if let rating = ankiRatings[currentIndex], currentIndex < savedCards.count {
-            SpacedRepetitionService.apply(rating: rating, to: savedCards[currentIndex])
+            let card = savedCards[currentIndex]
+            let firstRating = card.totalReviews == 0
+            SpacedRepetitionService.apply(rating: rating, to: card)
             try? modelContext.save()
+            if firstRating, isWortschatzSession {
+                StudyLogService.recordNewWords(1, in: modelContext)
+            }
+            // A miss comes back a few cards later. Ratings are keyed by card index, so clear this
+            // one or the stale Again would pre-select the button (and enable Next) on its return.
+            // Applying SM-2 again when the card comes back is intended.
+            if rating == .again, requeue(currentIndex) {
+                ankiRatings[currentIndex] = nil
+            }
         }
 
         if ankiDuePosition < ankiDueIndices.count - 1 {
@@ -69,9 +87,9 @@ extension CardDeckView {
     }
 
     func finishAnkiSession() {
-        let correct = ankiRatings.values.filter { $0 != .again }.count
-        let total = ankiDueIndices.count
-        let missed = ankiRatings.filter { $0.value == .again }.map { $0.key }.sorted()
+        let total = sessionDueCount
+        let missed = sessionLapses.sorted()
+        let correct = max(0, total - missed.count)
         onQuizComplete?(correct, total, missed, elapsedSeconds, .anki, ankiRatings)
         clearPauseProgress()
         showQuizSummary = true

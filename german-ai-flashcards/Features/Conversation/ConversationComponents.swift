@@ -20,10 +20,15 @@ struct ChatModelPickerSection: View {
 
     private var sortedModels: [MLXModel] {
         _ = cacheRefreshID
+        // Downloaded first, then in `germanTutors` order (already best-first), with the built-in
+        // Apple model last. Matches how the Settings screen and the story picker order things.
+        let rank: (MLXModel) -> Int = { model in
+            MLXModel.germanTutors.firstIndex(of: model) ?? MLXModel.germanTutors.count
+        }
         let sorted = MLXModel.allCases.sorted { a, b in
             let da = a.isDownloaded, db = b.isDownloaded
             if da != db { return da }            // downloaded first
-            return a.germanQualityScore > b.germanQualityScore
+            return rank(a) < rank(b)
         }
         // The hero has its own section above when emphasized, so drop it from the main list.
         return showsHero ? sorted.filter { !$0.isHero } : sorted
@@ -50,7 +55,7 @@ struct ChatModelPickerSection: View {
                 Text(showsHero ? "Other models" : title)
             } footer: {
                 if showsHero {
-                    Text("These models are good at generating flashcards, but they're weaker at live, turn-based conversation. \(MLXModel.hero.rawValue) is the strongest at holding a back-and-forth chat and correcting you as you go. Any downloaded model still works here.")
+                    Text("Every tutor here is trained on the same German material. \(MLXModel.hero.rawValue) holds a back-and-forth best and is the sharpest at correcting you as you go; the smaller ones reply faster and use less memory. Apple's built-in model is instant but weaker at correcting you.")
                         .font(.caption2)
                 } else {
                     Text(footerText)

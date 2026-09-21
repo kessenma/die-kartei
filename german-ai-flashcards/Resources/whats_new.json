@@ -1,0 +1,263 @@
+{
+  "releases": [
+    {
+      "version": "1.6",
+      "date": "2026-09-16",
+      "highlights": [
+        {
+          "title": "Your tutor is loading · Download progress on Home",
+          "detail": "The card at the top of Home now shows a live bar and how far your teacher has got, so you can start a download and carry on working while it lands.",
+          "symbol": "arrow.down.circle"
+        },
+        {
+          "title": "Was ist neu · What's New",
+          "detail": "Release notes now live in the app: once after each update, and any time from Settings ▸ About.",
+          "symbol": "sparkles"
+        },
+        {
+          "title": "Bewerbung · Job prep",
+          "detail": "Save a job posting from the browser, study its language, and rehearse the interview for that exact role.",
+          "symbol": "briefcase"
+        },
+        {
+          "title": "Type instead of talk",
+          "detail": "Conversations accept typed turns, with a quick German/English keyboard switch.",
+          "symbol": "keyboard"
+        },
+        {
+          "title": "Dein Weg · Your journey",
+          "detail": "A timeline of your progress, with a quick „Weißt du es noch?“ check on words you learned a while ago.",
+          "symbol": "map"
+        },
+        {
+          "title": "Placement answers you can revisit",
+          "detail": "The placement check keeps your answers so you can review them question by question and hand them to the coach.",
+          "symbol": "list.clipboard"
+        },
+        {
+          "title": "Abzeichen · Badges",
+          "detail": "Milestones for streaks, words learned, perfect rounds and first stories.",
+          "symbol": "rosette"
+        },
+        {
+          "title": "Earned, not estimated",
+          "detail": "The Lernpyramide now separates what you've proven from what a declared level only suggests.",
+          "symbol": "triangle"
+        },
+        {
+          "title": "Gespräch · Picking a chat back up",
+          "detail": "If a conversation is interrupted — you switch apps, or your iPad runs low on memory — reopening it offers to get the reply you were waiting for, instead of leaving the chat stuck.",
+          "symbol": "arrow.trianglehead.clockwise"
+        },
+        {
+          "title": "Wortschatz · One word box for A1–B1",
+          "detail": "The three Goethe lists share one box now: a word learned at A1 stays learned at A2. Pick levels and word types, see what is due today, press Start.",
+          "symbol": "archivebox"
+        },
+        {
+          "title": "Der Karteikasten · Your word box",
+          "detail": "A bar for each compartment shows how your words move from new to known.",
+          "symbol": "chart.bar"
+        },
+        {
+          "title": "Neue Wörter · New words in daily portions",
+          "detail": "Set how many new Goethe words a day, and ask for ten more when you are on a roll.",
+          "symbol": "plus.circle"
+        },
+        {
+          "title": "der · die · das? · Gender first",
+          "detail": "Nouns hide their article until you flip, so every card is a small gender check. Turn it off in Settings ▸ Cards.",
+          "symbol": "questionmark.circle"
+        },
+        {
+          "title": "Noch einmal · Missed cards come back",
+          "detail": "A card you mark Didn't know returns a few cards later in the same session.",
+          "symbol": "arrow.uturn.backward"
+        },
+        {
+          "title": "Wörter durchsuchen · Every word's status",
+          "detail": "Browse all Goethe words as new, due, tricky, or known, and tap one for its history.",
+          "symbol": "list.bullet.rectangle"
+        },
+        {
+          "title": "Pluralformen · Plural and Perfekt forms",
+          "detail": "Hundreds of Goethe nouns and verbs now show their plural or Perfekt forms on the card.",
+          "symbol": "text.append"
+        },
+        {
+          "title": "Bilder · Picture layout",
+          "detail": "Story pictures are shown whole instead of cropped, and you can pick how they sit: short banners, full width, or with the text flowing around them.",
+          "symbol": "photo.on.rectangle.angled"
+        },
+        {
+          "title": "Speicher · Memory",
+          "detail": "See what is using memory right now, and a log of any crashes, under Settings ▸ Speicher. Copy it to share when something goes wrong.",
+          "symbol": "memorychip"
+        },
+        {
+          "title": "Stabiler · More stable",
+          "detail": "Runs more reliably on iPads and phones with less memory: pictures, tutors and the drawing model no longer compete for the same space.",
+          "symbol": "checkmark.shield"
+        }
+      ]
+    },
+    {
+      "version": "1.4",
+      "date": "2026-09-05",
+      "highlights": [
+        {
+          "title": "Tutors for smaller phones",
+          "detail": "Additional models that fit lower-end devices.",
+          "symbol": "iphone"
+        },
+        {
+          "title": "Vorstellungsgespräch · Job interview chats",
+          "detail": "A clearer flow for interview practice.",
+          "symbol": "briefcase"
+        },
+        {
+          "title": "Präpositionen in 3D · Preposition game",
+          "detail": "A new grammar game where every spatial word is acted out in 3D.",
+          "symbol": "cube"
+        },
+        {
+          "title": "Einstufung · Placement quiz",
+          "detail": "A new entrance quiz and proficiency selector, A1 to C1.",
+          "symbol": "checklist"
+        },
+        {
+          "title": "Lernpyramide · Learner pyramid",
+          "detail": "Track your progress layer by layer.",
+          "symbol": "triangle"
+        },
+        {
+          "title": "Easier story translation",
+          "detail": "Unknown words in short stories are simpler to look up.",
+          "symbol": "book.pages"
+        },
+        {
+          "title": "Farbige Artikel · der, die, das in colour",
+          "detail": "Articles are colour-coded in conversation views.",
+          "symbol": "paintbrush"
+        },
+        {
+          "title": "New conversation animations",
+          "symbol": "bubble.left.and.bubble.right"
+        }
+      ]
+    },
+    {
+      "version": "1.3",
+      "date": "2026-07-21",
+      "highlights": [
+        {
+          "title": "German Tutor, a model fine-tuned for this app",
+          "detail": "Gemma 4 E4B, trained on a German tutoring dataset built for Die Kartei and running entirely on device. It writes every story and backs the coaching, cards and corrections.",
+          "symbol": "graduationcap"
+        },
+        {
+          "title": "Open model, open data",
+          "detail": "The model and its training data are public on Hugging Face.",
+          "symbol": "globe"
+        },
+        {
+          "title": "Story Mode · Lesen",
+          "detail": "Read a short story at your level, then answer comprehension questions in the format of the Goethe and ÖSD reading exams.",
+          "symbol": "book"
+        },
+        {
+          "title": "Illustrated stories, two voices",
+          "detail": "Stories can be illustrated on device, and separate male and female voices make dialogue sound like two people.",
+          "symbol": "photo"
+        },
+        {
+          "title": "A coach that watches where you struggle",
+          "detail": "Weak spots from cards, games and chats come back as targeted drills, and a streak calendar on Home shows each day's practice.",
+          "symbol": "figure.mind.and.body"
+        },
+        {
+          "title": "Two games",
+          "detail": "Vocab Matching with your own decks, and Der/Die/Das from the on-device dictionary.",
+          "symbol": "gamecontroller"
+        },
+        {
+          "title": "Bulk jobs",
+          "detail": "Queue the heavy work, illustrated decks and story images, and let it run in one pass.",
+          "symbol": "tray.full"
+        },
+        {
+          "title": "Smarter article checking",
+          "detail": "Every card is checked against the bundled Wiktionary. Compounds take the gender of their last part, reliable endings cover most of the rest, and nouns with two valid articles are no longer flagged.",
+          "symbol": "checkmark.seal"
+        },
+        {
+          "title": "Reminders on your terms",
+          "detail": "Choose the cadence or turn them off, all inside the app.",
+          "symbol": "bell.badge"
+        },
+        {
+          "title": "Rebuilt navigation and haptics",
+          "detail": "New navigation now that there is more to reach, plus haptics on flashcard and multiple-choice answers with settings to tune them.",
+          "symbol": "hand.tap"
+        }
+      ]
+    },
+    {
+      "version": "1.2",
+      "date": "2026-06-12",
+      "highlights": [
+        {
+          "title": "KI-Sprachchat · AI Voice Chat",
+          "detail": "Practice speaking German out loud in 20+ everyday scenarios or on a grammar focus, and get corrected as you go.",
+          "symbol": "waveform"
+        },
+        {
+          "title": "Hints, translations, replies read aloud",
+          "detail": "Tap any word for its meaning, and every reply can be read aloud.",
+          "symbol": "speaker.wave.2"
+        },
+        {
+          "title": "Sag es auf Deutsch · Say it in German",
+          "detail": "Work out what you want to say from English, then get coached through saying it.",
+          "symbol": "text.bubble"
+        },
+        {
+          "title": "Coaching report after every chat",
+          "detail": "Each conversation ends with a report and can become a flashcard deck.",
+          "symbol": "doc.text"
+        },
+        {
+          "title": "Save phrases you hear in the wild",
+          "detail": "Double-tap or highlight any phrase in a chat to save it. The AI weaves active ones into later chats, and saved phrases can become decks.",
+          "symbol": "bookmark"
+        },
+        {
+          "title": "Cards from your own material",
+          "detail": "Scan PDFs, scan photos, or paste a webpage to build cards and conversations.",
+          "symbol": "doc.viewfinder"
+        },
+        {
+          "title": "The app takes on your model's look",
+          "detail": "Colours follow whichever AI model you pick, conversations included.",
+          "symbol": "paintpalette"
+        },
+        {
+          "title": "Also in this update",
+          "detail": "A Conversation settings tab, step-by-step instructions for Apple's higher-quality voices, smarter model loading, and the first Akkusativ and Dativ cards in the Goethe decks.",
+          "symbol": "ellipsis.circle"
+        }
+      ]
+    },
+    {
+      "version": "1.0",
+      "date": "2026-05-17",
+      "highlights": [
+        {
+          "title": "Die Kartei",
+          "detail": "AI flashcards for German: generate a deck on any topic, study it, and keep the words that stick.",
+          "symbol": "rectangle.stack"
+        }
+      ]
+    }
+  ]
+}

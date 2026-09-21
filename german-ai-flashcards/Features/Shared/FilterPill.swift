@@ -16,6 +16,9 @@ struct FilterPill: View {
     var systemImage: String?
     let tint: Color
     let isOn: Bool
+    /// The ✕ on a selected pill reads as "tap to clear" — right for single-choice filters, wrong
+    /// for a multi-select strip where tapping just toggles. Off there; the fill alone says selected.
+    var showsClearGlyph: Bool = true
     let action: () -> Void
 
     @Environment(\.appTheme) private var appTheme
@@ -27,7 +30,7 @@ struct FilterPill: View {
                     Image(systemName: systemImage)
                 }
                 Text(label)
-                if isOn {
+                if isOn && showsClearGlyph {
                     Image(systemName: "xmark")
                         .font(.caption2.weight(.bold))
                 }

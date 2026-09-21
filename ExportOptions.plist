@@ -2,26 +2,29 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- App Store export options used by scripts/deploy.py.
+	     Automatic signing: the only App Store profile for this app is
+	     Xcode-managed, which cannot be combined with manual signing. -->
 	<key>method</key>
-	<string>app-store</string>
-	<key>teamID</key>
-	<string>RHPLRY9X9P</string>
-	<key>signingStyle</key>
-	<string>manual</string>
-	<key>provisioningProfiles</key>
-	<dict>
-		<key>kyle-essenmacher.german-ai-flashcards</key>
-		<string>match AppStore kyle-essenmacher.german-ai-flashcards</string>
-	</dict>
-	<key>uploadSymbols</key>
-	<true/>
-	<key>uploadBitcode</key>
-	<false/>
-	<key>compileBitcode</key>
-	<false/>
-	<key>stripSwiftSymbols</key>
-	<true/>
+	<string>app-store-connect</string>
 	<key>destination</key>
 	<string>export</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>teamID</key>
+	<string>RHPLRY9X9P</string>
+
+	<!-- Critical: defaults to YES, which lets Xcode silently rewrite
+	     CFBundleVersion at export time based on what App Store Connect
+	     already has. deploy.py sets the build number deliberately via
+	     `asc builds next-build-number` (which also counts in-flight
+	     uploads, unlike Xcode), so Xcode must not second-guess it. -->
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
+
+	<key>uploadSymbols</key>
+	<true/>
+	<key>stripSwiftSymbols</key>
+	<true/>
 </dict>
 </plist>

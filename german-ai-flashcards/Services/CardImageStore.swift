@@ -45,6 +45,13 @@ nonisolated enum CardImageStore {
         UIImage(contentsOfFile: url(fileName: fileName, deckID: deckID).path)
     }
 
+    /// Load a card's picture no larger than `maxPixelSize` on its long edge — the same ImageIO
+    /// path the story pictures use. A 48 pt thumbnail row used to decode the full 512² (1 MB)
+    /// per card; see `DownsampledImage`.
+    static func loadImage(fileName: String, deckID: UUID, maxPixelSize: Int) -> UIImage? {
+        DownsampledImage.load(at: url(fileName: fileName, deckID: deckID), maxPixelSize: maxPixelSize)
+    }
+
     // MARK: - Drafts
 
     /// A file name for a picture drawn before its card exists — `CardImageTiming.everyCard` draws

@@ -32,8 +32,20 @@ struct ConversationView: View {
     @State private var showSayIt = false
     @State private var showSavedWords = false
     @State private var showHelp = false
+    /// Interview chats: the posting the recruiter is working from, for re-reading mid-chat.
+    @State private var showPosting = false
+    /// App ▸ Voice, reachable from the chat menu so the German voice can be changed mid-session.
+    @State private var showVoiceSettings = false
     /// A span the user selected from a correction and wants to save to their phrase library.
     @State private var phraseDraft: PhraseDraft?
+
+    /// The typed turn in progress, its keyboard language, and a handle on the field.
+    @State private var draft = ""
+    @State private var composerLanguage: ComposerLanguage = .german
+    @State private var composer = ChatComposerController()
+    /// True only when the learner switched into typing mid-session — then the keyboard comes up
+    /// on its own. Opening a chat that was already in typing mode leaves the reply visible.
+    @State private var focusComposerOnAppear = false
 
     var body: some View {
         Group {
@@ -55,6 +67,7 @@ struct ConversationView: View {
             }
         }
         .onDisappear { engine?.tearDown() }
+        .memoryContext("Chat")
         .sheet(isPresented: $showSummary) {
             if let summary {
                 ConversationSummaryView(
@@ -79,9 +92,29 @@ struct ConversationView: View {
             topBar(engine)
             brandDivider
             messageList(engine)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             inputArea(engine)
         }
+        .overlay {
+            // An interview opens on a "call connecting" screen while the tutor loads and writes
+            // its first line; the chat underneath would otherwise sit empty with a status caption.
+            if showsRecruiterWarmup(engine) {
+                RecruiterWarmupView(
+                    config: config,
+                    isLoadingModel: engine.isLoadingModel,
+                    loadProgress: mlxService.downloadProgress,
+                    loadInfo: mlxService.downloadInfo,
+                    onCancel: { mlxService.cancelLoad() }
+                )
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.35), value: showsRecruiterWarmup(engine))
         .background {
+            let userTurns = engine.conversation.messages.lazy.filter(\.isUser).count
+            // The wash warms one turn at a time — a long conversation literally heats up.
+            let restingOpacity = min(0.28 + Double(userTurns) * 0.006, 0.40)
             ZStack(alignment: .top) {
                 if appTheme == .klar {
                     Color(.systemBackground)
@@ -96,10 +129,18 @@ struct ConversationView: View {
                     .mask(
                         LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom)
                     )
-                    .opacity(engine.phase == .thinking ? 0.5 : 0.28)
+                    .opacity(engine.phase == .thinking ? 0.5 : restingOpacity)
                     .animation(.easeInOut(duration: 0.6), value: engine.phase)
+                    .animation(.easeInOut(duration: 1.5), value: userTurns)
             }
             .ignoresSafeArea()
+        }
+        .sensoryFeedback(.impact(weight: .light), trigger: engine.isRecording) { _, _ in
+            // A cue, not an error — silent in "Mistakes only".
+            modelManager.hapticFeedbackMode == .all
+        }
+        .sensoryFeedback(.success, trigger: engine.successTurnCount) { old, new in
+            new > old && modelManager.hapticFeedbackMode.playsSuccess
         }
         .sheet(isPresented: Binding(
             get: { engine.inspectedWord != nil },
@@ -112,6 +153,21 @@ struct ConversationView: View {
         }
         .sheet(isPresented: $showSavedWords) {
             SavedWordsSheet(engine: engine)
+        }
+        .sheet(isPresented: $showPosting) {
+            JobPostingSheet(config: config)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showVoiceSettings) {
+            NavigationStack {
+                VoiceSettingsView(modelManager: modelManager)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showVoiceSettings = false }
+                        }
+                    }
+            }
         }
         .sheet(isPresented: $showHelp) {
             GestureHelpSheet(
@@ -182,6 +238,15 @@ struct ConversationView: View {
 
             Spacer(minLength: 4)
 
+            if config.mode == .interview {
+                Button {
+                    showPosting = true
+                } label: {
+                    Image(systemName: "briefcase.fill").font(.title3)
+                }
+                .accessibilityLabel("Show the job posting")
+            }
+
             Button {
                 showHelp = true
             } label: {
@@ -204,7 +269,26 @@ struct ConversationView: View {
 
                 Divider()
 
-                Toggle("Auto-play replies", isOn: $modelManager.autoPlayReplies)
+                Picker("Input", selection: Binding(
+                    get: { engine.inputMode },
+                    set: { switchInput(to: $0, engine: engine) }
+                )) {
+                    ForEach(ChatInputMode.allCases) { mode in
+                        Label(mode.rawValue, systemImage: mode.systemImage).tag(mode)
+                    }
+                }
+
+                if engine.isSilent {
+                    // The auto-play toggle would read as broken here: typing is silent by design.
+                    Label("Replies stay silent while you type", systemImage: "speaker.slash.fill")
+                } else {
+                    Toggle("Auto-play replies", isOn: $modelManager.autoPlayReplies)
+                }
+                Button {
+                    showVoiceSettings = true
+                } label: {
+                    Label("Voice settings", systemImage: "waveform")
+                }
                 Button {
                     showEndConfirm = true
                 } label: {
@@ -258,6 +342,15 @@ struct ConversationView: View {
                             text: error,
                             onRetry: engine.canRetryReply ? { engine.retryReply() } : nil
                         )
+                    } else if let notice = engine.strandedTurnNotice {
+                        // Not an error — a turn the AI still owes from a session that ended badly.
+                        // Without this the only apparent way forward is to send again, which is
+                        // what stacks two learner turns and breaks the chat template.
+                        StrandedTurnBanner(
+                            text: notice,
+                            onContinue: { engine.continueStrandedTurn() },
+                            onDismiss: { engine.dismissStrandedTurnNotice() }
+                        )
                     }
 
                     Color.clear.frame(height: 1).id("bottom")
@@ -265,7 +358,7 @@ struct ConversationView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 16)
             }
-            .scrollDismissesKeyboard(.immediately)
+            .scrollDismissesKeyboard(.interactively)
             .onChange(of: engine.conversation.messages.count) { _, _ in scrollToBottom(proxy) }
             .onChange(of: engine.streamingReply) { _, _ in scrollToBottom(proxy) }
             .onChange(of: engine.phase) { _, _ in scrollToBottom(proxy) }
@@ -273,7 +366,7 @@ struct ConversationView: View {
     }
 
     private func inputArea(_ engine: ConversationEngine) -> some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             if engine.phase == .loadingModel {
                 ModelLoadingBanner(service: mlxService, model: config.model)
             }
@@ -281,8 +374,10 @@ struct ConversationView: View {
             if !engine.hints.isEmpty || engine.hintLoading {
                 HintCard(
                     hints: engine.hints,
+                    history: engine.hintHistory,
                     loading: engine.hintLoading,
                     onClose: { engine.clearHints() },
+                    onRegenerate: { engine.regenerateHints() },
                     onTapWord: { engine.inspectWord($0) },
                     onSavePhrase: { phraseDraft = PhraseDraft(german: $0) }
                 )
@@ -293,6 +388,7 @@ struct ConversationView: View {
                 SayItPromptCard(
                     prompt: prompt,
                     accent: theme.accent,
+                    isTyping: engine.inputMode == .type,
                     onHear: { SpeechService.shared.speak(prompt.german) },
                     onHearSlow: { SpeechService.shared.speak(prompt.german, slow: true) },
                     onUseAnyway: { engine.useSayItPromptAnyway() },
@@ -305,6 +401,7 @@ struct ConversationView: View {
                 NudgePromptCard(
                     prompt: repair,
                     accent: theme.accent,
+                    isTyping: engine.inputMode == .type,
                     onHear: { SpeechService.shared.speak(repair.target) },
                     onHearSlow: { SpeechService.shared.speak(repair.target, slow: true) },
                     onReveal: { engine.revealRepair() },
@@ -329,60 +426,46 @@ struct ConversationView: View {
                 }
             }
 
-            Text(statusText(engine))
-                .font(.callout)
-                .foregroundStyle(engine.isRecording ? .primary : .secondary)
-                .multilineTextAlignment(.center)
-                .lineLimit(3)
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: 24)
-                .animation(.default, value: engine.isRecording)
-
-            if engine.isRecording {
-                RecordingControls(
-                    onPeriod:   { engine.addPunctuation(".") },
-                    onQuestion: { engine.addPunctuation("?") },
-                    onRestart:  { engine.restartRecording() }
-                )
-                .transition(.scale(scale: 0.9).combined(with: .opacity))
+            let status = statusText(engine)
+            if !status.isEmpty {
+                Text(status)
+                    .font(engine.isRecording ? .callout : .footnote)
+                    .foregroundStyle(engine.isRecording ? .primary : .secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(3)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: 18)
+                    .animation(.default, value: engine.isRecording)
             }
 
-            ZStack {
-                MicButton(
-                    isRecording: engine.isRecording,
-                    level: engine.micLevel,
-                    disabled: engine.isBusy,
-                    dimmed: !engine.isModelReady && !engine.isRecording,
-                    tint: theme.accent
-                ) {
-                    engine.toggleRecording()
-                }
-
-                HStack(spacing: 12) {
-                    // An obvious one-tap loader, shown beside the mic only until the model is in memory.
-                    if !engine.isModelReady && !engine.isLoadingModel {
-                        LoadModelButton(model: config.model) { engine.loadModel() }
-                            .transition(.scale.combined(with: .opacity))
-                    }
-                    Spacer()
-                    if engine.savedWordCount > 0 {
-                        SavedWordsButton(count: engine.savedWordCount) {
-                            showSavedWords = true
-                        }
-                    }
-                    if engine.conversation.messages.contains(where: { $0.isUser }) {
-                        CircleIconButton(system: "flag.checkered", tint: .secondary, disabled: engine.isBusy) {
-                            showEndConfirm = true
-                        }
-                    }
-                }
-                .padding(.horizontal, 24)
+            if engine.inputMode == .type {
+                typingInput(engine)
+            } else {
+                speakingInput(engine)
             }
         }
-        .padding(.top, 10)
-        .padding(.bottom, 12)
-        .background(.bar)
-        .animation(.easeInOut(duration: 0.2), value: engine.isRecording)
+        .padding(.top, 18)
+        .padding(.bottom, 6)
+        .background(alignment: .top) {
+            // A soft scrim in the theme's own ground color instead of a hard bar: messages fade
+            // out as they scroll beneath the mic, echoing the model sheet's masked-gradient look.
+            Rectangle()
+                .fill(appTheme == .klar ? AnyShapeStyle(Color(.systemBackground)) : appTheme.screenBackground)
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: .black.opacity(0.9), location: 0.3),
+                            .init(color: .black, location: 0.55)
+                        ],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
+                .padding(.top, -44)
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+        }
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: engine.isRecording)
         .animation(.easeInOut(duration: 0.25), value: engine.isModelReady)
         .animation(.easeInOut(duration: 0.2), value: engine.sayItPrompt)
         .animation(.easeInOut(duration: 0.2), value: engine.repairPrompt)
@@ -391,7 +474,120 @@ struct ConversationView: View {
         }
     }
 
+    /// Tap-to-record: the mic, its waveform, and the punctuation controls that go with it.
+    @ViewBuilder
+    private func speakingInput(_ engine: ConversationEngine) -> some View {
+        if engine.isRecording {
+            RecordingControls(
+                onPeriod:   { engine.addPunctuation(".") },
+                onQuestion: { engine.addPunctuation("?") },
+                onComma:    { engine.addPunctuation(",") },
+                onRestart:  { engine.restartRecording() }
+            )
+            .transition(.scale(scale: 0.9).combined(with: .opacity))
+        }
+
+        ZStack {
+            if engine.isRecording {
+                MicWaveform(level: engine.micLevel)
+                    .frame(height: 44)
+                    .padding(.horizontal, 8)
+                    .transition(.opacity)
+            }
+
+            MicButton(
+                isRecording: engine.isRecording,
+                level: engine.micLevel,
+                disabled: engine.isBusy,
+                dimmed: !engine.isModelReady && !engine.isRecording,
+                tint: theme.accent
+            ) {
+                engine.toggleRecording()
+            }
+
+            sessionControls(engine)
+        }
+    }
+
+    /// The silent alternative: write the turn instead of speaking it. The session controls sit
+    /// above the field here, so the composer stays right on top of the keyboard.
+    @ViewBuilder
+    private func typingInput(_ engine: ConversationEngine) -> some View {
+        sessionControls(engine)
+
+        ChatComposer(
+            text: $draft,
+            language: $composerLanguage,
+            controller: composer,
+            placeholder: composerPlaceholder(engine),
+            accent: theme.accent,
+            canTakeTurn: engine.canSubmitTyped,
+            focusOnAppear: focusComposerOnAppear,
+            onSend: { sendDraft(engine) },
+            onSwitchToSpeaking: { switchInput(to: .speak, engine: engine) }
+        )
+    }
+
+    /// The controls that flank the input whichever way the learner is taking their turn: load the
+    /// model, switch input, review saved words, end the session.
+    private func sessionControls(_ engine: ConversationEngine) -> some View {
+        HStack(spacing: 12) {
+            // An obvious one-tap loader, shown beside the mic only until the model is in memory.
+            if !engine.isModelReady && !engine.isLoadingModel {
+                LoadModelButton(model: config.model) { engine.loadModel() }
+                    .transition(.scale.combined(with: .opacity))
+            }
+            if engine.inputMode == .speak {
+                CircleIconButton(system: "keyboard.fill", tint: .secondary, disabled: engine.isBusy) {
+                    switchInput(to: .type, engine: engine)
+                }
+                .accessibilityLabel("Type instead of speaking")
+            }
+            Spacer()
+            if engine.savedWordCount > 0 {
+                SavedWordsButton(count: engine.savedWordCount) {
+                    showSavedWords = true
+                }
+            }
+            if engine.conversation.messages.contains(where: { $0.isUser }) {
+                CircleIconButton(system: "flag.checkered", tint: .secondary, disabled: engine.isBusy) {
+                    showEndConfirm = true
+                }
+            }
+        }
+        .padding(.horizontal, 24)
+    }
+
     // MARK: - Helpers
+
+    /// Send the typed turn. The draft is only cleared once the engine takes it, so a turn typed
+    /// before the model is loaded survives the load prompt.
+    private func sendDraft(_ engine: ConversationEngine) {
+        if engine.submitTyped(draft) { draft = "" }
+    }
+
+    /// Flip between mic and keyboard, keeping the keyboard out of the way of the mic.
+    private func switchInput(to mode: ChatInputMode, engine: ConversationEngine) {
+        guard mode != engine.inputMode else { return }
+        focusComposerOnAppear = (mode == .type)
+        if mode == .speak { composer.dismissKeyboard() }
+        withAnimation(.snappy(duration: 0.25)) { engine.setInputMode(mode) }
+    }
+
+    /// What the empty composer asks for, which changes with what the chat is waiting on.
+    private func composerPlaceholder(_ engine: ConversationEngine) -> String {
+        if engine.repairPrompt != nil { return "Write the correction…" }
+        if engine.sayItPrompt != nil { return "Write it in German…" }
+        return "Write in German…"
+    }
+
+    /// The warm-up overlay covers a fresh interview until its opening line exists: through the
+    /// model load and the recruiter's first turn. A resumed chat already has messages.
+    private func showsRecruiterWarmup(_ engine: ConversationEngine) -> Bool {
+        config.mode == .interview
+            && engine.conversation.messages.isEmpty
+            && (engine.phase == .loadingModel || engine.phase == .thinking)
+    }
 
     private func statusText(_ engine: ConversationEngine) -> String {
         switch engine.phase {
@@ -402,13 +598,19 @@ struct ConversationView: View {
             let t = engine.liveTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
             return t.isEmpty ? "Listening… tap to stop" : t
         case .idle:
+            let typing = engine.inputMode == .type
             if !engine.isModelReady {
-                return "Tap the mic to load \(config.model.rawValue) and pick up where you left off"
+                return typing
+                    ? "Send your line to load \(config.model.rawValue) and pick up where you left off"
+                    : "Tap the mic to load \(config.model.rawValue) and pick up where you left off"
             }
             if engine.repairPrompt != nil {
-                return "Tap the mic and say the corrected sentence"
+                return typing ? "Write the corrected sentence" : "Tap the mic and say the corrected sentence"
             }
-            return engine.conversation.messages.isEmpty ? "Getting ready…" : "Tap to speak"
+            if engine.conversation.messages.isEmpty { return "Getting ready…" }
+            // The composer's own placeholder already says what to do; a caption above it would
+            // only push the field further up the screen.
+            return typing ? "" : "Tap to speak"
         }
     }
 
@@ -448,6 +650,12 @@ private struct AssistantMessageView: View {
         return engine.spokenRange
     }
 
+    /// Dictionary-confirmed noun genders in this reply, for der/die/das tinting.
+    private var genderTints: [(range: NSRange, gender: Gender)] {
+        guard engine.config.genderColors else { return [] }
+        return NounGenderTinter.tints(for: message.text, messageID: message.id)
+    }
+
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
             ModelAvatar(model: engine.config.model)
@@ -460,6 +668,7 @@ private struct AssistantMessageView: View {
                         textStyle: .title3,
                         highlightRange: highlightRange,
                         savedWords: engine.conversation.savedVocabWords,
+                        nounTints: genderTints.map { ($0.range, UIColor($0.gender.color)) },
                         onTapWord: { engine.inspectWord($0) },
                         onTranslateSelection: { engine.inspectWord($0) },
                         onSavePhrase: { onSavePhrase($0) }
@@ -469,6 +678,7 @@ private struct AssistantMessageView: View {
                         text: message.text,
                         highlightRange: highlightRange,
                         savedWords: engine.conversation.savedVocabWords,
+                        nounTints: genderTints.map { ($0.range, $0.gender.color) },
                         font: .title3,
                         onTapWord: { engine.inspectWord($0) }
                     )
@@ -584,6 +794,13 @@ private struct UserMessageView: View {
             }
 
             HStack(spacing: 8) {
+                if message.confirmedClean {
+                    Label("clean", systemImage: "checkmark")
+                        .font(.caption2)
+                        .foregroundStyle(.green)
+                        .labelStyle(.iconOnly)
+                        .accessibilityLabel("Sentence confirmed correct")
+                }
                 if message.usedHint {
                     Label("used a hint", systemImage: "lightbulb.fill")
                         .font(.caption2)
@@ -616,16 +833,31 @@ private struct CorrectionCard: View {
     private var corrected: String { message.correctedText ?? "" }
     private var note: String? { message.correctionNote }
     private var selfCorrected: Bool { message.selfCorrected }
-    /// Green when the learner repaired it themselves (elicitation), orange for a handed-over fix.
-    private var tint: Color { selfCorrected ? .green : .orange }
+    /// Understandable with minor slips — lead with the win before the fix.
+    private var closeEnough: Bool {
+        ConversationEngine.closeEnough(original: message.text, corrected: corrected)
+    }
+    /// Green when the learner repaired it themselves (elicitation), teal for a near-miss,
+    /// orange for a handed-over fix.
+    private var tint: Color { selfCorrected ? .green : (closeEnough ? .teal : .orange) }
+
+    private var headerIcon: String {
+        if selfCorrected { return "checkmark.seal.fill" }
+        return closeEnough ? "checkmark.bubble.fill" : "pencil.and.outline"
+    }
+
+    private var headerText: String {
+        if selfCorrected { return "You fixed this yourself" }
+        return closeEnough ? "Fast richtig! One small fix" : "Suggested correction"
+    }
 
     var body: some View {
         HStack {
             Spacer(minLength: 24)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
-                    Image(systemName: selfCorrected ? "checkmark.seal.fill" : "pencil.and.outline")
-                    Text(selfCorrected ? "You fixed this yourself" : "Suggested correction")
+                    Image(systemName: headerIcon)
+                    Text(headerText)
                         .font(.caption.weight(.semibold))
                 }
                 .foregroundStyle(tint)
@@ -643,10 +875,17 @@ private struct CorrectionCard: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                Button {
-                    SpeechService.shared.speak(corrected)
-                } label: {
-                    Label("Hear it", systemImage: "speaker.wave.2.fill").font(.caption2)
+                HStack(spacing: 14) {
+                    Button {
+                        SpeechService.shared.speak(corrected)
+                    } label: {
+                        Label("Hear it", systemImage: "speaker.wave.2.fill").font(.caption2)
+                    }
+                    Button {
+                        SpeechService.shared.speak(corrected, slow: true)
+                    } label: {
+                        Label("Slow", systemImage: "tortoise.fill").font(.caption2)
+                    }
                 }
                 .buttonStyle(.borderless)
                 .padding(.top, 1)
@@ -722,28 +961,134 @@ private struct MicButton: View {
     var tint: Color = .accentColor
     let action: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         Button(action: action) {
             ZStack {
                 if isRecording {
+                    // A soft glow that swells with the voice, in place of the old flat halo.
                     Circle()
-                        .fill(Color.red.opacity(0.25))
-                        .frame(width: 84 + CGFloat(level) * 36, height: 84 + CGFloat(level) * 36)
+                        .fill(
+                            RadialGradient(
+                                colors: [Color.red.opacity(0.35), Color.red.opacity(0.02)],
+                                center: .center, startRadius: 18, endRadius: 58
+                            )
+                        )
+                        .frame(width: 116, height: 116)
+                        .scaleEffect(0.72 + CGFloat(level) * 0.45)
                         .animation(.easeOut(duration: 0.12), value: level)
+
+                    if !reduceMotion {
+                        SonarRipples()
+                    }
                 }
                 Circle()
                     .fill(isRecording ? Color.red : tint)
-                    .frame(width: 76, height: 76)
-                    .shadow(radius: isRecording ? 6 : 2)
+                    .frame(width: 64, height: 64)
+                    .shadow(color: (isRecording ? Color.red : tint).opacity(0.35),
+                            radius: isRecording ? 10 : 6, y: 3)
                 Image(systemName: isRecording ? "stop.fill" : "mic.fill")
-                    .font(.system(size: 30, weight: .semibold))
+                    .font(.system(size: 26, weight: .semibold))
                     .foregroundStyle(.white)
+                    .contentTransition(.symbolEffect(.replace))
             }
+            .animation(.spring(response: 0.35, dampingFraction: 0.7), value: isRecording)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SpringPressStyle())
         .disabled(disabled)
         .opacity(disabled ? 0.5 : (dimmed ? 0.55 : 1))
-        .frame(width: 120, height: 120)
+        .frame(width: 96, height: 76)
+    }
+}
+
+/// Two slow, expanding rings that fade as they grow — a quiet "the mic is live" pulse behind the
+/// record button. Skipped entirely under Reduce Motion.
+private struct SonarRipples: View {
+    @State private var animate = false
+
+    var body: some View {
+        ZStack {
+            ripple(delay: 0)
+            ripple(delay: 1.1)
+        }
+        .allowsHitTesting(false)
+        .onAppear { animate = true }
+    }
+
+    private func ripple(delay: Double) -> some View {
+        Circle()
+            .stroke(Color.red.opacity(animate ? 0 : 0.3), lineWidth: 1.5)
+            .frame(width: 68, height: 68)
+            .scaleEffect(animate ? 1.85 : 1)
+            .animation(.easeOut(duration: 2.2).repeatForever(autoreverses: false).delay(delay), value: animate)
+    }
+}
+
+/// A gentle press-down spring shared by the round controls, so taps feel tactile without any
+/// added chrome.
+private struct SpringPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.93 : 1)
+            .animation(.spring(response: 0.28, dampingFraction: 0.65), value: configuration.isPressed)
+    }
+}
+
+/// A live, mirrored level history radiating out from behind the mic while recording — the newest
+/// sample lands beside the button and older ones drift toward the edges, Voice-Memos style.
+private struct MicWaveform: View {
+    let level: Double
+
+    @State private var samples: [CGFloat] = []
+    @State private var lastAppend = Date.distantPast
+
+    /// Bars kept per side; at 5pt spacing this comfortably fills a phone width.
+    private let maxBars = 30
+
+    var body: some View {
+        Canvas { context, size in
+            let barWidth: CGFloat = 3
+            let step: CGFloat = 5
+            let midX = size.width / 2
+            let midY = size.height / 2
+            for (i, sample) in samples.enumerated() {
+                let height = max(3, sample * size.height)
+                let age = CGFloat(i) / CGFloat(max(samples.count, 1))
+                let opacity = 0.4 * (1 - age)
+                // Start clear of the 64pt button: first bar ~40pt from center.
+                let offset = CGFloat(i + 8) * step
+                for x in [midX + offset, midX - offset] {
+                    let rect = CGRect(x: x - barWidth / 2, y: midY - height / 2,
+                                      width: barWidth, height: height)
+                    context.fill(Path(roundedRect: rect, cornerRadius: barWidth / 2),
+                                 with: .color(.red.opacity(opacity)))
+                }
+            }
+        }
+        .mask(
+            LinearGradient(
+                stops: [
+                    .init(color: .clear, location: 0), .init(color: .black, location: 0.18),
+                    .init(color: .black, location: 0.82), .init(color: .clear, location: 1)
+                ],
+                startPoint: .leading, endPoint: .trailing
+            )
+        )
+        .allowsHitTesting(false)
+        .onChange(of: level) { _, newValue in
+            let clamped = CGFloat(min(max(newValue, 0), 1))
+            let now = Date()
+            // Throttle to ~20 bars/s so the scroll speed stays steady regardless of update rate;
+            // between appends keep the loudest peak so transients still register.
+            guard now.timeIntervalSince(lastAppend) > 0.045 else {
+                if let first = samples.first, clamped > first { samples[0] = clamped }
+                return
+            }
+            lastAppend = now
+            samples.insert(clamped, at: 0)
+            if samples.count > maxBars { samples.removeLast() }
+        }
     }
 }
 
@@ -794,14 +1139,19 @@ private struct LoadModelButton: View {
 struct RecordingControls: View {
     let onPeriod: () -> Void
     let onQuestion: () -> Void
+    let onComma: () -> Void
     let onRestart: () -> Void
 
     @Environment(\.appTheme) private var appTheme
 
     var body: some View {
         HStack(spacing: 12) {
+            PunctuationButton(symbol: ",", action: onComma)
+                .staggeredIn(0)
             PunctuationButton(symbol: ".", action: onPeriod)
+                .staggeredIn(1)
             PunctuationButton(symbol: "?", action: onQuestion)
+                .staggeredIn(2)
             Button(action: onRestart) {
                 Label("Restart", systemImage: "arrow.counterclockwise")
                     .font(.subheadline.weight(.semibold))
@@ -810,9 +1160,37 @@ struct RecordingControls: View {
                     .frame(height: 44)
                     .background(Color(.secondarySystemBackground), in: appTheme.pillShape)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(SpringPressStyle())
+            .staggeredIn(3)
         }
     }
+}
+
+/// Pops a control in with a small springy scale, delayed by its position — used so the recording
+/// controls ripple into place left-to-right instead of appearing as one block. Under Reduce
+/// Motion the content just shows immediately.
+private struct StaggeredIn: ViewModifier {
+    let index: Int
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var shown = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(shown ? 1 : 0)
+            .scaleEffect(shown ? 1 : 0.7)
+            .onAppear {
+                guard !reduceMotion else { shown = true; return }
+                withAnimation(.spring(response: 0.32, dampingFraction: 0.65).delay(Double(index) * 0.05)) {
+                    shown = true
+                }
+            }
+            .onDisappear { shown = false }
+    }
+}
+
+private extension View {
+    func staggeredIn(_ index: Int) -> some View { modifier(StaggeredIn(index: index)) }
 }
 
 struct PunctuationButton: View {
@@ -827,8 +1205,16 @@ struct PunctuationButton: View {
                 .frame(width: 44, height: 44)
                 .background(Color(.secondarySystemBackground), in: Circle())
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(symbol == "?" ? "Add question mark" : "Add period")
+        .buttonStyle(SpringPressStyle())
+        .accessibilityLabel(accessibilityName)
+    }
+
+    private var accessibilityName: String {
+        switch symbol {
+        case "?": "Add question mark"
+        case ",": "Add comma"
+        default:  "Add period"
+        }
     }
 }
 
@@ -847,7 +1233,7 @@ private struct CircleIconButton: View {
                 .background(Color(.secondarySystemBackground))
                 .clipShape(Circle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SpringPressStyle())
         .disabled(disabled)
     }
 }
@@ -954,7 +1340,7 @@ private struct SavedWordsButton: View {
                         .offset(x: 6, y: -4)
                 }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SpringPressStyle())
     }
 }
 
@@ -1030,11 +1416,52 @@ private struct ErrorBanner: View {
     }
 }
 
+/// A turn the AI still owes, from a session that ended before its reply landed — a termination, a
+/// memory eviction, a failed generation. Styled as information rather than as a warning, because
+/// nothing is wrong: the conversation is simply waiting on a tap.
+private struct StrandedTurnBanner: View {
+    let text: String
+    let onContinue: () -> Void
+    let onDismiss: () -> Void
+
+    @Environment(\.appTheme) private var appTheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(text, systemImage: "arrow.trianglehead.clockwise")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            HStack(spacing: 16) {
+                Button(action: onContinue) {
+                    Label("Get a reply", systemImage: "bubble.left.and.text.bubble.right")
+                        .font(.caption.weight(.semibold))
+                }
+                .buttonStyle(.borderless)
+                Button("Not now", action: onDismiss)
+                    .font(.caption)
+                    .buttonStyle(.borderless)
+                    .tint(.secondary)
+            }
+        }
+        .padding(10)
+        .background(Color.secondary.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(10)))
+    }
+}
+
 /// Inline hint(s) shown just above the mic, so the user can read them and record at the same time.
+/// Older batches stay reachable: the chevrons (or a side swipe) page back through this session's
+/// earlier hints, so a regenerate or a new turn never loses a line the learner wanted.
 private struct HintCard: View {
     let hints: [HintSuggestion]
+    /// Earlier batches from this session, newest first (see `ConversationEngine.hintHistory`).
+    var history: [[HintSuggestion]] = []
     let loading: Bool
     let onClose: () -> Void
+    /// Ask for a fresh batch of suggestions when the first ones don't fit.
+    var onRegenerate: () -> Void = {}
     /// Double-tap a word in a hint to inspect it.
     var onTapWord: (String) -> Void = { _ in }
     /// Select a span in a hint to save it as a phrase.
@@ -1042,13 +1469,68 @@ private struct HintCard: View {
 
     @Environment(\.appTheme) private var appTheme
 
+    /// 0 = the current batch, 1… = history batches (newest first).
+    @State private var page = 0
+
+    /// Current batch first, then history — skipping an empty current batch while loading.
+    private var pages: [[HintSuggestion]] {
+        (hints.isEmpty ? history : [hints] + history).filter { !$0.isEmpty }
+    }
+
+    private var shownHints: [HintSuggestion] {
+        pages.indices.contains(page) ? pages[page] : (pages.first ?? hints)
+    }
+
+    /// Paging back through history is only offered when there is somewhere to go.
+    private var canPage: Bool { pages.count > 1 }
+    private var viewingEarlier: Bool { canPage && page > 0 && !hints.isEmpty }
+
+    private var title: String {
+        if viewingEarlier { return "Earlier hints" }
+        return shownHints.count > 1 ? "Hints — you could say" : "Hint — you could say"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                Image(systemName: "lightbulb.fill").foregroundStyle(.yellow)
-                Text(hints.count > 1 ? "Hints — you could say" : "Hint — you could say")
+                Image(systemName: viewingEarlier ? "clock.arrow.circlepath" : "lightbulb.fill")
+                    .foregroundStyle(viewingEarlier ? Color.secondary : .yellow)
+                Text(title)
                     .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 Spacer()
+                if canPage, !loading {
+                    HStack(spacing: 2) {
+                        Button { page = min(page + 1, pages.count - 1) } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(page < pages.count - 1 ? Color.secondary : Color(.tertiaryLabel))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(page >= pages.count - 1)
+                        .accessibilityLabel("Earlier hints")
+
+                        Text("\(pages.count - page)/\(pages.count)")
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(.tertiary)
+
+                        Button { page = max(page - 1, 0) } label: {
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(page > 0 ? Color.secondary : Color(.tertiaryLabel))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(page == 0)
+                        .accessibilityLabel("Newer hints")
+                    }
+                    .padding(.trailing, 4)
+                }
+                if !loading, page == 0 {
+                    Button { onRegenerate() } label: {
+                        Image(systemName: "arrow.clockwise.circle.fill").foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("New suggestions")
+                }
                 Button { onClose() } label: {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                 }
@@ -1061,7 +1543,7 @@ private struct HintCard: View {
                     Text("Thinking of suggestions…").font(.callout).foregroundStyle(.secondary)
                 }
             } else {
-                ForEach(Array(hints.enumerated()), id: \.element.id) { index, h in
+                ForEach(Array(shownHints.enumerated()), id: \.element.id) { index, h in
                     if index > 0 { Divider() }
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -1094,13 +1576,28 @@ private struct HintCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(Color.yellow.opacity(0.10))
+        .background(Color.yellow.opacity(viewingEarlier ? 0.06 : 0.10))
         .overlay(
             RoundedRectangle(cornerRadius: appTheme.innerRadius(14), style: .continuous)
-                .strokeBorder(Color.yellow.opacity(0.35), lineWidth: 1)
+                .strokeBorder(Color.yellow.opacity(viewingEarlier ? 0.2 : 0.35), lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(14), style: .continuous))
         .padding(.horizontal, 16)
+        .animation(.easeInOut(duration: 0.15), value: page)
+        // A fresh batch always lands the card back on the newest page.
+        .onChange(of: hints.first?.id) { _, _ in page = 0 }
+        // Side-swipe pages through history: left = older, right = newer.
+        .gesture(
+            DragGesture(minimumDistance: 30)
+                .onEnded { value in
+                    guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                    if value.translation.width < 0 {
+                        page = min(page + 1, max(pages.count - 1, 0))
+                    } else {
+                        page = max(page - 1, 0)
+                    }
+                }
+        )
     }
 }
 
@@ -1110,6 +1607,8 @@ private struct HintCard: View {
 private struct SayItPromptCard: View {
     let prompt: SayItPrompt
     let accent: Color
+    /// The learner is writing their attempt, not speaking it — the instructions have to match.
+    let isTyping: Bool
     let onHear: () -> Void
     let onHearSlow: () -> Void
     let onUseAnyway: () -> Void
@@ -1120,12 +1619,22 @@ private struct SayItPromptCard: View {
     private var missed: Bool { prompt.matched == false }
     private var tint: Color { missed ? .orange : accent }
 
+    private var headline: String {
+        if missed { return isTyping ? "Almost — here's how it goes" : "Almost — here's how to say it" }
+        return isTyping ? "Write it yourself" : "Say it out loud"
+    }
+
+    private var instruction: String {
+        if isTyping { return missed ? "Write it again below" : "Write it below" }
+        return missed ? "Tap the mic to try again" : "Tap the mic and say it"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: missed ? "exclamationmark.bubble.fill" : "character.bubble.fill")
                     .foregroundStyle(tint)
-                Text(missed ? "Almost — here's how to say it" : "Say it out loud")
+                Text(headline)
                     .font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 Spacer()
                 Button { onClose() } label: {
@@ -1135,7 +1644,7 @@ private struct SayItPromptCard: View {
             }
 
             if missed, let heard = prompt.heardText, !heard.isEmpty {
-                Text("You said: \(heard)")
+                Text("\(isTyping ? "You wrote" : "You said"): \(heard)")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1162,8 +1671,7 @@ private struct SayItPromptCard: View {
             }
 
             HStack(spacing: 8) {
-                Label(missed ? "Tap the mic to try again" : "Tap the mic and say it",
-                      systemImage: "mic.fill")
+                Label(instruction, systemImage: isTyping ? "keyboard.fill" : "mic.fill")
                     .font(.caption2).foregroundStyle(.secondary)
                 Spacer()
                 Button { onUseAnyway() } label: {
@@ -1191,6 +1699,8 @@ private struct SayItPromptCard: View {
 private struct NudgePromptCard: View {
     let prompt: RepairPrompt
     let accent: Color
+    /// The learner is writing their repair, not speaking it.
+    let isTyping: Bool
     let onHear: () -> Void
     let onHearSlow: () -> Void
     let onReveal: () -> Void
@@ -1202,6 +1712,11 @@ private struct NudgePromptCard: View {
     private var missed: Bool { prompt.matched == false }
     private var revealed: Bool { prompt.revealed }
     private var tint: Color { missed ? .orange : accent }
+
+    private var instruction: String {
+        if isTyping { return missed ? "Write the fix below" : "Write the corrected sentence" }
+        return missed ? "Tap the mic to try again" : "Tap the mic and say it correctly"
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -1223,7 +1738,7 @@ private struct NudgePromptCard: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             if missed, let heard = prompt.heardText, !heard.isEmpty {
-                Text("You said: \(heard)")
+                Text("\(isTyping ? "You wrote" : "You said"): \(heard)")
                     .font(.caption).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -1252,8 +1767,7 @@ private struct NudgePromptCard: View {
             }
 
             HStack(spacing: 8) {
-                Label(missed ? "Tap the mic to try again" : "Tap the mic and say it correctly",
-                      systemImage: "mic.fill")
+                Label(instruction, systemImage: isTyping ? "keyboard.fill" : "mic.fill")
                     .font(.caption2).foregroundStyle(.secondary)
                 Spacer()
                 if !revealed {

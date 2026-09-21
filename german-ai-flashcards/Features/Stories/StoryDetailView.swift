@@ -11,6 +11,7 @@ struct StoryDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.appTheme) private var appTheme
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     enum StudyMode: String, CaseIterable {
         case read = "Lesen"
@@ -54,8 +55,30 @@ struct StoryDetailView: View {
     /// ones have a translation waiting. Recomputed when the glossary arrives.
     @State private var glossaryHighlight = GlossaryHighlight.none
 
-    private var hero: MLXModel { StoryStudyService.requiredModel }
-    private var theme: ModelTheme { hero.theme }
+    /// How the pictures are arranged. A reading preference, so it's kept across stories.
+    @AppStorage("storyReadingLayout") private var layout: StoryReadingLayout = .ganz
+    /// Decoded pictures, needed only by „Umfluss" — the text view has to know their proportions
+    /// before it can flow lines around them.
+    @State private var imageCache = StoryImageCache()
+
+    // Per-render work moved out of `body`. Each of these used to be recomputed on every pass —
+    // a SwiftData fetch, a JSON decode of a stored blob — and the reader redraws often (timer
+    // ticks, spoken-word highlights). Refreshed at the points that can change them.
+    /// Lowercased German words already saved to this story's deck — highlighted in the text.
+    @State private var savedWords: Set<String> = []
+    /// Lowercased forms of the words looked up in this story — marked in red in the text.
+    @State private var lookedUpWords: Set<String> = []
+    /// The story's picture records, decoded once from `imagesData` rather than per render.
+    @State private var images: [StoryImageRecord] = []
+
+    /// The tutor this story belongs to: the one that wrote it where that's still usable here,
+    /// otherwise the current pick. Drives both the screen's colors and any follow-up generation
+    /// (translation, grading, word lookups), so a reader doesn't swap gigabytes of weights just to
+    /// translate a word.
+    private var storyModel: MLXModel {
+        StoryStudyService.followUpModel(wrote: story.model, fallback: modelManager.selectedStoryModel)
+    }
+    private var theme: ModelTheme { storyModel.theme }
 
     var body: some View {
         List {
@@ -72,7 +95,7 @@ struct StoryDetailView: View {
             lookupSection
             questionSection
         }
-        // Innermost so it wins over `.themedListScreen()`'s own tint: Klar keeps the story hero's
+        // Innermost so it wins over `.themedListScreen()`'s own tint: Klar keeps the story model's
         // brand accent (pixel-identical to the old `.tint(theme.accent)`); the identity themes take
         // their own accent.
         .tint(appTheme.accent(model: theme))
@@ -80,7 +103,13 @@ struct StoryDetailView: View {
         .navigationTitle(story.title)
         .navigationBarTitleDisplayMode(.inline)
         .contentMargins(.bottom, 120, for: .scrollContent)
+        .memoryContext("Story reader · \(layout.label)")
         .toolbar {
+            if !images.isEmpty {
+                ToolbarItem(placement: .primaryAction) {
+                    StoryLayoutMenu(layout: $layout)
+                }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     showHelp = true
@@ -138,7 +167,30 @@ struct StoryDetailView: View {
             // read that answer off rather than run the model over it again.
             inspector?.knownTranslations = knownTranslations
         }
+        // The stored blobs, decoded when they change rather than on every render.
+        .task(id: story.imagesData) { images = story.images }
+        .task(id: story.lookupsData) {
+            lookedUpWords = Set(story.lookups.map { $0.german.lowercased() })
+            inspector?.knownTranslations = knownTranslations
+        }
+        // Only „Umfluss" needs the decoded bitmaps in hand; the stacked layouts let each
+        // `StoryIllustrationView` read its own file. Keyed on the layout too, so switching into
+        // Umfluss loads them then rather than on every story.
+        .task(id: "\(layout.rawValue)|\(images.count)") {
+            guard layout == .umfluss else {
+                // Switching away leaves a full set of decoded bitmaps behind nothing — and the
+                // switch itself is the moment both layouts' pictures are briefly resident, which
+                // is where this used to run the app out of memory.
+                imageCache.purge()
+                return
+            }
+            await imageCache.load(images.filter { $0.paragraphAnchorIndex != nil },
+                                  storyID: story.id)
+        }
         .onDisappear {
+            imageCache.purge()
+            // A lookup still waiting on a model load has no one to report to now.
+            inspector?.tearDown()
             SpeechService.shared.stop()
             // Covers every way out: back, the quiz push, and the app being closed from here.
             // The read-aloud player is the exception — it covers this screen rather than
@@ -178,13 +230,18 @@ struct StoryDetailView: View {
                         .padding(.vertical, 3)
                         .background(Color(.tertiarySystemFill), in: appTheme.pillShape)
                     Spacer()
-                    hero.logoImage
+                    storyModel.logoImage
                         .resizable()
                         .scaledToFit()
                         .frame(height: 18)
                 }
                 if let record = story.headerImage {
-                    StoryIllustrationView(record: record, storyID: story.id, accent: theme.accent, maxHeight: 200)
+                    StoryIllustrationView(
+                        record: record,
+                        storyID: story.id,
+                        accent: theme.accent,
+                        fit: layout == .kompakt ? .banner(height: headerBannerHeight) : .full
+                    )
                 }
                 HStack(spacing: 12) {
                     Label("\(story.wordCount) Wörter", systemImage: "text.alignleft")
@@ -295,17 +352,17 @@ struct StoryDetailView: View {
         .padding(.vertical, 4)
     }
 
-    /// The read-mode story text: paragraphs with any generated illustrations interleaved at
-    /// their anchors. The listen-mode transcript keeps `interactiveStoryText` — its read-along
-    /// highlight is an NSRange over the whole story string, which paragraph-splitting would break.
+    /// The read-mode story text: paragraphs with any generated illustrations placed at their
+    /// anchors, in whichever layout the learner picked. The listen-mode transcript keeps
+    /// `interactiveStoryText` — its read-along highlight is an NSRange over the whole story string,
+    /// which paragraph-splitting would break.
     private var illustratedStoryText: some View {
         let paragraphs = story.storyText.components(separatedBy: "\n\n")
-        let inline = Dictionary(
-            grouping: story.images.filter { $0.paragraphAnchorIndex != nil },
-            by: { $0.paragraphAnchorIndex! }
-        )
-        return VStack(alignment: .leading, spacing: 14) {
+        let inline = inlineImages(paragraphCount: paragraphs.count)
+        let order = wrapOrder
+        return VStack(alignment: .leading, spacing: paragraphSpacing) {
             ForEach(paragraphs.indices, id: \.self) { index in
+                let pictures = inline[index] ?? []
                 SelectableGermanText(
                     text: paragraphs[index],
                     textStyle: .body,
@@ -313,38 +370,108 @@ struct StoryDetailView: View {
                     savedWords: savedWords,
                     glossary: glossaryHighlight,
                     lookedUpWords: lookedUpWords,
+                    wrappedImages: layout == .umfluss ? wrapSpecs(pictures, order: order) : [],
+                    usesImageWrapping: layout == .umfluss,
                     onTapWord: { inspect($0) },
                     onTranslateSelection: { inspect($0) },
                     onSavePhrase: { phraseDraft = PhraseDraft(german: $0) }
                 )
-                ForEach(inline[index] ?? []) { record in
-                    StoryIllustrationView(record: record, storyID: story.id, accent: theme.accent, maxHeight: 180)
+                // Umfluss draws its pictures inside the paragraph above; the other two stack them
+                // between the paragraphs.
+                if layout != .umfluss {
+                    ForEach(pictures) { record in
+                        StoryIllustrationView(
+                            record: record, storyID: story.id, accent: theme.accent,
+                            fit: layout.inlineFit(compactHeight: inlineBannerHeight)
+                        )
+                    }
                 }
             }
         }
         .padding(.vertical, 4)
+        // Only „Umfluss" picks a different text engine, so only crossing that line has to rebuild
+        // the views. Kompakt ↔ Ganz update in place — keyed on `layout` itself, every paragraph
+        // and picture was torn down and rebuilt, with both generations resident mid-transition.
+        .id(layout == .umfluss)
     }
 
-    /// The English translation with the same illustrations interleaved, so switching language keeps
-    /// the pictures. (The header image sits in `headerSection` and shows in both languages already.)
+    /// The English translation with the same illustrations in the same layout, so switching language
+    /// keeps the pictures. (The header image sits in `headerSection` and shows in both languages.)
     private func translatedStoryText(_ english: String) -> some View {
         let paragraphs = englishParagraphs(english)
-        // Anchors are indices into the German paragraphs; clamp so a translation that merged
-        // paragraphs still shows every picture rather than dropping the tail ones.
-        let inline = Dictionary(
-            grouping: story.images.filter { $0.paragraphAnchorIndex != nil },
-            by: { min($0.paragraphAnchorIndex!, paragraphs.count - 1) }
-        )
-        return VStack(alignment: .leading, spacing: 14) {
+        let inline = inlineImages(paragraphCount: paragraphs.count)
+        let order = wrapOrder
+        return VStack(alignment: .leading, spacing: paragraphSpacing) {
             ForEach(paragraphs.indices, id: \.self) { index in
-                Text(paragraphs[index])
-                    .font(.body)
-                ForEach(inline[index] ?? []) { record in
-                    StoryIllustrationView(record: record, storyID: story.id, accent: theme.accent, maxHeight: 180)
+                let pictures = inline[index] ?? []
+                if layout == .umfluss {
+                    WrappedText(
+                        text: paragraphs[index],
+                        textStyle: .body,
+                        wrappedImages: wrapSpecs(pictures, order: order)
+                    )
+                } else {
+                    Text(paragraphs[index])
+                        .font(.body)
+                    ForEach(pictures) { record in
+                        StoryIllustrationView(
+                            record: record, storyID: story.id, accent: theme.accent,
+                            fit: layout.inlineFit(compactHeight: inlineBannerHeight)
+                        )
+                    }
                 }
             }
         }
         .padding(.vertical, 4)
+        .id(layout == .umfluss)
+    }
+
+    // MARK: - Picture layout
+
+    /// Wrapped pictures need more air between paragraphs — a line ending beside a picture and the
+    /// next one starting under it read as one block otherwise.
+    private var paragraphSpacing: CGFloat { layout == .umfluss ? 18 : 14 }
+
+    /// Cropped banners get more room on a wide layout: the same fixed height across a much wider row
+    /// cuts a square picture down to a strip.
+    private var headerBannerHeight: CGFloat { horizontalSizeClass == .regular ? 260 : 200 }
+    private var inlineBannerHeight: CGFloat { horizontalSizeClass == .regular ? 240 : 180 }
+
+    /// Inline pictures grouped by the paragraph they follow. Anchors are indices into the German
+    /// paragraphs, so they're clamped — a translation that merged paragraphs still shows every
+    /// picture rather than dropping the tail ones.
+    private func inlineImages(paragraphCount: Int) -> [Int: [StoryImageRecord]] {
+        guard paragraphCount > 0 else { return [:] }
+        return Dictionary(
+            grouping: images.filter { $0.paragraphAnchorIndex != nil },
+            by: { min($0.paragraphAnchorIndex!, paragraphCount - 1) }
+        )
+    }
+
+    /// Reading position of every inline picture, so „Umfluss" alternates sides down the whole story
+    /// rather than restarting inside each paragraph.
+    private var wrapOrder: [String: Int] {
+        let ordered = images
+            .filter { $0.paragraphAnchorIndex != nil }
+            .sorted { ($0.paragraphAnchorIndex!, $0.fileName) < ($1.paragraphAnchorIndex!, $1.fileName) }
+        // `uniqueKeysWithValues` would trap on a repeated file name; a duplicate record is a data
+        // glitch, not something worth crashing a reader over.
+        return Dictionary(ordered.enumerated().map { ($1.fileName, $0) }, uniquingKeysWith: { first, _ in first })
+    }
+
+    /// Turn the pictures anchored to one paragraph into wrap specs. A picture still being read off
+    /// disk is skipped — it appears as soon as the cache publishes it.
+    private func wrapSpecs(_ records: [StoryImageRecord], order: [String: Int]) -> [WrappedImageSpec] {
+        records.compactMap { record in
+            guard let image = imageCache.image(record) else { return nil }
+            let position = order[record.fileName] ?? 0
+            return WrappedImageSpec(
+                id: record.fileName,
+                image: image,
+                side: position.isMultiple(of: 2) ? .trailing : .leading,
+                cornerRadius: appTheme.innerRadius(12)
+            )
+        }
     }
 
     /// Split the translation into paragraphs that line up with the German ones where possible, so
@@ -432,7 +559,7 @@ struct StoryDetailView: View {
         entries.remove(atOffsets: offsets)
         story.setLookups(entries)
         try? modelContext.save()
-        inspector?.knownTranslations = knownTranslations
+        // The `lookupsData` task refreshes the cached sets and the inspector's known words.
     }
 
     // MARK: - Listen mode
@@ -558,14 +685,18 @@ struct StoryDetailView: View {
 
     private func setUp() {
         if service == nil {
-            service = StoryStudyService(mlxService: mlxService, modelContext: modelContext)
+            service = StoryStudyService(mlxService: mlxService, modelContext: modelContext, model: storyModel)
         }
         if inspector == nil {
             inspector = StoryWordInspector.make(
                 story: story,
                 mlxService: mlxService,
+                model: storyModel,
                 feedsCoach: modelManager.storyFeedsCoach,
-                onSaved: { wordsSaved += 1 },
+                onSaved: {
+                    wordsSaved += 1
+                    refreshSavedWords()
+                },
                 context: modelContext
             )
         }
@@ -573,6 +704,12 @@ struct StoryDetailView: View {
         // whichever of the two runs first.
         inspector?.knownTranslations = knownTranslations
         previousSeconds = StoryProgressService.secondsRead(storyID: story.id, in: modelContext)
+        refreshSavedWords()
+    }
+
+    /// One fetch, on appear and after each save — not one per render.
+    private func refreshSavedWords() {
+        savedWords = StoryDeckStore.savedWords(for: story, context: modelContext)
     }
 
     // MARK: - Time on story
@@ -606,16 +743,6 @@ struct StoryDetailView: View {
             // instead of evaporating on every trip through the background.
             readingTimer.giveBack(seconds)
         }
-    }
-
-    /// Lowercased German words already saved to this story's deck — highlighted in the text.
-    private var savedWords: Set<String> {
-        StoryDeckStore.savedWords(for: story, context: modelContext)
-    }
-
-    /// Lowercased forms of the words looked up in this story — marked in red in the text.
-    private var lookedUpWords: Set<String> {
-        Set(story.lookups.map { $0.german.lowercased() })
     }
 
     /// Everything a double-tap can be answered with without the model: the story's glossary, plus
@@ -652,20 +779,22 @@ struct StoryDetailView: View {
 /// Builds the word inspector both story screens use: double-tapped words are translated 1:1 and
 /// can be saved into the story's own deck.
 enum StoryWordInspector {
+    /// `model` is the tutor the lookups run on (the story's own, where it's still usable);
     /// `feedsCoach` gates the learner-profile hand-off; `knownTranslations` lets glossary words
     /// answer without the model; `onSaved` lets the caller count saves against the current session.
     @MainActor
     static func make(
         story: StudyStory,
         mlxService: MLXGenerationService,
+        model: MLXModel,
         feedsCoach: Bool = true,
         knownTranslations: [String: KnownTranslation] = [:],
         onSaved: @escaping () -> Void = {},
         context: ModelContext
     ) -> WordInspectorModel {
-        let model = WordInspectorModel(
+        let inspector = WordInspectorModel(
             mlxService: mlxService,
-            model: StoryStudyService.requiredModel,
+            model: model,
             isWordSaved: { word in StoryDeckStore.isWordSaved(word, story: story, context: context) },
             onSave: { german, english in
                 StoryDeckStore.saveWord(
@@ -681,8 +810,8 @@ enum StoryWordInspector {
                 try? context.save()
             }
         )
-        model.knownTranslations = knownTranslations
-        return model
+        inspector.knownTranslations = knownTranslations
+        return inspector
     }
 }
 

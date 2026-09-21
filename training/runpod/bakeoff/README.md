@@ -107,10 +107,16 @@ Why this shape:
 
 - **Termination is gated on the data being off the box, not on the generator exiting.** Killing the
   process saves nothing; the GPU bills until the *pod* dies.
-- **The pod terminates itself.** RunPod injects `RUNPOD_POD_ID` and a pod-scoped `RUNPOD_API_KEY`
-  into every pod, and `runpodctl` is preinstalled — `runpodctl remove pod $RUNPOD_POD_ID` works
-  from inside. No Mac-side watchdog to leave running overnight; results go to HF, not scp, for the
-  same reason (the laptop can sleep).
+- **The pod terminates itself — but you must give it credentials.** Measured 2026-08-17 on a
+  community pod with the standard pytorch image: `runpodctl` IS preinstalled but `RUNPOD_POD_ID`
+  and `RUNPOD_API_KEY` are **NOT injected**, contrary to what this doc previously claimed. Pass
+  both at creation: `env.SELF_POD_ID` (you get the id from the create response — or create, read
+  the id, then `update-pod` the env) and `env.RUNPOD_API_KEY` set to a **Restricted** API key
+  (console → Settings → API Keys) scoped to pod management only — never the full account key on a
+  community pod, whose host is a third party. The script then runs
+  `runpodctl config --apiKey "$RUNPOD_API_KEY" && runpodctl remove pod "$SELF_POD_ID"`. If either
+  is missing it must leave the pod up and say so loudly — an external watchdog is then required.
+  Results still go to HF, not scp, so the laptop can sleep.
 - **The deadline backstop is a separate process armed before the run.** §6.9 of the main runbook:
   failsafes here have failed in both directions, so the backstop must be something a hung child
   cannot block.

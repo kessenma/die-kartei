@@ -25,7 +25,7 @@ enum WebTextExtractor {
 
     struct Extracted { let title: String; let text: String }
 
-    private static let userAgent =
+    nonisolated private static let userAgent =
         "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) DieKartei/1.0"
     /// Reddit blocks generic browser UAs; their guidelines ask for a unique descriptive one.
     private static let redditUserAgent = "ios:de.diekartei.studyapp:1.0 (German study app)"

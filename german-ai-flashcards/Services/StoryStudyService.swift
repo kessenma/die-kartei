@@ -5,16 +5,79 @@ import SwiftData
 /// Generates a short German story plus comprehension questions and a glossary, and later
 /// grades free-response answers and translates the story on demand.
 ///
-/// Exclusive to the hero model (the in-house German fine-tune) — enforced, unlike the paper
-/// feature's recommended-but-optional model: level-controlled prose and consistent answer keys
-/// are the whole feature, and only the hero is trusted with them. Loosening the gate later is
-/// a one-line edit here.
+/// Restricted to the in-house German tutors — enforced, unlike the paper feature's
+/// recommended-but-optional model: level-controlled prose and consistent answer keys are the whole
+/// feature, and a stock model gives neither. Every tutor is trained on the same German material,
+/// so the choice inside the family is about what the device can hold, not about whether the output
+/// can be trusted. Loosening the gate further is a one-line edit to ``eligibleModels``.
 @Observable
 @MainActor
 final class StoryStudyService {
 
-    /// The one model allowed to write and grade stories.
-    static let requiredModel: MLXModel = .hero
+    /// The models allowed to write and grade stories: the in-house German tutors, best first.
+    static var eligibleModels: [MLXModel] { MLXModel.germanTutors }
+
+    /// Whether `model` is one of the tutors trusted with stories.
+    static func isEligible(_ model: MLXModel) -> Bool { eligibleModels.contains(model) }
+
+    /// The tutors this device may run, best first — empty only on a device too small for the
+    /// smallest of them.
+    static var runnableModels: [MLXModel] {
+        eligibleModels.filter { DeviceCapability.mayRun($0) }
+    }
+
+    /// The best runnable tutor already on disk, or nil. What the unattended paths (the batch queue)
+    /// ask, since they can't stop and offer a download.
+    static var readyModel: MLXModel? { runnableModels.first(where: \.isDownloaded) }
+
+    /// The lightest tutor. Named by the "this device is too small" copy, since it's the closest
+    /// thing to a fit.
+    static var smallestModel: MLXModel {
+        eligibleModels.min { $0.minimumRAMGB < $1.minimumRAMGB } ?? .hero
+    }
+
+    /// What a learner who has never picked a story model gets: a tutor they already downloaded
+    /// before the best one the device could run, so an upgrade never demands a fresh multi-GB
+    /// download from someone who is already set up.
+    static var defaultModel: MLXModel {
+        readyModel ?? runnableModels.first ?? smallestModel
+    }
+
+    /// Where `MLXModelManager.selectedStoryModel` is stored. Named here because the unattended
+    /// path below reads the preference straight from defaults, with no model manager in reach.
+    static let selectionDefaultsKey = "selectedStoryModel"
+
+    /// The tutor an unattended run — a queued batch story — should use: the learner's own pick when
+    /// it's downloaded, otherwise whichever tutor is. Nil when none of them are, since a background
+    /// job has no business starting a multi-gigabyte download on its own.
+    static var unattendedModel: MLXModel? {
+        let stored = MLXModel(rawValue: UserDefaults.standard.string(forKey: selectionDefaultsKey) ?? "")
+        if let stored, isEligible(stored), DeviceCapability.mayRun(stored), stored.isDownloaded {
+            return stored
+        }
+        return readyModel
+    }
+
+    /// Coerce a remembered pick to something this device can actually use — a tutor that was
+    /// selected on another device (or before a memory-saver opt-out) falls back to the default.
+    static func resolve(_ model: MLXModel?) -> MLXModel {
+        guard let model, isEligible(model), DeviceCapability.mayRun(model) else { return defaultModel }
+        return model
+    }
+
+    /// The model for follow-up work on a story that already exists — grading a written answer,
+    /// translating it, looking a word up. Prefers the tutor that wrote the story so a reader
+    /// doesn't swap gigabytes of weights mid-session, and falls back to `fallback` when that model
+    /// is gone: deleted, or too big for the device the story is being read on.
+    static func followUpModel(wrote: MLXModel?, fallback: MLXModel) -> MLXModel {
+        if let wrote, isEligible(wrote), DeviceCapability.mayRun(wrote), wrote.isDownloaded {
+            return wrote
+        }
+        // Second choice is the learner's current pick, but only if it's on disk: translating one
+        // word is no reason to start a multi-gigabyte download when another tutor is right there.
+        let pick = resolve(fallback)
+        return pick.isDownloaded ? pick : (readyModel ?? pick)
+    }
 
     enum Phase: Equatable {
         case idle
@@ -74,19 +137,31 @@ final class StoryStudyService {
     private let mlxService: MLXGenerationService
     private let modelContext: ModelContext
     private let imageService: StoryImageService
-    private var model: MLXModel { Self.requiredModel }
+    /// The tutor this service writes, grades, and translates with. Fixed for its lifetime — a
+    /// screen that wants a different one makes a new service.
+    let model: MLXModel
     private var stopRequested = false
 
     init(
         mlxService: MLXGenerationService,
         modelContext: ModelContext,
+        model: MLXModel? = nil,
         imageService: StoryImageService? = nil
     ) {
         self.mlxService = mlxService
         self.modelContext = modelContext
-        // Resolved here rather than as a default argument: default args evaluate outside
-        // this init's MainActor isolation, where touching .shared is a Swift 6 error.
+        // Both resolved here rather than as default arguments: default args evaluate outside
+        // this init's MainActor isolation, where touching .shared is a Swift 6 error. `resolve`
+        // also keeps a caller from handing us a model this device can't run.
+        self.model = Self.resolve(model)
         self.imageService = imageService ?? .shared
+        // The live previews are full 512² bitmaps held for a 30 pt filmstrip; name them in the
+        // memory breakdown so a reading taken mid-generation accounts for them.
+        MemoryDiagnostics.register("storyPreviews", name: "Story generation previews") { [weak self] in
+            guard let self else { return 0 }
+            let all = self.imageThumbs.compactMap { $0 } + [self.imagePreview].compactMap { $0 }
+            return all.reduce(0) { $0 + $1.bytesPerRow * $1.height }
+        }
     }
 
     /// Ask the current generation to stop. Takes effect immediately during the streamed story
@@ -174,6 +249,10 @@ final class StoryStudyService {
         progress = 1
         phase = .done
         statusText = "Fertig!"
+        // The overlay that showed these is dismissed on .done; the bitmaps (up to four 512² images
+        // plus the last preview) used to sit here until the *next* run started.
+        imageThumbs = []
+        imagePreview = nil
     }
 
     // MARK: - Step 4: illustrations
@@ -214,7 +293,7 @@ final class StoryStudyService {
         }
         guard !stopRequested else { return }
 
-        // Point of no return for cheap LLM access: free the ~5 GB language model before the
+        // Point of no return for cheap LLM access: free the language model before the
         // diffusion pipeline loads — the two don't fit together on 6 GB devices. Grading and
         // translation reload the LLM lazily later.
         mlxService.unloadModel()

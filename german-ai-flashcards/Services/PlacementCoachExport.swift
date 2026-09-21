@@ -131,6 +131,41 @@ enum PlacementCoachExport {
     static func resetHighWaterMark() {
         UserDefaults.standard.removeObject(forKey: highWaterKey)
     }
+
+    /// `-placement.debugVerify 1` — runs the hand-off and dumps the export beside `attempts.json`.
+    ///
+    /// Both actions sit behind buttons that a simulator can't press, and both are exactly what has
+    /// to be checked after touching this file: the hand-off is the only code path that can move a
+    /// pyramid number it must not move, and the export is the only one that leaves the device.
+    /// Returns a one-line summary for the run log.
+    @discardableResult
+    static func runDebugVerification(in context: ModelContext) -> String {
+        let attempts = PlacementAttemptStore.attempts()
+        let plan = pendingPlan(in: attempts)
+        let sent = send(plan, in: context)
+
+        if let document = PlacementExport.document(
+            attempts: attempts,
+            visible: attempts.flatMap { attempt in
+                attempt.records.enumerated().map { index, record in
+                    PlacementReviewItem(
+                        attemptID: attempt.id,
+                        attemptAt: attempt.takenAt,
+                        index: index,
+                        record: record
+                    )
+                }
+            },
+            filter: PlacementReviewFilter()
+        ) {
+            let url = URL.applicationSupportDirectory
+                .appendingPathComponent("Placement")
+                .appendingPathComponent("export-preview.json")
+            try? document.data.write(to: url, options: .atomic)
+        }
+
+        return "[placement] handoff: \(plan.words.count) words, \(plan.slips.count) slips — \(sent)"
+    }
 #endif
 
     // MARK: - Mapping

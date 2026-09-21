@@ -31,6 +31,58 @@ extension MLXModel {
         if self == .appleIntelligence { return }   // built-in model — nothing to delete
         try HubCacheLocation.delete(repoID: configuration.name)
     }
+
+    /// Bytes an interrupted download of this model already holds safely on disk — completed
+    /// files in the hub cache plus the in-flight file's partial. 0 once fully downloaded (or
+    /// for the built-in model), so non-zero means "there's a download to resume". Walks the
+    /// cache directory; don't call it on every progress tick.
+    var pausedDownloadBytes: Int64 {
+        if self == .appleIntelligence || isDownloaded { return 0 }
+        let cached = HubCacheLocation.cachedSizeBytes(repoID: configuration.name) ?? 0
+        let partials = HubCacheLocation.directorySize(
+            ResumableModelDownloader.partialsDirectory(forRepo: configuration.name)
+        )
+        return cached + partials
+    }
+}
+
+// MARK: - Background download continuation
+
+/// Finishes an interrupted model download while the app is woken in the *background* for
+/// URLSession events: each completed file gets committed and the next file's transfer
+/// enqueued, so the whole model can land — and post its "ready to use offline" notification —
+/// without the user ever reopening the app. Stopped the moment the app becomes active, where
+/// `MLXGenerationService.resumeInterruptedDownloadIfNeeded()` takes over: two drivers on the
+/// same repo would race each other's partials.
+@MainActor
+enum BackgroundDownloadResumer {
+    private static var task: Task<Void, Never>?
+
+    /// Kick from the app delegate's background-session wake. No-op unless a download is on
+    /// record as unfinished.
+    static func kickIfNeeded() {
+        guard task == nil,
+              let raw = UserDefaults.standard.string(forKey: MLXGenerationService.downloadInFlightKey),
+              let model = MLXModel(rawValue: raw),
+              model != .appleIntelligence,
+              !model.isDownloaded
+        else { return }
+        task = Task {
+            defer { task = nil }
+            try? await ResumableModelDownloader().download(repoID: model.configuration.name) { _, _ in }
+            guard !Task.isCancelled, model.isDownloaded else { return }
+            UserDefaults.standard.removeObject(forKey: MLXGenerationService.downloadInFlightKey)
+            await ModelDownloadNotificationService.notifyDownloadFinished(modelName: model.displayName)
+        }
+    }
+
+    /// Cancel and wait for the driver to fully unwind — its in-flight segment lands as resume
+    /// data first — so a foreground resume can safely start the moment this returns.
+    static func stop() async {
+        task?.cancel()
+        await task?.value
+        task = nil
+    }
 }
 
 // MARK: - Codable types for JSON deserialization from MLX output
@@ -51,7 +103,7 @@ struct CodableConjugation: Codable {
         )
     }
 
-    /// Remove pronoun prefixes that some models (e.g. Mistral) include in conjugation values.
+    /// Remove pronoun prefixes that a model may include in conjugation values.
     /// e.g. "ich unterrichte" → "unterrichte", "er/sie/es unterrichtet" → "unterrichtet"
     func strippingPronouns() -> CodableConjugation {
         CodableConjugation(
@@ -98,7 +150,7 @@ struct CodableVocabCard: Codable {
         // Handle three conjugation formats models produce:
         // 1. Array:      [{"tense":"Präsens","ich":"lerne",...}]
         // 2. Dict:       {"Präsens":{"ich":"lebe",...}}
-        // 3. Flat obj:   {"tense":"Präsens","ich":"lerne",...}  (Mistral)
+        // 3. Flat obj:   {"tense":"Präsens","ich":"lerne",...}
         if let array = try? container.decodeIfPresent([CodableConjugation].self, forKey: .conjugations) {
             self.conjugations = array.map { $0.strippingPronouns() }
         } else if let dict = try? container.decodeIfPresent([String: ConjugationForms].self, forKey: .conjugations) {
@@ -200,6 +252,16 @@ final class GenerationActivity {
     var idleSeconds: TimeInterval { Date().timeIntervalSince(lastProgress) }
 }
 
+/// What a card batch has produced so far, kept *outside* the decode task so a stall that cancels
+/// the task still leaves the partial output for the salvage parse. Main-actor confined for the
+/// same reason as `GenerationActivity`.
+@MainActor
+private final class PartialOutput {
+    var text = ""
+    var tokenCount = 0
+    var exitedEarly = false
+}
+
 // MARK: - MLX Generation Service
 
 @Observable
@@ -244,20 +306,44 @@ class MLXGenerationService {
     /// foreground) picks up exactly where the transfer stopped.
     private(set) var interruptedDownloadModel: MLXModel?
 
+    /// Generations in flight right now. Memory eviction waits for zero — freeing weights out from
+    /// under a live decode saves nothing (the running task holds its own reference) and costs the
+    /// learner a reload for a reply that was already on its way.
+    private var activeGenerations = 0
+
+    /// A model the *app* dropped to stay alive — a background eviction or a memory warning — as
+    /// opposed to one the user unloaded on purpose. Whoever was using it reloads it on return
+    /// rather than leaving the learner tapping Send at a model that isn't there any more.
+    /// Cleared by the next successful load, and by `unloadModel()` (a deliberate unload is not
+    /// something to undo behind the user's back).
+    private(set) var evictedModel: MLXModel?
+
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "de.germanflashcards", category: "ModelLoad")
     private let genLogger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "de.germanflashcards", category: "Generation")
 
-    /// Physical memory footprint of this process in MB. Uses phys_footprint (what jetsam measures).
-    private func memFootprintMB() -> Int {
-        var info = task_vm_info_data_t()
-        var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
-        let kr = withUnsafeMutablePointer(to: &info) { ptr in
-            ptr.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-                task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
+    init() {
+        // The weights are nearly all of what this app ever holds; name them in the memory
+        // breakdown (Settings ▸ Speicher). MLX's active buffers are the loaded model plus any live
+        // KV cache, and nothing else in the app allocates through MLX.
+        MemoryDiagnostics.register(
+            "tutor",
+            name: { [weak self] in
+                guard let self, let model = self.loadedModel else { return "Tutor" }
+                return "Tutor · \(model.rawValue)"
+            },
+            bytes: { [weak self] in
+                self?.isModelLoaded == true && MemorySaver.mlxRuntimeReady ? Memory.activeMemory : 0
             }
-        }
-        return kr == KERN_SUCCESS ? Int(info.phys_footprint) / 1_048_576 : -1
+        )
     }
+
+    /// Physical memory footprint of this process in MB — `phys_footprint`, what jetsam measures.
+    private func memFootprintMB() -> Int { MemoryBudget.footprintMB }
+
+    /// How long a card batch may go without a single token before it's declared stuck. Longer
+    /// than the chat watchdog: the prompt carries every word already generated, so prefill on a
+    /// governed device can take a while before the first token lands.
+    private static let cardStallTimeout: Double = 90
 
     /// Generation parameters with the memory governors applied. Every generation path builds its
     /// parameters through here, so a model running over this device's budget stays bounded no
@@ -282,14 +368,27 @@ class MLXGenerationService {
     /// Load a model into memory. Downloads from HuggingFace Hub on first use.
     func loadModel(_ model: MLXModel) async {
         guard !isLoading else { return }
+        guard !isModelLoaded || currentModel != model else { return }
+
+        // One heavy resident at a time. A running generation holds its own reference to the
+        // container, so dropping ours below frees nothing — a second model would load on top of
+        // the first, which on an 8 GB device is the app being killed. Same for the drawing model:
+        // every illustrate path unloads the tutor before the pipeline loads, and this is the
+        // matching guard in the other direction.
+        if activeGenerations > 0, currentModel != model {
+            loadError = "The tutor is still answering. Try again in a moment."
+            return
+        }
+        if StoryImageService.shared.isBusy {
+            loadError = "Pictures are being drawn right now. The tutor loads once they finish."
+            return
+        }
 
         // Unload previous model if switching
         if currentModel != model {
             modelContainer = nil
             isModelLoaded = false
         }
-
-        guard !isModelLoaded || currentModel != model else { return }
 
         // Apple's built-in model: no download and no MLX container — just verify availability.
         if model == .appleIntelligence {
@@ -301,12 +400,25 @@ class MLXGenerationService {
             if appleService.isAvailable {
                 currentModel = .appleIntelligence
                 isModelLoaded = true
+                evictedModel = nil
                 lastBatchEndedEarly = false
             } else {
                 isModelLoaded = false
                 loadError = appleService.unavailableReason ?? "Apple Intelligence isn't available."
             }
             isLoading = false
+            return
+        }
+
+        // The live budget, on every path — not just the Settings screen's memory check. Seventeen
+        // call sites auto-load without asking; on a device the model doesn't fit, each of them was
+        // a jetsam waiting to happen. "Use it anyway" in Settings ▸ Model & Downloads is the one
+        // door through, and it stays open.
+        if MemoryBudget.isOverBudget(model), !MemorySaver.allowsOversizedModels {
+            let needs = MemoryBudget.formattedGB(MemoryBudget.requiredMB(for: model) + MemoryBudget.reserveMB)
+            let has = MemoryBudget.formattedGB(MemoryBudget.totalMB)
+            loadError = "\(model.displayName) needs about \(needs) of memory and this device gives the app \(has). Choose it under Settings ▸ Model & Downloads to run it anyway."
+            logger.warning("[\(model.rawValue, privacy: .public)] Load refused — over budget (needs \(needs, privacy: .public), budget \(has, privacy: .public)) and the oversized opt-in is off")
             return
         }
 
@@ -323,16 +435,22 @@ class MLXGenerationService {
         let budgetMB = MemoryBudget.totalMB
         let neededMB = MemoryBudget.requiredMB(for: model)
         logger.info("[\(model.rawValue, privacy: .public)] Load started — Device RAM: \(physicalMB, privacy: .public) MB, App budget: \(budgetMB, privacy: .public) MB, App footprint: \(footprintBefore, privacy: .public) MB, Model size: \(model.approximateSizeMB, privacy: .public) MB, Model needs: \(neededMB, privacy: .public) MB, Memory Saver: \(MemorySaver.isActive(for: model), privacy: .public), Already cached: \(model.isDownloaded, privacy: .public)")
+        MemoryDiagnostics.record(
+            .modelLoadStart,
+            title: "Loading \(model.rawValue)",
+            detail: "Needs about \(neededMB) MB of a \(budgetMB) MB budget · Memory Saver \(MemorySaver.isActive(for: model) ? "on" : "off") · \(model.isDownloaded ? "from storage" : "downloading first")"
+        )
 
         // Start from as much headroom as we can get: drop MLX's reuse cache before pulling several
         // GB of weights in, and size the allocator for what this model costs on this device.
+        // This is the process's first MLX call, so the runtime gate opens here (never in the sim).
+        MemorySaver.markRuntimeReady()
         MemorySaver.releaseCaches()
         MemorySaver.applyAllocatorLimits(for: model)
         MemoryPressureMonitor.shared.startMonitoring()
-
-        // Survives the process, so a load that gets the app killed is visible on the next launch
-        // (see `takeInterruptedLoad()`) instead of silently repeating.
-        UserDefaults.standard.set(model.rawValue, forKey: Self.loadInFlightKey)
+        MemoryPressureMonitor.shared.onCriticalPressure = { [weak self] in
+            self?.releaseMemory(reason: .pressure)
+        }
 
         let task = Task {
             do {
@@ -344,10 +462,15 @@ class MLXGenerationService {
                 if !model.isDownloaded {
                     await ModelDownloadNotificationService.requestAuthorizationIfNeeded()
 
+                    // Survives the process: if iOS terminates the app mid-download (switching
+                    // to a heavy app is enough), the next launch — or a background wake —
+                    // resumes from the saved partials instead of starting over.
+                    UserDefaults.standard.set(model.rawValue, forKey: Self.downloadInFlightKey)
+
                     try await ResumableModelDownloader().download(
                         repoID: model.configuration.name
-                    ) { [weak self] downloaded, total in
-                        guard let self, self.isLoading else { return }
+                    ) { [self] downloaded, total in
+                        guard self.isLoading else { return }
                         self.downloadInfo = "Downloading \(model.displayName)…"
                         self.downloadBytesInfo = ByteCountFormatter.string(fromByteCount: downloaded, countStyle: .file)
                             + " / " + ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
@@ -355,6 +478,7 @@ class MLXGenerationService {
                             self.downloadProgress = Double(downloaded) / Double(total)
                         }
                     }
+                    UserDefaults.standard.removeObject(forKey: Self.downloadInFlightKey)
                     await ModelDownloadNotificationService.notifyDownloadFinished(modelName: model.displayName)
                 }
 
@@ -362,6 +486,12 @@ class MLXGenerationService {
                 downloadProgress = nil
                 downloadBytesInfo = nil
                 downloadInfo = "Loading \(model.displayName) into memory…"
+
+                // Survives the process, so a load that gets the app killed is visible on the next
+                // launch (see `takeInterruptedLoad()`) instead of silently repeating. Set only for
+                // the in-memory phase: dying during the *download* is a lifecycle event handled by
+                // `downloadInFlightKey` above, not a memory verdict.
+                UserDefaults.standard.set(model.rawValue, forKey: Self.loadInFlightKey)
 
                 // Everything is in the hub cache now, so this resolves without downloading.
                 let container = try await LLMModelFactory.shared.loadContainer(
@@ -374,9 +504,11 @@ class MLXGenerationService {
                 modelContainer = container
                 currentModel = model
                 isModelLoaded = true
+                evictedModel = nil
                 interruptedDownloadModel = nil
                 let footprintAfter = memFootprintMB()
                 logger.info("[\(model.rawValue, privacy: .public)] Loaded successfully — App footprint: \(footprintAfter, privacy: .public) MB")
+                MemoryDiagnostics.record(.modelLoaded, title: "Loaded \(model.rawValue)")
             } catch is CancellationError {
                 loadError = nil
                 logger.info("[\(model.rawValue, privacy: .public)] Load cancelled by user")
@@ -386,10 +518,14 @@ class MLXGenerationService {
             } catch {
                 let footprintOnError = memFootprintMB()
                 logger.error("[\(model.rawValue, privacy: .public)] Load FAILED — footprint: \(footprintOnError, privacy: .public) MB, error: \(error.localizedDescription, privacy: .public), raw: \(String(describing: error), privacy: .public)")
+                MemoryDiagnostics.record(.modelLoadFailed, title: "Couldn't load \(model.rawValue)", detail: error.localizedDescription)
                 if Self.isNetworkInterruption(error), !model.isDownloaded {
                     interruptedDownloadModel = model
                     loadError = "Download interrupted — progress is saved. It resumes automatically, or select the model again."
                 } else {
+                    // Not resumable (bad repo, HTTP error, disk) — don't let the next launch
+                    // auto-retry a download that will fail the same way.
+                    UserDefaults.standard.removeObject(forKey: Self.downloadInFlightKey)
                     loadError = "Failed to load model: \(error.localizedDescription)"
                 }
                 isModelLoaded = false
@@ -412,6 +548,11 @@ class MLXGenerationService {
     // MARK: - Interrupted loads
 
     private static let loadInFlightKey = "modelLoadInFlight"
+    /// Set while the resumable downloader is fetching a model; cleared when the download
+    /// completes, the user cancels, or the model is deleted. Unlike `interruptedDownloadModel`
+    /// it survives the process, so a download the app *died* holding resumes on relaunch —
+    /// and can be pushed forward by a background wake (`BackgroundDownloadResumer`).
+    fileprivate static let downloadInFlightKey = "modelDownloadInFlight"
 
     /// A model whose load was still running when the app last stopped — which, for a model that
     /// runs over this device's budget, usually means iOS killed the app for memory. Read once at
@@ -431,12 +572,28 @@ class MLXGenerationService {
         return false
     }
 
-    /// Call when the app returns to the foreground: if a download was cut off while the user
-    /// was away (or offline), restart it — completed files are skipped and the interrupted
-    /// file resumes from its partial, so this is cheap.
+    /// Call when the app becomes active: if a download was cut off while the user was away —
+    /// including by iOS terminating the app entirely — restart it. Completed files are
+    /// skipped and the interrupted file resumes from its partial (plus any saved resume
+    /// data), so this costs seconds, not gigabytes.
     func resumeInterruptedDownloadIfNeeded() {
-        guard let model = interruptedDownloadModel, !isLoading else { return }
+        guard !isLoading else { return }
+        var candidate = interruptedDownloadModel
+        if candidate == nil, let raw = UserDefaults.standard.string(forKey: Self.downloadInFlightKey) {
+            // The app died mid-download; only the on-disk flag remembers.
+            candidate = MLXModel(rawValue: raw)
+            if candidate == nil {
+                UserDefaults.standard.removeObject(forKey: Self.downloadInFlightKey)
+            }
+        }
+        guard let model = candidate else { return }
         interruptedDownloadModel = nil
+        if model.isDownloaded {
+            // A background wake finished it while the user was away — nothing to fetch, and
+            // loading multi-GB weights into memory stays the user's call.
+            UserDefaults.standard.removeObject(forKey: Self.downloadInFlightKey)
+            return
+        }
         Task { await loadModel(model) }
     }
 
@@ -447,6 +604,7 @@ class MLXGenerationService {
         loadTask?.cancel()
         loadTask = nil
         interruptedDownloadModel = nil
+        UserDefaults.standard.removeObject(forKey: Self.downloadInFlightKey)
         downloadProgress = nil
         downloadInfo = nil
         loadStartTime = nil
@@ -460,12 +618,75 @@ class MLXGenerationService {
     /// during story illustration — the two never fit in memory together on 6 GB devices.
     func unloadModel() {
         guard !isLoading else { return }
+        let unloaded = currentModel
         modelContainer = nil
         isModelLoaded = false
         currentModel = nil
-        Memory.clearCache()
+        evictedModel = nil
+        MemorySaver.releaseCaches()
+        // Back to the ungoverned allocator settings — a governed model's tight cache limit has no
+        // business outliving it.
+        MemorySaver.applyAllocatorLimits(for: nil)
         logger.info("Model unloaded — App footprint: \(self.memFootprintMB(), privacy: .public) MB")
+        if let unloaded {
+            MemoryDiagnostics.record(.modelUnloaded, title: "Unloaded \(unloaded.rawValue)")
+        }
     }
+
+    // MARK: - Memory eviction
+
+    /// Why the app is giving memory back.
+    enum EvictionReason: String {
+        /// The app left the foreground. iOS ranks a suspended app for termination largely by
+        /// footprint, and an app sitting on multi-GB weights is at the front of that queue — so a
+        /// trip to Settings to add a keyboard is enough to get it killed and take the open
+        /// conversation's in-flight turn with it.
+        case background
+        /// A `didReceiveMemoryWarning`. Freeing caches alone rarely moves the needle when the
+        /// weights are the footprint.
+        case pressure
+    }
+
+    /// Give memory back, dropping the loaded model when holding it is what's putting the app at
+    /// risk. Always safe to call: it no-ops mid-load and mid-generation, and a model with real
+    /// headroom on this device is kept (reloading it costs the learner a wait for nothing).
+    ///
+    /// A model dropped here is remembered in ``evictedModel`` so the screen that was using it can
+    /// bring it straight back, instead of the learner discovering it's gone by tapping Send.
+    func releaseMemory(reason: EvictionReason) {
+        guard !isLoading, activeGenerations == 0 else { return }
+        MemorySaver.releaseCaches()
+
+        guard let model = currentModel, isModelLoaded, !model.isAppleIntelligence else { return }
+        // A pressure warning means it's already going wrong, so the model goes regardless of fit.
+        // Backgrounding only sheds a model this device has no room to spare for — on a device with
+        // headroom, coming back to a loaded tutor is worth more than the footprint.
+        let mustGo = reason == .pressure
+            || MemoryBudget.isOverBudget(model)
+            || MemoryBudget.hasSlimHeadroom(model)
+        guard mustGo else { return }
+
+        modelContainer = nil
+        isModelLoaded = false
+        currentModel = nil
+        evictedModel = model
+        MemorySaver.releaseCaches()
+        MemorySaver.applyAllocatorLimits(for: nil)
+        logger.notice("[\(model.rawValue, privacy: .public)] Evicted (\(reason.rawValue, privacy: .public)) — App footprint: \(self.memFootprintMB(), privacy: .public) MB")
+        MemoryDiagnostics.record(
+            .modelEvicted,
+            title: "Dropped \(model.rawValue) to stay alive",
+            detail: reason == .pressure
+                ? "iOS warned that memory was low. The screen using the tutor reloads it on return."
+                : "The app went to the background holding a tutor this device has little room for; a suspended app that size is the first one iOS closes."
+        )
+    }
+
+    /// Whether `model` was dropped by the app and hasn't been brought back yet.
+    func wasEvicted(_ model: MLXModel) -> Bool { evictedModel == model && !isModelLoaded }
+
+    /// Forget a pending eviction without reloading — the user moved on.
+    func clearEviction() { evictedModel = nil }
 
     /// Delete a downloaded model from the HuggingFace Hub cache.
     /// If it's the currently loaded model, unloads it first.
@@ -474,6 +695,11 @@ class MLXGenerationService {
             modelContainer = nil
             isModelLoaded = false
             currentModel = nil
+            MemorySaver.releaseCaches()
+            MemorySaver.applyAllocatorLimits(for: nil)
+        }
+        if UserDefaults.standard.string(forKey: Self.downloadInFlightKey) == model.rawValue {
+            UserDefaults.standard.removeObject(forKey: Self.downloadInFlightKey)
         }
         try model.deleteFromCache()
     }
@@ -537,17 +763,7 @@ class MLXGenerationService {
 
         let systemPrompt = "You are a German language tutor. Respond ONLY with valid JSON. No markdown fences, no explanation."
 
-        // Qwen3's chat template only honors /no_think at the END of the user message,
-        // not in the system prompt. Placing it elsewhere leaves thinking mode active,
-        // which produces <think> blocks that corrupt the conjugation JSON.
-        let userMessage: String
-        switch model {
-        case .qwen3_0_6B, .qwen3_4B:
-            userMessage = prompt + "\n/no_think"
-            print("[MLX:\(model.rawValue)] /no_think appended to user message")
-        default:
-            userMessage = prompt
-        }
+        let userMessage = prompt
 
         print("[MLX:\(model.rawValue)] User prompt:\n\(userMessage)")
 
@@ -566,41 +782,58 @@ class MLXGenerationService {
 
         let stream = try await container.generate(input: lmInput, parameters: parameters)
 
-        var fullText = ""
-        var tokenCount = 0
-        var exitedEarly = false
         streamingTokenCount = 0
         lastBatchEndedEarly = false
         MemoryPressureMonitor.shared.beginRun()
+        activeGenerations += 1
+        defer { activeGenerations -= 1 }
         let batchStartTime = Date()
 
-        for try await generation in stream {
-            if isStopRequested {
-                exitedEarly = true
-                break
-            }
-            if Date().timeIntervalSince(batchStartTime) > timeoutSeconds {
-                let elapsed = Int(Date().timeIntervalSince(batchStartTime))
-                let elapsedVal = elapsed
-                genLogger.warning("[\(model.rawValue, privacy: .public)] Batch timeout after \(elapsedVal, privacy: .public)s (\(tokenCount, privacy: .public) tokens) — attempting partial parse")
-                exitedEarly = true
-                break
-            }
-            if shouldStopForMemory(at: tokenCount) {
-                genLogger.warning("[\(model.rawValue, privacy: .public)] Memory floor reached after \(tokenCount, privacy: .public) tokens (available=\(MemoryBudget.availableMB, privacy: .public) MB) — stopping early, parsing what arrived")
-                exitedEarly = true
-                break
-            }
-            if let chunk = generation.chunk {
-                fullText += chunk
-                tokenCount += 1
-                if tokenCount % 256 == 0 {
-                    let fp = memFootprintMB()
-                    genLogger.info("[\(model.rawValue, privacy: .public)] token=\(tokenCount, privacy: .public) footprint=\(fp, privacy: .public) MB")
-                    streamingTokenCount = tokenCount
+        // The batch timeout above only fires when a token arrives. A stream that never yields one
+        // used to sit here forever — and with `activeGenerations` pinned above zero, the model
+        // could never be evicted either. The same watchdog the chat path uses cancels the decode
+        // after `cardStallTimeout` of silence; the partial output survives in `partial`.
+        let partial = PartialOutput()
+        let activity = GenerationActivity()
+        let decode = Task { @MainActor in
+            for try await generation in stream {
+                try Task.checkCancellation()
+                activity.recordProgress()
+                if self.isStopRequested {
+                    partial.exitedEarly = true
+                    break
+                }
+                if Date().timeIntervalSince(batchStartTime) > timeoutSeconds {
+                    let elapsed = Int(Date().timeIntervalSince(batchStartTime))
+                    self.genLogger.warning("[\(model.rawValue, privacy: .public)] Batch timeout after \(elapsed, privacy: .public)s (\(partial.tokenCount, privacy: .public) tokens) — attempting partial parse")
+                    partial.exitedEarly = true
+                    break
+                }
+                if self.shouldStopForMemory(at: partial.tokenCount) {
+                    self.genLogger.warning("[\(model.rawValue, privacy: .public)] Memory floor reached after \(partial.tokenCount, privacy: .public) tokens (available=\(MemoryBudget.availableMB, privacy: .public) MB) — stopping early, parsing what arrived")
+                    partial.exitedEarly = true
+                    break
+                }
+                if let chunk = generation.chunk {
+                    partial.text += chunk
+                    partial.tokenCount += 1
+                    if partial.tokenCount % 256 == 0 {
+                        let fp = self.memFootprintMB()
+                        self.genLogger.info("[\(model.rawValue, privacy: .public)] token=\(partial.tokenCount, privacy: .public) footprint=\(fp, privacy: .public) MB")
+                        self.streamingTokenCount = partial.tokenCount
+                    }
                 }
             }
         }
+        do {
+            try await value(of: decode, abortingIfIdlePast: Self.cardStallTimeout, tracking: activity)
+        } catch MLXError.generationTimedOut {
+            genLogger.warning("[\(model.rawValue, privacy: .public)] No token for \(Int(Self.cardStallTimeout), privacy: .public)s (\(partial.tokenCount, privacy: .public) so far) — declaring the batch stuck, parsing what arrived")
+            partial.exitedEarly = true
+        }
+        let fullText = partial.text
+        let tokenCount = partial.tokenCount
+        let exitedEarly = partial.exitedEarly
 
         let footprintAfterGen = memFootprintMB()
         genLogger.info("[\(model.rawValue, privacy: .public)] Generation \(exitedEarly ? "interrupted" : "done", privacy: .public) — tokens=\(tokenCount, privacy: .public), footprint=\(footprintAfterGen, privacy: .public) MB, output_chars=\(fullText.count, privacy: .public)")
@@ -640,13 +873,7 @@ class MLXGenerationService {
             throw MLXError.modelNotLoaded
         }
 
-        let adjustedUser: String
-        switch model {
-        case .qwen3_0_6B, .qwen3_4B:
-            adjustedUser = userMessage + "\n/no_think"
-        default:
-            adjustedUser = userMessage
-        }
+        let adjustedUser = userMessage
 
         let userInput = UserInput(chat: [
             .system(systemPrompt),
@@ -661,6 +888,8 @@ class MLXGenerationService {
         var output = ""
         var tokenCount = 0
         MemoryPressureMonitor.shared.beginRun()
+        activeGenerations += 1
+        defer { activeGenerations -= 1 }
         for try await generation in stream {
             try Task.checkCancellation()
             if shouldStopForMemory(at: tokenCount) {
@@ -701,13 +930,7 @@ class MLXGenerationService {
             throw MLXError.modelNotLoaded
         }
 
-        let adjustedUser: String
-        switch model {
-        case .qwen3_0_6B, .qwen3_4B:
-            adjustedUser = userMessage + "\n/no_think"
-        default:
-            adjustedUser = userMessage
-        }
+        let adjustedUser = userMessage
 
         let userInput = UserInput(chat: [
             .system(systemPrompt),
@@ -726,6 +949,8 @@ class MLXGenerationService {
         lastBatchEndedEarly = false
         isStopRequested = false
         MemoryPressureMonitor.shared.beginRun()
+        activeGenerations += 1
+        defer { activeGenerations -= 1 }
         let startTime = Date()
 
         for try await generation in stream {
@@ -789,13 +1014,7 @@ class MLXGenerationService {
             throw MLXError.modelNotLoaded
         }
 
-        let userMessage: String
-        switch model {
-        case .qwen3_0_6B, .qwen3_4B:
-            userMessage = prompt + "\n/no_think"
-        default:
-            userMessage = prompt
-        }
+        let userMessage = prompt
 
         let userInput = UserInput(chat: [
             .system(systemPrompt),
@@ -817,6 +1036,8 @@ class MLXGenerationService {
         lastBatchEndedEarly = false
         isStopRequested = false
         MemoryPressureMonitor.shared.beginRun()
+        activeGenerations += 1
+        defer { activeGenerations -= 1 }
         let startTime = Date()
 
         for try await generation in stream {
@@ -1036,16 +1257,11 @@ class MLXGenerationService {
         onPartial: @escaping (String) -> Void
     ) async throws -> String {
         // Several chat templates (notably Gemma's) require the turn sequence to begin with a
-        // `user` message and to strictly alternate user/assistant. Our conversations open with an
-        // AI-generated line — an `assistant` turn with no preceding user turn — so a naive history
-        // starts with `assistant`, which makes the template call `raise_exception(...)` and
-        // surfaces to the user as "Jinja.TemplateException". Re-insert the opener seed as the
-        // eliciting user turn so the sequence alternates cleanly (and the model still sees the
-        // opener it's replying to). No-op for histories that already start on a user turn.
-        var turns = history
-        if turns.first?.role == .assistant {
-            turns.insert((role: .user, content: ConversationPrompts.openerSeed), at: 0)
-        }
+        // `user` message and to strictly alternate user/assistant; anything else calls
+        // `raise_exception(...)` and surfaces to the learner as "Jinja.TemplateException".
+        // ``ChatTurnNormalizer`` is the single place that guarantees the accepted shape — see it
+        // for every way an ordinary conversation drifts out of it.
+        let turns = ChatTurnNormalizer.normalized(history, openerSeed: ConversationPrompts.openerSeed)
 
         if model == .appleIntelligence {
             guard isModelLoaded, currentModel == model else { throw MLXError.modelNotLoaded }
@@ -1069,15 +1285,8 @@ class MLXGenerationService {
         }
 
         var messages: [Chat.Message] = [.system(system)]
-        for (index, turn) in turns.enumerated() {
-            var content = turn.content
-            // Qwen3 small models only honor /no_think at the end of the final user turn.
-            if turn.role == .user, index == turns.count - 1 {
-                switch model {
-                case .qwen3_0_6B, .qwen3_4B: content += "\n/no_think"
-                default: break
-                }
-            }
+        for turn in turns {
+            let content = turn.content
             switch turn.role {
             case .system:    messages.append(.system(content))
             case .user:      messages.append(.user(content))
@@ -1096,8 +1305,26 @@ class MLXGenerationService {
         // `checkCancellation()` and we surface `generationTimedOut` (shown with "Try again").
         let activity = GenerationActivity()
         MemoryPressureMonitor.shared.beginRun()
+        activeGenerations += 1
+        defer { activeGenerations -= 1 }
         let decode = Task { @MainActor in
-            let lmInput = try await container.prepare(input: userInput)
+            let lmInput: LMInput
+            do {
+                lmInput = try await container.prepare(input: userInput)
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                // The template rejected even the normalized sequence — a rule we haven't met. A
+                // single user turn is the one shape every chat template renders, so fall back to
+                // the transcript-in-one-turn prompt rather than ending the conversation on an
+                // error nobody can read. Worse replies beat dead ends.
+                self.genLogger.warning("Chat template rejected the turn sequence (\(error.localizedDescription, privacy: .public)) — retrying as a flattened prompt")
+                let flattened = UserInput(chat: [
+                    .system(system),
+                    .user(ChatTurnNormalizer.flattened(turns, openerSeed: ConversationPrompts.openerSeed))
+                ])
+                lmInput = try await container.prepare(input: flattened)
+            }
             let stream = try await container.generate(input: lmInput, parameters: parameters)
             var full = ""
             var tokenCount = 0
@@ -1735,13 +1962,7 @@ extension MLXGenerationService {
             throw MLXError.modelNotLoaded
         }
 
-        let userMessage: String
-        switch model {
-        case .qwen3_0_6B, .qwen3_4B:
-            userMessage = prompt + "\n/no_think"
-        default:
-            userMessage = prompt
-        }
+        let userMessage = prompt
 
         let userInput = UserInput(chat: [
             .system(systemPrompt),
@@ -1762,6 +1983,8 @@ extension MLXGenerationService {
         lastBatchEndedEarly = false
         isStopRequested = false
         MemoryPressureMonitor.shared.beginRun()
+        activeGenerations += 1
+        defer { activeGenerations -= 1 }
         let startTime = Date()
 
         for try await generation in stream {

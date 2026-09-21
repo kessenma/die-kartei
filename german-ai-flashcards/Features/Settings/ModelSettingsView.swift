@@ -12,131 +12,87 @@ struct ModelSettingsView: View {
     @State private var modelNeedingMemoryCheck: MLXModel?
     @State private var showModelGuide = false
     @State private var showHeroIntro = false
-    @State private var modelListTab: ModelListTab = .recommended
+    /// Whether the rest of the tutor family is expanded. Opens itself on appear for anyone who
+    /// has a non-lead tutor downloaded or selected — see `body`'s `.onAppear`.
+    @State private var showsOtherSizes = false
     @State private var memorySaverMode: MemorySaver.Mode = MemorySaver.mode
     @Environment(\.appTheme) private var appTheme
 
-    /// The retired build whose update sheet is open, and the one awaiting delete confirmation.
-    /// Both stay nil for anyone without an old build cached, which is what keeps every one of these
-    /// surfaces invisible to a fresh install.
+    /// The retired build whose update sheet is open, and the cached build awaiting delete
+    /// confirmation. Both stay nil for anyone without an old build cached, which is what keeps
+    /// every one of these surfaces invisible to a fresh install.
     @State private var supersessionToReview: ModelSupersession?
-    @State private var supersessionToDelete: ModelSupersession?
+    @State private var buildToDelete: DeletableBuild?
+    @State private var showClearAllModels = false
 
     /// The best in-house tutor this device can run, or nil when neither fits. Leads the promoted
     /// section as a full card.
     private var leadTutor: MLXModel? { MLXModel.leadTutor(ramGB: deviceRAMGB) }
 
-    /// The remaining runnable tutors, listed under the lead card. On an 8 GB device that's the
-    /// lighter E2B tutor, worth keeping in reach for anyone running under memory pressure; on a
-    /// 6 GB device the E2B tutor is already the lead and there's nothing left to show.
-    private var siblingTutors: [MLXModel] {
+    /// Every tutor except the one on the card, runnable ones first.
+    ///
+    /// The two-pass partition is load-bearing, not tidiness: a single `filter` returns
+    /// `germanTutors` order, which on a 4 GB phone puts both Gemma tutors — neither of which it
+    /// can run — above the one alternative it can. Runnable first, over-tier last.
+    private var otherTutors: [MLXModel] {
         guard let leadTutor else { return [] }
-        return MLXModel.germanTutors.filter { $0 != leadTutor && $0.minimumRAMGB <= deviceRAMGB }
+        let rest = MLXModel.germanTutors.filter { $0 != leadTutor }
+        return rest.filter { $0.minimumRAMGB <= deviceRAMGB }
+             + rest.filter { $0.minimumRAMGB > deviceRAMGB }
     }
 
-    /// The tutors shown in the promoted section, pulled out of the list below so nothing is listed
-    /// twice. A tutor this device *can't* run deliberately stays in the list, sunk to the bottom
-    /// with its RAM note, rather than vanishing from the app entirely.
-    private var shownTutors: [MLXModel] {
-        guard let leadTutor else { return [] }
-        return [leadTutor] + siblingTutors
+    private var oversizedTutorCount: Int {
+        otherTutors.filter { $0.minimumRAMGB > deviceRAMGB }.count
     }
 
-    /// Whether the promoted tutor section is shown at all.
-    private var showsTutorSection: Bool { leadTutor != nil }
-
-    enum ModelListTab: String, CaseIterable {
-        case recommended = "Recommended"
-        case size        = "Size"
-        case parameters  = "Parameters"
+    private var downloadedOtherTutorCount: Int {
+        otherTutors.filter { isDownloaded($0) }.count
     }
 
-    /// Tester ask: a "tell us what matters, we'll pick + load a model" shortcut, so a learner doesn't
-    /// have to read every spec card. The full list stays one scroll below for anyone who prefers it.
-    private enum ModelGoal: String, CaseIterable, Identifiable {
-        case bestGerman  = "Best German"
-        case fastest     = "Fastest"
-        case fitsDevice  = "Fits my device"
-        case longStories = "Longest stories"
-
-        var id: String { rawValue }
-
-        var systemImage: String {
-            switch self {
-            case .bestGerman:  "checkmark.seal.fill"
-            case .fastest:     "bolt.fill"
-            case .fitsDevice:  "iphone.gen3"
-            case .longStories: "book.fill"
-            }
-        }
-
-        var caption: String {
-            switch self {
-            case .bestGerman:  "Sharpest corrections and grammar"
-            case .fastest:     "Snappiest replies, smallest download"
-            case .fitsDevice:  "The balanced pick for your RAM"
-            case .longStories: "Most capable for long, rich text"
-            }
-        }
-    }
-
-    /// Resolve a goal to a concrete model. The pool is `recommendedOrder` (already filtered to what
-    /// this device can actually run / has available), so a goal never points at an unreachable model.
-    private func modelForGoal(_ goal: ModelGoal) -> MLXModel {
-        let pool = MLXModel.recommendedOrder(ramGB: deviceRAMGB)
-        guard !pool.isEmpty else { return .hero }
-        switch goal {
-        case .bestGerman:  return pool.max { $0.germanQualityScore < $1.germanQualityScore } ?? pool[0]
-        case .fastest:     return pool.min { $0.parameterCountValue < $1.parameterCountValue } ?? pool[0]
-        case .fitsDevice:  return pool.first ?? .hero
-        case .longStories: return pool.max { $0.parameterCountValue < $1.parameterCountValue } ?? pool[0]
-        }
-    }
-
-    /// "Pick by goal" — one tap resolves to a model and loads it (via the same `requestLoad` path,
-    /// so the too-big-for-this-device check still runs). The full spec list stays below.
-    private var goalSection: some View {
-        Section {
-            ForEach(ModelGoal.allCases) { goal in
-                let model = modelForGoal(goal)
-                Button {
-                    requestLoad(model)
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: goal.systemImage)
-                            .foregroundStyle(.tint)
-                            .frame(width: 30)
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(goal.rawValue)
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(.primary)
-                            Text(goal.caption)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        HStack(spacing: 6) {
-                            Text(model.rawValue)
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                            if modelManager.selectedMLXModel == model {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(.green)
-                            }
-                        }
+    /// The row that opens the rest of the family.
+    ///
+    /// Not a `DisclosureGroup`: its content isn't made of list rows, and `modelRow` depends on
+    /// being one for its edge-to-edge insets and its swipe-to-delete.
+    ///
+    /// The caption is what stops a collapsed row from being a black hole — "3 others" says
+    /// nothing, "1 downloaded" says there is something of yours in here.
+    private var otherSizesToggle: some View {
+        Button {
+            withAnimation(.snappy(duration: 0.22)) { showsOtherSizes.toggle() }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .rotationEffect(.degrees(showsOtherSizes ? 90 : 0))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Other sizes (\(otherTutors.count))")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.primary)
+                    if let caption = otherSizesCaption {
+                        Text(caption)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
                 }
-                .buttonStyle(.plain)
+                Spacer()
             }
-        } header: {
-            Text("Pick by goal").themedSectionHeader()
-        } footer: {
-            Text("Tell us what matters and we'll pick — and load — a model for it. Or scroll down to choose one by spec.")
-                .font(.caption2)
+            .contentShape(Rectangle())
         }
-        .themedListRow()
+        .buttonStyle(.plain)
+    }
+
+    /// Only the clauses that are true. Nil when there's nothing worth saying, so a plain
+    /// "three other sizes exist" doesn't get dressed up as news.
+    private var otherSizesCaption: String? {
+        var parts: [String] = []
+        if downloadedOtherTutorCount > 0 { parts.append("\(downloadedOtherTutorCount) downloaded") }
+        if oversizedTutorCount > 0 {
+            parts.append(oversizedTutorCount == 1
+                         ? "1 needs more memory than this phone"
+                         : "\(oversizedTutorCount) need more memory than this phone")
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: " \u{00B7} ")
     }
 
     var body: some View {
@@ -189,25 +145,57 @@ struct ModelSettingsView: View {
             }
             .themedListRow()
 
-            goalSection
-
-            // The in-house German tutors, kept together above the general-purpose list. They're one
-            // fine-tune at two sizes, so splitting them across the sorted list below buries the
-            // lighter one under models it outscores.
+            // The tutor this device should use, with the rest of the family one tap away. Every
+            // row here is a direct Section child rather than a DisclosureGroup's content, which
+            // is what keeps `modelRow`'s list-row insets and swipe-to-delete working.
             if let leadTutor {
                 Section {
                     heroCard(leadTutor)
-                    ForEach(siblingTutors) { model in
-                        modelRow(model)
+
+                    // Active load progress — shared with Home so both screens animate
+                    // identically. Lives here rather than in a list below because there is no
+                    // longer a list below, and a download with no visible progress is worse than
+                    // a slow one.
+                    if mlxService.isLoading {
+                        ModelLoadingPanel(
+                            mlxService: mlxService,
+                            showsHeader: true,
+                            headerModel: modelManager.selectedMLXModel
+                        )
+                        .padding(.vertical, 4)
                     }
-                    // A retired build of a *sibling* tutor has nowhere to hang off a plain row, so
-                    // it gets its own banner line here. Empty today; free coverage when the lighter
-                    // tutor is eventually retrained.
-                    ForEach(siblingTutors.compactMap(pendingSupersession)) { supersession in
+
+                    if let error = mlxService.loadError {
+                        Label(error, systemImage: "exclamationmark.triangle")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+
+                    if !otherTutors.isEmpty {
+                        otherSizesToggle
+
+                        if showsOtherSizes {
+                            if oversizedTutorCount > 0 {
+                                Text("A tutor marked \u{201C}May struggle\u{201D} needs more memory "
+                                     + "than this phone gives an app. You can still try one; the "
+                                     + "memory check spells out the trade before anything downloads.")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            ForEach(otherTutors) { model in
+                                modelRow(model)
+                            }
+                        }
+                    }
+
+                    // A retired build of a non-lead tutor has nowhere to hang off a plain row, so
+                    // it gets its own banner line. Deliberately outside the disclosure: several GB
+                    // of a dead build must not need a tap to discover.
+                    ForEach(otherTutors.compactMap(pendingSupersession)) { supersession in
                         supersessionBanner(supersession)
                     }
                 } header: {
-                    Text("Tuned for this app").themedSectionHeader()
+                    Text("Your German tutor").themedSectionHeader()
                 } footer: {
                     Text(tutorSectionFooter)
                         .font(.caption2)
@@ -216,56 +204,21 @@ struct ModelSettingsView: View {
             }
 
             Section {
-                Picker("Sort by", selection: $modelListTab) {
-                    ForEach(ModelListTab.allCases, id: \.self) { tab in
-                        Text(tab.rawValue).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-
-                // Active load progress — shared with Home so both screens animate identically.
-                if mlxService.isLoading {
-                    ModelLoadingPanel(
-                        mlxService: mlxService,
-                        showsHeader: true,
-                        headerModel: modelManager.selectedMLXModel
-                    )
-                    .padding(.vertical, 4)
-                }
-
-                ForEach(sortedModels) { model in
-                    modelRow(model)
-                }
-
-                if let error = mlxService.loadError {
-                    Label(error, systemImage: "exclamationmark.triangle")
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                }
+                modelRow(.appleIntelligence)
             } header: {
-                Text(showsTutorSection ? "General-purpose models" : "MLX Model").themedSectionHeader()
+                Text("Built in to iOS").themedSectionHeader()
             } footer: {
-                VStack(alignment: .leading, spacing: 6) {
-                    if showsTutorSection {
-                        Text("None of these were trained on German correction, so they're noticeably weaker at catching and explaining a learner's mistakes than the tutors above. They still write usable vocabulary cards. Tap one to load it; the loaded model is marked with a green checkmark.")
-                    } else {
-                        Text("Tap a model to load it. The one loaded and ready is marked with a green checkmark.")
-                    }
-                    Group {
-                        switch modelListTab {
-                        case .recommended:
-                            Text("Ranked by German quality for your \(deviceRAMGB) GB device. Switch to Size or Parameters to reorder.")
-                        case .size:
-                            Text("Sorted smallest to largest download. Tap \(Image(systemName: "info.circle")) for model details. Swipe left on a downloaded model to delete it.")
-                        case .parameters:
-                            Text("Sorted largest to smallest by parameter count. More parameters generally means higher quality. Swipe left on a downloaded model to delete it.")
-                        }
-                    }
-                }
-                .font(.caption2)
+                Text("Apple's on-device model. Nothing to download, it starts instantly, and it "
+                     + "runs privately on your phone. It's weaker at German than the tutors: 60% "
+                     + "on the app's grammar test against 75\u{2013}90%, and 0 of 15 on "
+                     + "da-/wo-compounds. It flags about one correct sentence in six as wrong and "
+                     + "misses a third of real mistakes. Good for quick vocabulary work; for "
+                     + "correction practice, use a tutor.")
+                    .font(.caption2)
             }
             .themedListRow()
+
+            reclaimBanner
 
             ImageGenerationSection(cacheRefreshID: $cacheRefreshID)
 
@@ -273,16 +226,39 @@ struct ModelSettingsView: View {
                 models: MLXModel.allCases,
                 imageModels: ImageGenModel.allCases,
                 legacyBuilds: ModelSupersession.occupyingSpace,
+                orphans: orphanedDownloads,
                 cacheRefreshID: cacheRefreshID,
-                onDeleteRequest: { supersessionToDelete = $0 }
+                onDeleteRequest: { buildToDelete = $0 },
+                onClearAllRequest: { showClearAllModels = true }
             )
             .themedListRow()
+        }
+        .sheet(isPresented: $showClearAllModels) {
+            ClearAllModelsSheet(
+                languageBytes: downloadedLanguageBytes,
+                imageBytes: downloadedImageBytes,
+                reclaimableBytes: reclaimableBuildBytes,
+                onConfirm: clearAllModels
+            )
+        }
+        // Open the list for anyone whose tutor isn't the one on the card. Making someone hunt
+        // for the model they are actually running would be worse than not collapsing at all.
+        .onAppear {
+            if otherTutors.contains(where: {
+                isDownloaded($0) || $0 == modelManager.selectedMLXModel || $0 == mlxService.currentModel
+            }) {
+                showsOtherSizes = true
+            }
         }
         .sheet(isPresented: $showModelGuide) {
             ModelGuideSheet()
         }
         .sheet(isPresented: $showHeroIntro) {
-            HeroModelIntroSheet(modelManager: modelManager, mlxService: mlxService)
+            HeroModelIntroSheet(
+                modelManager: modelManager,
+                mlxService: mlxService,
+                model: leadTutor ?? .hero
+            )
         }
         .sheet(item: $supersessionToReview) { supersession in
             ModelUpdateSheet(
@@ -300,7 +276,9 @@ struct ModelSettingsView: View {
         .sheet(item: $modelNeedingMemoryCheck) { model in
             MemoryCheckSheet(
                 model: model,
-                alternative: MLXModel.recommended(ramGB: deviceRAMGB),
+                // The best tutor that actually fits, not "the top of a global ranking" — on a
+                // 4 GB phone that difference is a Granite tutor rather than Apple Intelligence.
+                alternative: MLXModel.leadTutor(ramGB: deviceRAMGB) ?? .appleIntelligence,
                 onUseAnyway: { loadAndSelect(model) },
                 onUseAlternative: { loadAndSelect($0) }
             )
@@ -326,28 +304,120 @@ struct ModelSettingsView: View {
             }
         }
         .alert(
-            "Delete the old version?",
+            buildToDelete.map(deleteBuildTitle) ?? "",
             isPresented: Binding(
-                get: { supersessionToDelete != nil },
-                set: { if !$0 { supersessionToDelete = nil } }
+                get: { buildToDelete != nil },
+                set: { if !$0 { buildToDelete = nil } }
             )
         ) {
-            Button("Cancel", role: .cancel) { supersessionToDelete = nil }
+            Button("Cancel", role: .cancel) { buildToDelete = nil }
             Button("Delete", role: .destructive) {
-                if let supersession = supersessionToDelete {
-                    try? supersession.delete()
+                if let build = buildToDelete {
+                    try? build.delete()
                     // The container in memory came out of the directory just removed. Deliberately
-                    // not `mlxService.deleteModel(_:)`, which targets the *new* repo.
-                    if mlxService.currentModel == supersession.model { mlxService.unloadModel() }
+                    // not `mlxService.deleteModel(_:)`, which targets the *new* repo. A removed
+                    // model has no live case, so `liveModel` is nil and nothing needs unloading.
+                    if let model = build.liveModel, mlxService.currentModel == model {
+                        mlxService.unloadModel()
+                    }
                     cacheRefreshID = UUID()
-                    supersessionToDelete = nil
+                    buildToDelete = nil
                 }
             }
         } message: {
-            if let supersession = supersessionToDelete {
-                Text("This removes the previous download of \(supersession.model.rawValue). The version you have now is unaffected, and nothing you've made with it changes.")
+            if let build = buildToDelete {
+                Text(deleteBuildMessage(build))
             }
         }
+    }
+
+    /// Both delete confirmations for a cached build nothing will load again. Split by case
+    /// because the two are not the same promise: an old version can be downloaded again and has
+    /// a replacement already on the device, a removed model has neither.
+    private func deleteBuildTitle(_ build: DeletableBuild) -> String {
+        switch build {
+        case .superseded: "Delete the old version?"
+        case .orphaned:   "Delete this model?"
+        }
+    }
+
+    private func deleteBuildMessage(_ build: DeletableBuild) -> String {
+        switch build {
+        case .superseded(let supersession):
+            "This removes the previous download of \(supersession.model.rawValue). The version "
+            + "you have now is unaffected, and nothing you've made with it changes."
+        case .orphaned(let orphan):
+            "This removes the downloaded weights for \(orphan.displayName) "
+            + "(\(formattedBytes(orphan.bytes))). This model is no longer part of the app, so it "
+            + "can't be downloaded again. Nothing you've made with it changes."
+        }
+    }
+
+    /// "You have models on here that this app dropped." Storage is the last section on a long
+    /// screen, so without this the bytes are findable only by someone already scrolling for them.
+    /// Renders for nobody who hasn't downloaded a since-removed model, which is every new install.
+    @ViewBuilder private var reclaimBanner: some View {
+        let orphans = orphanedDownloads
+        if !orphans.isEmpty {
+            Section {
+                HStack(spacing: 12) {
+                    Image(systemName: "shippingbox")
+                        .foregroundStyle(.orange)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(orphans.count == 1
+                             ? "1 model is no longer part of this app"
+                             : "\(orphans.count) models are no longer part of this app")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        Text("Still on your phone, using \(formattedBytes(orphans.reduce(0) { $0 + $1.bytes })). "
+                             + "Nothing here can load them. Free the space under Storage below.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+            .themedListRow()
+        }
+    }
+
+    // MARK: - Cached downloads
+
+    /// Cached models the app no longer ships. Read through `cacheRefreshID` like the other cache
+    /// lookups here, so the rows disappear the moment a delete lands.
+    private var orphanedDownloads: [OrphanedModelCache.Orphan] {
+        _ = cacheRefreshID
+        return OrphanedModelCache.all
+    }
+
+    private var downloadedLanguageBytes: Int64 {
+        _ = cacheRefreshID
+        return MLXModel.allCases.reduce(0) { $0 + ($1.cachedSizeBytes ?? 0) }
+    }
+
+    private var downloadedImageBytes: Int64 {
+        _ = cacheRefreshID
+        return ImageGenModel.allCases.reduce(0) { $0 + ($1.cachedSizeBytes ?? 0) }
+    }
+
+    /// Bytes held by builds no live model names: retired versions plus removed models.
+    private var reclaimableBuildBytes: Int64 {
+        _ = cacheRefreshID
+        return ModelSupersession.occupyingSpace.reduce(0) { $0 + $1.reclaimableBytes }
+             + orphanedDownloads.reduce(0) { $0 + $1.bytes }
+    }
+
+    /// Delete every model file the app can re-download. Unloads first so nothing keeps reading a
+    /// directory that's about to go, and leaves decks, chats, stories and progress alone —
+    /// those live in SwiftData, not in the model cache.
+    private func clearAllModels() {
+        mlxService.unloadModel()
+        for model in MLXModel.allCases { try? mlxService.deleteModel(model) }
+        for model in ImageGenModel.allCases { try? model.deleteFromCache() }
+        for supersession in ModelSupersession.occupyingSpace { try? supersession.delete() }
+        for orphan in orphanedDownloads { try? OrphanedModelCache.delete(orphan) }
+        cacheRefreshID = UUID()
     }
 
     /// Whether the governors are running right now, and on what. Automatic mode is invisible
@@ -372,14 +442,17 @@ struct ModelSettingsView: View {
     private var tutorSectionFooter: String {
         guard let leadTutor else { return "" }
         if leadTutor.isHero {
-            return "Both are Gemma 4 fine-tuned on German grammar for this app, and both beat every "
-                 + "general-purpose model below on the app's own grammar test. The E4B tutor scores "
-                 + "highest; the E2B tutor trades a little accuracy for about 1.7 GB less memory, "
-                 + "which helps if the big one makes your phone struggle."
+            return "Four tutors, all fine-tuned on the same German material for this app: verbs "
+                 + "with prepositions, separable and reflexive verbs, da-/wo-compounds, relative "
+                 + "pronouns, Konjunktiv II. On the app's own grammar test the E4B tutor scores "
+                 + "90%, the E2B 83%, the Granite 3B 81%, and the Granite 2B 75%. They differ in "
+                 + "download size and memory, not in what they were taught. Pick a smaller one if "
+                 + "the big one makes this phone struggle."
         }
-        return "Gemma 4 E2B, fine-tuned on German grammar for this app. It beats every "
-             + "general-purpose model below on the app's own grammar test, and it's the tutor that "
-             + "fits this device. The larger E4B tutor needs 8 GB of RAM."
+        return "All four tutors were fine-tuned on the same German material for this app. "
+             + "\(leadTutor.rawValue) is the strongest one that fits this phone's memory, at "
+             + "\(leadTutor.suiteScorePercent)% on the app's grammar test. The others are smaller "
+             + "downloads that let more mistakes past."
     }
 
     // MARK: - Hero Card
@@ -390,6 +463,7 @@ struct ModelSettingsView: View {
         let downloaded = isDownloaded(model)
         let isDownloading = mlxService.isLoading && modelManager.selectedMLXModel == model
         let isLoaded = mlxService.isModelLoaded && mlxService.currentModel == model
+        let pausedBytes = pausedDownloadBytes(model)
 
         VStack(alignment: .leading, spacing: 12) {
             Button {
@@ -428,6 +502,10 @@ struct ModelSettingsView: View {
                                     Text("Loaded & ready").fontWeight(.medium).foregroundStyle(.green)
                                 } else if downloaded {
                                     Text("Downloaded · tap to load").foregroundStyle(.green)
+                                } else if pausedBytes > 0 {
+                                    Text("Paused · \(formattedBytes(pausedBytes)) saved · tap to continue")
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(.orange)
                                 } else {
                                     Text("~\(formattedSize(model.approximateSizeMB)) · one-time download")
                                         .foregroundStyle(.secondary)
@@ -445,6 +523,10 @@ struct ModelSettingsView: View {
                         } else if downloaded {
                             Image(systemName: "arrow.down.circle.fill")
                                 .foregroundStyle(.green)
+                                .imageScale(.small)
+                        } else if pausedBytes > 0 {
+                            Image(systemName: "pause.circle.fill")
+                                .foregroundStyle(.orange)
                                 .imageScale(.small)
                         } else {
                             Image(systemName: "arrow.down.circle").foregroundStyle(model.theme.accent)
@@ -467,16 +549,14 @@ struct ModelSettingsView: View {
             Divider()
 
             HStack {
-                // The intro wizard is written about the hero specifically, so it's only offered
-                // when the hero is the one leading the card.
-                if model.isHero {
-                    Button {
-                        showHeroIntro = true
-                    } label: {
-                        Label("Why this model?", systemImage: "sparkles")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                    }
+                // The pitch is per-tutor now, so this opens for whichever one leads the card
+                // rather than only for the hero.
+                Button {
+                    showHeroIntro = true
+                } label: {
+                    Label("Why this model?", systemImage: "sparkles")
+                        .font(.caption)
+                        .fontWeight(.medium)
                 }
                 Spacer()
                 Button {
@@ -548,8 +628,7 @@ struct ModelSettingsView: View {
         let downloaded = isDownloaded(model)
         let isDownloading = mlxService.isLoading && modelManager.selectedMLXModel == model
         let isLoaded = mlxService.isModelLoaded && mlxService.currentModel == model
-        // The tutor card above already carries the recommendation, so don't also badge a list row.
-        let isRecommended = !showsTutorSection && model == recommendedModel
+        let pausedBytes = pausedDownloadBytes(model)
         let isLastUsed = modelManager.lastLoadedModel == model && !isLoaded && !isDownloading
         HStack(spacing: 0) {
             Button {
@@ -572,11 +651,13 @@ struct ModelSettingsView: View {
                         HStack(spacing: 6) {
                             Text(model.rawValue)
                                 .foregroundStyle(.primary)
-                            if isRecommended {
-                                tagLabel("Best", color: .accentColor)
-                            }
                             if isLastUsed {
                                 tagLabel("Last used", color: .secondary)
+                            }
+                            // Over-tier models stay tappable — the tag says the row is a knowing
+                            // trade, and the memory check sheet spells it out before the download.
+                            if !model.isAppleIntelligence && model.minimumRAMGB > deviceRAMGB {
+                                tagLabel("May struggle", color: .orange)
                             }
                         }
                         HStack(spacing: 6) {
@@ -604,6 +685,10 @@ struct ModelSettingsView: View {
                                     Text("Downloaded")
                                         .fontWeight(.medium)
                                         .foregroundStyle(.green)
+                                } else if pausedBytes > 0 {
+                                    Text("Paused · \(formattedBytes(pausedBytes)) saved")
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(.orange)
                                 }
                             }
                         }
@@ -632,6 +717,10 @@ struct ModelSettingsView: View {
                     Image(systemName: "arrow.down.circle.fill")
                         .foregroundStyle(.green)
                         .imageScale(.small)
+                } else if pausedBytes > 0 {
+                    Image(systemName: "pause.circle.fill")
+                        .foregroundStyle(.orange)
+                        .imageScale(.small)
                 }
             }
             .padding(.trailing, 8)
@@ -653,7 +742,9 @@ struct ModelSettingsView: View {
         }
         .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 0))
         .swipeActions(edge: .trailing) {
-            if downloaded && !mlxService.isLoading {
+            // Paused downloads are deletable too — abandoning one shouldn't strand its
+            // partial gigabytes on the phone.
+            if (downloaded || pausedBytes > 0) && !mlxService.isLoading {
                 Button("Delete", role: .destructive) {
                     modelToDelete = model
                 }
@@ -663,32 +754,7 @@ struct ModelSettingsView: View {
 
     // MARK: - Device Info
 
-    private var deviceRAMGB: Int {
-        Int((Double(ProcessInfo.processInfo.physicalMemory) / 1_073_741_824).rounded())
-    }
-
-    // MARK: - Model Sorting
-
-    private var sortedModels: [MLXModel] {
-        // Drop only the tutors actually promoted above, so a tutor this device can't run still
-        // appears here (sunk to the bottom with its RAM note) instead of disappearing.
-        let promoted = Set(shownTutors)
-        let models = MLXModel.allCases.filter { !promoted.contains($0) }
-        switch modelListTab {
-        case .recommended:
-            return MLXModel.recommendedOrder(ramGB: deviceRAMGB).filter { models.contains($0) }
-        case .size:
-            return models.sorted { $0.approximateSizeMB < $1.approximateSizeMB }
-        case .parameters:
-            return models.sorted { $0.parameterCountValue > $1.parameterCountValue }
-        }
-    }
-
-    /// The single best model to badge in the *list* — used only when the hero card isn't shown (i.e.
-    /// on devices that can't run the hero). Otherwise the hero card carries the recommendation.
-    private var recommendedModel: MLXModel? {
-        MLXModel.recommended(ramGB: deviceRAMGB)
-    }
+    private var deviceRAMGB: Int { DeviceCapability.ramGB }
 
     // MARK: - Loading
 
@@ -731,6 +797,15 @@ struct ModelSettingsView: View {
         return model.isDownloaded
     }
 
+    /// Bytes an interrupted download of `model` still holds on disk, or 0. Skipped entirely
+    /// while any load is running: rows re-render on every progress tick, and this walks the
+    /// cache directory (same discipline as the supersession banner's size shortcut).
+    private func pausedDownloadBytes(_ model: MLXModel) -> Int64 {
+        _ = cacheRefreshID
+        guard !mlxService.isLoading else { return 0 }
+        return model.pausedDownloadBytes
+    }
+
     // MARK: - Formatting
 
     private func formattedSize(_ mb: Int) -> String {
@@ -739,6 +814,62 @@ struct ModelSettingsView: View {
             return String(format: "%.1f GB", gb)
         }
         return "\(mb) MB"
+    }
+
+    private func formattedBytes(_ bytes: Int64) -> String {
+        ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+    }
+}
+
+// MARK: - Deletable builds
+
+/// Something in the cache that no live model will ever load again, and can therefore be deleted
+/// from the Storage list.
+///
+/// Two ways that happens, and they read differently to the user, so they get different copy: a
+/// model was *retrained* and the old build lingers (``ModelSupersession``), or a model was
+/// *removed from the app* entirely (``OrphanedModelCache``). The first can be re-downloaded and
+/// has a replacement to point at; the second cannot and does not. They share this type only
+/// because the Storage section needs one delete target, not because they mean the same thing.
+enum DeletableBuild: Identifiable {
+    case superseded(ModelSupersession)
+    case orphaned(OrphanedModelCache.Orphan)
+
+    var id: String {
+        switch self {
+        case .superseded(let supersession): supersession.id
+        case .orphaned(let orphan):         orphan.id
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .superseded(let supersession): supersession.model.rawValue
+        case .orphaned(let orphan):         orphan.displayName
+        }
+    }
+
+    var reclaimableBytes: Int64 {
+        switch self {
+        case .superseded(let supersession): supersession.reclaimableBytes
+        case .orphaned(let orphan):         orphan.bytes
+        }
+    }
+
+    func delete() throws {
+        switch self {
+        case .superseded(let supersession): try supersession.delete()
+        case .orphaned(let orphan):         try OrphanedModelCache.delete(orphan)
+        }
+    }
+
+    /// The model whose weights these are, when the app still ships one under that name. Nil for
+    /// a removed model, which is what tells the delete path there is nothing to unload.
+    var liveModel: MLXModel? {
+        switch self {
+        case .superseded(let supersession): supersession.model
+        case .orphaned:                     nil
+        }
     }
 }
 
@@ -753,10 +884,17 @@ private struct ModelStorageSection: View {
     /// without this they'd be invisible here and silently counted in the grey "Other" segment —
     /// several GB of the learner's phone with nothing on any screen to explain it.
     let legacyBuilds: [ModelSupersession]
+    /// Cached models the app dropped entirely. Same problem as `legacyBuilds` and the same fix,
+    /// but found by sweeping the cache rather than from a table, since a removed model has no
+    /// enum case left to hang a row off. See ``OrphanedModelCache``.
+    let orphans: [OrphanedModelCache.Orphan]
     let cacheRefreshID: UUID
     /// Raises the delete confirmation on the parent, which owns every destructive alert on this
-    /// screen. Only legacy rows delete from here; live models are swipe-to-delete in the list above.
-    var onDeleteRequest: (ModelSupersession) -> Void
+    /// screen. Only rows for builds no live model names delete from here; live models are
+    /// swipe-to-delete in the list above.
+    var onDeleteRequest: (DeletableBuild) -> Void
+    /// Raises the "delete everything" confirmation, also owned by the parent.
+    var onClearAllRequest: () -> Void
 
     private let modelColors: [Color] = [.blue, .purple, .orange, .teal, .indigo, .pink]
 
@@ -764,7 +902,7 @@ private struct ModelStorageSection: View {
     /// have to share a protocol.
     private struct ModelEntry: Identifiable {
         /// What this row is. Drives the tag beside the name and whether it can be deleted here.
-        enum Kind { case language, image, legacy }
+        enum Kind { case language, image, legacy, orphaned }
 
         let id: String
         let name: String
@@ -772,8 +910,8 @@ private struct ModelStorageSection: View {
         let bytes: Int64
         let kind: Kind
         let colorIndex: Int
-        /// Set on `.legacy` rows only — the row's delete target.
-        let supersession: ModelSupersession?
+        /// Set on `.legacy` and `.orphaned` rows only — the row's delete target.
+        let build: DeletableBuild?
     }
 
     private var downloadedModels: [ModelEntry] {
@@ -789,7 +927,7 @@ private struct ModelStorageSection: View {
                     bytes: bytes,
                     kind: .language,
                     colorIndex: idx,
-                    supersession: nil
+                    build: nil
                 ))
                 idx += 1
             }
@@ -803,7 +941,7 @@ private struct ModelStorageSection: View {
                     bytes: bytes,
                     kind: .image,
                     colorIndex: idx,
-                    supersession: nil
+                    build: nil
                 ))
                 idx += 1
             }
@@ -818,10 +956,24 @@ private struct ModelStorageSection: View {
                     bytes: bytes,
                     kind: .legacy,
                     colorIndex: idx,
-                    supersession: build
+                    build: .superseded(build)
                 ))
                 idx += 1
             }
+        }
+        // Models the app dropped. Last in the list because they're the least explicable, and the
+        // "No longer offered" tag plus the footer have to do that explaining.
+        for orphan in orphans {
+            result.append(ModelEntry(
+                id: "orphan-" + orphan.repoID,
+                name: orphan.displayName,
+                logo: orphan.logoName.map { Image($0) } ?? Image(systemName: "shippingbox"),
+                bytes: orphan.bytes,
+                kind: .orphaned,
+                colorIndex: idx,
+                build: .orphaned(orphan)
+            ))
+            idx += 1
         }
         return result
     }
@@ -920,8 +1072,9 @@ private struct ModelStorageSection: View {
                             Text(entry.name)
                                 .font(.caption)
                             switch entry.kind {
-                            case .image:  tag("Pictures", color: .secondary)
-                            case .legacy: tag("Old version", color: .orange)
+                            case .image:    tag("Pictures", color: .secondary)
+                            case .legacy:   tag("Old version", color: .orange)
+                            case .orphaned: tag("No longer offered", color: .orange)
                             case .language: EmptyView()
                             }
                             Spacer()
@@ -929,11 +1082,11 @@ private struct ModelStorageSection: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .monospacedDigit()
-                            // Legacy rows need their own button: the footer's "swipe a language
+                            // These rows need their own button: the footer's "swipe a language
                             // model above" has no row up there to swipe for them.
-                            if entry.kind == .legacy, let supersession = entry.supersession {
+                            if let build = entry.build {
                                 Button(role: .destructive) {
-                                    onDeleteRequest(supersession)
+                                    onDeleteRequest(build)
                                 } label: {
                                     Image(systemName: "trash").font(.caption)
                                 }
@@ -942,15 +1095,47 @@ private struct ModelStorageSection: View {
                             }
                         }
                     }
+
+                    Divider()
+
+                    // The escape hatch for "something is on my phone and I want it gone" — a
+                    // single button rather than making someone delete a dozen rows one at a
+                    // time. The confirmation states the total before anything happens.
+                    Button(role: .destructive) {
+                        onClearAllRequest()
+                    } label: {
+                        Label("Delete all downloaded models", systemImage: "trash")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.red)
+                    .padding(.top, 2)
                 }
             }
             .padding(.vertical, 4)
         } header: {
             Label("Storage", systemImage: "internaldrive")
         } footer: {
-            Text("Counts every downloaded model, language and image alike. Swipe a language model above to delete it; the image model has its own Delete button. A row marked \u{201C}Old version\u{201D} is a previous download of a model that has since been updated: it's never loaded again and is safe to delete here.")
+            Text(storageFooter)
                 .font(.caption2)
         }
+    }
+
+    /// Explains only the row kinds actually on screen. The two "this can be deleted here"
+    /// sentences are the ones people need and both describe something invisible to anyone who
+    /// hasn't hit that case, so neither is worth saying unprompted.
+    private var storageFooter: String {
+        var text = "Counts every downloaded model, language and image alike. Swipe a language "
+                 + "model above to delete it; the image model has its own Delete button."
+        if !legacyBuilds.isEmpty {
+            text += " A row marked \u{201C}Old version\u{201D} is a previous download of a model "
+                  + "that has since been updated: it's never loaded again and is safe to delete here."
+        }
+        if !orphans.isEmpty {
+            text += " A row marked \u{201C}No longer offered\u{201D} is a model this app used to "
+                  + "include and no longer does. Nothing here can load it, so deleting it is free."
+        }
+        return text
     }
 
     /// The small capsule beside a row's name. Shared so the "Pictures" and "Old version" tags can't
@@ -998,6 +1183,96 @@ private struct ModelStorageSection: View {
     }
 
     private func formatBytes(_ bytes: Int64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        formatter.allowedUnits = [.useGB, .useMB]
+        return formatter.string(fromByteCount: bytes)
+    }
+}
+
+// MARK: - Clear All Models Sheet
+
+/// Confirmation for deleting every downloaded model at once.
+///
+/// A sheet rather than an alert because it has numbers worth showing: this is potentially ten
+/// gigabytes and a long re-download, and an alert's two lines can't break that down. Same
+/// discipline as ``MemoryCheckSheet`` — state what happens, then let the user decide.
+struct ClearAllModelsSheet: View {
+    let languageBytes: Int64
+    let imageBytes: Int64
+    /// Old versions and removed models, which are the bytes most people are here for.
+    let reclaimableBytes: Int64
+    var onConfirm: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    private var totalBytes: Int64 { languageBytes + imageBytes + reclaimableBytes }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section {
+                    VStack(alignment: .leading, spacing: 14) {
+                        HStack(spacing: 14) {
+                            Image(systemName: "internaldrive")
+                                .font(.title)
+                                .foregroundStyle(.red)
+                            Text("This frees \(formatted(totalBytes)).")
+                                .font(.headline)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        VStack(spacing: 6) {
+                            if languageBytes > 0 { byteRow("Language models", languageBytes) }
+                            if imageBytes > 0 { byteRow("Picture model", imageBytes) }
+                            if reclaimableBytes > 0 { byteRow("Old and removed models", reclaimableBytes) }
+                        }
+                    }
+                    .padding(.vertical, 6)
+                }
+
+                Section("What that means") {
+                    Label("Your decks, chats, stories and progress are untouched.", systemImage: "checkmark.shield")
+                    Label("The app can't write cards, talk, or make stories until you download a model again.", systemImage: "xmark.circle")
+                    Label("Downloading again needs a connection, and the largest tutor is about 5 GB.", systemImage: "arrow.down.circle")
+                }
+                .font(.subheadline)
+
+                Section {
+                    Button(role: .destructive) {
+                        onConfirm()
+                        dismiss()
+                    } label: {
+                        Text("Delete All Models")
+                            .frame(maxWidth: .infinity)
+                    }
+
+                    Button(role: .cancel) {
+                        dismiss()
+                    } label: {
+                        Text("Cancel")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+            .navigationTitle("Delete every model?")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private func byteRow(_ label: String, _ bytes: Int64) -> some View {
+        HStack {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(formatted(bytes))
+                .font(.caption)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func formatted(_ bytes: Int64) -> String {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
         formatter.allowedUnits = [.useGB, .useMB]

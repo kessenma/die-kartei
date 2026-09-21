@@ -70,6 +70,15 @@ final class SavedCard {
     /// Current Leitner box (0 = new/unseen, 1–5 = active boxes).
     var leitnerBox: Int
 
+    // MARK: - Review history (optional so existing stores migrate lightweightly)
+
+    /// When this card was last rated, in any mode. Lets "today" screens list what was reviewed.
+    var lastReviewedAt: Date?
+    /// How the last rating went: false for Didn't know / wrong, true otherwise.
+    var lastReviewWasCorrect: Bool?
+    /// When this card got its first rating ever — the day the learner met it.
+    var firstReviewedAt: Date?
+
     var deck: SavedDeck?
 
     init(
@@ -101,6 +110,10 @@ final class SavedCard {
         // Leitner default
         self.leitnerBox = 0
 
+        self.lastReviewedAt = nil
+        self.lastReviewWasCorrect = nil
+        self.firstReviewedAt = nil
+
         if let conjugations, !conjugations.isEmpty {
             let stored = conjugations.map { StoredConjugation(from: $0) }
             self.conjugationsData = try? JSONEncoder().encode(stored)
@@ -111,5 +124,27 @@ final class SavedCard {
         guard let data = conjugationsData else { return nil }
         let stored = try? JSONDecoder().decode([StoredConjugation].self, from: data)
         return stored?.map { $0.toConjugation() }
+    }
+
+    /// Stamp a rating: last review time and result, and the first-ever review if this is it.
+    func noteReview(correct: Bool, at now: Date = .now) {
+        lastReviewedAt = now
+        lastReviewWasCorrect = correct
+        if firstReviewedAt == nil { firstReviewedAt = now }
+    }
+
+    /// The value-type card the player studies, built from this row. Cards of the Wortschatz deck
+    /// also carry their plural / Perfekt forms line, looked up in the bundled index rather than
+    /// stored — the lists own that data, the store only owns progress.
+    var vocabCard: VocabCard {
+        VocabCard(
+            germanWord: germanWord,
+            englishTranslation: englishTranslation,
+            wordType: wordType,
+            article: article,
+            exampleSentence: exampleSentence,
+            conjugations: conjugations,
+            forms: deck?.kind == .goetheSRS ? GoetheVocabService.index[germanWord]?.formsLine : nil
+        )
     }
 }

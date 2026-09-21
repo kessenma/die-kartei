@@ -16,6 +16,14 @@ struct CardDeckView: View {
     /// When true, restore the paused session immediately on appear (Home ▸ Continue), skipping
     /// the setup screen's resume prompt.
     var autoResume: Bool = false
+    /// When true, skip the setup screen and begin at once — for launchers that are themselves the
+    /// setup screen (the Wortschatz hub). A paused session still wins.
+    var autoStart: Bool = false
+    /// Badge the card wears when no model logo applies. Falls back to the Goethe mark for
+    /// Wortschatz decks (`cardBadgeLogoName`).
+    var badgeLogoName: String? = nil
+    /// Backs the in-session card settings sheet; nil hides its shortcuts.
+    var modelManager: MLXModelManager? = nil
 
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -27,7 +35,12 @@ struct CardDeckView: View {
 
     @State var localStyle: FlashcardStyle = .default
     @State var currentIndex = 0
-    @State var showGermanFirst = true
+    /// Which side shows first. Shared with Settings ▸ Cards and the setup picker through one key.
+    @AppStorage(CardStudyPrefs.germanFirstKey) var showGermanFirst = true
+    /// Nouns hide their article on the German side until the flip (der / die / das?).
+    @AppStorage(CardStudyPrefs.articleQuizKey) var articleQuiz = true
+    /// A card rated Again comes back a few cards later in the same session.
+    @AppStorage(CardStudyPrefs.repeatMissedKey) var repeatMissed = true
     @State var hasStarted = false
     @State var isFlipped = false
     @State var showExamplesOnGermanSide = true
@@ -45,6 +58,19 @@ struct CardDeckView: View {
     @State var ankiDueIndices: [Int] = []
     /// Position within the ankiDueIndices array.
     @State var ankiDuePosition: Int = 0
+    /// How many distinct cards this SRS session set out to review. `ankiDueIndices` grows as
+    /// missed cards are re-queued, so it can't serve as the denominator any more.
+    @State var sessionDueCount = 0
+    /// Card indices missed at least once this session — the summary's "missed" list.
+    @State var sessionLapses: Set<Int> = []
+    /// How often each card has been put back into the queue (capped so a card can't loop forever).
+    @State var requeueCounts: [Int: Int] = [:]
+    /// How many cards later a missed card comes back.
+    let requeueGap = 3
+    @State var showCardSettings = false
+    /// The current card has been flipped at least once, so its article is no longer withheld and
+    /// the example sentence may show again. Mirrors `FlashCardView.revealed`; resets per card.
+    @State var revealedCurrent = false
     /// Play order for plain/quiz mode: position → index into `cards`. Deck order on the first
     /// pass, reshuffled by "Try Again" so a repeat run isn't the same sequence. SRS modes use
     /// `ankiDueIndices`/`ankiDuePosition` for the same job.
@@ -74,10 +100,31 @@ struct CardDeckView: View {
     /// The model's accent, or the app accent for bundled decks with no model.
     var brandAccent: Color { deckTheme?.accent ?? .accentColor }
 
+    /// The session's badge when it brought one, else the Goethe mark for the Wortschatz box.
     var cardBadgeLogoName: String? {
-        let goetheLevels = ["A1", "A2", "B1", "B2", "C1", "C2"]
-        guard goetheLevels.contains(where: { topic == "\($0) Vocabulary" }) else { return nil }
-        return "logo-goethe-square-icon"
+        badgeLogoName ?? (savedDeck?.kind == .goetheSRS ? DeckStore.wortschatzBadge : nil)
+    }
+
+    /// Studying the Goethe word box: first ratings count against today's new-word budget.
+    var isWortschatzSession: Bool { savedDeck?.kind == .goetheSRS }
+
+    /// Puts a missed card back into the queue a few cards ahead, at most twice per card, and
+    /// records the lapse either way. Returns whether the card was actually re-queued.
+    @discardableResult
+    func requeue(_ idx: Int) -> Bool {
+        sessionLapses.insert(idx)
+        guard repeatMissed, requeueCounts[idx, default: 0] < 2 else { return false }
+        requeueCounts[idx, default: 0] += 1
+        let at = min(ankiDuePosition + 1 + requeueGap, ankiDueIndices.count)
+        ankiDueIndices.insert(idx, at: at)
+        return true
+    }
+
+    /// Resets the re-queue bookkeeping for a fresh pass over `ankiDueIndices`.
+    func resetSessionTally() {
+        sessionDueCount = ankiDueIndices.count
+        sessionLapses = []
+        requeueCounts = [:]
     }
 
     var currentValidation: ValidationResult? {
@@ -196,6 +243,8 @@ struct CardDeckView: View {
                                     .tag(false)
                             }
 
+                            Toggle("Ask der / die / das first", systemImage: "questionmark.circle", isOn: $articleQuiz)
+
                             Divider()
 
                             Picker("Show examples on", selection: $showExamplesOnGermanSide) {
@@ -212,6 +261,14 @@ struct CardDeckView: View {
                                     Label(style.label, systemImage: style.systemImage).tag(style)
                                 }
                             }
+
+                            if modelManager != nil {
+                                Divider()
+
+                                Button("All card settings…", systemImage: "slider.horizontal.3") {
+                                    showCardSettings = true
+                                }
+                            }
                         } label: {
                             Image(systemName: "textformat.size")
                         }
@@ -221,7 +278,18 @@ struct CardDeckView: View {
             .fullScreenCover(isPresented: $isFullscreen, onDismiss: {
                 // Fullscreen steps `currentIndex` in deck order; realign our position with
                 // whatever card it left us on so the deck doesn't jump back.
-                cardPosition = playOrder.firstIndex(of: currentIndex) ?? cardPosition
+                if isSRSMode {
+                    // Re-queued cards appear more than once, so look from the current position
+                    // forward first and only then anywhere in the queue.
+                    if ankiDueIndices.indices.contains(ankiDuePosition),
+                       let pos = ankiDueIndices[ankiDuePosition...].firstIndex(of: currentIndex) {
+                        ankiDuePosition = pos
+                    } else if let pos = ankiDueIndices.firstIndex(of: currentIndex) {
+                        ankiDuePosition = pos
+                    }
+                } else {
+                    cardPosition = playOrder.firstIndex(of: currentIndex) ?? cardPosition
+                }
             }) {
                 FullscreenCardView(
                     cards: $localCards,
@@ -233,6 +301,7 @@ struct CardDeckView: View {
                     showExamplesOnGermanSide: showExamplesOnGermanSide,
                     isQuizMode: isQuizMode,
                     badgeLogoName: cardBadgeLogoName,
+                    hidesArticleUntilFlipped: articleQuiz,
                     model: generatorModel,
                     savedCards: savedCards,
                     deckUUID: deckUUID,
@@ -250,6 +319,18 @@ struct CardDeckView: View {
                     )
                 }
             }
+            .sheet(isPresented: $showCardSettings, onDismiss: {
+                // The setup screen mirrors the global style / auto-advance in local state; pick up
+                // whatever the sheet changed before the session starts. Mid-session they stay put.
+                if !hasStarted, let modelManager {
+                    localStyle = modelManager.flashcardStyle
+                    localAutoAdvance = modelManager.autoAdvance
+                }
+            }) {
+                if let modelManager {
+                    CardSettingsSheet(modelManager: modelManager)
+                }
+            }
         }
         .onAppear {
             localStyle = flashcardStyle
@@ -259,6 +340,11 @@ struct CardDeckView: View {
             loadSavedProgress()
             if autoResume, let progress = savedProgress {
                 resumeFromSavedProgress(progress)
+            }
+            // Launchers that are their own setup screen skip ours, unless there is nothing due
+            // (the Start button would be disabled for the same reason).
+            if autoStart, savedProgress == nil, !hasStarted, !(isSRSMode && srsDueCount == 0) {
+                beginSession()
             }
         }
         .onChange(of: flashcardStyle) { _, newValue in
@@ -273,6 +359,9 @@ struct CardDeckView: View {
             cardPosition = 0
             ankiDueIndices = []
             ankiDuePosition = 0
+            sessionDueCount = 0
+            sessionLapses = []
+            requeueCounts = [:]
             hasStarted = false
             isPaused = false
             cardResults = [:]
@@ -286,6 +375,12 @@ struct CardDeckView: View {
             savedProgress = nil
             loadSavedProgress()
         }
+        .onChange(of: isFlipped) { _, flipped in
+            if flipped { revealedCurrent = true }
+        }
+        .onChange(of: currentIndex) {
+            revealedCurrent = false
+        }
         .onChange(of: scenePhase) { _, phase in
             // Leaving the app mid-session persists position so it survives a hard kill.
             if phase != .active, hasStarted, !showQuizSummary, !isPaused {
@@ -298,6 +393,7 @@ struct CardDeckView: View {
                 savePauseProgress()
             }
         }
+        .memoryContext("Deck study")
         // Keyed on the summary flag too: the loop exits when the session ends, and "Try Again"
         // only clears that flag — without it in the id the timer would never restart.
         .task(id: "\(hasStarted)-\(showQuizSummary)") {

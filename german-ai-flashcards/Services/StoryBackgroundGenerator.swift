@@ -1,5 +1,6 @@
 import BackgroundTasks
 import Foundation
+import os
 
 /// Runs a long on-device generation as an iOS 26 **continued-processing task**, so it keeps going —
 /// with a system progress UI in the Dynamic Island — if the learner leaves the app mid-run. Used by
@@ -37,7 +38,14 @@ final class StoryBackgroundGenerator {
 
     /// Submitted-but-not-yet-launched jobs, keyed by concrete identifier. A dictionary rather than a
     /// single slot so submitting a deck illustration can't clobber a story that's still pending.
-    private var pendingJobs: [String: Job] = [:]
+    /// The token tells a stale entry from a newer one with the same key.
+    private var pendingJobs: [String: (token: UUID, job: Job)] = [:]
+
+    /// How long an accepted job may wait for the system to launch it before we run it ourselves.
+    /// `.fail` strategy means acceptance promises a prompt launch, so this is a backstop for the
+    /// case where that promise isn't kept — the job runs inline instead of sitting in
+    /// `pendingJobs` for the rest of the process with everything it captured.
+    private static let launchGraceSeconds: Double = 30
     private var didRegister = false
 
     private init() {}
@@ -72,7 +80,16 @@ final class StoryBackgroundGenerator {
         registerIfNeeded()
         guard didRegister else { return false }
 
-        pendingJobs[kind.rawValue] = job
+        // A job the system accepted but never launched — throttled, resources unavailable, the app
+        // gone in between — used to sit in this dictionary for the rest of the process, holding
+        // its whole closure: a story service, a model context, live SwiftData objects, the setup
+        // screen's state. A second submit of the same kind now replaces it explicitly, and
+        // `expirePending` lets a caller that ran inline instead let go of the copy here.
+        if pendingJobs[kind.rawValue] != nil {
+            logger.notice("Replacing a pending \(kind.rawValue, privacy: .public) job that never launched")
+        }
+        let token = UUID()
+        pendingJobs[kind.rawValue] = (token, job)
         var accepted = false
         let noException = (try? KBExceptionCatcher.run {
             let request = BGContinuedProcessingTaskRequest(
@@ -92,15 +109,35 @@ final class StoryBackgroundGenerator {
             pendingJobs[kind.rawValue] = nil
             return false
         }
+
+        // Accepted. If the launch handler hasn't claimed it by the grace period, take it back and
+        // run it here; a launch that arrives later finds nothing and completes its task unfilled.
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(Self.launchGraceSeconds))
+            guard let pending = pendingJobs[kind.rawValue], pending.token == token else { return }
+            pendingJobs[kind.rawValue] = nil
+            logger.notice("\(kind.rawValue, privacy: .public) job was accepted but never launched — running it inline")
+            await pending.job(nil)
+        }
         return true
     }
+
+    /// Whether a job of this kind is still waiting for the system to launch it.
+    func hasPending(_ kind: TaskKind) -> Bool {
+        pendingJobs[kind.rawValue] != nil
+    }
+
+    private let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "de.germanflashcards",
+        category: "BackgroundTasks"
+    )
 
     private func launch(_ task: BGTask) {
         guard let continued = task as? BGContinuedProcessingTask else {
             task.setTaskCompleted(success: false)
             return
         }
-        let job = pendingJobs.removeValue(forKey: task.identifier)
+        let job = pendingJobs.removeValue(forKey: task.identifier)?.job
         Task { @MainActor in
             if let job {
                 await job(continued)

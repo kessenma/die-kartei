@@ -305,6 +305,38 @@ Content is the full Michigan preposition list (36 entries, 28 `core` / 8 `advanc
 - ⬜ Verify on device: a finished round moves a Präpositionen bar in Coach's Notes, a preposition
   missed twice reaches the coach's vocabulary, and the round shows on the tapped calendar day.
 
+## Phase 11 — The placement check hands over its misses (opt-in)  ✅
+
+`Services/PlacementCoachExport.swift`, reached from the placement answer review
+(`Features/Progress/PlacementReviewView.swift`). The fourth non-conversation writer (2026-08-16),
+and the only one that is **explicitly opt-in** rather than a settings-gated automatic rail — see
+`GAMIFICATION.md` Phase 8 for the storage, review screen and export that surround it.
+
+- ✅ Word-level misses (vocabulary, der/die/das nouns, prepositions) flow into `LearnerProfile.vocab`
+  through `noteVocabEncounters`, the same recognition-trouble channel as Phases 5/8/10 — the whole
+  probe is 3-or-4-option recognition, so this is exactly what that channel is for. Gender misses
+  hand over the **bare** noun, never "die Lampe": `VocabTouch.id` is the lowercased German, so an
+  articled form would never merge with the same word met in the matching game.
+- ✅ Grammar and cloze misses become `LexicalSlip`s via a new `noteSlips(_:in:)` — the one part of
+  the probe where the learner picked a specific wrong *form inside a sentence*. Tagged
+  `MemorySource.placement`, which does three things: Coach's Notes can say "you picked this in your
+  placement check" (not "you wrote"), `correctionHint` filters them out so an authored distractor is
+  never fed back as a mistake the learner made, and — critically — `LexicalSlip.id` now folds
+  `source` in, so a placement `die→der` can't merge with a real conversation `die→der` and
+  **overwrite the learner's own sentence and its cloze card**. Backward compatible because `source`
+  defaults to nil, leaving every existing id byte-identical.
+- ✅ Cloze-ready slips (17 of 18 in a typical run) flow straight into the existing "Fix your
+  sentences" rail with no new button. The exceptions are the four bank items with multi-word answers
+  — `blankIndex` addresses one token — which keep `sentence`/`blankIndex` nil, an already-supported
+  non-drillable state. Nothing is dropped.
+- ✅ **Never writes `profile.grammar`**, no `sessionCount` bump, and a
+  `placement.handoff.lastAttemptAt` high-water mark so a repeat tap can't inflate `timesSeen` with
+  no new material. Proven on a clean install: `0 % built · 34 % estimated` before and after a
+  hand-off of 35 words + 17 slips, with `grammar` NULL and `sessionCount` 0 afterwards.
+- ⬜ Verify on device: press the button by hand (the harness here can seed and run the code path but
+  can't tap), then check Coach's Notes shows the placement caption on those rows and that
+  "Fix your sentences" offers the new cloze cards.
+
 ---
 
 ## Feature complete (Phases 1–3)

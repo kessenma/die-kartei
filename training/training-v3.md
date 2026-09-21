@@ -255,7 +255,21 @@ One watch item: the 31B *under*-delivers fix rows (51/49 delivered against 65/35
 opposite skew of the 26B. `--fix-frac` corrected it at pack time; §5 of the bakeoff README now says
 to measure the delivered split on every batch.
 
-### The run (not yet started — GPU spend decision)
+### The run
+
+> **Status 2026-08-17:** corpus packed 2026-08-16 (`data/packed-v4/`, md5 in the Pack section
+> above); training run launched. **Scores not yet recorded — fill in the table below when it
+> lands**, then update the lineage table in [`CLAUDE.md`](CLAUDE.md) and §1 of
+> [`DATA_GAP_PLAN.md`](DATA_GAP_PLAN.md), which is blocked on this result.
+>
+> | suite | v3 | **v4** |
+> |---|---|---|
+> | core `guarded-v0` (60) | — | *pending* |
+> | ext `guarded-v1ext` (61) | 86.9% | *pending* |
+> | holdout `guarded-v2` (82) | 89.0% | *pending* |
+>
+> Watch `imperativ`, `relpron`, `k2` first — v3 had **zero** rows for all three, v4 has 133/390/287.
+> This is the first run that gives a real dose-response point on the thin tail.
 
 Same recipe as v2/v3 so the corpus is the only variable:
 
@@ -266,3 +280,76 @@ EPOCHS=1  BATCH_SIZE=8  GRAD_ACCUM=1  MAX_SEQ_LEN=1024  LORA_R=8  LR=2e-4  EVAL_
 
 Score **core first**, always guarded. Bars unchanged: beat v1's **54/60**; below stock's 48/60 the
 tune is harmful. Holdout and naturalness proxies second — v3 already proved naturalness survives.
+
+## 9. v4 generation results — four bases, one corpus, two days (2026-08-17/19)
+
+Corpus v4 (§8) went through E4B, E2B, granite-3.3-2b, and granite-4.1-3b with the recipe held
+constant (`EPOCHS=1 BATCH 8 LR 2e-4 SEQ 1024`; LoRA r=8 gemma / r=32 granite), so every delta below
+is attributable to base capacity. Scoreboard-format summary: `MODEL_SCOREBOARD.md` 2026-08-19 block.
+Total GPU spend for all four trainings: ~$10 (A100 SXM $1.39/hr for E4B, L40S $0.99/hr for the rest).
+
+### 9.1 E4B v4 — 182/203, ship candidate
+
+Grammar is a statistical tie with v1 (170/203 agreement, 11 v1-only vs 12 v4-only, exact McNemar
+p = 1.00) with opposite strengths: v1 +3 on its old 4-phenomenon core, v4 +5 on the 15-phenomenon
+holdout (75/82, ties the best ever). What actually changed is behavior: false corrections halved
+(6% → 3%, one invented correction in 32 correct sentences), `relpron` restored to 6/6 on both
+suites, and every naturalness proxy flipped — modal particles 2.82 → 12.37 /100 tokens,
+repeat-4gram 0.30 → 0.10, follow-ups 0.78 → 0.82. The cost: miss 9% → 16%. Final eval_loss 0.806.
+
+**Published:** `kessenma/gemma4-e4b-german-tutor-v4-4bit` (public, byte-verified, logged-out 200)
++ `…-v4-fp16` (public archive with LoRA). App swap staged but not yet made.
+
+### 9.2 E2B v4 and v5 — the capacity-dilution discovery
+
+- **v4 (full corpus): 163/203, miss 33%, FC 0%.** The corpus that helped E4B hurt E2B. The tell:
+  ext 52 → 45 *including* phenomena E2B v1 was never trained on — the 15-phenomenon breadth
+  interfered with existing competence instead of extending it. Dose-response on verdict ratio
+  alone does NOT explain it (E2B v2, trained at 44% fix, missed *less*: 20%).
+- **v5 (core-8 phenomena only, `--fix-frac 0.80`): 168/203, miss 23%, FC 3%.** Both levers worked
+  directionally — ext +4, miss −10 points, voice retained — and the paired test vs v1 is a tie
+  (18 vs 15, p = 0.73). But the pre-registered bar was *beat 171 with miss ≤ 15%*: *not met*.
+  Final eval_loss 0.822 (own val set, not comparable across packs).
+
+**Verdict: E2B stays on v1.** A ~2B model cannot hold strict error-catching and calibrated
+permissiveness at once. Next levers if reopened: fix-frac 0.85–0.90, hard-negative OK rows
+(correct sentences that look like classic errors). Archives: `…-e2b-german-v4-fp16`,
+`…-e2b-german-v4s-fp16` (both private, byte-verified).
+
+### 9.3 granite-3.3-2b v4 — 153/203, the project's first significant paired win
+
+vs the r32 tune on the old corpus: +22 items (35 gained / 13 lost, **exact McNemar p = 0.002** —
+every other pairwise comparison this project has run was noise). Miss 59% → 43%, FC stays 0%,
+naturalness transformed (11.9 particles, follow-up 0.92). Both granite tunes share the same
+failure mode — default to OK when unsure — the corpus just made it less unsure. eval_loss 0.7256.
+
+**Published:** `kessenma/granite33-2b-german-tutor-v4-4bit` (public).
+
+### 9.4 granite-4.1-3b v4 — 164/203, best small-model result
+
+Stock probe first: 111/203 (core 31, ext 39 — *equal to tuned granite-3.3 v4* — holdout 41), i.e.
+the base knows German but not correction behavior. Tuned on the full corpus: core 47 / ext 46 /
+holdout 71, **miss 43% → 25%**, FC 9%, particles 12.0. vs granite-3.3 v4: 26/15 discordant,
+p = 0.12 — directional, not conclusive on grammar, but the miss-rate halving is the story.
+Its ~100k vocab roughly halves German token counts vs 3.3's 49k BPE, offsetting the larger
+parameter count in per-sentence latency.
+
+**Published:** `kessenma/granite41-3b-german-tutor-v4-4bit` (public). **Open: peak RAM on a real
+4 GB device decides which granite ships in-app** (only one will — their sole differentiator is the
+RAM floor; the loser stays an HF artifact).
+
+### 9.5 The capacity law (the generalizable finding)
+
+One corpus, four bases, recipe constant:
+
+| base | effective capacity | outcome |
+|---|---|---|
+| gemma-4 E2B | ~2B sparse | ext regressed, miss 33% — **breadth dilutes**; even core-8-strict only reaches parity |
+| granite-3.3 | 2.5B dense | +22 significant, but verdict courage still lacking (miss 43%) |
+| granite-4.1 | 3.4B dense | +53 over its stock, miss 25% — digests breadth AND judgment |
+| gemma-4 E4B | ~4B active (8B total) | absorbs everything; personality change only |
+
+**Rules:** below ~2.5B dense, cap phenomenon breadth before adding data; below ~2B, the corpus
+can only re-style, not improve; the verdict-strictness/permissiveness trade only resolves cleanly
+at ≥3B dense. And on any pod: the delivered fix/ok ratio must be measured per batch (31B returned
+51/49 against a 65/35 manifest) and corrected at pack time with `--fix-frac`.

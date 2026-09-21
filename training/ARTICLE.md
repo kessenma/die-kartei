@@ -285,7 +285,7 @@ none of the discipline to deliver it in a parseable verdict. Forgiving the forma
 lifts it only to 25%, still less than half the ~55% floor below which fine-tuning adds
 confidence rather than skill. It's the whole thesis in one reader suggestion: the model card
 measures German; the eval measures the job. (Full workup:
-[`BUEBLE_LM_EVAL.md`](BUEBLE_LM_EVAL.md).)
+[`bueble.md`](data/german-first-models-writeups/bueble.md).)
 
 I ran the same test on three more small candidates hunting a lighter base than E4B —
 Granite 3.3 2B, Llama 3.2 3B, Salamandra 2B — and got the same wall from three new angles.
@@ -618,6 +618,92 @@ making sense against a shrinking population of 4 GB devices.
 The floor section above said the edge is moving quickly, and that remains the most useful
 thing to know. Every result here is a statement about one generation of small models. The
 next one gets to reset it.
+
+## Whose German? The tutor meets a Semmel
+
+I learned standard German for four years, then spent three months in Vienna and found out
+what "standard" means. At the supermarket bakery counter the roll is a *Semmel*, not a
+*Brötchen*. And the past tense works differently: an Austrian has *ist gesessen* — sein
+where Germany uses haben — and that isn't slang or dialect. German is **pluricentric**:
+Germany, Austria, and Switzerland each have a codified national standard, with their own
+dictionaries. *Jänner* for January is correct standard German in Austria the way *color*
+is correct English in Boston.
+
+For most apps this is trivia. For a tutor with a **correction mode** it's a liability
+with a specific failure: a student who says something correct in Austrian standard and
+gets "fixed" into Bundesdeutsch is being taught that their German is wrong. Every eval
+item in this project was written in Germany-standard German, so nothing I'd measured so
+far could catch it. So I built a variety audit: a 35-marker inventory of codified
+Austrian and Swiss forms (each paired with its Germany-standard counterpart and regex
+traps documented — *Semmelbrösel* is not a *Semmel*), a scan over every corpus version,
+and a 51-item probe battery run against both the stock Gemma 4 E4B and my v4 fine-tune.
+
+**The training corpus turned out to be Bundesdeutsch by omission.** Not one generation
+prompt in the whole pipeline ever names a variety — no "Hochdeutsch", no "wie in
+Deutschland üblich" — and the teachers defaulted to Germany-standard essentially
+completely. In 3.6M assistant-side tokens of the v4 corpus, the fourteen Austrian
+lexical markers appear **twice** (their German counterparts: 1,434 times); the eight
+Swiss markers appear **zero** times against 1,383. The only regional voice the corpus
+has is northern German: *Moin* opens 313 conversation rows, seven times more than
+*Servus* and *Grüß Gott* combined. And exactly five genuine Austrian-style
+sein-perfects hide in the conversation data ("Mit wem bist du denn die ganze Zeit im Zug
+gesessen?") — leakage from the teacher, not policy.
+
+Then I put valid Austrian and Swiss sentences through the app's real correction contract:
+
+| student says (all correct) | stock E4B | v4 fine-tune |
+|---|---|---|
+| Ich bin gestern lange im Café gesessen. | FIX → "Ich **saß** …" | OK |
+| Wir sind eine Stunde an der Bushaltestelle gestanden. | FIX → "Wir **haben** … **gewartet**." | OK |
+| Heuer im Jänner war es besonders kalt. | FIX (reordered) | OK |
+| Ich bin mit dem Velo zur Arbeit gefahren. | FIX → "**Fahrrad**" | OK |
+| Er hat das Auto vor dem Haus parkiert. | FIX → "**geparkt**" | FIX → "**geparkt**" |
+
+**The stock model flags five of eight correct Austrian/Swiss sentences as errors** — the
+frontier open model, out of the box, tells an Austrian that *ist gesessen* should be
+*saß*. The fine-tune passes seven of eight. Before I claim credit: the controls show
+part of that tolerance is the v4's known permissiveness (it also waved through a
+genuinely broken *"eine Semmeln"* — the miss-rate trade-off from earlier sections,
+wearing an Austrian coat). But part is real: handed a sentence with a genuine word-order
+error *and* an Austrian perfect, v4 fixed the error and left *bin … gesessen* alone,
+where the stock model rewrote the whole thing into Germany-standard Präteritum.
+
+The rest of the battery is humbling in the other direction. Neither model can *produce*
+the Austrian perfect when explicitly asked ("Setze ins Perfekt, wie es in Österreich
+üblich ist" → *habe gesessen*, both models), and both confidently state wrong facts —
+"Der Monat Januar heißt auch in Österreich Januar," says my fine-tune, in a complete
+sentence, about a country whose newspapers print *Jänner* on every front page each
+winter. And the fine-tune paid a price the stock model didn't: **variety attrition**.
+Stock E4B can improvise passable Bavarian ("I mog di vü und mia gsehn uns morgn") and
+Swiss German; the v4 answers every dialect-production request in flat Standard German,
+and its "five Austrian food words with German equivalents" include the invented
+*Servusknödel*, translated as *Servusknödel*. The loss is robust to decoding: sampled at
+temperature, the stock model says *Erdäpfel* under a Graz framing in three of three
+generations; the fine-tune in zero of three. Forty-two thousand rows of unmarked
+"German" quietly narrowed the model's German to one country's.
+
+The 4 GB tier tells the same story with a twist. On Granite 3.3 2B the frozen battery
+mostly measures the capability floor — neither stock nor tuned can perform the Perfekt
+transformation at all, and stock "fixes" *Paradeiser* into *Spargel*, which isn't a
+variety opinion, just a small model failing at words (its 3B sibling hallucinates
+*Erdbeeren* into the same Gulasch). The twist is that the Granite bases keep beating
+both Gemmas at variety: stock 2B is the only model in the whole study that says
+*Jänner* unprompted when framed in Innsbruck, and stock Granite 4.1 3B is the only one
+that actually produces the Austrian perfect on request ("Die Katze **ist** auf dem Sofa
+**gelegen**.") and Swiss lexis in open elicitation ("Dort **parkiere** ich in der …
+Tiefgarage"). IBM's multilingual bases carry variety associations neither Gemma has —
+and the fine-tune erodes most of it, though the tuned 3B also delivered the study's
+only fully correct fix of a broken Austrian sentence: *"eine Semmeln"* → "**eine
+Semmel**", agreement fixed, variety kept. Base substrate sets the variety ceiling too.
+
+The takeaway generalizes past this app: **a monolingual fine-tune is not
+variety-neutral.** If the data pipeline never says which German it means, it means
+Bundesdeutsch — the teachers see to that — and the fine-tune both inherits the default
+and erodes what the base model knew about everyone else's German. The fix is cheap at
+data-generation time (tag a slice of the prompts with a variety, add Austrian-standard
+items to the eval) and nearly impossible to notice after the fact unless you go
+looking. Full inventory, corpus tables, and probe transcripts:
+[`DIALECT_EVAL.md`](DIALECT_EVAL.md).
 
 ## The same question, in pixels: on-device image generation
 

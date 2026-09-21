@@ -56,6 +56,20 @@ enum CEFRLevel: String, CaseIterable, Codable, Identifiable {
         }
     }
 
+    /// A first-person can-do statement, for the screen where a learner picks their own level.
+    /// CEFR self-assessment framing: the question is "which of these sounds like me?", which
+    /// `englishLabel` alone can't answer — "Elementary" and "Intermediate" don't tell anyone which
+    /// one they are.
+    var selfAssessment: String {
+        switch self {
+        case .a1: "I know everyday expressions and very basic phrases."
+        case .a2: "I can handle simple, routine exchanges about familiar things."
+        case .b1: "I can get by while travelling and explain my opinions."
+        case .b2: "I can hold a real discussion on a range of topics."
+        case .c1: "I use German fluently and flexibly, for work or study."
+        }
+    }
+
     /// Instruction injected into the system prompt to control the AI's complexity.
     var promptInstruction: String {
         switch self {
@@ -94,6 +108,38 @@ enum Formality: String, CaseIterable, Codable, Identifiable {
         case .sie: "Address the learner formally using the \"Sie\" form."
         }
     }
+}
+
+// MARK: - Input mode
+
+/// How the learner takes their turn. Speaking is the default, but a conversation is just as
+/// useful typed — on a plane, in an office, or anywhere talking to your phone isn't an option.
+/// Typing also silences auto-play, so a session can be run start to finish without a sound.
+enum ChatInputMode: String, CaseIterable, Codable, Identifiable {
+    case speak = "Speak"
+    case type  = "Type"
+
+    var id: String { rawValue }
+
+    var systemImage: String {
+        switch self {
+        case .speak: "mic.fill"
+        case .type:  "keyboard.fill"
+        }
+    }
+
+    /// The other mode — the one the in-chat switch flips to.
+    var toggled: ChatInputMode { self == .speak ? .type : .speak }
+
+    var subtitle: String {
+        switch self {
+        case .speak: "Tap the mic and say your turn out loud"
+        case .type:  "Write your turn instead — replies stay silent"
+        }
+    }
+
+    /// True when this mode keeps the session soundless unless the learner asks to hear something.
+    var isSilent: Bool { self == .type }
 }
 
 // MARK: - Correction Strictness
@@ -529,6 +575,8 @@ struct ConversationConfig {
     /// How corrections are delivered — hand over the fix, or nudge the learner to self-correct first.
     var feedbackStyle: FeedbackStyle = .tellMe
     var model: MLXModel
+    /// Speak the turn or type it. Typing also suppresses auto-play so nothing makes a sound.
+    var inputMode: ChatInputMode = .speak
     var autoPlay: Bool = true
     /// Pre-compute the translation and a next-turn hint in the background after each reply.
     var eagerAssist: Bool = false
@@ -536,6 +584,10 @@ struct ConversationConfig {
     var autoShowTranslation: Bool = true
     /// How many suggestions the hint feature generates (1–3).
     var hintCount: Int = 1
+    /// Surface a "you could say" hint automatically after every AI reply.
+    var autoHints: Bool = false
+    /// Tint nouns in AI replies with their der/die/das color.
+    var genderColors: Bool = true
     /// For `.paper` mode: the paper's title and the reference text injected into the chat.
     var paperTitle: String? = nil
     var paperContext: String? = nil
@@ -543,6 +595,34 @@ struct ConversationConfig {
     /// (German or English — the interview itself is always in German).
     var jobTitle: String? = nil
     var jobContext: String? = nil
+    /// Where the interview is for: the employer and the job's location as captured from the posting
+    /// (or typed by the learner), plus the posting's URL so it can be reopened. All optional; chats
+    /// saved before these existed simply have none.
+    var jobCompany: String? = nil
+    var jobLocation: String? = nil
+    var jobURL: String? = nil
+    /// Which stage of the hiring process, and over which channel, the interview rehearses. Nil on
+    /// chats from before these existed; the recruiter then behaves as it always did.
+    var interviewRound: InterviewRound? = nil
+    var interviewFormat: InterviewFormat? = nil
+    /// File name of the saved PDF copy of the posting in `JobPostingSnapshotStore`, if one exists.
+    var jobSnapshotFile: String? = nil
+    /// The studied `JobPosting` this interview rehearses for, when it was started from one.
+    var jobPostingID: UUID? = nil
+    /// What the conversation partner calls the learner, exactly as the learner typed it in
+    /// Settings. Nil when they left it blank.
+    var learnerName: String? = nil
+
+    /// The stored name as the prompt wants it: trimmed, nil when blank.
+    static func learnerName(from stored: String) -> String? {
+        let trimmed = stored.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : String(trimmed.prefix(60))
+    }
+
+    /// Longest job title stored as the chat name.
+    static let jobTitleCap = 90
+    /// Longest company / location string stored with an interview chat.
+    static let jobDetailCap = 80
 
     /// A human-readable title for the saved-chats list.
     var displayTitle: String {
@@ -560,6 +640,129 @@ struct ConversationConfig {
             return jobTitle ?? "Vorstellungsgespräch"
         case .paper:
             return paperTitle ?? "Paper-Gespräch"
+        }
+    }
+}
+
+// MARK: - Interview round & format
+
+/// Which stage of the hiring process an interview chat rehearses. Steers who the interviewer is
+/// and what they dig into.
+enum InterviewRound: String, CaseIterable, Codable, Identifiable {
+    case screening
+    case technical
+    case final
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .screening: "HR screening"
+        case .technical: "Technical round"
+        case .final:     "Final round"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .screening: "person.text.rectangle"
+        case .technical: "wrench.and.screwdriver"
+        case .final:     "person.2.badge.gearshape"
+        }
+    }
+
+    /// One line under the picker saying what this round is about.
+    var blurb: String {
+        switch self {
+        case .screening: "A recruiter on your background, motivation, and how you work with people."
+        case .technical: "Someone from the team on the skills and tools the posting names."
+        case .final:     "The hiring manager on expectations, your first months, and your own questions."
+        }
+    }
+
+    /// Who sits across the table, for the persona line of the prompt.
+    var persona: String {
+        switch self {
+        case .screening: "an experienced recruiter"
+        case .technical: "a senior member of the team, conducting the technical round"
+        case .final:     "the hiring manager"
+        }
+    }
+
+    /// Steering for the recruiter prompt.
+    var promptInstruction: String {
+        switch self {
+        case .screening:
+            "This is the first-round HR screening. You are the recruiter. Focus on the candidate's background and career path, their motivation for this role and company, strengths and weaknesses, how they work with colleagues, and practical points such as availability and expectations. Keep technical questions light; you are checking fit and communication."
+        case .technical:
+            "This is the technical round. You are a senior member of the team the role reports to. Draw your questions from the concrete skills, tools, systems, and responsibilities named in the posting: ask how the candidate has used each one, pose short practical scenarios from the role's daily work, ask them to walk through how they would solve a problem, and follow up on the details of their answers. If the candidate asks what a term means, explain it briefly in simple German and continue."
+        case .final:
+            "This is the final round. You are the hiring manager. Focus on what the role expects, how the candidate would approach their first months, their working style and priorities, how they handle pressure and conflict, and team fit. Leave room for the candidate's own questions about the team and the company, and answer them from the posting."
+        }
+    }
+}
+
+/// The channel the interview happens over. Sets the opening and the tone.
+enum InterviewFormat: String, CaseIterable, Codable, Identifiable {
+    case phone
+    case video
+    case inPerson
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .phone:    "Phone call"
+        case .video:    "Video call"
+        case .inPerson: "In person"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .phone:    "phone.fill"
+        case .video:    "video.fill"
+        case .inPerson: "person.2.fill"
+        }
+    }
+
+    var blurb: String {
+        switch self {
+        case .phone:    "Voice only: crisp questions, no visual cues."
+        case .video:    "A short audio check, then straight in."
+        case .inPerson: "Welcomed at the office, a little small talk first."
+        }
+    }
+
+    /// What the interviewer does in the greeting, as a clause for the prompt's first-message rule.
+    var openerClause: String {
+        switch self {
+        case .phone:    "check in one sentence that it is a good moment to talk"
+        case .video:    "check in one sentence that the candidate can hear you well"
+        case .inPerson: "welcome the candidate to the office and offer them a seat"
+        }
+    }
+
+    /// The same clause in German, for the hidden seed turn that makes the model open.
+    var openerSeedClause: String {
+        switch self {
+        case .phone:    "frag in einem Satz, ob es gerade passt"
+        case .video:    "frag in einem Satz, ob ich Sie gut höre"
+        case .inPerson: "heiß mich im Büro willkommen und biete mir einen Platz an"
+        }
+    }
+
+    /// Tone rules for the rest of the interview. Nothing here invites small talk: the earlier
+    /// "occasionally check the candidate is still with you" produced filler questions about
+    /// scheduling instead of questions about the job.
+    var promptInstruction: String {
+        switch self {
+        case .phone:
+            "The interview is a phone call. There is no visual channel, so never refer to anything visual, and keep each question short and clear."
+        case .video:
+            "The interview is a video call. Keep small talk to the greeting; after that, every turn is about the role."
+        case .inPerson:
+            "The interview is in person at the company's office. A sentence of small talk about the candidate's journey belongs in the greeting only; after that, every turn is about the role."
         }
     }
 }

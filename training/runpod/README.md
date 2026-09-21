@@ -190,12 +190,14 @@ $5.50 — more than the run's actual GPU work cost. The lessons, in order of imp
 
 1. **Kill the pod, not the process.** The GPU bills until the *pod* dies. Any shutdown path whose
    last line is `kill <pid>` saves nothing.
-2. **Gate termination on the data being off the box**, then let the pod terminate itself — RunPod
-   injects `RUNPOD_POD_ID`/`RUNPOD_API_KEY` and preinstalls `runpodctl`, so
-   `runpodctl remove pod $RUNPOD_POD_ID` works from inside. The full pattern (generate → md5 →
-   `hf upload` → verify remote byte count → self-remove, plus a separate absolute-deadline backstop
-   armed first) is scripted in `bakeoff/run_and_die.sh` and documented in `bakeoff/README.md` §4.
-   Upload to HF rather than scp — it works while the laptop sleeps, which is exactly when this bites.
+2. **Gate termination on the data being off the box**, then let the pod terminate itself.
+   ⚠️ Measured 2026-08-17: contrary to RunPod folklore, `RUNPOD_POD_ID`/`RUNPOD_API_KEY` are **not**
+   injected (community pod, standard pytorch image) — only `runpodctl` itself is preinstalled. Pass
+   `env.SELF_POD_ID` and a **Restricted** `env.RUNPOD_API_KEY` (pod-scope only; never the full
+   account key on a community host) at creation. The full pattern (generate → md5 → `hf upload` →
+   verify remote byte count → self-remove, plus a separate absolute-deadline backstop armed first)
+   is scripted in `bakeoff/run_and_die.sh` and documented in `bakeoff/README.md` §4. Upload to HF
+   rather than scp — it works while the laptop sleeps, which is exactly when this bites.
 3. **Verify from outside that it fired**: `runpodctl pod list` must print an empty table. Every one
    of the three failures would have been caught by this check; none of them was prevented by trust.
 
@@ -275,3 +277,29 @@ runpodctl pod list        # then ALWAYS this — must print an empty table (§6.
 
 For unattended generation runs, prefer the self-terminating launch in `bakeoff/README.md` §4 so
 this step happens without you; the `pod list` check afterwards is still mandatory.
+
+### 6.11 pip's torch build must match the HOST driver, which varies pod-to-pod
+`pip install unsloth` upgrades torch and picks the newest CUDA build (cu130 as of 2026-08). Whether
+that build *runs* depends on the **host driver** the scheduler hands you, which differs between pods
+on the **same image**: an A100 host reporting CUDA 13.2 ran cu130 fine; the next day's L40S host
+reported 12.8 and torch said `The NVIDIA driver on your system is too old (found version 12080)` —
+surfacing as unsloth's misleading "cannot find any torch accelerator? You need a GPU." Fix, in order:
+
+```bash
+/root/venv/bin/pip install --force-reinstall "torch==<same version>" \
+    --index-url https://download.pytorch.org/whl/cu128
+/root/venv/bin/pip install --force-reinstall --no-deps --no-cache-dir \
+    --index-url https://download.pytorch.org/whl/cu128 "torchvision==<its version>"
+```
+
+torchvision fails SEPARATELY after torch is fixed (`operator torchvision::nms does not exist`) —
+its compiled ops are also CUDA-build-specific. **Always run the import check (§4) before launching
+anything**; both failures are import-time and cost a minute, not a training run.
+
+### 6.12 pgrep's bracket trick does not protect WRAPPER scripts that mention the process name
+`pgrep -f "[t]rain_x"` stops the *pgrep* from matching itself — but a `bash -c` wrapper whose text
+contains the plain string `train_x` (a launch line, a grep in a checklist) matches forever. Two such
+wrappers each saw the other and deadlocked a launch for several minutes while the GPU sat idle
+(2026-08-17). Fixes, best first: gate stages on **sentinel files** (`PIPELINE_DONE`/`_FAILED`)
+inside one sequential script, no process matching at all; or anchor the pattern to the process's
+full cmdline end: `pgrep -f "python train_x\.py$"`.

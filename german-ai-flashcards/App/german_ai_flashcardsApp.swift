@@ -12,10 +12,35 @@ import UIKit
 final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(
         _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
+        // Recreate the background download session on every launch: transfers that finished
+        // or failed while the app was gone deliver their callbacks now and get settled into
+        // their partial files, not only once a download screen happens to start one.
+        BackgroundModelDownloadSession.shared.activate()
+        // iOS's own account of crashes and memory-limit kills, filed into the memory log next to
+        // the app's session-marker records (Settings ▸ Speicher).
+        MetricKitSubscriber.shared.start()
+        return true
+    }
+
+    /// Rarely called on iOS — a foreground quit, some background terminations — but when it is,
+    /// the next launch must not report this session as a crash.
+    func applicationWillTerminate(_ application: UIApplication) {
+        MemoryDiagnostics.endSessionCleanly()
+    }
+
+    func application(
+        _ application: UIApplication,
         handleEventsForBackgroundURLSession identifier: String,
         completionHandler: @escaping () -> Void
     ) {
         BackgroundModelDownloadSession.shared.setBackgroundCompletionHandler(completionHandler)
+        // Woken in the background because a file finished: keep the download moving (commit
+        // the file, enqueue the next one) instead of waiting for the user to come back.
+        if application.applicationState == .background {
+            BackgroundDownloadResumer.kickIfNeeded()
+        }
     }
 }
 
@@ -50,7 +75,8 @@ struct german_ai_flashcardsApp: App {
             ArticleWordStat.self, ArticleRound.self,
             PrepositionStat.self, PrepositionRound.self,
             StoryReadingSession.self, StoryQuizAttempt.self,
-            BatchJob.self
+            BatchJob.self,
+            JobPosting.self
         ])
         let config = SwiftData.ModelConfiguration(schema: schema)
 
@@ -85,10 +111,27 @@ struct german_ai_flashcardsApp: App {
                 .environment(coordinator.mlxService)
                 .environment(\.appTheme, appTheme)
                 .onChange(of: scenePhase) { _, phase in
+                    // The session marker's app state is what decides whether an unclean exit is
+                    // reported as "closed while in use" or "closed in the background".
+                    MemoryDiagnostics.sceneDidChange()
                     // A model download cut off while the user was in another app resumes
-                    // from its saved partial files as soon as they come back.
+                    // from its saved partial files as soon as they come back — even when
+                    // the cutoff was iOS terminating the app. The background wake driver
+                    // stops first: two drivers would race one repo's partials.
                     if phase == .active {
-                        coordinator.mlxService.resumeInterruptedDownloadIfNeeded()
+                        Task { @MainActor in
+                            await BackgroundDownloadResumer.stop()
+                            coordinator.mlxService.resumeInterruptedDownloadIfNeeded()
+                        }
+                    }
+                    // Leaving the foreground with multi-GB weights resident is the single fastest
+                    // way to get the app terminated: iOS ranks suspended apps for jetsam largely
+                    // by footprint, so a trip to Settings (adding a German keyboard, say) is
+                    // enough to lose the open conversation's in-flight turn. Shed the model on the
+                    // devices that have no room to spare for it; the screen that was using it
+                    // reloads it on return (see `MLXGenerationService.releaseMemory(reason:)`).
+                    if phase == .background {
+                        coordinator.mlxService.releaseMemory(reason: .background)
                     }
                     // Keep practice reminders anchored to the real last-practice date: re-derive the
                     // ladder whenever the app enters or leaves the foreground. Leaving captures any

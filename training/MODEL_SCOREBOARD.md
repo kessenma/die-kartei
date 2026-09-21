@@ -65,6 +65,63 @@ dataset (`data/packed/`), QLoRA r=8, lr 2e-4, 2 epochs unless noted.
 > (14,045 correction rows at 62% fix) is packed and awaiting a retrain. This also explains the
 > two-architecture `relpron` regression in §3.4. Full workup: **[`training-v2.md`](training-v2.md) §2.6.**
 
+> ✅ **2026-08-19 — the v4 GENERATION. Corpus v4 (fixed teachers, per-phenomenon 70% fix) trained
+> across four bases in one two-day sweep. Everything below is guarded, all three suites, identical
+> items (/203 = core 60 + ext 61 + holdout 82). Full workup: [`training-v3.md`](training-v3.md) §8–9.**
+>
+> | model | size | core | ext | holdout | **/203** | FC | miss | modal-particles /100tok | status |
+> |---|---|---|---|---|---|---|---|---|---|
+> | E4B v1 | 4.8G | 54 | 57 | 70 | 181 | 6% | **9%** | 2.8 | shipped, superseded on ship |
+> | **E4B v4** | 4.8G | 51 | 56 | **75** | **182** | **3%** | 16% | **12.4** | ✅ **ship candidate** — PUBLIC `kessenma/gemma4-e4b-german-tutor-v4-4bit` |
+> | E2B v1 | 3.3G | 50 | 52 | 69 | **171** | 12% | **~10%** | — | **stays shipped** |
+> | E2B v4 | 3.3G | 48 | 45 | 70 | 163 | 0% | 33% | 11.7 | ❌ rejected (capacity dilution) |
+> | E2B v5 "strict" | 3.3G | 49 | 49 | 70 | 168 | 3% | 23% | 11.7 | ❌ bar not met (171 + miss ≤15%); archived |
+> | granite-3.3 r32 | 1.4G | 37 | 35 | 59 | 131 | 0% | 59% | — | superseded |
+> | **granite-3.3 v4** | 1.4G | 46 | 39 | 68 | 153 | **0%** | 43% | 11.9 | PUBLIC `kessenma/granite33-2b-german-tutor-v4-4bit` — first significant win of the project (McNemar p = 0.002 vs r32) |
+> | granite-4.1-3b stock | 1.8G | 31 | 39 | 41 | 111 | 34% | 45% | — | base probe (FC/miss filled 2026-08-26 from saved responses) |
+> | **granite-4.1 v4** | 1.8G | 47 | 46 | **71** | **164** | 9% | **25%** | 12.0 | PUBLIC `kessenma/granite41-3b-german-tutor-v4-4bit` — 4 GB-tier favorite pending on-device peak-RAM |
+> | granite-4.2-3b stock | 1.9G | 27 | 34 | 39 | 100 | 9% | 67% | — | ❌ base probe only, tune declined (2026-08-26). IBM's Aug-25 reasoning retrain (dense, ChatML template, `enable_thinking` — probed with thinking OFF, 0 format errors): **worse than 4.1 stock on every suite** (−11/203), so no substrate gain to justify a run. Local convert `models/granite42-3b-4bit` (4.5 bpw); mlx_lm + template verified working, `<|im_start|>` encodes as one token. If ever tuned: CHAT_TEMPLATE=native, bake `enable_thinking=false` default into the shipped template. Full workup: [`BUDGET_BASE_SEARCH.md`](BUDGET_BASE_SEARCH.md) 2026-08-26 addendum |
+>
+> **The findings that generalize:**
+> 1. **E4B v4 vs v1 is a personality change, not a capability change.** 170/203 agreement, 11 vs 12
+>    discordant, exact McNemar p = 1.0. v4 halves false corrections and speaks colloquial German
+>    (modal particles 4.4×, canned 4-grams ⅓); v1 catches more errors. Same trade at E2B (v5 vs v1,
+>    p = 0.73). The corpus's verdict ratio is a **strictness dial**, the conversation slice a
+>    **register dial** — temperament is now a training-time choice.
+> 2. **Capacity gates the corpus.** The identical 15-phenomenon corpus HURT E2B (~2B sparse: ext
+>    52 → 45 on phenomena it was never trained on — interference, not enrichment), was digested at
+>    2.5B dense (granite-3.3 +22, p = 0.002), and paid best at 3.4B dense (granite-4.1, miss 25%).
+>    Trimming to core-8 + `--fix-frac 0.80` (E2B v5) recovered ext (+4) and miss (−10 pts) but could
+>    not reach v1. **Below ~2.5B dense, cap phenomenon breadth; below ~2B, keep the old recipe.**
+> 3. **`relpron` is fixed everywhere** — 6/6 on both suites for E4B v4 (390 corpus rows vs v2's
+>    zero), confirming the two-architecture regression was always data-side.
+> 4. **Delivered verdict ratio ≠ requested** — gemma-4-31B returned 51/49 against a 65/35 manifest;
+>    `--fix-frac` at pack time is mandatory, not optional.
+
+> 📐 **2026-09-05 — the v3 suite, built for the RL round.** `data/eval/grammar_eval_v3.json`: 300
+> correction items, exactly 150 ok / 150 error, 14 phenomena, no cloze; **93 of the 150 OK items are
+> hard negatives** (correct sentences shaped like the classic learner error). Frozen before any RL; score
+> once, never iterate against it. Guarded. FC over 150 ok, miss over 150 error. Full read-out and the
+> per-phenomenon table: [`REINFORCEMENT_LEARNING.md`](REINFORCEMENT_LEARNING.md) Part C.1.
+>
+> | model | v3 (/300) | FC | traps fooled (/93) | miss | bare-OK misses | status |
+> |---|---|---|---|---|---|---|
+> | E4B stock | 244 (81%) | 19% (29/150) | 19 | 18% (27/150) | 12 | reference |
+> | E4B v1 | 250 (83%) | 11% (17/150) | 12 | 22% (33/150) | 16 | shipped, superseded on ship |
+> | **E4B v4** | **260 (87%)** | **3%** (4/150) | 1 | 24% (36/150) | 27 | ✅ **RL policy init** (REINFORCEMENT_LEARNING.md) |
+> | E4B v4 + FIX-bias 1 | 263 (88%) | 9% (14/150) | 7 | 15% (23/150) | — | control, not a candidate — the decode-time seesaw (Part C.2) |
+> | E4B v4 + FIX-bias 2 | 259 (86%) | 19% (28/150) | 15 | 9% (13/150) | — | control — meets miss, fails FC 3× |
+> | E4B rl1 (GRPO, 1 epoch) | 260 (87%) | 3% (4/150) | 1 | 24% (36/150) | 27 | ❌ **tie with v4 on every suite** (core 51, ext 56, holdout 73, McNemar p ≥ 0.5): LR 5e-6 × 215 steps moved the weights ~1e-4 relative; identical to v4 **unquantised too** (bf16 447/503 both) and under sampling. $7.05. Full workup: [`REINFORCEMENT_LEARNING.md`](REINFORCEMENT_LEARNING.md) Part B 2026-09-06 |
+> | E2B v1 | 251 (84%) | 13% (19/150) | 13 | 20% (30/150) | 10 | shipped |
+> | E2B v5 | 249 (83%) | 7% (11/150) | 10 | 27% (40/150) | 21 | archived |
+> | granite-4.1 v4 | 228 (76%) | 13% (19/150) | 11 | 35% (53/150) | 22 | 4 GB-tier favorite |
+>
+> **What it adds to the 08-19 findings:** the E4B v4 fine-tune's low FC survives 93 traps (1 fooled; stock
+> falls for 19, v1 for 12), and its cost is now measured at full size — **27 bare-`OK` misses vs stock's 12**.
+> E2B v5 "strict" shows the SFT knob's limit in one row: FC 13% → 7% bought miss 20% → 27%. v4 vs v1 on
+> v3: +21/−11, p = 0.11. The 27 silent misses are the RL target — and a first-token `FIX` bias cannot take
+> them without paying in FC one-for-one (the two control rows), which is why the round goes to RL.
+
 ## 🎉 v2 RESULTS (2026-07-29) — retrained on 45k teacher-generated examples
 
 All on the frozen `grammar_eval_v2_holdout.json`, all guarded. Full workup:
@@ -174,14 +231,20 @@ trade never had to be made.
 | Llama 3.2 1B | 0.7 GB | 17/60 (28%) | — | 20/61 (33%) | — | 0% (trivial) | **100%** | Llama license | ❌ unsalvageable — answered OK to all 69 errors |
 | Qwen3-8B | 4.9 GB | 35/60 (58%) | — | 47/61 (77%) | — | 6% | 48% | Apache 2.0 | ❌ skip fine-tune: same Qwen knowledge-deficit profile as 4B (misses half of real errors), core below *stock* E4B at identical size. Tuning (~+13 → ~71%) still loses to tuned E4B (85%) |
 | Phi-4 Mini 3.8B | 2.3 GB | 26/60 (43%) | — | 29/61 (48%) | — | 12% | **77%** | MIT | ❌ below fine-tune floor; Mistral-tier German despite strong English benchmarks (dawo 4/15, ndekl 1/6). Consider demoting for German use in-app |
-| Gemma 4 E2B | 3.3 GB disk / ~2B-class RAM | 39/60 (65%) | 41/60 (68%) | 46/61 (75%) | ❌ 43/61 (70%) | 34% → ❌ **59%** | 28% → 19% | Apache 2.0 | ❌ **DO NOT SHIP tuned — partial capacity cliff.** Core +2 and miss rate improved (28→19%, learned real error-catching), but false corrections nearly **doubled (34→59%)**: over-corrects correct sentences with confabulated rules ("*aufstehen* is inseparable" — it's separable; "fixes" `zumachen`→`zuschlagen`). Learned the FIX *behavior* without the capacity to aim it — same failure as 1B, one tier up. Per-phen core: vmp 12→13, refl 8→12, **sep 11→8**, dawo 8→8. **Ship STOCK E2B** for low/mid tier (FC 34% ≪ 59%). Tuned kept **private/local** for reference (`kessenma/gemma4-e2b-german-tutor` fp16 private; 4-bit at `models/gemma4-e2b-german-tutor-4bit`). Caveat: base=community quant, tuned=local mlx_vlm quant (25-pt FC jump ≫ any quant artifact) |
+| Gemma 4 E2B | 3.3 GB disk / ~2B-class RAM | 39/60 (65%) → **44/60 (73%) guarded** | 41/60 (68%) | 46/61 (75%) | ❌ 43/61 (70%) | 34% → ❌ **59%** | 28% → 19% | Apache 2.0 | ❌ **DO NOT SHIP tuned — partial capacity cliff.** Core +2 and miss rate improved (28→19%, learned real error-catching), but false corrections nearly **doubled (34→59%)**: over-corrects correct sentences with confabulated rules ("*aufstehen* is inseparable" — it's separable; "fixes" `zumachen`→`zuschlagen`). Learned the FIX *behavior* without the capacity to aim it — same failure as 1B, one tier up. Per-phen core: vmp 12→13, refl 8→12, **sep 11→8**, dawo 8→8. **Ship STOCK E2B** for low/mid tier (FC 34% ≪ 59%). Tuned kept **private/local** for reference (`kessenma/gemma4-e2b-german-tutor` fp16 private; 4-bit at `models/gemma4-e2b-german-tutor-4bit`). Caveat: base=community quant, tuned=local mlx_vlm quant (25-pt FC jump ≫ any quant artifact) |
 | Ministral 8B (2410) | 4.2 GB | 31/60 (52%) | — | 42/61 (69%) | — | **84%** (!) | 23% | ⚠️ Mistral Research License | ❌ research footnote: most extreme over-corrector measured — "fixes" 84% of correct sentences (anti-Qwen profile). Below floor anyway; license moot |
 | Aya Expanse 8B | 4.2 GB | 34/60 (57%) | — | 39/61 (64%) | — | **100%** (!!) | 12% | ⚠️ CC-BY-NC | ❌ research footnote: corrected ALL 32 correct sentences — zero verdict discipline, the exact mirror of Llama 1B (which OK'd all 69 errors). Decent knowledge, no judgment |
 | EuroLLM-1.7B Instruct | ~1 GB | 8/60 (**13%**) | — | 4/61 (**7%**) | — | 100% | 97% | Apache 2.0 | ❌ **DEAD LAST** — can't follow the correction format (26–29 format failures per suite; rambles in English prose). EU-24-languages pretraining without instruction-following is useless for a structured tutor task. Local convert at `models/eurollm-1.7b-4bit` |
-| BübleLM-2B-SFT (Gemma 2-2B, German) | 1.1 GB | 4/60 (**7%**) / 25% lenient | — | 3/61 (5%) | — | **100%** (0 bare OK) | 100% | Apache 2.0 | ❌ **below the fine-tune floor.** German-specialised Gemma 2-2B (HellaSwag-DE 47.9%) but never renders a verdict — 77% open `: "<sentence>"`, 0% emit `OK`, 7% emit `FIX:`. Even forgiving format entirely: 25% core ≪ 55% floor. The EuroLLM pattern again — strong-ish German, no task discipline. Full workup: [`BUEBLE_LM_EVAL.md`](BUEBLE_LM_EVAL.md). Local convert at `models/bueble-lm-2b-sft-4bit` |
+| BübleLM-2B-SFT (Gemma 2-2B, German) | 1.1 GB | 4/60 (**7%**) / 25% lenient | — | 3/61 (5%) | — | **100%** (0 bare OK) | 100% | Apache 2.0 | ❌ **below the fine-tune floor.** German-specialised Gemma 2-2B (HellaSwag-DE 47.9%) but never renders a verdict — 77% open `: "<sentence>"`, 0% emit `OK`, 7% emit `FIX:`. Even forgiving format entirely: 25% core ≪ 55% floor. The EuroLLM pattern again — strong-ish German, no task discipline. Full workup: [`bueble.md`](data/german-first-models-writeups/bueble.md). Local convert at `models/bueble-lm-2b-sft-4bit` |
 | **Granite 3.3 2B Instruct** (IBM) | 1.5 GB | 30/60 (50%) → **34/60 (57%) guarded** | **72% (v2 holdout, tuned)** | 27/61 (44%) → 62% guarded | — | 66% → **19%** base → **0% tuned** | 43% base → 44% tuned | Apache 2.0 | ◽ **fine-tuned 2026-07-30 — best 4 GB result, unshipped.** This row previously read "only *ties* stock Gemma-3-1B (58%)"; that anchor was wrong (true 34%), so Granite was **beating** it by 21 points (55% vs 34%), not tying. Its own projection that a fine-tune would land ~70% proved accurate: **72% guarded, 0% FC**. Ceiling is real though — a rank test (r=8→r=32) moved core by p=0.42, and its 49k BPE vocab needs ~1.9× the tokens for German. [`training-v2.md`](training-v2.md) §3, [`BUDGET_BASE_SEARCH.md`](BUDGET_BASE_SEARCH.md) |
 | Llama 3.2 3B Instruct | 2.0 GB | 16/60 (27%) → 35% guarded | — | 33/61 (54%) → 70% guarded | — | 100% → 53% guarded | 43% | Llama 3.2 (700M MAU) | ❌ **below floor.** Strong generalist (ext 70% guarded, 0 format errors) but weak German *grammar* — over-corrects half the correct sentences even guarded. Substrate ceiling: German MMLU 53.3 ≪ Gemma. The 1B's bigger sibling still can't do the hard areas. [`BUDGET_BASE_SEARCH.md`](BUDGET_BASE_SEARCH.md) |
 | Salamandra 2B Instruct (BSC) | 1.2 GB | 4/60 (**7%**) | — | 8/61 (13%) | — | 100% | 100% | Apache 2.0 | ❌ **EuroLLM redux — dead last tier.** 99/121 format failures; rambles in English, translates instead of correcting, confabulates (*'the correct form is "er" instead of "er"'*). 35-EU-language pretraining tuned for Catalan/Spanish → no German task discipline. Local convert at `models/salamandra-2b-instruct-4bit` |
+| **ELMOD-2.7B-it** (Fraunhofer IIS) | **1.6 GB** | 7/60 (12%) English 0-shot → 32/60 (53%) German 0-shot → **43/60 (72%) 3-shot** | not yet tuned | 8/61 (13%) English 0-shot; **not run 3-shot** | — | 100% → 50% → **19%** | 100% → 47% → **28%** | **CC BY-NC-4.0** | 🔵 **strongest 4 GB base measured — 72% core stock, at 1.6 GB.** ⚠️ **The 12% was a prompt-language artifact, not a model failure** (corrected same day, 2026-08-16): the app's prompt is English, ELMOD is German-first, and translating the *same contract* took format adherence 2% → 100%. Control: SauerkrautLM on the same German prompt went 53% → **50%**, i.e. no lift — so this is specific to German-first pretraining and **no other row on this board is affected**. 3-shot costs only 320 of 2048 tokens, so 72% is shippable-config, not lab-only. Robust weakness: **`dawo` 27%** even 3-shot (0%/20%/27% across conditions). **Do NOT read 72% as tying tuned Granite** — that 72% is 59/82 on the *v2 holdout*, a different suite. **Two run-blockers:** `mlx_lm`'s GPT-NeoX hardcodes `gelu_approx` vs `hidden_act: "gelu"` (diverges at token 20/40), and ELMOD's own `tokenizer.json` omits ids 5/6 — the only two its chat template uses — so generation never stopped. Both fixed before scoring. Next: ext suite 3-shot, then tuned Granite on core v0 for a same-suite head-to-head. Full workup: [`elmod.md`](data/german-first-models-writeups/elmod.md) |
+| **LLäMmlein 7B chat** (LSX-UniWue) | **3.5 GB** | 35/60 (58%) English 0-shot → 14/60 (23%) German 0-shot → **44/60 (73%) 3-shot** | not tuned | not run | — | 31% → 88% → **6%** | 47% → 84% → **31%** | ⚠️ **Research-only RAIL-M** | 🔵 **best non-Gemma stock number measured (73%), and unusable.** German-only pretraining (RedPajama V2 `de`, no English by construction) at Uni Würzburg. Lands in the **8 GB tier** at 3.5 GB, where shipped tuned E4B scores **90%**; its 73% merely ties *stock* Gemma 4 E2B (3.3 GB, **83% tuned**). ⚠️ **Inverts ELMOD's German-prompt finding** — English 0-shot 58% vs German 0-shot **23%** (format 94% → 23%), despite being *more* German-first. What carries format is few-shot, not prompt language; the ELMOD rule was model-specific and the standing criterion is now few-shot compliance. Robust weakness: **`dawo` 5/15 even 3-shot**, and **0–1 of 8 counting error items only** — the same wall as ELMOD (4/15). Licence is the blocker: §1(m) Permitted Purpose = *"academic or research purposes only"*, §6.5 binds Derivatives, so a fine-tune inherits and no good-faith commercial reading exists (stricter than ELMOD's CC BY-NC). **Do not use as a data teacher** — the corpus and every model trained from it fall inside the Derivative clause. Base model scores **68% 3-shot with 0/16 false corrections**, so 67–73% is substrate, not SFT. Full workup: [`llammlein.md`](data/german-first-models-writeups/llammlein.md) |
+| LLäMmlein 1B / 1B chat (LSX-UniWue) | 0.67 GB | base 22/60 (37%) 3-shot; chat 28/60 (47%) 3-shot, **5/60 (8%) English 0-shot** | not tuned | not run | — | chat **100%** English 0-shot (0 bare OK) → 19% 3-shot | 100% → 69% | ⚠️ **Research-only RAIL-M** | ❌ **below the ~55% floor at the size that would have mattered.** Would have been the interesting result — 0.67 GB at tuned-Granite quality unlocks the 4 GB tier — but 37% base / 47% chat. Under the app's real English prompt the chat variant reproduces the **BübleLM failure mode exactly**: 0/16 bare `OK`, 16/16 false corrections, 25% format adherence. ⚠️ **Harness trap:** both 1B chat adapters ship ByteLevel-BPE `tokenizer.json` while declaring `tokenizer_class: "LlamaTokenizer"`; `AutoTokenizer` (which `mlx_lm` uses) honours the label and destroys spaces and umlauts on encode *and* decode — scored **0/60** until rebuilt with `PreTrainedTokenizerFast`, then 47%. Adapters also target `LLaMmlein_1B_prerelease` (vocab 32000), **not** `LLaMmlein_1B` (32064). Pre-fix runs kept as `results/llammlein_BROKEN-TOKENIZER_*.json`. [`llammlein.md`](data/german-first-models-writeups/llammlein.md) |
+| **Apertus v1.1-4B Instruct** (EPFL/ETH/CSCS) | **2.0 GB** | 33/60 (55%) English 0-shot, **0 format errors** → **42/60 (70%) 3-shot** | not tuned | not run | — | 19% (3-shot) | 28% | **Apache 2.0** | ⚠️ **the only Apertus worth tuning.** Stock-E2B-class quality at **60% of E2B's size**, and the only German-first model measured that follows the app's format zero-shot. Loses to *stock* E2B (73% guarded) head-to-head, so a tune must clear tuned E2B's 83% from a 70% base — the ~+13 pt lift lands at a tie. Full writeup: [`data/german-first-models-writeups/apertus.md`](data/german-first-models-writeups/apertus.md) |
+| **Apertus-8B-Instruct-2509** (EPFL/ETH/CSCS) | 4.55 GB | 7/60 (12%) English 0-shot (**48 format errors**) → **43/60 (72%) 3-shot** | not tuned | not run | — | **0%** (3-shot) | 34% | Apache 2.0 | ❌ below *stock* E4B (80% guarded) at comparable size, and needs 3-shot to get there. Notable: **0/16 false corrections** — the best verdict discipline measured here, and *genuine* (miss 34%, not the degenerate always-OK case that faked Gemma-3-1B's 0%) |
+| Apertus v1.1-1.5B Instruct (EPFL/ETH/CSCS) | 0.8 GB | 2/60 (3%) English 0-shot (43 format errors) → 22/60 (37%) 3-shot | not tuned | not run | — | **50%** | 63% | Apache 2.0 | ❌ **4 GB tier negative result.** +4 pts over the incumbent (33%) is inside noise on 60 items, and it falsely "corrects" **half** of all already-correct sentences. Fourth failed attempt at this tier — do not retry |
 | SauerkrautLM-gemma-2-2b-it (VAGO) | 1.4 GB | 20/60 (33%) → **32/60 (53%) guarded** | — | 28/61 (46%) → 64% guarded | — | 97% → **25% guarded** | 46% | Gemma | ❌ **best-behaved existing German fine-tune, still below floor.** German Spectrum-tune of Gemma 2 2B — kept instruction-following (only 5/121 format errors, unlike BübleLM's collapse) but Gemma-2 substrate on the hard grammar lands *below* stock Gemma-3-1B (58%) and under the 55% floor. Confirms: an off-the-shelf German chat tune ≠ this task. [`BUDGET_BASE_SEARCH.md`](BUDGET_BASE_SEARCH.md) |
 | Gemma 4 12B | 6.7 GB | ▫️ research only | — | ▫️ | — | | | Apache 2.0 | ❌ **not app-viable**: iOS caps per-app memory (~8 GB even on Pro devices) and 12B-class models fail to load in practice (user-tested). Baseline only worth running for the article's capacity curve |
 | EuroLLM-9B Instruct | ~5 GB | ▫️ deprioritized | — | ▫️ | — | | | Apache 2.0 | the 1.7B's format-following collapse makes this a long shot; no MLX build either — only worth converting if curiosity outweighs the download |
@@ -294,7 +357,12 @@ protection that public INT4 quantizers don't provide. Full workup + reopen crite
 | Gemma Terms (Gemma 3 family) | ✅ | ✅ | ✅ (with Gemma terms compliance) |
 | Llama Community License | ✅ | ✅ | ✅ small-scale (has MAU threshold clauses) |
 | Mistral Research License (Ministral 8B) | ✅ | ✅ | ❌ needs commercial license |
-| CC-BY-NC (Aya Expanse) | ✅ | ✅ | ❌ non-commercial only |
+| CC-BY-NC (Aya Expanse, ELMOD-2.7B) | ✅ | ⚠️ see below | ❌ non-commercial only |
+
+⚠️ **NC is sticky through training.** A fine-tune is Adapted Material and inherits the NC term, so
+the cost of building on an NC base is not "swap the model out later" — it is discarding the tuned
+checkpoint and redoing the run on a different base. Since any NC candidate must beat an Apache-2.0
+incumbent (tuned Granite 3.3 2B, 72%) to be worth adopting at all, its bar is higher than its score.
 
 *Gemma 4 released under Apache 2.0 (changed from the old Gemma license).
 

@@ -17,13 +17,26 @@ extension CardDeckView {
         cards.contains { $0.exampleSentence != nil }
     }
 
+    /// The example sentence usually contains the article, so it waits with it.
+    var exampleWouldLeakArticle: Bool {
+        articleQuiz && isShowingGermanSide && !isFlipped && !revealedCurrent && cards[currentIndex].article != nil
+    }
+
+    /// Cards finished this SRS session: the set-out count minus what is still ahead in the queue
+    /// (a re-queued card counts once, however often it comes back).
+    var srsDoneCount: Int {
+        guard ankiDueIndices.indices.contains(ankiDuePosition) else { return sessionDueCount }
+        let pending = Set(ankiDueIndices[ankiDuePosition...]).count
+        return max(0, sessionDueCount - pending)
+    }
+
     @ViewBuilder
     var cardContent: some View {
         VStack(spacing: 0) {
             HStack {
                 Spacer()
                 if isSRSMode {
-                    Text("\(ankiDuePosition + 1) / \(ankiDueIndices.count)")
+                    Text("\(min(srsDoneCount + 1, sessionDueCount)) / \(sessionDueCount)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
@@ -56,7 +69,9 @@ extension CardDeckView {
                 isRegular: cards[currentIndex].isRegular,
                 exampleSentence: cards[currentIndex].exampleSentence,
                 imageFileName: imageFileName(at: currentIndex),
-                imageDeckID: deckUUID
+                imageDeckID: deckUUID,
+                hidesArticleUntilFlipped: articleQuiz,
+                forms: cards[currentIndex].forms
             )
             .id("\(currentIndex)-\(showGermanFirst)")
 
@@ -81,7 +96,8 @@ extension CardDeckView {
 
             if let sentence = cards[currentIndex].exampleSentence,
                cards[currentIndex].auxiliaryVerb == nil,
-               isShowingGermanSide == showExamplesOnGermanSide {
+               isShowingGermanSide == showExamplesOnGermanSide,
+               !exampleWouldLeakArticle {
                 HStack(spacing: 6) {
                     highlightedSentence(sentence, vocabWord: cards[currentIndex].germanWord)
                         .font(.subheadline)

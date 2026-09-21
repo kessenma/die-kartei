@@ -125,6 +125,9 @@ final class SpeechRecognitionService {
     private func startRecognitionTask(with recognizer: SFSpeechRecognizer) throws {
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
+        // Let the recognizer insert commas/periods/question marks from prosody, so a spoken
+        // "Ich glaube, dass…" doesn't come back comma-less and read as an error downstream.
+        request.addsPunctuation = true
         if recognizer.supportsOnDeviceRecognition {
             request.requiresOnDeviceRecognition = true
         }
@@ -194,7 +197,12 @@ final class SpeechRecognitionService {
     /// boundaries while speaking — it matters in German, where "?" vs "." changes the meaning.
     func appendPunctuation(_ mark: String) {
         guard isRecording, let recognizer else { return }
-        let base = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        var base = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        // With automatic punctuation on, the recognizer may already have ended the segment with a
+        // mark — replace it rather than stacking ("Ich glaube." + "," → "Ich glaube,").
+        while let last = base.last, ".,!?…".contains(last) {
+            base.removeLast()
+        }
         guard !base.isEmpty else { return }
 
         // Swap in a fresh recognizer so the in-progress utterance isn't re-delivered (and

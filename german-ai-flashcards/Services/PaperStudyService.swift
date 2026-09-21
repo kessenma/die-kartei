@@ -9,8 +9,9 @@ final class PaperStudyService {
 
     /// The recommended default model for this feature. Was stock Gemma 4 E4B; that model is no
     /// longer offered, since the tutor is the same base at the same 8 GB tier, a smaller download,
-    /// and scores 90% against its 80% on the app's grammar suite (guarded). This path is text-only (the PDF
-    /// and web extractors hand it plain text), so nothing here depended on the stock model's vision.
+    /// and scores 90% against its 83% across the app's full grammar suites (guarded; v4 tutor,
+    /// 182/203 vs 169/203). This path is text-only (the PDF and web extractors hand it plain
+    /// text), so nothing here depended on the stock model's vision.
     static let requiredModel: MLXModel = .hero
 
     enum Phase: Equatable {

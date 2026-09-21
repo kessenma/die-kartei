@@ -1,5 +1,10 @@
 # German Tutor — Cactus Runtime & Retraining Plan
 
+> ⚠️ **HISTORICAL — superseded 2026-07-29.** The Cactus runtime track is **closed**: Cactus and
+> LiteRT-LM were both rejected (INT4 wrecks Gemma-4's PLE). Current verdict, reopen criteria, and
+> the measurements behind them: [`RUNTIME_EXPLORATION.md`](RUNTIME_EXPLORATION.md). For current
+> training work start at [`CLAUDE.md`](CLAUDE.md). Kept for provenance — do not plan against it.
+
 **Base model:** `unsloth/gemma-4-E4B-it` (Gemma **4**, E-series; chat template `gemma-4`)
 — confirmed in [training/runpod/train_gemma4_e4b.py](runpod/train_gemma4_e4b.py#L31).
 **In-app models (MLX 4-bit today):**

@@ -44,24 +44,74 @@ struct DeckStore {
         )
     }
 
-    /// A Goethe vocab session. SRS modes bind to the persistent `goethe-srs` card store so
-    /// review state accumulates; other modes track stats on a lightweight `goethe` deck.
-    func goetheSession(cards: [VocabCard], topic: String, style: FlashcardStyle, label: String) -> StudySession {
-        var savedCards: [SavedCard] = []
-        var deckID: PersistentIdentifier?
-        if (style == .anki || style == .leitner), let srsDeck = fetchOrCreateGoetheSRSDeck(for: topic) {
-            let lookup = Dictionary(
-                srsDeck.cards.map { ($0.germanWord, $0) },
-                uniquingKeysWith: { first, _ in first }
-            )
-            savedCards = cards.compactMap { lookup[$0.germanWord] }
-            deckID = srsDeck.persistentModelID
-        } else {
-            deckID = fetchOrCreateGoetheStatsDeck(for: topic)?.persistentModelID
-        }
+    // MARK: Wortschatz (the Goethe box)
+
+    /// The one deck every Goethe word's progress lives on. See `WortschatzMergeService`.
+    static let wortschatzTopic = "Goethe Vocabulary"
+    static let wortschatzBadge = "logo-goethe-square-icon"
+
+    /// A Wortschatz session: the reviews due now (shuffled), then never-seen words up to what
+    /// today's budget still allows, in the lists' introduction order. `cards` is built *from* the
+    /// chosen rows, so the player's index-aligned `savedCards` can never drift. Nil when there is
+    /// nothing to study in this scope.
+    func wortschatzSession(
+        scope: WortschatzScope, style: FlashcardStyle, newBudget: Int, sessionCap: Int, now: Date = .now
+    ) -> StudySession? {
+        guard let deck = fetchOrCreateWortschatzDeck() else { return nil }
+        let style = style == .default ? .anki : style
+        let leitnerSession = deck.quizResults.count
+        let inScope = deck.cards.filter { WortschatzService.inScope($0, scope) }
+
+        let due = inScope
+            .filter { WortschatzService.isDue($0, style: style, leitnerSession: leitnerSession, now: now) }
+            .shuffled()
+        let cap = max(1, sessionCap)
+        let newAllowed = max(0, min(newBudget, cap - min(due.count, cap)))
+        let fresh = inScope
+            .filter { WortschatzService.isNew($0) }
+            .sorted { $0.sortOrder < $1.sortOrder }
+            .prefix(newAllowed)
+        let chosen = Array(due.prefix(cap)) + Array(fresh)
+        guard !chosen.isEmpty else { return nil }
+
         return StudySession(
-            cards: cards, topic: topic, deckID: deckID,
-            savedCards: savedCards, flashcardStyle: style, subDeckLabel: label
+            cards: chosen.map(\.vocabCard),
+            topic: scope.topic,
+            deckID: deck.persistentModelID,
+            savedCards: chosen,
+            flashcardStyle: style,
+            generatorRaw: "goethe-srs",
+            subDeckLabel: "\(min(due.count, cap)) due · \(fresh.count) new · \(scope.summary)",
+            badgeLogoName: Self.wortschatzBadge,
+            autoStart: true
+        )
+    }
+
+    /// Flip through words in scope without touching progress: no deck, no saved cards, so the
+    /// player runs in plain browse mode and records nothing.
+    func wortschatzPreviewSession(scope: WortschatzScope, count: Int) -> StudySession? {
+        let cards = GoetheVocabService.words(in: scope).compactMap(\.vocabCard).shuffled().prefix(max(1, count))
+        guard !cards.isEmpty else { return nil }
+        return StudySession(
+            cards: Array(cards),
+            topic: scope.topic,
+            deckID: nil,
+            flashcardStyle: .default,
+            generatorRaw: "goethe",
+            subDeckLabel: "Preview · \(cards.count) cards",
+            badgeLogoName: Self.wortschatzBadge
+        )
+    }
+
+    /// Due / new / unseen counts for the hero and the Today plan. Reads only; the deck is not
+    /// created here, so a learner who never opened the box gets zeros, not 2,800 new cards.
+    func wortschatzSummary(
+        scope: WortschatzScope, style: FlashcardStyle, budgetRemaining: Int, now: Date = .now
+    ) -> WortschatzService.Summary? {
+        guard let deck = fetchWortschatzDeck() else { return nil }
+        return WortschatzService.summary(
+            cards: deck.cards, scope: scope, style: style == .default ? .anki : style,
+            leitnerSession: deck.quizResults.count, budgetRemaining: budgetRemaining, now: now
         )
     }
 
@@ -107,10 +157,18 @@ struct DeckStore {
         var savedCards: [SavedCard] = []
 
         switch deck.kind {
-        case .generated, .phrase, .conversation, .paper, .story, .goetheSRS, .pastTenseSRS:
+        case .generated, .phrase, .conversation, .paper, .story, .job:
             // These store their cards on the deck.
             cards = deck.vocabCards
             savedCards = deck.cards.sorted { $0.sortOrder < $1.sortOrder }
+        case .goetheSRS, .pastTenseSRS:
+            // The SRS stores hold the whole list; the session studied a subset of it. Rebuild that
+            // subset from the saved word order, or give up if any word has since vanished.
+            guard let words = progress.cardGermanWords, !words.isEmpty else { return nil }
+            let lookup = Dictionary(deck.cards.map { ($0.germanWord, $0) }, uniquingKeysWith: { first, _ in first })
+            savedCards = words.compactMap { lookup[$0] }
+            guard savedCards.count == words.count else { return nil }
+            cards = savedCards.map(\.vocabCard)
         case .goethe:
             // Stats-only Goethe deck — rebuild the studied subset from the saved word order.
             guard let level = goetheLevel(for: deck.topic),
@@ -142,7 +200,8 @@ struct DeckStore {
             flashcardStyle: style,
             generatorRaw: deck.generatorRaw,
             subDeckLabel: nil,
-            autoResume: true
+            autoResume: true,
+            badgeLogoName: deck.kind == .goetheSRS ? Self.wortschatzBadge : nil
         )
     }
 
@@ -289,63 +348,62 @@ struct DeckStore {
         return deck
     }
 
-    func fetchOrCreateGoetheSRSDeck(for topic: String) -> SavedDeck? {
-        let level: GoetheLevel
-        switch topic {
-        case "A1 Vocabulary": level = .a1
-        case "A2 Vocabulary": level = .a2
-        case "B1 Vocabulary": level = .b1
-        default: return nil
-        }
-
-        let allEntries = GoetheVocabService.entries(for: level)
+    /// The merged Wortschatz deck if the learner has one. Read-only companion to the fetch-or-create.
+    func fetchWortschatzDeck() -> SavedDeck? {
+        let topic = Self.wortschatzTopic
         let descriptor = FetchDescriptor<SavedDeck>(
             predicate: #Predicate { $0.generatorRaw == "goethe-srs" && $0.topic == topic }
         )
+        return (try? modelContext.fetch(descriptor))?.first
+    }
 
-        if let deck = (try? modelContext.fetch(descriptor))?.first {
-            let existingWords = Set(deck.cards.map { $0.germanWord })
+    /// The one SRS deck for every Goethe word: one `SavedCard` per headword in the merged index,
+    /// in introduction order. An existing deck is backfilled with any word the lists gained and
+    /// stripped of duplicate rows (the old per-level create path never deduped).
+    func fetchOrCreateWortschatzDeck() -> SavedDeck? {
+        let words = GoetheVocabService.orderedWords
+
+        if let deck = fetchWortschatzDeck() {
+            var seen: Set<String> = []
+            for card in deck.cards.sorted(by: { ($1.interval, $1.repetitions) < ($0.interval, $0.repetitions) }) {
+                if seen.insert(card.germanWord).inserted { continue }
+                modelContext.delete(card)
+            }
             var nextOrder = (deck.cards.map(\.sortOrder).max() ?? -1) + 1
-            for entry in allEntries {
-                guard let translation = entry.translation, !translation.isEmpty else { continue }
-                guard !existingWords.contains(entry.word) else { continue }
-                let card = SavedCard(
-                    germanWord: entry.word,
-                    englishTranslation: translation,
-                    wordType: entry.wordType,
-                    article: entry.article,
-                    exampleSentence: entry.example?.isEmpty == false ? entry.example : nil,
-                    sortOrder: nextOrder
-                )
+            for word in words where !seen.contains(word.word) {
+                guard let card = Self.makeCard(for: word, sortOrder: nextOrder) else { continue }
                 deck.cards.append(card)
                 modelContext.insert(card)
                 nextOrder += 1
             }
+            deck.wordCount = words.count
             try? modelContext.save()
             return deck
         }
 
         let deck = SavedDeck(
-            topic: topic,
-            wordCount: allEntries.count,
+            topic: Self.wortschatzTopic,
+            wordCount: words.count,
             includeExamples: true,
             includeGender: true
         )
         deck.generatorRaw = "goethe-srs"
-        deck.cards = allEntries.enumerated().compactMap { index, entry in
-            guard let translation = entry.translation, !translation.isEmpty else { return nil }
-            return SavedCard(
-                germanWord: entry.word,
-                englishTranslation: translation,
-                wordType: entry.wordType,
-                article: entry.article,
-                exampleSentence: entry.example?.isEmpty == false ? entry.example : nil,
-                sortOrder: index
-            )
-        }
+        deck.cards = words.enumerated().compactMap { index, word in Self.makeCard(for: word, sortOrder: index) }
         modelContext.insert(deck)
         try? modelContext.save()
         return deck
+    }
+
+    private static func makeCard(for word: GoetheWord, sortOrder: Int) -> SavedCard? {
+        guard let translation = word.translation, !translation.isEmpty else { return nil }
+        return SavedCard(
+            germanWord: word.word,
+            englishTranslation: translation,
+            wordType: word.rawWordType,
+            article: word.article,
+            exampleSentence: word.example?.isEmpty == false ? word.example : nil,
+            sortOrder: sortOrder
+        )
     }
 
     func fetchOrCreatePastTenseStatsDeck(for topic: String) -> SavedDeck? {

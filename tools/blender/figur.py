@@ -893,6 +893,97 @@ def scene_aufbau(args, out_dir):
     verify_animation(twin)
 
 
+# MARK: - Der Gang (the walk-cycle clip)
+#
+# A seamless in-place stride: legs swing about the hip line, arms counter-swing, torso and head
+# ride a slight bob (highest at the passing position, like a real gait — and it puts motion on
+# all six parts, so `verify_animation`'s all-parts check keeps meaning something). The first
+# frame equals the last, so RealityKit's `.repeat()` loops without a hitch.
+#
+# Translation is deliberately NOT baked. The runtime slides the figure (the prep scenes'
+# contract: the app writes positions, never rotations), which keeps one clip reusable at any
+# walking speed — and keeps the loop seamless, since an in-place cycle has nothing to rewind.
+# The walker must still be yawed ±90° toward its direction of travel (see POSES["geh"]): the
+# swing is authored about X, along the hip line.
+
+GEHEN_SWING = 18        # degrees of leg swing, matching POSES["geh"]
+GEHEN_ARM_SWING = 11    # arms counter-swing a touch less
+GEHEN_BOB = 0.022       # torso/head lift at the passing position, in scene units
+GEHEN_CYCLE = 24        # frames at 24 fps — one full stride pair per second
+
+
+def keyframe_gehen(objects):
+    scene = bpy.context.scene
+    scene.frame_start, scene.frame_end = 1, GEHEN_CYCLE + 1
+    scene.render.fps = 24
+    quarter = GEHEN_CYCLE // 4
+
+    def key_swing(obj, frame, degrees):
+        obj.rotation_mode = "XYZ"
+        obj.rotation_euler = (math.radians(degrees), 0, 0)
+        obj.keyframe_insert("rotation_euler", frame=frame)
+
+    def key_lift(obj, frame, base, lift):
+        obj.location.z = base + lift
+        obj.keyframe_insert("location", frame=frame)
+
+    swings = {
+        "figur_leg_l": GEHEN_SWING,
+        "figur_leg_r": -GEHEN_SWING,
+        "figur_arm_l": -GEHEN_ARM_SWING,   # counter-swing: opposite its own side's leg
+        "figur_arm_r": GEHEN_ARM_SWING,
+    }
+    for obj in objects:
+        if swing := swings.get(obj.name):
+            for step, value in enumerate([swing, 0, -swing, 0, swing]):
+                key_swing(obj, 1 + step * quarter, value)
+        elif obj.name in ("figur_torso", "figur_head"):
+            base = obj.location.z
+            for step, lift in enumerate([0, GEHEN_BOB, 0, GEHEN_BOB, 0]):
+                key_lift(obj, 1 + step * quarter, base, lift)
+
+
+def scene_gehen(args, out_dir):
+    """The walk-cycle clip, plus a storyboard strip to judge the stride by.
+
+    Same two-build structure as `scene_aufbau`: the storyboard renders at high LOD so faceting
+    can never be mistaken for a gait problem; the export rebuilds at low LOD because that is
+    what ships. Same keyframes both times.
+    """
+    global _LOD
+
+    _LOD = "high"
+    clear_scene()
+    stage(args.size, *VIEWS["dim"], args.ortho, args.target_z)
+    objects, p = build_figure(args.preset, args.height)
+    keyframe_gehen(objects)
+    cells = []
+    for frame in range(1, GEHEN_CYCLE + 2, 3):
+        bpy.context.scene.frame_set(frame)
+        path = os.path.join(out_dir, f"gehen-f{frame:02d}.png")
+        render_to(path)
+        cells.append(path)
+    contact_sheet(cells, 3, os.path.join(out_dir, "figur-gehen.png"))
+
+    _LOD = "low"
+    clear_scene()
+    setup_render(args.size)
+    objects, p = build_figure(args.preset, args.height)
+    keyframe_gehen(objects)
+    out = os.path.normpath(args.out or os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "..",
+        "german-ai-flashcards", "Resources", "figur-gehen.usdz"))
+
+    # The plain-text twin, written from this same scene before the .usdz so the two cannot
+    # disagree — the only thing that can prove the clip carries motion (see `usda_animation`).
+    twin = os.path.join(out_dir, os.path.splitext(os.path.basename(out))[0] + ".usda")
+    bpy.ops.wm.usd_export(filepath=twin, export_materials=True, export_animation=True,
+                          convert_orientation=True)
+    export_usdz(out, animated=True)
+    print(f"GEHEN export {out}")
+    verify_animation(twin)
+
+
 def scene_scale(args, out_dir):
     """The figure standing with the cast it will join: the dog at its shipped 1.4 and the
     table at its shipped 2.5×1.5×1.25. Scale is a relationship, not a number — the question
@@ -936,6 +1027,7 @@ def main():
     ap.add_argument("--parts", action="store_true", help="every part alone, rendered + exported")
     ap.add_argument("--scale-check", action="store_true", help="beside hund.usdz and the table")
     ap.add_argument("--aufbau", action="store_true", help="bake the self-assembly clip")
+    ap.add_argument("--gehen", action="store_true", help="bake the looping walk-cycle clip")
     ap.add_argument("--pose", default="steh", choices=sorted(POSES),
                     help="stance for the default render/export path (probe with --pose sitz)")
     ap.add_argument("--color", default=None, metavar="RRGGBB",
@@ -964,6 +1056,9 @@ def main():
         return
     if args.aufbau:
         scene_aufbau(args, args.out_dir)
+        return
+    if args.gehen:
+        scene_gehen(args, args.out_dir)
         return
 
     global _LOD

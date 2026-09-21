@@ -132,6 +132,9 @@ struct TodaySection: View {
         case .resumePausedDeck:
             Button { launchResume() } label: { rowLabel(rec, hero: hero, chevron: true) }
                 .buttonStyle(.plain)
+        case .wortschatz:
+            Button { launchWortschatz() } label: { rowLabel(rec, hero: hero, chevron: true) }
+                .buttonStyle(.plain)
         }
     }
 
@@ -156,16 +159,49 @@ struct TodaySection: View {
                 studiedToday: StudyLogService.studiedToday(studyDays),
                 hasStartedLearning: hasStartedLearning,
                 dayIndex: dayIndex,
-                resume: resumeInfo
+                resume: resumeInfo,
+                wortschatz: wortschatzInfo
             )
         )
     }
 
+    // MARK: - Wortschatz
+
+    private var wortschatzDeck: SavedDeck? {
+        decks.first { $0.kind == .goetheSRS && $0.topic == DeckStore.wortschatzTopic }
+    }
+
+    /// The box's counts under the learner's own scope, style, and daily budget. Nil until the box
+    /// has been opened once — the plan never invents 2,800 new words for someone who hasn't.
+    private var wortschatzInfo: TodaySnapshot.WortschatzInfo? {
+        guard let deck = wortschatzDeck else { return nil }
+        let summary = WortschatzService.summary(
+            cards: deck.cards,
+            scope: WortschatzScope.load(),
+            style: WortschatzPrefs.style(),
+            leitnerSession: deck.quizResults.count,
+            budgetRemaining: StudyLogService.newWordBudgetRemaining(studyDays, newPerDay: WortschatzPrefs.newPerDay())
+        )
+        return .init(due: summary.due, new: summary.new)
+    }
+
+    private func launchWortschatz() {
+        guard let session = deckStore.wortschatzSession(
+            scope: WortschatzScope.load(),
+            style: WortschatzPrefs.style(),
+            newBudget: StudyLogService.newWordBudgetRemaining(studyDays, newPerDay: WortschatzPrefs.newPerDay()),
+            sessionCap: WortschatzPrefs.sessionCap()
+        ) else { return }
+        router.launch(.cardDeck(session))
+    }
+
     /// SRS cards that have been scheduled and are now due (never-reviewed cards are "new", not due),
-    /// soonest-due first, across every deck.
+    /// soonest-due first, across every deck except the Goethe box, which has its own plan step and
+    /// would otherwise fill the whole review with its words.
     private var dueCards: [SavedCard] {
         let now = Date()
         return decks
+            .filter { $0.kind != .goetheSRS }
             .flatMap(\.cards)
             .filter { card in
                 guard let next = card.nextReviewDate else { return false }
@@ -240,7 +276,7 @@ struct TodaySection: View {
         let cards = Array(dueCards.prefix(60))
         guard !cards.isEmpty else { return }
         let session = StudySession(
-            cards: cards.map(vocabCard(from:)),
+            cards: cards.map(\.vocabCard),
             topic: "Daily Review",
             deckID: nil,
             savedCards: cards,
@@ -260,16 +296,6 @@ struct TodaySection: View {
         }
     }
 
-    private func vocabCard(from c: SavedCard) -> VocabCard {
-        VocabCard(
-            germanWord: c.germanWord,
-            englishTranslation: c.englishTranslation,
-            wordType: c.wordType,
-            article: c.article,
-            exampleSentence: c.exampleSentence,
-            conjugations: c.conjugations
-        )
-    }
 }
 
 // MARK: - Row

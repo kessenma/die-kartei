@@ -11,7 +11,8 @@
     "article": null,
     "wordType": null,
     "translation": "Formerly standard spelling of Abend which was deprecated in the spelling reform (Rechtschreibreform) of 1996.",
-    "example": "Sie können das Geld auch online überweisen."
+    "example": "Sie können das Geld auch online überweisen.",
+    "plural": "-e"
   },
   {
     "word": "aber",
@@ -25,7 +26,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "departure (of a land or water vehicle)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "abgeben",
@@ -39,7 +41,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to collect, pick up or fetch someone or something",
-    "example": "hat abgeholt Wir müssen noch meinen Bruder abholen."
+    "example": "hat abgeholt Wir müssen noch meinen Bruder abholen.",
+    "verbForms": "holt ab · hat abgeholt"
   },
   {
     "word": "abschließen",
@@ -60,7 +63,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "address",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Ahnung",
@@ -144,7 +148,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "traffic light",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "an",
@@ -158,7 +163,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to offer, to provide",
-    "example": "9WORTLISTE"
+    "example": "9WORTLISTE",
+    "verbForms": "bietet an · hat angeboten"
   },
   {
     "word": "ander",
@@ -186,14 +192,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to begin",
-    "example": ""
+    "example": "",
+    "verbForms": "fängt an · hat angefangen"
   },
   {
     "word": "Angebot",
     "article": "das",
     "wordType": "noun",
     "translation": "offer, proposition",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Angst",
@@ -214,7 +222,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "arrival",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "anmachen",
@@ -228,7 +237,8 @@
     "article": null,
     "wordType": null,
     "translation": "to announce, declare",
-    "example": ""
+    "example": "",
+    "verbForms": "meldet sich an · hat sich angemeldet"
   },
   {
     "word": "Anmeldung",
@@ -242,7 +252,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "a call upon, an appeal (e.g., to gods, a court, etc.)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Anruf-",
@@ -256,14 +267,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to call, to ring (by telephone or similar technology)",
-    "example": "hat angerufen Juan ruft seine Freundin an."
+    "example": "hat angerufen Juan ruft seine Freundin an.",
+    "verbForms": "ruft an · hat angerufen"
   },
   {
     "word": "Anschluss",
     "article": "der",
     "wordType": "noun",
     "translation": "connection, joining",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "ansehen",
@@ -277,21 +290,24 @@
     "article": "die",
     "wordType": "noun",
     "translation": "answer",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "antworten",
     "article": null,
     "wordType": "verb",
     "translation": "to answer, to reply",
-    "example": "antwortet,"
+    "example": "antwortet,",
+    "verbForms": "hat geantwortet"
   },
   {
     "word": "Anzeige",
     "article": "die",
     "wordType": "noun",
     "translation": "advertisement, announcement",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Anzug",
@@ -305,14 +321,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "apple (fruit)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Apotheke",
     "article": "die",
     "wordType": "noun",
     "translation": "pharmacy",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Apparat",
@@ -326,14 +344,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "toil, regularly performed work, regularly pursued economic activity, labor, job, employment, occupation",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "arbeiten",
     "article": null,
     "wordType": "verb",
     "translation": "to work (to do a specific task by employing physical or mental powers)",
-    "example": "hat gearbeitet Ich arbeite als Krankenschwester in einem"
+    "example": "hat gearbeitet Ich arbeite als Krankenschwester in einem",
+    "verbForms": "hat gearbeitet"
   },
   {
     "word": "arbeitslos",
@@ -409,22 +429,25 @@
     "word": "aufstehen",
     "article": null,
     "wordType": "verb",
-    "translation": "to get up (move from a sitting or lying position to a standing position",
-    "example": ""
+    "translation": "to get up (move from a sitting or lying position to a standing position; to get up from bed)",
+    "example": "",
+    "verbForms": "steht auf · ist aufgestanden"
   },
   {
     "word": "Aufzug",
     "article": "der",
     "wordType": "noun",
     "translation": "verbal noun of aufziehen",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Auge",
     "article": "das",
     "wordType": "noun",
     "translation": "eye",
-    "example": "Mein rechtes Auge tut seit Sonntag weh."
+    "example": "Mein rechtes Auge tut seit Sonntag weh.",
+    "plural": "-n"
   },
   {
     "word": "aus",
@@ -438,35 +461,40 @@
     "article": "die",
     "wordType": "noun",
     "translation": "training, apprenticeship, vocational education, education",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Ausflug",
     "article": "der",
     "wordType": "noun",
     "translation": "excursion, outing, short trip",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "ausfüllen",
     "article": null,
     "wordType": "verb",
     "translation": "to fill in",
-    "example": ""
+    "example": "",
+    "verbForms": "füllt aus · hat ausgefüllt"
   },
   {
     "word": "Ausgang",
     "article": "der",
     "wordType": "noun",
     "translation": "exit (passage from inside to outside)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "ausgeben",
     "article": null,
     "wordType": "verb",
     "translation": "to spend, to expend",
-    "example": ""
+    "example": "",
+    "verbForms": "gibt aus · hat ausgegeben"
   },
   {
     "word": "ausgehen",
@@ -480,14 +508,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "enquiry",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Ausland",
     "article": "das",
     "wordType": "noun",
     "translation": "foreign countries (collectively)",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "ausmachen",
@@ -542,7 +572,7 @@
     "word": "austragen",
     "article": null,
     "wordType": "verb",
-    "translation": "to (go from house to house and) deliver sth.,",
+    "translation": "to (go from house to house and) deliver sth.",
     "example": ""
   },
   {
@@ -557,7 +587,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "car",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Autobahn",
@@ -620,7 +651,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "bath",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "baden",
@@ -641,7 +673,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "railway depot, railroad station, railway station, train station",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Bahnsteig",
@@ -690,7 +723,8 @@
     "article": null,
     "wordType": null,
     "translation": "bank, bench",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "bar",
@@ -710,7 +744,7 @@
     "word": "basteln",
     "article": null,
     "wordType": "verb",
-    "translation": "to perform handicrafts or DIY, to build, to craft (especially something from paper, fabric, and related materials, by cutting, folding, gluing, etc., e.g. such objects as kites, lanterns, calendars, greeting cards),",
+    "translation": "to perform handicrafts or DIY, to build, to craft (especially something from paper, fabric, and related materials, by cutting, folding, gluing, etc., e.g. such objects as kites, lanterns, calendars, greeting cards)",
     "example": ""
   },
   {
@@ -718,7 +752,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "abdomen, belly",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "bauen",
@@ -732,7 +767,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "tree",
-    "example": "Wir haben zwei Apfelbäume im Garten."
+    "example": "Wir haben zwei Apfelbäume im Garten.",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Baustelle",
@@ -760,7 +796,8 @@
     "article": null,
     "wordType": null,
     "translation": "to thank, to express thanks",
-    "example": ""
+    "example": "",
+    "verbForms": "hat sich bedankt"
   },
   {
     "word": "bedankt",
@@ -788,7 +825,8 @@
     "article": null,
     "wordType": null,
     "translation": "to hurry, to hasten, to rush",
-    "example": ""
+    "example": "",
+    "verbForms": "hat sich beeilt"
   },
   {
     "word": "beeilt",
@@ -809,7 +847,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to begin",
-    "example": "beginnt,"
+    "example": "beginnt,",
+    "verbForms": "hat begonnen"
   },
   {
     "word": "begründen",
@@ -858,7 +897,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to receive",
-    "example": ""
+    "example": "",
+    "verbForms": "hat bekommen"
   },
   {
     "word": "beliebt",
@@ -900,21 +940,24 @@
     "article": "der",
     "wordType": "noun",
     "translation": "a mountain, hill",
-    "example": "Wir fahren am Wochenende in die Berge."
+    "example": "Wir fahren am Wochenende in die Berge.",
+    "plural": "-e"
   },
   {
     "word": "berichten",
     "article": null,
     "wordType": "verb",
     "translation": "to relate, to tell, to give an account of",
-    "example": "berichtet,"
+    "example": "berichtet,",
+    "verbForms": "hat berichtet"
   },
   {
     "word": "Beruf",
     "article": "der",
     "wordType": "noun",
     "translation": "occupation, profession, trade, job, career",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "berühmt",
@@ -935,7 +978,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to describe",
-    "example": "beschreibt,"
+    "example": "beschreibt,",
+    "verbForms": "hat beschrieben"
   },
   {
     "word": "beschweren",
@@ -963,7 +1007,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to visit (a city, tourist site, monument etc.)",
-    "example": ""
+    "example": "",
+    "verbForms": "hat besichtigt"
   },
   {
     "word": "besichtigt",
@@ -984,14 +1029,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to succeed, to pass (an exam)",
-    "example": ""
+    "example": "",
+    "verbForms": "hat bestanden"
   },
   {
     "word": "bestellen",
     "article": null,
     "wordType": "verb",
     "translation": "to order (e.g. food at a restaurant, items for delivery)",
-    "example": ""
+    "example": "",
+    "verbForms": "hat bestellt"
   },
   {
     "word": "bestellt",
@@ -1019,7 +1066,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to visit, to see",
-    "example": ""
+    "example": "",
+    "verbForms": "hat besucht"
   },
   {
     "word": "besucht",
@@ -1032,8 +1080,9 @@
     "word": "Bett",
     "article": "das",
     "wordType": "noun",
-    "translation": "bed (piece of furniture, usually flat and soft, for resting or sleeping on",
-    "example": ""
+    "translation": "bed (piece of furniture, usually flat and soft, for resting or sleeping on; one's place of sleep or rest)",
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "bewerben",
@@ -1047,7 +1096,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "application (for a job or position), candidature",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "bewirbt",
@@ -1068,7 +1118,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to pay, give money",
-    "example": "bezahlt,"
+    "example": "bezahlt,",
+    "verbForms": "hat bezahlt"
   },
   {
     "word": "Bibliothek",
@@ -1081,15 +1132,17 @@
     "word": "Bier",
     "article": "das",
     "wordType": "noun",
-    "translation": "beer (alcoholic beverage fermented from starch material",
-    "example": ""
+    "translation": "beer (alcoholic beverage fermented from starch material; a serving of this beverage)",
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Bild",
     "article": "das",
     "wordType": "noun",
     "translation": "depiction, image, picture",
-    "example": ""
+    "example": "",
+    "plural": "-er"
   },
   {
     "word": "billig",
@@ -1152,7 +1205,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to remain (to continue to be)",
-    "example": ""
+    "example": "",
+    "verbForms": "ist geblieben"
   },
   {
     "word": "bleibt",
@@ -1180,7 +1234,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "flower, blossom (colorful, conspicuous reproductive structure(s) of an angiosperm)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Bluse",
@@ -1215,7 +1270,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to need, to be in need of, to require",
-    "example": ""
+    "example": "",
+    "verbForms": "hat gebraucht"
   },
   {
     "word": "brauchst",
@@ -1229,14 +1285,16 @@
     "article": null,
     "wordType": null,
     "translation": "letter (written message)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Briefmarke",
     "article": "die",
     "wordType": "noun",
     "translation": "postage stamp",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Brille",
@@ -1250,14 +1308,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to bring, to fetch, to take, to convey, to bear",
-    "example": ""
+    "example": "",
+    "verbForms": "hat gebracht"
   },
   {
     "word": "Brot",
     "article": "das",
     "wordType": "noun",
     "translation": "bread",
-    "example": "Haben Sie auch Weißbrot?"
+    "example": "Haben Sie auch Weißbrot?",
+    "plural": "-e"
   },
   {
     "word": "brät",
@@ -1271,7 +1331,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "a bun, bread roll",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Brücke",
@@ -1284,8 +1345,9 @@
     "word": "Buch",
     "article": "das",
     "wordType": "noun",
-    "translation": "book (collection of sheets of paper bound together to hinge at one edge",
-    "example": ""
+    "translation": "book (collection of sheets of paper bound together to hinge at one edge; long work fit for publication)",
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "buchen",
@@ -1320,14 +1382,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "bus (public transport)",
-    "example": ""
+    "example": "",
+    "plural": "-se"
   },
   {
     "word": "Butter",
     "article": "die",
     "wordType": "noun",
     "translation": "butter",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Bäckerei",
@@ -1348,7 +1412,8 @@
     "article": null,
     "wordType": null,
     "translation": "office (room for working)",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Cafeteria",
@@ -1369,7 +1434,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "boss, chief",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Chefin",
@@ -1390,7 +1456,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "computer (programmable electronic device that performs mathematical calculations, logical operations, and usually also data retrieval/storage)",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Creme",
@@ -1586,7 +1653,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "village (rural habitation of size between a hamlet and a town)",
-    "example": "Meine Familie lebt in einem Dorf."
+    "example": "Meine Familie lebt in einem Dorf.",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "draußen",
@@ -1614,14 +1682,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to print (a book, newspaper etc.)",
-    "example": ""
+    "example": "",
+    "verbForms": "hat gedruckt"
   },
   {
     "word": "Drucker",
     "article": "der",
     "wordType": "noun",
     "translation": "agent noun of drucken",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "drüben",
@@ -1634,7 +1704,7 @@
     "word": "drücken",
     "article": null,
     "wordType": "verb",
-    "translation": "to press, to push (a button/key",
+    "translation": "to press, to push (a button/key; a finger or other object against something)",
     "example": "hat gedrückt dann geht sie auf."
   },
   {
@@ -1663,7 +1733,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "thirst",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Dusche",
@@ -1747,7 +1818,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "egg (all biological senses)",
-    "example": ""
+    "example": "",
+    "plural": "-er"
   },
   {
     "word": "eigen",
@@ -1796,7 +1868,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "entrance, entry",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "einig",
@@ -1824,14 +1897,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to invite",
-    "example": ""
+    "example": "",
+    "verbForms": "lädt ein · hat eingeladen"
   },
   {
     "word": "Einladung",
     "article": "die",
     "wordType": "noun",
     "translation": "invitation",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "einmal",
@@ -1866,7 +1941,8 @@
     "article": null,
     "wordType": null,
     "translation": "third-person singular dependent present of eintreten",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "einverstanden",
@@ -1894,7 +1970,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to thread (elastic, thread etc.)",
-    "example": ""
+    "example": "",
+    "verbForms": "zieht ein · ist eingezogen"
   },
   {
     "word": "Eis",
@@ -1908,7 +1985,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to propose, to advise in favor of",
-    "example": "empfiehlt,"
+    "example": "empfiehlt,",
+    "verbForms": "empfiehlt · hat empfohlen"
   },
   {
     "word": "Empfänger",
@@ -1957,7 +2035,8 @@
     "article": null,
     "wordType": null,
     "translation": "to excuse (something or (formal) someone)",
-    "example": "(sich), Ich möchte mich bei dir entschuldigen."
+    "example": "(sich), Ich möchte mich bei dir entschuldigen.",
+    "verbForms": "hat sich entschuldigt"
   },
   {
     "word": "Entschuldigung",
@@ -1971,14 +2050,16 @@
     "article": "das",
     "wordType": "noun",
     "translation": "first floor (US), ground floor (UK)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Erfahrung",
     "article": "die",
     "wordType": "noun",
     "translation": "experience (event through which empirical knowledge is gained)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "erinnern",
@@ -2041,7 +2122,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to reach (to attain by stretching)",
-    "example": ""
+    "example": "",
+    "verbForms": "hat erreicht"
   },
   {
     "word": "erreicht",
@@ -2062,7 +2144,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to tell, to narrate, to recount",
-    "example": "hat erzählt Erzählst du mir eine Geschichte?"
+    "example": "hat erzählt Erzählst du mir eine Geschichte?",
+    "verbForms": "hat erzählt"
   },
   {
     "word": "es",
@@ -2076,7 +2159,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "food",
-    "example": "Darf ich Sie zum Essen einladen?"
+    "example": "Darf ich Sie zum Essen einladen?",
+    "plural": "only sg."
   },
   {
     "word": "etwas",
@@ -2104,14 +2188,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "fare ticket",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Fahrplan",
     "article": "der",
     "wordType": "noun",
     "translation": "timetable (for transport)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Fahrt",
@@ -2139,7 +2225,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "family",
-    "example": "Ich habe eine große Familie."
+    "example": "Ich habe eine große Familie.",
+    "plural": "-n"
   },
   {
     "word": "Fan",
@@ -2195,7 +2282,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "celebration",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "feiern",
@@ -2216,14 +2304,16 @@
     "article": "das",
     "wordType": "noun",
     "translation": "window",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Ferien",
     "article": "die",
     "wordType": "noun",
     "translation": "holidays during which an institution (especially a school, university) or a business is closed",
-    "example": ""
+    "example": "",
+    "plural": "only pl."
   },
   {
     "word": "fernsehen",
@@ -2272,35 +2362,40 @@
     "article": "das",
     "wordType": "noun",
     "translation": "fever (heightened body temperature)",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Film",
     "article": "der",
     "wordType": "noun",
     "translation": "film (a thin layer of some substance)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "finden",
     "article": null,
     "wordType": "verb",
     "translation": "to find",
-    "example": "hat gefunden Ich finde es nicht gut, dass du so viel arbeitest."
+    "example": "hat gefunden Ich finde es nicht gut, dass du so viel arbeitest.",
+    "verbForms": "hat gefunden"
   },
   {
     "word": "Firma",
     "article": "die",
     "wordType": "noun",
     "translation": "A company, a business.",
-    "example": ""
+    "example": "",
+    "plural": "Firmen"
   },
   {
     "word": "Fisch",
     "article": "der",
     "wordType": "noun",
     "translation": "fish (cold-blooded vertebrates living in water)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "fit",
@@ -2321,7 +2416,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "flesh",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "fleißig",
@@ -2349,14 +2445,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "airport",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Flugzeug",
     "article": "das",
     "wordType": "noun",
     "translation": "aeroplane",
-    "example": "Das Flugzeug startet in einer halben Stunde."
+    "example": "Das Flugzeug startet in einer halben Stunde.",
+    "plural": "-e"
   },
   {
     "word": "Fluss",
@@ -2398,21 +2496,24 @@
     "article": "die",
     "wordType": "noun",
     "translation": "question (interrogative sentence or phrase)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "fragen",
     "article": null,
     "wordType": "verb",
     "translation": "to ask",
-    "example": "hat gefragt Ich möchte Sie etwas fragen."
+    "example": "hat gefragt Ich möchte Sie etwas fragen.",
+    "verbForms": "hat gefragt"
   },
   {
     "word": "Frau",
     "article": null,
     "wordType": null,
     "translation": "woman (adult female human)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "frei",
@@ -2454,7 +2555,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "friend",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Freundin",
@@ -2510,7 +2612,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "breakfast",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "frühstücken",
@@ -2531,7 +2634,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "foot (body part)",
-    "example": "Gehen Sie zu Fuß zur Arbeit?"
+    "example": "Gehen Sie zu Fuß zur Arbeit?",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Fußball",
@@ -2566,7 +2670,8 @@
     "article": null,
     "wordType": null,
     "translation": "to feel (a thing, sensation, emotion - a noun)",
-    "example": ""
+    "example": "",
+    "verbForms": "hat sich gefühlt"
   },
   {
     "word": "Führer-",
@@ -2622,21 +2727,24 @@
     "article": "der",
     "wordType": "noun",
     "translation": "garden, yard (grounds at the front or back of a house)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Gast",
     "article": "der",
     "wordType": "noun",
     "translation": "guest",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "geben",
     "article": null,
     "wordType": "verb",
     "translation": "to give (changing ownership)",
-    "example": "hat gegeben Es gibt keine Karten mehr für das Konzert."
+    "example": "hat gegeben Es gibt keine Karten mehr für das Konzert.",
+    "verbForms": "gibt · hat gegeben"
   },
   {
     "word": "geboren",
@@ -2650,7 +2758,8 @@
     "article": null,
     "wordType": null,
     "translation": "birthday",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "geehrt",
@@ -2664,7 +2773,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to please",
-    "example": "hat gefallen Wie gefällt es Ihnen in Berlin?"
+    "example": "hat gefallen Wie gefällt es Ihnen in Berlin?",
+    "verbForms": "gefällt · hat gefallen"
   },
   {
     "word": "gefährlich",
@@ -2706,14 +2816,16 @@
     "article": "das",
     "wordType": "noun",
     "translation": "salary",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "gehen",
     "article": null,
     "wordType": "verb",
     "translation": "to go, to walk",
-    "example": "laufen) Wann kommst du zurück?"
+    "example": "laufen) Wann kommst du zurück?",
+    "verbForms": "ist gegangen"
   },
   {
     "word": "gehängt",
@@ -2734,7 +2846,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "money",
-    "example": "Kannst du mir ein bisschen Geld leihen?"
+    "example": "Kannst du mir ein bisschen Geld leihen?",
+    "plural": "only sg."
   },
   {
     "word": "Geldbörse",
@@ -2748,7 +2861,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "vegetable",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "genau",
@@ -2769,7 +2883,8 @@
     "article": null,
     "wordType": null,
     "translation": "luggage, baggage",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "gerade",
@@ -2790,7 +2905,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "court (of justice)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "gern",
@@ -2818,7 +2934,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "present, gift",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Geschichte",
@@ -2839,7 +2956,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "shop",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Gesicht",
@@ -2853,7 +2971,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "conversation, chat, talk (conversing between people or parties, either for pleasure or for business)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "gestern",
@@ -2874,7 +2993,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "health (state of being in good physical condition and free from illness)",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Getränk",
@@ -2895,7 +3015,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to win",
-    "example": ""
+    "example": "",
+    "verbForms": "hat gewonnen"
   },
   {
     "word": "Gewitter",
@@ -2951,7 +3072,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "railway (track on which trains run)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Glück",
@@ -2993,7 +3115,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "flu",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "groß",
@@ -3021,7 +3144,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "size, height",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "gut",
@@ -3091,7 +3215,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "stop (place to get on and off line buses or trams)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Hamburger",
@@ -3105,7 +3230,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "hand",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Handtuch",
@@ -3119,7 +3245,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "mobile phone, mobile, cell phone, phone (portable, wireless telephone)",
-    "example": "Kannst du mir bitte deine Handynummer geben?"
+    "example": "Kannst du mir bitte deine Handynummer geben?",
+    "plural": "-s"
   },
   {
     "word": "hart",
@@ -3147,7 +3274,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "house",
-    "example": "Ich gehe jetzt nach Hause."
+    "example": "Ich gehe jetzt nach Hause.",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "Haushalt",
@@ -3168,7 +3296,8 @@
     "article": null,
     "wordType": null,
     "translation": "home, home town, homeland, native land",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "heiraten",
@@ -3182,7 +3311,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "heating (a system that raises the temperature of a room or building)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "heiß",
@@ -3196,14 +3326,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to have a name",
-    "example": "hat geheißen Wie heißt das auf Deutsch?"
+    "example": "hat geheißen Wie heißt das auf Deutsch?",
+    "verbForms": "hat geheißen"
   },
   {
     "word": "helfen",
     "article": null,
     "wordType": "verb",
     "translation": "to help (someone)",
-    "example": ""
+    "example": "",
+    "verbForms": "hilft · hat geholfen"
   },
   {
     "word": "hell",
@@ -3217,7 +3349,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "shirt, or in particular a dress shirt",
-    "example": "her/her-/-her Komm bitte mal her!"
+    "example": "her/her-/-her Komm bitte mal her!",
+    "plural": "-en"
   },
   {
     "word": "Herd",
@@ -3252,7 +3385,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to download (to transfer data from a remote computer to a local one)",
-    "example": ""
+    "example": "",
+    "verbForms": "lädt herunter · hat heruntergeladen"
   },
   {
     "word": "herzlich",
@@ -3280,7 +3414,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "help, aid",
-    "example": "Er bekommt Hilfe von Freunden."
+    "example": "Er bekommt Hilfe von Freunden.",
+    "plural": "only sg."
   },
   {
     "word": "Himmel",
@@ -3364,28 +3499,32 @@
     "article": "die",
     "wordType": "noun",
     "translation": "trousers",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Hotel",
     "article": null,
     "wordType": null,
     "translation": "hotel",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Hund",
     "article": "der",
     "wordType": "noun",
     "translation": "dog, hound",
-    "example": "Meine Tochter hat Angst vor Hunden."
+    "example": "Meine Tochter hat Angst vor Hunden.",
+    "plural": "-e"
   },
   {
     "word": "Hunger",
     "article": "der",
     "wordType": "noun",
     "translation": "hunger",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "husten",
@@ -3420,7 +3559,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to hear (to perceive sounds (or a sound) through the ear)",
-    "example": "hat gehört Ich habe das Lied schon mal gehört."
+    "example": "hat gehört Ich habe das Lied schon mal gehört.",
+    "verbForms": "hat gehört"
   },
   {
     "word": "Idee",
@@ -3553,7 +3693,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "jacket",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Jeans",
@@ -3587,7 +3728,7 @@
     "word": "Jugend-",
     "article": "die",
     "wordType": "noun",
-    "translation": "youth (quality or state of being young",
+    "translation": "youth",
     "example": "herberge, -n"
   },
   {
@@ -3609,14 +3750,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "boy",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Kaffee",
     "article": "der",
     "wordType": "noun",
     "translation": "coffee (beverage made by infusing coffee beans in hot water)",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Kalender",
@@ -3658,28 +3801,32 @@
     "article": "die",
     "wordType": "noun",
     "translation": "potato",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Kasse",
     "article": "die",
     "wordType": "noun",
     "translation": "cash register, cash box",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Katze",
     "article": "die",
     "wordType": "noun",
     "translation": "house cat, Felis silvestris catus",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "kaufen",
     "article": null,
     "wordType": "verb",
     "translation": "to buy, to purchase",
-    "example": ""
+    "example": "",
+    "verbForms": "hat gekauft"
   },
   {
     "word": "Kaufhaus",
@@ -3700,14 +3847,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "cellar",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "kennen",
     "article": null,
     "wordType": "verb",
     "translation": "to know",
-    "example": "hat gekannt Kennen Sie Berlin?"
+    "example": "hat gekannt Kennen Sie Berlin?",
+    "verbForms": "hat gekannt"
   },
   {
     "word": "kennenlernen",
@@ -3735,7 +3884,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "kid",
-    "example": ""
+    "example": "",
+    "plural": "-er"
   },
   {
     "word": "Kindergarten",
@@ -3749,7 +3899,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "cinema",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Kiosk",
@@ -3763,14 +3914,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "church (building)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "klappen",
     "article": null,
     "wordType": "verb",
     "translation": "to clap (make a soft clapping sound, particularly of something being closed)",
-    "example": "hat geklappt klappt."
+    "example": "hat geklappt klappt.",
+    "verbForms": "hat geklappt"
   },
   {
     "word": "klar",
@@ -3791,14 +3944,16 @@
     "article": "das",
     "wordType": "noun",
     "translation": "dress, gown (kind of woman's garment)",
-    "example": ""
+    "example": "",
+    "plural": "-er"
   },
   {
     "word": "Kleidung",
     "article": "die",
     "wordType": "noun",
     "translation": "clothing",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "klein",
@@ -3826,21 +3981,24 @@
     "article": null,
     "wordType": "verb",
     "translation": "to cook, to prepare food (chiefly hot food for lunch or supper)",
-    "example": "hat gekocht Das Wasser kocht."
+    "example": "hat gekocht Das Wasser kocht.",
+    "verbForms": "hat gekocht"
   },
   {
     "word": "Koffer",
     "article": null,
     "wordType": null,
     "translation": "a case",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Kollege",
     "article": "der",
     "wordType": "noun",
     "translation": "colleague, coworker, workmate, fellow worker or member",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Kollegin",
@@ -3868,7 +4026,8 @@
     "article": null,
     "wordType": null,
     "translation": "to come",
-    "example": "wenig, -e Ich habe leider nur wenig verstanden."
+    "example": "wenig, -e Ich habe leider nur wenig verstanden.",
+    "verbForms": "ist gekommen"
   },
   {
     "word": "Kommst",
@@ -3882,14 +4041,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "contact",
-    "example": "Bitte schicken Sie mir Ihre Kontaktdaten!"
+    "example": "Bitte schicken Sie mir Ihre Kontaktdaten!",
+    "plural": "-e"
   },
   {
     "word": "Konto",
     "article": null,
     "wordType": null,
     "translation": "account",
-    "example": ""
+    "example": "",
+    "plural": "Konten"
   },
   {
     "word": "kontrollieren",
@@ -3917,7 +4078,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "head",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Kosmetik",
@@ -3931,7 +4093,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to cost",
-    "example": "hat gekostet Wie viel kostet das Buch?"
+    "example": "hat gekostet Wie viel kostet das Buch?",
+    "verbForms": "hat gekostet"
   },
   {
     "word": "kostenlos",
@@ -3959,14 +4122,16 @@
     "article": null,
     "wordType": null,
     "translation": "hospital",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "Krankheit",
     "article": "die",
     "wordType": "noun",
     "translation": "sickness, illness",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Kredit",
@@ -3980,7 +4145,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "crossing, intersection",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "kriegen",
@@ -4001,7 +4167,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "pie",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Kultur",
@@ -4015,7 +4182,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "customer, patron, client",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Kundin",
@@ -4050,7 +4218,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "cheese",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Können",
@@ -4078,7 +4247,8 @@
     "article": null,
     "wordType": null,
     "translation": "kitchen (room)",
-    "example": "Er isst sonntags ein Stück Kuchen."
+    "example": "Er isst sonntags ein Stück Kuchen.",
+    "plural": "-n"
   },
   {
     "word": "kühl",
@@ -4106,7 +4276,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to cancel, to terminate (a continuous obligation)",
-    "example": "hat gekündigt gekündigt."
+    "example": "hat gekündigt gekündigt.",
+    "verbForms": "hat gekündigt"
   },
   {
     "word": "lachen",
@@ -4127,7 +4298,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "lamp, light (piece of furniture, or fixture mounted on a wall or ceiling, holding one or more electric light sockets)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Land",
@@ -4161,7 +4333,7 @@
     "word": "langsam",
     "article": null,
     "wordType": null,
-    "translation": "slow (taking a long time to move or travel",
+    "translation": "slow (taking a long time to move or travel; not happening in a short time)",
     "example": ""
   },
   {
@@ -4183,7 +4355,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to walk",
-    "example": "ist gelaufen Unsere Tochter ist erst ein Jahr alt, aber sie kann"
+    "example": "ist gelaufen Unsere Tochter ist erst ein Jahr alt, aber sie kann",
+    "verbForms": "läuft · ist gelaufen"
   },
   {
     "word": "laut",
@@ -4232,7 +4405,8 @@
     "article": null,
     "wordType": null,
     "translation": "agent noun of lehren: one who teaches, teacher, instructor, especially a school teacher",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "leicht",
@@ -4253,7 +4427,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to borrow",
-    "example": ""
+    "example": "",
+    "verbForms": "hat geliehen"
   },
   {
     "word": "leise",
@@ -4267,14 +4442,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to learn, to acquire knowledge",
-    "example": ""
+    "example": "",
+    "verbForms": "hat gelernt"
   },
   {
     "word": "lesen",
     "article": null,
     "wordType": "verb",
     "translation": "to read (to look at and understand symbols, words, or data)",
-    "example": ""
+    "example": "",
+    "verbForms": "liest · hat gelesen"
   },
   {
     "word": "letzt",
@@ -4288,7 +4465,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "people (several individual persons, a group of people in general, esp. of one kind or another), folk (folks), peeps (slang), guys (boys and/or girls)",
-    "example": ""
+    "example": "",
+    "plural": "only pl."
   },
   {
     "word": "Licht",
@@ -4337,7 +4515,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to supply, provide",
-    "example": ""
+    "example": "",
+    "verbForms": "hat geliefert"
   },
   {
     "word": "liegen",
@@ -4421,7 +4600,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to make, to produce, to create (an object, arrangement, situation, etc.)",
-    "example": "hat gemacht Ich muss jetzt das Essen machen."
+    "example": "hat gemacht Ich muss jetzt das Essen machen.",
+    "verbForms": "hat gemacht"
   },
   {
     "word": "Magen",
@@ -4470,7 +4650,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "man, male human being",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "Mannschaft",
@@ -4484,14 +4665,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "coat, overcoat (long jacket that covers at least part of the thighs)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Markt",
     "article": "der",
     "wordType": "noun",
     "translation": "market (gathering for sale and purchase)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Maschine",
@@ -4505,14 +4688,16 @@
     "article": "das",
     "wordType": "noun",
     "translation": "drug, medicine",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Meer",
     "article": "das",
     "wordType": "noun",
     "translation": "sea",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "mehr",
@@ -4540,7 +4725,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "opinion",
-    "example": "Was ist deine Meinung dazu?"
+    "example": "Was ist deine Meinung dazu?",
+    "plural": "-en"
   },
   {
     "word": "meist",
@@ -4561,7 +4747,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "quantity",
-    "example": "Ich kenne eine Menge Leute in dieser Stadt."
+    "example": "Ich kenne eine Menge Leute in dieser Stadt.",
+    "plural": "-n"
   },
   {
     "word": "Mensch",
@@ -4610,21 +4797,24 @@
     "article": "die",
     "wordType": "noun",
     "translation": "rent",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "mieten",
     "article": null,
     "wordType": "verb",
     "translation": "to hire, to rent",
-    "example": ""
+    "example": "",
+    "verbForms": "hat gemietet"
   },
   {
     "word": "Milch",
     "article": "die",
     "wordType": "noun",
     "translation": "milk (white liquid produced by female mammals for their young to consume)",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "mindestens",
@@ -4659,7 +4849,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "lunch",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Mittags",
@@ -4757,14 +4948,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "music",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Mädchen",
     "article": null,
     "wordType": null,
     "translation": "girl",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "männlich",
@@ -4813,7 +5006,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "rubbish, refuse, waste, junk, trash (US), garbage (US)",
-    "example": "Kann ich die Zeitungen wegwerfen?"
+    "example": "Kann ich die Zeitungen wegwerfen?",
+    "plural": "only sg."
   },
   {
     "word": "müssen",
@@ -4841,7 +5035,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "neighbour",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Nachbarin",
@@ -4855,14 +5050,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "news, piece of news, notification",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Name",
     "article": "der",
     "wordType": "noun",
     "translation": "name (forename, Christian name, given name)",
-    "example": "Mein Name ist Thomas Schmidt."
+    "example": "Mein Name ist Thomas Schmidt.",
+    "plural": "-n"
   },
   {
     "word": "nass",
@@ -4904,7 +5101,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to take (something into one's possession or on one's body)",
-    "example": ""
+    "example": "",
+    "verbForms": "nimmt · hat genommen"
   },
   {
     "word": "nein",
@@ -5044,7 +5242,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "number",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "nur",
@@ -5079,7 +5278,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "fruit (food)",
-    "example": "ich Äpfel und Orangen."
+    "example": "ich Äpfel und Orangen.",
+    "plural": "only sg."
   },
   {
     "word": "oder",
@@ -5114,7 +5314,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "ear (the auditory organ)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "online",
@@ -5135,7 +5336,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "arrangement, regulation",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "organisieren",
@@ -5177,7 +5379,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "packet, package, parcel (the term is almost exclusively used for packages sent by mail)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Papier",
@@ -5247,7 +5450,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to happen",
-    "example": ""
+    "example": "",
+    "verbForms": "ist passiert"
   },
   {
     "word": "passiert",
@@ -5324,7 +5528,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "square, plaza, piazza",
-    "example": "Bitte nehmen Sie Platz!"
+    "example": "Bitte nehmen Sie Platz!",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "plötzlich",
@@ -5359,7 +5564,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "mail, post (sent and received letters etc.)",
-    "example": "Ist Post für mich da?"
+    "example": "Ist Post für mich da?",
+    "plural": "only sg."
   },
   {
     "word": "Poster",
@@ -5401,7 +5607,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "price",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "preiswert",
@@ -5436,7 +5643,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "problem",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Produkt",
@@ -5449,7 +5657,7 @@
     "word": "Programm",
     "article": "das",
     "wordType": "noun",
-    "translation": "program (set of structured ideas or activities",
+    "translation": "program (set of structured ideas or activities; a list thereof)",
     "example": "Was kommt heute im Kino?"
   },
   {
@@ -5478,7 +5686,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "an official test or examination on a subject",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Pullover",
@@ -5506,7 +5715,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "quality (level of excellence, level of being free from defects)",
-    "example": "Ich finde die Qualität wichtiger als den Preis."
+    "example": "Ich finde die Qualität wichtiger als den Preis.",
+    "plural": "-en"
   },
   {
     "word": "Quiz",
@@ -5519,7 +5729,7 @@
     "word": "Radio",
     "article": "das",
     "wordType": "noun",
-    "translation": "radio (technology that allows broadcasters to transmit audio programs",
+    "translation": "radio (technology that allows broadcasters to transmit audio programs; such programs)",
     "example": ""
   },
   {
@@ -5562,7 +5772,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "bill, restaurant bill",
-    "example": "Bitte, die Rechnung!"
+    "example": "Bitte, die Rechnung!",
+    "plural": "-en"
   },
   {
     "word": "recht",
@@ -5590,14 +5801,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "rain",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "regnen",
     "article": null,
     "wordType": "verb",
     "translation": "to rain",
-    "example": ""
+    "example": "",
+    "verbForms": "hat geregnet"
   },
   {
     "word": "reich",
@@ -5632,14 +5845,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "rice",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Reise",
     "article": "die",
     "wordType": "noun",
     "translation": "journey, travel",
-    "example": "Ich mache nächste Woche eine Geschäftsreise."
+    "example": "Ich mache nächste Woche eine Geschäftsreise.",
+    "plural": "-n"
   },
   {
     "word": "Reisebüro",
@@ -5695,14 +5910,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "repair, mending",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "reparieren",
     "article": null,
     "wordType": "verb",
     "translation": "to repair",
-    "example": "repariert,"
+    "example": "repariert,",
+    "verbForms": "hat repariert"
   },
   {
     "word": "reservieren",
@@ -5730,14 +5947,16 @@
     "article": "das",
     "wordType": "noun",
     "translation": "restaurant",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Rezept",
     "article": "das",
     "wordType": "noun",
     "translation": "recipe",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Rezeption",
@@ -5779,7 +5998,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "skirt (garment)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "romantisch",
@@ -5863,7 +6083,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "back",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Sache",
@@ -5877,7 +6098,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "juice",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Sag",
@@ -5890,8 +6112,9 @@
     "word": "sagen",
     "article": null,
     "wordType": "verb",
-    "translation": "to say (to pronounce",
-    "example": "hat gesagt Wie sagt man „sorry“ auf Deutsch?"
+    "translation": "to say (to pronounce; communicate verbally)",
+    "example": "hat gesagt Wie sagt man „sorry“ auf Deutsch?",
+    "verbForms": "hat gesagt"
   },
   {
     "word": "Salat",
@@ -5905,7 +6128,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "salt, table salt, sal",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "sammeln",
@@ -5954,7 +6178,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to create, to call into being",
-    "example": "hat geschafft alleine."
+    "example": "hat geschafft alleine.",
+    "verbForms": "hat geschafft"
   },
   {
     "word": "Schaffst",
@@ -6010,7 +6235,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to send, to dispatch (a person, letter, money etc. to a destination or a person)",
-    "example": "hat geschickt Ich schicke dir den Brief nach Hause."
+    "example": "hat geschickt Ich schicke dir den Brief nach Hause.",
+    "verbForms": "hat geschickt"
   },
   {
     "word": "Schiff",
@@ -6045,7 +6271,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to sleep",
-    "example": "hat geschlafen Haben Sie gut geschlafen?"
+    "example": "hat geschlafen Haben Sie gut geschlafen?",
+    "verbForms": "schläft · hat geschlafen"
   },
   {
     "word": "Schlafzimmer",
@@ -6058,7 +6285,7 @@
     "word": "schlecht",
     "article": null,
     "wordType": null,
-    "translation": "bad, evil, wicked (the opposite of good",
+    "translation": "bad, evil, wicked (the opposite of good; immoral)",
     "example": "Woche schlechtes Wetter."
   },
   {
@@ -6066,7 +6293,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to shut",
-    "example": ""
+    "example": "",
+    "verbForms": "hat geschlossen"
   },
   {
     "word": "schlimm",
@@ -6094,14 +6322,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "a key",
-    "example": "Ich finde meinen Schlüssel nicht."
+    "example": "Ich finde meinen Schlüssel nicht.",
+    "plural": "-"
   },
   {
     "word": "schmecken",
     "article": null,
     "wordType": "verb",
     "translation": "to taste",
-    "example": ""
+    "example": "",
+    "verbForms": "hat geschmeckt"
   },
   {
     "word": "Schmerz",
@@ -6122,7 +6352,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "snow",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "schneiden",
@@ -6164,7 +6395,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "cabinet (storage closet either separate from, or built into, a wall), or (specifically):",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "schrecklich",
@@ -6192,14 +6424,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "shoe",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Schule",
     "article": "die",
     "wordType": "noun",
-    "translation": "school (an institution dedicated to teaching and learning (especially before university)",
-    "example": "Morgen schneit es."
+    "translation": "school (an institution dedicated to teaching and learning (especially before university); department/institute at a college or university; art movement; followers of a particular doctrine)",
+    "example": "Morgen schneit es.",
+    "plural": "-n"
   },
   {
     "word": "schwach",
@@ -6248,7 +6482,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "swim",
-    "example": "schwimmt,"
+    "example": "schwimmt,",
+    "verbForms": "ist geschwommen"
   },
   {
     "word": "schädlich",
@@ -6269,7 +6504,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "pupil, student, schoolboy (male or of unspecified gender)",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Schülerin",
@@ -6283,14 +6519,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "sea, ocean",
-    "example": "Wir machen Urlaub an der Nordsee."
+    "example": "Wir machen Urlaub an der Nordsee.",
+    "plural": "-n"
   },
   {
     "word": "sehen",
     "article": null,
     "wordType": "verb",
     "translation": "to see",
-    "example": "hat gesehen Möchtest du einen Film sehen?"
+    "example": "hat gesehen Möchtest du einen Film sehen?",
+    "verbForms": "sieht · hat gesehen"
   },
   {
     "word": "Sehens-",
@@ -6465,7 +6703,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "a sun (a star, especially when being the center of a solar system)",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "sonnig",
@@ -6493,7 +6732,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to save up",
-    "example": ""
+    "example": "",
+    "verbForms": "hat gespart"
   },
   {
     "word": "spazieren",
@@ -6514,28 +6754,32 @@
     "article": null,
     "wordType": "verb",
     "translation": "to store, save (keep safe for future use)",
-    "example": "speichert,"
+    "example": "speichert,",
+    "verbForms": "hat gespeichert"
   },
   {
     "word": "Speisekarte",
     "article": null,
     "wordType": null,
     "translation": "menu",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Spiel",
     "article": "das",
     "wordType": "noun",
     "translation": "a game (instance or way of playing)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "spielen",
     "article": null,
     "wordType": "verb",
     "translation": "to play (engage in some activity for fun or entertainment)",
-    "example": ""
+    "example": "",
+    "verbForms": "hat gespielt"
   },
   {
     "word": "spielt",
@@ -6570,7 +6814,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "language (body of words, and set of methods of combining them)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Sprech-",
@@ -6605,7 +6850,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "city (a large settlement)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Stadtplan",
@@ -6633,7 +6879,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to take place, to happen",
-    "example": ""
+    "example": "",
+    "verbForms": "findet statt · hat stattgefunden"
   },
   {
     "word": "stehen",
@@ -6647,7 +6894,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "place, stead, location, position, lieu",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "stellen",
@@ -6703,14 +6951,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "street",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "streiten",
     "article": null,
     "wordType": null,
     "translation": "to argue",
-    "example": "streitet,"
+    "example": "streitet,",
+    "verbForms": "hat sich gestritten"
   },
   {
     "word": "streng",
@@ -6737,8 +6987,9 @@
     "word": "Student",
     "article": "der",
     "wordType": "noun",
-    "translation": "student (person attending lectures at a university",
-    "example": ""
+    "translation": "student (person attending lectures at a university; male or of unspecified sex)",
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Studentin",
@@ -6766,7 +7017,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "a chair (to sit on)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "stören",
@@ -6779,7 +7031,7 @@
     "word": "Stück",
     "article": "das",
     "wordType": "noun",
-    "translation": "one, item, piece, unit(of something countable",
+    "translation": "one, item, piece, unit(of something countable; often untranslated in English)",
     "example": ""
   },
   {
@@ -6787,7 +7039,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to search, to look for",
-    "example": "hat gesucht Ich suche meine Brille."
+    "example": "hat gesucht Ich suche meine Brille.",
+    "verbForms": "hat gesucht"
   },
   {
     "word": "super",
@@ -6801,14 +7054,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "supermarket",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Suppe",
     "article": "die",
     "wordType": "noun",
     "translation": "soup",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "surfen",
@@ -6850,7 +7105,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "tablet (pill)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Tafel",
@@ -6871,7 +7127,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "bag",
-    "example": "Ich habe nicht viel Gepäck."
+    "example": "Ich habe nicht viel Gepäck.",
+    "plural": "-n"
   },
   {
     "word": "Taschengeld",
@@ -6892,7 +7149,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "taxi, cab",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Team",
@@ -6906,7 +7164,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "tea (drink made by infusing parts of a plant, especially leaves or buds of Camellia sinensis, in water)",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "teilen",
@@ -6927,7 +7186,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "telephone",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "telefonieren",
@@ -6955,7 +7215,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "date (day on which a certain event takes place)",
-    "example": "Ich habe heute einen Termin bei meiner Zahnärztin."
+    "example": "Ich habe heute einen Termin bei meiner Zahnärztin.",
+    "plural": "-e"
   },
   {
     "word": "teuer",
@@ -6996,7 +7257,7 @@
     "word": "tief",
     "article": null,
     "wordType": null,
-    "translation": "deep (having a long distance to the bottom",
+    "translation": "deep (having a long distance to the bottom; of bodies of water, wells, etc.)",
     "example": ""
   },
   {
@@ -7004,7 +7265,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "animal (see usage notes below)",
-    "example": "Meine Lieblingstiere sind Katzen."
+    "example": "Meine Lieblingstiere sind Katzen.",
+    "plural": "-e"
   },
   {
     "word": "Tipp",
@@ -7018,7 +7280,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "table (a piece of furniture with a relatively deep surface at roughly waist or knee level)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Titel",
@@ -7032,7 +7295,8 @@
     "article": null,
     "wordType": null,
     "translation": "daughter",
-    "example": "Ich habe jetzt keine Zeit."
+    "example": "Ich habe jetzt keine Zeit.",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Toilette",
@@ -7109,7 +7373,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to carry, to bear (something on one's person)",
-    "example": "hat getragen Er trägt heute einen blauen Anzug."
+    "example": "hat getragen Er trägt heute einen blauen Anzug.",
+    "verbForms": "trägt · hat getragen"
   },
   {
     "word": "trainieren",
@@ -7130,7 +7395,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "dream",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "traurig",
@@ -7144,14 +7410,16 @@
     "article": null,
     "wordType": null,
     "translation": "to meet",
-    "example": ""
+    "example": "",
+    "verbForms": "trifft · hat getroffen"
   },
   {
     "word": "Treppe",
     "article": "die",
     "wordType": "noun",
     "translation": "stairs",
-    "example": "Wo ist die Toilette?"
+    "example": "Wo ist die Toilette?",
+    "plural": "-n"
   },
   {
     "word": "trifft",
@@ -7165,13 +7433,14 @@
     "article": null,
     "wordType": "verb",
     "translation": "to drink (to drink liquids (in bottles, glasses, etc.) by mouth)",
-    "example": ""
+    "example": "",
+    "verbForms": "hat getrunken"
   },
   {
     "word": "trocken",
     "article": null,
     "wordType": null,
-    "translation": "dry (not wet",
+    "translation": "dry (not wet; lacking water)",
     "example": ""
   },
   {
@@ -7214,14 +7483,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "door (rigid plane on a hinge)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Uhr",
     "article": "die",
     "wordType": "noun",
     "translation": "hours, o'clock (indicates the time within a twelve- or twenty-four-hour period)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "um",
@@ -7235,21 +7506,24 @@
     "article": null,
     "wordType": "verb",
     "translation": "to change, to interchange, to switch (from one means of transport to another)",
-    "example": ""
+    "example": "",
+    "verbForms": "steigt um · ist umgestiegen"
   },
   {
     "word": "umziehen",
     "article": null,
     "wordType": "verb",
     "translation": "to move",
-    "example": ""
+    "example": "",
+    "verbForms": "zieht um · ist umgezogen"
   },
   {
     "word": "Umzug",
     "article": "der",
     "wordType": "noun",
     "translation": "move, removal, relocation (change of residence)",
-    "example": "29WORTLISTE"
+    "example": "29WORTLISTE",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "unbedingt",
@@ -7270,14 +7544,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "accident",
-    "example": "Wie ist der Unfall passiert?"
+    "example": "Wie ist der Unfall passiert?",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Universität",
     "article": "die",
     "wordType": "noun",
     "translation": "university",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "unten",
@@ -7298,7 +7574,8 @@
     "article": null,
     "wordType": null,
     "translation": "to maintain",
-    "example": ""
+    "example": "",
+    "verbForms": "unterhält sich · hat sich unterhalten"
   },
   {
     "word": "unterhält",
@@ -7326,14 +7603,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "lesson, class, instruction, education",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Unterschied",
     "article": null,
     "wordType": null,
     "translation": "difference",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Unterschreiben",
@@ -7354,7 +7633,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to examine, investigate (inspect or study carefully in order to reach a conclusion)",
-    "example": ""
+    "example": "",
+    "verbForms": "hat untersucht"
   },
   {
     "word": "untersucht",
@@ -7375,7 +7655,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "holiday, vacation",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "verabredet",
@@ -7403,14 +7684,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to make money, to earn",
-    "example": "verdient,"
+    "example": "verdient,",
+    "verbForms": "hat verdient"
   },
   {
     "word": "Verein",
     "article": "der",
     "wordType": "noun",
     "translation": "association, club, society",
-    "example": "Es gibt einen neuen Sportverein in der Stadt."
+    "example": "Es gibt einen neuen Sportverein in der Stadt.",
+    "plural": "-e"
   },
   {
     "word": "vereinbaren",
@@ -7424,7 +7707,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to forget (lose remembrance of)",
-    "example": ""
+    "example": "",
+    "verbForms": "vergisst · hat vergessen"
   },
   {
     "word": "vergiss",
@@ -7445,21 +7729,24 @@
     "article": null,
     "wordType": "verb",
     "translation": "to compare",
-    "example": ""
+    "example": "",
+    "verbForms": "hat verglichen"
   },
   {
     "word": "verkaufen",
     "article": null,
     "wordType": "verb",
     "translation": "to sell (something in exchange for money)",
-    "example": "verkauft,"
+    "example": "verkauft,",
+    "verbForms": "hat verkauft"
   },
   {
     "word": "Verkehr",
     "article": "der",
     "wordType": "noun",
     "translation": "verbal noun of verkehren",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Verkehrs-",
@@ -7494,21 +7781,24 @@
     "article": null,
     "wordType": "verb",
     "translation": "to lose (something, or a game)",
-    "example": ""
+    "example": "",
+    "verbForms": "hat verloren"
   },
   {
     "word": "vermieten",
     "article": null,
     "wordType": "verb",
     "translation": "to rent (to someone), to rent out",
-    "example": "vermietet,"
+    "example": "vermietet,",
+    "verbForms": "hat vermietet"
   },
   {
     "word": "Vermieter",
     "article": "der",
     "wordType": "noun",
     "translation": "landlord (he who rents, lets)",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Vermieterin",
@@ -7521,8 +7811,9 @@
     "word": "verpassen",
     "article": null,
     "wordType": "verb",
-    "translation": "to miss (be late for",
-    "example": "verpasst,"
+    "translation": "to miss (be late for; be unable to use or attend)",
+    "example": "verpasst,",
+    "verbForms": "hat verpasst"
   },
   {
     "word": "verreisen",
@@ -7543,7 +7834,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to move, to shift",
-    "example": "verschiebt,"
+    "example": "verschiebt,",
+    "verbForms": "hat verschoben"
   },
   {
     "word": "verschieden",
@@ -7557,21 +7849,24 @@
     "article": "die",
     "wordType": "noun",
     "translation": "delay, lateness, late arrival",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "verstehen",
     "article": null,
     "wordType": "verb",
     "translation": "to understand",
-    "example": ""
+    "example": "",
+    "verbForms": "hat verstanden"
   },
   {
     "word": "versuchen",
     "article": null,
     "wordType": "verb",
     "translation": "to try, to attempt (often with an uncertain result)",
-    "example": ""
+    "example": "",
+    "verbForms": "hat versucht"
   },
   {
     "word": "versucht",
@@ -7585,7 +7880,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "contract, agreement",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "viel",
@@ -7676,7 +7972,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "suggestion, proposal (something proposed)",
-    "example": "(haben/machen) guten Vorschlag?"
+    "example": "(haben/machen) guten Vorschlag?",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "vorsichtig",
@@ -7732,7 +8029,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "forest",
-    "example": "Ich gehe gern im Wald spazieren."
+    "example": "Ich gehe gern im Wald spazieren.",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "wandern",
@@ -7802,7 +8100,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "water (H₂O)",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Webseite",
@@ -7830,14 +8129,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "path, trail, track (usually for foot traffic)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "wehtun",
     "article": null,
     "wordType": "verb",
     "translation": "[with dative] to hurt",
-    "example": ""
+    "example": "",
+    "verbForms": "tut weh · hat wehgetan"
   },
   {
     "word": "weiblich",
@@ -7865,7 +8166,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "wine",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "weinen",
@@ -7935,7 +8237,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "workshop (room where things are manufactured)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-en"
   },
   {
     "word": "Wettbewerb",
@@ -7949,7 +8252,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "weather",
-    "example": "Wir hatten im Urlaub schlechtes Wetter."
+    "example": "Wir hatten im Urlaub schlechtes Wetter.",
+    "plural": "only sg."
   },
   {
     "word": "wichtig",
@@ -7977,7 +8281,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to repeat (to do or say again)",
-    "example": "wiederholt,"
+    "example": "wiederholt,",
+    "verbForms": "hat wiederholt"
   },
   {
     "word": "Wiederhören",
@@ -8012,7 +8317,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "wind",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "windig",
@@ -8033,7 +8339,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to know",
-    "example": "hat gewusst Woher wissen Sie das?"
+    "example": "hat gewusst Woher wissen Sie das?",
+    "verbForms": "weiß · hat gewusst"
   },
   {
     "word": "Witz",
@@ -8075,14 +8382,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to live, reside, dwell (to remain or be settled permanently, or for a considerable time)",
-    "example": ""
+    "example": "",
+    "verbForms": "hat gewohnt"
   },
   {
     "word": "Wohnung",
     "article": "die",
     "wordType": "noun",
     "translation": "domicile",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Wohnzimmer",
@@ -8117,7 +8426,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "word as an isolated unit",
-    "example": "Ich muss das Wort im Wörterbuch suchen."
+    "example": "Ich muss das Wort im Wörterbuch suchen.",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "wunderbar",
@@ -8151,7 +8461,7 @@
     "word": "Wäsche",
     "article": "die",
     "wordType": "noun",
-    "translation": "wash, washing, laundry (the act of cleaning with water",
+    "translation": "wash, washing, laundry (the act of cleaning with water; an instance thereof)",
     "example": ""
   },
   {
@@ -8180,7 +8490,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "tooth",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "zeichnen",
@@ -8201,14 +8512,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to show, make see",
-    "example": ""
+    "example": "",
+    "verbForms": "hat gezeigt"
   },
   {
     "word": "Zeit",
     "article": "die",
     "wordType": "noun",
     "translation": "time (as a concept)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Zeitschrift",
@@ -8222,7 +8535,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "newspaper",
-    "example": "Wo ist die Zeitung von heute?"
+    "example": "Wo ist die Zeitung von heute?",
+    "plural": "-en"
   },
   {
     "word": "Zelt",
@@ -8250,7 +8564,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "testimony, witness declaration",
-    "example": "(an-)/(aus)ziehen, Ich ziehe (mir) eine Jacke an."
+    "example": "(an-)/(aus)ziehen, Ich ziehe (mir) eine Jacke an.",
+    "plural": "-se"
   },
   {
     "word": "Zieh",
@@ -8264,14 +8579,16 @@
     "article": "das",
     "wordType": "noun",
     "translation": "target",
-    "example": "Was ist dein Ziel im Leben?"
+    "example": "Was ist dein Ziel im Leben?",
+    "plural": "-e"
   },
   {
     "word": "Zimmer",
     "article": "das",
     "wordType": "noun",
     "translation": "room (separate part of a building, enclosed by walls, a floor and a ceiling)",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Zirkus",
@@ -8306,7 +8623,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "sugar",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "zuerst",
@@ -8327,7 +8645,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "procession (larger group moving together along a common route)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "zuhören",
@@ -8404,7 +8723,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to open (to make something accessible or allow for passage by moving from a shut position)",
-    "example": "hat geöffnet Der Laden ist samstags bis 16."
+    "example": "hat geöffnet Der Laden ist samstags bis 16.",
+    "verbForms": "hat geöffnet"
   },
   {
     "word": "Öl",
@@ -8446,7 +8766,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to stay overnight, to overnight, stay the night, sleep over",
-    "example": "übernachtet,"
+    "example": "übernachtet,",
+    "verbForms": "hat übernachtet"
   },
   {
     "word": "übersetzen",
@@ -8460,6 +8781,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to transfer, to wire",
-    "example": ""
+    "example": "",
+    "verbForms": "hat überwiesen"
   }
 ]

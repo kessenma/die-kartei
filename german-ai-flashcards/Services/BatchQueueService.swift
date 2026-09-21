@@ -286,8 +286,10 @@ final class BatchQueueService {
         modelContext: ModelContext,
         mlxService: MLXGenerationService
     ) async {
-        guard DeviceCapability.mayRunHero, StoryStudyService.requiredModel.isDownloaded else {
-            fail(job, "Stories need the \(StoryStudyService.requiredModel.rawValue) downloaded first.", in: modelContext)
+        // Nobody is watching this run, so it takes a tutor that's already downloaded rather than
+        // starting a multi-gigabyte download in the background.
+        guard let model = StoryStudyService.unattendedModel else {
+            fail(job, "Stories need one of the German Tutor models downloaded first.", in: modelContext)
             return
         }
 
@@ -296,7 +298,7 @@ final class BatchQueueService {
         modelContext.insert(story)
         try? modelContext.save()
 
-        let service = StoryStudyService(mlxService: mlxService, modelContext: modelContext)
+        let service = StoryStudyService(mlxService: mlxService, modelContext: modelContext, model: model)
         storyService = service
         defer { storyService = nil }
 

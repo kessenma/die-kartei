@@ -10,6 +10,18 @@ struct CardSettingsView: View {
     /// Shared with the same picker in the deck-creation options.
     @AppStorage(CardImageTiming.defaultsKey) private var imageTiming: CardImageTiming = .keptCards
 
+    // Shared with the player's own pickers and the Wortschatz hub through the same keys.
+    @AppStorage(CardStudyPrefs.germanFirstKey) private var germanFirst = true
+    @AppStorage(CardStudyPrefs.articleQuizKey) private var articleQuiz = true
+    @AppStorage(CardStudyPrefs.repeatMissedKey) private var repeatMissed = true
+    @AppStorage(WortschatzPrefs.styleKey) private var wortschatzStyleRaw = FlashcardStyle.anki.rawValue
+    @AppStorage(WortschatzPrefs.newPerDayKey) private var newPerDay = WortschatzPrefs.newPerDayDefault
+    @AppStorage(WortschatzPrefs.sessionCapKey) private var sessionCap = WortschatzPrefs.sessionCapDefault
+
+    private var wortschatzStyle: FlashcardStyle {
+        FlashcardStyle(rawValue: wortschatzStyleRaw).flatMap { $0 == .default ? nil : $0 } ?? .anki
+    }
+
     var body: some View {
         Group {
             Section {
@@ -26,6 +38,25 @@ struct CardSettingsView: View {
 
                 Toggle("Auto-advance", isOn: $modelManager.autoAdvance)
                 Text("Moves to the next card automatically after selecting a rating — no need to tap Next.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Picker("Front side", selection: $germanFirst) {
+                    Text("German").tag(true)
+                    Text("English").tag(false)
+                }
+                .pickerStyle(.segmented)
+                Text("Which side a card shows first. You can still switch it inside any deck.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Toggle("Ask der / die / das first", isOn: $articleQuiz)
+                Text("Nouns hide their article on the German side until you flip, so every noun is a small gender check.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Toggle("Repeat missed cards", isOn: $repeatMissed)
+                Text("A card you mark Didn't know comes back a few cards later in the same session.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -59,6 +90,38 @@ struct CardSettingsView: View {
             .themedListRow()
 
             Section {
+                Picker("Study with", selection: $wortschatzStyleRaw) {
+                    Text(FlashcardStyle.anki.rawValue).tag(FlashcardStyle.anki.rawValue)
+                    Text(FlashcardStyle.leitner.rawValue).tag(FlashcardStyle.leitner.rawValue)
+                }
+                .pickerStyle(.segmented)
+                Text(wortschatzStyle.description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Picker("New words per day", selection: $newPerDay) {
+                    ForEach(WortschatzPrefs.newPerDayOptions, id: \.self) { n in
+                        Text("\(n)").tag(n)
+                    }
+                }
+                Text("How many unseen Goethe words a session may introduce. Lower it if reviews pile up; the box offers ten more whenever you want them.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Picker("Cards per session", selection: $sessionCap) {
+                    ForEach(WortschatzPrefs.sessionCapOptions, id: \.self) { n in
+                        Text("\(n)").tag(n)
+                    }
+                }
+                Text("Due reviews come first, then new words up to the daily budget.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text("Wortschatz · Goethe").themedSectionHeader()
+            }
+            .themedListRow()
+
+            Section {
                 Picker("Game vibrations", selection: $modelManager.hapticFeedbackMode) {
                     ForEach(HapticFeedbackMode.allCases) { mode in
                         Text(mode.rawValue).tag(mode)
@@ -66,7 +129,7 @@ struct CardSettingsView: View {
                 }
                 .pickerStyle(.segmented)
 
-                Text(modelManager.hapticFeedbackMode.description + " Applies to the matching, der/die/das, and grammar drills — never stories, chat, or flashcards.")
+                Text(modelManager.hapticFeedbackMode.description + " Covers the matching, der/die/das, and grammar drills, plus two soft ticks in chat: when recording starts or stops, and when a spoken turn lands clean. Stories and flashcards never vibrate.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {

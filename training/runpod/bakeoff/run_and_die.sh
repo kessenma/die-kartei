@@ -4,8 +4,11 @@
 # Run detached ON the pod:  setsid nohup bash run_and_die.sh > /workspace/run.log 2>&1 < /dev/null &
 # Arm the deadline backstop BEFORE this (see bakeoff/README.md §4) — a wedged generator can't block it.
 #
-# Requires at pod creation: env.HF_TOKEN (write-scoped). RunPod injects RUNPOD_POD_ID and a
-# pod-scoped RUNPOD_API_KEY, and runpodctl is preinstalled, so self-termination needs no extra setup.
+# Requires at pod creation: env.HF_TOKEN (write-scoped), env.SELF_POD_ID, and env.RUNPOD_API_KEY
+# set to a RESTRICTED key (pod-scope only — never the full account key on a community host).
+# Measured 2026-08-17: RunPod does NOT inject RUNPOD_POD_ID/RUNPOD_API_KEY on the standard pytorch
+# image; only runpodctl itself is preinstalled. Without both env vars this script cannot terminate
+# the pod and will say so — an external watchdog must then do it.
 #
 # The termination gate is "bytes verified on HF", NOT "generator exited". Killing the process saves
 # nothing — the GPU bills until the POD dies. And on mismatch we deliberately leave the pod up:
@@ -39,8 +42,14 @@ PY
 )
 
 if [ -n "$REMOTE" ] && [ "$LOCAL" = "$REMOTE" ]; then
-  echo "UPLOAD VERIFIED ($LOCAL bytes) — terminating pod $RUNPOD_POD_ID"
-  runpodctl remove pod "$RUNPOD_POD_ID"
+  if [ -n "${SELF_POD_ID:-}" ] && [ -n "${RUNPOD_API_KEY:-}" ]; then
+    echo "UPLOAD VERIFIED ($LOCAL bytes) — terminating pod $SELF_POD_ID"
+    runpodctl config --apiKey "$RUNPOD_API_KEY"
+    runpodctl remove pod "$SELF_POD_ID"
+  else
+    echo "UPLOAD VERIFIED but SELF_POD_ID/RUNPOD_API_KEY not set — CANNOT SELF-TERMINATE."
+    echo "POD STILL BILLING: an external watchdog must remove it."
+  fi
 else
   echo "UPLOAD MISMATCH local=$LOCAL remote=$REMOTE — POD LEFT RUNNING, retrieve manually"
 fi

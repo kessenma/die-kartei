@@ -39,6 +39,16 @@ final class StudyDay {
     /// Seconds spent on story comprehension quizzes (reading time lives in `storySeconds`).
     var storyQuizSeconds: Int = 0
 
+    // MARK: New words
+    //
+    // The Wortschatz daily budget. Defaulted like the time buckets, so older days read as zero.
+    // Neither field counts toward `hasActivity`: asking for ten more words is not studying.
+
+    /// Goethe words rated for the first time today.
+    var newWordsIntroduced: Int = 0
+    /// Extra new words the learner asked for today beyond the daily setting ("Learn 10 more").
+    var newWordsBonus: Int = 0
+
     init(dayStart: Date) {
         self.dayStart = dayStart
         self.cardsReviewed = 0
@@ -51,6 +61,8 @@ final class StudyDay {
         self.grammarSeconds = 0
         self.conversationSeconds = 0
         self.storyQuizSeconds = 0
+        self.newWordsIntroduced = 0
+        self.newWordsBonus = 0
     }
 
     /// Time only counts as a study day once it passes a minute — a ten-second glance at a story

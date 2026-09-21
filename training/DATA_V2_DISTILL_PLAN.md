@@ -1,5 +1,12 @@
 # Data v2 + the 1B distillation track — plan
 
+> ⚠️ **HISTORICAL — superseded.** This is the *plan*; what actually happened is in
+> [`training-v2.md`](training-v2.md) (v2 build + mix-in ablation) and [`training-v3.md`](training-v3.md)
+> (v3 rebalance, v4 teacher replacement). The 1B distillation track ended in a **negative result** —
+> the same dataset gave E4B +13 pts and Gemma-3-1B **−26**; see the capacity-cliff entry in
+> [`MODEL_SCOREBOARD.md`](MODEL_SCOREBOARD.md). Start at [`CLAUDE.md`](CLAUDE.md). Kept for
+> provenance — do not plan against it.
+
 Three goals, in dependency order:
 
 1. **Rebuild the training set** — clean the existing 1,447, scale it with a Gemma-4 teacher.

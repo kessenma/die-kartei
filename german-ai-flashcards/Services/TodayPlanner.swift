@@ -17,6 +17,8 @@ enum TodayIntent: Equatable {
     case generateDeck
     /// Pick up a flashcard session the learner paused mid-deck.
     case resumePausedDeck
+    /// The Goethe word box: today's due reviews plus the new-word budget, in one session.
+    case wortschatz
 }
 
 /// One ordered item in the Today plan.
@@ -35,6 +37,7 @@ struct TodayRecommendation: Identifiable {
         case .buildDrillDeck:   return "drill"
         case .generateDeck:     return "generate"
         case .resumePausedDeck: return "resume"
+        case .wortschatz:       return "wortschatz"
         }
     }
 }
@@ -56,11 +59,19 @@ struct TodaySnapshot {
     var dayIndex: Int
     /// An in-progress (paused) flashcard session to offer resuming, if any.
     var resume: ResumeInfo? = nil
+    /// What the Goethe box has waiting today, once the learner has opened it at all.
+    var wortschatz: WortschatzInfo? = nil
 
     struct ResumeInfo: Equatable {
         var topic: String
         var cardIndex: Int
         var cardCount: Int
+    }
+
+    struct WortschatzInfo: Equatable {
+        var due: Int
+        var new: Int
+        var todo: Int { due + new }
     }
 }
 
@@ -81,10 +92,14 @@ enum TodayPlanner {
             recs.append(resumeRec(resume))
         }
 
-        // 1. Clear the spaced-repetition backlog first — it's time-sensitive by design.
+        // 1. Clear the spaced-repetition backlog first — it's time-sensitive by design. The
+        //    Goethe box keeps its own step: its due words are not in `dueCardCount`.
+        if let w = s.wortschatz, w.todo > 0 {
+            recs.append(wortschatz(w))
+        }
         if s.dueCardCount > 0 {
             recs.append(review(count: s.dueCardCount))
-        } else if s.hasCoachContent {
+        } else if s.hasCoachContent, s.wortschatz?.todo ?? 0 == 0 {
             // Nothing due, but there's remembered material worth turning into review.
             recs.append(drill())
         }
@@ -116,6 +131,20 @@ enum TodayPlanner {
             subtitle: "Spaced repetition · ~\(minutes) min",
             systemImage: "rectangle.stack.badge.play.fill",
             accent: .blue
+        )
+    }
+
+    private static func wortschatz(_ w: TodaySnapshot.WortschatzInfo) -> TodayRecommendation {
+        let minutes = max(1, Int((Double(w.todo) * 7.0 / 60.0).rounded()))
+        let title = w.due > 0
+            ? "Wortschatz · \(w.due) due" + (w.new > 0 ? " + \(w.new) new" : "")
+            : "Wortschatz · \(w.new) new word\(w.new == 1 ? "" : "s")"
+        return TodayRecommendation(
+            intent: .wortschatz,
+            title: title,
+            subtitle: "Goethe A1–B1 · ~\(minutes) min",
+            systemImage: "archivebox.fill",
+            accent: .indigo
         )
     }
 

@@ -79,7 +79,14 @@ struct PlacementReviewFilter: Equatable {
         // asked at a level at all. The screen's footer says so rather than leaving it a mystery.
         if let levelRaw, record.levelRaw != levelRaw { return false }
         if let attemptID, item.attemptID != attemptID { return false }
-        if let repeatMisses, (missCounts[record.questionKey] ?? 0) < repeatMisses { return false }
+        if let repeatMisses {
+            // The *misses* themselves, not every encounter of a repeatedly-missed question. A row
+            // you got right is not a "missed 2+" row however often you've fumbled it elsewhere —
+            // the improvement arc belongs in the question detail's "every time you were asked
+            // this", where it reads as progress instead of contradicting the pill's label.
+            if record.isCorrect { return false }
+            if (missCounts[record.questionKey] ?? 0) < repeatMisses { return false }
+        }
         return true
     }
 }

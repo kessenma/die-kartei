@@ -92,6 +92,9 @@ final class ConversationEngine: WordInspecting {
     /// "What could I say?" suggestions, shown in an inline card when requested.
     private(set) var hints: [HintSuggestion] = []
     private(set) var hintLoading = false
+    /// Earlier hint batches from this session, newest first — the hint card pages back through
+    /// them so a regenerate or a new turn never loses a suggestion the learner wanted to reuse.
+    private(set) var hintHistory: [[HintSuggestion]] = []
     /// A "Say it in German" phrase the learner is practicing saying out loud, shown above the mic.
     private(set) var sayItPrompt: SayItPrompt?
     /// An in-flight "Nudge me" repair — the AI's reply is deferred until this resolves. `nil` unless
@@ -104,8 +107,19 @@ final class ConversationEngine: WordInspecting {
     private var eagerTask: Task<Void, Never>?
     /// Set when the user views a hint; the next user turn is then marked hint-assisted.
     private var pendingHintUse = false
+    /// Turns this session that came back clean or nearly clean from the correction pass.
+    /// Only ever increments — the view uses it as a sensory-feedback trigger.
+    private(set) var successTurnCount = 0
     /// The word the user tapped to inspect (translate / save), if any.
     private(set) var inspectedWord: InspectedWord?
+    /// Speaking or typing. Seeded from the chat's stored mode and switchable mid-session — the
+    /// reason to type (a plane, an office, a sleeping flatmate) usually arrives mid-conversation.
+    private(set) var inputMode: ChatInputMode
+    /// Set when a chat is re-opened with the learner's turn last and no reply after it — the app
+    /// was terminated, the tutor was evicted for memory, or a generation failed before the reply
+    /// landed. Deliberately *not* `errorMessage`: nothing is going wrong now, the AI just still
+    /// owes a turn, and the learner needs a way to ask for it.
+    private(set) var strandedTurnNotice: String?
     /// Set when the user taps a model-requiring control before the model is loaded.
     /// Drives the "load this conversation's model" prompt in the view.
     private(set) var showModelLoadPrompt = false
@@ -165,6 +179,7 @@ final class ConversationEngine: WordInspecting {
         }
 
         self.config = cfg
+        self.inputMode = cfg.inputMode
         self.systemPrompt = ConversationPrompts.systemPrompt(for: cfg)
         self.baseDuration = conversation.durationSeconds
         self.loggedSeconds = conversation.durationSeconds
@@ -175,7 +190,36 @@ final class ConversationEngine: WordInspecting {
     func onAppear() {
         if appearedAt == nil { appearedAt = Date() }
         Task { await generateOpenerIfNeeded() }
+        noticeStrandedTurn()
     }
+
+    /// A chat whose last message is the learner's is a turn the AI still owes. Re-opening one used
+    /// to show that message sitting at the bottom with nothing happening and no control to make
+    /// anything happen — the "Try again" affordance hangs off `errorMessage`, and a fresh launch
+    /// has no error to carry over from the run that died. The only apparent way forward was to
+    /// send again, which is exactly what puts two `user` turns back to back and trips the chat
+    /// template (see ``ChatTurnNormalizer``).
+    ///
+    /// With the model already in memory there's nothing to ask about, so the reply just runs.
+    /// Otherwise it's a notice with a Continue button, rather than silently starting a multi-GB
+    /// load the learner didn't ask for.
+    private func noticeStrandedTurn() {
+        guard !conversation.messages.isEmpty, canRetryReply else { return }
+        if isModelReady {
+            retryReply()
+        } else {
+            strandedTurnNotice = "Your last message never got a reply."
+        }
+    }
+
+    /// Ask for the owed reply from the stranded-turn notice, loading the model first if needed.
+    func continueStrandedTurn() {
+        strandedTurnNotice = nil
+        guard requireModelReady(orRun: { [weak self] in self?.retryReply() }) else { return }
+        retryReply()
+    }
+
+    func dismissStrandedTurnNotice() { strandedTurnNotice = nil }
 
     /// Live elapsed seconds for the header timer.
     func elapsedSeconds() -> Int {
@@ -215,6 +259,14 @@ final class ConversationEngine: WordInspecting {
     /// Resume counting when the user returns to the foreground.
     func resume() {
         if appearedAt == nil { appearedAt = Date() }
+        // The app shed this chat's tutor while we were away, to keep iOS from terminating a
+        // suspended app sitting on gigabytes of weights (see
+        // `MLXGenerationService.releaseMemory(reason:)`). Bring it back now: being in this
+        // conversation is the consent, and the worst time to discover the model is gone is when
+        // you tap Send after a trip to Settings that had nothing to do with it.
+        if mlxService.wasEvicted(config.model), phase == .idle {
+            Task { await ensureModelLoaded() }
+        }
     }
 
     func tearDown() {
@@ -283,7 +335,7 @@ final class ConversationEngine: WordInspecting {
         streamingReply = ""
         do {
             let reply = try await mlxService.streamChatReply(
-                history: [(role: .user, content: ConversationPrompts.openerSeed)],
+                history: [(role: .user, content: ConversationPrompts.openerSeed(for: config))],
                 system: systemPrompt,
                 model: config.model,
                 maxTokens: 200,
@@ -293,7 +345,7 @@ final class ConversationEngine: WordInspecting {
             }
             streamingReply = ""
             if let message = appendAssistant(reply) {
-                if modelManager.autoPlayReplies { play(message, slow: false) }
+                if shouldAutoPlay { play(message, slow: false) }
                 startEagerAssist(for: message)
             } else {
                 // The opener came back empty — surface it so the screen isn't stuck on
@@ -307,6 +359,32 @@ final class ConversationEngine: WordInspecting {
         }
         streamingReply = ""
         phase = .idle
+    }
+
+    // MARK: - Input mode
+
+    /// True while the session is meant to stay soundless — typing mode. Replies are still
+    /// playable on demand from each bubble; they just don't start speaking on their own.
+    var isSilent: Bool { inputMode.isSilent }
+
+    /// Auto-play is the learner's setting, minus typing mode — the whole point of typing is that
+    /// nothing makes a noise unless you ask it to.
+    private var shouldAutoPlay: Bool { modelManager.autoPlayReplies && !isSilent }
+
+    /// Switch between speaking and typing mid-session and remember it on the chat, so resuming
+    /// later comes back the way it was left.
+    func setInputMode(_ mode: ChatInputMode) {
+        guard mode != inputMode else { return }
+        if mode == .type {
+            // Don't leave a hot mic (or a reply talking to the room) behind the keyboard.
+            speechRecognizer.cancel()
+            SpeechService.shared.stop()
+            speakingMessageID = nil
+            if phase == .listening { phase = .idle }
+        }
+        inputMode = mode
+        conversation.inputModeRaw = mode.rawValue
+        save()
     }
 
     // MARK: - Recording → turn
@@ -352,17 +430,42 @@ final class ConversationEngine: WordInspecting {
         speechRecognizer.start { [weak self] finalText in
             guard let self else { return }
             self.phase = .idle
-            let trimmed = finalText.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !trimmed.isEmpty else { return }
-            // A live nudge means this turn is a self-correction attempt; a live "say it" target
-            // means it's a practice attempt. Otherwise it's a free reply.
-            if self.repairPrompt != nil {
-                Task { await self.evaluateRepairAttempt(trimmed) }
-            } else if self.sayItPrompt != nil {
-                Task { await self.evaluateSayItAttempt(trimmed) }
-            } else {
-                Task { await self.handleUtterance(trimmed) }
-            }
+            self.route(finalText)
+        }
+    }
+
+    /// Take a typed turn. The keyboard's counterpart to finishing a recording — same routing, so a
+    /// nudge or a "say it" target judges a written attempt exactly as it judges a spoken one.
+    /// Returns false when the turn wasn't accepted, so the composer can keep what was written:
+    /// an unloaded model raises the load prompt here exactly as tapping the mic does.
+    @discardableResult
+    func submitTyped(_ text: String) -> Bool {
+        guard canSubmitTyped else { return false }
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        guard requireModelReady() else { return false }
+        eagerTask?.cancel()
+        eagerTask = nil
+        SpeechService.shared.stop()
+        speakingMessageID = nil
+        errorMessage = nil
+        route(text)
+        return true
+    }
+
+    /// True when a typed turn can be sent right now.
+    var canSubmitTyped: Bool { phase == .idle && !speechRecognizer.isRecording }
+
+    /// Send a finished turn down the right path: a live nudge makes it a self-correction attempt, a
+    /// live "say it" target makes it a practice attempt, otherwise it's a free reply.
+    private func route(_ raw: String) {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if repairPrompt != nil {
+            Task { await evaluateRepairAttempt(trimmed) }
+        } else if sayItPrompt != nil {
+            Task { await evaluateSayItAttempt(trimmed) }
+        } else {
+            Task { await handleUtterance(trimmed) }
         }
     }
 
@@ -372,9 +475,15 @@ final class ConversationEngine: WordInspecting {
         // 1. Persist the user's turn.
         let userMessage = ChatMessage(role: .user, text: text, sortOrder: nextSortOrder())
         userMessage.targetWordsUsed = ConversationPrompts.matchedWords(in: text, targetWords: config.deckWords)
-        userMessage.usedHint = pendingHintUse
+        // Auto-surfaced hints don't set `pendingHintUse`, but parroting one still counts as
+        // hint-assisted — otherwise auto-hints would make every turn look unaided.
+        let echoedHint = !pendingHintUse && hints.contains {
+            Self.phraseSimilarity(text, $0.german) >= 0.75
+        }
+        userMessage.usedHint = pendingHintUse || echoedHint
         userMessage.usedPhraseHelper = viaPhraseHelper
         pendingHintUse = false
+        archiveCurrentHints()
         hints = []  // dismiss the hint card now that the turn is taken
         sayItPrompt = nil  // and the say-it practice card
         userMessage.conversation = conversation
@@ -387,6 +496,11 @@ final class ConversationEngine: WordInspecting {
         // 2. Correction pass (optional). Skip for phrase-helper turns — the German is model-generated.
         if config.correctionsEnabled && !viaPhraseHelper {
             await runCorrection(on: userMessage)
+            // A clean or nearly-clean turn counts as a success (drives the gentle haptic).
+            if userMessage.confirmedClean
+                || userMessage.correctedText.map({ Self.closeEnough(original: userMessage.text, corrected: $0) }) == true {
+                successTurnCount += 1
+            }
         }
 
         // 2b. Spaced re-encounter: advance any SRS-due card the learner used correctly this turn.
@@ -437,19 +551,35 @@ final class ConversationEngine: WordInspecting {
                 // Elicitation feedback: keep the German nudge question so the learner can self-correct.
                 if config.feedbackStyle == .nudgeMe { message.correctionHint = result.hint }
                 save()
+            } else {
+                // The model looked and said OK (or produced nothing actionable) — distinct from
+                // the catch below, where the correction call itself failed.
+                message.confirmedClean = true
+                save()
             }
         } catch {
             // A failed correction shouldn't block the conversation.
         }
     }
 
+    /// Understandable with minor slips: the corrected sentence is at least 80% similar to what
+    /// was actually said. Drives the "Fast richtig" encouragement tier.
+    static func closeEnough(original: String, corrected: String) -> Bool {
+        phraseSimilarity(original, corrected) >= 0.8
+    }
+
     private func runReply() async {
         streamingReply = ""
         let history = recentHistory()
+        // Interviews get a one-line progress note per turn (which plan point comes next), so a
+        // small model keeps moving through the posting instead of circling on pleasantries.
+        let candidateTurns = conversation.messages.filter(\.isUser).count
+        let progress = ConversationPrompts.interviewProgressNote(for: config, candidateTurns: candidateTurns)
+        let system = progress.map { systemPrompt + "\n\n" + $0 } ?? systemPrompt
         do {
             let reply = try await mlxService.streamChatReply(
                 history: history,
-                system: systemPrompt,
+                system: system,
                 model: config.model,
                 maxTokens: 220,
                 temperature: 0.7
@@ -458,7 +588,7 @@ final class ConversationEngine: WordInspecting {
             }
             streamingReply = ""
             if let message = appendAssistant(reply) {
-                if modelManager.autoPlayReplies { play(message, slow: false) }
+                if shouldAutoPlay { play(message, slow: false) }
                 startEagerAssist(for: message)
             } else {
                 // Empty reply: nothing gets appended, so the turn would silently end on the
@@ -490,6 +620,7 @@ final class ConversationEngine: WordInspecting {
     func retryReply() {
         guard canRetryReply else { return }
         errorMessage = nil
+        strandedTurnNotice = nil
         if conversation.messages.isEmpty {
             Task { await generateOpenerIfNeeded() }
             return
@@ -608,10 +739,12 @@ final class ConversationEngine: WordInspecting {
         sayItPrompt = nil  // don't stack with a say-it practice card
         // Use pre-computed hints if they're for the latest assistant turn.
         if !cachedHints.isEmpty, cachedHintMessageID == latestAssistantID() {
+            archiveCurrentHints()
             hints = cachedHints
             return
         }
         hintLoading = true
+        archiveCurrentHints()
         hints = []
         Task {
             defer { hintLoading = false }
@@ -624,25 +757,95 @@ final class ConversationEngine: WordInspecting {
         }
     }
 
-    private func produceHints(count: Int) async -> [HintSuggestion] {
+    /// Fresh suggestions for the same turn — the learner didn't like the first batch. Clears the
+    /// cache and tells the model what to avoid so it doesn't re-serve the same lines.
+    func regenerateHints() {
+        guard !hintLoading else { return }
+        guard requireModelReady(orRun: { [weak self] in self?.regenerateHints() }) else { return }
+        let previous = hints.isEmpty ? cachedHints : hints
+        hintLoading = true
+        archiveCurrentHints()
+        hints = []
+        cachedHints = []
+        cachedHintMessageID = nil
+        Task {
+            defer { hintLoading = false }
+            let produced = await produceHints(count: config.hintCount, avoiding: previous)
+            if !produced.isEmpty {
+                hints = produced
+                cachedHints = produced
+                cachedHintMessageID = latestAssistantID()
+            }
+        }
+    }
+
+    private func produceHints(count: Int, avoiding previous: [HintSuggestion] = []) async -> [HintSuggestion] {
         guard await ensureModelLoaded() else { return [] }
         let n = max(1, min(3, count))
-        let partner = lastAssistantText() ?? ""
-        let system = """
+
+        var system = """
         You are a helpful German tutor. The learner (level \(config.level.rawValue), \(config.formality.rawValue) form) is mid-conversation and may be stuck. \
-        Suggest \(n) different, natural thing\(n == 1 ? "" : "s") they could say next in German, each a single sentence appropriate as a reply. \
+        Suggest \(n) different, natural thing\(n == 1 ? "" : "s") they could say next in German, each a single sentence appropriate as a reply.
+        """
+        if let scene = hintSceneLine() {
+            system += " " + scene
+        }
+        system += """
+         Every suggestion must fit that situation and directly continue the conversation — a plausible answer to the partner's last line, never an unrelated topic. \
         Output each suggestion on its own line in EXACTLY this format and nothing else:
         German sentence | English translation
         """
-        let user = partner.isEmpty
-            ? "Suggest \(n) opening line\(n == 1 ? "" : "s") the learner could say."
-            : "The partner just said: \"\(partner)\". Suggest \(n) thing\(n == 1 ? "" : "s") the learner could say in reply."
+
+        // Give the model the actual conversation, not just the last line, so suggestions stay
+        // on-scene ("Was darf es sein?" at the bakery shouldn't yield "Wo ist die Post?").
+        let recent = conversation.sortedMessages.suffix(6)
+            .map { "\($0.isUser ? "LEARNER" : "PARTNER"): \($0.text)" }
+            .joined(separator: "\n")
+        var user: String
+        if recent.isEmpty {
+            user = "Suggest \(n) opening line\(n == 1 ? "" : "s") the learner could say."
+        } else {
+            user = "Conversation so far:\n\(recent)\n\nSuggest \(n) thing\(n == 1 ? "" : "s") the LEARNER could say next, replying to the PARTNER's last line."
+        }
+        if !previous.isEmpty {
+            user += "\n\nThe learner wants different ideas. Do NOT repeat or rephrase these:\n"
+                + previous.map { "- \($0.german)" }.joined(separator: "\n")
+        }
+
         do {
             let raw = try await mlxService.generateText(system: system, user: user, model: config.model, maxTokens: 80 + n * 60)
             return parseHintSuggestions(raw, limit: n)
         } catch {
             if !(error is CancellationError) { errorMessage = friendly(error) }
             return []
+        }
+    }
+
+    /// One line of scene context for the hint prompt, mirroring the conversation's setup. Without
+    /// it the tutor model only sees the partner's last line and suggests situationally-wrong
+    /// replies (e.g. asking for the post office at the bakery).
+    private func hintSceneLine() -> String? {
+        switch config.mode {
+        case .scenario:
+            if config.scenario == .custom {
+                let custom = config.customScenario.trimmingCharacters(in: .whitespacesAndNewlines)
+                return custom.isEmpty ? nil : "The conversation is a role-play of this situation: \(custom)."
+            }
+            if let scenario = config.scenario, scenario != .custom {
+                return "The conversation is a role-play — the scene is: \(scenario.englishTitle) („\(scenario.germanTitle)“). The partner plays the other person in that scene."
+            }
+            return nil
+        case .interview:
+            let position = config.jobTitle.map { " for the position \"\($0)\"" } ?? ""
+            return "The conversation is a job interview\(position); the partner is the interviewer and the learner is the candidate."
+        case .paper:
+            return "The conversation is an academic discussion of a paper titled \"\(config.paperTitle ?? "das Papier")\"."
+        case .decks:
+            guard !config.deckWords.isEmpty else { return nil }
+            let sample = config.deckWords.prefix(12).joined(separator: ", ")
+            return "The learner is practicing these vocabulary words, so prefer suggestions that use one where it fits naturally: \(sample)."
+        case .freestyle:
+            return nil
         }
     }
 
@@ -668,7 +871,16 @@ final class ConversationEngine: WordInspecting {
         return result
     }
 
-    func clearHints() { hints = []; hintLoading = false }
+    func clearHints() { archiveCurrentHints(); hints = []; hintLoading = false }
+
+    /// Move the batch on screen into the history stack before it's replaced or dismissed, so the
+    /// card can page back to it. Skips empties and an exact repeat of the newest archived batch.
+    private func archiveCurrentHints() {
+        guard !hints.isEmpty else { return }
+        guard hintHistory.first?.map(\.id) != hints.map(\.id) else { return }
+        hintHistory.insert(hints, at: 0)
+        if hintHistory.count > 8 { hintHistory.removeLast() }
+    }
 
     // MARK: - Tap-a-word inspector (translate + save)
 
@@ -676,6 +888,21 @@ final class ConversationEngine: WordInspecting {
     func inspectWord(_ raw: String) {
         let word = SingleWordTranslator.cleanWord(raw)
         guard !word.isEmpty else { return }
+        // A capitalized word may be a noun the dictionary knows outright (the lookup is
+        // case-insensitive, so lowercase words must not reach it: "gut" is not "das Gut").
+        let nounHit = word.first?.isUppercase == true
+            ? WiktionaryValidator.shared.nounArticle(for: word) : nil
+        if let nounHit, let english = nounHit.english, !english.isEmpty {
+            // The dictionary answers fully — no model needed, no load prompt.
+            inspectedWord = InspectedWord(
+                word: word,
+                translation: english,
+                loading: false,
+                saved: conversation.isVocabSaved(german: word),
+                article: nounHit.article
+            )
+            return
+        }
         // Translating a tapped word needs the model — prompt to load it rather than opening an
         // inspector that just spins.
         guard requireModelReady(orRun: { [weak self] in self?.inspectWord(raw) }) else { return }
@@ -684,11 +911,12 @@ final class ConversationEngine: WordInspecting {
             translation: nil,
             loading: true,
             loadingModel: !SingleWordTranslator.isReady(config.model, in: mlxService),
-            saved: conversation.isVocabSaved(german: word)
+            saved: conversation.isVocabSaved(german: word),
+            article: nounHit?.article
         )
         Task {
-            let translation = await translateSingleWord(word) { [weak self] in
-                guard let self, inspectedWord?.word == word else { return }
+            let translation = await translateSingleWord(word) { [self] in
+                guard inspectedWord?.word == word else { return }
                 inspectedWord?.loadingModel = false
             }
             // Only apply if the inspector is still showing the same word.
@@ -769,6 +997,7 @@ final class ConversationEngine: WordInspecting {
     func practiceSaying(_ german: String, english: String?) {
         let text = german.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
+        archiveCurrentHints()
         hints = []  // don't stack with a hint card
         let gloss = english?.trimmingCharacters(in: .whitespacesAndNewlines)
         sayItPrompt = SayItPrompt(german: text, english: (gloss?.isEmpty == false) ? gloss : nil)
@@ -811,6 +1040,7 @@ final class ConversationEngine: WordInspecting {
     private func beginRepair(for message: ChatMessage) {
         guard let corrected = message.correctedText,
               let hint = message.correctionHint, !hint.isEmpty else { return }
+        archiveCurrentHints()
         hints = []          // don't stack with a hint card
         sayItPrompt = nil   // …or a say-it practice card
         repairPrompt = RepairPrompt(
@@ -874,18 +1104,26 @@ final class ConversationEngine: WordInspecting {
     // MARK: - Eager assist (background pre-loading)
 
     private func startEagerAssist(for message: ChatMessage) {
-        guard config.eagerAssist else { return }
+        guard config.eagerAssist || config.autoHints else { return }
         eagerTask?.cancel()
         // Lower priority so background translation/hint work doesn't compete with the
         // read-along highlight updates on the main actor while the reply is being read aloud.
         eagerTask = Task(priority: .utility) { [weak self] in
             guard let self else { return }
-            await self.translateInline(message)
+            if self.config.eagerAssist { await self.translateInline(message) }
             if Task.isCancelled { return }
             let produced = await self.produceHints(count: self.config.hintCount)
             if !produced.isEmpty {
                 self.cachedHints = produced
                 self.cachedHintMessageID = message.id
+                // Auto-hints: surface the card right away, without marking the turn
+                // hint-assisted — that only happens when the learner asks or parrots one.
+                if self.config.autoHints, message.id == self.latestAssistantID(),
+                   !self.isRecording, self.repairPrompt == nil, self.sayItPrompt == nil,
+                   self.phase == .idle {
+                    self.archiveCurrentHints()
+                    self.hints = produced
+                }
             }
         }
     }
@@ -922,6 +1160,26 @@ final class ConversationEngine: WordInspecting {
 
     // MARK: - Summary
 
+    /// Longest run of consecutive user turns taken without aids. A turn is unaided when it used
+    /// no hint, no phrase helper, and the assistant reply immediately before it was never
+    /// translated. (A translation revealed later still counts against it — the timestamps to know
+    /// better aren't stored; documented approximation.)
+    private func bestUnaidedStreak(in messages: [ChatMessage]) -> Int {
+        var best = 0, run = 0
+        var previousAssistantTranslated = false
+        for m in messages {
+            if !m.isUser {
+                previousAssistantTranslated = m.translationViewed
+                continue
+            }
+            let unaided = !m.usedHint && !m.usedPhraseHelper && !previousAssistantTranslated
+            run = unaided ? run + 1 : 0
+            best = max(best, run)
+            previousAssistantTranslated = false
+        }
+        return best
+    }
+
     @discardableResult
     func endAndSummarize() async -> ConversationSummary? {
         speechRecognizer.cancel()
@@ -945,6 +1203,12 @@ final class ConversationEngine: WordInspecting {
         for m in messages { spacedReviews.append(contentsOf: m.reviewedWords) }
         spacedReviews = Array(Set(spacedReviews)).sorted()
 
+        // Confidence streak: longest run of turns taken without aids, and whether it's a record.
+        // Capture `isRecord` before updating the stored best.
+        let unaidedStreak = bestUnaidedStreak(in: messages)
+        let streakIsRecord = unaidedStreak > 0 && unaidedStreak > modelManager.chatBestUnaidedStreak
+        if streakIsRecord { modelManager.chatBestUnaidedStreak = unaidedStreak }
+
         // Too little to analyze — store a gentle placeholder.
         guard userTurns.count >= 1, await ensureModelLoaded() else {
             let summary = ConversationSummary(
@@ -958,6 +1222,8 @@ final class ConversationEngine: WordInspecting {
                 translationsUsed: translationsUsed,
                 phraseHelperUsed: phraseHelperUsed,
                 spacedReviews: spacedReviews.isEmpty ? nil : spacedReviews,
+                bestUnaidedStreak: unaidedStreak > 0 ? unaidedStreak : nil,
+                unaidedStreakIsRecord: streakIsRecord ? true : nil,
                 turnCount: userTurns.count,
                 generatedAt: Date(),
                 rawText: nil
@@ -990,6 +1256,8 @@ final class ConversationEngine: WordInspecting {
                 translationsUsed: translationsUsed,
                 phraseHelperUsed: phraseHelperUsed,
                 spacedReviews: spacedReviews.isEmpty ? nil : spacedReviews,
+                bestUnaidedStreak: unaidedStreak > 0 ? unaidedStreak : nil,
+                unaidedStreakIsRecord: streakIsRecord ? true : nil,
                 turnCount: userTurns.count,
                 generatedAt: Date(),
                 rawText: (parsed.strengths.isEmpty && parsed.improvements.isEmpty)
@@ -1041,10 +1309,23 @@ final class ConversationEngine: WordInspecting {
     }
 
     /// The most recent turns, mapped for the model (capped to keep latency sane).
+    /// How many recent turns travel with each prompt. Bounded because the KV cache — not the text —
+    /// is what a tight device runs out of room for.
+    private static let historyTurns = 12
+
     private func recentHistory() -> [(role: ChatRole, content: String)] {
-        conversation.sortedMessages
-            .suffix(12)
-            .map { (role: $0.role, content: $0.text) }
+        let all = conversation.sortedMessages
+        var window = Array(all.suffix(Self.historyTurns))
+        // A trailing window can start on an assistant turn. ``ChatTurnNormalizer`` would then have
+        // to stand the opener seed in front of it — "begin the conversation now" — in the middle
+        // of a conversation already underway. Widening by one keeps the learner's real line that
+        // the AI was answering, which is both a valid sequence and a true one. (Only when there's
+        // something to widen into: a window that *is* the whole chat genuinely starts on the AI's
+        // opener, and the seed is the right stand-in there.)
+        if window.first?.isUser == false, all.count > window.count {
+            window = Array(all.suffix(Self.historyTurns + 1))
+        }
+        return window.map { (role: $0.role, content: $0.text) }
     }
 
     private func save() {
@@ -1098,7 +1379,17 @@ final class ConversationEngine: WordInspecting {
 
     private func friendly(_ error: Error) -> String {
         if let mlxError = error as? MLXError { return mlxError.errorDescription ?? "Something went wrong." }
-        return error.localizedDescription
+        let description = error.localizedDescription
+        // A chat template refusing the turn sequence surfaces as "The operation couldn't be
+        // completed. (Jinja.TemplateException error 1.)" — accurate, and unreadable to a learner.
+        // `ChatTurnNormalizer` should make this unreachable; if an unfamiliar template still gets
+        // here, say the one thing that helps.
+        if description.localizedCaseInsensitiveContains("jinja")
+            || description.localizedCaseInsensitiveContains("templateexception") {
+            return "\(config.model.rawValue) couldn't read this conversation's history. "
+                + "Try again — or end the session and start a fresh chat."
+        }
+        return description
     }
 
     private func authMessage() -> String {

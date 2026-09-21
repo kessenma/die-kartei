@@ -153,30 +153,31 @@ struct QueueStoryJobSheet: View {
 
     init(modelManager: MLXModelManager) {
         self.modelManager = modelManager
-        _level = State(initialValue: modelManager.storyLevel)
+        _level = State(initialValue: modelManager.germanLevel)
         _genre = State(initialValue: modelManager.storyGenre)
         _questionCount = State(initialValue: modelManager.storyQuestionCount)
         _withImages = State(initialValue: modelManager.storyIllustrationsEnabled && ImageGenModel.current.isDownloaded)
         _imageCount = State(initialValue: modelManager.storyImageCount)
     }
 
-    private var hero: MLXModel { StoryStudyService.requiredModel }
+    /// The tutor a story queued from here will be written by, or nil when none is downloaded.
+    private var storyModel: MLXModel? { StoryStudyService.unattendedModel }
     private var trimmedTopic: String { topic.trimmingCharacters(in: .whitespaces) }
-    private var heroReady: Bool { DeviceCapability.mayRunHero && hero.isDownloaded }
+    private var storyReady: Bool { storyModel != nil }
 
     var body: some View {
         NavigationStack {
             Form {
-                if !DeviceCapability.mayRunHero {
+                if StoryStudyService.runnableModels.isEmpty {
                     Section {
-                        Label("Stories need the \(hero.rawValue), and this device doesn't have enough memory to run it.", systemImage: "book.pages")
+                        Label("Stories need a German Tutor model, and this device doesn't have enough memory to run even the lightest one.", systemImage: "book.pages")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                     .themedListRow()
-                } else if !hero.isDownloaded {
+                } else if storyModel == nil {
                     Section {
-                        Label("Stories are written by the \(hero.rawValue). Download it once on the story screen (Reading ▸ Read a Short Story), then queue as many as you like.", systemImage: "arrow.down.circle")
+                        Label("Stories are written by a German Tutor model. Download one on the story screen (Reading ▸ Read a Short Story), then queue as many as you like.", systemImage: "arrow.down.circle")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -278,7 +279,7 @@ struct QueueStoryJobSheet: View {
     }
 
     private func addJob() {
-        guard heroReady else { return }
+        guard storyReady else { return }
         let job = BatchJob.story(
             topic: trimmedTopic,
             level: level,

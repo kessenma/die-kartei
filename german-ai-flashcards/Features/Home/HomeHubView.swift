@@ -27,6 +27,9 @@ struct HomeHubView: View {
     /// dedupe in `CelebrationCenter`, so re-evaluating on every log change is cheap and safe.
     @Query private var studyDays: [StudyDay]
 
+    /// For the weekly journey snapshot, which self-throttles inside `recordIfDue`.
+    @Environment(\.modelContext) private var modelContext
+
     /// Two columns; each tile sizes itself (`ActivityCategoryTile`), giving a 3×2 grid.
     private let tileColumns = [
         GridItem(.flexible(), spacing: 14),
@@ -58,6 +61,14 @@ struct HomeHubView: View {
                     .listRowInsets(EdgeInsets())
             }
 
+            // Sits above everything, in both Home modes, until a tutor is on disk. Renders nothing
+            // once one is — and nothing at all on a device no tutor fits.
+            Section {
+                ModelUpgradeNudge(kind: .tutor, mlxService: coordinator.mlxService)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+            }
+
             if coordinator.modelManager.gamificationEnabled {
                 LevelCardSection(coordinator: coordinator)
             }
@@ -78,11 +89,15 @@ struct HomeHubView: View {
 
     private func evaluateGamification() {
         CelebrationCenter.shared.evaluate(studyDays: studyDays, manager: coordinator.modelManager)
+        // The journey record: a ~weekly numeric snapshot + newly detected milestones. Returns
+        // immediately when the last snapshot is fresh, so riding this hook costs nothing.
+        ProgressSnapshotService.recordIfDue(in: modelContext)
     }
 
     // MARK: - All Activities — the six-tile hub
 
-    /// Six categories, one screenful, instead of the thirteen-row scroll this replaces. A
+    /// Six categories, one screenful, instead of the thirteen-row scroll this replaces, plus the
+    /// wide Job prep card beneath them (a goal, not a seventh skill — see `JobPrepTile`). A
     /// `ScrollView` rather than a `List` on purpose: the grid is the point, and stepping outside
     /// grouped chrome is also what lets Grundform's tiles keep genuinely square corners (a grouped
     /// section clips its rows to a rounded rect we don't control — see docs/theme-upgrade.md §3).
@@ -91,19 +106,33 @@ struct HomeHubView: View {
             VStack(spacing: 18) {
                 modePicker
 
-                LazyVGrid(columns: tileColumns, spacing: 14) {
-                    ForEach(ActivityCategory.allCases) { category in
-                        NavigationLink {
-                            ActivityCategoryDestination(
-                                category: category,
-                                coordinator: coordinator,
-                                onGenerationComplete: onGenerationComplete
-                            )
-                        } label: {
-                            ActivityCategoryTile(category: category)
+                ModelUpgradeNudge(kind: .tutor, mlxService: coordinator.mlxService)
+
+                VStack(spacing: 14) {
+                    LazyVGrid(columns: tileColumns, spacing: 14) {
+                        ForEach(ActivityCategory.allCases) { category in
+                            NavigationLink {
+                                ActivityCategoryDestination(
+                                    category: category,
+                                    coordinator: coordinator,
+                                    onGenerationComplete: onGenerationComplete
+                                )
+                            } label: {
+                                ActivityCategoryTile(category: category)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
+
+                    NavigationLink {
+                        JobPrepHubView(
+                            modelManager: coordinator.modelManager,
+                            mlxService: coordinator.mlxService
+                        )
+                    } label: {
+                        JobPrepTile()
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, hubInset)
@@ -139,7 +168,7 @@ private func homeHubPreview(_ theme: AppTheme) -> some View {
     .environment(\.appTheme, theme)
     .modelContainer(
         for: [SavedDeck.self, SavedCard.self, StudyDay.self, LearnerProfile.self,
-              ChatConversation.self, PrepositionStat.self, StoryQuizAttempt.self],
+              ChatConversation.self, PrepositionStat.self, StoryQuizAttempt.self, JobPosting.self],
         inMemory: true
     )
 }

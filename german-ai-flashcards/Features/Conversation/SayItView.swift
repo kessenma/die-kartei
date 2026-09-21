@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// "Say it in German" — the learner types or speaks (in English) what they want to say,
-/// and the AI shows the natural German. They can hear it or use it as their spoken turn.
+/// and the AI shows the natural German. They can hear it, say it back, or write it back —
+/// whichever way the conversation is being taken.
 struct SayItView: View {
     let engine: ConversationEngine
     @Environment(\.dismiss) private var dismiss
@@ -23,14 +24,18 @@ struct SayItView: View {
                     TextField("What do you want to say? (in English)", text: $englishText, axis: .vertical)
                         .lineLimit(2...5)
 
-                    Button {
-                        toggleRecording()
-                    } label: {
-                        Label(
-                            recognizer.isRecording ? "Stop" : "Or speak in English",
-                            systemImage: recognizer.isRecording ? "stop.circle.fill" : "mic.fill"
-                        )
-                        .foregroundStyle(recognizer.isRecording ? .red : .accentColor)
+                    // Offering to talk is beside the point in a typed session — the reason to type
+                    // is usually that speaking isn't an option.
+                    if !engine.isSilent {
+                        Button {
+                            toggleRecording()
+                        } label: {
+                            Label(
+                                recognizer.isRecording ? "Stop" : "Or speak in English",
+                                systemImage: recognizer.isRecording ? "stop.circle.fill" : "mic.fill"
+                            )
+                            .foregroundStyle(recognizer.isRecording ? .red : .accentColor)
+                        }
                     }
 
                     if recognizer.isRecording {
@@ -40,6 +45,7 @@ struct SayItView: View {
                         RecordingControls(
                             onPeriod:   { recognizer.appendPunctuation(".") },
                             onQuestion: { recognizer.appendPunctuation("?") },
+                            onComma:    { recognizer.appendPunctuation(",") },
                             onRestart:  { recognizer.restart() }
                         )
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -51,7 +57,9 @@ struct SayItView: View {
                 } header: {
                     Text("In English").themedSectionHeader()
                 } footer: {
-                    Text("Type or speak what you’d like to say. The AI will show you how to say it in German — then you can hear it or use it as your turn.")
+                    Text(engine.isSilent
+                         ? "Write what you’d like to say. The AI will show you how to say it in German — then you can write it back as your turn."
+                         : "Type or speak what you’d like to say. The AI will show you how to say it in German — then you can hear it or use it as your turn.")
                 }
                 .themedListRow()
 
@@ -81,7 +89,9 @@ struct SayItView: View {
                             engine.practiceSaying(german, english: gloss.isEmpty ? nil : gloss)
                             dismiss()
                         } label: {
-                            Label("Let me say it", systemImage: "mic.fill")
+                            let typing = engine.inputMode == .type
+                            Label(typing ? "Let me write it" : "Let me say it",
+                                  systemImage: typing ? "keyboard.fill" : "mic.fill")
                         }
                     } header: {
                         Text("In German").themedSectionHeader()

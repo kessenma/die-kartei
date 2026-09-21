@@ -46,7 +46,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "departure (of a land or water vehicle)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Abfall",
@@ -66,7 +67,7 @@
     "word": "abgeben",
     "article": null,
     "wordType": "verb",
-    "translation": "to give up, relinquish, let go, concede, hand over, etc. (po",
+    "translation": "to give up, relinquish, let go, concede, hand over, etc. (power, money, valuable objects, etc.)",
     "example": ""
   },
   {
@@ -81,7 +82,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to collect, pick up or fetch someone or something",
-    "example": ""
+    "example": "",
+    "verbForms": "holt ab · hat abgeholt"
   },
   {
     "word": "abhängen",
@@ -101,7 +103,7 @@
     "word": "Abitur",
     "article": "das",
     "wordType": "noun",
-    "translation": "final exams taken by pupils at the end of their secondary ed",
+    "translation": "final exams taken by pupils at the end of their secondary education in Germany and Finland to attain eligibility for all kinds of universities (allgemeine Hochschulreife).",
     "example": ""
   },
   {
@@ -109,7 +111,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to decline, refuse, reject, turn down",
-    "example": ""
+    "example": "",
+    "verbForms": "lehnt ab · hat abgelehnt"
   },
   {
     "word": "abmachen",
@@ -122,8 +125,9 @@
     "word": "abnehmen",
     "article": null,
     "wordType": "verb",
-    "translation": "to take off (to remove something that is attached to somethi",
-    "example": ""
+    "translation": "to take off (to remove something that is attached to something or on top of it)",
+    "example": "",
+    "verbForms": "nimmt ab · hat abgenommen"
   },
   {
     "word": "Abonnement",
@@ -137,7 +141,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "cancel",
-    "example": ""
+    "example": "",
+    "verbForms": "sagt ab · hat abgesagt"
   },
   {
     "word": "Abschied",
@@ -242,7 +247,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "address",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Ahnung",
@@ -276,14 +282,14 @@
     "word": "aktuell",
     "article": null,
     "wordType": null,
-    "translation": "current, currently in action, live (in the sense of broadcas",
+    "translation": "current, currently in action, live (in the sense of broadcasting)",
     "example": ""
   },
   {
     "word": "akzeptieren",
     "article": null,
     "wordType": "verb",
-    "translation": "to accept, to approve, to take, to agree to (e.g. a proposal",
+    "translation": "to accept, to approve, to take, to agree to (e.g. a proposal)",
     "example": ""
   },
   {
@@ -333,7 +339,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "everyday life, daily routine",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "alltäglich",
@@ -346,7 +353,7 @@
     "word": "Alphabet",
     "article": "das",
     "wordType": "noun",
-    "translation": "alphabet (the set of letters used when writing in a language",
+    "translation": "alphabet (the set of letters used when writing in a language)",
     "example": ""
   },
   {
@@ -410,7 +417,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "traffic light",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Amt",
@@ -438,7 +446,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to offer, to provide",
-    "example": ""
+    "example": "",
+    "verbForms": "bietet an · hat angeboten"
   },
   {
     "word": "Anbieter",
@@ -472,7 +481,7 @@
     "word": "anerkennen",
     "article": null,
     "wordType": "verb",
-    "translation": "to acknowledge, to recognize, to accept (as legally, morally",
+    "translation": "to acknowledge, to recognize, to accept (as legally, morally or scientifically valid or sufficient)",
     "example": ""
   },
   {
@@ -487,7 +496,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to begin",
-    "example": ""
+    "example": "",
+    "verbForms": "fängt an · hat angefangen"
   },
   {
     "word": "anfangs",
@@ -515,7 +525,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "offer, proposition",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "angenehm",
@@ -557,7 +568,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "arrival",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "ankündigen",
@@ -585,7 +597,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to announce, declare",
-    "example": ""
+    "example": "",
+    "verbForms": "meldet sich an · hat sich angemeldet"
   },
   {
     "word": "Anmeldung",
@@ -620,7 +633,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "a call upon, an appeal (e.g., to gods, a court, etc.)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Anrufbeantworter",
@@ -634,7 +648,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to call, to ring (by telephone or similar technology)",
-    "example": ""
+    "example": "",
+    "verbForms": "ruft an · hat angerufen"
   },
   {
     "word": "Ansage",
@@ -662,7 +677,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "connection, joining",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "anschnallen",
@@ -675,7 +691,7 @@
     "word": "ansehen",
     "article": null,
     "wordType": "verb",
-    "translation": "to look at, to have a look at (taking in information in doin",
+    "translation": "to look at, to have a look at (taking in information in doing so)",
     "example": ""
   },
   {
@@ -718,7 +734,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "answer",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Anwalt",
@@ -731,7 +748,7 @@
     "word": "anwenden",
     "article": null,
     "wordType": "verb",
-    "translation": "to use, apply, utilize or deploy (to put to use for a purpos",
+    "translation": "to use, apply, utilize or deploy (to put to use for a purpose)",
     "example": ""
   },
   {
@@ -760,13 +777,14 @@
     "article": "die",
     "wordType": "noun",
     "translation": "advertisement, announcement",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "anzeigen",
     "article": null,
     "wordType": "verb",
-    "translation": "to display, to show (a measurement e.g. time, temperature, s",
+    "translation": "to display, to show (a measurement e.g. time, temperature, speed etc.)",
     "example": ""
   },
   {
@@ -795,14 +813,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "apple (fruit)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Apotheke",
     "article": "die",
     "wordType": "noun",
     "translation": "pharmacy",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Apparat",
@@ -829,8 +849,9 @@
     "word": "Arbeit",
     "article": "die",
     "wordType": "noun",
-    "translation": "toil, regularly performed work, regularly pursued economic a",
-    "example": ""
+    "translation": "toil, regularly performed work, regularly pursued economic activity, labor, job, employment, occupation",
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Arbeiter",
@@ -920,8 +941,9 @@
     "word": "Arzt",
     "article": "der",
     "wordType": "noun",
-    "translation": "doctor, physician (male or of unspecified gender) (without n",
-    "example": ""
+    "translation": "doctor, physician (male or of unspecified gender) (without necessarily having a postgraduate degree)",
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Asyl",
@@ -941,7 +963,7 @@
     "word": "auch",
     "article": null,
     "wordType": null,
-    "translation": "also, too, as well (in addition to whatever or whoever has p",
+    "translation": "also, too, as well (in addition to whatever or whoever has previously been listed)",
     "example": ""
   },
   {
@@ -983,7 +1005,7 @@
     "word": "aufführen",
     "article": null,
     "wordType": "verb",
-    "translation": "to perform (a play, a piece of music, etc.",
+    "translation": "to perform (a play, a piece of music, etc.; especially on a stage)",
     "example": ""
   },
   {
@@ -991,14 +1013,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "task, job",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "aufgeben",
     "article": null,
     "wordType": "verb",
     "translation": "to give up on (one's efforts)",
-    "example": ""
+    "example": "",
+    "verbForms": "gibt auf · hat aufgegeben"
   },
   {
     "word": "aufhalten",
@@ -1088,8 +1112,9 @@
     "word": "aufstehen",
     "article": null,
     "wordType": "verb",
-    "translation": "to get up (move from a sitting or lying position to a standi",
-    "example": ""
+    "translation": "to get up (move from a sitting or lying position to a standing position; to get up from bed)",
+    "example": "",
+    "verbForms": "steht auf · ist aufgestanden"
   },
   {
     "word": "Auftrag",
@@ -1131,14 +1156,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "verbal noun of aufziehen",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Auge",
     "article": "das",
     "wordType": "noun",
     "translation": "eye",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Augenblick",
@@ -1159,7 +1186,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "training, apprenticeship, vocational education, education",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Ausdruck",
@@ -1201,14 +1229,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "excursion, outing, short trip",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "ausfüllen",
     "article": null,
     "wordType": "verb",
     "translation": "to fill in",
-    "example": ""
+    "example": "",
+    "verbForms": "füllt aus · hat ausgefüllt"
   },
   {
     "word": "Ausgabe",
@@ -1222,14 +1252,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "exit (passage from inside to outside)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "ausgeben",
     "article": null,
     "wordType": "verb",
     "translation": "to spend, to expend",
-    "example": ""
+    "example": "",
+    "verbForms": "gibt aus · hat ausgegeben"
   },
   {
     "word": "ausgebildet",
@@ -1264,14 +1296,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "enquiry",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Ausland",
     "article": "das",
     "wordType": "noun",
     "translation": "foreign countries (collectively)",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Ausländer",
@@ -1403,7 +1437,7 @@
     "word": "Ausweis",
     "article": "der",
     "wordType": "noun",
-    "translation": "ID card (a card or badge showing the official identity of th",
+    "translation": "ID card (a card or badge showing the official identity of the bearer)",
     "example": ""
   },
   {
@@ -1425,13 +1459,14 @@
     "article": "das",
     "wordType": "noun",
     "translation": "car",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Autobahn",
     "article": "die",
     "wordType": "noun",
-    "translation": "motorway (Britain, Ireland, New Zealand), freeway (Australia",
+    "translation": "motorway (Britain, Ireland, New Zealand), freeway (Australia, Canada, US), highway (parts of the US), expressway (parts of Canada, parts of the US), controlled-access highway",
     "example": ""
   },
   {
@@ -1459,7 +1494,7 @@
     "word": "Autorin",
     "article": "die",
     "wordType": "noun",
-    "translation": "female equivalent of Autor (“author”): female author, author",
+    "translation": "female equivalent of Autor (“author”): female author, authoress",
     "example": ""
   },
   {
@@ -1495,7 +1530,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "bath",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "Badewanne",
@@ -1515,8 +1551,9 @@
     "word": "Bahnhof",
     "article": "der",
     "wordType": "noun",
-    "translation": "railway depot, railroad station, railway station, train stat",
-    "example": ""
+    "translation": "railway depot, railroad station, railway station, train station",
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Bahnsteig",
@@ -1536,7 +1573,7 @@
     "word": "Balkon",
     "article": "der",
     "wordType": "noun",
-    "translation": "balcony (an accessible structure extending from a building, ",
+    "translation": "balcony (an accessible structure extending from a building, especially outside a window or overlooking a stage)",
     "example": ""
   },
   {
@@ -1565,7 +1602,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "bank, bench",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Bankleitzahl",
@@ -1586,7 +1624,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "cash (money in the form of notes/bills and coins)",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Bart",
@@ -1621,7 +1660,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "abdomen, belly",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Bauer",
@@ -1642,7 +1682,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "tree",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Baustelle",
@@ -1767,7 +1808,7 @@
     "word": "Beitrag",
     "article": "der",
     "wordType": "noun",
-    "translation": "contribution (something given or offered that adds to a larg",
+    "translation": "contribution (something given or offered that adds to a larger whole)",
     "example": ""
   },
   {
@@ -1838,7 +1879,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "a mountain, hill",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Bericht",
@@ -1852,7 +1894,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "occupation, profession, trade, job, career",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "beruflich",
@@ -1900,7 +1943,7 @@
     "word": "Beschäftigung",
     "article": "die",
     "wordType": "noun",
-    "translation": "occupation (activity or task with which one occupies oneself",
+    "translation": "occupation (activity or task with which one occupies oneself)",
     "example": ""
   },
   {
@@ -1914,7 +1957,7 @@
     "word": "Besprechung",
     "article": "die",
     "wordType": "noun",
-    "translation": "meeting, discussion, (gathering among business people to dis",
+    "translation": "meeting, discussion, (gathering among business people to discuss their business)",
     "example": ""
   },
   {
@@ -1950,7 +1993,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to visit, to see",
-    "example": ""
+    "example": "",
+    "verbForms": "hat besucht"
   },
   {
     "word": "Betrag",
@@ -1984,7 +2028,7 @@
     "word": "Betrieb",
     "article": "der",
     "wordType": "noun",
-    "translation": "operating or running a technical device, application or proc",
+    "translation": "operating or running a technical device, application or process, in other words planful activity under the exploitation of tools, connections and/or manpower with an inherent direction towards an economic result, industry, operation, verbal noun of betreiben",
     "example": ""
   },
   {
@@ -2012,8 +2056,9 @@
     "word": "Bett",
     "article": "das",
     "wordType": "noun",
-    "translation": "bed (piece of furniture, usually flat and soft, for resting ",
-    "example": ""
+    "translation": "bed (piece of furniture, usually flat and soft, for resting or sleeping on; one's place of sleep or rest)",
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "bevor",
@@ -2048,13 +2093,14 @@
     "article": "die",
     "wordType": "noun",
     "translation": "application (for a job or position), candidature",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Bewohner",
     "article": "der",
     "wordType": "noun",
-    "translation": "agent noun of bewohnen: inhabitant (someone who lives or dwe",
+    "translation": "agent noun of bewohnen: inhabitant (someone who lives or dwells in a place, especially a room, house, institution)",
     "example": ""
   },
   {
@@ -2076,7 +2122,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "relation, relationship, connection",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Bibliothek",
@@ -2089,15 +2136,17 @@
     "word": "Bier",
     "article": "das",
     "wordType": "noun",
-    "translation": "beer (alcoholic beverage fermented from starch material",
-    "example": ""
+    "translation": "beer (alcoholic beverage fermented from starch material; a serving of this beverage)",
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Bild",
     "article": "das",
     "wordType": "noun",
     "translation": "depiction, image, picture",
-    "example": ""
+    "example": "",
+    "plural": "-er"
   },
   {
     "word": "Bildschirm",
@@ -2229,8 +2278,9 @@
     "word": "Blume",
     "article": "die",
     "wordType": "noun",
-    "translation": "flower, blossom (colorful, conspicuous reproductive structur",
-    "example": ""
+    "translation": "flower, blossom (colorful, conspicuous reproductive structure(s) of an angiosperm)",
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Bluse",
@@ -2314,7 +2364,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "letter (written message)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Briefkasten",
@@ -2328,7 +2379,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "postage stamp",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Brieftasche",
@@ -2355,7 +2407,7 @@
     "word": "Brille",
     "article": "die",
     "wordType": "noun",
-    "translation": "glasses, spectacles (frames bearing two lenses worn in front",
+    "translation": "glasses, spectacles (frames bearing two lenses worn in front of the eyes to correct vision)",
     "example": ""
   },
   {
@@ -2370,14 +2422,16 @@
     "article": "das",
     "wordType": "noun",
     "translation": "bread",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Bruder",
     "article": "der",
     "wordType": "noun",
     "translation": "brother",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Brust",
@@ -2391,7 +2445,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "a bun, bread roll",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Brötli",
@@ -2418,8 +2473,9 @@
     "word": "Buch",
     "article": "das",
     "wordType": "noun",
-    "translation": "book (collection of sheets of paper bound together to hinge ",
-    "example": ""
+    "translation": "book (collection of sheets of paper bound together to hinge at one edge; long work fit for publication)",
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "Buchhandlung",
@@ -2461,14 +2517,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "bus (public transport)",
-    "example": ""
+    "example": "",
+    "plural": "-se"
   },
   {
     "word": "Butter",
     "article": "die",
     "wordType": "noun",
     "translation": "butter",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Bäckerei",
@@ -2517,7 +2575,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "office (room for working)",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Bürste",
@@ -2545,7 +2604,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "boss, chief",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Chefin",
@@ -2656,7 +2716,7 @@
     "word": "dahin",
     "article": null,
     "wordType": null,
-    "translation": "there (to or into that place",
+    "translation": "there (to or into that place; thither)",
     "example": ""
   },
   {
@@ -2930,7 +2990,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "discussion, debate",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Distanz",
@@ -2999,8 +3060,9 @@
     "word": "Dorf",
     "article": "das",
     "wordType": "noun",
-    "translation": "village (rural habitation of size between a hamlet and a tow",
-    "example": ""
+    "translation": "village (rural habitation of size between a hamlet and a town)",
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "dort",
@@ -3048,14 +3110,14 @@
     "word": "Droge",
     "article": "die",
     "wordType": "noun",
-    "translation": "drug (psychoactive substance, especially one which is illega",
+    "translation": "drug (psychoactive substance, especially one which is illegal)",
     "example": ""
   },
   {
     "word": "Drogerie",
     "article": "die",
     "wordType": "noun",
-    "translation": "a retail store selling beauty, hygiene and household related",
+    "translation": "a retail store selling beauty, hygiene and household related products as well as certain non-prescription medications, roughly equivalent to a drugstore/chemist",
     "example": ""
   },
   {
@@ -3070,7 +3132,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "agent noun of drucken",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "drüben",
@@ -3133,7 +3196,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "thirst",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "durstig",
@@ -3223,7 +3287,7 @@
     "word": "Ehe",
     "article": "die",
     "wordType": "noun",
-    "translation": "marriage (state of being married",
+    "translation": "marriage (state of being married; life as a married couple)",
     "example": ""
   },
   {
@@ -3266,20 +3330,21 @@
     "article": "das",
     "wordType": "noun",
     "translation": "egg (all biological senses)",
-    "example": ""
+    "example": "",
+    "plural": "-er"
   },
   {
     "word": "eigen-",
     "article": null,
     "wordType": null,
-    "translation": "own, peculiar or private to someone, idiosyncratic, proper o",
+    "translation": "own, peculiar or private to someone, idiosyncratic",
     "example": ""
   },
   {
     "word": "eigentlich",
     "article": null,
     "wordType": null,
-    "translation": "Used to frame a statement as being a more (formally) truthfu",
+    "translation": "Used to frame a statement as being a more (formally) truthful description of the situation in comparison to another claim or assumption",
     "example": ""
   },
   {
@@ -3300,14 +3365,14 @@
     "word": "ein",
     "article": null,
     "wordType": "verb",
-    "translation": "indicating (concrete or abstract/metaphorical) motion into s",
+    "translation": "indicating (concrete or abstract/metaphorical) motion into something",
     "example": ""
   },
   {
     "word": "ein-",
     "article": null,
     "wordType": null,
-    "translation": "indicating (concrete or abstract/metaphorical) motion into s",
+    "translation": "indicating (concrete or abstract/metaphorical) motion into",
     "example": ""
   },
   {
@@ -3357,7 +3422,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "impression",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "einerseits",
@@ -3427,7 +3493,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "entrance, entry",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "einheitlich",
@@ -3447,7 +3514,7 @@
     "word": "Einkauf",
     "article": "der",
     "wordType": "noun",
-    "translation": "purchase (the act or process of seeking and obtaining someth",
+    "translation": "purchase (the act or process of seeking and obtaining something)",
     "example": ""
   },
   {
@@ -3469,14 +3536,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to invite",
-    "example": ""
+    "example": "",
+    "verbForms": "lädt ein · hat eingeladen"
   },
   {
     "word": "Einladung",
     "article": "die",
     "wordType": "noun",
     "translation": "invitation",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "einmal",
@@ -3531,7 +3600,7 @@
     "word": "einschalten",
     "article": null,
     "wordType": "verb",
-    "translation": "to turn on, to switch on, to power up, to enable (to put a m",
+    "translation": "to turn on, to switch on, to power up, to enable (to put a mechanism, device or system into operation)",
     "example": ""
   },
   {
@@ -3588,7 +3657,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "occurring",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "einverstanden",
@@ -3601,7 +3671,7 @@
     "word": "Einwohner",
     "article": "der",
     "wordType": "noun",
-    "translation": "inhabitant (anyone who lives or dwells in something, especia",
+    "translation": "inhabitant (anyone who lives or dwells in something, especially a country, region, settlement)",
     "example": ""
   },
   {
@@ -3651,7 +3721,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to thread (elastic, thread etc.)",
-    "example": ""
+    "example": "",
+    "verbForms": "zieht ein · ist eingezogen"
   },
   {
     "word": "einzig-",
@@ -3700,13 +3771,14 @@
     "article": "die",
     "wordType": "noun",
     "translation": "parents",
-    "example": ""
+    "example": "",
+    "plural": "only pl."
   },
   {
     "word": "Empfang",
     "article": "der",
     "wordType": "noun",
-    "translation": "receipt, acceptance, welcome (act of receiving someone or so",
+    "translation": "receipt, acceptance, welcome (act of receiving someone or something)",
     "example": ""
   },
   {
@@ -3805,7 +3877,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "decision",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "entschlossen",
@@ -3819,7 +3892,8 @@
     "article": null,
     "wordType": null,
     "translation": "to excuse (something or (formal) someone)",
-    "example": ""
+    "example": "",
+    "verbForms": "hat sich entschuldigt"
   },
   {
     "word": "entschuldigt",
@@ -3847,7 +3921,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "disappointment, let-down, bummer, frustration",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Entwicklung",
@@ -3875,7 +3950,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "first floor (US), ground floor (UK)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Ereignis",
@@ -3888,8 +3964,9 @@
     "word": "Erfahrung",
     "article": "die",
     "wordType": "noun",
-    "translation": "experience (event through which empirical knowledge is gaine",
-    "example": ""
+    "translation": "experience (event through which empirical knowledge is gained)",
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Erfindung",
@@ -3923,8 +4000,9 @@
     "word": "Ergebnis",
     "article": "das",
     "wordType": "noun",
-    "translation": "result, outcome, conclusion, finding, fruit, consequence, up",
-    "example": ""
+    "translation": "result, outcome, conclusion, finding, fruit, consequence, upshot, answer",
+    "example": "",
+    "plural": "-se"
   },
   {
     "word": "Erholung",
@@ -3945,7 +4023,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "memory (recall)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Erklärung",
@@ -3966,7 +4045,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "cold (illness)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Erlaubnis",
@@ -4085,7 +4165,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "food",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Essig",
@@ -4147,7 +4228,7 @@
     "word": "extra",
     "article": null,
     "wordType": null,
-    "translation": "separate (not included in or directly connected to the objec",
+    "translation": "separate (not included in or directly connected to the object being discussed)",
     "example": ""
   },
   {
@@ -4204,21 +4285,24 @@
     "article": null,
     "wordType": null,
     "translation": "fare ticket",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Fahrplan",
     "article": "der",
     "wordType": "noun",
     "translation": "timetable (for transport)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Fahrrad",
     "article": "das",
     "wordType": "noun",
     "translation": "bicycle",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "Fahrt",
@@ -4274,7 +4358,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "family",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Familienname",
@@ -4358,20 +4443,22 @@
     "article": "die",
     "wordType": "noun",
     "translation": "celebration",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Feierabend",
     "article": "der",
     "wordType": "noun",
     "translation": "The evening before a holiday, eve.",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Feiertag",
     "article": "der",
     "wordType": "noun",
-    "translation": "holiday (a day on which a festival, etc., is traditionally o",
+    "translation": "holiday (a day on which a festival, etc., is traditionally observed)",
     "example": ""
   },
   {
@@ -4386,27 +4473,29 @@
     "article": "das",
     "wordType": "noun",
     "translation": "window",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Ferien",
     "article": "die",
     "wordType": "noun",
-    "translation": "holidays during which an institution (especially a school, u",
-    "example": ""
+    "translation": "holidays during which an institution (especially a school, university) or a business is closed; break (usually three days or more)",
+    "example": "",
+    "plural": "only pl."
   },
   {
     "word": "Ferien-",
     "article": null,
     "wordType": null,
-    "translation": "holidays during which an institution (especially a school, u",
+    "translation": "holidays during which an institution",
     "example": ""
   },
   {
     "word": "Fernbedienung",
     "article": "die",
     "wordType": "noun",
-    "translation": "remote control (device used to operate an appliance, such as",
+    "translation": "remote control (device used to operate an appliance, such as a TV)",
     "example": ""
   },
   {
@@ -4519,7 +4608,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "fever (heightened body temperature)",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Figur",
@@ -4533,7 +4623,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "film (a thin layer of some substance)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "finanziell",
@@ -4554,7 +4645,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "A company, a business.",
-    "example": ""
+    "example": "",
+    "plural": "Firmen"
   },
   {
     "word": "flach",
@@ -4582,7 +4674,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "flesh",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Fleischhauer",
@@ -4595,7 +4688,7 @@
     "word": "fleißig",
     "article": null,
     "wordType": null,
-    "translation": "diligent, hard-working, industrious, busy, assiduous, sedulo",
+    "translation": "diligent, hard-working, industrious, busy, assiduous, sedulous",
     "example": ""
   },
   {
@@ -4638,14 +4731,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "airport",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Flugzeug",
     "article": "das",
     "wordType": "noun",
     "translation": "aeroplane",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Flur",
@@ -4763,7 +4858,7 @@
     "word": "Foto",
     "article": "das",
     "wordType": "noun",
-    "translation": "photograph (picture created by projecting an image onto a ph",
+    "translation": "photograph (picture created by projecting an image onto a photosensitive surface)",
     "example": ""
   },
   {
@@ -4792,14 +4887,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "question (interrogative sentence or phrase)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Frau",
     "article": "die",
     "wordType": "noun",
     "translation": "woman (adult female human)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "frech",
@@ -4833,7 +4930,7 @@
     "word": "Freizeit",
     "article": "die",
     "wordType": "noun",
-    "translation": "free time, leisure time, spare time. The time during which o",
+    "translation": "free time, leisure time, spare time. The time during which one is not working.",
     "example": ""
   },
   {
@@ -4862,7 +4959,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "friend",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "freundlich",
@@ -4953,7 +5051,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "breakfast",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Fundbüro",
@@ -4974,7 +5073,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "foot (body part)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Fußball",
@@ -5029,15 +5129,16 @@
     "word": "Förderung",
     "article": "die",
     "wordType": "noun",
-    "translation": "support, promotion, advancement (financial, moral, or emotio",
+    "translation": "support, promotion, advancement (financial, moral, or emotional advancement).",
     "example": ""
   },
   {
     "word": "Führerschein",
     "article": "der",
     "wordType": "noun",
-    "translation": "driver's license (US), driver's licence (Aus), driving licen",
-    "example": ""
+    "translation": "driver's license (US), driver's licence (Aus), driving licence (UK)",
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Führung",
@@ -5085,7 +5186,7 @@
     "word": "gar",
     "article": null,
     "wordType": null,
-    "translation": "cooked, done (of food such as meat or vegetables: ready for ",
+    "translation": "cooked, done (of food such as meat or vegetables: ready for consumption)",
     "example": ""
   },
   {
@@ -5100,13 +5201,14 @@
     "article": "die",
     "wordType": "noun",
     "translation": "guarantee",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Garderobe",
     "article": "die",
     "wordType": "noun",
-    "translation": "coatrack, hallstand (piece of furniture on which clothes may",
+    "translation": "coatrack, hallstand (piece of furniture on which clothes may be hung)",
     "example": ""
   },
   {
@@ -5114,7 +5216,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "garden, yard (grounds at the front or back of a house)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Gas",
@@ -5128,7 +5231,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "guest",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Gasthaus",
@@ -5184,7 +5288,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "birthday",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Gebäck",
@@ -5205,7 +5310,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "fee",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Gedanke",
@@ -5261,7 +5367,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to please",
-    "example": ""
+    "example": "",
+    "verbForms": "gefällt · hat gefallen"
   },
   {
     "word": "geflossen",
@@ -5296,7 +5403,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "feeling (either physical sensation or emotion)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Gegend",
@@ -5352,7 +5460,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "salary",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "geheim",
@@ -5394,7 +5503,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "money",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Geldautomat",
@@ -5464,7 +5574,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "vegetable",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "gemütlich",
@@ -5520,7 +5631,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "luggage, baggage",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "gerade",
@@ -5548,7 +5660,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "court (of justice)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "gering",
@@ -5569,7 +5682,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "present, gift",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Geschichte",
@@ -5604,7 +5718,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "taste",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "Geschwindigkeit",
@@ -5625,7 +5740,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "shop",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Gesellschaft",
@@ -5646,7 +5762,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "law, legal act, bill, statute",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Gesicht",
@@ -5680,8 +5797,9 @@
     "word": "Gespräch",
     "article": "das",
     "wordType": "noun",
-    "translation": "conversation, chat, talk (conversing between people or parti",
-    "example": ""
+    "translation": "conversation, chat, talk (conversing between people or parties, either for pleasure or for business)",
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "gestern",
@@ -5708,8 +5826,9 @@
     "word": "Gesundheit",
     "article": "die",
     "wordType": "noun",
-    "translation": "health (state of being in good physical condition and free f",
-    "example": ""
+    "translation": "health (state of being in good physical condition and free from illness)",
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "gesungen",
@@ -5786,7 +5905,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "habit",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "gewohnt",
@@ -5891,7 +6011,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "railway (track on which trains run)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Glück",
@@ -5968,7 +6089,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "border",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Grill",
@@ -5982,7 +6104,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "flu",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "groß",
@@ -6010,7 +6133,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "ground, land (usually as someone's property)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Grundstück",
@@ -6038,7 +6162,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "size, height",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "gründlich",
@@ -6121,7 +6246,7 @@
     "word": "Halle",
     "article": "die",
     "wordType": "noun",
-    "translation": "hall (a spacious room, especially one with a specific functi",
+    "translation": "hall (a spacious room, especially one with a specific function)",
     "example": ""
   },
   {
@@ -6164,7 +6289,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "stop (place to get on and off line buses or trams)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Hammer",
@@ -6178,7 +6304,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "hand",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Handarbeit",
@@ -6212,8 +6339,9 @@
     "word": "Handy",
     "article": "das",
     "wordType": "noun",
-    "translation": "mobile phone, mobile, cell phone, phone (portable, wireless ",
-    "example": ""
+    "translation": "mobile phone, mobile, cell phone, phone (portable, wireless telephone)",
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "hart",
@@ -6248,13 +6376,14 @@
     "article": "das",
     "wordType": "noun",
     "translation": "house",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "Hausaufgabe",
     "article": "die",
     "wordType": "noun",
-    "translation": "homework assignment, a piece of exercise or examination by w",
+    "translation": "homework assignment, a piece of exercise or examination by which a teacher or examiner tries the performance of a student",
     "example": ""
   },
   {
@@ -6268,14 +6397,14 @@
     "word": "Haushalt",
     "article": "der",
     "wordType": "noun",
-    "translation": "household (collectively, all the persons who live in a given",
+    "translation": "household (collectively, all the persons who live in a given home)",
     "example": ""
   },
   {
     "word": "Hausmeister",
     "article": "der",
     "wordType": "noun",
-    "translation": "caretaker or janitor (male or of unspecified gender) (someon",
+    "translation": "caretaker or janitor (male or of unspecified gender) (someone who repairs and potentially cleans a building)",
     "example": ""
   },
   {
@@ -6289,7 +6418,7 @@
     "word": "Haustier",
     "article": "das",
     "wordType": "noun",
-    "translation": "A domestic animal, in the senses of livestock and beast of b",
+    "translation": "A domestic animal, in the senses of livestock and beast of burden; also called Nutztier.",
     "example": ""
   },
   {
@@ -6303,7 +6432,7 @@
     "word": "Heft",
     "article": "das",
     "wordType": "noun",
-    "translation": "notebook, writing booklet, cahier, composition book (book in",
+    "translation": "notebook, writing booklet, cahier, composition book (book in which notes or memoranda are written)",
     "example": ""
   },
   {
@@ -6318,7 +6447,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "home, home town, homeland, native land",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "heimlich",
@@ -6338,8 +6468,9 @@
     "word": "Heizung",
     "article": "die",
     "wordType": "noun",
-    "translation": "heating (a system that raises the temperature of a room or b",
-    "example": ""
+    "translation": "heating (a system that raises the temperature of a room or building)",
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "heiß",
@@ -6374,7 +6505,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "shirt, or in particular a dress shirt",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "heraus",
@@ -6472,7 +6604,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "help, aid",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Himmel",
@@ -6541,14 +6674,14 @@
     "word": "Hochzeit",
     "article": "die",
     "wordType": "noun",
-    "translation": "wedding, marriage (a ceremony in which people are married an",
+    "translation": "wedding, marriage (a ceremony in which people are married and/or a celebration thereof)",
     "example": ""
   },
   {
     "word": "Hof",
     "article": "der",
     "wordType": "noun",
-    "translation": "yard, court, courtyard (open area by a house or enclosed by ",
+    "translation": "yard, court, courtyard (open area by a house or enclosed by houses)",
     "example": ""
   },
   {
@@ -6562,8 +6695,9 @@
     "word": "Hoffnung",
     "article": "die",
     "wordType": "noun",
-    "translation": "hope, the belief or expectation that something wished for ca",
-    "example": ""
+    "translation": "hope, the belief or expectation that something wished for can or will really happen.",
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Holz",
@@ -6584,14 +6718,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "trousers",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Hotel",
     "article": "das",
     "wordType": "noun",
     "translation": "hotel",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Humor",
@@ -6605,7 +6741,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "hunger",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "hungrig",
@@ -6619,7 +6756,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "cough",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Hut",
@@ -6723,7 +6861,7 @@
     "word": "Hütte",
     "article": "die",
     "wordType": "noun",
-    "translation": "hut, cabin, shack, cottage (small house, typically built of ",
+    "translation": "hut, cabin, shack, cottage (small house, typically built of light materials rather than stone)",
     "example": ""
   },
   {
@@ -6863,7 +7001,7 @@
     "word": "insgesamt",
     "article": null,
     "wordType": null,
-    "translation": "overall, altogether, in total, all in all, by and large, on ",
+    "translation": "overall, altogether, in total, all in all, by and large, on the whole",
     "example": ""
   },
   {
@@ -6954,7 +7092,7 @@
     "word": "inzwischen",
     "article": null,
     "wordType": null,
-    "translation": "since then, by now, in the meantime (contrasting between the",
+    "translation": "since then, by now, in the meantime (contrasting between the current state and a known past state)",
     "example": ""
   },
   {
@@ -6983,7 +7121,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "jacket",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Jause",
@@ -7059,14 +7198,14 @@
     "word": "Jugend",
     "article": "die",
     "wordType": "noun",
-    "translation": "youth (quality or state of being young",
+    "translation": "youth (quality or state of being young; part of life following childhood)",
     "example": ""
   },
   {
     "word": "Jugendherberge",
     "article": "die",
     "wordType": "noun",
-    "translation": "youth hostel (a supervised, inexpensive lodging place, prima",
+    "translation": "youth hostel (a supervised, inexpensive lodging place, primarily for young people)",
     "example": ""
   },
   {
@@ -7081,7 +7220,8 @@
     "article": null,
     "wordType": null,
     "translation": "boy",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Kabel",
@@ -7102,7 +7242,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "coffee (beverage made by infusing coffee beans in hot water)",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Kaffeehaus",
@@ -7115,14 +7256,14 @@
     "word": "Kakao",
     "article": "der",
     "wordType": "noun",
-    "translation": "cocoa (unsweetened brown powder made from roasted, ground co",
+    "translation": "cocoa (unsweetened brown powder made from roasted, ground cocoa beans)",
     "example": ""
   },
   {
     "word": "Kalender",
     "article": "der",
     "wordType": "noun",
-    "translation": "calendar (means for determining dates, including documents c",
+    "translation": "calendar (means for determining dates, including documents containing date and other time information)",
     "example": ""
   },
   {
@@ -7164,7 +7305,7 @@
     "word": "Kanne",
     "article": "die",
     "wordType": "noun",
-    "translation": "jug, pitcher, pot, can (container for pouring fluids, especi",
+    "translation": "jug, pitcher, pot, can (container for pouring fluids, especially beverages, often having spout and handle)",
     "example": ""
   },
   {
@@ -7227,7 +7368,7 @@
     "word": "Karte",
     "article": "die",
     "wordType": "noun",
-    "translation": "card (flat, normally rectangular piece of stiff paper, plast",
+    "translation": "card (flat, normally rectangular piece of stiff paper, plastic etc.)",
     "example": ""
   },
   {
@@ -7235,14 +7376,16 @@
     "article": null,
     "wordType": null,
     "translation": "potato",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Kasse",
     "article": "die",
     "wordType": "noun",
     "translation": "cash register, cash box",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Kassette",
@@ -7262,7 +7405,7 @@
     "word": "Katalog",
     "article": "der",
     "wordType": "noun",
-    "translation": "catalogue (systematic list of names, books, pictures, etc.",
+    "translation": "catalogue (systematic list of names, books, pictures, etc.; complete list of items; university calendar)",
     "example": ""
   },
   {
@@ -7298,7 +7441,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "cellar",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Kellner",
@@ -7319,7 +7463,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to know",
-    "example": ""
+    "example": "",
+    "verbForms": "hat gekannt"
   },
   {
     "word": "Kennzeichen",
@@ -7347,7 +7492,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "kid",
-    "example": ""
+    "example": "",
+    "plural": "-er"
   },
   {
     "word": "Kindergarten",
@@ -7368,7 +7514,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "cinema",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Kiosk",
@@ -7382,7 +7529,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "church (building)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Kissen",
@@ -7431,14 +7579,16 @@
     "article": "das",
     "wordType": "noun",
     "translation": "dress, gown (kind of woman's garment)",
-    "example": ""
+    "example": "",
+    "plural": "-er"
   },
   {
     "word": "Kleidung",
     "article": "die",
     "wordType": "noun",
     "translation": "clothing",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "klein",
@@ -7542,7 +7692,7 @@
     "word": "Koch",
     "article": "der",
     "wordType": "noun",
-    "translation": "cook (one who cooks",
+    "translation": "cook (one who cooks; male or unspecified gender)",
     "example": ""
   },
   {
@@ -7550,14 +7700,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "a case",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Kollege",
     "article": "der",
     "wordType": "noun",
     "translation": "colleague, coworker, workmate, fellow worker or member",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Kollegin",
@@ -7599,7 +7751,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "compromise",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Konferenz",
@@ -7648,14 +7801,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "contact",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Konto",
     "article": "das",
     "wordType": "noun",
     "translation": "account",
-    "example": ""
+    "example": "",
+    "plural": "Konten"
   },
   {
     "word": "Kontrolle",
@@ -7676,7 +7831,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "head",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Kopie",
@@ -7731,7 +7887,7 @@
     "word": "Kostüm",
     "article": "das",
     "wordType": "noun",
-    "translation": "skirt suit (women’s business suit consisting of a skirt and ",
+    "translation": "skirt suit (women’s business suit consisting of a skirt and jacket)",
     "example": ""
   },
   {
@@ -7774,7 +7930,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "hospital",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "Krankenkasse",
@@ -7787,7 +7944,7 @@
     "word": "Krankenpfleger",
     "article": "der",
     "wordType": "noun",
-    "translation": "nurse (male or of unspecified gender) (person who cares for ",
+    "translation": "nurse (male or of unspecified gender) (person who cares for the ill)",
     "example": ""
   },
   {
@@ -7809,7 +7966,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "sickness, illness",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "kreativ",
@@ -7822,7 +7980,7 @@
     "word": "Kredit",
     "article": "der",
     "wordType": "noun",
-    "translation": "loan or anything afforded to someone in the expectation of r",
+    "translation": "loan or anything afforded to someone in the expectation of return",
     "example": ""
   },
   {
@@ -7830,7 +7988,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "credit card",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Kreis",
@@ -7851,7 +8010,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "crossing, intersection",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Krieg",
@@ -7878,7 +8038,7 @@
     "word": "Kriminalpolizei",
     "article": "die",
     "wordType": "noun",
-    "translation": "The branch or department of a police force that investigates",
+    "translation": "The branch or department of a police force that investigates crime.",
     "example": ""
   },
   {
@@ -7906,7 +8066,7 @@
     "word": "kräftig",
     "article": null,
     "wordType": null,
-    "translation": "bold, intense, powerful, robust, strong, sturdy, vigorous, v",
+    "translation": "bold, intense, powerful, robust, strong, sturdy, vigorous, vivid",
     "example": ""
   },
   {
@@ -7914,7 +8074,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "pie",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Kugelschreiber",
@@ -7927,7 +8088,7 @@
     "word": "Kuli",
     "article": "der",
     "wordType": "noun",
-    "translation": "coolie (unskilled Asian worker, usually of Chinese or Indian",
+    "translation": "coolie (unskilled Asian worker, usually of Chinese or Indian descent)",
     "example": ""
   },
   {
@@ -7949,7 +8110,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "customer, patron, client",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Kundin",
@@ -7969,7 +8131,7 @@
     "word": "Kunststoff",
     "article": "der",
     "wordType": "noun",
-    "translation": "plastic (a stiff but usually slightly flexible synthetic mat",
+    "translation": "plastic (a stiff but usually slightly flexible synthetic material)",
     "example": ""
   },
   {
@@ -8019,7 +8181,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "cheese",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Käufer",
@@ -8068,7 +8231,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "kitchen (room)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "kühl",
@@ -8088,8 +8252,9 @@
     "word": "Kündigung",
     "article": "die",
     "wordType": "noun",
-    "translation": "a declaration of will ending a continuing obligation, termin",
-    "example": ""
+    "translation": "a declaration of will ending a continuing obligation, termination, dismissal, resignation, notice, quitting",
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Künstler",
@@ -8144,15 +8309,16 @@
     "word": "Lager",
     "article": "das",
     "wordType": "noun",
-    "translation": "place where one sleeps, such as a bed or a spot in a barn, e",
+    "translation": "place where one sleeps, such as a bed or a spot in a barn, etc.",
     "example": ""
   },
   {
     "word": "Lampe",
     "article": "die",
     "wordType": "noun",
-    "translation": "lamp, light (piece of furniture, or fixture mounted on a wal",
-    "example": ""
+    "translation": "lamp, light (piece of furniture, or fixture mounted on a wall or ceiling, holding one or more electric light sockets)",
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Land",
@@ -8264,13 +8430,14 @@
     "article": "der",
     "wordType": "noun",
     "translation": "curriculum vitae (UK), résumé (US)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Lebensmittel",
     "article": "die",
     "wordType": "noun",
-    "translation": "any item or substance intended for human consumption (exclud",
+    "translation": "any item or substance intended for human consumption (excluding drugs other than alcohol), food, comestible",
     "example": ""
   },
   {
@@ -8312,8 +8479,9 @@
     "word": "Lehrer",
     "article": "der",
     "wordType": "noun",
-    "translation": "agent noun of lehren: one who teaches, teacher, instructor, ",
-    "example": ""
+    "translation": "agent noun of lehren: one who teaches, teacher, instructor, especially a school teacher",
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Lehrerin",
@@ -8424,14 +8592,15 @@
     "word": "Leute",
     "article": "die",
     "wordType": "noun",
-    "translation": "people (several individual persons, a group of people in gen",
-    "example": ""
+    "translation": "people (several individual persons, a group of people in general, esp. of one kind or another), folk (folks), peeps (slang), guys (boys and/or girls)",
+    "example": "",
+    "plural": "only pl."
   },
   {
     "word": "Lexikon",
     "article": "das",
     "wordType": "noun",
-    "translation": "reference book (a book, usually alphabetically ordered, in w",
+    "translation": "reference book (a book, usually alphabetically ordered, in which definitions and facts can be looked up, such as an encyclopaedia, dictionary, etc.)",
     "example": ""
   },
   {
@@ -8536,7 +8705,7 @@
     "word": "Literatur",
     "article": "die",
     "wordType": "noun",
-    "translation": "literature (written works collectively, often about a certai",
+    "translation": "literature (written works collectively, often about a certain topic, in a certain language etc.)",
     "example": ""
   },
   {
@@ -8614,7 +8783,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "annoying noise",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Löffel",
@@ -8628,7 +8798,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "solution (answer to a riddle or problem)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Lüge",
@@ -8641,8 +8812,9 @@
     "word": "machen",
     "article": null,
     "wordType": "verb",
-    "translation": "to make, to produce, to create (an object, arrangement, situ",
-    "example": ""
+    "translation": "to make, to produce, to create (an object, arrangement, situation, etc.)",
+    "example": "",
+    "verbForms": "hat gemacht"
   },
   {
     "word": "Magazin",
@@ -8718,7 +8890,7 @@
     "word": "Mangel",
     "article": "der",
     "wordType": "noun",
-    "translation": "lack, shortage (the condition of having an insufficient amou",
+    "translation": "lack, shortage (the condition of having an insufficient amount of a resource, or none at all)",
     "example": ""
   },
   {
@@ -8739,14 +8911,15 @@
     "word": "Mantel",
     "article": "der",
     "wordType": "noun",
-    "translation": "coat, overcoat (long jacket that covers at least part of the",
-    "example": ""
+    "translation": "coat, overcoat (long jacket that covers at least part of the thighs)",
+    "example": "",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Mappe",
     "article": "die",
     "wordType": "noun",
-    "translation": "portfolio (case",
+    "translation": "portfolio (case; collection)",
     "example": ""
   },
   {
@@ -8768,14 +8941,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "mark (like trade mark), brand",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Markt",
     "article": "der",
     "wordType": "noun",
     "translation": "market (gathering for sale and purchase)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Marmelade",
@@ -8802,7 +8977,7 @@
     "word": "Matura",
     "article": null,
     "wordType": null,
-    "translation": "matura (school-leaving exam such as the A level, Abitur etc.",
+    "translation": "matura (school-leaving exam such as the A level, Abitur etc.)",
     "example": ""
   },
   {
@@ -8830,7 +9005,7 @@
     "word": "Mechanikerin",
     "article": "die",
     "wordType": "noun",
-    "translation": "mechanic, repairwoman, fitter, mechanician, machinist, greas",
+    "translation": "mechanic, repairwoman, fitter, mechanician, machinist, grease monkey (colloquial - auto mechanic) (female) (\"Mechanikerin\" is used in many compounds with multiple senses)",
     "example": ""
   },
   {
@@ -8838,14 +9013,16 @@
     "article": "das",
     "wordType": "noun",
     "translation": "drug, medicine",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Meer",
     "article": "das",
     "wordType": "noun",
     "translation": "sea",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Mehl",
@@ -8880,7 +9057,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "opinion",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Meister",
@@ -8901,7 +9079,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "quantity",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Mensa",
@@ -8928,7 +9107,7 @@
     "word": "Menü",
     "article": "das",
     "wordType": "noun",
-    "translation": "a set of dishes with few choices to be made, usually consist",
+    "translation": "a set of dishes with few choices to be made, usually consisting of two or more courses",
     "example": ""
   },
   {
@@ -8985,7 +9164,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "rent",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Mieter",
@@ -9019,8 +9199,9 @@
     "word": "Milch",
     "article": "die",
     "wordType": "noun",
-    "translation": "milk (white liquid produced by female mammals for their youn",
-    "example": ""
+    "translation": "milk (white liquid produced by female mammals for their young to consume)",
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "mild",
@@ -9075,7 +9256,7 @@
     "word": "Mitarbeiter",
     "article": "der",
     "wordType": "noun",
-    "translation": "employee (person who works, together with others, in a parti",
+    "translation": "employee (person who works, together with others, in a particular business or institution)",
     "example": ""
   },
   {
@@ -9097,7 +9278,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "member",
-    "example": ""
+    "example": "",
+    "plural": "-er"
   },
   {
     "word": "Mitte",
@@ -9110,7 +9292,7 @@
     "word": "mitteilen",
     "article": null,
     "wordType": "verb",
-    "translation": "to inform about, to tell, to disclose, to impart, to report,",
+    "translation": "to inform about, to tell, to disclose, to impart, to report, to announce",
     "example": ""
   },
   {
@@ -9187,7 +9369,7 @@
     "word": "Mond",
     "article": "der",
     "wordType": "noun",
-    "translation": "moon (a natural satellite that is orbiting its corresponding",
+    "translation": "moon (a natural satellite that is orbiting its corresponding planet)",
     "example": ""
   },
   {
@@ -9222,14 +9404,14 @@
     "word": "mus",
     "article": null,
     "wordType": null,
-    "translation": "mush, mash (food of a pulpy consistency, chiefly made out of",
+    "translation": "mush, mash",
     "example": ""
   },
   {
     "word": "Museum",
     "article": "das",
     "wordType": "noun",
-    "translation": "museum (building or institution dedicated to the protection ",
+    "translation": "museum (building or institution dedicated to the protection and exhibition of items with scientific, historical, cultural or artistic value)",
     "example": ""
   },
   {
@@ -9237,7 +9419,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "music",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "musikalisch",
@@ -9286,21 +9469,24 @@
     "article": "die",
     "wordType": "noun",
     "translation": "mother",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Muttersprache",
     "article": "die",
     "wordType": "noun",
     "translation": "mother tongue",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Mädchen",
     "article": "das",
     "wordType": "noun",
     "translation": "girl",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "männlich",
@@ -9342,7 +9528,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "possibility, likelihood",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "möglichst",
@@ -9384,7 +9571,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "rubbish, refuse, waste, junk, trash (US), garbage (US)",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Müller",
@@ -9426,7 +9614,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "neighbour",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Nachbarin",
@@ -9453,7 +9642,7 @@
     "word": "nachher",
     "article": null,
     "wordType": null,
-    "translation": "in a short while (in the near future, but not more than a fe",
+    "translation": "in a short while (in the near future, but not more than a few hours)",
     "example": ""
   },
   {
@@ -9468,7 +9657,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "news, piece of news, notification",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Nachspeise",
@@ -9489,7 +9679,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "disadvantage, demerit",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Nachwuchs",
@@ -9509,7 +9700,7 @@
     "word": "Nagel",
     "article": "der",
     "wordType": "noun",
-    "translation": "A nail, the horny plate on fingers and toes of humans and ce",
+    "translation": "A nail, the horny plate on fingers and toes of humans and certain animals which mostly consists of keratin.",
     "example": ""
   },
   {
@@ -9524,7 +9715,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "name (forename, Christian name, given name)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Nase",
@@ -9670,7 +9862,7 @@
     "word": "nicht",
     "article": null,
     "wordType": null,
-    "translation": "not, non- (negates the meaning of a verb, adjective, or adve",
+    "translation": "not, non- (negates the meaning of a verb, adjective, or adverb)",
     "example": ""
   },
   {
@@ -9705,7 +9897,7 @@
     "word": "nie",
     "article": null,
     "wordType": null,
-    "translation": "never, never at all (referring to an indefinite period of ti",
+    "translation": "never, never at all (referring to an indefinite period of time)",
     "example": ""
   },
   {
@@ -9754,7 +9946,7 @@
     "word": "Nord",
     "article": "die",
     "wordType": "noun",
-    "translation": "the north (used without article",
+    "translation": "the north (used without article; a short form of Norden)",
     "example": ""
   },
   {
@@ -9846,7 +10038,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "number",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "nun",
@@ -9873,7 +10066,7 @@
     "word": "nämlich",
     "article": null,
     "wordType": null,
-    "translation": "(the) very same, selfsame (as was mentioned or described pre",
+    "translation": "(the) very same, selfsame (as was mentioned or described previously; either the same object by identity, or sometimes just the same in type or appearance)",
     "example": ""
   },
   {
@@ -9923,7 +10116,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "fruit (food)",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "obwohl",
@@ -9965,7 +10159,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "ear (the auditory organ)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Oma",
@@ -9992,7 +10187,7 @@
     "word": "Oper",
     "article": "die",
     "wordType": "noun",
-    "translation": "opera (theatrical work, combining drama, music, song and som",
+    "translation": "opera (theatrical work, combining drama, music, song and sometimes dance)",
     "example": ""
   },
   {
@@ -10056,7 +10251,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "arrangement, regulation",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Organisation",
@@ -10097,8 +10293,9 @@
     "word": "Paket",
     "article": "das",
     "wordType": "noun",
-    "translation": "packet, package, parcel (the term is almost exclusively used",
-    "example": ""
+    "translation": "packet, package, parcel (the term is almost exclusively used for packages sent by mail)",
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Panne",
@@ -10132,14 +10329,14 @@
     "word": "Parfüm",
     "article": "das",
     "wordType": "noun",
-    "translation": "perfume (generally only in the sense of “odorous substance”,",
+    "translation": "perfume (generally only in the sense of “odorous substance”, not “pleasant smell”)",
     "example": ""
   },
   {
     "word": "Park",
     "article": "der",
     "wordType": "noun",
-    "translation": "park (piece of ground in or near a city or town, enclosed an",
+    "translation": "park (piece of ground in or near a city or town, enclosed and kept for ornament and recreation)",
     "example": ""
   },
   {
@@ -10181,7 +10378,7 @@
     "word": "Passagier",
     "article": "der",
     "wordType": "noun",
-    "translation": "passenger (especially of a plane or ship, but applicable to ",
+    "translation": "passenger (especially of a plane or ship, but applicable to all transport)",
     "example": ""
   },
   {
@@ -10216,7 +10413,7 @@
     "word": "pauschal",
     "article": null,
     "wordType": null,
-    "translation": "in total, in a lump sum, all-inclusive, flat (with units of ",
+    "translation": "in total, in a lump sum, all-inclusive, flat (with units of time, distance, etc.: not exceeding)",
     "example": ""
   },
   {
@@ -10300,7 +10497,7 @@
     "word": "Pfeffer",
     "article": "der",
     "wordType": "noun",
-    "translation": "pepper (plant of the family Piperaceae and spice made theref",
+    "translation": "pepper (plant of the family Piperaceae and spice made therefrom)",
     "example": ""
   },
   {
@@ -10314,7 +10511,7 @@
     "word": "Pflaster",
     "article": "das",
     "wordType": "noun",
-    "translation": "plaster, cement, mortar, a mixture of gypsum, sand and chalk",
+    "translation": "plaster, cement, mortar, a mixture of gypsum, sand and chalk applied to floors",
     "example": ""
   },
   {
@@ -10413,7 +10610,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "square, plaza, piazza",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "plötzlich",
@@ -10503,7 +10701,7 @@
     "word": "Portion",
     "article": "die",
     "wordType": "noun",
-    "translation": "portion, an allocated amount, (chiefly) a portion of food, a",
+    "translation": "portion, an allocated amount, (chiefly) a portion of food, a serving, helping",
     "example": ""
   },
   {
@@ -10518,7 +10716,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "post (individual message in an Internet forum)",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Postleitzahl",
@@ -10574,7 +10773,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "price",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "preiswert",
@@ -10616,7 +10816,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "problem",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Produkt",
@@ -10657,7 +10858,7 @@
     "word": "Programm",
     "article": "das",
     "wordType": "noun",
-    "translation": "program (set of structured ideas or activities",
+    "translation": "program (set of structured ideas or activities; a list thereof)",
     "example": ""
   },
   {
@@ -10707,13 +10908,14 @@
     "article": "die",
     "wordType": "noun",
     "translation": "an official test or examination on a subject",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Publikum",
     "article": "das",
     "wordType": "noun",
-    "translation": "audience, those who see, hear, read some work or performance",
+    "translation": "audience, those who see, hear, read some work or performance (crowd, viewership, readership etc.)",
     "example": ""
   },
   {
@@ -10762,8 +10964,9 @@
     "word": "Qualität",
     "article": "die",
     "wordType": "noun",
-    "translation": "quality (level of excellence, level of being free from defec",
-    "example": ""
+    "translation": "quality (level of excellence, level of being free from defects)",
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Quartier",
@@ -10783,8 +10986,9 @@
     "word": "Quittung",
     "article": "die",
     "wordType": "noun",
-    "translation": "a receipt, an undersigned document issued to someone to enab",
-    "example": ""
+    "translation": "a receipt, an undersigned document issued to someone to enable him with evidence that his party has performed upon an obligation",
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Quiz",
@@ -10825,7 +11029,7 @@
     "word": "Radio",
     "article": "das",
     "wordType": "noun",
-    "translation": "radio (technology that allows broadcasters to transmit audio",
+    "translation": "radio (technology that allows broadcasters to transmit audio programs; such programs)",
     "example": ""
   },
   {
@@ -10916,7 +11120,7 @@
     "word": "Recherche",
     "article": "die",
     "wordType": "noun",
-    "translation": "research, investigation (many contexts, but especially journ",
+    "translation": "research, investigation (many contexts, but especially journalism)",
     "example": ""
   },
   {
@@ -10931,7 +11135,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "bill, restaurant bill",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Recht",
@@ -10993,7 +11198,7 @@
     "word": "Regal",
     "article": "das",
     "wordType": "noun",
-    "translation": "a rack of shelves, shelving, a shelf (in this collective sen",
+    "translation": "a rack of shelves, shelving, a shelf (in this collective sense), e.g. an open bookcase",
     "example": ""
   },
   {
@@ -11001,7 +11206,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "rule",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "regelmäßig",
@@ -11015,7 +11221,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "rain",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Region",
@@ -11036,7 +11243,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to rain",
-    "example": ""
+    "example": "",
+    "verbForms": "hat geregnet"
   },
   {
     "word": "reich",
@@ -11092,14 +11300,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "rice",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Reise",
     "article": "die",
     "wordType": "noun",
     "translation": "journey, travel",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Reisebüro",
@@ -11162,13 +11372,14 @@
     "article": "die",
     "wordType": "noun",
     "translation": "repair, mending",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Reportage",
     "article": "die",
     "wordType": "noun",
-    "translation": "a report of some length and depth, including first-hand acco",
+    "translation": "a report of some length and depth, including first-hand accounts, sometimes investigative",
     "example": ""
   },
   {
@@ -11190,7 +11401,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "reservation, booking",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Respekt",
@@ -11211,20 +11423,22 @@
     "article": "das",
     "wordType": "noun",
     "translation": "restaurant",
-    "example": ""
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Rezept",
     "article": "das",
     "wordType": "noun",
     "translation": "recipe",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Rezeption",
     "article": "die",
     "wordType": "noun",
-    "translation": "reception (desk of a hotel or office where guests are receiv",
+    "translation": "reception (desk of a hotel or office where guests are received)",
     "example": ""
   },
   {
@@ -11253,7 +11467,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "direction",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "riesig",
@@ -11288,7 +11503,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "skirt (garment)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "roh",
@@ -11386,7 +11602,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "back",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Rückfahrt",
@@ -11427,7 +11644,7 @@
     "word": "Saal",
     "article": "der",
     "wordType": "noun",
-    "translation": "hall or large room (chiefly for gatherings or performances b",
+    "translation": "hall or large room (chiefly for gatherings or performances by large groups of people)",
     "example": ""
   },
   {
@@ -11449,7 +11666,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "juice",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Saison",
@@ -11484,7 +11702,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "salt, table salt, sal",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "salzig",
@@ -11630,7 +11849,7 @@
     "word": "schief",
     "article": null,
     "wordType": null,
-    "translation": "skew, oblique, askew, leaning, slanting, aslant, inclined (n",
+    "translation": "skew, oblique, askew, leaning, slanting, aslant, inclined (neither parallel nor perpendicular)",
     "example": ""
   },
   {
@@ -11686,7 +11905,7 @@
     "word": "schlecht",
     "article": null,
     "wordType": null,
-    "translation": "bad, evil, wicked (the opposite of good",
+    "translation": "bad, evil, wicked (the opposite of good; immoral)",
     "example": ""
   },
   {
@@ -11700,7 +11919,7 @@
     "word": "schlimm",
     "article": null,
     "wordType": null,
-    "translation": "bad, terrible, serious (seriously bad), dire, horrible, awfu",
+    "translation": "bad, terrible, serious (seriously bad), dire, horrible, awful",
     "example": ""
   },
   {
@@ -11722,7 +11941,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "a key",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "schmal",
@@ -11771,7 +11991,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "snow",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "schneiden",
@@ -11826,8 +12047,9 @@
     "word": "Schrank",
     "article": "der",
     "wordType": "noun",
-    "translation": "cabinet (storage closet either separate from, or built into,",
-    "example": ""
+    "translation": "cabinet (storage closet either separate from, or built into, a wall), or (specifically):",
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Schreck",
@@ -11890,7 +12112,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "shoe",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Schularbeit",
@@ -11924,8 +12147,9 @@
     "word": "Schule",
     "article": "die",
     "wordType": "noun",
-    "translation": "school (an institution dedicated to teaching and learning (e",
-    "example": ""
+    "translation": "school (an institution dedicated to teaching and learning (especially before university); department/institute at a college or university; art movement; followers of a particular doctrine)",
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Schulter",
@@ -11988,7 +12212,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "sister",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Schwieger-",
@@ -12037,7 +12262,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "pupil, student, schoolboy (male or of unspecified gender)",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Schülerin",
@@ -12058,7 +12284,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "lake",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Sehenswürdigkeit",
@@ -12162,7 +12389,7 @@
     "word": "Seminar",
     "article": "das",
     "wordType": "noun",
-    "translation": "seminar (small-group university class similar to a school le",
+    "translation": "seminar (small-group university class similar to a school lesson)",
     "example": ""
   },
   {
@@ -12190,21 +12417,21 @@
     "word": "Senior",
     "article": null,
     "wordType": null,
-    "translation": "father, senior, the elder (older of two close male relatives",
+    "translation": "father, senior, the elder (older of two close male relatives, especially with the same name)",
     "example": ""
   },
   {
     "word": "senkrecht",
     "article": null,
     "wordType": null,
-    "translation": "vertical (perpendicular to some roughly horizontal line, e.g",
+    "translation": "vertical (perpendicular to some roughly horizontal line, e.g. the surface of the earth)",
     "example": ""
   },
   {
     "word": "Serie",
     "article": "die",
     "wordType": "noun",
-    "translation": "series (a number of things that follow on one after the othe",
+    "translation": "series (a number of things that follow on one after the other)",
     "example": ""
   },
   {
@@ -12218,7 +12445,7 @@
     "word": "Sessel",
     "article": "der",
     "wordType": "noun",
-    "translation": "armchair, easy chair (comfortable chair with supports for th",
+    "translation": "armchair, easy chair (comfortable chair with supports for the arms or elbows)",
     "example": ""
   },
   {
@@ -12351,7 +12578,7 @@
     "word": "Sofa",
     "article": "das",
     "wordType": "noun",
-    "translation": "sofa, couch (upholstered seat with a raised back and one or ",
+    "translation": "sofa, couch (upholstered seat with a raised back and one or two raised ends, that accommodates at least two people)",
     "example": ""
   },
   {
@@ -12380,7 +12607,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "son",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "solange",
@@ -12394,7 +12622,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "bargain",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "sondern",
@@ -12407,8 +12636,9 @@
     "word": "Sonne",
     "article": "die",
     "wordType": "noun",
-    "translation": "a sun (a star, especially when being the center of a solar s",
-    "example": ""
+    "translation": "a sun (a star, especially when being the center of a solar system)",
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "sonnig",
@@ -12429,7 +12659,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "concern, care, responsibility, aid",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Souvenir",
@@ -12520,7 +12751,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "menu",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Speisewagen",
@@ -12554,7 +12786,7 @@
     "word": "Spiegel",
     "article": "der",
     "wordType": "noun",
-    "translation": "mirror (smooth surface, usually made of glass with reflectiv",
+    "translation": "mirror (smooth surface, usually made of glass with reflective material painted on the underside, that reflects light)",
     "example": ""
   },
   {
@@ -12562,7 +12794,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "a game (instance or way of playing)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Spieler",
@@ -12603,7 +12836,7 @@
     "word": "Sport",
     "article": "der",
     "wordType": "noun",
-    "translation": "sport (athletic activity that uses physical skills competiti",
+    "translation": "sport (athletic activity that uses physical skills competitively under a set of rules)",
     "example": ""
   },
   {
@@ -12638,15 +12871,17 @@
     "word": "Sprache",
     "article": "die",
     "wordType": "noun",
-    "translation": "language (body of words, and set of methods of combining the",
-    "example": ""
+    "translation": "language (body of words, and set of methods of combining them)",
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Sprechstunde",
     "article": null,
     "wordType": null,
     "translation": "office hours",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Spritze",
@@ -12659,7 +12894,7 @@
     "word": "Spur",
     "article": "die",
     "wordType": "noun",
-    "translation": "trace (rest of something that indicates its former presence",
+    "translation": "trace (rest of something that indicates its former presence; (by extension) any small amount)",
     "example": ""
   },
   {
@@ -12688,7 +12923,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "city (a large settlement)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Stadtplan",
@@ -12729,7 +12965,7 @@
     "word": "Station",
     "article": "die",
     "wordType": "noun",
-    "translation": "stop, stopover, station (a place where one stops on the way",
+    "translation": "stop, stopover, station (a place where one stops on the way; the act of stopping itself)",
     "example": ""
   },
   {
@@ -12758,14 +12994,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to take place, to happen",
-    "example": ""
+    "example": "",
+    "verbForms": "findet statt · hat stattgefunden"
   },
   {
     "word": "Stau",
     "article": "der",
     "wordType": "noun",
-    "translation": "congestion, stagnancy of water or anything dammed or otherwi",
-    "example": ""
+    "translation": "congestion, stagnancy of water or anything dammed or otherwise backed-up",
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Staub",
@@ -12807,7 +13045,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "place, stead, location, position, lieu",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Stempel",
@@ -12905,13 +13144,14 @@
     "article": "die",
     "wordType": "noun",
     "translation": "mood (emotional state)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Stock",
     "article": null,
     "wordType": null,
-    "translation": "stick (solid, wooden, broken off twig or small branch mostly",
+    "translation": "stick (solid, wooden, broken off twig or small branch mostly clear of leaves or smaller twigs)",
     "example": ""
   },
   {
@@ -12975,7 +13215,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "street",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Straßenbahn",
@@ -13017,7 +13258,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to argue",
-    "example": ""
+    "example": "",
+    "verbForms": "hat sich gestritten"
   },
   {
     "word": "streng",
@@ -13038,7 +13280,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "a large river",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Strumpf",
@@ -13051,14 +13294,15 @@
     "word": "Student",
     "article": "der",
     "wordType": "noun",
-    "translation": "student (person attending lectures at a university",
-    "example": ""
+    "translation": "student (person attending lectures at a university; male or of unspecified sex)",
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Studentin",
     "article": "die",
     "wordType": "noun",
-    "translation": "female equivalent of Student (“person attending lectures at ",
+    "translation": "female equivalent of Student (“person attending lectures at university”)",
     "example": ""
   },
   {
@@ -13094,7 +13338,8 @@
     "article": null,
     "wordType": null,
     "translation": "a chair (to sit on)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "stumm",
@@ -13108,7 +13353,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "hour (unit of time consisting of 60 minutes)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Sturm",
@@ -13142,7 +13388,7 @@
     "word": "Stück",
     "article": "das",
     "wordType": "noun",
-    "translation": "one, item, piece, unit(of something countable",
+    "translation": "one, item, piece, unit(of something countable; often untranslated in English)",
     "example": ""
   },
   {
@@ -13178,14 +13424,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "supermarket",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Suppe",
     "article": "die",
     "wordType": "noun",
     "translation": "soup",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Symbol",
@@ -13255,7 +13503,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "tablet (pill)",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Tafel",
@@ -13290,7 +13539,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "gas station",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Tante",
@@ -13311,7 +13561,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "bag",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Taschengeld",
@@ -13401,14 +13652,15 @@
     "word": "Tee",
     "article": "der",
     "wordType": "noun",
-    "translation": "tea (drink made by infusing parts of a plant, especially lea",
-    "example": ""
+    "translation": "tea (drink made by infusing parts of a plant, especially leaves or buds of Camellia sinensis, in water)",
+    "example": "",
+    "plural": "-s"
   },
   {
     "word": "Teil",
     "article": "das",
     "wordType": "noun",
-    "translation": "part, piece (a physical object which is used in a greater on",
+    "translation": "part, piece (a physical object which is used in a greater one, often in relation to inanimate objects)",
     "example": ""
   },
   {
@@ -13451,7 +13703,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "telephone",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Teller",
@@ -13493,7 +13746,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "date (day on which a certain event takes place)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Terminkalender",
@@ -13506,7 +13760,7 @@
     "word": "Terrasse",
     "article": "die",
     "wordType": "noun",
-    "translation": "terrace (raised, flat-topped bank of earth with sloping side",
+    "translation": "terrace (raised, flat-topped bank of earth with sloping sides)",
     "example": ""
   },
   {
@@ -13527,14 +13781,14 @@
     "word": "Text",
     "article": "der",
     "wordType": "noun",
-    "translation": "text (writing consisting of several sentences and forming a ",
+    "translation": "text (writing consisting of several sentences and forming a discrete unit)",
     "example": ""
   },
   {
     "word": "Theater",
     "article": "das",
     "wordType": "noun",
-    "translation": "theater (a place or building consisting of a stage and seats",
+    "translation": "theater (a place or building consisting of a stage and seats)",
     "example": ""
   },
   {
@@ -13576,7 +13830,7 @@
     "word": "tief",
     "article": null,
     "wordType": null,
-    "translation": "deep (having a long distance to the bottom",
+    "translation": "deep (having a long distance to the bottom; of bodies of water, wells, etc.)",
     "example": ""
   },
   {
@@ -13584,7 +13838,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "animal (see usage notes below)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Tierpark",
@@ -13604,8 +13859,9 @@
     "word": "Tisch",
     "article": "der",
     "wordType": "noun",
-    "translation": "table (a piece of furniture with a relatively deep surface a",
-    "example": ""
+    "translation": "table (a piece of furniture with a relatively deep surface at roughly waist or knee level); specific uses include:",
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Titel",
@@ -13619,7 +13875,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "daughter",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Tod",
@@ -13660,21 +13917,21 @@
     "word": "Topf",
     "article": null,
     "wordType": null,
-    "translation": "pot (flat-bottomed, open-topped vessel, especially for cooki",
+    "translation": "pot (flat-bottomed, open-topped vessel, especially for cooking food)",
     "example": ""
   },
   {
     "word": "Tor",
     "article": "das",
     "wordType": "noun",
-    "translation": "gate, archway (passageway covered by an arch, particularly o",
+    "translation": "gate, archway (passageway covered by an arch, particularly one made of masonry)",
     "example": ""
   },
   {
     "word": "Torte",
     "article": "die",
     "wordType": "noun",
-    "translation": "a typically multilayered, often round cake with fillings of ",
+    "translation": "a typically multilayered, often round cake with fillings of all kinds, often with icing and garnish",
     "example": ""
   },
   {
@@ -13688,7 +13945,7 @@
     "word": "total",
     "article": null,
     "wordType": null,
-    "translation": "total, absolute, complete, utter (not used in the sense of “",
+    "translation": "total, absolute, complete, utter (not used in the sense of “entire”)",
     "example": ""
   },
   {
@@ -13766,7 +14023,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "dream",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Traum-",
@@ -13793,7 +14051,7 @@
     "word": "trennen",
     "article": null,
     "wordType": "verb",
-    "translation": "to separate, sever, part, disunite, uncouple, segregate, unj",
+    "translation": "to separate, sever, part, disunite, uncouple, segregate, unjoin, disjoin",
     "example": ""
   },
   {
@@ -13808,7 +14066,8 @@
     "article": null,
     "wordType": null,
     "translation": "stairs",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Treppenhaus",
@@ -13828,14 +14087,15 @@
     "word": "Trinkgeld",
     "article": "das",
     "wordType": "noun",
-    "translation": "tip (small amount of money given to service providers, such ",
-    "example": ""
+    "translation": "tip (small amount of money given to service providers, such as waiters, hairdressers, taxi drivers etc.)",
+    "example": "",
+    "plural": "-er"
   },
   {
     "word": "trocken",
     "article": null,
     "wordType": null,
-    "translation": "dry (not wet",
+    "translation": "dry (not wet; lacking water)",
     "example": ""
   },
   {
@@ -13884,7 +14144,7 @@
     "word": "Turm",
     "article": "der",
     "wordType": "noun",
-    "translation": "tower, spire (very tall building or structure, especially wi",
+    "translation": "tower, spire (very tall building or structure, especially with a tapering top)",
     "example": ""
   },
   {
@@ -13934,13 +14194,14 @@
     "article": "die",
     "wordType": "noun",
     "translation": "door (rigid plane on a hinge)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Tüte",
     "article": "die",
     "wordType": "noun",
-    "translation": "a small to medium-sized bag, usually of paper or plastic (so",
+    "translation": "a small to medium-sized bag, usually of paper or plastic (sometimes also of fabric, for which more properly Beutel is used)",
     "example": ""
   },
   {
@@ -13948,7 +14209,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "underground railway",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Ufer",
@@ -13961,8 +14223,9 @@
     "word": "Uhr",
     "article": "die",
     "wordType": "noun",
-    "translation": "hours, o'clock (indicates the time within a twelve- or twent",
-    "example": ""
+    "translation": "hours, o'clock (indicates the time within a twelve- or twenty-four-hour period)",
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "um",
@@ -13990,7 +14253,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "environment (area around something), vicinity, surroundings",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "umgehen",
@@ -14031,28 +14295,31 @@
     "word": "umsteigen",
     "article": null,
     "wordType": "verb",
-    "translation": "to change, to interchange, to switch (from one means of tran",
-    "example": ""
+    "translation": "to change, to interchange, to switch (from one means of transport to another)",
+    "example": "",
+    "verbForms": "steigt um · ist umgestiegen"
   },
   {
     "word": "umtauschen",
     "article": null,
     "wordType": "verb",
     "translation": "to exchange",
-    "example": ""
+    "example": "",
+    "verbForms": "tauscht um · hat umgetauscht"
   },
   {
     "word": "Umwelt",
     "article": "die",
     "wordType": "noun",
     "translation": "environment",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Umweltschutz",
     "article": "der",
     "wordType": "noun",
-    "translation": "environmentalism, protection of the environment, environment",
+    "translation": "environmentalism, protection of the environment, environmental protection",
     "example": ""
   },
   {
@@ -14060,14 +14327,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to move",
-    "example": ""
+    "example": "",
+    "verbForms": "zieht um · ist umgezogen"
   },
   {
     "word": "Umzug",
     "article": "der",
     "wordType": "noun",
     "translation": "move, removal, relocation (change of residence)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "unbedingt",
@@ -14095,7 +14364,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "accident",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "ungefähr",
@@ -14136,7 +14406,7 @@
     "word": "Uniform",
     "article": "die",
     "wordType": "noun",
-    "translation": "uniform (distinctive outfit as a means of identifying member",
+    "translation": "uniform (distinctive outfit as a means of identifying members of a group)",
     "example": ""
   },
   {
@@ -14144,7 +14414,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "university",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "unten",
@@ -14172,7 +14443,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to maintain",
-    "example": ""
+    "example": "",
+    "verbForms": "unterhält sich · hat sich unterhalten"
   },
   {
     "word": "Unterhaltung",
@@ -14200,7 +14472,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "lesson, class, instruction, education",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "untersagt",
@@ -14214,7 +14487,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "difference",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "unterschiedlich",
@@ -14248,7 +14522,7 @@
     "word": "unterwegs",
     "article": null,
     "wordType": null,
-    "translation": "on one’s way, underway, en route, in transit, going, travell",
+    "translation": "on one’s way, underway, en route, in transit, going, travelling",
     "example": ""
   },
   {
@@ -14263,7 +14537,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "holiday, vacation",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Ursache",
@@ -14283,7 +14558,7 @@
     "word": "Urteil",
     "article": "das",
     "wordType": "noun",
-    "translation": "judgment (the preferred spelling in a legal context), verdic",
+    "translation": "judgment (the preferred spelling in a legal context), verdict, sentence (court decision)",
     "example": ""
   },
   {
@@ -14298,7 +14573,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "father",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-"
   },
   {
     "word": "vegetarisch",
@@ -14319,7 +14595,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to arrange",
-    "example": ""
+    "example": "",
+    "verbForms": "hat sich verabredet"
   },
   {
     "word": "verabredet",
@@ -14353,8 +14630,9 @@
     "word": "Veranstaltung",
     "article": "die",
     "wordType": "noun",
-    "translation": "public event or community gathering with a specific theme or",
-    "example": ""
+    "translation": "public event or community gathering with a specific theme or purpose and a specific duration",
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "verantwortlich",
@@ -14368,21 +14646,24 @@
     "article": "die",
     "wordType": "noun",
     "translation": "responsibility",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "verbessern",
     "article": null,
     "wordType": "verb",
     "translation": "to improve (to make better), to enhance",
-    "example": ""
+    "example": "",
+    "verbForms": "hat verbessert"
   },
   {
     "word": "Verbindung",
     "article": "die",
     "wordType": "noun",
     "translation": "connection",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "verbot",
@@ -14416,7 +14697,7 @@
     "word": "verbrennen",
     "article": null,
     "wordType": "verb",
-    "translation": "to burn (to cause to be consumed by fire or flames), to inci",
+    "translation": "to burn (to cause to be consumed by fire or flames), to incinerate, to combust",
     "example": ""
   },
   {
@@ -14438,7 +14719,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "association, club, society",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Vergangenheit",
@@ -14501,7 +14783,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "verbal noun of verkehren",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Verkehrsmittel",
@@ -14535,7 +14818,7 @@
     "word": "Verlag",
     "article": "der",
     "wordType": "noun",
-    "translation": "publishing house, publisher (a company that produces and sel",
+    "translation": "publishing house, publisher (a company that produces and sells books, booklets, magazines)",
     "example": ""
   },
   {
@@ -14549,7 +14832,7 @@
     "word": "verletzte",
     "article": null,
     "wordType": "verb",
-    "translation": "female equivalent of Verletzter: female injured (person), fe",
+    "translation": "female equivalent of Verletzter: female injured (person)",
     "example": ""
   },
   {
@@ -14557,7 +14840,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "injury",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "verliebt",
@@ -14577,7 +14861,7 @@
     "word": "Verlust",
     "article": "der",
     "wordType": "noun",
-    "translation": "loss (all senses, except defeat, for which Niederlage is use",
+    "translation": "loss (all senses, except defeat, for which Niederlage is used)",
     "example": ""
   },
   {
@@ -14585,7 +14869,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "landlord (he who rents, lets)",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Vermieterin",
@@ -14676,14 +14961,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "insurance",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Verspätung",
     "article": null,
     "wordType": null,
     "translation": "delay, lateness, late arrival",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "verstecken",
@@ -14697,7 +14984,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to understand",
-    "example": ""
+    "example": "",
+    "verbForms": "hat verstanden"
   },
   {
     "word": "verständlich",
@@ -14725,7 +15013,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "contract, agreement",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Vertrauen",
@@ -14808,7 +15097,7 @@
     "word": "virtuell",
     "article": null,
     "wordType": null,
-    "translation": "virtual (in effect",
+    "translation": "virtual (in effect; not fact)",
     "example": ""
   },
   {
@@ -14941,21 +15230,21 @@
     "word": "vorhaben",
     "article": null,
     "wordType": "verb",
-    "translation": "to intend, to have (something) planned, to have (something) ",
+    "translation": "to intend, to have (something) planned, to have (something) to do",
     "example": ""
   },
   {
     "word": "vorher",
     "article": null,
     "wordType": null,
-    "translation": "beforehand, previously, before (a previously mentioned point",
+    "translation": "beforehand, previously, before (a previously mentioned point or action)",
     "example": ""
   },
   {
     "word": "vorhin",
     "article": null,
     "wordType": null,
-    "translation": "earlier (a short time ago, typically between minutes and a f",
+    "translation": "earlier (a short time ago, typically between minutes and a few hours ago)",
     "example": ""
   },
   {
@@ -14998,14 +15287,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "suggestion, proposal (something proposed)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "vorschlagen",
     "article": null,
     "wordType": "verb",
     "translation": "to propose, to suggest",
-    "example": ""
+    "example": "",
+    "verbForms": "schlägt vor · hat vorgeschlagen"
   },
   {
     "word": "Vorschrift",
@@ -15039,7 +15330,7 @@
     "word": "Vorstellung",
     "article": "die",
     "wordType": "noun",
-    "translation": "idea, image, representation (the transcript, image, or pictu",
+    "translation": "idea, image, representation (the transcript, image, or picture of a visible object that is formed by the mind)",
     "example": ""
   },
   {
@@ -15047,7 +15338,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "advantage, plus, benefit, perk (of a job)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "Vortrag",
@@ -15145,7 +15437,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "forest",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "Wand",
@@ -15215,7 +15508,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "water (H₂O)",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Wecker",
@@ -15229,14 +15523,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "path, trail, track (usually for foot traffic)",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "wehtun",
     "article": null,
     "wordType": "verb",
     "translation": "[with dative] to hurt",
-    "example": ""
+    "example": "",
+    "verbForms": "tut weh · hat wehgetan"
   },
   {
     "word": "weiblich",
@@ -15264,7 +15560,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "wine",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "weit",
@@ -15334,7 +15631,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "workshop (room where things are manufactured)",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-en"
   },
   {
     "word": "Werkzeug",
@@ -15383,7 +15681,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "weather",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "Wetterbericht",
@@ -15467,7 +15766,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "wind",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "windig",
@@ -15529,7 +15829,7 @@
     "word": "Wissenschaft",
     "article": "die",
     "wordType": "noun",
-    "translation": "science (a branch of knowledge or academic discipline dealin",
+    "translation": "science (a branch of knowledge or academic discipline dealing with a systematic body of facts or truths)",
     "example": ""
   },
   {
@@ -15564,8 +15864,9 @@
     "word": "Woche",
     "article": "der",
     "wordType": "noun",
-    "translation": "week (period of seven days counting from Monday to Sunday, o",
-    "example": ""
+    "translation": "week (period of seven days counting from Monday to Sunday, or from Sunday to Saturday)",
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "woher",
@@ -15607,7 +15908,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "domicile",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Wohnzimmer",
@@ -15620,7 +15922,7 @@
     "word": "Wolke",
     "article": "die",
     "wordType": "noun",
-    "translation": "cloud (a visible mass of water droplets suspended in the air",
+    "translation": "cloud (a visible mass of water droplets suspended in the air)",
     "example": ""
   },
   {
@@ -15635,7 +15937,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "word as an isolated unit",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "worum",
@@ -15704,14 +16007,14 @@
     "word": "Wäsche",
     "article": "die",
     "wordType": "noun",
-    "translation": "wash, washing, laundry (the act of cleaning with water",
+    "translation": "wash, washing, laundry (the act of cleaning with water; an instance thereof)",
     "example": ""
   },
   {
     "word": "Wörterbuch",
     "article": "das",
     "wordType": "noun",
-    "translation": "dictionary (reference work with a list of words from one or ",
+    "translation": "dictionary (reference work with a list of words from one or more languages, and their definitions or translations)",
     "example": ""
   },
   {
@@ -15754,7 +16057,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "tooth",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Zahnbürste",
@@ -15803,7 +16107,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "time (as a concept)",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Zeitpunkt",
@@ -15824,7 +16129,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "newspaper",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Zelt",
@@ -15872,7 +16178,7 @@
     "word": "Zeuge",
     "article": "der",
     "wordType": "noun",
-    "translation": "witness, wit (slang), deponent, attestor (attester), voucher",
+    "translation": "witness, wit (slang), deponent, attestor (attester), voucher (male or of unspecified gender)",
     "example": ""
   },
   {
@@ -15887,14 +16193,16 @@
     "article": "das",
     "wordType": "noun",
     "translation": "testimony, witness declaration",
-    "example": ""
+    "example": "",
+    "plural": "-se"
   },
   {
     "word": "Ziel",
     "article": "das",
     "wordType": "noun",
     "translation": "target",
-    "example": ""
+    "example": "",
+    "plural": "-e"
   },
   {
     "word": "ziemlich",
@@ -15914,8 +16222,9 @@
     "word": "Zimmer",
     "article": "das",
     "wordType": "noun",
-    "translation": "room (separate part of a building, enclosed by walls, a floo",
-    "example": ""
+    "translation": "room (separate part of a building, enclosed by walls, a floor and a ceiling)",
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "Zirkus",
@@ -15971,7 +16280,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "sugar",
-    "example": ""
+    "example": "",
+    "plural": "only sg."
   },
   {
     "word": "zuerst",
@@ -16005,8 +16315,9 @@
     "word": "Zug",
     "article": "der",
     "wordType": "noun",
-    "translation": "procession (larger group moving together along a common rout",
-    "example": ""
+    "translation": "procession (larger group moving together along a common route)",
+    "example": "",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Zugang",
@@ -16026,7 +16337,7 @@
     "word": "zugänglich",
     "article": null,
     "wordType": null,
-    "translation": "accessible, open, able to be factually or legally reached or",
+    "translation": "accessible, open, able to be factually or legally reached or accessed",
     "example": ""
   },
   {
@@ -16097,13 +16408,14 @@
     "article": null,
     "wordType": "verb",
     "translation": "to increase",
-    "example": ""
+    "example": "",
+    "verbForms": "nimmt zu · hat zugenommen"
   },
   {
     "word": "zunächst",
     "article": null,
     "wordType": null,
-    "translation": "first, first of all, in the first place, to begin with, init",
+    "translation": "first, first of all, in the first place, to begin with, initially",
     "example": ""
   },
   {
@@ -16188,13 +16500,14 @@
     "article": null,
     "wordType": "verb",
     "translation": "to agree",
-    "example": ""
+    "example": "",
+    "verbForms": "stimmt zu · hat zugestimmt"
   },
   {
     "word": "Zustimmung",
     "article": "die",
     "wordType": "noun",
-    "translation": "agreement (expression or indication that an agreement has be",
+    "translation": "agreement (expression or indication that an agreement has been reached)",
     "example": ""
   },
   {
@@ -16278,7 +16591,7 @@
     "word": "Zünder",
     "article": "die",
     "wordType": "noun",
-    "translation": "fuze in an explosive, pyrotechnic device or military munitio",
+    "translation": "fuze in an explosive, pyrotechnic device or military munition",
     "example": ""
   },
   {
@@ -16419,7 +16732,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "surprise",
-    "example": ""
+    "example": "",
+    "plural": "-en"
   },
   {
     "word": "Überschrift",
@@ -16432,7 +16746,7 @@
     "word": "Übersetzer",
     "article": "der",
     "wordType": "noun",
-    "translation": "translator (one who translates completed texts",
+    "translation": "translator (one who translates completed texts; male or of unspecified sex)",
     "example": ""
   },
   {
@@ -16454,7 +16768,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "hour of overtime",
-    "example": ""
+    "example": "",
+    "plural": "-n"
   },
   {
     "word": "Überweisung",
@@ -16468,7 +16783,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to convince",
-    "example": ""
+    "example": "",
+    "verbForms": "hat überzeugt"
   },
   {
     "word": "Überzeugung",
@@ -16502,7 +16818,7 @@
     "word": "Übung",
     "article": "die",
     "wordType": "noun",
-    "translation": "practice (degree of being used to and proficient in some act",
+    "translation": "practice (degree of being used to and proficient in some activity)",
     "example": ""
   }
 ]

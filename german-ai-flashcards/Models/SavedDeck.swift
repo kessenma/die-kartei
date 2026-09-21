@@ -84,8 +84,9 @@ final class SavedDeck {
         case goethe, goetheSRS
         case pastTense, pastTenseSRS
         case grammar
-        /// Real saved-word content built from the phrase library / a conversation / a paper / a story.
-        case phrase, conversation, paper, story
+        /// Real saved-word content built from the phrase library / a conversation / a paper / a story
+        /// / a job posting the learner studied.
+        case phrase, conversation, paper, story, job
     }
 
     var kind: Kind {
@@ -99,7 +100,21 @@ final class SavedDeck {
         case "conversation": .conversation
         case "paper": .paper
         case "story": .story
+        case "job": .job
         default: .generated // "" or an MLXModel.rawValue
+        }
+    }
+
+    /// An SF Symbol standing for the deck's source when it has no model logo to show — the
+    /// document kinds, which no single model generated.
+    var kindSymbol: String? {
+        switch kind {
+        case .job: "briefcase.fill"
+        case .story: "book.pages"
+        case .paper: "doc.text"
+        case .conversation: "bubble.left.and.bubble.right"
+        case .phrase: "ear.badge.waveform"
+        default: nil
         }
     }
 
@@ -108,7 +123,7 @@ final class SavedDeck {
     /// not standalone content) — fixing the empty-`grammar`-deck leak the old string filter missed.
     var isBrowsableContent: Bool {
         switch kind {
-        case .generated, .phrase, .conversation, .paper, .story: true
+        case .generated, .phrase, .conversation, .paper, .story, .job: true
         case .goethe, .goetheSRS, .pastTense, .pastTenseSRS, .grammar: false
         }
     }
@@ -174,4 +189,12 @@ struct DeckSessionProgress: Codable {
     var ankiDueIndices: [Int]?
     var ankiDuePosition: Int?
     var cardGermanWords: [String]?
+    // Added with the Again re-queue and the persisted direction; optional so older blobs decode.
+    /// Distinct cards the SRS session set out to review (`ankiDueIndices` grows with re-queues).
+    var sessionDueCount: Int?
+    /// Card indices missed at least once this session.
+    var sessionLapses: [Int]?
+    /// Position in the plain/quiz play order, so a resume lands on the same card.
+    var cardPosition: Int?
+    var showGermanFirst: Bool?
 }

@@ -1,8 +1,0 @@
-First TestFlight build of Die Kartei.
-
-Please test:
-• Creating a deck and adding cards
-• Generating cards from text, a photo, or a PDF
-• The spaced-repetition review flow
-• Conversation practice
-• Photo scan (OCR)

@@ -11,14 +11,8 @@ extension MLXModel {
         case .appleIntelligence: 0   // built-in, no download
         case .gemma4_E4B_german: 5000
         case .gemma4_E2B_german: 3300
-        case .mistral7B:    4000
-        case .qwen3_8B:     4900
-        case .qwen3_4B:     2200
-        case .phi4Mini:     2300
-        case .llama3_2_1B:   800
-        case .gemma3_1B:     800
-        case .qwen3_0_6B:    500
         case .granite2B_german: 1430
+        case .granite41_3B_german: 1915
         }
     }
 
@@ -40,25 +34,13 @@ extension MLXModel {
         case .appleIntelligence:
             "Apple's built-in on-device model (Apple Intelligence). No download, and it runs entirely on your device, privately and offline. Apple updates it with each major iOS release. It scores 60% on this app's German grammar test, but it's shaky on judgement: it flags about one in six already-correct sentences as wrong, and it misses a third of real mistakes. It's weakest exactly where German learners struggle most, getting 0 of 15 on da-/wo-compounds. Fine for quick vocabulary work, less so for correction practice. Requires a supported device with Apple Intelligence turned on."
         case .gemma4_E4B_german:
-            "Gemma 4 E4B fine-tuned for this app on the parts of German learners actually get wrong: verbs with prepositions, separable and reflexive verbs, da-/wo-compounds, and haben/sein. The strongest model measured here, scoring 90% on this app's German grammar test against 80% for the same model untuned. It also catches the most real mistakes of anything in this list, missing only 9%, while rarely inventing a correction. About 5 GB."
+            "Gemma 4 E4B fine-tuned for this app on the parts of German learners actually get wrong, from verbs with prepositions and separable verbs to relative pronouns and Konjunktiv II. The strongest model measured here: 90% across this app's full 203-item German grammar test, with the best score ever recorded on the hardest section. It almost never 'corrects' a sentence that was already right (once in 32 correct sentences), and it talks like a conversation partner rather than a worksheet. It misses about one real mistake in six. About 5 GB."
         case .gemma4_E2B_german:
             "The same German fine-tune as the E4B tutor, trained on the smaller Gemma 4 E2B. Scores 83% on this app's German grammar test, just behind the E4B tutor, and it almost never 'corrects' a sentence that was already right. It does let more real mistakes through than the E4B tutor. About 3.3 GB instead of 5 GB, so it fits devices the E4B tutor doesn't."
         case .granite2B_german:
-            "IBM's Granite 3.3 2B, fine-tuned on the same German material as the Gemma tutors above. Built for devices that can't fit either of them: it scores 62% on this app's German grammar test against 33% for the Gemma 3 1B it replaces, and it never once 'corrected' a sentence that was already right. It still misses more than half of real mistakes, so treat what it does catch as reliable and don't assume silence means your sentence was fine. It also writes German roughly half as fast as its size suggests, because its vocabulary splits German words into more pieces. About 1.4 GB."
-        case .mistral7B:
-            "Mistral AI's 7B Instruct v0.3, 4-bit quantized. Well regarded generally, but it scored 48% on this app's German grammar test and was the weakest of the mid-size models on da-/wo-compounds, getting 1 of 15. It's also the most eager to 'fix' sentences that were already correct, flagging 59% of them, and the slowest model in the app. Not recommended for German."
-        case .qwen3_8B:
-            "Alibaba's Qwen3 8B, 4-bit quantized, and the strongest Qwen tested here. It follows instructions well, but scored 58% on this app's German grammar test and missed roughly half of the real mistakes it was shown, so it's unreliable for corrections."
-        case .qwen3_4B:
-            "Alibaba's Qwen3 4B, 4-bit quantized. Fits on devices the larger models don't, but it scored 52% on this app's German grammar test and missed 61% of the real mistakes it was shown. Reasonable for drafting vocabulary, unreliable for judging your German."
-        case .phi4Mini:
-            "Microsoft's Phi-4 Mini 3.8B Instruct, 4-bit quantized. Strong on English benchmarks, but its German lands near Mistral's at 47% on this app's grammar test, and it missed 77% of the real mistakes it was shown. Weak on da-/wo-compounds and N-declension."
-        case .llama3_2_1B:
-            "Meta's LLaMA 3.2 1B Instruct, 4-bit quantized. Small and fast, and the weakest model measured here at 28% on this app's German grammar test. Shown 69 incorrect sentences, it accepted every one of them, so it will not catch your mistakes at all. Vocabulary only."
-        case .gemma3_1B:
-            "Google's Gemma 3 1B Instruct with QAT 4-bit quantization. Small and fast, and it writes usable vocabulary cards, but it can't correct German: it scores 33% on this app's grammar test and missed every single one of the 69 real mistakes it was shown. It answers in a shape this app can't display, so where you'd expect a correction you get nothing. Vocabulary only. If your device can run it, the Granite tutor is the better choice at this size."
-        case .qwen3_0_6B:
-            "A compact 0.6B model from Alibaba's Qwen3 family, 4-bit quantized. The fastest and smallest option here, and the least capable. Not measured on this app's grammar test; expect it to fall well short of the rest. Best for quick vocabulary drafts."
+            "IBM's Granite 3.3 2B, fine-tuned on the same German material as the Gemma tutors. The smallest tutor in the app, and the one for phones the others don't fit: 75% across the full 203-item grammar test, and it never once 'corrected' a sentence that was already right. It still misses over 40% of real mistakes, so treat what it does catch as reliable and don't assume silence means your sentence was fine. It also writes German more slowly than its size suggests, because its vocabulary splits German words into many pieces. About 1.4 GB."
+        case .granite41_3B_german:
+            "IBM's newer Granite 4.1 3B on the same German training as the 2B Granite, and the stronger of the two: 81% across the full 203-item grammar test, and it misses far fewer real mistakes (about one in four, against the 2B's four in ten). The trade: it occasionally flags a sentence that was already right, where the 2B never does, and it's about 0.5 GB bigger. Its larger vocabulary handles German words in fewer pieces, so it also writes faster than the 2B despite its size. About 1.9 GB."
         }
     }
 
@@ -67,61 +49,29 @@ extension MLXModel {
         case .appleIntelligence: "On-device"
         case .gemma4_E4B_german: "~4B"
         case .gemma4_E2B_german: "~2B"
-        case .mistral7B:    "7B"
-        case .qwen3_8B:     "8B"
-        case .qwen3_4B:     "4B"
-        case .phi4Mini:     "3.8B"
-        case .llama3_2_1B:  "1B"
-        case .gemma3_1B:    "1B"
-        case .qwen3_0_6B:   "0.6B"
         case .granite2B_german: "2B"
+        case .granite41_3B_german: "3B"
         }
     }
 
-    /// Numeric parameter count for sorting the Parameters tab.
-    var parameterCountValue: Double {
-        switch self {
-        case .appleIntelligence: 0   // Apple doesn't publish a size; sort to an end
-        case .mistral7B:     7.0
-        case .qwen3_8B:      8.0
-        case .gemma4_E4B_german: 4.0
-        case .gemma4_E2B_german: 2.0
-        case .qwen3_4B:      4.0
-        case .phi4Mini:      3.8
-        case .llama3_2_1B:   1.0
-        case .gemma3_1B:     1.0
-        case .qwen3_0_6B:    0.6
-        case .granite2B_german: 2.0
-        }
-    }
-
-    /// Relative German quality score used by the Recommended sort (1 = lowest, 5 = highest).
+    /// Guarded accuracy on the app's 203-item German grammar suite, as a percentage.
     ///
-    /// Anchored to measured core-suite accuracy in `training/MODEL_SCOREBOARD.md` rather than to
-    /// parameter count or general reputation, both of which mispredict German badly here: a tuned
-    /// 2B Granite (62%) beats Qwen3 8B (58%) and Mistral 7B (48%), each many times its size.
+    /// The number every piece of copy on the model screens quotes, so it lives in exactly one
+    /// place. It replaced a 1–5 `germanQualityScore` abstraction: with a lineup that is one
+    /// family at four sizes, the bucket added nothing the percentage doesn't say better, and the
+    /// hand-typed percentages it sat alongside had already drifted apart (the guide sheet said
+    /// the E2B tutor scored 84%, the model descriptions said 83%).
     ///
-    /// **All percentages below are guarded** — scored as the app behaves. This matters most for the
-    /// small end: Gemma 3 1B used to sit at 3 here on a recorded 58%, which turned out to be a
-    /// scoring artifact (it answers `OK` followed by a `FIX:`, which the app discards entirely).
-    /// Its real score is 33% with a 100% miss rate, so it now sits at 1. Rebuild these from
+    /// **Guarded** means scored the way the app behaves, where a reply the app renders as nothing
+    /// counts as nothing. Anchored to `training/MODEL_SCOREBOARD.md`; regenerate with
     /// `scripts/rescore_app_models.py`.
-    ///
-    /// Miss rate is a tie-breaker, not just core accuracy: a model that never contradicts the
-    /// learner is worse than its percentage suggests, because silence reads as approval.
-    var germanQualityScore: Int {
+    var suiteScorePercent: Int {
         switch self {
-        case .gemma4_E4B_german: 5   // 90%, misses only 9% of real errors — the best measured
-        case .gemma4_E2B_german: 5   // 83%, with a 3% false-correction rate
-        case .granite2B_german: 4    // 62% and 0% false corrections, in 1.4 GB
-        case .appleIntelligence: 3   // 60%, but flags 16% of correct sentences and misses 35%
-        case .qwen3_8B:     3        // 58%, and misses ~48% of real errors despite the size
-        case .qwen3_4B:     2        // 52%, misses 61%
-        case .mistral7B:    2        // 48%, worst on da-/wo-compounds (1/15), "fixes" 59% of correct sentences
-        case .phi4Mini:     2        // 47%, misses 77% of real errors
-        case .gemma3_1B:    1        // 33%, and misses 100% — it shows the learner nothing
-        case .llama3_2_1B:  1        // 28%, answered OK to all 69 errors in the suite
-        case .qwen3_0_6B:   1        // untested in-app; expected well below the usable floor
+        case .gemma4_E4B_german: 90   // 3% false corrections, misses 9% — the best measured
+        case .gemma4_E2B_german: 83   // 3% false corrections, misses 19%
+        case .granite41_3B_german: 81 // misses 25% — the best small-device tutor
+        case .granite2B_german: 75    // 0% false corrections but misses 43%, in 1.4 GB
+        case .appleIntelligence: 60   // flags 16% of correct sentences, misses 35%
         }
     }
 
@@ -169,9 +119,9 @@ extension MLXModel {
     var minimumRAMGB: Int {
         switch self {
         case .appleIntelligence: 0   // gated by Apple Intelligence eligibility, not by RAM
-        case .qwen3_0_6B, .llama3_2_1B, .gemma3_1B, .granite2B_german: 4
-        case .qwen3_4B, .phi4Mini, .gemma4_E2B_german: 6
-        case .mistral7B, .gemma4_E4B_german, .qwen3_8B: 8
+        case .granite2B_german, .granite41_3B_german: 4
+        case .gemma4_E2B_german: 6
+        case .gemma4_E4B_german: 8
         }
     }
 
@@ -180,39 +130,31 @@ extension MLXModel {
         switch self {
         case .appleIntelligence:
             "Requires Apple Intelligence (iPhone 15 Pro or newer)"
-        case .qwen3_0_6B, .llama3_2_1B, .gemma3_1B:
-            "iPhone 12 or newer"
         case .granite2B_german:
-            "iPhone 12 or newer (4 GB RAM) \u{2014} the tutor for smaller devices"
-        case .qwen3_4B, .phi4Mini:
-            "iPhone 13 Pro / iPhone 14 or newer (6 GB RAM)"
+            "iPhone 12 or newer (4 GB RAM) \u{2014} the smallest tutor"
+        case .granite41_3B_german:
+            "iPhone 12 or newer (4 GB RAM) \u{2014} the stronger small-device tutor"
         case .gemma4_E2B_german:
-            "iPhone 13 Pro / iPhone 14 or newer (6 GB RAM) — the lightest German tutor"
-        case .mistral7B, .gemma4_E4B_german, .qwen3_8B:
+            "iPhone 13 Pro / iPhone 14 or newer (6 GB RAM) \u{2014} the lightest Gemma tutor"
+        case .gemma4_E4B_german:
             "iPhone 15 Pro or newer (8 GB RAM)"
         }
     }
 
+    /// Where "Learn more" goes: the *base model* this tutor was fine-tuned from.
+    ///
+    /// Deliberately not the tutor's own HuggingFace repo. Each tutor's `promoPageURL` used to be
+    /// exactly its `huggingFaceRepoURL`, so the info sheet offered two links to the same page.
+    /// Pointing at the base family is the genuinely different information, and it's the app's
+    /// only remaining credit to the open-weight models these are built on.
     var promoPageURL: URL {
         switch self {
         case .appleIntelligence:
             URL(string: "https://www.apple.com/apple-intelligence/")!
-        case .qwen3_0_6B, .qwen3_4B, .qwen3_8B:
-            URL(string: "https://qwen.ai/blog?id=qwen3")!
-        case .llama3_2_1B:
-            URL(string: "https://www.llama.com/models/llama-3/")!
-        case .gemma3_1B:
+        case .gemma4_E4B_german, .gemma4_E2B_german:
             URL(string: "https://deepmind.google/models/gemma/")!
-        case .gemma4_E4B_german:
-            URL(string: "https://huggingface.co/kessenma/gemma4-e4b-german-tutor-4bit")!
-        case .gemma4_E2B_german:
-            URL(string: "https://huggingface.co/kessenma/gemma4-e2b-german-tutor-4bit")!
-        case .mistral7B:
-            URL(string: "https://mistral.ai/models/")!
-        case .phi4Mini:
-            URL(string: "https://azure.microsoft.com/en-us/products/phi")!
-        case .granite2B_german:
-            URL(string: "https://huggingface.co/kessenma/granite33-2b-german-tutor-4bit")!
+        case .granite2B_german, .granite41_3B_german:
+            URL(string: "https://www.ibm.com/granite")!
         }
     }
 }
@@ -235,14 +177,22 @@ extension MLXModel {
         "Fine-tuned on German grammar just for this app,"
     }
 
-    /// Longer marketing points for the intro wizard. Hero only.
+    /// Longer pitch points for the intro wizard and the onboarding pitch page.
+    ///
+    /// Per-tutor rather than hero-only, because onboarding now pitches whichever tutor the
+    /// device can actually run — a 6 GB phone was previously shown no model at all. The size
+    /// line is derived so it can't drift from `approximateSizeMB`, which it had already: this
+    /// list hard-coded "~5 GB download." while the E2B tutor is 3.3 GB.
     var heroSellingPoints: [String] {
         [
-            "Not a general-purpose model.",
-            "Built on Google's Gemma family, which draws on years of Google Translate research.",
+            "Trained specifically to correct German learners, not to do everything.",
+            isGermanTutor && logoName == "logo-gemma"
+                ? "Built on Google's Gemma family, which draws on years of Google Translate research."
+                : "Built on IBM's open-weight Granite family, sized for phones the Gemma tutors don't fit.",
             "Sharper on the hard parts of German: verbs with prepositions, separable and reflexive "
             + "verbs, da-/wo-compounds, and haben/sein, with fewer false corrections.",
-            "~5 GB download.",
+            "Scores \(suiteScorePercent)% on the app's own German grammar test.",
+            "~\(approximateSizeLabel) download, then it runs offline.",
         ]
     }
 
@@ -257,14 +207,21 @@ extension MLXModel {
     /// is a different base entirely, trained on the same German material to reach the 4 GB devices
     /// neither Gemma fits. What they share is being tuned for this app's correction task, which is
     /// what this list is for.
-    static let germanTutors: [MLXModel] = [.gemma4_E4B_german, .gemma4_E2B_german, .granite2B_german]
+    static let germanTutors: [MLXModel] = [.gemma4_E4B_german, .gemma4_E2B_german, .granite41_3B_german, .granite2B_german]
 
     /// Whether this is one of the in-house German tutors.
     var isGermanTutor: Bool { Self.germanTutors.contains(self) }
 
-    /// The best tutor a device with `ramGB` can actually run, or nil when neither fits. Decides
-    /// which tutor leads the Settings section: the E4B tutor where there's room for it, the E2B
-    /// tutor on a 6 GB device, and no promoted section at all below that.
+    /// **The one function that answers "which model for this phone."**
+    ///
+    /// The best tutor a device with `ramGB` can run: E4B where there's room, E2B on a 6 GB
+    /// phone, the Granite 3B below that. Nil only on a device smaller than any tutor, which no
+    /// iPhone meeting the deployment target is — the callers keep their fallbacks anyway, since
+    /// "nil means no tutor fits" is cheaper to keep true than to re-derive.
+    ///
+    /// This replaced a four-bucket `recommendedOrder`/`recommendationRank` sort. With one family
+    /// at four sizes there is nothing to rank: the tutors are already in quality order, so the
+    /// question collapses to "which is the first one that fits".
     static func leadTutor(ramGB: Int) -> MLXModel? {
         germanTutors.first { $0.minimumRAMGB <= ramGB }
     }
@@ -275,43 +232,23 @@ extension MLXModel {
         switch self {
         case .gemma4_E2B_german:
             "The same German training as the E4B tutor, sized to fit a 6 GB iPhone."
+        case .granite41_3B_german:
+            "The stronger of the two small-device tutors, for phones the Gemma tutors don't fit."
         case .granite2B_german:
-            "German training on a smaller base, for devices the Gemma tutors don't fit."
+            "The smallest tutor. Never flags correct German, but lets more mistakes through."
         default:
             heroTagline
         }
     }
 
-    /// Canonical "recommended" ordering for a device with `ramGB` RAM. One source of truth for every
-    /// picker: the hero model leads when it fits, then Apple Intelligence (instant, no download), then
-    /// the remaining runnable models by German quality, with anything the device can't run sinking to
-    /// the bottom.
-    static func recommendedOrder(ramGB: Int) -> [MLXModel] {
-        allCases.sorted { recommendationRank($0, ramGB: ramGB) < recommendationRank($1, ramGB: ramGB) }
+    /// "~4.2 GB"-style label for the one-time download, shared by every surface that offers one.
+    ///
+    /// Lived on the hero intro sheet until the onboarding explainer, the Home card and the
+    /// conversation nudge all needed it too. It belongs next to the sizes it formats.
+    var approximateSizeLabel: String {
+        approximateSizeMB >= 1000
+            ? String(format: "%.1f GB", Double(approximateSizeMB) / 1000.0)
+            : "\(approximateSizeMB) MB"
     }
 
-    /// The single model to badge as "Recommended" for this device — the hero when it fits, otherwise
-    /// the best option the device can actually run.
-    static func recommended(ramGB: Int) -> MLXModel {
-        recommendedOrder(ramGB: ramGB).first ?? hero
-    }
-
-    /// Sort key for `recommendedOrder`. Lower sorts first:
-    /// (priority bucket, inverted German quality, inverted parameter count).
-    private static func recommendationRank(_ model: MLXModel, ramGB: Int) -> (Int, Int, Double) {
-        let runnable = model.isAppleIntelligence
-            ? AppleIntelligenceService.currentlyAvailable()
-            : model.minimumRAMGB <= ramGB
-        let bucket: Int
-        if model.isHero && runnable {
-            bucket = 0                                   // hero pinned to the very top when it fits
-        } else if model.isAppleIntelligence && runnable {
-            bucket = 1                                   // instant, zero-download option next
-        } else if runnable {
-            bucket = 2                                   // other models the device can run
-        } else {
-            bucket = 3                                   // can't run here — sink to the bottom
-        }
-        return (bucket, -model.germanQualityScore, -model.parameterCountValue)
-    }
 }

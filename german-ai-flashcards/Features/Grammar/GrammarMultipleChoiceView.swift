@@ -200,14 +200,11 @@ struct GrammarMultipleChoiceView: View {
     /// becomes den." One `Text`, so it wraps as a sentence rather than as stacked fragments.
     private func whyLine(_ exercise: GrammarExercise) -> some View {
         let clause = GrammarExplanation.because(exercise, in: category)
-        return (
-            Text("The answer is ")
-            + Text(exercise.correctAnswer).fontWeight(.semibold)
-            + Text(" because \(clause)")
-        )
-        .font(.callout)
-        .foregroundStyle(.secondary)
-        .multilineTextAlignment(.center)
+        let answer = Text(exercise.correctAnswer).fontWeight(.semibold)
+        return Text("The answer is \(answer) because \(clause)")
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
     }
 
     private func hintSentenceText(_ exercise: GrammarExercise) -> Text {

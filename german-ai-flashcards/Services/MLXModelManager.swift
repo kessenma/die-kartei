@@ -139,10 +139,29 @@ class MLXModelManager {
         }
     }
 
-    /// Remembered conversation-setup defaults (so a new chat reuses the last choices).
-    var chatLevelRaw: String {
-        didSet { UserDefaults.standard.set(chatLevelRaw, forKey: "chatLevelRaw") }
+    /// The learner's German level — the one anchor every level picker in the app opens at.
+    ///
+    /// Set by hand (Settings ▸ Learning ▸ Your Level, or the placement check's hard-select door)
+    /// or by adopting a placement estimate. Exercises **seed** from it and never write back, so
+    /// running one story at B2 doesn't quietly make you a B2 learner everywhere.
+    ///
+    /// It replaced `chatLevelRaw` + `storyLevelRaw`, which were last-used memories masquerading as
+    /// defaults — the reason no declared default could be respected before.
+    var germanLevelRaw: String {
+        didSet { UserDefaults.standard.set(germanLevelRaw, forKey: "german.level") }
     }
+    /// Typed accessor for the level anchor.
+    var germanLevel: CEFRLevel {
+        get { CEFRLevel(rawValue: germanLevelRaw) ?? .a2 }
+        set { germanLevelRaw = newValue.rawValue }
+    }
+    /// True when the learner chose the level themselves, false when a placement check set it.
+    /// Drives copy only ("You set this" vs "From your check") — never behaviour.
+    var germanLevelIsDeclared: Bool {
+        didSet { UserDefaults.standard.set(germanLevelIsDeclared, forKey: "german.level.declared") }
+    }
+
+    /// Remembered conversation-setup defaults (so a new chat reuses the last choices).
     var chatFormalityRaw: String {
         didSet { UserDefaults.standard.set(chatFormalityRaw, forKey: "chatFormalityRaw") }
     }
@@ -173,6 +192,32 @@ class MLXModelManager {
     var chatHintCount: Int {
         didSet { UserDefaults.standard.set(chatHintCount, forKey: "chatHintCount") }
     }
+    /// Surface a "you could say" hint automatically after every AI reply (beginner aid).
+    var chatAutoHints: Bool {
+        didSet { UserDefaults.standard.set(chatAutoHints, forKey: "chatAutoHints") }
+    }
+    /// Raw `ChatInputMode` — whether new conversations start in speaking or typing mode.
+    var chatInputModeRaw: String {
+        didSet { UserDefaults.standard.set(chatInputModeRaw, forKey: "chatInputModeRaw") }
+    }
+    /// Typed accessor for the default conversation input mode.
+    var chatInputMode: ChatInputMode {
+        get { ChatInputMode(rawValue: chatInputModeRaw) ?? .speak }
+        set { chatInputModeRaw = newValue.rawValue }
+    }
+    /// How the conversation partner addresses the learner ("Kyle", or "Herr Essenmacher" for
+    /// formal chats). Empty means the model is left to pick something, which it does badly.
+    var learnerName: String {
+        didSet { UserDefaults.standard.set(learnerName, forKey: "learnerName") }
+    }
+    /// Tint nouns in AI replies with their der/die/das color.
+    var chatGenderColors: Bool {
+        didSet { UserDefaults.standard.set(chatGenderColors, forKey: "chatGenderColors") }
+    }
+    /// All-time best run of consecutive unaided conversation turns (no hints/translations).
+    var chatBestUnaidedStreak: Int {
+        didSet { UserDefaults.standard.set(chatBestUnaidedStreak, forKey: "chatBestUnaidedStreak") }
+    }
     /// When on, the coach keeps a persistent on-device learner profile and uses it to
     /// personalize each session (steer toward weak spots, reuse the learner's words, sharpen
     /// corrections). See `LearnerMemoryService`.
@@ -200,11 +245,17 @@ class MLXModelManager {
 
     // MARK: - Short Stories Settings
 
-    /// Remembered story-setup defaults. The level starts from the conversation level and then
-    /// tracks the learner's own story choice.
-    var storyLevelRaw: String {
-        didSet { UserDefaults.standard.set(storyLevelRaw, forKey: "storyLevelRaw") }
+    /// The German tutor that writes and grades stories. Any of them can — see
+    /// `StoryStudyService.eligibleModels` — so this is a real choice, made once and remembered,
+    /// not a fixed model the feature is pinned to.
+    var selectedStoryModel: MLXModel {
+        didSet {
+            UserDefaults.standard.set(selectedStoryModel.rawValue, forKey: StoryStudyService.selectionDefaultsKey)
+        }
     }
+
+    /// Remembered story-setup defaults. Level is no longer among them — it comes from
+    /// `germanLevel`, the app-wide anchor, and a per-story choice stays with that story.
     var storyGenreRaw: String {
         didSet { UserDefaults.standard.set(storyGenreRaw, forKey: "storyGenreRaw") }
     }
@@ -240,10 +291,6 @@ class MLXModelManager {
         didSet { UserDefaults.standard.set(storyFeedsCoach, forKey: "storyFeedsCoach") }
     }
 
-    var storyLevel: CEFRLevel {
-        get { CEFRLevel(rawValue: storyLevelRaw) ?? .a2 }
-        set { storyLevelRaw = newValue.rawValue }
-    }
     var storyGenre: StoryGenre {
         get { StoryGenre(rawValue: storyGenreRaw) ?? .alltag }
         set { storyGenreRaw = newValue.rawValue }
@@ -284,6 +331,11 @@ class MLXModelManager {
     /// The Lernpyramide — the 3D learning path — on Home and Fortschritt.
     var gamificationPyramidEnabled: Bool {
         didSet { UserDefaults.standard.set(gamificationPyramidEnabled, forKey: "gamificationPyramidEnabled") }
+    }
+    /// „Weißt du es noch?" — the one-question probe on Dein Weg that re-checks a long-mastered
+    /// item. Off hides the card; the journey timeline itself is unaffected.
+    var gamificationRememberProbeEnabled: Bool {
+        didSet { UserDefaults.standard.set(gamificationRememberProbeEnabled, forKey: "gamificationRememberProbeEnabled") }
     }
 
     // MARK: - Practice Reminder Settings
@@ -328,7 +380,14 @@ class MLXModelManager {
         // On first run (no stored choice), default to Apple's built-in model when the device
         // supports it — zero download, instant start. The user can switch to any other model and
         // that choice persists as their new default.
-        let firstRunDefault: MLXModel = AppleIntelligenceService.currentlyAvailable() ? .appleIntelligence : .qwen3_0_6B
+        // The fallback is the best tutor this phone can hold, not a fixed model: this line used
+        // to name a 0.6B model regardless of RAM, so a fresh 8 GB phone defaulted to the
+        // weakest thing in the app. It is only a *selection* — nothing is downloaded until the
+        // user asks — so naming a tutor here costs nothing and points the rest of the UI at the
+        // right one.
+        let firstRunDefault: MLXModel = AppleIntelligenceService.currentlyAvailable()
+            ? .appleIntelligence
+            : (MLXModel.leadTutor(ramGB: DeviceCapability.ramGB) ?? .granite2B_german)
 
         let modelRaw = UserDefaults.standard.string(forKey: "selectedMLXModel") ?? ""
         self.selectedMLXModel = MLXModel(rawValue: modelRaw) ?? firstRunDefault
@@ -361,7 +420,19 @@ class MLXModelManager {
             ?? MLXModel(rawValue: modelRaw)
             ?? firstRunDefault
         self.autoPlayReplies = (UserDefaults.standard.object(forKey: "autoPlayReplies") as? Bool) ?? true
-        self.chatLevelRaw = UserDefaults.standard.string(forKey: "chatLevelRaw") ?? CEFRLevel.a2.rawValue
+        // The level anchor, migrated forward from the two settings it replaced. `chatLevelRaw` is
+        // preferred because it's what placement wrote and what conversations read; `storyLevelRaw`
+        // only ever diverged by a learner's per-story pick.
+        let migratedLevel = UserDefaults.standard.string(forKey: "german.level")
+            ?? UserDefaults.standard.string(forKey: "chatLevelRaw")
+            ?? UserDefaults.standard.string(forKey: "storyLevelRaw")
+            ?? CEFRLevel.a2.rawValue
+        self.germanLevelRaw = migratedLevel
+        // Written through explicitly: `didSet` doesn't fire during `init`, so without this the
+        // migrated value would live only in memory and the app would keep re-deriving it from the
+        // legacy keys on every launch — one cleanup away from silently resetting to A2.
+        UserDefaults.standard.set(migratedLevel, forKey: "german.level")
+        self.germanLevelIsDeclared = UserDefaults.standard.bool(forKey: "german.level.declared")
         self.chatFormalityRaw = UserDefaults.standard.string(forKey: "chatFormalityRaw") ?? Formality.du.rawValue
         self.chatStrictnessRaw = UserDefaults.standard.string(forKey: "chatStrictnessRaw") ?? CorrectionStrictness.balanced.rawValue
         self.chatFeedbackStyleRaw = UserDefaults.standard.string(forKey: "chatFeedbackStyleRaw") ?? FeedbackStyle.tellMe.rawValue
@@ -371,16 +442,21 @@ class MLXModelManager {
         self.chatAutoShowTranslation = (UserDefaults.standard.object(forKey: "chatAutoShowTranslation") as? Bool) ?? true
         let storedHintCount = UserDefaults.standard.integer(forKey: "chatHintCount")
         self.chatHintCount = (1...3).contains(storedHintCount) ? storedHintCount : 1
+        self.chatAutoHints = (UserDefaults.standard.object(forKey: "chatAutoHints") as? Bool) ?? false
+        self.chatInputModeRaw = UserDefaults.standard.string(forKey: "chatInputModeRaw") ?? ChatInputMode.speak.rawValue
+        self.learnerName = UserDefaults.standard.string(forKey: "learnerName") ?? ""
+        self.chatGenderColors = (UserDefaults.standard.object(forKey: "chatGenderColors") as? Bool) ?? true
+        self.chatBestUnaidedStreak = UserDefaults.standard.integer(forKey: "chatBestUnaidedStreak")
         self.chatPersonalizedCoaching = (UserDefaults.standard.object(forKey: "chatPersonalizedCoaching") as? Bool) ?? true
         self.chatSpacedReview = (UserDefaults.standard.object(forKey: "chatSpacedReview") as? Bool) ?? true
         self.chatSpacedReviewScopeRaw = UserDefaults.standard.string(forKey: "chatSpacedReviewScopeRaw") ?? SpacedReviewScope.everywhere.rawValue
         let paperModelRaw = UserDefaults.standard.string(forKey: "selectedPaperModel") ?? ""
         self.selectedPaperModel = MLXModel(rawValue: paperModelRaw) ?? PaperStudyService.requiredModel
 
-        // Story settings — the level follows the conversation level until changed.
-        self.storyLevelRaw = UserDefaults.standard.string(forKey: "storyLevelRaw")
-            ?? UserDefaults.standard.string(forKey: "chatLevelRaw")
-            ?? CEFRLevel.a2.rawValue
+        // Story settings — the level comes from `germanLevel` above, and the model resolves to the
+        // best tutor this device already has when nobody has picked one.
+        let storyModelRaw = UserDefaults.standard.string(forKey: StoryStudyService.selectionDefaultsKey) ?? ""
+        self.selectedStoryModel = StoryStudyService.resolve(MLXModel(rawValue: storyModelRaw))
         self.storyGenreRaw = UserDefaults.standard.string(forKey: "storyGenreRaw") ?? StoryGenre.alltag.rawValue
         self.storyQuestionTypesRaw = UserDefaults.standard.string(forKey: "storyQuestionTypesRaw")
             ?? StoryQuestion.Kind.multipleChoice.rawValue
@@ -401,6 +477,7 @@ class MLXModelManager {
         self.gamificationCelebrationsEnabled = (UserDefaults.standard.object(forKey: "gamificationCelebrationsEnabled") as? Bool) ?? true
         self.gamificationBadgesEnabled = (UserDefaults.standard.object(forKey: "gamificationBadgesEnabled") as? Bool) ?? true
         self.gamificationPyramidEnabled = (UserDefaults.standard.object(forKey: "gamificationPyramidEnabled") as? Bool) ?? true
+        self.gamificationRememberProbeEnabled = (UserDefaults.standard.object(forKey: "gamificationRememberProbeEnabled") as? Bool) ?? true
 
         // Practice reminders — opt-in, so the master switch defaults off (nothing is scheduled while
         // it's off). The checkpoint set is pre-seeded with a gentle escalating ladder so flipping the

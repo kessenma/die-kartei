@@ -22,6 +22,10 @@ struct VocabCard {
     var isSeparable: Bool?
     var verbPrefix: String?
     var isRegular: Bool?
+
+    /// A one-line caption under the German word — a noun's plural ("Plural: -en") or a verb's
+    /// present + Perfekt forms. Bundled Goethe words carry it; generated cards leave it nil.
+    var forms: String? = nil
 }
 
 struct VocabCardResponse {

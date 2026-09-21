@@ -32,7 +32,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to collect, pick up or fetch someone or something",
-    "example": "Wann kann ich den Schrank bei dir abholen? Wir müssen noch meinen Bruder abholen."
+    "example": "Wann kann ich den Schrank bei dir abholen? Wir müssen noch meinen Bruder abholen.",
+    "verbForms": "holt ab · hat abgeholt"
   },
   {
     "word": "Absender",
@@ -53,7 +54,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "address",
-    "example": "Können Sie mir seine Adresse sagen?"
+    "example": "Können Sie mir seine Adresse sagen?",
+    "plural": "-n"
   },
   {
     "word": "all",
@@ -102,7 +104,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to offer, to provide",
-    "example": "Was darf ich dir anbieten?"
+    "example": "Was darf ich dir anbieten?",
+    "verbForms": "bietet an · hat angeboten"
   },
   {
     "word": "ander",
@@ -116,7 +119,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to begin",
-    "example": "Hier fängt die Bahnhofstraße an. Der Unterricht fängt gleich an. Wir machen Anfang Juli Urlaub."
+    "example": "Hier fängt die Bahnhofstraße an. Der Unterricht fängt gleich an. Wir machen Anfang Juli Urlaub.",
+    "verbForms": "fängt an · hat angefangen"
   },
   {
     "word": "anklicken",
@@ -137,7 +141,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "arrival",
-    "example": "Auf diesem Plan steht nur die Ankunft(-szeit) der Züge."
+    "example": "Auf diesem Plan steht nur die Ankunft(-szeit) der Züge.",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "ankreuzen",
@@ -158,7 +163,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to announce, declare",
-    "example": "Wo kann ich mich anmelden?"
+    "example": "Wo kann ich mich anmelden?",
+    "verbForms": "meldet sich an · hat sich angemeldet"
   },
   {
     "word": "Anrede",
@@ -172,14 +178,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to call, phone",
-    "example": "Kann man Sie anrufen? Peter ruft kurz seine Freundin an."
+    "example": "Kann man Sie anrufen? Peter ruft kurz seine Freundin an.",
+    "verbForms": "ruft an · hat angerufen"
   },
   {
     "word": "Anruf",
     "article": "der",
     "wordType": "noun",
     "translation": "phone call",
-    "example": "Sie bekommt viele Anrufe auf ihrem Handy. beantworter den Anrufbeantworter."
+    "example": "Sie bekommt viele Anrufe auf ihrem Handy. beantworter den Anrufbeantworter.",
+    "plural": "-e"
   },
   {
     "word": "Ansage",
@@ -193,7 +201,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "connection, joining",
-    "example": "In Mannheim haben Sie Anschluss nach Saarbrücken. Ist das die Anmeldung für einen Telefonanschluss?"
+    "example": "In Mannheim haben Sie Anschluss nach Saarbrücken. Ist das die Anmeldung für einen Telefonanschluss?",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "an",
@@ -207,14 +216,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to answer, to reply",
-    "example": "Er antwortet nicht."
+    "example": "Er antwortet nicht.",
+    "verbForms": "hat geantwortet"
   },
   {
     "word": "Anzeige",
     "article": "die",
     "wordType": "noun",
     "translation": "advertisement, announcement",
-    "example": "Ich habe Ihre Anzeige in der Zeitung gelesen."
+    "example": "Ich habe Ihre Anzeige in der Zeitung gelesen.",
+    "plural": "-n"
   },
   {
     "word": "anziehen",
@@ -235,7 +246,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "apple (fruit)",
-    "example": "Ein Pfund Äpfel bitte."
+    "example": "Ein Pfund Äpfel bitte.",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Appetit",
@@ -249,7 +261,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to work",
-    "example": "Wo arbeiten Sie?"
+    "example": "Wo arbeiten Sie?",
+    "verbForms": "hat gearbeitet"
   },
   {
     "word": "arbeitslos",
@@ -284,7 +297,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "task, job",
-    "example": "Das ist eine schwere Aufgabe."
+    "example": "Das ist eine schwere Aufgabe.",
+    "plural": "-n"
   },
   {
     "word": "aufhören",
@@ -305,14 +319,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to get up, stand up",
-    "example": "Ich muss immer um vier Uhr aufstehen. Soll ich aufstehen?"
+    "example": "Ich muss immer um vier Uhr aufstehen. Soll ich aufstehen?",
+    "verbForms": "steht auf · ist aufgestanden"
   },
   {
     "word": "Auge",
     "article": "das",
     "wordType": "noun",
     "translation": "eye",
-    "example": "Er hat blaue Augen."
+    "example": "Er hat blaue Augen.",
+    "plural": "-n"
   },
   {
     "word": "aus",
@@ -326,28 +342,32 @@
     "article": "der",
     "wordType": "noun",
     "translation": "excursion, outing, short trip",
-    "example": "Morgen machen wir einen Ausflug nach Heidelberg."
+    "example": "Morgen machen wir einen Ausflug nach Heidelberg.",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "ausfüllen",
     "article": null,
     "wordType": "verb",
     "translation": "to fill in",
-    "example": "Füllen Sie bitte dieses Formular aus."
+    "example": "Füllen Sie bitte dieses Formular aus.",
+    "verbForms": "füllt aus · hat ausgefüllt"
   },
   {
     "word": "Ausgang",
     "article": "der",
     "wordType": "noun",
     "translation": "exit (passage from inside to outside)",
-    "example": "Wo ist der Ausgang?"
+    "example": "Wo ist der Ausgang?",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Ausland",
     "article": "das",
     "wordType": "noun",
     "translation": "foreign countries (collectively)",
-    "example": "Fahren Sie ins Ausland? ausländisch Leider habe ich nur ausländisches Geld."
+    "example": "Fahren Sie ins Ausland? ausländisch Leider habe ich nur ausländisches Geld.",
+    "plural": "only sg."
   },
   {
     "word": "ausmachen",
@@ -403,7 +423,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "car",
-    "example": "Er kommt mit dem Auto."
+    "example": "Er kommt mit dem Auto.",
+    "plural": "-s"
   },
   {
     "word": "Autobahn",
@@ -445,7 +466,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "bath",
-    "example": "Wir haben kein großes Bad."
+    "example": "Wir haben kein großes Bad.",
+    "plural": "\\u00a8-er"
   },
   {
     "word": "baden",
@@ -466,7 +488,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "train station",
-    "example": "Komme ich hier zum Bahnhof?"
+    "example": "Komme ich hier zum Bahnhof?",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Bahnsteig",
@@ -501,7 +524,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "bank, bench",
-    "example": "Die Bank schließt schon um vier Uhr. Er sitzt im Park auf einer Bank und liest."
+    "example": "Die Bank schließt schon um vier Uhr. Er sitzt im Park auf einer Bank und liest.",
+    "plural": "-en"
   },
   {
     "word": "bar",
@@ -515,7 +539,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "abdomen, belly",
-    "example": "Seit gestern tut mir der Bauch weh."
+    "example": "Seit gestern tut mir der Bauch weh.",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "Beamte",
@@ -536,7 +561,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to begin",
-    "example": "Das Spiel beginnt um 15.30 Uhr."
+    "example": "Das Spiel beginnt um 15.30 Uhr.",
+    "verbForms": "hat begonnen"
   },
   {
     "word": "bei",
@@ -585,7 +611,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to receive",
-    "example": "Haben Sie meinen Brief bekommen? Was bekommen Sie? Dieses Medikament bekommen Sie in der Apotheke."
+    "example": "Haben Sie meinen Brief bekommen? Was bekommen Sie? Dieses Medikament bekommen Sie in der Apotheke.",
+    "verbForms": "hat bekommen"
   },
   {
     "word": "benutzen",
@@ -599,7 +626,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "occupation, profession, trade, job, career",
-    "example": "Was sind Sie von Beruf? Was ist Ihr Beruf?"
+    "example": "Was sind Sie von Beruf? Was ist Ihr Beruf?",
+    "plural": "-e"
   },
   {
     "word": "besetzt",
@@ -613,7 +641,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to visit (a city, tourist site, monument etc.)",
-    "example": "Ich möchte gern den Dom besichtigen."
+    "example": "Ich möchte gern den Dom besichtigen.",
+    "verbForms": "hat besichtigt"
   },
   {
     "word": "besser",
@@ -634,42 +663,48 @@
     "article": null,
     "wordType": "verb",
     "translation": "to order",
-    "example": "Wir möchten bestellen, bitte. Dieses Buch haben wir nicht – sollen wir es für Sie bestellen?"
+    "example": "Wir möchten bestellen, bitte. Dieses Buch haben wir nicht – sollen wir es für Sie bestellen?",
+    "verbForms": "hat bestellt"
   },
   {
     "word": "besuchen",
     "article": null,
     "wordType": "verb",
     "translation": "to visit, to see",
-    "example": "Darf ich dich besuchen?"
+    "example": "Darf ich dich besuchen?",
+    "verbForms": "hat besucht"
   },
   {
     "word": "Bett",
     "article": "das",
     "wordType": "noun",
     "translation": "bed",
-    "example": "Wir brauchen noch ein Kinderbett."
+    "example": "Wir brauchen noch ein Kinderbett.",
+    "plural": "-en"
   },
   {
     "word": "bezahlen",
     "article": null,
     "wordType": "verb",
     "translation": "to pay, give money",
-    "example": "Wo muss ich bezahlen?"
+    "example": "Wo muss ich bezahlen?",
+    "verbForms": "hat bezahlt"
   },
   {
     "word": "Bier",
     "article": "das",
     "wordType": "noun",
     "translation": "beer",
-    "example": "Noch ein Bier bitte."
+    "example": "Noch ein Bier bitte.",
+    "plural": "-e"
   },
   {
     "word": "Bild",
     "article": "das",
     "wordType": "noun",
     "translation": "depiction, image, picture",
-    "example": "Hast du ein Bild von deinem Sohn?"
+    "example": "Hast du ein Bild von deinem Sohn?",
+    "plural": "-er"
   },
   {
     "word": "billig",
@@ -718,7 +753,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to remain (to continue to be)",
-    "example": "Ich bleibe heute zu Hause. Wir bleiben nur bis morgen."
+    "example": "Ich bleibe heute zu Hause. Wir bleiben nur bis morgen.",
+    "verbForms": "ist geblieben"
   },
   {
     "word": "Bleistift",
@@ -738,8 +774,9 @@
     "word": "Blume",
     "article": "die",
     "wordType": "noun",
-    "translation": "flower, blossom of an angiosperm)",
-    "example": "Gefallen dir die Blumen?"
+    "translation": "flower, blossom of an angiosperm",
+    "example": "Gefallen dir die Blumen?",
+    "plural": "-n"
   },
   {
     "word": "Bogen",
@@ -760,7 +797,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to need, to be in need of, to require",
-    "example": "Brauchst du die Zeitung noch?"
+    "example": "Brauchst du die Zeitung noch?",
+    "verbForms": "hat gebraucht"
   },
   {
     "word": "breit",
@@ -774,35 +812,40 @@
     "article": "der",
     "wordType": "noun",
     "translation": "letter (written message)",
-    "example": "Haben Sie einen Brief für mich?"
+    "example": "Haben Sie einen Brief für mich?",
+    "plural": "-e"
   },
   {
     "word": "Briefmarke",
     "article": "die",
     "wordType": "noun",
     "translation": "postage stamp",
-    "example": "Kaufst du bitte Briefmarken bei der Post."
+    "example": "Kaufst du bitte Briefmarken bei der Post.",
+    "plural": "-n"
   },
   {
     "word": "bringen",
     "article": null,
     "wordType": "verb",
     "translation": "to bring, to fetch, to take, to convey, to bear",
-    "example": "Bringen Sie mir bitte noch einen Kaffee! Wir müssen ihn zum Arzt bringen."
+    "example": "Bringen Sie mir bitte noch einen Kaffee! Wir müssen ihn zum Arzt bringen.",
+    "verbForms": "hat gebracht"
   },
   {
     "word": "Brot",
     "article": "das",
     "wordType": "noun",
     "translation": "bread",
-    "example": "Haben Sie auch Weißbrot? Nimm noch ein paar Brote für die Fahrt mit."
+    "example": "Haben Sie auch Weißbrot? Nimm noch ein paar Brote für die Fahrt mit.",
+    "plural": "-e"
   },
   {
     "word": "Bruder",
     "article": "der",
     "wordType": "noun",
     "translation": "brother",
-    "example": "Sein Bruder arbeitet auch hier."
+    "example": "Sein Bruder arbeitet auch hier.",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Buchstabe",
@@ -823,14 +866,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "bus (public transport)",
-    "example": "Wann kommt der nächste Bus?"
+    "example": "Wann kommt der nächste Bus?",
+    "plural": "-se"
   },
   {
     "word": "Butter",
     "article": "die",
     "wordType": "noun",
     "translation": "butter",
-    "example": "Für mich bitte ein Brötchen mit Butter und Käse."
+    "example": "Für mich bitte ein Brötchen mit Butter und Käse.",
+    "plural": "only sg."
   },
   {
     "word": "CD",
@@ -844,7 +889,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "boss, chief",
-    "example": "Wir haben eine neue Chefin."
+    "example": "Wir haben eine neue Chefin.",
+    "plural": "-s"
   },
   {
     "word": "circa/ca.",
@@ -984,13 +1030,14 @@
     "article": null,
     "wordType": "verb",
     "translation": "to print (a book, newspaper etc.)",
-    "example": "Bitte drucke das Formular für mich."
+    "example": "Bitte drucke das Formular für mich.",
+    "verbForms": "hat gedruckt"
   },
   {
     "word": "drücken",
     "article": null,
     "wordType": "verb",
-    "translation": "to press, to push (a button/key",
+    "translation": "to press, to push (a button/key; a finger or other object against something)",
     "example": "Drück hier, dann geht der Computer an."
   },
   {
@@ -1019,7 +1066,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "thirst",
-    "example": "Hast du etwas zu trinken? Ich habe großen Durst."
+    "example": "Hast du etwas zu trinken? Ich habe großen Durst.",
+    "plural": "only sg."
   },
   {
     "word": "duschen",
@@ -1040,7 +1088,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "egg (all biological senses)",
-    "example": "Möchtest du ein Ei zum Frühstück?"
+    "example": "Möchtest du ein Ei zum Frühstück?",
+    "plural": "-er"
   },
   {
     "word": "eilig",
@@ -1068,7 +1117,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "entrance, entry",
-    "example": "Der Eingang ist um die Ecke."
+    "example": "Der Eingang ist um die Ecke.",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "einkaufen",
@@ -1082,7 +1132,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to invite",
-    "example": "Darf ich Sie zu einem Kaffee einladen?"
+    "example": "Darf ich Sie zu einem Kaffee einladen?",
+    "verbForms": "lädt ein · hat eingeladen"
   },
   {
     "word": "einmal",
@@ -1103,7 +1154,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "occurring",
-    "example": "Der Preis für den Eintritt ist 5 Euro."
+    "example": "Der Preis für den Eintritt ist 5 Euro.",
+    "plural": "only sg."
   },
   {
     "word": "Einzelzimmer",
@@ -1117,21 +1169,24 @@
     "article": "die",
     "wordType": "noun",
     "translation": "parents",
-    "example": "(pl.) Meine Eltern leben in Spanien."
+    "example": "(pl.) Meine Eltern leben in Spanien.",
+    "plural": "only pl."
   },
   {
     "word": "E-Mail",
     "article": "die",
     "wordType": "noun",
-    "translation": "e-mail (system",
-    "example": "Ich habe Ihre E-Mail nicht bekommen."
+    "translation": "e-mail (system; letter)",
+    "example": "Ich habe Ihre E-Mail nicht bekommen.",
+    "plural": "-s"
   },
   {
     "word": "empfehlen",
     "article": null,
     "wordType": "verb",
     "translation": "to propose, to advise in favor of",
-    "example": "Welchen Wein können Sie mir empfehlen?"
+    "example": "Welchen Wein können Sie mir empfehlen?",
+    "verbForms": "empfiehlt · hat empfohlen"
   },
   {
     "word": "enden",
@@ -1145,7 +1200,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to excuse (something or (formal) someone)",
-    "example": "Entschuldigen Sie bitte!"
+    "example": "Entschuldigen Sie bitte!",
+    "verbForms": "hat sich entschuldigt"
   },
   {
     "word": "er",
@@ -1159,7 +1215,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "result, outcome, conclusion, finding, fruit, consequence, upshot, answer",
-    "example": "Das Ergebnis des Tests bekommen Sie in zwei Wochen."
+    "example": "Das Ergebnis des Tests bekommen Sie in zwei Wochen.",
+    "plural": "-se"
   },
   {
     "word": "erklären",
@@ -1187,7 +1244,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to tell, to narrate, to recount",
-    "example": "Wir müssen euch etwas erzählen!"
+    "example": "Wir müssen euch etwas erzählen!",
+    "verbForms": "hat erzählt"
   },
   {
     "word": "es",
@@ -1201,7 +1259,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to eat",
-    "example": "Was gibt es zu essen?"
+    "example": "Was gibt es zu essen?",
+    "verbForms": "isst · hat gegessen"
   },
   {
     "word": "euer",
@@ -1215,14 +1274,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to go at speed",
-    "example": "Ich fahre mit dem Auto zur Arbeit."
+    "example": "Ich fahre mit dem Auto zur Arbeit.",
+    "verbForms": "fährt · ist gefahren"
   },
   {
     "word": "Fahrkarte",
     "article": "die",
     "wordType": "noun",
     "translation": "fare ticket",
-    "example": "Hast du schon eine Fahrkarte?"
+    "example": "Hast du schon eine Fahrkarte?",
+    "plural": "-n"
   },
   {
     "word": "falsch",
@@ -1236,7 +1297,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "family",
-    "example": "Meine Familie lebt in Spanien."
+    "example": "Meine Familie lebt in Spanien.",
+    "plural": "-n"
   },
   {
     "word": "Farbe",
@@ -1257,7 +1319,8 @@
     "article": null,
     "wordType": "noun",
     "translation": "celebration",
-    "example": "z. B. Feierabend, Feiertag Am Montag ist Feiertag."
+    "example": "z. B. Feierabend, Feiertag Am Montag ist Feiertag.",
+    "plural": "-n"
   },
   {
     "word": "feiern",
@@ -1299,35 +1362,40 @@
     "article": "das",
     "wordType": "noun",
     "translation": "fever (heightened body temperature)",
-    "example": "Mein Mann hat noch immer Fieber."
+    "example": "Mein Mann hat noch immer Fieber.",
+    "plural": "only sg."
   },
   {
     "word": "Film",
     "article": "der",
     "wordType": "noun",
     "translation": "film (a thin layer of some substance)",
-    "example": "Ich möchte gern diesen Film sehen."
+    "example": "Ich möchte gern diesen Film sehen.",
+    "plural": "-e"
   },
   {
     "word": "finden",
     "article": null,
     "wordType": "verb",
     "translation": "to find",
-    "example": "Wir müssen den Schlüssel finden."
+    "example": "Wir müssen den Schlüssel finden.",
+    "verbForms": "hat gefunden"
   },
   {
     "word": "Firma",
     "article": "die",
     "wordType": "noun",
     "translation": "A company, a business.",
-    "example": "Er arbeitet jetzt bei einer anderen Firma."
+    "example": "Er arbeitet jetzt bei einer anderen Firma.",
+    "plural": "Firmen"
   },
   {
     "word": "Fisch",
     "article": "der",
     "wordType": "noun",
     "translation": "fish",
-    "example": "Ich esse gern Fisch. Fleisch mag ich nicht."
+    "example": "Ich esse gern Fisch. Fleisch mag ich nicht.",
+    "plural": "-e"
   },
   {
     "word": "Flasche",
@@ -1341,28 +1409,32 @@
     "article": "das",
     "wordType": "noun",
     "translation": "flesh",
-    "example": "Fleisch mag ich nicht."
+    "example": "Fleisch mag ich nicht.",
+    "plural": "only sg."
   },
   {
     "word": "fliegen",
     "article": null,
     "wordType": "verb",
     "translation": "to fly",
-    "example": "Ich fliege nicht gern. Deshalb fahre ich mit dem Zug. abfliegen Wann fliegst du ab?"
+    "example": "Ich fliege nicht gern. Deshalb fahre ich mit dem Zug. abfliegen Wann fliegst du ab?",
+    "verbForms": "ist geflogen"
   },
   {
     "word": "Flughafen",
     "article": "der",
     "wordType": "noun",
     "translation": "airport",
-    "example": "Kannst du mich zum Flughafen bringen?"
+    "example": "Kannst du mich zum Flughafen bringen?",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Flugzeug",
     "article": "das",
     "wordType": "noun",
     "translation": "aeroplane",
-    "example": "Das Flugzeug aus Berlin kommt heute später an."
+    "example": "Das Flugzeug aus Berlin kommt heute später an.",
+    "plural": "-e"
   },
   {
     "word": "Formular",
@@ -1383,14 +1455,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to ask",
-    "example": "Er möchte Sie etwas fragen. Wann kommen Sie?"
+    "example": "Er möchte Sie etwas fragen. Wann kommen Sie?",
+    "verbForms": "hat gefragt"
   },
   {
     "word": "Frau",
     "article": "die",
     "wordType": "noun",
     "translation": "woman (adult female human)",
-    "example": "Das ist Frau Becker. Guten Tag, Frau Schmitt! Hier arbeiten mehr Frauen als Männer."
+    "example": "Das ist Frau Becker. Guten Tag, Frau Schmitt! Hier arbeiten mehr Frauen als Männer.",
+    "plural": "-en"
   },
   {
     "word": "frei",
@@ -1425,7 +1499,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "friend",
-    "example": "Das ist ein Freund von mir. Das ist meine Freundin."
+    "example": "Das ist ein Freund von mir. Das ist meine Freundin.",
+    "plural": "-e"
   },
   {
     "word": "früher",
@@ -1467,14 +1542,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "garden, yard (grounds at the front or back of a house)",
-    "example": "Wir haben leider keinen Garten."
+    "example": "Wir haben leider keinen Garten.",
+    "plural": "\\u00a8-"
   },
   {
     "word": "geben",
     "article": null,
     "wordType": "verb",
     "translation": "to give (changing ownership)",
-    "example": "Kannst du mir bitte deinen Kugelschreiber geben? Es gibt keine Karten mehr."
+    "example": "Kannst du mir bitte deinen Kugelschreiber geben? Es gibt keine Karten mehr.",
+    "verbForms": "gibt · hat gegeben"
   },
   {
     "word": "geboren",
@@ -1502,14 +1579,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "birthday",
-    "example": "Herzlichen Glückwunsch zum Geburtstag!"
+    "example": "Herzlichen Glückwunsch zum Geburtstag!",
+    "plural": "-e"
   },
   {
     "word": "gefallen",
     "article": null,
     "wordType": "verb",
     "translation": "to please",
-    "example": "Das gefällt mir."
+    "example": "Das gefällt mir.",
+    "verbForms": "gefällt · hat gefallen"
   },
   {
     "word": "gegen",
@@ -1523,7 +1602,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to go, to walk",
-    "example": "Ich weiß nicht, wie das geht. Wie geht‘s? Jetzt muss ich (aber) leider gehen. Ich muss zum Arzt gehen. Das geht nicht!"
+    "example": "Ich weiß nicht, wie das geht. Wie geht‘s? Jetzt muss ich (aber) leider gehen. Ich muss zum Arzt gehen. Das geht nicht!",
+    "verbForms": "ist gegangen"
   },
   {
     "word": "gehören",
@@ -1537,21 +1617,24 @@
     "article": "das",
     "wordType": "noun",
     "translation": "money",
-    "example": "Hast du noch Geld?"
+    "example": "Hast du noch Geld?",
+    "plural": "only sg."
   },
   {
     "word": "Gemüse",
     "article": "das",
     "wordType": "noun",
     "translation": "vegetable",
-    "example": "Gemüse brauchen wir auch noch."
+    "example": "Gemüse brauchen wir auch noch.",
+    "plural": "only sg."
   },
   {
     "word": "Gepäck",
     "article": "das",
     "wordType": "noun",
     "translation": "luggage, baggage",
-    "example": "Wollen Sie Ihr Gepäck mitnehmen?"
+    "example": "Wollen Sie Ihr Gepäck mitnehmen?",
+    "plural": "only sg."
   },
   {
     "word": "gerade",
@@ -1579,14 +1662,16 @@
     "article": "das",
     "wordType": "noun",
     "translation": "shop",
-    "example": "Die Geschäfte schließen um 18.30 Uhr."
+    "example": "Die Geschäfte schließen um 18.30 Uhr.",
+    "plural": "-e"
   },
   {
     "word": "Geschenk",
     "article": "das",
     "wordType": "noun",
     "translation": "present, gift",
-    "example": "Danke für das schöne Geschenk."
+    "example": "Danke für das schöne Geschenk.",
+    "plural": "-e"
   },
   {
     "word": "Geschwister",
@@ -1600,7 +1685,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "conversation, chat, talk",
-    "example": "Das Gespräch mit Frau Kunz ist um 14 Uhr."
+    "example": "Das Gespräch mit Frau Kunz ist um 14 Uhr.",
+    "plural": "-e"
   },
   {
     "word": "gestern",
@@ -1635,7 +1721,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to win",
-    "example": "Wer gewinnt das Spiel?"
+    "example": "Wer gewinnt das Spiel?",
+    "verbForms": "hat gewonnen"
   },
   {
     "word": "glauben",
@@ -1656,7 +1743,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "railway (track on which trains run)",
-    "example": "Der ICE nach Berlin hält heute an Gleis 12."
+    "example": "Der ICE nach Berlin hält heute an Gleis 12.",
+    "plural": "-e"
   },
   {
     "word": "Glück",
@@ -1789,14 +1877,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "stop",
-    "example": "An der nächsten Haltestelle müssen Sie aussteigen."
+    "example": "An der nächsten Haltestelle müssen Sie aussteigen.",
+    "plural": "-n"
   },
   {
     "word": "Handy",
     "article": "das",
     "wordType": "noun",
     "translation": "mobile phone, mobile, cell phone, phone (portable, wireless telephone)",
-    "example": "In der Schule bitte die Handys ausmachen!"
+    "example": "In der Schule bitte die Handys ausmachen!",
+    "plural": "-s"
   },
   {
     "word": "Hausaufgabe",
@@ -1810,7 +1900,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "home, home town, homeland, native land",
-    "example": "Ich komme aus der Schweiz. Das ist meine Heimat."
+    "example": "Ich komme aus der Schweiz. Das ist meine Heimat.",
+    "plural": "only sg."
   },
   {
     "word": "heiraten",
@@ -1824,14 +1915,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to have a name",
-    "example": "Ich heiße Charlotte Meier. Wie heißt das auf Deutsch?"
+    "example": "Ich heiße Charlotte Meier. Wie heißt das auf Deutsch?",
+    "verbForms": "hat geheißen"
   },
   {
     "word": "helfen",
     "article": null,
     "wordType": "verb",
     "translation": "to help (someone)",
-    "example": "Können Sie mir helfen, bitte?"
+    "example": "Können Sie mir helfen, bitte?",
+    "verbForms": "hilft · hat geholfen"
   },
   {
     "word": "hell",
@@ -1880,7 +1973,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "help, aid",
-    "example": "Hilfe! Bitte helfen Sie mir! Brauchen Sie meine Hilfe?"
+    "example": "Hilfe! Bitte helfen Sie mir! Brauchen Sie meine Hilfe?",
+    "plural": "only sg."
   },
   {
     "word": "hinten",
@@ -1922,28 +2016,32 @@
     "article": null,
     "wordType": "verb",
     "translation": "to hear (to perceive sounds (or a sound) through the ear)",
-    "example": "Hör mal! Was ist das? Ich habe das Lied schon mal gehört."
+    "example": "Hör mal! Was ist das? Ich habe das Lied schon mal gehört.",
+    "verbForms": "hat gehört"
   },
   {
     "word": "Hotel",
     "article": "das",
     "wordType": "noun",
     "translation": "hotel",
-    "example": "Im Urlaub sind wir in einem Hotel am Meer."
+    "example": "Im Urlaub sind wir in einem Hotel am Meer.",
+    "plural": "-s"
   },
   {
     "word": "Hund",
     "article": "der",
     "wordType": "noun",
     "translation": "dog, hound",
-    "example": "Der Hund ist noch jung."
+    "example": "Der Hund ist noch jung.",
+    "plural": "-e"
   },
   {
     "word": "Hunger",
     "article": "der",
     "wordType": "noun",
     "translation": "hunger",
-    "example": "Ich habe Hunger! Wann ist das Essen fertig?"
+    "example": "Ich habe Hunger! Wann ist das Essen fertig?",
+    "plural": "only sg."
   },
   {
     "word": "ich",
@@ -2006,7 +2104,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "jacket",
-    "example": "Zieh dir eine Jacke an. Es ist kalt."
+    "example": "Zieh dir eine Jacke an. Es ist kalt.",
+    "plural": "-n"
   },
   {
     "word": "jed",
@@ -2048,14 +2147,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "boy",
-    "example": "Ich habe zwei Kinder. Einen Jungen und ein Mädchen."
+    "example": "Ich habe zwei Kinder. Einen Jungen und ein Mädchen.",
+    "plural": "-n"
   },
   {
     "word": "Kaffee",
     "article": "der",
     "wordType": "noun",
     "translation": "coffee",
-    "example": "Zum Frühstück trinke ich immer Kaffee."
+    "example": "Zum Frühstück trinke ich immer Kaffee.",
+    "plural": "-s"
   },
   {
     "word": "kaputt",
@@ -2076,21 +2177,24 @@
     "article": "die",
     "wordType": "noun",
     "translation": "potato",
-    "example": "Für Pommes frites braucht man Kartoffeln."
+    "example": "Für Pommes frites braucht man Kartoffeln.",
+    "plural": "-n"
   },
   {
     "word": "Kasse",
     "article": "die",
     "wordType": "noun",
     "translation": "cash register, cash box",
-    "example": "Zahlen Sie bitte an der Kasse."
+    "example": "Zahlen Sie bitte an der Kasse.",
+    "plural": "-n"
   },
   {
     "word": "kaufen",
     "article": null,
     "wordType": "verb",
     "translation": "to buy, to purchase",
-    "example": "Tim kauft sich ein neues Auto."
+    "example": "Tim kauft sich ein neues Auto.",
+    "verbForms": "hat gekauft"
   },
   {
     "word": "kein",
@@ -2104,14 +2208,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to know",
-    "example": "Kennen Sie diese Frau? – Nein, leider nicht. kennenlernen Wir sind neu hier. Wir möchten Sie kennenlernen."
+    "example": "Kennen Sie diese Frau? – Nein, leider nicht. kennenlernen Wir sind neu hier. Wir möchten Sie kennenlernen.",
+    "verbForms": "hat gekannt"
   },
   {
     "word": "Kind",
     "article": "das",
     "wordType": "noun",
     "translation": "kid",
-    "example": "Wie viele Kinder haben Sie?"
+    "example": "Wie viele Kinder haben Sie?",
+    "plural": "-er"
   },
   {
     "word": "Kindergarten",
@@ -2125,7 +2231,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "cinema",
-    "example": "Wir sehen heute Abend im Kino einen schönen Film."
+    "example": "Wir sehen heute Abend im Kino einen schönen Film.",
+    "plural": "-s"
   },
   {
     "word": "Kiosk",
@@ -2153,7 +2260,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "clothing",
-    "example": "Wo finde ich Kleidung? – Jacken im ersten, Jeans im zweiten Stock."
+    "example": "Wo finde ich Kleidung? – Jacken im ersten, Jeans im zweiten Stock.",
+    "plural": "only sg."
   },
   {
     "word": "klein",
@@ -2167,21 +2275,24 @@
     "article": null,
     "wordType": "verb",
     "translation": "to cook, to prepare food (chiefly hot food for lunch or supper)",
-    "example": "Herr Georgi kann gut kochen."
+    "example": "Herr Georgi kann gut kochen.",
+    "verbForms": "hat gekocht"
   },
   {
     "word": "Kollege",
     "article": "der",
     "wordType": "noun",
     "translation": "colleague, coworker, workmate, fellow worker or member",
-    "example": "Wie heißt die neue Kollegin?"
+    "example": "Wie heißt die neue Kollegin?",
+    "plural": "-n"
   },
   {
     "word": "kommen",
     "article": null,
     "wordType": "verb",
     "translation": "to come",
-    "example": "Woher kommen Sie? – Aus Frankreich. Kommst du mit ins Schwimmbad?"
+    "example": "Woher kommen Sie? – Aus Frankreich. Kommst du mit ins Schwimmbad?",
+    "verbForms": "ist gekommen"
   },
   {
     "word": "können",
@@ -2195,21 +2306,24 @@
     "article": "das",
     "wordType": "noun",
     "translation": "account",
-    "example": "Das Geld überweisen wir am ersten März auf Ihr Konto."
+    "example": "Das Geld überweisen wir am ersten März auf Ihr Konto.",
+    "plural": "Konten"
   },
   {
     "word": "Kopf",
     "article": "der",
     "wordType": "noun",
     "translation": "head",
-    "example": "Mein Kopf tut weh!"
+    "example": "Mein Kopf tut weh!",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "kosten",
     "article": null,
     "wordType": "verb",
     "translation": "to cost",
-    "example": "Wie viel kostet das? – 10 Euro."
+    "example": "Wie viel kostet das? – 10 Euro.",
+    "verbForms": "hat gekostet"
   },
   {
     "word": "krank",
@@ -2230,14 +2344,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "kitchen (room)",
-    "example": "Der neue Herd kommt in die Küche."
+    "example": "Der neue Herd kommt in die Küche.",
+    "plural": "-n"
   },
   {
     "word": "Kuchen",
     "article": "der",
     "wordType": "noun",
     "translation": "pie",
-    "example": "Ich nehme ein Stück Kuchen."
+    "example": "Ich nehme ein Stück Kuchen.",
+    "plural": "-"
   },
   {
     "word": "Kugelschreiber",
@@ -2272,7 +2388,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "customer, patron, client",
-    "example": "Einen Moment, bitte. Ich habe eine Kundin."
+    "example": "Einen Moment, bitte. Ich habe eine Kundin.",
+    "plural": "-n"
   },
   {
     "word": "Kurs",
@@ -2320,7 +2437,7 @@
     "word": "langsam",
     "article": null,
     "wordType": "adj",
-    "translation": "slow (taking a long time to move or travel",
+    "translation": "slow (taking a long time to move or travel; not happening in a short time)",
     "example": "Könnten Sie bitte etwas langsamer sprechen?"
   },
   {
@@ -2328,7 +2445,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to walk",
-    "example": "Ich möchte nicht Auto fahren, ich möchte laufen."
+    "example": "Ich möchte nicht Auto fahren, ich möchte laufen.",
+    "verbForms": "läuft · ist gelaufen"
   },
   {
     "word": "laut",
@@ -2342,7 +2460,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to live, to be alive",
-    "example": "Sie lebt bei ihrer Schwester. Ihre Eltern leben nicht mehr. mittel (pl.) Lebensmittel bekommen Sie im Supermarkt."
+    "example": "Sie lebt bei ihrer Schwester. Ihre Eltern leben nicht mehr. mittel (pl.) Lebensmittel bekommen Sie im Supermarkt.",
+    "verbForms": "hat gelebt"
   },
   {
     "word": "ledig",
@@ -2384,14 +2503,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to learn, to acquire knowledge",
-    "example": "Wie lange lernen Sie schon Deutsch?"
+    "example": "Wie lange lernen Sie schon Deutsch?",
+    "verbForms": "hat gelernt"
   },
   {
     "word": "lesen",
     "article": null,
     "wordType": "verb",
     "translation": "to read",
-    "example": "Ich lese ein Buch von García Márquez."
+    "example": "Ich lese ein Buch von García Márquez.",
+    "verbForms": "liest · hat gelesen"
   },
   {
     "word": "letzt",
@@ -2405,7 +2526,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "people",
-    "example": "(pl.) In der Disko sind viele Leute."
+    "example": "(pl.) In der Disko sind viele Leute.",
+    "plural": "only pl."
   },
   {
     "word": "Licht",
@@ -2468,7 +2590,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "solution (answer to a riddle or problem)",
-    "example": "Die Lösung ist ganz einfach."
+    "example": "Die Lösung ist ganz einfach.",
+    "plural": "-en"
   },
   {
     "word": "lustig",
@@ -2482,7 +2605,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to make, to produce, to create (an object, arrangement, situation, etc.)",
-    "example": "Was machst du heute Abend? Ich muss jetzt das Essen machen. Das macht 5 Euro 95. Das macht nichts."
+    "example": "Was machst du heute Abend? Ich muss jetzt das Essen machen. Das macht 5 Euro 95. Das macht nichts.",
+    "verbForms": "hat gemacht"
   },
   {
     "word": "man",
@@ -2503,7 +2627,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "sea",
-    "example": "Wir machen Urlaub am Meer."
+    "example": "Wir machen Urlaub am Meer.",
+    "plural": "-e"
   },
   {
     "word": "mehr",
@@ -2538,14 +2663,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to hire, to rent",
-    "example": "Ich möchte ein Auto mieten."
+    "example": "Ich möchte ein Auto mieten.",
+    "verbForms": "hat gemietet"
   },
   {
     "word": "Milch",
     "article": "die",
     "wordType": "noun",
     "translation": "milk",
-    "example": "Die Milch steht im Kühlschrank."
+    "example": "Die Milch steht im Kühlschrank.",
+    "plural": "only sg."
   },
   {
     "word": "mit",
@@ -2657,7 +2784,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "mother",
-    "example": "Frau Berghäuser ist die Mutter von Michaela."
+    "example": "Frau Berghäuser ist die Mutter von Michaela.",
+    "plural": "\\u00a8-"
   },
   {
     "word": "nach",
@@ -2678,14 +2806,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "name (forename, Christian name, given name)",
-    "example": "Mein Name ist Thomas Schmidt. Mein Vorname ist Thomas; Schmidt ist der Familienname."
+    "example": "Mein Name ist Thomas Schmidt. Mein Vorname ist Thomas; Schmidt ist der Familienname.",
+    "plural": "-n"
   },
   {
     "word": "nehmen",
     "article": null,
     "wordType": "verb",
     "translation": "to take",
-    "example": "Heute gibt es Hähnchen. Das nehme ich. Ich nehme den Bus."
+    "example": "Heute gibt es Hähnchen. Das nehme ich. Ich nehme den Bus.",
+    "verbForms": "nimmt · hat genommen"
   },
   {
     "word": "nein",
@@ -2741,7 +2871,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "number",
-    "example": "Sie haben Zimmer Nummer zwölf. Welche Hausnummer haben Sie? Können Sie mir Ihre Nummer geben?"
+    "example": "Sie haben Zimmer Nummer zwölf. Welche Hausnummer haben Sie? Können Sie mir Ihre Nummer geben?",
+    "plural": "-n"
   },
   {
     "word": "nur",
@@ -2762,7 +2893,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "fruit (food)",
-    "example": "Im Sommer ist das Obst billig."
+    "example": "Im Sommer ist das Obst billig.",
+    "plural": "only sg."
   },
   {
     "word": "oder",
@@ -2776,7 +2908,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to open",
-    "example": "Ich öffne die Tür. geöffnet Der Laden ist samstags bis 16.00 Uhr geöffnet."
+    "example": "Ich öffne die Tür. geöffnet Der Laden ist samstags bis 16.00 Uhr geöffnet.",
+    "verbForms": "hat geöffnet"
   },
   {
     "word": "oft",
@@ -2818,7 +2951,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "arrangement, regulation",
-    "example": "Das ist in Ordnung."
+    "example": "Das ist in Ordnung.",
+    "plural": "only sg."
   },
   {
     "word": "Ort",
@@ -2874,7 +3008,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "mail, post (sent and received letters etc.)",
-    "example": "Wo ist die Post, bitte? Ist Post da?"
+    "example": "Wo ist die Post, bitte? Ist Post da?",
+    "plural": "only sg."
   },
   {
     "word": "Postleitzahl",
@@ -2902,14 +3037,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "price",
-    "example": "Die Preise sind hoch."
+    "example": "Die Preise sind hoch.",
+    "plural": "-e"
   },
   {
     "word": "Problem",
     "article": "das",
     "wordType": "noun",
     "translation": "problem",
-    "example": "Mein Problem ist die Sprache."
+    "example": "Mein Problem ist die Sprache.",
+    "plural": "-e"
   },
   {
     "word": "Prospekt",
@@ -2923,7 +3060,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "an official test or examination on a subject",
-    "example": "Die Prüfung ist am Montag um 8.00 Uhr."
+    "example": "Die Prüfung ist am Montag um 8.00 Uhr.",
+    "plural": "-en"
   },
   {
     "word": "pünktlich",
@@ -2951,7 +3089,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "bill, restaurant bill",
-    "example": "Die Rechnung, bitte."
+    "example": "Die Rechnung, bitte.",
+    "plural": "-en"
   },
   {
     "word": "rechts",
@@ -2965,14 +3104,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to rain",
-    "example": "Heute regnet es."
+    "example": "Heute regnet es.",
+    "verbForms": "hat geregnet"
   },
   {
     "word": "Reis",
     "article": "der",
     "wordType": "noun",
     "translation": "rice",
-    "example": "Ich esse gern Reis."
+    "example": "Ich esse gern Reis.",
+    "plural": "only sg."
   },
   {
     "word": "reisen",
@@ -2986,14 +3127,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to repair",
-    "example": "Er hat das Fahrrad repariert."
+    "example": "Er hat das Fahrrad repariert.",
+    "verbForms": "hat repariert"
   },
   {
     "word": "Restaurant",
     "article": "das",
     "wordType": "noun",
     "translation": "restaurant",
-    "example": "Wir essen heute in einem Restaurant."
+    "example": "Wir essen heute in einem Restaurant.",
+    "plural": "-s"
   },
   {
     "word": "Rezeption",
@@ -3028,14 +3171,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "juice",
-    "example": "Möchtest du einen Apfelsaft?"
+    "example": "Möchtest du einen Apfelsaft?",
+    "plural": "\\u00a8-e"
   },
   {
     "word": "sagen",
     "article": null,
     "wordType": "verb",
-    "translation": "to say (to pronounce",
-    "example": "Sag mal, wie geht es dir denn?"
+    "translation": "to say (to pronounce; communicate verbally)",
+    "example": "Sag mal, wie geht es dir denn?",
+    "verbForms": "hat gesagt"
   },
   {
     "word": "Salat",
@@ -3049,7 +3194,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "salt, table salt, sal",
-    "example": "Herr Ober, kann ich bitte Salz haben?"
+    "example": "Herr Ober, kann ich bitte Salz haben?",
+    "plural": "only sg."
   },
   {
     "word": "Satz",
@@ -3084,7 +3230,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to send, to dispatch",
-    "example": "Bitte schicken Sie mir eine E-Mail."
+    "example": "Bitte schicken Sie mir eine E-Mail.",
+    "verbForms": "hat geschickt"
   },
   {
     "word": "Schild",
@@ -3098,13 +3245,14 @@
     "article": null,
     "wordType": "verb",
     "translation": "to sleep",
-    "example": "Ich schlafe meistens acht Stunden."
+    "example": "Ich schlafe meistens acht Stunden.",
+    "verbForms": "schläft · hat geschlafen"
   },
   {
     "word": "schlecht",
     "article": null,
     "wordType": "adj",
-    "translation": "bad, evil, wicked (the opposite of good",
+    "translation": "bad, evil, wicked (the opposite of good; immoral)",
     "example": "Mir ist schlecht! Sie sehen schlecht aus. Wir haben schlechtes Wetter."
   },
   {
@@ -3112,7 +3260,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to shut",
-    "example": "Bitte, schließen Sie die Tür. geschlossen Die Bank hat am Samstag geschlossen."
+    "example": "Bitte, schließen Sie die Tür. geschlossen Die Bank hat am Samstag geschlossen.",
+    "verbForms": "hat geschlossen"
   },
   {
     "word": "Schluss",
@@ -3126,7 +3275,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to taste",
-    "example": "Schmeckt das gut?"
+    "example": "Schmeckt das gut?",
+    "verbForms": "hat geschmeckt"
   },
   {
     "word": "schnell",
@@ -3154,21 +3304,24 @@
     "article": null,
     "wordType": "verb",
     "translation": "to write, to write out (use letters to make words and texts)",
-    "example": "Er schreibt jeden Tag fünfzig E-Mails."
+    "example": "Er schreibt jeden Tag fünfzig E-Mails.",
+    "verbForms": "hat geschrieben"
   },
   {
     "word": "Schuh",
     "article": "der",
     "wordType": "noun",
     "translation": "shoe",
-    "example": "Zieh die Schuhe aus!"
+    "example": "Zieh die Schuhe aus!",
+    "plural": "-e"
   },
   {
     "word": "Schule",
     "article": "die",
     "wordType": "noun",
     "translation": "school",
-    "example": "Meine Tochter geht schon in die Schule. Die Schule ist gleich hier um die Ecke. Schüler."
+    "example": "Meine Tochter geht schon in die Schule. Die Schule ist gleich hier um die Ecke. Schüler.",
+    "plural": "-n"
   },
   {
     "word": "schwer",
@@ -3182,28 +3335,32 @@
     "article": "die",
     "wordType": "noun",
     "translation": "sister",
-    "example": "Meine Schwester kommt am Dienstag."
+    "example": "Meine Schwester kommt am Dienstag.",
+    "plural": "-n"
   },
   {
     "word": "schwimmen",
     "article": null,
     "wordType": "noun",
     "translation": "swim",
-    "example": "Ich schwimme jeden Tag einen Kilometer."
+    "example": "Ich schwimme jeden Tag einen Kilometer.",
+    "verbForms": "ist geschwommen"
   },
   {
     "word": "See",
     "article": "der",
     "wordType": "noun",
     "translation": "lake",
-    "example": "Komm, wir fahren zum Starnberger See."
+    "example": "Komm, wir fahren zum Starnberger See.",
+    "plural": "-n"
   },
   {
     "word": "sehen",
     "article": null,
     "wordType": "verb",
     "translation": "to see",
-    "example": "Ich kann dich nicht sehen. Ich habe diesen Jungen schon einmal gesehen."
+    "example": "Ich kann dich nicht sehen. Ich habe diesen Jungen schon einmal gesehen.",
+    "verbForms": "sieht · hat gesehen"
   },
   {
     "word": "sehr",
@@ -3294,7 +3451,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "a sun",
-    "example": "Die Sonne scheint."
+    "example": "Die Sonne scheint.",
+    "plural": "only sg."
   },
   {
     "word": "spät",
@@ -3315,14 +3473,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "menu",
-    "example": "Bringen Sie mir die Speisekarte, bitte."
+    "example": "Bringen Sie mir die Speisekarte, bitte.",
+    "plural": "-n"
   },
   {
     "word": "spielen",
     "article": null,
     "wordType": "verb",
     "translation": "to play",
-    "example": "Die Kinder spielen draußen. Spielen Sie Karten?"
+    "example": "Die Kinder spielen draußen. Spielen Sie Karten?",
+    "verbForms": "hat gespielt"
   },
   {
     "word": "Sport",
@@ -3336,14 +3496,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "language",
-    "example": "Welche Sprachen sprichst du?"
+    "example": "Welche Sprachen sprichst du?",
+    "plural": "-n"
   },
   {
     "word": "sprechen",
     "article": null,
     "wordType": "verb",
     "translation": "to speak (some language, the truth, etc.)",
-    "example": "Kann ich (mit) Herrn Klein sprechen?"
+    "example": "Kann ich (mit) Herrn Klein sprechen?",
+    "verbForms": "spricht · hat gesprochen"
   },
   {
     "word": "stehen",
@@ -3357,7 +3519,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "place, stead, location, position, lieu",
-    "example": "Ich habe eine neue Stelle."
+    "example": "Ich habe eine neue Stelle.",
+    "plural": "-n"
   },
   {
     "word": "stellen",
@@ -3378,7 +3541,8 @@
     "article": "die",
     "wordType": "noun",
     "translation": "street",
-    "example": "In welcher Straße wohnen Sie?"
+    "example": "In welcher Straße wohnen Sie?",
+    "plural": "-n"
   },
   {
     "word": "Straßenbahn",
@@ -3406,14 +3570,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "hour (unit of time consisting of 60 minutes)",
-    "example": "Ich bin in einer Stunde zurück."
+    "example": "Ich bin in einer Stunde zurück.",
+    "plural": "-n"
   },
   {
     "word": "suchen",
     "article": null,
     "wordType": "verb",
     "translation": "to search, to look for",
-    "example": "Suchst du etwas?"
+    "example": "Suchst du etwas?",
+    "verbForms": "hat gesucht"
   },
   {
     "word": "tanzen",
@@ -3427,21 +3593,24 @@
     "article": "die",
     "wordType": "noun",
     "translation": "bag",
-    "example": "Ich habe die Schlüssel in der Tasche."
+    "example": "Ich habe die Schlüssel in der Tasche.",
+    "plural": "-n"
   },
   {
     "word": "Taxi",
     "article": "das",
     "wordType": "noun",
     "translation": "taxi, cab",
-    "example": "Es gibt heute keinen Bus mehr. Er fährt mit dem Taxi."
+    "example": "Es gibt heute keinen Bus mehr. Er fährt mit dem Taxi.",
+    "plural": "-s"
   },
   {
     "word": "Tee",
     "article": "der",
     "wordType": "noun",
     "translation": "tea",
-    "example": "Ich trinke morgens immer Tee."
+    "example": "Ich trinke morgens immer Tee.",
+    "plural": "-s"
   },
   {
     "word": "Teil",
@@ -3462,7 +3631,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "date",
-    "example": "Am besten machen wir sofort einen Termin."
+    "example": "Am besten machen wir sofort einen Termin.",
+    "plural": "-e"
   },
   {
     "word": "Test",
@@ -3504,14 +3674,16 @@
     "article": "der",
     "wordType": "noun",
     "translation": "table",
-    "example": "Die Fotos liegen auf dem Tisch."
+    "example": "Die Fotos liegen auf dem Tisch.",
+    "plural": "-e"
   },
   {
     "word": "Tochter",
     "article": "die",
     "wordType": "noun",
     "translation": "daughter",
-    "example": "Das ist meine Tochter Katharina."
+    "example": "Das ist meine Tochter Katharina.",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Toilette",
@@ -3539,21 +3711,24 @@
     "article": null,
     "wordType": "verb",
     "translation": "to meet",
-    "example": "Ich treffe in der Stadt einen Kollegen. Wir treffen uns immer freitags."
+    "example": "Ich treffe in der Stadt einen Kollegen. Wir treffen uns immer freitags.",
+    "verbForms": "trifft · hat getroffen"
   },
   {
     "word": "Treppe",
     "article": "die",
     "wordType": "noun",
     "translation": "stairs",
-    "example": "Die Toilette? Die Treppe hoch und dann links."
+    "example": "Die Toilette? Die Treppe hoch und dann links.",
+    "plural": "-n"
   },
   {
     "word": "trinken",
     "article": null,
     "wordType": "verb",
-    "translation": "to drink by mouth)",
-    "example": "Möchtest du etwas trinken?"
+    "translation": "to drink by mouth",
+    "example": "Möchtest du etwas trinken?",
+    "verbForms": "hat getrunken"
   },
   {
     "word": "tschüss",
@@ -3581,21 +3756,24 @@
     "article": null,
     "wordType": "verb",
     "translation": "to stay overnight, to overnight, stay the night, sleep over",
-    "example": "Du kannst bei mir übernachten."
+    "example": "Du kannst bei mir übernachten.",
+    "verbForms": "hat übernachtet"
   },
   {
     "word": "überweisen",
     "article": null,
     "wordType": "verb",
     "translation": "to transfer, to wire",
-    "example": "Sie können das Geld auch überweisen."
+    "example": "Sie können das Geld auch überweisen.",
+    "verbForms": "hat überwiesen"
   },
   {
     "word": "Uhr",
     "article": "die",
     "wordType": "noun",
     "translation": "hours, o'clock",
-    "example": "Es ist vier Uhr."
+    "example": "Es ist vier Uhr.",
+    "plural": "-en"
   },
   {
     "word": "um",
@@ -3609,7 +3787,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to move",
-    "example": "Nächsten Monat ziehen wir um."
+    "example": "Nächsten Monat ziehen wir um.",
+    "verbForms": "zieht um · ist umgezogen"
   },
   {
     "word": "und",
@@ -3644,28 +3823,32 @@
     "article": "der",
     "wordType": "noun",
     "translation": "lesson, class, instruction, education",
-    "example": "Wir haben Unterricht von 8.00 bis 12.00 Uhr."
+    "example": "Wir haben Unterricht von 8.00 bis 12.00 Uhr.",
+    "plural": "only sg."
   },
   {
     "word": "unterschreiben",
     "article": null,
     "wordType": "verb",
     "translation": "to sign (write one’s signature)",
-    "example": "Wo muss ich unterschreiben?"
+    "example": "Wo muss ich unterschreiben?",
+    "verbForms": "hat unterschrieben"
   },
   {
     "word": "Urlaub",
     "article": "der",
     "wordType": "noun",
     "translation": "holiday, vacation",
-    "example": "Ich nehme im September Urlaub."
+    "example": "Ich nehme im September Urlaub.",
+    "plural": "-e"
   },
   {
     "word": "Vater",
     "article": "der",
     "wordType": "noun",
     "translation": "father",
-    "example": "Mein Vater ist Arbeiter."
+    "example": "Mein Vater ist Arbeiter.",
+    "plural": "\\u00a8-"
   },
   {
     "word": "verboten",
@@ -3679,14 +3862,16 @@
     "article": null,
     "wordType": "verb",
     "translation": "to make money, to earn",
-    "example": "Ich verdiene 1.500 Euro im Monat."
+    "example": "Ich verdiene 1.500 Euro im Monat.",
+    "verbForms": "hat verdient"
   },
   {
     "word": "Verein",
     "article": "der",
     "wordType": "noun",
     "translation": "association, club, society",
-    "example": "Es gibt einen neuen Sportverein in der Stadt."
+    "example": "Es gibt einen neuen Sportverein in der Stadt.",
+    "plural": "-e"
   },
   {
     "word": "verheiratet",
@@ -3700,21 +3885,24 @@
     "article": null,
     "wordType": "verb",
     "translation": "to sell (something in exchange for money)",
-    "example": "Er verkauft sein altes Auto."
+    "example": "Er verkauft sein altes Auto.",
+    "verbForms": "hat verkauft"
   },
   {
     "word": "vermieten",
     "article": null,
     "wordType": "verb",
     "translation": "to rent (to someone), to rent out",
-    "example": "Die Wohnung ist schon vermietet."
+    "example": "Die Wohnung ist schon vermietet.",
+    "verbForms": "hat vermietet"
   },
   {
     "word": "verstehen",
     "article": null,
     "wordType": "verb",
     "translation": "to understand",
-    "example": "Können Sie mich verstehen?"
+    "example": "Können Sie mich verstehen?",
+    "verbForms": "hat verstanden"
   },
   {
     "word": "Verwandte",
@@ -3798,7 +3986,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to wait (for)",
-    "example": "Können Sie ein paar Minuten warten? Auf wen warten Sie?"
+    "example": "Können Sie ein paar Minuten warten? Auf wen warten Sie?",
+    "verbForms": "hat gewartet"
   },
   {
     "word": "warum",
@@ -3833,7 +4022,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "water (H₂O)",
-    "example": "Ein Glas Wasser, bitte."
+    "example": "Ein Glas Wasser, bitte.",
+    "plural": "only sg."
   },
   {
     "word": "weh",
@@ -3854,7 +4044,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "wine",
-    "example": "Nein danke, ich möchte keinen Wein."
+    "example": "Nein danke, ich möchte keinen Wein.",
+    "plural": "-e"
   },
   {
     "word": "weit",
@@ -3910,7 +4101,8 @@
     "article": "das",
     "wordType": "noun",
     "translation": "weather",
-    "example": "Wir hatten schlechtes Wetter."
+    "example": "Wir hatten schlechtes Wetter.",
+    "plural": "only sg."
   },
   {
     "word": "wichtig",
@@ -3931,7 +4123,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to repeat (to do or say again)",
-    "example": "Können Sie das bitte wiederholen?"
+    "example": "Können Sie das bitte wiederholen?",
+    "verbForms": "hat wiederholt"
   },
   {
     "word": "Wiederhören",
@@ -3966,7 +4159,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "wind",
-    "example": "Der Wind kommt aus Osten."
+    "example": "Der Wind kommt aus Osten.",
+    "plural": "-e"
   },
   {
     "word": "wir",
@@ -3980,7 +4174,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to know",
-    "example": "Weißt du, wie er heißt?"
+    "example": "Weißt du, wie er heißt?",
+    "verbForms": "weiß · hat gewusst"
   },
   {
     "word": "wo",
@@ -4008,7 +4203,8 @@
     "article": null,
     "wordType": "verb",
     "translation": "to live, reside, dwell",
-    "example": "Ich wohne in München."
+    "example": "Ich wohne in München.",
+    "verbForms": "hat gewohnt"
   },
   {
     "word": "wollen",
@@ -4036,14 +4232,16 @@
     "article": "die",
     "wordType": "noun",
     "translation": "time (as a concept)",
-    "example": "Ich habe heute keine Zeit. zurzeit Zurzeit habe ich sehr viel zu tun."
+    "example": "Ich habe heute keine Zeit. zurzeit Zurzeit habe ich sehr viel zu tun.",
+    "plural": "-en"
   },
   {
     "word": "Zeitung",
     "article": "die",
     "wordType": "noun",
     "translation": "newspaper",
-    "example": "Ich lese gern Zeitung."
+    "example": "Ich lese gern Zeitung.",
+    "plural": "-en"
   },
   {
     "word": "Zigarette",

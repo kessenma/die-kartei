@@ -96,31 +96,10 @@ struct FeedbackSection: View {
         """
     }
 
-    private var appVersion: String {
-        let info = Bundle.main.infoDictionary
-        let version = info?["CFBundleShortVersionString"] as? String ?? "?"
-        let build = info?["CFBundleVersion"] as? String ?? "?"
-        return "\(version) (\(build))"
-    }
-
-    /// The hardware identifier (e.g. "iPhone15,2"), more useful for debugging
-    /// than UIDevice's generic "iPhone". Falls back to UIDevice if unavailable.
-    private var deviceModel: String {
-        var systemInfo = utsname()
-        uname(&systemInfo)
-        let machine = Mirror(reflecting: systemInfo.machine).children.reduce(into: "") { result, element in
-            if let value = element.value as? Int8, value != 0 {
-                result.append(Character(UnicodeScalar(UInt8(value))))
-            }
-        }
-        return machine.isEmpty ? UIDevice.current.model : machine
-    }
-
-    private var osVersion: String {
-        "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)"
-    }
-
-    private var ramGB: Int {
-        Int((Double(ProcessInfo.processInfo.physicalMemory) / 1_073_741_824).rounded())
-    }
+    // Shared with the memory log's header (`DeviceInfo`), so a bug report and a pasted log
+    // describe the device the same way.
+    private var appVersion: String { DeviceInfo.appVersion }
+    private var deviceModel: String { DeviceInfo.deviceModel }
+    private var osVersion: String { DeviceInfo.osVersion }
+    private var ramGB: Int { DeviceCapability.ramGB }
 }

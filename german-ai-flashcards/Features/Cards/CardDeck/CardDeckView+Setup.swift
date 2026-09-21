@@ -37,6 +37,15 @@ extension CardDeckView {
                     cards: cards
                 )
 
+                if modelManager != nil {
+                    Button {
+                        showCardSettings = true
+                    } label: {
+                        Label("Card settings…", systemImage: "slider.horizontal.3")
+                            .font(.subheadline)
+                    }
+                }
+
                 illustrateDeckRow
 
                 if isAnkiMode {
@@ -205,34 +214,44 @@ extension CardDeckView {
         }
     }
 
+    /// Starts a fresh session from the top: deck order for plain/quiz play, the due set for SRS.
+    /// Shared by the Start button and `autoStart` launches.
+    func beginSession() {
+        sessionStartTime = .now
+        elapsedSeconds = 0
+        cardOrder = Array(cards.indices)
+        cardPosition = 0
+        currentIndex = 0
+        if isAnkiMode {
+            ankiDueIndices = savedCards.enumerated().compactMap { index, card in
+                guard let next = card.nextReviewDate else { return index }
+                return next <= .now ? index : nil
+            }
+            ankiDuePosition = 0
+            if !ankiDueIndices.isEmpty {
+                currentIndex = ankiDueIndices[0]
+            }
+        } else if isLeitnerMode {
+            let sessionNumber = leitnerSessionNumber
+            ankiDueIndices = savedCards.enumerated().compactMap { index, card in
+                LeitnerService.isDue(box: card.leitnerBox, sessionNumber: sessionNumber) ? index : nil
+            }
+            ankiDuePosition = 0
+            if !ankiDueIndices.isEmpty {
+                currentIndex = ankiDueIndices[0]
+            }
+        } else {
+            ankiDueIndices = []
+            ankiDuePosition = 0
+        }
+        resetSessionTally()
+        hasStarted = true
+    }
+
     @ViewBuilder
     private var startButton: some View {
         Button {
-            sessionStartTime = .now
-            elapsedSeconds = 0
-            cardOrder = Array(cards.indices)
-            cardPosition = 0
-            currentIndex = 0
-            if isAnkiMode {
-                ankiDueIndices = savedCards.enumerated().compactMap { index, card in
-                    guard let next = card.nextReviewDate else { return index }
-                    return next <= .now ? index : nil
-                }
-                ankiDuePosition = 0
-                if !ankiDueIndices.isEmpty {
-                    currentIndex = ankiDueIndices[0]
-                }
-            } else if isLeitnerMode {
-                let sessionNumber = leitnerSessionNumber
-                ankiDueIndices = savedCards.enumerated().compactMap { index, card in
-                    LeitnerService.isDue(box: card.leitnerBox, sessionNumber: sessionNumber) ? index : nil
-                }
-                ankiDuePosition = 0
-                if !ankiDueIndices.isEmpty {
-                    currentIndex = ankiDueIndices[0]
-                }
-            }
-            hasStarted = true
+            beginSession()
         } label: {
             Label(isSRSMode ? "Start Review" : "Start", systemImage: "play.fill")
                 .font(.headline)

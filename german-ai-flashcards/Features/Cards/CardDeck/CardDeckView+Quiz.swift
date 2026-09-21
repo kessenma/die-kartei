@@ -30,14 +30,12 @@ extension CardDeckView {
     /// three `finish*` functions. The shared summary screen used to always read `cardResults`, so
     /// SRS runs (whose results live elsewhere) showed 0% with the wrong total.
     var quizSummaryTally: (correct: Int, total: Int, missed: [Int]) {
-        if isAnkiMode {
-            let correct = ankiRatings.values.filter { $0 != .again }.count
-            let missed = ankiRatings.filter { $0.value == .again }.map { $0.key }.sorted()
-            return (correct, ankiDueIndices.count, missed)
-        } else if isLeitnerMode {
-            let correct = leitnerResults.values.filter { $0 }.count
-            let missed = leitnerResults.filter { !$0.value }.map { $0.key }.sorted()
-            return (correct, ankiDueIndices.count, missed)
+        if isSRSMode {
+            // Both SRS modes tally lapses per distinct card, since a re-queued card is rated
+            // more than once and only counts once against the session.
+            let total = sessionDueCount
+            let missed = sessionLapses.sorted()
+            return (max(0, total - missed.count), total, missed)
         } else {
             let correct = cardResults.values.filter { $0 }.count
             let missed = cardResults.filter { !$0.value }.map { $0.key }.sorted()
@@ -178,9 +176,13 @@ extension CardDeckView {
         if isSRSMode {
             // Replay the same due set rather than recomputing it: the first pass already
             // rescheduled these cards, so a fresh "what's due" query would come back empty.
-            ankiDueIndices = ankiDueIndices.shuffled()
+            // Drop the re-queued repeats first (keeping first occurrences) so each card is
+            // played once, then reshuffle.
+            var seen: Set<Int> = []
+            ankiDueIndices = ankiDueIndices.filter { seen.insert($0).inserted }.shuffled()
             ankiDuePosition = 0
             currentIndex = ankiDueIndices.first ?? 0
+            resetSessionTally()
         } else {
             cardOrder = Array(cards.indices).shuffled()
             cardPosition = 0

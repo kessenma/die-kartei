@@ -21,7 +21,7 @@ struct PhraseToDeckSheet: View {
 
     /// User-made decks only — skip the generated catalogues, matching `ReviewDeckView`.
     private var existingDecks: [SavedDeck] {
-        allDecks.filter { !["goethe", "goethe-srs", "past-tense", "past-tense-srs", "grammar"].contains($0.generatorRaw) }
+        allDecks.filter(\.isBrowsableContent)
     }
 
     private var selectedCount: Int { selected.count }

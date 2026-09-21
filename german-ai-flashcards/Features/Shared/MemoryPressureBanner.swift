@@ -8,6 +8,9 @@ import SwiftUI
 /// local notification, posted by ``MemoryPressureMonitor`` when the app isn't in front.
 struct MemoryPressureBanner: ViewModifier {
     @Environment(\.appTheme) private var appTheme
+    /// Optional on purpose: the banner sits at the very root, above where most of the
+    /// environment is assembled, and a preview or a stripped-down host has no router at all.
+    @Environment(SettingsRouter.self) private var settingsRouter: SettingsRouter?
     private let monitor = MemoryPressureMonitor.shared
 
     /// How long a warning stays up before fading on its own. Critical notices stay until dismissed;
@@ -45,6 +48,18 @@ struct MemoryPressureBanner: ViewModifier {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                // The banner sits outside every NavigationStack, so the only way into the memory
+                // screen is the router — exactly what it was built for.
+                if let settingsRouter {
+                    Button("See what's using memory") {
+                        withAnimation { monitor.dismiss() }
+                        settingsRouter.route = .memory
+                    }
+                    .font(.caption.weight(.semibold))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.tint)
+                    .padding(.top, 2)
+                }
             }
 
             Spacer(minLength: 0)

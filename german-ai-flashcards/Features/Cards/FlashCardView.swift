@@ -41,6 +41,12 @@ struct FlashCardView: View {
     var imageFileName: String? = nil
     var imageDeckID: UUID? = nil
 
+    /// "der / die / das?": keep a noun's article off the German side until the flip, so the card
+    /// asks for the gender before it shows it. Nothing else on the card may give it away either.
+    var hidesArticleUntilFlipped: Bool = false
+    /// A noun's plural or a verb's forms, shown under the German word once it is revealed.
+    var forms: String? = nil
+
     @Environment(\.colorScheme) private var colorScheme
     /// Named `appTheme` because `theme` is already this view's `ModelTheme` (the two coexist by design).
     @Environment(\.appTheme) private var appTheme
@@ -50,6 +56,9 @@ struct FlashCardView: View {
     /// appears as soon as SwiftData hands down the new file name.
     @State private var cardImage: UIImage?
     @State private var showingFullScreenImage = false
+    /// Set on the first flip, so turning the card back over shows the article the learner just
+    /// checked instead of asking again. The player recreates the view per card, so it resets.
+    @State private var revealed = false
 
     private var theme: ModelTheme? { model?.theme }
 
@@ -80,8 +89,56 @@ struct FlashCardView: View {
         return theme?.accent.opacity(0.35) ?? Color.gray.opacity(colorScheme == .dark ? 0.5 : 0.3)
     }
 
-    /// This card's grammatical gender, when it's a noun with a readable article.
-    private var gender: Gender? { article.flatMap(Gender.init(article:)) }
+    private var hasGender: Bool { article.flatMap(Gender.init(article:)) != nil }
+
+    /// The article is being withheld right now: quiz on, German side up, not yet flipped on this
+    /// card, and there is an article to withhold.
+    private var articleHidden: Bool {
+        hidesArticleUntilFlipped && showGermanFirst && !isFlipped && !revealed && hasGender
+    }
+
+    /// The English side of a quizzed noun carries the answer, since with German first the flip is
+    /// the only place the learner can check the gender they just guessed.
+    private var revealsGenderOnBack: Bool {
+        hidesArticleUntilFlipped && showGermanFirst && isFlipped && hasGender
+    }
+
+    /// This card's grammatical gender, when it's a noun with a readable article. Nil while the
+    /// article is withheld, which is the one switch that silences the tab and the badge too.
+    private var gender: Gender? { articleHidden ? nil : article.flatMap(Gender.init(article:)) }
+
+    /// The noun without any article, including one baked into the word by an older deck
+    /// ("der Absender" stored as the word), so the question never contains its own answer.
+    private var bareGerman: String {
+        let trimmed = germanWord.trimmingCharacters(in: .whitespaces)
+        for candidate in ["der ", "die ", "das "] where trimmed.lowercased().hasPrefix(candidate) {
+            return String(trimmed.dropFirst(candidate.count))
+        }
+        return trimmed
+    }
+
+    /// What the card says out loud and captions with: the bare noun while the article is withheld.
+    private var spokenGerman: String { articleHidden ? bareGerman : germanDisplay }
+
+    /// The German word as the card shows it: gender-colored article + noun, or the bare noun under
+    /// the "der · die · das?" prompt.
+    private var germanText: Text {
+        articleHidden ? Text(bareGerman) : Text.gendered(germanWord, article: article)
+    }
+
+    /// The question, on its own line so it cannot be read as part of the word.
+    private var articlePrompt: some View {
+        Text("der · die · das?")
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(Color.secondary.opacity(0.12), in: appTheme.pillShape)
+            .accessibilityLabel("Which article?")
+    }
+
+    /// The forms caption belongs to the answer, so it waits with the article.
+    private var showsForms: Bool { isShowingGerman && !articleHidden && forms != nil }
     private var lineColor: Color {
         colorScheme == .dark
             ? Color(red: 0.35, green: 0.38, blue: 0.45).opacity(0.3)
@@ -260,8 +317,17 @@ struct FlashCardView: View {
                 cardImage = nil
                 return
             }
-            cardImage = CardImageStore.loadImage(fileName: imageFileName, deckID: imageDeckID)
+            // Off the main actor: this used to be a synchronous PNG decode on every card advance.
+            // The card fills a wide frame, so the cap is the file's own size — no downsampling
+            // is possible here, only the thread it happens on. The full-screen viewer shares the
+            // same bitmap rather than decoding a second copy.
+            let decoded = await Task.detached(priority: .userInitiated) {
+                CardImageStore.loadImage(fileName: imageFileName, deckID: imageDeckID, maxPixelSize: 512)
+            }.value
+            guard !Task.isCancelled else { return }
+            cardImage = decoded
         }
+        .onDisappear { cardImage = nil }
         .shadow(
             color: theme?.accent.opacity(0.28) ?? .black.opacity(0.1),
             radius: theme == nil ? 8 : 12, x: 0, y: 4
@@ -273,10 +339,13 @@ struct FlashCardView: View {
                 isFlipped.toggle()
             }
         }
+        .onChange(of: isFlipped) { _, flipped in
+            if flipped { revealed = true }
+        }
         .rotation3DEffect(.degrees(isFlipped ? 180 : 0), axis: (x: 0, y: 1, z: 0))
         .fullScreenCover(isPresented: $showingFullScreenImage) {
             if let cardImage {
-                FullScreenImageView(image: cardImage, caption: germanDisplay)
+                FullScreenImageView(image: cardImage, caption: spokenGerman)
             }
         }
     }
@@ -297,15 +366,28 @@ struct FlashCardView: View {
                 // Word + pronunciation, floated over the picture. The article keeps its gender color
                 // here too — only the noun takes the white the photo needs.
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text.gendered(germanWord, article: article)
-                        .font(.system(size: 32, weight: .bold, design: .serif))
-                        .foregroundStyle(.white)
-                        .shadow(color: .black.opacity(0.55), radius: 4, x: 0, y: 1)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.6)
+                    VStack(alignment: .leading, spacing: 4) {
+                        if articleHidden {
+                            articlePrompt
+                                .environment(\.colorScheme, .dark)
+                        }
+                        germanText
+                            .font(.system(size: 32, weight: .bold, design: .serif))
+                            .foregroundStyle(.white)
+                            .shadow(color: .black.opacity(0.55), radius: 4, x: 0, y: 1)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.6)
+                        if showsForms, let forms {
+                            Text(forms)
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.85))
+                                .shadow(color: .black.opacity(0.5), radius: 3)
+                                .lineLimit(1)
+                        }
+                    }
 
                     Button {
-                        SpeechService.shared.speak(germanDisplay)
+                        SpeechService.shared.speak(spokenGerman)
                     } label: {
                         Image(systemName: "speaker.wave.2.fill")
                             .font(.title3)
@@ -414,18 +496,24 @@ struct FlashCardView: View {
                 if isFlipped && auxiliaryVerb != nil {
                     verbBackContent
                 } else {
+                    if articleHidden {
+                        articlePrompt
+                            .padding(.bottom, 8)
+                    }
+
                     HStack(spacing: 10) {
                         // Only the German side carries an article to color; the English side is a
                         // plain word, so it renders through the same helper unchanged.
                         (isShowingGerman
-                            ? Text.gendered(germanWord, article: article)
+                            ? germanText
                             : Text(isFlipped ? backText : frontText))
                             .font(.system(size: 38, weight: .bold, design: .serif))
                             .foregroundStyle(.primary)
+                            .multilineTextAlignment(.center)
 
                         if isShowingGerman {
                             Button {
-                                SpeechService.shared.speak(germanDisplay)
+                                SpeechService.shared.speak(spokenGerman)
                             } label: {
                                 Image(systemName: "speaker.wave.2.fill")
                                     .font(.title3)
@@ -433,6 +521,23 @@ struct FlashCardView: View {
                             }
                             .buttonStyle(.plain)
                         }
+                    }
+
+                    if showsForms, let forms {
+                        Text(forms)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 2)
+                    }
+
+                    // The answer to "der · die · das?", where the flip lands.
+                    if revealsGenderOnBack {
+                        Text.gendered(bareGerman, article: article)
+                            .font(.system(size: 20, weight: .semibold, design: .serif))
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 6)
                     }
 
                     if let badge = genderBadge {
@@ -456,6 +561,15 @@ struct FlashCardView: View {
 
 #Preview("Default") {
     FlashCardView(isFlipped: .constant(false))
+}
+
+#Preview("der / die / das?") {
+    VStack(spacing: 20) {
+        FlashCardView(isFlipped: .constant(false), germanWord: "Wohnung", englishWord: "flat",
+                      article: "die", hidesArticleUntilFlipped: true, forms: "Plural: -en")
+        FlashCardView(isFlipped: .constant(true), germanWord: "Wohnung", englishWord: "flat",
+                      article: "die", showGermanFirst: false, hidesArticleUntilFlipped: true, forms: "Plural: -en")
+    }
 }
 
 #Preview("Gender colors · 4 themes") {

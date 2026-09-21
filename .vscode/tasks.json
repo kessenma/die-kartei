@@ -1,0 +1,74 @@
+{
+  // Deploy pipeline for Die Kartei.
+  //   Run:  Cmd+Shift+B            -> TestFlight (default build task)
+  //         Cmd+Shift+P > "Run Task" -> pick any of the below
+  // Setup for a new machine: docs/DEPLOY_SETUP.md
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Deploy: TestFlight",
+      "detail": "Archive, upload, wait for processing, distribute to internal-die-Kartei",
+      "type": "shell",
+      "command": "python3 scripts/deploy.py",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$swiftc"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      }
+    },
+    {
+      "label": "Deploy: App Store (upload only, no submit)",
+      "detail": "Uploads and attaches an App Store version. Does NOT submit for review.",
+      "type": "shell",
+      "command": "python3 scripts/deploy.py release",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$swiftc"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      }
+    },
+    {
+      "label": "Deploy: Preflight checks",
+      "detail": "Auth, asc doctor, toolchain, signing identity, local vs live version. Read-only.",
+      "type": "shell",
+      "command": [
+        "echo '── auth ──' && asc auth status --validate | head -3",
+        "&& echo '── doctor ──' && asc doctor > /dev/null && echo 'doctor: OK (exit 0)'",
+        "&& echo '── toolchain (must not say beta) ──' && xcodebuild -version | head -1 && xcode-select -p",
+        "&& echo '── host macOS (trailing letter = beta host; restamped at archive) ──' && sw_vers -buildVersion",
+        "&& (grep -q stamp-release-os.sh german-ai-flashcards.xcodeproj/project.pbxproj && echo 'stamp phase: wired' || echo 'stamp phase: MISSING (ITMS-90111 on a beta host)')",
+        "&& echo '── signing ──' && security find-identity -v -p codesigning | grep 'Apple Distribution'",
+        "&& echo '── local version ──' && asc xcode version view --project german-ai-flashcards.xcodeproj --target 'Die Kartei' --configuration Release --output json",
+        "&& echo '── recent builds ──' && asc builds list --app 6770390331 --sort -uploadedDate --limit 3 --processing-state all --output table"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
+    },
+    {
+      "label": "Deploy: Clean build artifacts",
+      "detail": "Removes .asc/artifacts (the .xcarchive and .ipa — hundreds of MB per build)",
+      "type": "shell",
+      "command": "rm -rf .asc/artifacts && echo 'Removed .asc/artifacts'",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "Deploy: Open latest log",
+      "detail": "Opens the most recent deploy log in the editor",
+      "type": "shell",
+      "command": "ls -t build-logs/deploy-*/*/*.log 2>/dev/null | head -1 | xargs -I{} code {} || echo 'No deploy logs yet'",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "silent", "panel": "shared" }
+    }
+  ]
+}

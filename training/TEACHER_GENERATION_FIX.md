@@ -92,9 +92,65 @@ Two things are working and should be carried forward untouched:
 | **Claude Sonnet** | Claude Code subagents; `scripts/extract_batch.py` already parses the transcript into JSONL | tokens, no GPU, no API key | the only teacher with a measured 54/60 attached |
 | **`google/gemma-4-31B-it`** | RunPod, QAT `w4a16-ct` build ≈ 23.3 GB, fits L40S (~$0.79/hr) or A40 ($0.44/hr) | ~$1–3 | **dense**, ~8× the active params/token of the 26B-A4B. Same family — your own rule is "base multilingual substrate sets the ceiling," and Gemma beat Qwen/Llama/Mistral on German at every size tested |
 | **`Qwen/Qwen3.8-27B`** | RunPod; bf16 ≈ 54 GB (A100 80GB) or the FP8 build ≈ 27 GB (A40/L40S) | ~$0.50–1.50 | released 2026-08-14. **Dense**, 64 layers × 5120 hidden, **vocab 248,320**. See the split verdict below. |
+| **`swiss-ai/Apertus-70B-Instruct-2509`** | RunPod; bf16 ≈ 140 GB (2×80 GB) — see §5a for the quantized traps | ~$3–6 | **dense**, 80 layers × 64 heads, Apache 2.0, German-speaking consortium (EPFL/ETH/CSCS). The only untested candidate that clears every filter this project applies. **⚠️ use the `2509` v1.0 build, NOT v1.5** — see §5a |
 | another family (Llama / Mistral large) | RunPod | — | ⚠️ likely a downgrade for German on this project's own evidence |
 
+### 5a. Apertus-70B — the pick-the-right-repo problem (surveyed 2026-08-17, not yet run)
+
+Apertus is the first candidate since gemma-4-31B to clear every filter this project applies, and the
+first one where the *repo selection* is the hard part. Three things to get right before spending.
+
+**1. Use v1.0 (`2509`), not v1.5.** They are different architectures:
+
+| | `Apertus-70B-Instruct-2509` (v1.0) | `Apertus-v1.5-70B` |
+|---|---|---|
+| `model_type` | `apertus` | **`apertus1p5`** |
+| modality | text | **multimodal** (`image-text-to-text`) |
+| transformers | standard release | **custom branch, upstreaming in progress** |
+| HF gating | open | **`gated: auto`** (needs token + accepted terms) |
+| mlx-lm 0.31.3 | ✅ `apertus.py` implements it | ❌ no `apertus1p5` support |
+
+The standing rule — *check `transformers` can load it on a small download before renting* — would
+have caught this, but only after paying for the pod. Checking `config.json` via the HF API costs
+nothing and catches it first.
+
+**2. The quantized builds each carry a known trap.** bf16 70B is ~140 GB, so the temptation is a
+pre-quant:
+
+| build | size | verdict |
+|---|---|---|
+| `RedHatAI/Apertus-70B-Instruct-2509-quantized.w4a16` | ~40 GB | ⚠️ **`compressed-tensors` dequantizes on load** — this is exactly what OOM'd a 48 GB A40 with gemma-4-31B's QAT build (§ bakeoff README). Do not assume it fits a 48 GB card |
+| FP8 dynamic | ~70 GB | ⚠️ needs **Ada sm_89+**. A40 is Ampere — no FP8. L40S (48 GB) is Ada but too small for 70B; realistically H100 |
+| `unsloth/...-GGUF` Q4 | ~40 GB | ⚠️ llama.cpp path, not the batched `transformers` path `generate_bulk.py` uses. Would need a separate harness |
+| **bf16, 2×A100 80 GB** | 140 GB | ✅ the only path that reuses the existing batched generator unchanged |
+
+**3. Volume budget.** 70B bf16 (140 GB) does not share a 150 GB volume with gemma-4-31B (62.5 GB).
+Free the other cache first: `rm -rf /workspace/hf/hub/models--google--gemma-4-31B-it`.
+
+**Why it is still worth ~$1 to bake off.** Every prior "add a second teacher" argument died on
+measurement, and the Qwen post-mortem (§6d) explains why corpus statistics cannot settle it. Apertus
+differs from Qwen on the one axis that plausibly matters: it was *pretrained for* German by a
+German-speaking consortium rather than being incidentally multilingual, on 15T tokens with 40%
+non-English. A supporting signal from the on-device work: Apertus tokenizes German at **1.70
+tokens/word, identical to gemma-4-E4B** (131k vocab), so the Granite tokenizer-inefficiency failure
+mode (49k vocab, ~1.9 tok/word) does not apply to this family.
+
+**Protocol — unchanged from the 2026-08-14 bake-off so results are comparable.** Same 50 stratified
+`refl`+`sep` jobs, same prompt, `scripts/check_hard_case_share.py`. Bar: match gemma-31B's 100% /
+0% / 3.8%. **Kill if** either shape gate fails, or no-ops exceed ~20% (Qwen's 39% was the
+disqualifier).
+
+**Order of operations.** This is step 5 of [`DATA_GAP_PLAN.md`](DATA_GAP_PLAN.md) §5, deliberately
+*after* the v4 eval and the gemma-31B tail generation. A second teacher is only justified by a
+phenomenon that stays stuck **after** being well-fed; right now nothing is well-fed enough to make
+that claim, and the thin tail is the cheaper explanation.
+
 ### On Qwen3.8-27B specifically
+
+> ✅ **RESOLVED — see §6d.** Measured 2026-08-15: passes both shape gates (refl 84%, sep 0%) but
+> 39% no-ops, and a 2026-08-17 control showed its lexical contribution is indistinguishable from
+> resampling gemma. **Fallback teacher only.** The pre-registered reasoning below is kept because
+> it predicted the outcome correctly on the "against" side.
 
 Two facts argue for testing it, and one argues against. Worth stating both rather than deciding
 from reputation.
@@ -168,7 +224,7 @@ self-check instruction), scored by `scripts/check_hard_case_share.py`.
 | **Claude Sonnet** (subagents) | **100%** | **0%** | 0% | ✅ PASS |
 | **`google/gemma-4-31B-it`** (dense) | **100%** ¹ | **0%** ¹ | 18% ² | ✅ **PASS — viable bulk teacher** |
 | `gemma-4-26B-A4B-it` (MoE, v2/v3) | 12% | 26% | 0% | ❌ FAIL |
-| `Qwen/Qwen3.8-27B` | — | — | — | ⏸️ not measured, see §6d |
+| `Qwen/Qwen3.8-27B` (dense) | 84% | 0% | **39%** | ⚠️ PASSES both gates, poor yield — fallback only, see §6d |
 
 ¹ of *live* rows (excluding no-ops). ² `student == fix`, removable with a one-line filter.
 
@@ -205,13 +261,50 @@ Shape-testing the other slices of the gemma-26B corpus:
 (swap a preposition, collapse `auf es` → `darauf`) and fails only where the error requires judgment
 about which subtle thing is wrong. That is a coherent capability boundary, not general incompetence.
 
-### 6d. ⚠️ Qwen3.8-27B — unmeasured, and the trap that nearly produced a false negative
+### 6d. Qwen3.8-27B — MEASURED (2026-08-15), and the trap that nearly produced a false negative
 
 Released 2026-08-14. `model_type: qwen3_5`, **dense**, 64 layers × 5120, **vocab 248,320** (Gemma-class,
 unlike the 49k that hobbled Granite on German). `transformers` 5.15.0 loads it without
 `trust_remote_code` issues — the architecture-support risk did not materialise.
 
-**It was not measured** because the session ended; it had loaded (30 GB at 8-bit) and was mid-run.
+**Result: passes both shape gates, disqualified on yield.** Pilots at
+`data/bakeoff/qwen38_pilot.jsonl` (55 rows) and `qwen38_refl.jsonl` (56 rows), scored with
+`scripts/check_hard_case_share.py`:
+
+```
+refl case-change   84%   (gate >= 60%)  PASS      vs gemma-31B 100%
+sep pure-reorder    0%   (gate <=  5%)  PASS      vs gemma-31B   0%
+no-op rows         39%                            vs gemma-31B 3.8%
+malformed          3/31 (~10%, "fix changes no reflexive")  vs gemma-31B 0
+```
+
+39% no-ops means ~1.6× the rows for the same usable yield. On a $5 bulk run that is ~$8 — not a real
+constraint, which is why the yield argument alone was never decisive. **The decisive measurement was
+the diversity control** (2026-08-17), which tested the only reason to want a second teacher:
+
+```
+vocab Jaccard, n=44 samples, refl only, 200 trials
+  gemma vs gemma  (SAME teacher, different samples)   0.249   [0.187-0.314]   <- the control
+  gemma vs qwen                                       0.203   [0.164-0.256]
+  gemma-bulk vs gemma-pilot (different runs/dates)    0.258
+
+novel-vocabulary rate of a 44-row sample vs ~800 gemma refl rows
+  a fresh GEMMA sample   13.8%   (300 draws, range 6.9-21.1%)
+  the QWEN sample        14.5%   <- inside gemma's own resampling range
+```
+
+**Qwen's lexical contribution is indistinguishable from running gemma longer**, and gemma's
+vocabulary is nowhere near exhausted (44 rows → 162 types; 800 rows → 963, still adding ~272 new
+types per 400 rows). At matched level, gemma also writes the *more* complex sentences — at C1, 9.7
+words and 0.57 commas/sentence against Qwen's 6.5 and **0.00**. Qwen matches on lexical
+sophistication and lags on syntax.
+
+⚠️ **The methodological trap here, worth more than the result:** the first pass measured
+gemma-vs-Qwen Jaccard at 0.264, controlled for the job-mix confound, and concluded "genuine teacher
+personality." That was wrong — with no same-teacher control, it was measuring temperature-0.9
+sampling noise. **Any claim that two teachers differ requires a same-teacher baseline at matched
+sample size.** Corpus statistics cannot detect a teacher ceiling anyway: a phenomenon a teacher
+never constructs leaves no lexical trace. Only a trained student's eval can.
 
 **The trap, which cost ~$0.15 and nearly produced a wrong conclusion:** Qwen3.x chat templates
 default to thinking mode. `apply_chat_template` emits
@@ -227,10 +320,14 @@ It looks exactly like a capability failure. **Always pass `enable_thinking=False
 Fixed in `runpod/bakeoff/generate_hardcase.py`, which now tries the kwarg and falls back on
 `TypeError` for templates that don't accept it.
 
-Prior worth weighing when it *is* measured: this project has consistently found Qwen weak on German
-(Qwen3 8B 58% core and misses ~48% of real errors; tuned Qwen3-4B 62% < **stock** Gemma E4B 72%),
-with a knowledge-deficit profile. But that prior is two generations old and predates the vocabulary
-change.
+**How the prior held up.** This project had consistently found Qwen weak on German (Qwen3 8B 58%
+core, misses ~48% of real errors; tuned Qwen3-4B 62% < **stock** Gemma E4B 72%), with a
+knowledge-deficit profile — but that prior was two generations old and predated the vocabulary
+change, so it was explicitly *not* treated as decisive. It turned out to be directionally right for
+the wrong reason: the 248k vocab did close the gap on shape quality (84% is a clear pass), and Qwen
+failed instead on **yield** and on contributing nothing gemma could not. Keep the rule that a stale
+prior does not substitute for measurement — it cost ~$1 to check and produced a cleaner answer than
+the prior would have.
 
 ---
 
@@ -264,8 +361,18 @@ own, but it is not on the critical path to beating 54/60.
 
 ## 8. Open
 
-- **`sep` volume at source** — only 379 `fix` rows were ever generated for separable verbs against
-  1,605 `ok`, so even a correctly balanced slice is thin (471 rows).
-- **`relpron` has zero training rows** in the v2 corpus and regressed on every model trained on it.
-- **`dawo`** did not respond to verdict rebalancing; it needs the same shape analysis `refl` and
-  `sep` got, and it has not been done.
+*Status as of 2026-08-17. Current generation targets live in [`DATA_GAP_PLAN.md`](DATA_GAP_PLAN.md).*
+
+- ✅ **`sep` volume** — resolved in v4: **984 rows** @ 70% fix (was 471), reorder-mislabel at 2%.
+  ⚠️ But the *generation prompt* still under-produces separable-verb errors (379 `fix` vs 1,605 `ok`
+  at source). Fix the prompt before any new `sep` request or the skew returns.
+- ✅ **`relpron`** — resolved in v4: **390 rows** @ 70% fix (was zero).
+- ⏸️ **`dawo` shape analysis** — still not done. It did not respond to verdict rebalancing and has
+  never had the shape audit `refl` and `sep` got. At 3,070 rows it is the second-largest slice, so a
+  shape problem here would be expensive.
+- 🆕 **Distribution, not coverage, is now the problem.** v4 covers all 14 phenomena but `vmp`+`dawo`
+  are 66% of the correction slice while `imperativ` has 133 rows — 45:1. See
+  [`DATA_GAP_PLAN.md`](DATA_GAP_PLAN.md) §1.
+- 🆕 **`aux` is `ok`-starved.** `ok_available: 47, ok_kept: 47` — the packer consumed every available
+  `ok` row and still landed at 77.2% fix, the only phenomenon that missed the 70% target. New `aux`
+  requests must ask for `ok` rows specifically.

@@ -363,3 +363,10 @@ weight-quant question, not a graph question). Reproduce: start `cactus serve` pe
 [german-tutor-cactus-retrain-plan.md](german-tutor-cactus-retrain-plan.md) §3.2, then
 `.venv/bin/python scripts/gen_cactus_responses.py`, then score the two `results/cactus_e2b_cq4_*.responses.json`
 files with `run_baseline_eval.py --responses --app-guard` / `behavior_metrics.py --app-guard`.
+
+---
+
+> **2026-08-19 update:** two corpus-v4 retrains (full corpus, and core-8 @ 0.80 fix "v5") both
+> failed to displace the shipped v1 — grammar ties (p = 0.73) but miss rate 23–33% vs v1's ~10%.
+> E2B stays on v1; the capacity analysis and next levers are in
+> [`training-v3.md`](training-v3.md) §9.2 and the `e2b-capacity-dilution` memory.

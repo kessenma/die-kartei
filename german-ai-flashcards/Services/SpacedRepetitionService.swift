@@ -8,12 +8,24 @@ enum AnkiRating: Int, CaseIterable {
     case good = 3
     case easy = 4
 
+    /// Button titles. "Didn't know" rather than Anki's "Again": learners pressed Hard when they
+    /// had no idea, because nothing said Hard still counts as knowing it.
     var label: String {
         switch self {
-        case .again: "Again"
+        case .again: "Didn't know"
         case .hard: "Hard"
         case .good: "Good"
         case .easy: "Easy"
+        }
+    }
+
+    /// One-line meaning, for the legend above the buttons.
+    var meaning: String {
+        switch self {
+        case .again: "no idea, or wrong"
+        case .hard: "knew it, slowly"
+        case .good: "knew it"
+        case .easy: "instant"
         }
     }
 
@@ -33,6 +45,7 @@ enum SpacedRepetitionService {
     /// Apply a rating to a card and update its SRS fields in-place.
     static func apply(rating: AnkiRating, to card: SavedCard) {
         card.totalReviews += 1
+        card.noteReview(correct: rating != .again)
 
         switch rating {
         case .again:

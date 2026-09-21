@@ -148,21 +148,21 @@ struct ModelBrandWash: View {
     NavigationStack {
         List {
             Section {
-                Text("Alibaba's Qwen3 8B model, 4-bit quantized. The strongest Qwen3 variant that fits comfortably on device.")
+                Text(MLXModel.hero.description)
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
             Section {
                 Label("View on HuggingFace", systemImage: "arrow.up.right.square")
-                Label("Learn more about Qwen3 8B", systemImage: "globe")
+                Label("Learn more about \(MLXModel.hero.rawValue)", systemImage: "globe")
             }
         }
         .scrollContentBackground(.hidden)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            ModelLogoMark(model: .qwen3_8B)
+            ModelLogoMark(model: .hero)
         }
         .background {
-            ModelSheetBackground(model: .qwen3_8B)
+            ModelSheetBackground(model: .hero)
         }
     }
 }

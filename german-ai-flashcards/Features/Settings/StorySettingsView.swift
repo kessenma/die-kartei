@@ -8,6 +8,16 @@ struct StorySettingsView: View {
 
     var body: some View {
         Section {
+            StoryModelRow(selected: $modelManager.selectedStoryModel)
+        } header: {
+            Text("Story model").themedSectionHeader()
+        } footer: {
+            Text("Any of the German Tutor models can write and grade stories — pick by what this iPhone has room for. Stories you already have keep the tutor that wrote them.")
+                .font(.caption2)
+        }
+        .themedListRow()
+
+        Section {
             Toggle("Reading counts as study", isOn: $modelManager.storyTimeCountsTowardStreak)
             NavigationLink {
                 StoryProgressView()
@@ -37,15 +47,18 @@ struct StorySettingsView: View {
         .themedListRow()
 
         Section {
-            Picker("Level", selection: Binding(
-                get: { modelManager.storyLevel },
-                set: { modelManager.storyLevel = $0 }
-            )) {
-                ForEach(CEFRLevel.allCases) { level in
-                    Text(level.rawValue).tag(level)
+            // Level isn't a story default any more — it's the app-wide anchor, so this links to the
+            // one screen that owns it rather than offering a second place to change it.
+            NavigationLink {
+                LevelSettingsView(modelManager: modelManager)
+            } label: {
+                HStack {
+                    Text("Level")
+                    Spacer()
+                    Text(modelManager.germanLevel.rawValue)
+                        .foregroundStyle(.secondary)
                 }
             }
-            .pickerStyle(.segmented)
 
             Picker("Questions", selection: Binding(
                 get: { modelManager.storyQuestionCount },
@@ -68,7 +81,7 @@ struct StorySettingsView: View {
         } header: {
             Text("New story defaults").themedSectionHeader()
         } footer: {
-            Text("Where the setup screen starts. Everything here can still be changed per story — and the setup screen remembers your last choice.")
+            Text("Where the setup screen starts. Everything here can still be changed per story. Level comes from Your Level and is shared with conversations — changing it for one story leaves it alone.")
                 .font(.caption2)
         }
         .themedListRow()

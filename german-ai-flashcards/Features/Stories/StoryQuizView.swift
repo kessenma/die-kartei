@@ -44,7 +44,9 @@ struct StoryQuizView: View {
     /// (batched rather than per-answer so a run the learner abandons leaves no trace).
     @State private var writtenCorrections: [(original: String, corrected: String)] = []
 
-    private var theme: ModelTheme { StoryStudyService.requiredModel.theme }
+    /// The colors follow the tutor doing the grading, which is the one the story was written with
+    /// wherever it's still usable (`StoryDetailView` builds the service).
+    private var theme: ModelTheme { service.model.theme }
 
     private var current: StoryQuestion? {
         questions.indices.contains(currentIndex) ? questions[currentIndex] : nil

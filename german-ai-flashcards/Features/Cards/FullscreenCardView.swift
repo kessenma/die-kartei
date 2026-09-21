@@ -10,6 +10,8 @@ struct FullscreenCardView: View {
     let showExamplesOnGermanSide: Bool
     let isQuizMode: Bool
     let badgeLogoName: String?
+    /// "der / die / das?" — withhold a noun's article on the German side until the flip.
+    var hidesArticleUntilFlipped: Bool = false
     var model: MLXModel? = nil
     /// Index-aligned with `cards`; supplies each card's picture file name. Empty for loose decks.
     var savedCards: [SavedCard] = []
@@ -22,9 +24,16 @@ struct FullscreenCardView: View {
     @State private var dragOffset: CGFloat = 0
     @State private var isRotated = false
     @State private var showCorrectionSheet = false
+    /// The current card has been flipped at least once here; the example may show again.
+    @State private var revealedCurrent = false
 
     private var isShowingGermanSide: Bool {
         (showGermanFirst && !isFlipped) || (!showGermanFirst && isFlipped)
+    }
+
+    /// The example sentence usually contains the article, so it waits with it.
+    private var exampleWouldLeakArticle: Bool {
+        hidesArticleUntilFlipped && isShowingGermanSide && !isFlipped && !revealedCurrent && cards[currentIndex].article != nil
     }
 
     /// The current card's picture file name, when this deck has saved cards backing it.
@@ -127,6 +136,12 @@ struct FullscreenCardView: View {
             }
         }
         .statusBarHidden()
+        .onChange(of: isFlipped) { _, flipped in
+            if flipped { revealedCurrent = true }
+        }
+        .onChange(of: currentIndex) {
+            revealedCurrent = false
+        }
     }
 
     // MARK: - Rotated layout (card + quiz buttons rotated 90°, no nav buttons)
@@ -156,7 +171,9 @@ struct FullscreenCardView: View {
                 isRegular: cards[currentIndex].isRegular,
                 exampleSentence: cards[currentIndex].exampleSentence,
                 imageFileName: currentImageFileName,
-                imageDeckID: deckUUID
+                imageDeckID: deckUUID,
+                hidesArticleUntilFlipped: hidesArticleUntilFlipped,
+                forms: cards[currentIndex].forms
             )
             .id("fs-\(currentIndex)-\(showGermanFirst)")
             .frame(maxWidth: visibleHeight - 32) // constrain card width to fit rotated bounds
@@ -198,7 +215,9 @@ struct FullscreenCardView: View {
                 isRegular: cards[currentIndex].isRegular,
                 exampleSentence: cards[currentIndex].exampleSentence,
                 imageFileName: currentImageFileName,
-                imageDeckID: deckUUID
+                imageDeckID: deckUUID,
+                hidesArticleUntilFlipped: hidesArticleUntilFlipped,
+                forms: cards[currentIndex].forms
             )
             .id("fs-\(currentIndex)-\(showGermanFirst)")
             .offset(x: dragOffset * 0.3)
@@ -219,7 +238,8 @@ struct FullscreenCardView: View {
 
             if let sentence = cards[currentIndex].exampleSentence,
                cards[currentIndex].auxiliaryVerb == nil,
-               isShowingGermanSide == showExamplesOnGermanSide {
+               isShowingGermanSide == showExamplesOnGermanSide,
+               !exampleWouldLeakArticle {
                 HStack(spacing: 6) {
                     Text(sentence)
                         .font(.subheadline)

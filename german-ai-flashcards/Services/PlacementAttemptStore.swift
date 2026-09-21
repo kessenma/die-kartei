@@ -67,8 +67,11 @@ enum PlacementAttemptStore {
     // MARK: - Writing
 
     static func append(_ attempt: PlacementAttempt) {
-        var all = attempts()
-        all.insert(attempt, at: 0)
+        // Re-sort rather than just inserting at the front: a real run is always "now", but the
+        // debug seeder backdates, and the cache is handed straight back by `attempts()` without a
+        // second sort — so an out-of-order insert would survive for the rest of the launch and
+        // quietly break the newest-first contract every caller relies on.
+        let all = (attempts() + [attempt]).sorted { $0.takenAt > $1.takenAt }
         write(Array(all.prefix(cap)))
     }
 

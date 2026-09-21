@@ -282,17 +282,21 @@ struct WeekInReviewSection: View {
     private func recapConfig() -> ConversationConfig {
         let manager = coordinator.modelManager
         var config = ConversationConfig(model: manager.selectedChatModel)
+        config.learnerName = ConversationConfig.learnerName(from: manager.learnerName)
         config.mode = .freestyle
         config.focusAreas = weakFocuses
-        config.level = CEFRLevel(rawValue: manager.chatLevelRaw) ?? .a2
+        config.level = manager.germanLevel
         config.formality = Formality(rawValue: manager.chatFormalityRaw) ?? .du
         config.correctionsEnabled = manager.chatCorrectionsEnabled
         config.correctionTranslationEnabled = manager.chatShowCorrectionTranslation
         config.strictness = CorrectionStrictness(rawValue: manager.chatStrictnessRaw) ?? .balanced
         config.autoPlay = manager.autoPlayReplies
+        config.inputMode = manager.chatInputMode
         config.eagerAssist = manager.chatEagerAssist
         config.autoShowTranslation = manager.chatAutoShowTranslation
         config.hintCount = manager.chatHintCount
+        config.autoHints = manager.chatAutoHints
+        config.genderColors = manager.chatGenderColors
         return config
     }
 }

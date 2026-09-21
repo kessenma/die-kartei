@@ -142,25 +142,27 @@ extension CardDeckView {
     }
 
     func leitnerBoxSwiftUIColor(_ box: Int) -> Color {
-        switch box {
-        case 0: .gray
-        case 1: .red
-        case 2: .orange
-        case 3: .yellow
-        case 4: .green
-        case 5: .blue
-        default: .gray
-        }
+        LeitnerService.boxSwiftUIColor(box)
     }
 
     func leitnerAdvance() {
         if let correct = leitnerResults[currentIndex], currentIndex < savedCards.count {
+            let card = savedCards[currentIndex]
+            let firstRating = card.totalReviews == 0
             if correct {
-                LeitnerService.markCorrect(savedCards[currentIndex])
+                LeitnerService.markCorrect(card)
             } else {
-                LeitnerService.markWrong(savedCards[currentIndex])
+                LeitnerService.markWrong(card)
             }
             try? modelContext.save()
+            if firstRating, isWortschatzSession {
+                StudyLogService.recordNewWords(1, in: modelContext)
+            }
+            // A wrong answer comes back a few cards later; clear the stale result so the button
+            // isn't pre-selected on its return (see `ankiAdvance`).
+            if !correct, requeue(currentIndex) {
+                leitnerResults[currentIndex] = nil
+            }
         }
 
         if ankiDuePosition < ankiDueIndices.count - 1 {
@@ -173,9 +175,9 @@ extension CardDeckView {
     }
 
     func finishLeitnerSession() {
-        let correct = leitnerResults.values.filter { $0 }.count
-        let total = ankiDueIndices.count
-        let missed = leitnerResults.filter { !$0.value }.map { $0.key }.sorted()
+        let total = sessionDueCount
+        let missed = sessionLapses.sorted()
+        let correct = max(0, total - missed.count)
         onQuizComplete?(correct, total, missed, elapsedSeconds, .leitner, nil)
         clearPauseProgress()
         showQuizSummary = true

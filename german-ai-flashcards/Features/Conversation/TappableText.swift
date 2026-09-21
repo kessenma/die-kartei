@@ -9,6 +9,8 @@ struct TappableText: View {
     var highlightRange: NSRange? = nil
     /// Lowercased German words already saved (shown with a subtle background).
     var savedWords: Set<String> = []
+    /// UTF-16 ranges to tint with a noun's der/die/das color.
+    var nounTints: [(range: NSRange, color: Color)] = []
     var font: Font = .title3
     let onTapWord: (String) -> Void
 
@@ -38,6 +40,9 @@ struct TappableText: View {
 
                 if savedWords.contains(token.text.lowercased()) {
                     run.backgroundColor = Color.accentColor.opacity(0.16)
+                }
+                if let tint = nounTints.first(where: { NSIntersectionRange($0.range, token.range).length > 0 }) {
+                    run.foregroundColor = tint.color
                 }
                 if let highlightRange, NSIntersectionRange(highlightRange, token.range).length > 0 {
                     run.foregroundColor = .accentColor

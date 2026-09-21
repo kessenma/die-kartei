@@ -1,22 +1,26 @@
 import SwiftUI
 
-/// A soft-sell wizard for the hero model (our in-house German-tuned Gemma 4 E4B). Reachable any
-/// time from Settings → Model ("Why this model?"); on first launch the same pitch opens the
-/// onboarding wizard instead (`OnboardingWizardView`). It never forces the download — "Maybe
-/// later" keeps whatever instant model is already selected (typically Apple Intelligence).
+/// A soft-sell wizard for one of the in-house German tutors. Reachable any time from
+/// Settings → Model ("Why this model?"); on first launch the same pitch opens the onboarding
+/// wizard instead (`OnboardingWizardView`). It never forces the download — "Maybe later" keeps
+/// whatever instant model is already selected (typically Apple Intelligence).
+///
+/// Takes the tutor rather than assuming the hero: a 6 GB phone can't run the E4B tutor, and
+/// pitching it there would be an advert for something the device can't hold.
 struct HeroModelIntroSheet: View {
     var modelManager: MLXModelManager
     var mlxService: MLXGenerationService
+    var model: MLXModel = .hero
 
     @Environment(\.dismiss) private var dismiss
 
-    private var hero: MLXModel { .hero }
+    private var hero: MLXModel { model }
     private var heroDownloaded: Bool { hero.isDownloaded }
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                HeroModelPitchContent()
+                HeroModelPitchContent(model: hero)
                     .padding()
                     .padding(.bottom, 8)
             }
@@ -69,13 +73,17 @@ struct HeroModelIntroSheet: View {
 /// The hero pitch's body — logo chip, tagline, selling points, compatibility note — shared by the
 /// standalone sheet above and the first page of `OnboardingWizardView`, so the two can't drift.
 struct HeroModelPitchContent: View {
+    /// The tutor being pitched. Defaults to the hero so existing call sites keep their meaning,
+    /// but onboarding passes the best tutor for the device in hand.
+    var model: MLXModel = .hero
+
     /// Set this to the published article URL to reveal the "Read the story" link. While it's `nil`
     /// the link stays hidden — flip it on once the portfolio article is live.
     var articleURL: URL? = nil
 
     @Environment(\.appTheme) private var appTheme
 
-    private var hero: MLXModel { .hero }
+    private var hero: MLXModel { model }
 
     var body: some View {
         VStack(spacing: 24) {
@@ -160,11 +168,5 @@ struct HeroModelPitchContent: View {
     }
 }
 
-extension MLXModel {
-    /// "~4.2 GB"-style label for the one-time download, shared by every hero pitch surface.
-    var approximateSizeLabel: String {
-        approximateSizeMB >= 1000
-            ? String(format: "%.1f GB", Double(approximateSizeMB) / 1000.0)
-            : "\(approximateSizeMB) MB"
-    }
-}
+// `MLXModel.approximateSizeLabel` used to live here. It now sits next to the sizes it formats, in
+// `MLXModel+Descriptors.swift`, since the onboarding explainer and the upgrade nudges need it too.

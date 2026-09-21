@@ -94,7 +94,14 @@ final class CelebrationCenter {
         current = celebration
     }
 
-    func dismiss() { current = nil }
+    /// Clears the moment, and hands it to `ReviewPromptService` — a dismissed streak milestone is
+    /// the one thing in the app that earns an App Store ask. Guarded on `current`, so the overlay's
+    /// tap and its auto-dismiss timer both landing can't offer the same moment twice.
+    func dismiss() {
+        guard let celebration = current else { return }
+        current = nil
+        ReviewPromptService.shared.celebrationDismissed(celebration)
+    }
 
     // MARK: Dedupe
 

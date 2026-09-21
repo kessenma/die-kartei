@@ -30,6 +30,24 @@ nonisolated enum HubCacheLocation {
         "models--" + repoID.replacingOccurrences(of: "/", with: "--")
     }
 
+    /// The inverse of ``repoDirectoryName(_:)``: recover a repo ID from a cache directory name,
+    /// or nil if the name isn't one of ours.
+    ///
+    /// Lives next to its inverse so the two encodings cannot drift apart. This is what lets
+    /// ``OrphanedModelCache`` name a download whose `MLXModel` case has been deleted — after a
+    /// model is removed from the enum, the directory name is the only remaining record of what
+    /// it was.
+    ///
+    /// The encoding is lossless for HuggingFace IDs, which are `owner/name` with no `--` in
+    /// either half. A directory that doesn't fit the shape returns nil rather than a mangled
+    /// guess, so a stray folder in the cache is skipped instead of being offered for deletion.
+    static func repoID(fromDirectoryName name: String) -> String? {
+        guard name.hasPrefix("models--") else { return nil }
+        let parts = name.dropFirst("models--".count).components(separatedBy: "--")
+        guard parts.count == 2, !parts[0].isEmpty, !parts[1].isEmpty else { return nil }
+        return parts[0] + "/" + parts[1]
+    }
+
     static func repoDirectory(repoID: String) -> URL {
         hubCacheDirectory.appendingPathComponent(repoDirectoryName(repoID))
     }

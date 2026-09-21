@@ -3,9 +3,10 @@ import SwiftData
 import BackgroundTasks
 import UIKit
 
-/// Configure and generate a new short story. Hard-gated to the hero model: on devices that
-/// can't run it the screen explains why, and until it's downloaded the screen offers the
-/// download — there is no model picker here on purpose.
+/// Configure and generate a new short story. Gated to the in-house German tutors (any of them —
+/// see ``StoryStudyService/eligibleModels``): the screen leads with which tutor is writing and
+/// lets you swap it, offers the download until that one is on disk, and explains itself on the
+/// rare device too small to run even the lightest tutor.
 struct StorySetupView: View {
     @Bindable var modelManager: MLXModelManager
     var mlxService: MLXGenerationService
@@ -15,6 +16,11 @@ struct StorySetupView: View {
     @FocusState private var topicFocused: Bool
     @State private var service: StoryStudyService?
     @State private var topic = ""
+    /// This story's level. Seeded from `germanLevel` on appear and kept local: picking a harder
+    /// level for one story must not move the app-wide anchor, which is what binding straight to
+    /// the stored setting used to do.
+    @State private var level: CEFRLevel = .a2
+    @State private var didLoadLevel = false
     /// Set when generation finishes; drives the push to the finished story.
     @State private var finishedStory: StudyStory?
     @State private var showStarters = false
@@ -24,18 +30,24 @@ struct StorySetupView: View {
     /// Presents the memory check on a device the story model doesn't comfortably fit.
     @State private var showMemoryCheck = false
 
-    private var hero: MLXModel { StoryStudyService.requiredModel }
-    private var theme: ModelTheme { hero.theme }
+    /// The tutor this screen will write with. Read through `resolve` rather than straight off the
+    /// manager so a pick made on a roomier device (or before a memory-saver opt-out) can't strand
+    /// this screen on a model it can't load.
+    private var storyModel: MLXModel { StoryStudyService.resolve(modelManager.selectedStoryModel) }
+    private var theme: ModelTheme { storyModel.theme }
     private var trimmedTopic: String { topic.trimmingCharacters(in: .whitespaces) }
+    /// The lightest tutor, named by the "this device is too small" copy.
+    private var smallestTutor: MLXModel { StoryStudyService.smallestModel }
 
     var body: some View {
         Form {
-            if !DeviceCapability.mayRunHero {
+            if StoryStudyService.runnableModels.isEmpty {
                 deviceTooSmallSection.themedListRow()
-            } else if !hero.isDownloaded {
+            } else if !storyModel.isDownloaded {
+                modelSection
                 downloadSection.themedListRow()
             } else {
-                heroSection
+                modelSection
                 topicSection.themedListRow()
                 storySection.themedListRow()
                 questionSection.themedListRow()
@@ -52,7 +64,7 @@ struct StorySetupView: View {
             }
         }
         // Innermost so it wins over `.themedListScreen()`'s own tint: on Klar this resolves to the
-        // story hero's brand accent (pixel-identical to the old `.tint(theme.accent)`); on the
+        // story model's brand accent (pixel-identical to the old `.tint(theme.accent)`); on the
         // identity themes it becomes the theme's accent.
         .tint(appTheme.accent(model: theme))
         .themedListScreen()
@@ -80,8 +92,15 @@ struct StorySetupView: View {
             ))
         }
         .onAppear {
-            if service == nil {
-                service = StoryStudyService(mlxService: mlxService, modelContext: modelContext)
+            // A remembered pick this device can't honour is rewritten once, here, so the picker
+            // and the generator agree on what's selected.
+            modelManager.selectedStoryModel = storyModel
+            makeServiceIfNeeded()
+            // Guarded so re-appearing (a push and back) doesn't discard the level chosen for the
+            // story being set up.
+            if !didLoadLevel {
+                didLoadLevel = true
+                level = modelManager.germanLevel
             }
         }
     }
@@ -91,9 +110,9 @@ struct StorySetupView: View {
     private var deviceTooSmallSection: some View {
         Section {
             VStack(alignment: .leading, spacing: 8) {
-                Label("Stories need the \(hero.rawValue)", systemImage: "book.pages")
+                Label("Stories need a German Tutor model", systemImage: "book.pages")
                     .font(.headline)
-                Text("Writing a level-controlled German story and grading your answers takes the German Tutor model, and it needs more memory than this iPhone gives an app. Everything else in the app runs normally here.")
+                Text("Writing a level-controlled German story and grading your answers takes one of the German Tutor models, and even the lightest of them — \(smallestTutor.rawValue) — wants more memory than this iPhone gives an app. Everything else in the app runs normally here.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Button {
@@ -108,8 +127,10 @@ struct StorySetupView: View {
         }
         .sheet(isPresented: $showMemoryCheck) {
             MemoryCheckSheet(
-                model: hero,
-                alternative: hero,   // stories have no smaller stand-in: it's this model or nothing
+                model: smallestTutor,
+                // This branch only runs when nothing fits, so the lightest tutor is both the
+                // model in question and the closest thing to an alternative.
+                alternative: smallestTutor,
                 onUseAnyway: {},     // the sheet records the opt-in; this screen unlocks on redraw
                 onUseAlternative: { _ in }
             )
@@ -120,14 +141,14 @@ struct StorySetupView: View {
         Section {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 10) {
-                    hero.logoImage
+                    storyModel.logoImage
                         .resizable()
                         .scaledToFit()
                         .frame(width: 28, height: 28)
-                    Text(hero.rawValue)
+                    Text(storyModel.rawValue)
                         .font(.headline)
                 }
-                Text("Stories are written and graded by the German Tutor, fine-tuned on German for this app. One-time download of about 5 GB — after that it runs fully on-device.")
+                Text("Stories are written and graded by a German Tutor, fine-tuned on German for this app. One-time download of about \(downloadSizeText) — after that it runs fully on-device. Tap the row above to pick a lighter tutor instead.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
@@ -146,7 +167,7 @@ struct StorySetupView: View {
                     }
                 } else {
                     Button {
-                        Task { await mlxService.loadModel(hero) }
+                        Task { await mlxService.loadModel(storyModel) }
                     } label: {
                         Label("Download & Load", systemImage: "arrow.down.circle.fill")
                             .font(.headline)
@@ -166,25 +187,21 @@ struct StorySetupView: View {
         }
     }
 
-    private var heroSection: some View {
+    /// Which tutor is writing, and the way to change it.
+    private var modelSection: some View {
         Section {
-            HStack(spacing: 12) {
-                hero.logoImage
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 30, height: 30)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(hero.rawValue)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                    Text("Writes the story and grades your answers, fully on-device.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(.vertical, 2)
+            StoryModelRow(
+                selected: $modelManager.selectedStoryModel,
+                caption: "Writes the story and grades your answers, fully on-device."
+            )
             .listRowBackground(theme.linear.opacity(0.12))
         }
+    }
+
+    /// Download size of the selected tutor, for the "Model Needed" copy.
+    private var downloadSizeText: String {
+        let mb = storyModel.approximateSizeMB
+        return mb >= 1000 ? String(format: "%.1f GB", Double(mb) / 1000.0) : "\(mb) MB"
     }
 
     // MARK: - Setup form
@@ -239,10 +256,7 @@ struct StorySetupView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("Level")
-                Picker("Level", selection: Binding(
-                    get: { modelManager.storyLevel },
-                    set: { modelManager.storyLevel = $0 }
-                )) {
+                Picker("Level", selection: $level) {
                     ForEach(CEFRLevel.allCases) { level in
                         Text(level.rawValue).tag(level)
                     }
@@ -253,8 +267,7 @@ struct StorySetupView: View {
         } header: {
             Text("Story").themedSectionHeader()
         } footer: {
-            let level = modelManager.storyLevel
-            Text("\(level.rawValue) · \(level.englishLabel) — about \(level.storyWordRange.lowerBound)–\(level.storyWordRange.upperBound) words.")
+            Text(levelFooter)
         }
     }
 
@@ -456,11 +469,19 @@ struct StorySetupView: View {
         }
     }
 
+    /// Length guidance, plus — only when the learner has moved this story off their own level — a
+    /// note that the change is local. Saying it unconditionally would nag on every visit.
+    private var levelFooter: String {
+        let base = "\(level.rawValue) · \(level.englishLabel) — about \(level.storyWordRange.lowerBound)–\(level.storyWordRange.upperBound) words."
+        guard level != modelManager.germanLevel else { return base }
+        return base + " Just for this story — your level stays \(modelManager.germanLevel.rawValue)."
+    }
+
     private func addToQueue() {
         topicFocused = false
         let job = BatchJob.story(
             topic: trimmedTopic,
-            level: modelManager.storyLevel,
+            level: level,
             genre: modelManager.storyGenre,
             questionCount: modelManager.storyQuestionCount,
             questionKinds: modelManager.storyQuestionKinds,
@@ -484,12 +505,20 @@ struct StorySetupView: View {
 
     // MARK: - Generation
 
+    /// Creates the generator, or replaces it when the learner has since picked a different tutor —
+    /// the service holds its model for life.
+    private func makeServiceIfNeeded() {
+        guard service == nil || service?.model != storyModel else { return }
+        service = StoryStudyService(mlxService: mlxService, modelContext: modelContext, model: storyModel)
+    }
+
     private func generate() {
+        makeServiceIfNeeded()
         guard let service else { return }
         topicFocused = false
         let story = StudyStory(
             topic: trimmedTopic,
-            level: modelManager.storyLevel,
+            level: level,
             genre: modelManager.storyGenre
         )
         modelContext.insert(story)

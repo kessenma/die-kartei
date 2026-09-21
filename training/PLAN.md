@@ -1,5 +1,11 @@
 # German Grammar Fine-Tune Plan — Gemma 4 E4B
 
+> 📍 **This is the v1 round** (corpus `data/packed/`, 1,403 rows — the shipped 54/60 model). It is
+> still accurate for v1 and for the Qwen3-4B track, but four rounds have happened since. For the
+> current state start at [`CLAUDE.md`](CLAUDE.md); for what to generate next see
+> [`DATA_GAP_PLAN.md`](DATA_GAP_PLAN.md). Open checkboxes below may have been resolved elsewhere —
+> check [`MODEL_SCOREBOARD.md`](MODEL_SCOREBOARD.md) before acting on one.
+
 Goal: fine-tune the app's on-device model (Gemma 4 E4B, MLX 4-bit) to be reliably
 correct at four German grammar areas it currently struggles with, plus broaden
 useful vocabulary coverage:

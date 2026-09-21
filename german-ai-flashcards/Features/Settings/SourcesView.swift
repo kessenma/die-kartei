@@ -46,6 +46,32 @@ struct SourcesView: View {
             }
             .themedListRow()
 
+            // MARK: - Wortkiste
+            Section {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "shippingbox.fill")
+                        .font(.system(size: 26))
+                        .foregroundStyle(.tint)
+                        .frame(width: 40, height: 40)
+
+                    Text(
+                        "The plural and Perfekt forms on Goethe cards, and the due-today word box behind the Wortschatz screen, follow Wortkiste, an open-source word box for the same exams by matchaDataHub, released under the MIT license."
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 4)
+
+                Link(destination: URL(string: "https://github.com/matchaDataHub/wortkiste")!) {
+                    Label("Wortkiste on GitHub", systemImage: "arrow.up.right.square")
+                        .font(.footnote)
+                }
+            } header: {
+                Text("Wortkiste")
+                    .themedSectionHeader()
+            }
+            .themedListRow()
+
             // MARK: - Wiktionary / Kaikki
             Section {
                 HStack(spacing: 12) {
@@ -124,7 +150,7 @@ struct SourcesView: View {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(
-                        "Flashcards are generated on-device using open-source models (from Alibaba - Qwen, Google- Gemma, and Meta- LLaMA) via MLX. MLX is an open-source framework by Apple machine learning research to run machine learning models locally on Apple devices."
+                        "Flashcards are generated on your device by models fine-tuned for this app: two built on Google's Gemma 4, two on IBM's Granite. Both base families are open-weight. They run through MLX, an open-source framework by Apple machine learning research to run machine learning models locally on Apple devices. On supported iPhones you can use Apple's built-in on-device model instead."
                     )
                     .font(.footnote)
                     .foregroundStyle(.secondary)

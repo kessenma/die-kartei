@@ -113,6 +113,9 @@ struct ConversationSummaryView: View {
             ("\(summary.translationsUsed ?? 0)", "Translations"),
             ("\(summary.phraseHelperUsed ?? 0)", "Phrase helps"),
         ])
+        if let streak = summary.bestUnaidedStreak, streak > 0 {
+            items.append(("\(streak)", "On your own"))
+        }
         return items
     }
 
@@ -127,6 +130,11 @@ struct ConversationSummaryView: View {
         } header: {
             Text(conversation.createdAt.formatted(date: .abbreviated, time: .shortened))
                 .themedSectionHeader()
+        } footer: {
+            if summary.unaidedStreakIsRecord == true, let streak = summary.bestUnaidedStreak {
+                Text("\(streak) turn\(streak == 1 ? "" : "s") in a row without hints or translations. Your best yet.")
+                    .font(.caption2)
+            }
         }
     }
 
@@ -242,4 +250,33 @@ struct WrapLayout: Layout {
             rowHeight = max(rowHeight, size.height)
         }
     }
+}
+
+#Preview("Report · record streak") {
+    let config = ConversationConfig(model: .hero)
+    let summary = ConversationSummary(
+        strengths: ["Natural word order in main clauses", "Good use of scenario vocabulary"],
+        improvements: ["Watch the case after \"mit\""],
+        patternNote: "Dative endings slip when the sentence gets long.",
+        wordsPracticed: ["die Gabel", "bestellen"],
+        correctionCount: 2,
+        selfCorrections: 1,
+        hintsUsed: 1,
+        translationsUsed: 0,
+        phraseHelperUsed: 0,
+        spacedReviews: nil,
+        bestUnaidedStreak: 4,
+        unaidedStreakIsRecord: true,
+        turnCount: 9,
+        generatedAt: .now,
+        rawText: nil
+    )
+    return ConversationSummaryView(
+        conversation: ChatConversation(config: config),
+        summary: summary,
+        mlxService: nil,
+        modelManager: nil,
+        onDone: {}
+    )
+    .modelContainer(for: [ChatConversation.self], inMemory: true)
 }

@@ -152,8 +152,13 @@ struct UnifiedLibraryView: View {
                 } label: {
                     Label("Photo Scans", systemImage: "camera.viewfinder")
                 }
+                NavigationLink {
+                    JobPostingListView(modelManager: modelManager, mlxService: mlxService)
+                } label: {
+                    Label("Job Postings", systemImage: "briefcase.fill")
+                }
             } footer: {
-                Text("AI-written stories at your level, plus German texts you've imported or scanned. Open one to study its vocabulary and practice questions, or discuss it with the AI.")
+                Text("AI-written stories at your level, German texts you've imported or scanned, and the job ads you're studying. Open one to study its vocabulary and practice questions, or discuss it with the AI.")
             }
             .themedListRow()
         }
@@ -265,6 +270,11 @@ private struct GeneratorBadge: View {
                 .resizable()
                 .scaledToFit()
                 .frame(height: 18)
+        } else if let symbol = deck.kindSymbol {
+            // Document decks (a story, a paper, a job posting) have no single generator to show.
+            Image(systemName: symbol)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 }

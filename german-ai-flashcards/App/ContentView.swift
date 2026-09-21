@@ -45,6 +45,16 @@ struct ContentView: View {
     @State private var pendingSelection: CardSelectionPayload?
     @State private var pendingIllustration: PendingIllustration?
     @State private var saveError: String?
+    #if DEBUG
+    @State private var showPlacementReview = false
+    @State private var showLevelSettings = false
+    @State private var showConversationSetup = false
+    /// `-wortschatz.debugOpen 1`: the hub sits two taps into Home, and this simulator can't tap.
+    @State private var showWortschatzHub = false
+    /// `-stories.debugOpen 1`: the reader sits several taps deep and needs a story that has
+    /// pictures, which normally means running diffusion. See `StoryDebugSeeder`.
+    @State private var debugStory: StudyStory?
+    #endif
     @Environment(\.modelContext) private var modelContext
 
     /// Legacy first-launch flag from when the hero intro was its own sheet. Still read (and set)
@@ -52,20 +62,32 @@ struct ContentView: View {
     /// else — the standalone sheet now only opens from Settings → Model.
     @AppStorage("hasSeenHeroModelIntro") private var hasSeenHeroModelIntro = false
 
-    /// The combined first-launch wizard: hero pitch, then the placement check while the model
-    /// downloads. Offered once, ever; devices that can't run the hero start at the check.
+    /// Superseded by `hasSeenOnboardingV2`. Still written so a downgrade doesn't re-onboard, and
+    /// still cleared by the debug reset.
     @AppStorage("hasSeenOnboardingWizard") private var hasSeenOnboardingWizard = false
+
+    /// The first-launch flow: why-a-download, the tutor offer, then the placement check while the
+    /// model downloads. Offered once, ever.
+    ///
+    /// A *new* key rather than a reuse of `hasSeenOnboardingWizard`, and that is deliberate: the
+    /// flow now leads with an explanation nobody who saw the old wizard has ever been shown, so
+    /// everyone gets it once. The steps self-skip for people who are already set up (see
+    /// `OnboardingWizardView`), which is what keeps that from being a nuisance.
+    @AppStorage("hasSeenOnboardingV2") private var hasSeenOnboardingV2 = false
     @State private var showOnboardingWizard = false
+
+    /// Deep links into the Settings tab, so the Home tutor card and the upgrade nudges can point
+    /// somewhere real instead of naming a screen and leaving the reader to find it.
+    @State private var settingsRouter = SettingsRouter()
 
     /// A retired model build still sitting in the hub cache, if this device has one. Item-driven so
     /// the sheet can never present before its payload is set, and nil for everyone who never had the
     /// old build — which, since a fresh install has no hub cache at all, is every new user.
     @State private var modelUpdate: ModelSupersession?
 
-    /// The optional placement check. Offered once, after whichever model sheet (if any) has been
-    /// dismissed — deliberately *not* gated on `DeviceCapability.canRunHero`, since knowing where a
-    /// learner starts has nothing to do with whether their phone can run the hero model.
-    @State private var showPlacement = false
+    /// The version whose release notes to show at launch, if this launch is the first on a new
+    /// version of an existing install. Item-driven for the same reason as `modelUpdate`.
+    @State private var whatsNewRelease: WhatsNewRelease?
 
     private var deckStore: DeckStore { DeckStore(modelContext: modelContext) }
 
@@ -101,7 +123,8 @@ struct ContentView: View {
                     SettingsView(
                         modelManager: coordinator.modelManager,
                         mlxService: coordinator.mlxService,
-                        resetToken: settingsResetToken
+                        resetToken: settingsResetToken,
+                        route: $settingsRouter.route
                     )
                     .opacity(selectedTab == .settings ? 1 : 0)
                     .allowsHitTesting(selectedTab == .settings)
@@ -165,6 +188,10 @@ struct ContentView: View {
         // rise above whichever tab is active. The center decides; this only displays.
         .overlay { CelebrationOverlayHost() }
         .environment(router)
+        .environment(settingsRouter)
+        // Anyone can ask for a Settings destination by setting the route; the shell is what brings
+        // the tab forward to show it.
+        .onChange(of: settingsRouter.route) { showSettingsRoute() }
         // The loaded model's brand theme, published once for the whole app. Themes that defer
         // their accent to the model (Klar) resolve their tint from this; the identity-forward
         // themes ignore it and assert their own.
@@ -190,10 +217,14 @@ struct ContentView: View {
         .fullScreenCover(item: $router.active) { activity in
             activityCover(activity)
         }
-        .sheet(isPresented: $showOnboardingWizard) {
+        // Full screen, not a sheet. Setup is the app's first screen, not an interruption laid over
+        // it — and a cover has no swipe-to-dismiss, which replaces the old
+        // `interactiveDismissDisabled` guard that kept a half-finished check from vanishing.
+        .fullScreenCover(isPresented: $showOnboardingWizard) {
             OnboardingWizardView(
                 modelManager: coordinator.modelManager,
-                mlxService: coordinator.mlxService
+                mlxService: coordinator.mlxService,
+                onOpenModelSettings: openModelSettings
             )
         }
         .sheet(item: $modelUpdate, onDismiss: offerNextOnboardingStep) { supersession in
@@ -203,16 +234,80 @@ struct ContentView: View {
                 mlxService: coordinator.mlxService
             )
         }
-        .sheet(isPresented: $showPlacement) {
-            PlacementQuizView(modelManager: coordinator.modelManager)
+        .sheet(item: $whatsNewRelease) { release in
+            WhatsNewSheet(current: release)
         }
+        #if DEBUG
+        // `-placement.debugOpenReview 1` opens the answer review straight from launch. The screen
+        // otherwise sits three taps deep behind the Lernpyramide, and a simulator can be driven by
+        // launch arguments but not by taps — so without this the only way to see it is by hand.
+        .sheet(isPresented: $showPlacementReview) {
+            NavigationStack {
+                PlacementReviewView(modelManager: coordinator.modelManager)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { showPlacementReview = false }
+                        }
+                    }
+            }
+        }
+        // `-level.debugOpenLevel 1` opens Settings ▸ Learning ▸ Your Level, which is otherwise two
+        // taps deep. Same reason as the review sheet above.
+        .sheet(isPresented: $showLevelSettings) {
+            NavigationStack {
+                LevelSettingsView(modelManager: coordinator.modelManager)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { showLevelSettings = false }
+                        }
+                    }
+            }
+        }
+        .sheet(isPresented: $showConversationSetup) {
+            ConversationSetupView(
+                modelManager: coordinator.modelManager,
+                mlxService: coordinator.mlxService
+            ) { _ in showConversationSetup = false }
+        }
+        .sheet(item: $debugStory) { story in
+            NavigationStack {
+                StoryDetailView(
+                    story: story,
+                    modelManager: coordinator.modelManager,
+                    mlxService: coordinator.mlxService
+                )
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { debugStory = nil }
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showWortschatzHub) {
+            NavigationStack {
+                WortschatzHubView(coordinator: coordinator)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { showWortschatzHub = false }
+                        }
+                    }
+            }
+            .environment(router)
+            .environment(settingsRouter)
+        }
+        #endif
         .memoryPressureBanner()
+        .memoryReadoutOverlay()
+        // The banner above is outside the `.environment(settingsRouter)` applied further in, so
+        // it gets its own — its "See what's using memory" link routes through this.
+        .environment(settingsRouter)
         .task {
             #if DEBUG
             // `-onboarding.resetWizard 1` clears every first-launch flag plus the stored estimate,
             // so a relaunch lands straight in the wizard — the sim can't be tapped through a reset
             // any other way.
             if UserDefaults.standard.bool(forKey: "onboarding.resetWizard") {
+                UserDefaults.standard.removeObject(forKey: "hasSeenOnboardingV2")
                 UserDefaults.standard.removeObject(forKey: "hasSeenOnboardingWizard")
                 UserDefaults.standard.removeObject(forKey: "hasSeenHeroModelIntro")
                 UserDefaults.standard.removeObject(forKey: PlacementService.seenKey)
@@ -221,20 +316,128 @@ struct ContentView: View {
                 // — otherwise a reset leaves the review screen full of history and the sim lies.
                 PlacementAttemptStore.deleteAll()
                 PlacementCoachExport.resetHighWaterMark()
+                // The level anchor is part of "fresh install" too — a declared level would
+                // otherwise survive the reset and the wizard would open pre-answered.
+                UserDefaults.standard.removeObject(forKey: "german.level")
+                UserDefaults.standard.removeObject(forKey: "german.level.declared")
+                coordinator.modelManager.germanLevel = .a2
+                coordinator.modelManager.germanLevelIsDeclared = false
+                hasSeenOnboardingV2 = false
                 hasSeenOnboardingWizard = false
                 hasSeenHeroModelIntro = false
             }
+            // `-onboarding.debugV2Only 1` clears *only* the V2 flag, leaving the placement result
+            // and the level anchor alone. That's the returning-user path: someone already set up,
+            // meeting the new explanation for the first time, whose check steps should self-skip.
+            // `resetWizard` can't test it — it wipes the very result the skip depends on.
+            if UserDefaults.standard.bool(forKey: "onboarding.debugV2Only") {
+                UserDefaults.standard.removeObject(forKey: "hasSeenOnboardingV2")
+                hasSeenOnboardingV2 = false
+            }
+            // `-settings.debugOpenModel 1` fires the deep link at launch. Proves it *pushes* — the
+            // only handle on this stack before `SettingsRouter` was one that popped to root.
+            if UserDefaults.standard.bool(forKey: "settings.debugOpenModel") {
+                openModelSettings()
+            }
             PlacementService.applyDebugLaunchArgumentIfNeeded()
             PlacementService.applyDebugAttemptsLaunchArgumentIfNeeded()
+            // `-review.debugForce 1` raises the App Store ask without the seven-day streak the real
+            // trigger needs — the only way to see that sheet on a simulator.
+            ReviewPromptService.shared.applyDebugLaunchArgumentIfNeeded()
+            // `-whatsNew.debugForce 1` raises the release-notes sheet on a simulator, which never
+            // has an "update" to detect — the only way to see that sheet without shipping.
+            WhatsNew.applyDebugLaunchArgumentIfNeeded()
+            // `-level.debugDeclare B2` hard-selects a level the way the intro door does, so the
+            // "declaring credits nothing" invariant can be checked on a simulator that can't tap.
+            // Deliberately writes no `PlacementResult` — that's the whole thing being verified.
+            if let raw = UserDefaults.standard.string(forKey: "level.debugDeclare"),
+               let level = CEFRLevel(rawValue: raw.uppercased()) {
+                coordinator.modelManager.germanLevel = level
+                coordinator.modelManager.germanLevelIsDeclared = true
+                PlacementService.markOffered()
+            }
+            if UserDefaults.standard.bool(forKey: "placement.debugOpenReview") {
+                showPlacementReview = true
+            }
+            if UserDefaults.standard.bool(forKey: "level.debugOpenLevel") {
+                showLevelSettings = true
+            }
+            // `-conversation.debugOpenSetup 1` opens New Conversation, which otherwise sits behind
+            // Speaking ▸ Conversation ▸ +. Same reason as the two above: the upgrade nudge under
+            // the model picker is only reachable by tapping, and this simulator can't.
+            if UserDefaults.standard.bool(forKey: "conversation.debugOpenSetup") {
+                showConversationSetup = true
+            }
+            if UserDefaults.standard.bool(forKey: "placement.debugVerify") {
+                print(PlacementCoachExport.runDebugVerification(in: modelContext))
+            }
+            // `-screenshots.debugFill 1` / `-screenshots.debugRestore 1` run Settings ▸ Developer ▸
+            // Screenshot Data from launch. The button is three taps deep and this simulator can't
+            // tap; on real hardware you'd always use the button.
+            if UserDefaults.standard.bool(forKey: "screenshots.debugFill") {
+                print("[screenshots] " + ScreenshotDataSeeder.fill(in: modelContext))
+            }
+            if UserDefaults.standard.bool(forKey: "screenshots.debugRestore") {
+                print("[screenshots] restored: \(ScreenshotDataSeeder.restore(in: modelContext))")
+            }
+            // The Wortschatz box on a simulator that can't tap. `-wortschatz.debugLegacyDecks 1`
+            // recreates the three old per-level SRS decks and clears the merge flag, so the merge
+            // below has input; `-wortschatz.debugMerge 1` re-runs the merge now;
+            // `-wortschatz.debugSeed 1` spreads the merged deck over new / due / known / lapsed
+            // (reversible with `-wortschatz.debugRestore 1`).
+            if UserDefaults.standard.bool(forKey: "wortschatz.debugOpen") {
+                showWortschatzHub = true
+            }
+            // `-wortschatz.debugOpenSession 1` starts a box session at launch (the player is
+            // three taps deep), so the "der · die · das?" front can be checked on a simulator.
+            if UserDefaults.standard.bool(forKey: "wortschatz.debugOpenSession"),
+               let session = deckStore.wortschatzSession(
+                    scope: WortschatzScope.load(), style: WortschatzPrefs.style(),
+                    newBudget: WortschatzPrefs.newPerDay(), sessionCap: WortschatzPrefs.sessionCap()
+               ) {
+                router.launch(.cardDeck(session))
+            }
+            // `-stories.debugSeed 1` / `-stories.debugOpen 1` / `-stories.debugRemove 1`: an
+            // illustrated story without running diffusion, so the reader's three picture layouts
+            // can be checked on a simulator that can neither tap nor generate.
+            if UserDefaults.standard.bool(forKey: "stories.debugRemove") {
+                print("[stories] removed: \(StoryDebugSeeder.remove(in: modelContext))")
+            }
+            if UserDefaults.standard.bool(forKey: "stories.debugSeed") {
+                print("[stories] seeded: \(StoryDebugSeeder.seed(in: modelContext)?.title ?? "failed")")
+            }
+            if UserDefaults.standard.bool(forKey: "stories.debugOpen") {
+                debugStory = StoryDebugSeeder.seed(in: modelContext)
+            }
+            if UserDefaults.standard.bool(forKey: "wortschatz.debugLegacyDecks") {
+                print("[wortschatz] " + WortschatzDebugSeeder.createLegacyDecks(in: modelContext))
+            }
+            if UserDefaults.standard.bool(forKey: "wortschatz.debugMerge") {
+                print("[wortschatz] " + WortschatzDebugSeeder.rerunMerge(in: modelContext))
+            }
+            if UserDefaults.standard.bool(forKey: "wortschatz.debugSeed") {
+                print("[wortschatz] " + WortschatzDebugSeeder.seed(in: modelContext))
+            }
+            if UserDefaults.standard.bool(forKey: "wortschatz.debugRestore") {
+                print("[wortschatz] restored: \(WortschatzDebugSeeder.restore(in: modelContext))")
+            }
             #endif
 
             // One-time roll-up of historical activity durations into the per-day log, so the
             // streak calendar's time totals cover the days that predate time tracking.
             StudyTimeBackfillService.runIfNeeded(in: modelContext)
+            // One-time merge of the per-level Goethe SRS decks into the single Wortschatz deck, so
+            // a word studied at A1 and again at A2 has one schedule from now on.
+            WortschatzMergeService.runIfNeeded(in: modelContext)
 
             // Watch for system memory warnings for the whole session, not just while a model
             // happens to be loading.
             MemoryPressureMonitor.shared.startMonitoring()
+
+            // Was the last session closed by iOS, a crash, or the app switcher? The marker it
+            // left behind says, and lands in the memory log (Settings ▸ Speicher) with the last
+            // reading and the screen that was open.
+            MemoryDiagnostics.beginSession()
 
             // A load still marked in-flight means the app went away mid-load last time — on a
             // device that's tight for the model, that's iOS reclaiming it. Say so once.
@@ -259,44 +462,74 @@ struct ContentView: View {
         }
     }
 
-    /// Routes first launch to the right offer, once, ever. New installs get the combined wizard;
-    /// anyone the old two-sheet flow already reached keeps its semantics — the wizard must never
-    /// appear for an existing user, but a legacy mid-state (hero intro seen, placement never
-    /// offered) still gets its placement offer.
+    /// Routes first launch to the onboarding flow, once, ever.
+    ///
+    /// This used to fork on the legacy flags to keep a half-finished old flow — hero intro seen,
+    /// placement never offered — from losing its placement offer. That fork is gone because the
+    /// flow itself now handles the case: its check step self-skips only when a stored result
+    /// exists, so a legacy mid-state gets the check inside the flow rather than as a separate
+    /// sheet afterwards.
     private func offerNextOnboardingStep() {
-        if hasSeenHeroModelIntro || PlacementService.hasBeenOffered {
-            hasSeenOnboardingWizard = true
-            offerPlacementIfNeeded()
+        // Release notes are asked first, and the two can never both present: the prompt returns
+        // nil for exactly the launches where the wizard should run (a fresh install), stamping the
+        // version as seen so a new user is never told what changed since a version they never had.
+        if let release = WhatsNew.launchPrompt(isFreshInstall: !hasSeenOnboardingV2) {
+            offerWhatsNew(release)
             return
         }
         offerWizardIfNeeded()
     }
 
-    /// Presents the wizard once, ever. Every flag is written *before* presenting, so a crash
-    /// inside the sheet can't turn a one-time offer into a nag — the same discipline the model
-    /// sheets above use. Marking the legacy flags too keeps the standalone sheets from ever
-    /// auto-firing afterwards.
+    /// Marked seen *before* presenting, like every launch sheet here. Delayed for the same reason
+    /// as the wizard: this also runs from the supersession sheet's `onDismiss`, and a sheet
+    /// presented synchronously while another is still dismissing is dropped.
+    private func offerWhatsNew(_ release: WhatsNewRelease) {
+        WhatsNew.markSeen()
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.5))
+            whatsNewRelease = release
+        }
+    }
+
+    /// Presents the flow once, ever. Every flag is written *before* presenting, so a crash inside
+    /// it can't turn a one-time offer into a nag — the same discipline the model sheets above use.
+    ///
+    /// The legacy flags are marked too, so the standalone sheets never auto-fire afterwards and a
+    /// downgrade wouldn't re-onboard. `markOffered()` is no longer called here: presentation is
+    /// gated on `hasSeenOnboardingV2` alone now, and the flow's own steps write the placement keys
+    /// when they run. Marking it here would only claim the check had been offered on runs that
+    /// skip it.
     private func offerWizardIfNeeded() {
-        guard !hasSeenOnboardingWizard else { return }
+        guard !hasSeenOnboardingV2 else { return }
+        hasSeenOnboardingV2 = true
         hasSeenOnboardingWizard = true
         hasSeenHeroModelIntro = true
-        PlacementService.markOffered()
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.5))
             showOnboardingWizard = true
         }
     }
 
-    /// The legacy placement-only offer, kept for users the old flow half-finished. Marked offered
-    /// *before* presenting, same crash-safety rule. Skipping still counts as offered; the check
-    /// stays reachable from the pyramid.
-    private func offerPlacementIfNeeded() {
-        guard !PlacementService.hasBeenOffered else { return }
-        PlacementService.markOffered()
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(0.5))
-            showPlacement = true
-        }
+    /// Takes the learner to Settings ▸ Model & Downloads.
+    ///
+    /// Only sets the intent. Switching to the tab is `showSettingsRoute`'s job, so that *every*
+    /// caller gets it — a nudge buried three screens down only has the router, not this view's
+    /// tab state, and setting a route without switching tabs would push the destination onto a
+    /// stack nobody is looking at.
+    private func openModelSettings() {
+        settingsRouter.route = .model
+    }
+
+    /// Brings the Settings tab forward for a route someone asked for.
+    ///
+    /// Both steps matter. The Settings tab is built lazily (`visitedTabs`), so it has to exist
+    /// before a route can be honoured, and `.onChange(of: selectedTab)` inserts it only after the
+    /// body pass — too late. Nothing here touches `settingsResetToken`: bumping it would give the
+    /// stack a fresh identity and throw the push away.
+    private func showSettingsRoute() {
+        guard settingsRouter.route != nil else { return }
+        visitedTabs.insert(.settings)
+        selectedTab = .settings
     }
 
     // MARK: - Activity presentation
@@ -321,7 +554,11 @@ struct ContentView: View {
                 savedCards: session.savedCards,
                 flashcardStyle: session.flashcardStyle,
                 generatorModel: session.generatorModel,
-                autoAdvance: coordinator.modelManager.autoAdvance
+                autoAdvance: coordinator.modelManager.autoAdvance,
+                autoResume: session.autoResume,
+                autoStart: session.autoStart,
+                badgeLogoName: session.badgeLogoName,
+                modelManager: coordinator.modelManager
             )
             .environment(coordinator.mlxService)
 

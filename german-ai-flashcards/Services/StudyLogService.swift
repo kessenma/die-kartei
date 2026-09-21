@@ -74,6 +74,40 @@ enum StudyLogService {
         try? context.save()
     }
 
+    // MARK: New-word budget (Wortschatz)
+
+    /// A Goethe word got its first rating. Counts against today's new-word budget; does not mark
+    /// the day active on its own (the review that produced it already did).
+    static func recordNewWords(_ n: Int, in context: ModelContext) {
+        guard n > 0 else { return }
+        let day = fetchOrCreate(Calendar.current.startOfDay(for: Date()), in: context)
+        day.newWordsIntroduced += n
+        try? context.save()
+    }
+
+    /// "Learn 10 more": widen today's budget without touching the daily setting.
+    static func addNewWordBonus(_ n: Int, in context: ModelContext) {
+        guard n > 0 else { return }
+        let day = fetchOrCreate(Calendar.current.startOfDay(for: Date()), in: context)
+        day.newWordsBonus += n
+        try? context.save()
+    }
+
+    /// Today's introduced count and bonus, read off an already-fetched set.
+    static func todayNewWords(_ days: [StudyDay], asOf now: Date = Date()) -> (introduced: Int, bonus: Int) {
+        let today = Calendar.current.startOfDay(for: now)
+        guard let day = days.first(where: { Calendar.current.startOfDay(for: $0.dayStart) == today }) else {
+            return (0, 0)
+        }
+        return (day.newWordsIntroduced, day.newWordsBonus)
+    }
+
+    /// New words still allowed today under `newPerDay`.
+    static func newWordBudgetRemaining(_ days: [StudyDay], newPerDay: Int, asOf now: Date = Date()) -> Int {
+        let today = todayNewWords(days, asOf: now)
+        return max(0, newPerDay + today.bonus - today.introduced)
+    }
+
     private static func add(seconds: Int, to bucket: StudyTimeBucket, on day: StudyDay) {
         let s = max(0, seconds)
         guard s > 0 else { return }

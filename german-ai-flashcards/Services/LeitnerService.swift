@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// Implements the Leitner box system for spaced repetition.
 ///
@@ -15,16 +16,25 @@ enum LeitnerService {
     static let maxBox = 5
 
     /// Promote a card after a correct answer.
+    ///
+    /// Leitner study counts as learned the same way Anki study does: a run of correct answers
+    /// bumps `repetitions` (the bar `PyramidService.provenRepetitions` reads), and the box's own
+    /// spacing stands in for an interval, so a word drilled only in Leitner can reach "bekannt".
     static func markCorrect(_ card: SavedCard) {
         card.leitnerBox = min(card.leitnerBox + 1, maxBox)
         card.totalReviews += 1
+        card.noteReview(correct: true)
+        card.repetitions += 1
+        card.interval = max(card.interval, 1 << (card.leitnerBox - 1))
     }
 
-    /// Demote a card after a wrong answer (back to Box 1).
+    /// Demote a card after a wrong answer (back to Box 1). The correct-run resets with it.
     static func markWrong(_ card: SavedCard) {
         card.leitnerBox = 1
         card.totalReviews += 1
+        card.noteReview(correct: false)
         card.lapses += 1
+        card.repetitions = 0
     }
 
     /// Returns cards that should be reviewed this session.
@@ -72,6 +82,19 @@ enum LeitnerService {
         case 4: "green"
         case 5: "blue"
         default: "gray"
+        }
+    }
+
+    /// The box's tint, shared by the player's box badge and the Wortschatz chart.
+    static func boxSwiftUIColor(_ box: Int) -> Color {
+        switch box {
+        case 0: .gray
+        case 1: .red
+        case 2: .orange
+        case 3: .yellow
+        case 4: .green
+        case 5: .blue
+        default: .gray
         }
     }
 

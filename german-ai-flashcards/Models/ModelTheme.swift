@@ -6,8 +6,8 @@ import SwiftUI
 /// pick up its provider's colors — gradient headers, accent tints, chips, glows, progress bars —
 /// so the look stays consistent across every screen that mentions the model.
 ///
-/// Colors are grouped by provider (all Qwen sizes share one theme, all Gemma sizes share one, etc.),
-/// matching how `logoName` groups the logo assets.
+/// Colors are grouped by provider (both Gemma tutors share one theme, both Granite tutors
+/// another), matching how `logoName` groups the logo assets.
 struct ModelTheme {
     /// Brand colors ordered light → deep (roughly top → bottom of the logo). Drives gradients and
     /// the animated mesh in `ModelGradientHero`.
@@ -43,7 +43,7 @@ extension MLXModel {
                 accent: Color(hex: 0xBF5AF2)
             )
 
-        case .gemma3_1B, .gemma4_E4B_german, .gemma4_E2B_german:
+        case .gemma4_E4B_german, .gemma4_E2B_german:
             // Google / Gemma soft blue.
             ModelTheme(
                 palette: [
@@ -53,47 +53,7 @@ extension MLXModel {
                 accent: Color(hex: 0x4285F4)
             )
 
-        case .mistral7B:
-            // Mistral flame: yellow → orange → red (top → bottom of the logo).
-            ModelTheme(
-                palette: [
-                    Color(hex: 0xFFD200), Color(hex: 0xFF8A00), Color(hex: 0xFF5C00),
-                    Color(hex: 0xF1370E), Color(hex: 0xE10500),
-                ],
-                accent: Color(hex: 0xFF6B00)
-            )
-
-        case .qwen3_0_6B, .qwen3_4B, .qwen3_8B:
-            // Qwen indigo → violet.
-            ModelTheme(
-                palette: [
-                    Color(hex: 0x8B7FF7), Color(hex: 0x6A5AE8),
-                    Color(hex: 0x5B4FD6), Color(hex: 0x4B40B8),
-                ],
-                accent: Color(hex: 0x615CED)
-            )
-
-        case .llama3_2_1B:
-            // Meta / LLaMA blue.
-            ModelTheme(
-                palette: [
-                    Color(hex: 0x2AA8FF), Color(hex: 0x0091FF),
-                    Color(hex: 0x0A6CF5), Color(hex: 0x0052D9),
-                ],
-                accent: Color(hex: 0x0668E1)
-            )
-
-        case .phi4Mini:
-            // Microsoft / Phi four-square: red, green, blue, yellow.
-            ModelTheme(
-                palette: [
-                    Color(hex: 0xF25022), Color(hex: 0x7FBA00),
-                    Color(hex: 0x00A4EF), Color(hex: 0xFFB900),
-                ],
-                accent: Color(hex: 0x00A4EF)
-            )
-
-        case .granite2B_german:
+        case .granite2B_german, .granite41_3B_german:
             // IBM blue, darker and cooler than Meta's so the two don't read as the same brand.
             ModelTheme(
                 palette: [

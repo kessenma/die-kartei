@@ -228,9 +228,37 @@ final class StudyStory {
     var genre: StoryGenre { genreRaw.flatMap { StoryGenre(rawValue: $0) } ?? .alltag }
     var model: MLXModel? { modelRaw.flatMap { MLXModel(rawValue: $0) } }
 
+    // MARK: Decoded blobs
+    //
+    // Each accessor used to run `JSONDecoder` on every read, and the reader reads several of them
+    // per render. The caches below are keyed on the bytes they were decoded from: a cache whose
+    // `data` no longer matches the stored blob is stale and is simply rebuilt, so a write from any
+    // path — the setters here, or SwiftData refreshing the row — can't serve an old value.
+    // `@Transient` keeps them out of the schema.
+
+    private struct Decoded<Value> {
+        let data: Data
+        let value: Value
+    }
+
+    @Transient private var questionsCache: Decoded<[StoryQuestion]>? = nil
+    @Transient private var glossaryCache: Decoded<[GlossaryEntry]>? = nil
+    @Transient private var speakersCache: Decoded<[StorySpeaker]>? = nil
+    @Transient private var imagesCache: Decoded<[StoryImageRecord]>? = nil
+    @Transient private var lookupsCache: Decoded<[GlossaryEntry]>? = nil
+
+    private func decoded<Value: Decodable>(
+        _ data: Data?, cache: inout Decoded<Value>?, as type: Value.Type
+    ) -> Value? {
+        guard let data else { cache = nil; return nil }
+        if let cache, cache.data == data { return cache.value }
+        guard let value = try? JSONDecoder().decode(type, from: data) else { cache = nil; return nil }
+        cache = Decoded(data: data, value: value)
+        return value
+    }
+
     var questions: [StoryQuestion] {
-        guard let questionsData else { return [] }
-        return (try? JSONDecoder().decode([StoryQuestion].self, from: questionsData)) ?? []
+        decoded(questionsData, cache: &questionsCache, as: [StoryQuestion].self) ?? []
     }
 
     func setQuestions(_ questions: [StoryQuestion]) {
@@ -238,8 +266,7 @@ final class StudyStory {
     }
 
     var glossary: [GlossaryEntry] {
-        guard let glossaryData else { return [] }
-        return (try? JSONDecoder().decode([GlossaryEntry].self, from: glossaryData)) ?? []
+        decoded(glossaryData, cache: &glossaryCache, as: [GlossaryEntry].self) ?? []
     }
 
     func setGlossary(_ entries: [GlossaryEntry]) {
@@ -247,8 +274,7 @@ final class StudyStory {
     }
 
     var speakers: [StorySpeaker] {
-        guard let speakersData else { return [] }
-        return (try? JSONDecoder().decode([StorySpeaker].self, from: speakersData)) ?? []
+        decoded(speakersData, cache: &speakersCache, as: [StorySpeaker].self) ?? []
     }
 
     func setSpeakers(_ speakers: [StorySpeaker]) {
@@ -256,8 +282,7 @@ final class StudyStory {
     }
 
     var images: [StoryImageRecord] {
-        guard let imagesData else { return [] }
-        return (try? JSONDecoder().decode([StoryImageRecord].self, from: imagesData)) ?? []
+        decoded(imagesData, cache: &imagesCache, as: [StoryImageRecord].self) ?? []
     }
 
     func setImages(_ records: [StoryImageRecord]) {
@@ -266,8 +291,7 @@ final class StudyStory {
 
     /// Words looked up while reading this story, newest first.
     var lookups: [GlossaryEntry] {
-        guard let lookupsData else { return [] }
-        return (try? JSONDecoder().decode([GlossaryEntry].self, from: lookupsData)) ?? []
+        decoded(lookupsData, cache: &lookupsCache, as: [GlossaryEntry].self) ?? []
     }
 
     func setLookups(_ entries: [GlossaryEntry]) {

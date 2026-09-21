@@ -14,8 +14,20 @@ import SwiftUI
 
 struct PlacementAttemptDetailView: View {
     let attempt: PlacementAttempt
+    /// The whole history, passed through so a question opened from *inside* one check can still
+    /// show every other time it was asked. Defaults to just this check for callers that don't
+    /// have the rest.
+    var allAttempts: [PlacementAttempt]?
+    /// Whether this check's estimate is the one currently steering the app.
+    var isCurrent: Bool = false
+    /// Adopt this check's estimate. Nil when the caller has no way to (the post-quiz link, where
+    /// the run just finished *is* the current one).
+    var onAdopt: (() -> Void)?
 
     @Environment(\.appTheme) private var appTheme
+    @Environment(\.dismiss) private var dismiss
+
+    private var history: [PlacementAttempt] { allAttempts ?? [attempt] }
 
     private var blockTallies: [(block: PlacementRecord.Block, correct: Int, asked: Int)] {
         PlacementRecord.Block.allCases.compactMap { block in
@@ -32,6 +44,7 @@ struct PlacementAttemptDetailView: View {
     var body: some View {
         List {
             summarySection
+            adoptSection
             if !blockTallies.isEmpty { breakdownSection }
             if !attempt.records.isEmpty { questionsSection }
         }
@@ -80,6 +93,34 @@ struct PlacementAttemptDetailView: View {
         .themedListRow()
     }
 
+    /// Switching the live estimate to this check. Nothing is lost either way — the result stored on
+    /// each check is exactly what that run concluded, so moving between them is reversible.
+    @ViewBuilder private var adoptSection: some View {
+        if let onAdopt {
+            Section {
+                if isCurrent {
+                    Label("This check is setting your level", systemImage: "checkmark.seal.fill")
+                        .font(.callout)
+                        .foregroundStyle(.green)
+                } else {
+                    Button {
+                        onAdopt()
+                        dismiss()
+                    } label: {
+                        Label("Use this check's blueprint", systemImage: "checkmark.seal")
+                            .font(.callout.weight(.medium))
+                    }
+                }
+            } footer: {
+                Text(isCurrent
+                     ? "This check sets the level for stories and conversations, and draws the Lernpyramide's blueprint."
+                     : "Switches your level and the pyramid's blueprint back to what this check found. Your other checks stay exactly where they are.")
+                    .font(.caption2)
+            }
+            .themedListRow()
+        }
+    }
+
     @ViewBuilder private var breakdownSection: some View {
         Section {
             ForEach(blockTallies, id: \.block) { tally in
@@ -88,6 +129,7 @@ struct PlacementAttemptDetailView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .frame(width: 20)
+                        .accessibilityHidden(true)   // decoration beside its own name
                     Text(tally.block.label)
                         .font(.callout)
                     Spacer()
@@ -95,6 +137,13 @@ struct PlacementAttemptDetailView: View {
                         .font(.caption)
                         .foregroundStyle(tally.correct == tally.asked ? .green : .secondary)
                 }
+                // One element with a real sentence. `.accessibilityHidden` on the symbol isn't
+                // enough on a plain (non-tappable) row — SwiftUI only folds children into one
+                // element automatically when the row is interactive, so without this the row
+                // announces as three fragments led by the SF Symbol's name ("Text On A Closed
+                // Book", "Words", "4/8").
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(tally.block.label): \(tally.correct) of \(tally.asked) right")
             }
         } header: {
             Text("By block").themedSectionHeader()
@@ -106,7 +155,7 @@ struct PlacementAttemptDetailView: View {
         Section {
             ForEach(Array(attempt.records.enumerated()), id: \.offset) { _, record in
                 NavigationLink {
-                    PlacementQuestionDetailView(record: record, attempts: [attempt])
+                    PlacementQuestionDetailView(record: record, attempts: history)
                 } label: {
                     HStack(alignment: .top, spacing: 10) {
                         Image(systemName: record.wasSkipped

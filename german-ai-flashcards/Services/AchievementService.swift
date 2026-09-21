@@ -187,4 +187,21 @@ enum AchievementService {
         let dates = earnedDates()
         return catalog.map { State(achievement: $0.achievement, earnedAt: dates[$0.achievement.id]) }
     }
+
+    // MARK: - Developer screenshot seeding
+    //
+    // `ScreenshotDataSeeder` is the only caller. Badges are otherwise *earned* — nothing else in
+    // the app may assign a date — but the seeder has to backdate a whole wall of them onto real
+    // study days, and its restore has to put the learner's own dates back byte for byte.
+
+    static func earnedDatesForBackup() -> [String: Date] { earnedDates() }
+
+    static var hasSeededBadges: Bool { UserDefaults.standard.bool(forKey: seededKey) }
+
+    /// Replaces the earned-date record wholesale. `seeded: true` keeps the next evaluation quiet,
+    /// which is what stops a freshly seeded device throwing sixteen celebrations at once.
+    static func replaceEarnedDates(_ dates: [String: Date], seeded: Bool) {
+        store(dates)
+        UserDefaults.standard.set(seeded, forKey: seededKey)
+    }
 }

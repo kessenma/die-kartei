@@ -46,7 +46,7 @@ enum ActivityCategory: String, CaseIterable, Identifiable {
     /// moment a tool is added.
     var subtitle: String {
         switch self {
-        case .vocabulary: "Flashcards, Goethe, matching"
+        case .vocabulary: "Flashcards, Wortschatz, matching"
         case .grammar:    "Drills and der · die · das"
         case .reading:    "Stories, papers, scans"
         case .speaking:   "Conversation practice"
@@ -170,16 +170,10 @@ struct ActivityCategoryView: View {
             } label: {
                 ActivityRow("Generate Flashcards", "Create AI vocabulary on any topic", "sparkles")
             }
-            ForEach(GoetheLevel.allCases) { level in
-                NavigationLink {
-                    GoetheVocabListView(
-                        level: level,
-                        onStartStudy: launchGoethe,
-                        onStartPastTenseStudy: launchPastTense
-                    )
-                } label: {
-                    ActivityRow("Goethe \(level.rawValue) Vocabulary", level.examName, "text.book.closed")
-                }
+            NavigationLink {
+                WortschatzHubView(coordinator: coordinator)
+            } label: {
+                ActivityRow("Wortschatz · Goethe", "A1–B1 word lists · due today · your word box", "archivebox")
             }
             NavigationLink {
                 MatchingDeckPickerView(modelManager: coordinator.modelManager)
@@ -208,7 +202,8 @@ struct ActivityCategoryView: View {
                 ActivityRow("Der · Die · Das", "The article game — guess each noun's gender", "textformat.abc")
             }
             NavigationLink {
-                PrepositionHubView(modelManager: coordinator.modelManager)
+                PrepositionHubView(modelManager: coordinator.modelManager,
+                                   mlxService: coordinator.mlxService)
             } label: {
                 ActivityRow("Präpositionen", "Which case each preposition takes", "arrow.triangle.branch")
             }
@@ -238,10 +233,6 @@ struct ActivityCategoryView: View {
     }
 
     // MARK: Launch helpers (card-producing → router)
-
-    private func launchGoethe(_ cards: [VocabCard], _ topic: String, _ style: FlashcardStyle, _ label: String) {
-        router.launch(.cardDeck(deckStore.goetheSession(cards: cards, topic: topic, style: style, label: label)))
-    }
 
     private func launchPastTense(_ cards: [VocabCard], _ topic: String, _ style: FlashcardStyle, _ label: String) {
         router.launch(.cardDeck(deckStore.pastTenseSession(cards: cards, topic: topic, style: style, label: label)))

@@ -21,6 +21,13 @@ import HuggingFace
 /// content): if the repo changes upstream between attempts, the stale partial is discarded
 /// rather than risking a mixed-content file. The whole download is pinned to the commit hash
 /// resolved on the first request, so one snapshot never mixes two revisions.
+///
+/// All of this survives the *process* dying mid-download, not just the network dropping:
+/// `BackgroundModelDownloadSession` records every task on disk before starting it, settles
+/// tasks that finished while the app was gone into their partials when its callbacks replay
+/// on the next launch, keeps a failed or cancelled task's segment via URLSession resume data,
+/// and re-adopts a task that is *still running* from a previous launch instead of starting a
+/// duplicate. iOS killing the app at 4 GB of 5 costs nothing but the reconnection.
 actor ResumableModelDownloader {
     /// Mirrors mlx-swift-lm's `modelDownloadPatterns` — weights plus config/tokenizer files.
     nonisolated static let modelFilePatterns = ["*.safetensors", "*.json", "*.jinja"]
@@ -46,13 +53,19 @@ actor ResumableModelDownloader {
         session = URLSession(configuration: config)
     }
 
-    /// Where in-flight partial files live for a repo (e.g. "mlx-community/Foo-4bit").
-    /// Deleted by `MLXModel.deleteFromCache()` alongside the model itself.
-    nonisolated static func partialsDirectory(forRepo repoID: String) -> URL {
+    /// The root every repo's partials live under. Separate from the hub cache, so anything
+    /// sweeping for abandoned downloads (``OrphanedModelCache``) has to look in both places.
+    nonisolated static var partialsRootDirectory: URL {
         URL.cachesDirectory
             .appendingPathComponent("huggingface")
             .appendingPathComponent("downloads")
-            .appendingPathComponent("models--" + repoID.replacingOccurrences(of: "/", with: "--"))
+    }
+
+    /// Where in-flight partial files live for a repo (e.g. "mlx-community/Foo-4bit").
+    /// Deleted by `MLXModel.deleteFromCache()` alongside the model itself.
+    nonisolated static func partialsDirectory(forRepo repoID: String) -> URL {
+        partialsRootDirectory
+            .appendingPathComponent(HubCacheLocation.repoDirectoryName(repoID))
     }
 
     /// Download every repo file matching `patterns` into the shared HuggingFace cache.
@@ -220,8 +233,23 @@ actor ResumableModelDownloader {
         }
         try handle.close()
 
+        // A failed or cancelled earlier task may have left resume data covering bytes it
+        // transferred beyond the partial. Hand it back to URLSession — consumed once; a
+        // failed resume writes a fresh blob — as long as the partial still ends exactly
+        // where that task began.
+        var resumeData: Data?
+        let blobURL = BackgroundModelDownloadSession.resumeBlobURL(forPartial: partial)
+        if let blobData = try? Data(contentsOf: blobURL) {
+            try? FileManager.default.removeItem(at: blobURL)
+            if let blob = try? JSONDecoder().decode(BackgroundModelDownloadSession.ResumeBlob.self, from: blobData),
+               blob.initialBytes == offset {
+                resumeData = blob.data
+            }
+        }
+
         try await backgroundSession.download(
             request,
+            resumeData: resumeData,
             appendingTo: partial,
             initialBytes: offset,
             expectedSize: expectedSize,
@@ -289,8 +317,9 @@ actor ResumableModelDownloader {
             .appending(path: path)
     }
 
-    /// Delete partials for this file written against a different etag (the repo updated
-    /// upstream since they were started) — resuming into them would corrupt the file.
+    /// Delete partials (and their saved resume data) for this file written against a different
+    /// etag (the repo updated upstream since they were started) — resuming into them would
+    /// corrupt the file.
     nonisolated private static func removeStalePartials(repoID: String, path: String, keepingEtag etag: String) {
         let filename = (path as NSString).lastPathComponent
         let keep = "\(filename).\(etag).partial"
@@ -301,8 +330,9 @@ actor ResumableModelDownloader {
         }
         for item in items
         where item.lastPathComponent.hasPrefix("\(filename).")
-            && item.lastPathComponent.hasSuffix(".partial")
+            && (item.lastPathComponent.hasSuffix(".partial") || item.lastPathComponent.hasSuffix(".partial.resume"))
             && item.lastPathComponent != keep
+            && item.lastPathComponent != keep + ".resume"
         {
             try? FileManager.default.removeItem(at: item)
         }
@@ -350,14 +380,60 @@ actor ResumableModelDownloader {
 /// Owns the app-wide background URLSession used for large Hugging Face model files. iOS may
 /// wake the app later to deliver these delegate callbacks, so this object is a process singleton
 /// and is also referenced from the app delegate's background-session hook.
-final class BackgroundModelDownloadSession: NSObject, URLSessionDownloadDelegate, URLSessionTaskDelegate {
+///
+/// Every task is recorded on disk (`transfers.json`) before it starts, so a transfer that
+/// outlives the process can still be settled when the session is recreated on the next launch:
+/// a task that finished while the app was gone has its bytes appended to the right `.partial`,
+/// a task that failed (or was force-quit) leaves its resume data beside the partial for the
+/// next attempt, and a task still in flight is re-adopted by the next `download` call for the
+/// same file instead of a duplicate being started.
+nonisolated final class BackgroundModelDownloadSession: NSObject, URLSessionDownloadDelegate,
+    URLSessionTaskDelegate, @unchecked Sendable {
     static let shared = BackgroundModelDownloadSession()
 
-    private struct Transfer {
-        let destination: URL
+    /// What a task is writing and where, as recorded on disk before the task starts —
+    /// everything needed to settle the transfer without the in-memory `Transfer`, i.e. after
+    /// the process that started it is gone.
+    struct TransferSpec: Codable {
+        /// The `.partial` path relative to the caches directory (the app container's absolute
+        /// path can change between launches).
+        let destinationRelativePath: String
         let initialBytes: Int64
         let expectedSize: Int64?
         let filePath: String
+        /// Task was created from URLSession resume data. Its response describes the segment
+        /// URLSession internally resumed, not our original request, so the strict header
+        /// checks don't apply — the final-size check in `append` is the integrity gate.
+        let fromResumeData: Bool
+
+        init(destination: URL, initialBytes: Int64, expectedSize: Int64?, filePath: String, fromResumeData: Bool) {
+            let root = URL.cachesDirectory.path + "/"
+            let path = destination.path
+            self.destinationRelativePath = path.hasPrefix(root) ? String(path.dropFirst(root.count)) : path
+            self.initialBytes = initialBytes
+            self.expectedSize = expectedSize
+            self.filePath = filePath
+            self.fromResumeData = fromResumeData
+        }
+
+        var destination: URL {
+            destinationRelativePath.hasPrefix("/")
+                ? URL(fileURLWithPath: destinationRelativePath)
+                : URL.cachesDirectory.appendingPathComponent(destinationRelativePath)
+        }
+    }
+
+    /// Saved when a task fails or is cancelled, so the next attempt hands the segment already
+    /// sitting in URLSession's own temp file back instead of re-fetching from `initialBytes`.
+    struct ResumeBlob: Codable {
+        /// The partial's size when the failed task started — the blob is only valid while the
+        /// partial still ends exactly there.
+        let initialBytes: Int64
+        let data: Data
+    }
+
+    private struct Transfer {
+        let spec: TransferSpec
         let progress: @Sendable (Int64) async -> Void
         let continuation: CheckedContinuation<Void, Error>
         var temporaryFile: URL?
@@ -366,13 +442,26 @@ final class BackgroundModelDownloadSession: NSObject, URLSessionDownloadDelegate
 
     private let lock = NSLock()
     private var transfers: [Int: Transfer] = [:]
+    /// On-disk mirror of which task writes where, keyed by task identifier; guarded by `lock`.
+    private var specs: [String: TransferSpec] = [:]
+    private var specsLoaded = false
     private var backgroundCompletionHandler: (() -> Void)?
     private let temporaryDirectory = URL.cachesDirectory
         .appendingPathComponent("huggingface")
         .appendingPathComponent("downloads")
         .appendingPathComponent("background-tasks")
 
-    private lazy var session: URLSession = {
+    /// Guards `_session` only — `download()` creates tasks while holding `lock`, so session
+    /// creation needs its own lock to stay deadlock-free.
+    private let sessionLock = NSLock()
+    private var _session: URLSession?
+    /// The background session, created on first use (eagerly at `activate()`). Recreating a
+    /// session with the same identifier reconnects to tasks a previous process left behind
+    /// and replays their undelivered callbacks.
+    private var session: URLSession {
+        sessionLock.lock()
+        defer { sessionLock.unlock() }
+        if let _session { return _session }
         let bundleID = Bundle.main.bundleIdentifier ?? "de.germanflashcards"
         let config = URLSessionConfiguration.background(withIdentifier: "\(bundleID).model-downloads")
         config.waitsForConnectivity = true
@@ -380,11 +469,33 @@ final class BackgroundModelDownloadSession: NSObject, URLSessionDownloadDelegate
         config.sessionSendsLaunchEvents = true
         config.timeoutIntervalForRequest = 60
         config.timeoutIntervalForResource = 7 * 24 * 60 * 60
-        return URLSession(configuration: config, delegate: self, delegateQueue: nil)
-    }()
+        let created = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+        _session = created
+        return created
+    }
 
     private override init() {
         super.init()
+    }
+
+    /// Where a failed task's resume data waits, next to the partial it belongs to.
+    static func resumeBlobURL(forPartial partial: URL) -> URL {
+        URL(fileURLWithPath: partial.path + ".resume")
+    }
+
+    /// Recreate the background session at launch so callbacks from transfers that finished or
+    /// failed while the app was gone are delivered — and settled into their partials — right
+    /// away, not only once a download screen happens to start something. A beat later, sweep
+    /// whatever those callbacks no longer cover: a crash can strand a task's payload with no
+    /// callback left to claim it.
+    func activate() {
+        _ = session
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 3) { [weak self] in
+            guard let self else { return }
+            self.session.getAllTasks { tasks in
+                self.sweep(liveTaskIDs: Set(tasks.map(\.taskIdentifier)))
+            }
+        }
     }
 
     func setBackgroundCompletionHandler(_ completionHandler: @escaping () -> Void) {
@@ -396,6 +507,7 @@ final class BackgroundModelDownloadSession: NSObject, URLSessionDownloadDelegate
 
     func download(
         _ request: URLRequest,
+        resumeData: Data? = nil,
         appendingTo destination: URL,
         initialBytes: Int64,
         expectedSize: Int64?,
@@ -406,26 +518,68 @@ final class BackgroundModelDownloadSession: NSObject, URLSessionDownloadDelegate
             var task: URLSessionDownloadTask?
         }
         let box = TaskBox()
+        // Snapshot before taking the lock (the property is async): tasks that survived a
+        // relaunch and are still moving bytes.
+        let (_, _, existingTasks) = await session.tasks
 
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
-                let task = session.downloadTask(with: request)
-                box.task = task
-                let transfer = Transfer(
+                lock.lock()
+                loadSpecsLocked()
+
+                // A task from a previous launch may still be transferring this very segment —
+                // adopt it, since a second task on the same partial would double-append. A
+                // recorded task on the same file that no longer matches (the etag or offset
+                // moved on) gets cancelled instead: its output is useless against the current
+                // partial, and left running it would corrupt the resume bookkeeping.
+                for task in existingTasks {
+                    guard let spec = specs[String(task.taskIdentifier)],
+                          spec.filePath == filePath,
+                          transfers[task.taskIdentifier] == nil
+                    else { continue }
+                    if spec.destination.path == destination.path,
+                       spec.initialBytes == initialBytes,
+                       task.state == .running || task.state == .suspended {
+                        var transfer = Transfer(
+                            spec: spec, progress: progress, continuation: continuation,
+                            temporaryFile: nil, completionError: nil
+                        )
+                        let temp = temporaryFile(for: task.taskIdentifier)
+                        if FileManager.default.fileExists(atPath: temp.path) {
+                            transfer.temporaryFile = temp
+                        }
+                        transfers[task.taskIdentifier] = transfer
+                        lock.unlock()
+                        box.task = task
+                        if task.state == .suspended { task.resume() }
+                        return
+                    }
+                    task.cancel()
+                }
+
+                let task = resumeData.flatMap { session.downloadTask(withResumeData: $0) }
+                    ?? session.downloadTask(with: request)
+                let spec = TransferSpec(
                     destination: destination,
                     initialBytes: initialBytes,
                     expectedSize: expectedSize,
                     filePath: filePath,
-                    progress: progress,
-                    continuation: continuation
+                    fromResumeData: resumeData != nil
                 )
-                lock.lock()
-                transfers[task.taskIdentifier] = transfer
+                transfers[task.taskIdentifier] = Transfer(
+                    spec: spec, progress: progress, continuation: continuation,
+                    temporaryFile: nil, completionError: nil
+                )
+                specs[String(task.taskIdentifier)] = spec
+                saveSpecsLocked()
                 lock.unlock()
+                box.task = task
                 task.resume()
             }
         } onCancel: {
-            box.task?.cancel()
+            // Produce resume data so the segment transferred so far survives the cancel —
+            // the delegate's completion callback stores it beside the partial.
+            box.task?.cancel(byProducingResumeData: { _ in })
         }
     }
 
@@ -438,7 +592,7 @@ final class BackgroundModelDownloadSession: NSObject, URLSessionDownloadDelegate
     ) {
         guard let transfer = transfer(for: downloadTask.taskIdentifier) else { return }
         Task {
-            await transfer.progress(transfer.initialBytes + totalBytesWritten)
+            await transfer.progress(transfer.spec.initialBytes + totalBytesWritten)
         }
     }
 
@@ -447,8 +601,7 @@ final class BackgroundModelDownloadSession: NSObject, URLSessionDownloadDelegate
         downloadTask: URLSessionDownloadTask,
         didFinishDownloadingTo location: URL
     ) {
-        let taskTemporaryFile = temporaryDirectory
-            .appendingPathComponent("\(downloadTask.taskIdentifier).download")
+        let taskTemporaryFile = temporaryFile(for: downloadTask.taskIdentifier)
         do {
             try FileManager.default.createDirectory(
                 at: temporaryDirectory, withIntermediateDirectories: true
@@ -471,6 +624,9 @@ final class BackgroundModelDownloadSession: NSObject, URLSessionDownloadDelegate
             transfers[downloadTask.taskIdentifier] = transfer
         }
         lock.unlock()
+        // With no in-memory transfer (the task finished while the app was gone and this is
+        // the replay), the moved file waits at its deterministic path for
+        // `didCompleteWithError`, which settles it from the on-disk spec.
     }
 
     func urlSession(
@@ -478,25 +634,48 @@ final class BackgroundModelDownloadSession: NSObject, URLSessionDownloadDelegate
         task: URLSessionTask,
         didCompleteWithError error: Error?
     ) {
-        guard let transfer = removeTransfer(for: task.taskIdentifier) else { return }
-        if let error {
-            transfer.continuation.resume(throwing: error)
-            return
-        }
-        if let error = transfer.completionError {
-            transfer.continuation.resume(throwing: error)
-            return
-        }
-        guard let http = task.response as? HTTPURLResponse, let temporaryFile = transfer.temporaryFile else {
-            transfer.continuation.resume(throwing: ModelDownloadError.incompleteTransfer(file: transfer.filePath))
+        lock.lock()
+        loadSpecsLocked()
+        let transfer = transfers.removeValue(forKey: task.taskIdentifier)
+        let spec = transfer?.spec ?? specs[String(task.taskIdentifier)]
+        specs.removeValue(forKey: String(task.taskIdentifier))
+        saveSpecsLocked()
+        lock.unlock()
+
+        // A replayed callback for a task nothing remembers: drop whatever it left behind.
+        guard let spec else {
+            try? FileManager.default.removeItem(at: temporaryFile(for: task.taskIdentifier))
             return
         }
 
+        if let error {
+            // Keep the transferred-but-uncommitted segment reachable: the resume data points
+            // into URLSession's own temp file, and the next attempt hands it back to continue
+            // mid-segment. Covers network failures, cancels, and force-quits alike.
+            storeResumeData(from: error, spec: spec)
+            transfer?.continuation.resume(throwing: error)
+            return
+        }
+        if let completionError = transfer?.completionError {
+            transfer?.continuation.resume(throwing: completionError)
+            return
+        }
+
+        // Settle the finished download into its partial. `transfer` is nil when the task
+        // finished while the app was away — the spec still knows where the bytes go.
+        let temp = transfer?.temporaryFile ?? temporaryFile(for: task.taskIdentifier)
         do {
-            try finish(transfer: transfer, response: http, temporaryFile: temporaryFile)
-            transfer.continuation.resume()
+            guard FileManager.default.fileExists(atPath: temp.path) else {
+                throw ModelDownloadError.incompleteTransfer(file: spec.filePath)
+            }
+            if let http = task.response as? HTTPURLResponse, !spec.fromResumeData {
+                try validate(response: http, spec: spec)
+            }
+            try append(temporaryFile: temp, per: spec)
+            transfer?.continuation.resume()
         } catch {
-            transfer.continuation.resume(throwing: error)
+            try? FileManager.default.removeItem(at: temp)
+            transfer?.continuation.resume(throwing: error)
         }
     }
 
@@ -511,46 +690,53 @@ final class BackgroundModelDownloadSession: NSObject, URLSessionDownloadDelegate
         }
     }
 
-    private func finish(transfer: Transfer, response http: HTTPURLResponse, temporaryFile: URL) throws {
+    /// The strict response checks for a task built from our own ranged request: the status and
+    /// headers must describe exactly the segment asked for. Not applicable to resume-data
+    /// tasks, whose response describes URLSession's internal continuation instead.
+    private func validate(response http: HTTPURLResponse, spec: TransferSpec) throws {
         switch http.statusCode {
         case 200:
-            // Full body — either no Range was sent or the server ignored it.
-            if transfer.initialBytes > 0 {
-                let handle = try FileHandle(forWritingTo: transfer.destination)
-                try handle.truncate(atOffset: 0)
-                try handle.close()
+            // Full body — either no Range was sent or the server ignored it. The partial's
+            // existing bytes would be duplicated by the append, so restart the file.
+            if spec.initialBytes > 0 {
+                try truncate(spec.destination, to: 0)
             }
         case 206:
-            guard http.value(forHTTPHeaderField: "Content-Range")?.hasPrefix("bytes \(transfer.initialBytes)-") == true else {
-                let handle = try FileHandle(forWritingTo: transfer.destination)
-                try handle.truncate(atOffset: 0)
-                try handle.close()
-                throw ModelDownloadError.incompleteTransfer(file: transfer.filePath)
+            guard http.value(forHTTPHeaderField: "Content-Range")?.hasPrefix("bytes \(spec.initialBytes)-") == true else {
+                try truncate(spec.destination, to: 0)
+                throw ModelDownloadError.incompleteTransfer(file: spec.filePath)
             }
         case 416:
-            let handle = try FileHandle(forWritingTo: transfer.destination)
-            try handle.truncate(atOffset: 0)
-            try handle.close()
-            throw ModelDownloadError.incompleteTransfer(file: transfer.filePath)
+            try truncate(spec.destination, to: 0)
+            throw ModelDownloadError.incompleteTransfer(file: spec.filePath)
         default:
-            throw ModelDownloadError.httpStatus(http.statusCode, file: transfer.filePath)
+            throw ModelDownloadError.httpStatus(http.statusCode, file: spec.filePath)
         }
 
-        if let expectedSize = transfer.expectedSize,
+        if let expectedSize = spec.expectedSize,
            let contentLength = http.value(forHTTPHeaderField: "Content-Length").flatMap(Int64.init)
         {
-            let expectedRemaining = max(expectedSize - transfer.initialBytes, 0)
+            let expectedRemaining = max(expectedSize - spec.initialBytes, 0)
             guard contentLength == expectedRemaining else {
-                try truncate(transfer.destination, to: transfer.initialBytes)
-                throw ModelDownloadError.incompleteTransfer(file: transfer.filePath)
+                try truncate(spec.destination, to: spec.initialBytes)
+                throw ModelDownloadError.incompleteTransfer(file: spec.filePath)
             }
         }
+    }
 
-        let readHandle = try FileHandle(forReadingFrom: temporaryFile)
+    /// Append a finished task's payload to its partial, then verify the partial is exactly the
+    /// expected size; anything else rolls it back to where this append started. Doubles as the
+    /// whole settle step for orphaned payloads (relaunch replay, sweep), where no live response
+    /// is around to header-check — the size check is what guards integrity there.
+    private func append(temporaryFile temp: URL, per spec: TransferSpec) throws {
+        defer { try? FileManager.default.removeItem(at: temp) }
+        let readHandle = try FileHandle(forReadingFrom: temp)
         defer { try? readHandle.close() }
-        let writeHandle = try FileHandle(forWritingTo: transfer.destination)
+        let writeHandle = try FileHandle(forWritingTo: spec.destination)
         defer { try? writeHandle.close() }
-        try writeHandle.seekToEnd()
+        // Roll back to the size *before* this append on any mismatch — after a 200 reset the
+        // partial starts at 0, so rolling back to `initialBytes` would keep garbage.
+        let baseOffset = try writeHandle.seekToEnd()
 
         while true {
             let shouldContinue = try autoreleasepool {
@@ -561,15 +747,81 @@ final class BackgroundModelDownloadSession: NSObject, URLSessionDownloadDelegate
             }
             if !shouldContinue { break }
         }
-        try? FileManager.default.removeItem(at: temporaryFile)
 
-        if let expectedSize = transfer.expectedSize {
+        if let expectedSize = spec.expectedSize {
             let finalSize = Int64(try writeHandle.seekToEnd())
             guard finalSize == expectedSize else {
-                try truncate(transfer.destination, to: transfer.initialBytes)
-                throw ModelDownloadError.incompleteTransfer(file: transfer.filePath)
+                try writeHandle.truncate(atOffset: baseOffset)
+                throw ModelDownloadError.incompleteTransfer(file: spec.filePath)
             }
         }
+    }
+
+    /// Save a failed task's resume data beside its partial for the next attempt to consume.
+    private func storeResumeData(from error: Error, spec: TransferSpec) {
+        guard let data = (error as NSError).userInfo[NSURLSessionDownloadTaskResumeData] as? Data,
+              let encoded = try? JSONEncoder().encode(ResumeBlob(initialBytes: spec.initialBytes, data: data))
+        else { return }
+        try? encoded.write(to: Self.resumeBlobURL(forPartial: spec.destination), options: .atomic)
+    }
+
+    /// Settle transfer records nothing will ever call back for — a crash between a task
+    /// finishing and its callbacks landing strands the payload on disk. Their bytes are
+    /// appended to the right partial, and payload files with no record at all are deleted.
+    private func sweep(liveTaskIDs: Set<Int>) {
+        lock.lock()
+        loadSpecsLocked()
+        var orphaned: [(id: Int, spec: TransferSpec)] = []
+        for (key, spec) in specs {
+            guard let id = Int(key), !liveTaskIDs.contains(id), transfers[id] == nil else { continue }
+            orphaned.append((id, spec))
+            specs.removeValue(forKey: key)
+        }
+        if !orphaned.isEmpty { saveSpecsLocked() }
+        let claimedIDs = Set(specs.keys.compactMap(Int.init)).union(transfers.keys)
+        lock.unlock()
+
+        for (id, spec) in orphaned {
+            let temp = temporaryFile(for: id)
+            guard FileManager.default.fileExists(atPath: temp.path) else { continue }
+            try? append(temporaryFile: temp, per: spec)
+        }
+
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: temporaryDirectory, includingPropertiesForKeys: nil
+        ) else { return }
+        for file in files where file.pathExtension == "download" {
+            guard let id = Int(file.deletingPathExtension().lastPathComponent),
+                  !liveTaskIDs.contains(id), !claimedIDs.contains(id)
+            else { continue }
+            try? FileManager.default.removeItem(at: file)
+        }
+    }
+
+    // MARK: Spec persistence & small helpers
+
+    private var specsFile: URL { temporaryDirectory.appendingPathComponent("transfers.json") }
+
+    /// Callers must hold `lock`. First touch pulls in what a previous process recorded;
+    /// in-memory entries always win over the stored copy.
+    private func loadSpecsLocked() {
+        guard !specsLoaded else { return }
+        specsLoaded = true
+        guard let data = try? Data(contentsOf: specsFile),
+              let stored = try? JSONDecoder().decode([String: TransferSpec].self, from: data)
+        else { return }
+        specs.merge(stored) { current, _ in current }
+    }
+
+    /// Callers must hold `lock`.
+    private func saveSpecsLocked() {
+        try? FileManager.default.createDirectory(at: temporaryDirectory, withIntermediateDirectories: true)
+        guard let data = try? JSONEncoder().encode(specs) else { return }
+        try? data.write(to: specsFile, options: .atomic)
+    }
+
+    private func temporaryFile(for taskIdentifier: Int) -> URL {
+        temporaryDirectory.appendingPathComponent("\(taskIdentifier).download")
     }
 
     private func truncate(_ file: URL, to offset: Int64) throws {
@@ -582,12 +834,6 @@ final class BackgroundModelDownloadSession: NSObject, URLSessionDownloadDelegate
         lock.lock()
         defer { lock.unlock() }
         return transfers[taskIdentifier]
-    }
-
-    private func removeTransfer(for taskIdentifier: Int) -> Transfer? {
-        lock.lock()
-        defer { lock.unlock() }
-        return transfers.removeValue(forKey: taskIdentifier)
     }
 }
 

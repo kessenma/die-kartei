@@ -4,48 +4,52 @@ struct ModelGuideSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appTheme) private var appTheme
 
+    /// Only the two rows that mark a real decision point: the best measured tutor, and the best
+    /// one for a phone that can't hold a Gemma. The middle two need no badge — their size line
+    /// already says where they sit, and badging every row would badge nothing.
+    private func guideBadge(_ model: MLXModel) -> String? {
+        switch model {
+        case .gemma4_E4B_german:   "Best measured"
+        case .granite41_3B_german: "Best under 2 GB"
+        default:                   nil
+        }
+    }
+
+    private func guideBadgeColor(_ model: MLXModel) -> Color? {
+        guideBadge(model) == nil ? nil : model.theme.accent
+    }
+
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    GuideRow(model: .gemma4_E4B_german, badge: "Best", badgeColor: MLXModel.hero.theme.accent)
-                    GuideRow(model: .gemma4_E2B_german, badge: "Lighter", badgeColor: MLXModel.gemma4_E2B_german.theme.accent)
+                    ForEach(MLXModel.germanTutors) { model in
+                        GuideRow(
+                            model: model,
+                            badge: guideBadge(model),
+                            badgeColor: guideBadgeColor(model)
+                        )
+                    }
                 } header: {
-                    Text("Built for this app")
+                    Text("The German tutors")
                         .themedSectionHeader()
                 } footer: {
-                    Text("Short version: if your device runs one of these, use it. Both are Google's Gemma 4 fine-tuned on German grammar for this app, on the parts learners actually get wrong: verbs with prepositions, separable and reflexive verbs, da-/wo-compounds, and haben/sein. On the app's own grammar test the E4B tutor scores 90% and the E2B tutor 83%. The best general-purpose model below scores 58%. The tutors are also the only models here trained to correct you without inventing mistakes you didn't make, which is what makes conversation practice trustworthy.")
+                    Text("If your phone runs one of these, use it. All four were fine-tuned on the same German material for this app, on the parts learners actually get wrong: verbs with prepositions, separable and reflexive verbs, da-/wo-compounds, relative pronouns, Konjunktiv II. On the app's own 203-item test the E4B tutor scores 90%, the E2B 83%, the Granite 3B 81%, and the Granite 2B 75%. They differ in download size and memory, not in what they were taught, so pick the largest one your phone runs comfortably. They're also trained to correct you without inventing mistakes you didn't make, which is what makes conversation practice worth trusting.")
                 }
                 .themedListRow()
 
                 Section {
-                    GuideRow(model: .qwen3_8B, badge: nil, badgeColor: nil)
-                    GuideRow(model: .mistral7B, badge: nil, badgeColor: nil)
-                    GuideRow(model: .qwen3_4B, badge: nil, badgeColor: nil)
-                    GuideRow(model: .phi4Mini, badge: nil, badgeColor: nil)
+                    GuideRow(model: .appleIntelligence, badge: "No download", badgeColor: .secondary)
                 } header: {
-                    Text("Large, but weaker at German")
+                    Text("Built in to iOS")
                         .themedSectionHeader()
                 } footer: {
-                    Text("These have strong general reputations and all four underperformed on German grammar here. Qwen3 8B scores 58% and misses about half of a learner's real mistakes. Mistral 7B scores 48%, is worst on da-/wo-compounds, 'fixes' 59% of sentences that were already correct, and is the slowest model in the app. Qwen3 4B scores 52%; Phi-4 Mini scores 47% and misses 77% of real mistakes. They're listed for completeness, not as recommendations.")
+                    Text("Apple's on-device model, on phones that support it. Nothing to download and it starts instantly, but it's weaker at German than the tutors: 60% on the same test, 0 of 15 on da-/wo-compounds, and it flags about one already-correct sentence in six as wrong. Good for quick vocabulary work while a tutor downloads; for correction practice, use a tutor.")
                 }
                 .themedListRow()
 
                 Section {
-                    GuideRow(model: .granite2B_german, badge: "Best small", badgeColor: .green)
-                    GuideRow(model: .gemma3_1B, badge: nil, badgeColor: nil)
-                    GuideRow(model: .qwen3_0_6B, badge: "Fastest", badgeColor: .orange)
-                    GuideRow(model: .llama3_2_1B, badge: nil, badgeColor: nil)
-                } header: {
-                    Text("Small devices (iPhone 12+)")
-                        .themedSectionHeader()
-                } footer: {
-                    Text("If your device can't run a Gemma tutor, the Granite tutor is the pick: 62% on the app's grammar test, higher than both 7–8B models above at a fraction of the size, and it never flagged a correct sentence as wrong. It is slower per word than its size suggests. The two models below it can write vocabulary cards but cannot correct you. Gemma 3 1B scores 33% and missed all 69 real mistakes it was shown; LLaMA 3.2 1B scores 28% and did the same. Neither will catch anything, so don't read their silence as approval.")
-                }
-                .themedListRow()
-
-                Section {
-                    Text("Not reliably. Parameter count turned out to be a poor predictor of German quality in testing.\n\nOn the app's grammar test, a fine-tuned 2B Granite (62%) beat Mistral 7B (48%), a model three times its size, and Qwen3 8B (58%), four times its size. Qwen3 8B is the same download size as the E4B tutor and scored 58% against the tutor's 90%. German is unusually demanding, with four cases, three genders, separable verbs, and long compounds, and a model either picked those patterns up in training or it didn't.\n\nWhat matters more is what a model was trained on, and whether it was trained for this particular job. The E2B tutor is the smallest capable model here at around 2B parameters, and it outscores every general-purpose model tested, including the 8B ones, because it was fine-tuned on the exact correction format this app uses. The same holds one size up: the E4B tutor scores 90% where that model untuned scores 80%, so the training alone is worth about 10 points.\n\nThat gap is also why the app checks every flashcard against a dictionary instead of trusting the model.")
+                    Text("Not reliably. Parameter count turned out to be a poor predictor of German quality in testing.\n\nThe Granite 2B tutor, at 1.4 GB, scores 75% on this app's grammar test. Several general-purpose models of 7\u{2013}8B parameters were measured on the same test and landed in the 40s and 50s, at roughly four times the download. German is unusually demanding, with four cases, three genders, separable verbs, and long compounds, and a model either picked those patterns up in training or it didn't.\n\nWhat matters more is whether a model was trained for this particular job. The E4B tutor scores 90% where the same model untuned scores 80%, so the fine-tuning alone is worth about ten points. That's why this app ships its own tutors instead of a general-purpose model.\n\nIt's also why the app checks every flashcard against a dictionary instead of trusting the model.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 } header: {

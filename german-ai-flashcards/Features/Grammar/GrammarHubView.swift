@@ -123,7 +123,7 @@ struct GrammarHubView: View {
             } else if focus == .praepositionen || focus == .wechselpraepositionen {
                 // The preposition hub carries every drill for both focuses.
                 NavigationLink {
-                    PrepositionHubView(modelManager: modelManager)
+                    PrepositionHubView(modelManager: modelManager, mlxService: mlxService)
                 } label: {
                     coachRowLabel(focus, subtitle: "Needs work · drill the cases", chevron: false)
                 }
@@ -252,7 +252,7 @@ struct GrammarHubView: View {
     private var prepositionSection: some View {
         Section {
             NavigationLink {
-                PrepositionHubView(modelManager: modelManager)
+                PrepositionHubView(modelManager: modelManager, mlxService: mlxService)
             } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "arrow.triangle.branch")

@@ -9,17 +9,39 @@
 //  Reduce Motion keeps the card and skips the rain.
 //
 
+import StoreKit
 import SwiftUI
 
 /// Drop-in overlay: shows whatever the center is holding, if anything. One instance at the app
 /// root covers every tab.
+///
+/// Also the app's one call site for the App Store rating prompt. `ReviewPromptService` decides
+/// *whether* to ask (a dismissed 7-day streak, at most once a version); this decides *when* —
+/// after the confetti has cleared, so the system sheet never lands on top of a celebration.
 struct CelebrationOverlayHost: View {
     @State private var center = CelebrationCenter.shared
+    @State private var reviewPrompt = ReviewPromptService.shared
+    @Environment(\.requestReview) private var requestReview
 
     var body: some View {
-        if let celebration = center.current {
-            CelebrationOverlay(celebration: celebration) { center.dismiss() }
-                .transition(.opacity)
+        ZStack {
+            if let celebration = center.current {
+                CelebrationOverlay(celebration: celebration) { center.dismiss() }
+                    .transition(.opacity)
+            }
+        }
+        // With no celebration the ZStack is empty, but it still spans the overlay — keep it out of
+        // the way of the tab underneath.
+        .allowsHitTesting(center.current != nil)
+        .onChange(of: reviewPrompt.pending) { _, pending in
+            guard pending else { return }
+            Task {
+                // Long enough for the overlay's fade to finish; short enough to still read as part
+                // of the same moment.
+                try? await Task.sleep(for: .seconds(0.6))
+                reviewPrompt.consume()
+                requestReview()
+            }
         }
     }
 }

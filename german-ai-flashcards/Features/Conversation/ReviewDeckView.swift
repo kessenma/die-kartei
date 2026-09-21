@@ -46,7 +46,7 @@ struct ReviewDeckView: View {
     }
 
     private var existingDecks: [SavedDeck] {
-        allDecks.filter { !["goethe", "goethe-srs", "past-tense", "past-tense-srs", "grammar"].contains($0.generatorRaw) }
+        allDecks.filter(\.isBrowsableContent)
     }
 
     private var selectedCount: Int { words.filter(\.selected).count }
@@ -247,7 +247,7 @@ struct ReviewDeckView: View {
         loading = true
         defer { loading = false }
 
-        let model = conversation.model ?? modelManager?.selectedChatModel ?? .qwen3_0_6B
+        let model = conversation.model ?? modelManager?.selectedChatModel ?? .hero
         if !mlxService.isModelLoaded || mlxService.currentModel != model {
             await mlxService.loadModel(model)
         }

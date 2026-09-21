@@ -288,7 +288,7 @@ enum PyramidService {
                 id: .fundament,
                 earnedFill: ratio(s.masteredPrepositions, s.corePrepositions),
                 provisionalFill: ratio(s.estimatedPrepositions, s.corePrepositions),
-                detail: estimated(
+                detail: blueprinted(
                     "\(s.masteredPrepositions) of \(s.corePrepositions) prepositions mastered",
                     s.estimatedPrepositions
                 )
@@ -297,7 +297,7 @@ enum PyramidService {
                 id: .wortschatzA1,
                 earnedFill: ratio(s.learnedA1Words, s.a1WordGoal),
                 provisionalFill: ratio(s.estimatedA1Words, s.a1WordGoal),
-                detail: estimated(
+                detail: blueprinted(
                     "\(s.learnedA1Words) of \(s.a1WordGoal) A1 words learned",
                     s.estimatedA1Words
                 )
@@ -311,7 +311,7 @@ enum PyramidService {
                 id: .grammatikKern,
                 earnedFill: ratio(s.solidCoreGrammar, s.coreGrammarCount),
                 provisionalFill: ratio(s.estimatedCoreGrammar, s.coreGrammarCount),
-                detail: estimated(
+                detail: blueprinted(
                     "\(s.solidCoreGrammar) of \(s.coreGrammarCount) core structures solid",
                     Int(s.estimatedCoreGrammar.rounded())
                 )
@@ -323,7 +323,7 @@ enum PyramidService {
                 earnedFill: (ratio(s.learnedA2Words, s.a2WordGoal)
                              + ratio(s.a2StoriesPassed, storyGoalPerLevel)) / 2,
                 provisionalFill: ratio(s.estimatedA2Words, s.a2WordGoal) / 2,
-                detail: estimated(
+                detail: blueprinted(
                     "\(s.learnedA2Words) A2 words · \(min(s.a2StoriesPassed, storyGoalPerLevel)) of \(storyGoalPerLevel) A2 stories",
                     s.estimatedA2Words
                 )
@@ -338,10 +338,10 @@ enum PyramidService {
         ]
     }
 
-    /// Appends the estimated count to a detail line, so a ghost-filled layer says where its fill
+    /// Appends the blueprint count to a detail line, so a ghost-filled layer says where its fill
     /// came from rather than looking like unexplained progress.
-    private static func estimated(_ base: String, _ count: Int) -> String {
-        count > 0 ? "\(base) · \(count) estimated" : base
+    private static func blueprinted(_ base: String, _ count: Int) -> String {
+        count > 0 ? "\(base) · \(count) on the blueprint" : base
     }
 
     /// Whole-pyramid completion including the placement estimate — the number the teasers show.

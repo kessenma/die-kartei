@@ -64,6 +64,8 @@ struct FortschrittView: View {
             if coordinator.modelManager.gamificationPyramidEnabled {
                 pyramidSection
             }
+
+            journeySection
         }
         .navigationTitle("Fortschritt")
         .navigationBarTitleDisplayMode(.inline)
@@ -159,7 +161,7 @@ struct FortschrittView: View {
                             .fontWeight(.semibold)
                             .foregroundStyle(.primary)
                         Text("\(Int((fill * 100).rounded()))% built — \(layers.filter(\.isComplete).count) of \(layers.count) layers"
-                             + (estimated > 0.005 ? " · \(Int((estimated * 100).rounded()))% estimated" : ""))
+                             + (estimated > 0.005 ? " · blueprint applied" : ""))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -190,6 +192,37 @@ struct FortschrittView: View {
             }
         } header: {
             Text("Der Weg · The Path").themedSectionHeader()
+        }
+        .themedListRow()
+    }
+
+    // MARK: - Journey
+
+    /// „Dein Weg" — the timeline of where the learner started and everything conquered since.
+    /// Not gated on the pyramid switch: the journey is broader than one visualization.
+    private var journeySection: some View {
+        Section {
+            NavigationLink {
+                JourneyView(modelManager: coordinator.modelManager)
+            } label: {
+                HStack(spacing: 12) {
+                    BauhausIcon(assetName: "pyramid-icon-weiterbauen",
+                                fallbackSystemImage: "point.topleft.down.to.point.bottomright.curvepath",
+                                fallbackTint: .orange,
+                                fallbackBackground: Color.orange.opacity(0.14),
+                                size: 44)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Dein Weg · Your Journey")
+                            .themedLabel(.subheadline, size: 15)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.primary)
+                        Text("Where you started, what you've conquered, how far you've come")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
         }
         .themedListRow()
     }

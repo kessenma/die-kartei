@@ -113,8 +113,10 @@ enum PlacementService {
     ///     xcrun simctl launch <udid> <bundle-id> -placement.debugLevel B1
     ///
     /// Accepts `A1` / `A2` / `B1` / `B2` / `beginner`. DEBUG builds only — never ships. Note that
-    /// seeding writes only the stored result: chat/story levels are set by the quiz UI on a real
-    /// run, so a seeded `B2` shows on the pyramid but does not move the content-level pickers.
+    /// seeding writes only the stored result: `germanLevel` is set by the quiz UI on a real run, so
+    /// a seeded `B2` shows on the pyramid but does not move the content level. Its counterpart is
+    /// `-level.debugDeclare` (in `ContentView`), which does exactly the opposite — moves the level
+    /// and writes no result. Between them they prove the two channels are independent.
     static func applyDebugLaunchArgumentIfNeeded() {
         guard let raw = UserDefaults.standard.string(forKey: "placement.debugLevel") else { return }
         markOffered()
@@ -168,12 +170,17 @@ enum PlacementService {
     ///     xcrun simctl launch <udid> <bundle-id> -placement.debugAttempts 4 -placement.debugAccuracy 0.6
     ///
     /// Drives a **real** `PlacementSession`, so the questions, the staircases and the explanations
-    /// are the real ones rather than a fixture that could drift from them. The generator is seeded,
-    /// so a given run is reproducible and repeats actually repeat. Note that repeats are guaranteed
-    /// by construction: the two anchors open every run, and the bank holds 10–12 items per level
-    /// against 8 grammar questions, so grammar ids recur heavily across a few attempts. Vocabulary
-    /// repeats stay rare — it samples 585/1209/2358-word lists — and that asymmetry is real, not a
-    /// flaw in the seeder.
+    /// are the real ones rather than a fixture that could drift from them.
+    ///
+    /// The seed governs the simulated *answers* only — which items get asked still comes from the
+    /// session's own unseeded sampling, so two runs at the same accuracy produce similar but not
+    /// identical histories. That's deliberate (a fixed item list would stop exercising the
+    /// staircases), but it does mean counts wobble between runs.
+    ///
+    /// Repeat offenders are guaranteed regardless: the two anchors open every run, and the bank
+    /// holds 10–12 items per level against 8 grammar questions, so grammar ids recur heavily across
+    /// a few attempts. Vocabulary repeats stay rare — that block samples 585/1209/2358-word lists —
+    /// and that asymmetry is real rather than a flaw in the seeder.
     static func seedDebugAttempts(count: Int, accuracy: Double) {
         var rng = SeededGenerator(seed: 42)
         let skipRate = 0.05
@@ -216,6 +223,14 @@ enum PlacementService {
         PlacementAttemptStore.deleteAll()
         PlacementCoachExport.resetHighWaterMark()
         seedDebugAttempts(count: min(count, attemptCapForDebug), accuracy: accuracy)
+
+        // Adopt the newest seeded run, so the sim matches how a real device behaves: the live
+        // estimate is always *some check's* result. Without this the stored estimate comes from
+        // `-placement.debugLevel`'s synthetic blob, which equals no attempt, and the review screen
+        // correctly shows nothing as "Now in use" — accurate, but it makes the badge untestable.
+        if let newest = PlacementAttemptStore.attempts().first {
+            save(newest.result)
+        }
     }
 
     private static var attemptCapForDebug: Int { PlacementAttemptStore.cap }
@@ -230,14 +245,15 @@ enum PlacementService {
             guard let translation = entry.translation, !translation.isEmpty else { return false }
             return !used.contains(entry.word.lowercased())
         }
-        guard let answer = pool.randomElement(), let correct = answer.translation else { return nil }
+        guard let answer = pool.randomElement(), let correct = answer.translation.map(conciseGloss)
+        else { return nil }
 
         var choices: Set<String> = [correct]
         var attempts = 0
         while choices.count < choiceCount, attempts < 200 {
             attempts += 1
             if let candidate = pool.randomElement()?.translation, !candidate.isEmpty {
-                choices.insert(candidate)
+                choices.insert(conciseGloss(candidate))
             }
         }
         guard choices.count == choiceCount else { return nil }
@@ -251,6 +267,26 @@ enum PlacementService {
             choices: ordered,
             correctIndex: index
         )
+    }
+
+    /// A dictionary gloss condensed to its head translations: parenthetical elaborations dropped,
+    /// whitespace healed. "to use, apply, utilize or deploy (to put to use for a purpose)" reads
+    /// as a definition; "to use, apply, utilize or deploy" reads as an answer button. Condensing
+    /// *before* the choice set dedupes also keeps two options from differing only inside a
+    /// parenthetical the learner has to squint at. Falls back to the input when stripping would
+    /// leave nothing — some glosses ("indicating (…) motion into something") lean on their parens.
+    nonisolated static func conciseGloss(_ translation: String) -> String {
+        var out = ""
+        var depth = 0
+        for ch in translation {
+            if ch == "(" { depth += 1; continue }
+            if ch == ")" { depth = max(0, depth - 1); continue }
+            if depth == 0 { out.append(ch) }
+        }
+        out = out.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .replacingOccurrences(of: #"\s+([,.;:])"#, with: "$1", options: .regularExpression)
+            .trimmingCharacters(in: CharacterSet(charactersIn: " ,;:"))
+        return out.count >= 2 ? out : translation.trimmingCharacters(in: .whitespaces)
     }
 
     /// der/die/das for a noun. The prompt is the bare noun — showing the article would answer it.
@@ -268,7 +304,7 @@ enum PlacementService {
         return PlacementItem(
             kind: .gender,
             prompt: answer.word,
-            subtitle: answer.translation,
+            subtitle: answer.translation.map(conciseGloss),
             choices: articles,
             correctIndex: index
         )

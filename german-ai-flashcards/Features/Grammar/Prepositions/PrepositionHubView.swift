@@ -19,6 +19,10 @@ struct PrepositionHubView: View {
     /// Owns the picture-mode setting; the drill needs the same value, so it lives on the
     /// manager rather than in a view-local @AppStorage that would drift from it.
     var modelManager: MLXModelManager
+    /// Only the tutor-scene mock needs this, and only to push the real Model screen behind its
+    /// Download button. Optional so the two previews below keep constructing this view with one
+    /// argument.
+    var mlxService: MLXGenerationService?
 
     @Query(sort: \PrepositionRound.date, order: .reverse) private var rounds: [PrepositionRound]
     @Query private var stats: [PrepositionStat]
@@ -35,6 +39,7 @@ struct PrepositionHubView: View {
     @AppStorage("prepositions.matchColorCoded") private var matchColorCoded = true
 
     @State private var showRules = false
+    @State private var showsTutorLab = false
     @State private var isOptionsExpanded = false
     @State private var errorMessage: String?
 
@@ -394,8 +399,31 @@ struct PrepositionHubView: View {
                     isLauncher: false
                 )
             }
+
+            // Also not a preposition scene. The onboarding download pitch, judged against the
+            // wizard's own copy — throwaway until it is settled.
+            //
+            // A cover rather than a push, and that is not a style choice: the app's NavBar is an
+            // overlay in ContentView's ZStack that runs through the bottom safe area, so a
+            // pushed screen's own action bar ends up underneath it. The real wizard is presented
+            // as a cover for the same reason, so mocking it as one is also the only way the
+            // geometry being judged is the geometry that will ship.
+            Button {
+                showsTutorLab = true
+            } label: {
+                sourceRow(
+                    "Tutor-Szene",
+                    "The onboarding download pitch",
+                    "shippingbox",
+                    isLauncher: false
+                )
+            }
+            .buttonStyle(.plain)
         } header: {
             Text("Work in Progress")
+        }
+        .fullScreenCover(isPresented: $showsTutorLab) {
+            TutorSceneLabView(modelManager: modelManager, mlxService: mlxService)
         }
     }
 

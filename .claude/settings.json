@@ -10,7 +10,16 @@
       "Bash(.venv/bin/python -c ' *)",
       "Bash(.venv/bin/python scripts/validate_data.py data/generated_sonnet_v2/batch_hardcase.jsonl)",
       "mcp__runpod__get-gpu-type",
-      "mcp__XcodeBuildMCP__stop_app_sim"
+      "mcp__XcodeBuildMCP__stop_app_sim",
+      "Bash(.venv/bin/python scripts/score_variety_probe.py results/variety-base_gemma-4-e4b-it-4bit.responses.json)",
+      "Bash(.venv/bin/python scripts/run_variety_probe.py --limit 1 --model models/granite41-3b-german-v4-4bit --tag variety-g3b-smoke)",
+      "Bash(.venv/bin/python scripts/run_variety_probe.py --model mlx-community/granite-4.1-3b-4bit --tag variety-g3b-base)",
+      "Bash(.venv/bin/python scripts/run_variety_probe.py --model models/granite41-3b-german-v4-4bit --tag variety-g3b-v4)",
+      "Bash(swift /private/tmp/claude-501/-Users-ke-ws-german-flashcards-german-ai-flashcards/bacbafcf-77a0-4d60-b507-df97c24d635a/scratchpad/roundtrip.swift)",
+      "mcp__chrome-devtools__close_page",
+      "Bash(xargs -I{} sed -n '{}p' Services/JobPostingScripts.swift)",
+      "Bash(echo \"--- exit: $? \\(1 = clean\\) ---\")",
+      "Bash(grep -n 'settingsRouter\\\\|hasSeenOnboardingV2\\\\|fullScreenCover\\(isPresented: $showOnboardingWizard\\)' german-ai-flashcards/App/ContentView.swift)"
     ]
   }
 }

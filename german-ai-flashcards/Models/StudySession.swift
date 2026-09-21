@@ -28,6 +28,13 @@ struct StudySession: Identifiable {
     /// When true (launched from Home ▸ Continue), the player restores the paused position on
     /// appear instead of showing the setup screen's "you have a paused session" prompt.
     var autoResume: Bool = false
+    /// Asset name of the badge the card wears when no model logo applies (the Goethe mark on
+    /// Wortschatz cards). The player also infers it from the backing deck; this covers sessions
+    /// with no saved cards, like a Vorschau.
+    var badgeLogoName: String? = nil
+    /// When true the player skips its setup screen and begins at once — for launchers that are
+    /// themselves the setup screen (the Wortschatz hub). A paused session still wins.
+    var autoStart: Bool = false
 
     /// The model that generated this deck, when known — used for the deck's brand tint.
     var generatorModel: MLXModel? { MLXModel(rawValue: generatorRaw) }
