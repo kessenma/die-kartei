@@ -15,16 +15,47 @@
 		8AB660422FB717B00052F4F4 /* Transformers in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660412FB717B00052F4F4 /* Transformers */; };
 		8AB660452FB7199D0052F4F4 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660442FB7199D0052F4F4 /* MLXHuggingFace */; };
 		8AB660532FB720000052F4F4 /* StableDiffusion in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660522FB720000052F4F4 /* StableDiffusion */; };
+		8ABE00012FC000000000000C /* Die Kartei Keyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8ABE00012FC0000000000003 /* Die Kartei Keyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8ABE00012FC000000000000E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8AB65FE02FB65EFD0052F4F4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8ABE00012FC0000000000002;
+			remoteInfo = "Die Kartei Keyboard";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8ABE00012FC000000000000B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8ABE00012FC000000000000C /* Die Kartei Keyboard.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		8AB65FE82FB65EFD0052F4F4 /* Die Kartei.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Die Kartei.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8ABE00012FC0000000000003 /* Die Kartei Keyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Die Kartei Keyboard.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8AB65FEA2FB65EFD0052F4F4 /* german-ai-flashcards */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "german-ai-flashcards";
+			sourceTree = "<group>";
+		};
+		8ABE00012FC0000000000001 /* KeyboardExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = KeyboardExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -45,6 +76,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8ABE00012FC0000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -52,6 +90,7 @@
 			isa = PBXGroup;
 			children = (
 				8AB65FEA2FB65EFD0052F4F4 /* german-ai-flashcards */,
+				8ABE00012FC0000000000001 /* KeyboardExtension */,
 				8AB660432FB719410052F4F4 /* Frameworks */,
 				8AB65FE92FB65EFD0052F4F4 /* Products */,
 			);
@@ -61,6 +100,7 @@
 			isa = PBXGroup;
 			children = (
 				8AB65FE82FB65EFD0052F4F4 /* Die Kartei.app */,
+				8ABE00012FC0000000000003 /* Die Kartei Keyboard.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -82,11 +122,13 @@
 				8AB65FE42FB65EFD0052F4F4 /* Sources */,
 				8AB65FE52FB65EFD0052F4F4 /* Frameworks */,
 				8AB65FE62FB65EFD0052F4F4 /* Resources */,
+				8ABE00012FC000000000000B /* Embed Foundation Extensions */,
 				8AB660602FB7A0000052F4F4 /* Stamp release macOS build */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				8ABE00012FC000000000000D /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				8AB65FEA2FB65EFD0052F4F4 /* german-ai-flashcards */,
@@ -106,6 +148,29 @@
 			productReference = 8AB65FE82FB65EFD0052F4F4 /* Die Kartei.app */;
 			productType = "com.apple.product-type.application";
 		};
+		8ABE00012FC0000000000002 /* Die Kartei Keyboard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8ABE00012FC0000000000008 /* Build configuration list for PBXNativeTarget "Die Kartei Keyboard" */;
+			buildPhases = (
+				8ABE00012FC0000000000004 /* Sources */,
+				8ABE00012FC0000000000005 /* Frameworks */,
+				8ABE00012FC0000000000006 /* Resources */,
+				8ABE00012FC0000000000007 /* Stamp release macOS build */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				8ABE00012FC0000000000001 /* KeyboardExtension */,
+			);
+			name = "Die Kartei Keyboard";
+			packageProductDependencies = (
+			);
+			productName = "Die Kartei Keyboard";
+			productReference = 8ABE00012FC0000000000003 /* Die Kartei Keyboard.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -117,6 +182,9 @@
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					8AB65FE72FB65EFD0052F4F4 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					8ABE00012FC0000000000002 = {
 						CreatedOnToolsVersion = 26.3;
 					};
 				};
@@ -143,12 +211,20 @@
 			projectRoot = "";
 			targets = (
 				8AB65FE72FB65EFD0052F4F4 /* Die Kartei */,
+				8ABE00012FC0000000000002 /* Die Kartei Keyboard */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		8AB65FE62FB65EFD0052F4F4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8ABE00012FC0000000000006 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -177,6 +253,25 @@
 			shellPath = /bin/sh;
 			shellScript = "# Rewrites BuildMachineOSBuild when archiving on a beta macOS, so App Store Connect\n# doesn't reject the build with ITMS-90111. Must stay the LAST phase (runs before code signing).\n# See scripts/stamp-release-os.sh and docs/DEPLOY_SETUP.md.\n/bin/bash \"${SRCROOT}/scripts/stamp-release-os.sh\"\n";
 		};
+		8ABE00012FC0000000000007 /* Stamp release macOS build */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Stamp release macOS build";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# The extension's own copy of the app target's stamp phase. It must run HERE, as this\n# target's last phase, because the appex is signed by this target and then embedded: a\n# rewrite after that point would invalidate its signature. The app target's pass prunes\n# nested .appex bundles for exactly this reason.\n# See scripts/stamp-release-os.sh and docs/DEPLOY_SETUP.md.\n/bin/bash \"${SRCROOT}/scripts/stamp-release-os.sh\"\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -187,7 +282,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8ABE00012FC0000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		8ABE00012FC000000000000D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8ABE00012FC0000000000002 /* Die Kartei Keyboard */;
+			targetProxy = 8ABE00012FC000000000000E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		8AB65FF12FB65EFF0052F4F4 /* Debug */ = {
@@ -414,6 +524,62 @@
 	isa = XCBuildConfiguration;
 	name = Release;
 };
+		8ABE00012FC0000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 3;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = RHPLRY9X9P;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "KeyboardExtension-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Die Kartei";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.2;
+				PRODUCT_BUNDLE_IDENTIFIER = "kyle-essenmacher.german-ai-flashcards.keyboard";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8ABE00012FC000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = RHPLRY9X9P;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "KeyboardExtension-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Die Kartei";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks @executable_path/../../Frameworks";
+				MARKETING_VERSION = 1.6;
+				PRODUCT_BUNDLE_IDENTIFIER = "kyle-essenmacher.german-ai-flashcards.keyboard";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -431,6 +597,15 @@
 			buildConfigurations = (
 				8AB65FF42FB65EFF0052F4F4 /* Debug */,
 				8AB65FF52FB65EFF0052F4F4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8ABE00012FC0000000000008 /* Build configuration list for PBXNativeTarget "Die Kartei Keyboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8ABE00012FC0000000000009 /* Debug */,
+				8ABE00012FC000000000000A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

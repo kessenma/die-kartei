@@ -93,6 +93,10 @@ BUNDLE_ID = "kyle-essenmacher.german-ai-flashcards"
 PROJECT = "german-ai-flashcards.xcodeproj"
 SCHEME = "german-ai-flashcards"
 TARGET = "Die Kartei"
+# Embedded app extensions. `asc xcode version edit` is scoped to ONE target, so every nested
+# bundle has to be stamped explicitly: App Store Connect rejects an upload whose .appex carries a
+# different CFBundleShortVersionString / CFBundleVersion than the app containing it.
+EXTENSION_TARGETS = ["Die Kartei Keyboard"]
 TEAM_ID = "RHPLRY9X9P"
 CONFIGURATION = "Release"
 
@@ -276,24 +280,44 @@ def report_binary_stamps(version, build):
         log("⚠️", f"No IPA for {version} ({build}) under {ARTIFACTS}; skipping stamp check.")
         return
     ipa = ipas[-1]
+    # The app's own Info.plist AND every embedded extension's. An .appex is stamped by its own
+    # target's copy of the phase, so it can go wrong independently of the app — checking only the
+    # top-level plist would report green on a build ASC is about to reject.
+    wanted = re.compile(r"Payload/[^/]+\.app/(?:(?:Extensions|PlugIns)/[^/]+\.appex/)?Info\.plist")
     try:
         with zipfile.ZipFile(ipa) as z:
-            name = next(n for n in z.namelist() if re.fullmatch(r"Payload/[^/]+\.app/Info\.plist", n))
-            info = plistlib.loads(z.read(name))
+            names = sorted(n for n in z.namelist() if wanted.fullmatch(n))
+            app_name = next(n for n in names if re.fullmatch(r"Payload/[^/]+\.app/Info\.plist", n))
+            infos = {n: plistlib.loads(z.read(n)) for n in names}
     except Exception as e:  # noqa: BLE001 - diagnostics only
         log("⚠️", f"Couldn't read Info.plist from {ipa.name} ({e}); skipping stamp check.")
         return
-    stamps = {k: str(info.get(k, "?")) for k in ("DTXcodeBuild", "DTSDKBuild", "BuildMachineOSBuild")}
-    summary = ", ".join(f"{k}={v}" for k, v in stamps.items())
-    # The seed-suffix rule holds for Xcode and macOS builds, but NOT for SDK builds:
-    # release Xcode 26.6 ships iOS SDK 23F81a. A beta SDK only comes with a beta
-    # Xcode anyway, which DTXcodeBuild catches, so DTSDKBuild is shown, not judged.
-    beta = [k for k in ("DTXcodeBuild", "BuildMachineOSBuild") if _is_seed_build(stamps[k])]
-    if beta:
-        log("❌", f"{ipa.name} carries beta stamp(s) {', '.join(beta)} ({summary}). "
-                  "ASC will reject this build at submission with ITMS-90111.")
-    else:
-        log("✅", f"{ipa.name} toolchain stamps are all release builds ({summary})")
+
+    app_info = infos[app_name]
+
+    for name, info in infos.items():
+        # "Die Kartei.app" for the app, "Die Kartei Keyboard.appex" for an extension.
+        bundle = name.rsplit("/", 2)[-2]
+        stamps = {k: str(info.get(k, "?")) for k in ("DTXcodeBuild", "DTSDKBuild", "BuildMachineOSBuild")}
+        summary = ", ".join(f"{k}={v}" for k, v in stamps.items())
+        # The seed-suffix rule holds for Xcode and macOS builds, but NOT for SDK builds:
+        # release Xcode 26.6 ships iOS SDK 23F81a. A beta SDK only comes with a beta
+        # Xcode anyway, which DTXcodeBuild catches, so DTSDKBuild is shown, not judged.
+        beta = [k for k in ("DTXcodeBuild", "BuildMachineOSBuild") if _is_seed_build(stamps[k])]
+        if beta:
+            log("❌", f"{bundle} carries beta stamp(s) {', '.join(beta)} ({summary}). "
+                      "ASC will reject this build at submission with ITMS-90111.")
+        else:
+            log("✅", f"{bundle} toolchain stamps are all release builds ({summary})")
+
+        # Version parity, checked on the bytes that were actually uploaded — the cheapest place to
+        # catch a sync_extension_versions() that silently missed a target.
+        if bundle.endswith(".appex"):
+            for key in ("CFBundleShortVersionString", "CFBundleVersion"):
+                if str(info.get(key, "?")) != str(app_info.get(key, "?")):
+                    log("❌", f"{bundle} {key}={info.get(key)} does not match the app's "
+                              f"{app_info.get(key)}. ASC rejects mismatched nested bundles — "
+                              "check EXTENSION_TARGETS.")
 
 
 def ensure_signing():
@@ -629,7 +653,30 @@ def set_next_build():
     )
     version, build = local_version()
     log("📦", f"Versioned as {version} ({build})")
+    sync_extension_versions(version, build)
     return version, build
+
+
+def sync_extension_versions(version, build):
+    """Copy the app's version and build onto every embedded extension target.
+
+    `set_marketing_version`, `set_next_build` and the `ensure_version_ahead` bump are all scoped
+    with `--target TARGET`, so they only ever touch the app. An extension left at Xcode's default
+    1.0 (1) inside an app at 1.7 (14) fails ASC validation after a full archive and upload — the
+    slowest possible way to find out. Called from `set_next_build`, the single point every deploy
+    path passes through once the version is final.
+    """
+    for target in EXTENSION_TARGETS:
+        asc(
+            "xcode", "version", "edit",
+            "--version", version,
+            "--build-number", str(build),
+            "--project", PROJECT,
+            "--target", target,
+            "--configuration", CONFIGURATION,
+            "--output", "json",
+        )
+        log("🔗", f"{target} synced to {version} ({build})")
 
 
 # --- what's new --------------------------------------------------------------

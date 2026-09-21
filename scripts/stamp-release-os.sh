@@ -72,12 +72,23 @@ if [[ ! -d "$app" ]]; then
   exit 1
 fi
 
+# Nested .appex bundles are stamped by their OWN target's copy of this phase, which runs before
+# that extension is signed. By the time the app target gets here the appex has been signed and
+# embedded, so rewriting its Info.plist would invalidate the signature. Prune them — unless we
+# *are* the extension, in which case the wrapper itself is the .appex and must be walked.
+prune=()
+if [[ "${WRAPPER_NAME}" != *.appex ]]; then
+  prune=(-name '*.appex' -prune -o)
+fi
+
 count=0
 while IFS= read -r -d '' plist; do
   if /usr/libexec/PlistBuddy -c 'Print :BuildMachineOSBuild' "$plist" >/dev/null 2>&1; then
     /usr/libexec/PlistBuddy -c "Set :BuildMachineOSBuild ${release_build}" "$plist"
     count=$((count + 1))
   fi
-done < <(find "$app" -name Info.plist -print0)
+  # `${prune[@]+...}` because /bin/bash on macOS is 3.2, where expanding an empty array
+  # under `set -u` is an error.
+done < <(find "$app" ${prune[@]+"${prune[@]}"} -name Info.plist -print0)
 
 echo "stamped BuildMachineOSBuild ${host_build} -> ${release_build} in ${count} Info.plist(s) under ${WRAPPER_NAME} (Xcode ${xcode_build})"
