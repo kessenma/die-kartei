@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "unreleased",
+      "highlights": [
+        {
+          "title": "Tastatur · Keyboard",
+          "detail": "Settings now shows you how to switch on the German writing keyboard, so you can use it in Mail, Gmail, and anywhere else you write.",
+          "symbol": "keyboard"
+        }
+      ]
+    },
+    {
       "version": "1.6",
       "date": "2026-09-16",
       "highlights": [

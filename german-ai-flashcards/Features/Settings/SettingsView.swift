@@ -43,6 +43,14 @@ struct SettingsView: View {
                     } label: {
                         row("Voice", systemImage: "waveform")
                     }
+                    // Setup only: iOS gives an app no way to enable its own keyboard, so this
+                    // screen explains where the switch lives and reports whether it's been flipped.
+                    NavigationLink {
+                        KeyboardSettingsView()
+                    } label: {
+                        row("Tastatur · Keyboard", systemImage: "keyboard",
+                            detail: GermanKeyboard.summary)
+                    }
                     NavigationLink {
                         GamificationSettingsView(modelManager: modelManager)
                     } label: {
