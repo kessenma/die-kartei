@@ -26,6 +26,11 @@ struct JobReadingCallbacks {
 struct JobReadingDecorations: Equatable {
     var savedWords: Set<String> = []
     var lookedUpWords: Set<String> = []
+    /// Words a vocabulary list explains (a dotted underline; a tap answers from the list). The
+    /// class handouts use this with the course's vocab deck; postings leave it empty.
+    var glossary: GlossaryHighlight = .none
+    /// Print the glossary's English inline after each glossed word.
+    var inlineGlosses: InlineGlossMode = .off
 
     static let none = JobReadingDecorations()
 }

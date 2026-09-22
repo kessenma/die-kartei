@@ -24,6 +24,8 @@ struct JobPostingTextSurface: View {
                     text: paragraph,
                     textStyle: .body,
                     savedWords: decorations.savedWords,
+                    glossary: decorations.glossary,
+                    inlineGlosses: decorations.inlineGlosses,
                     lookedUpWords: decorations.lookedUpWords,
                     onTapWord: callbacks.onTapWord,
                     onTranslateSelection: callbacks.onTranslateSelection,

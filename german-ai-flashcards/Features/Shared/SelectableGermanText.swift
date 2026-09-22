@@ -25,6 +25,10 @@ struct SelectableGermanText: UIViewRepresentable {
     var savedWords: Set<String> = []
     /// Words explained in a glossary shown below the text (marked with a dotted underline).
     var glossary: GlossaryHighlight = .none
+    /// Print each glossary word's English right after it in the text. Only the handout reader asks
+    /// for this: the read-along and gender ranges of the other callers are computed against the
+    /// plain text and would drift once glosses are inserted, so those callers leave it `.off`.
+    var inlineGlosses: InlineGlossMode = .off
     /// Lowercased words this learner looked up in this text (marked with a red dashed underline).
     var lookedUpWords: Set<String> = []
     /// UTF-16 ranges to tint with a noun's der/die/das color. Range-based (not word-keyed) so a
@@ -94,11 +98,84 @@ struct SelectableGermanText: UIViewRepresentable {
         context.coordinator.parent = self
         let base = UIFont.systemFont(ofSize: UIFont.preferredFont(forTextStyle: textStyle).pointSize, weight: weight)
         let font = UIFontMetrics(forTextStyle: textStyle).scaledFont(for: base)
-        tv.attributedText = Self.attributed(text, font: font, savedWords: savedWords,
-                                            glossary: glossary, lookedUpWords: lookedUpWords,
-                                            nounTints: nounTints,
-                                            highlightRange: highlightRange)
+        let styled = Self.attributed(text, font: font, savedWords: savedWords,
+                                     glossary: glossary, lookedUpWords: lookedUpWords,
+                                     nounTints: nounTints,
+                                     highlightRange: highlightRange)
+        Self.insertInlineGlosses(into: styled, glossary: glossary, mode: inlineGlosses, font: font)
+        tv.attributedText = styled
         (tv as? WrappingTextView)?.wrappedImages = wrappedImages
+    }
+
+    /// The gloss text after a word, in a smaller secondary face and tagged so a tap or a selection
+    /// never treats it as part of the German. Phrases are glossed as a whole; a word inside a
+    /// glossed phrase is left alone. `.first` glosses each entry once, where it first appears.
+    private static func insertInlineGlosses(into result: NSMutableAttributedString,
+                                            glossary: GlossaryHighlight,
+                                            mode: InlineGlossMode,
+                                            font: UIFont) {
+        guard mode != .off, !glossary.isEmpty else { return }
+        let ns = result.string as NSString
+        var matches: [(range: NSRange, entry: GlossaryEntry)] = []
+        var phraseRanges: [NSRange] = []
+        for phrase in glossary.phrases {
+            var searched = 0
+            while searched < ns.length {
+                let found = ns.range(of: phrase, options: .caseInsensitive,
+                                     range: NSRange(location: searched, length: ns.length - searched))
+                guard found.location != NSNotFound else { break }
+                if let entry = glossary.phraseEntries[phrase.lowercased()] { matches.append((found, entry)) }
+                phraseRanges.append(found)
+                searched = max(NSMaxRange(found), searched + 1)
+            }
+        }
+        ns.enumerateSubstrings(in: NSRange(location: 0, length: ns.length), options: .byWords) { word, range, _, _ in
+            guard let key = word?.lowercased(), let entry = glossary.words[key] else { return }
+            if phraseRanges.contains(where: { NSIntersectionRange($0, range).length > 0 }) { return }
+            matches.append((range, entry))
+        }
+        matches.sort { $0.range.location < $1.range.location }
+
+        var seen = Set<String>()
+        var chosen: [(NSRange, String)] = []
+        for match in matches {
+            let id = match.entry.german.lowercased()
+            if mode == .first {
+                guard !seen.contains(id) else { continue }
+                seen.insert(id)
+            }
+            chosen.append((match.range, Self.shortGloss(match.entry.english)))
+        }
+        let glossFont = UIFont.systemFont(ofSize: font.pointSize * 0.82)
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: glossFont,
+            .foregroundColor: UIColor.secondaryLabel,
+            .inlineGloss: true
+        ]
+        // From the end, so earlier ranges stay valid as the string grows.
+        for (range, english) in chosen.reversed() {
+            result.insert(NSAttributedString(string: " (\(english))", attributes: attributes), at: NSMaxRange(range))
+        }
+    }
+
+    /// A gloss short enough to sit inside a sentence: the first sense, capped.
+    private static func shortGloss(_ english: String) -> String {
+        var gloss = english
+        if let cut = gloss.range(of: " (") { gloss = String(gloss[..<cut.lowerBound]) }
+        gloss = gloss.trimmingCharacters(in: .whitespaces)
+        return gloss.count > 60 ? String(gloss.prefix(57)).trimmingCharacters(in: .whitespaces) + "…" : gloss
+    }
+
+    /// The text of a selection with any inline glosses left out, so "Translate" on a highlighted
+    /// span never carries the English along.
+    static func plainText(of attributed: NSAttributedString, in range: NSRange) -> String {
+        guard NSMaxRange(range) <= attributed.length else { return "" }
+        var out = ""
+        let ns = attributed.string as NSString
+        attributed.enumerateAttribute(.inlineGloss, in: range, options: []) { value, sub, _ in
+            if value == nil { out += ns.substring(with: sub) }
+        }
+        return out
     }
 
     /// Build the styled string: base label color, an accent wash on saved words, a dotted underline
@@ -111,7 +188,7 @@ struct SelectableGermanText: UIViewRepresentable {
                                    glossary: GlossaryHighlight,
                                    lookedUpWords: Set<String>,
                                    nounTints: [(range: NSRange, color: UIColor)],
-                                   highlightRange: NSRange?) -> NSAttributedString {
+                                   highlightRange: NSRange?) -> NSMutableAttributedString {
         let result = NSMutableAttributedString(string: text, attributes: [
             .font: font,
             .foregroundColor: UIColor.label
@@ -197,6 +274,11 @@ struct SelectableGermanText: UIViewRepresentable {
             let point = gr.location(in: tv)
             guard let pos = tv.closestPosition(to: point) else { return }
             let offset = tv.offset(from: tv.beginningOfDocument, to: pos)
+            // An inline gloss is English the reader printed, not a word to look up.
+            if let attributed = tv.attributedText, offset < attributed.length,
+               attributed.attribute(.inlineGloss, at: offset, effectiveRange: nil) != nil {
+                return
+            }
             if let word = Self.word(in: tv.text ?? "", atUTF16Offset: offset) {
                 tv.selectedTextRange = nil
                 parent.onTapWord(word)
@@ -213,10 +295,9 @@ struct SelectableGermanText: UIViewRepresentable {
         func textView(_ textView: UITextView,
                       editMenuForTextIn range: NSRange,
                       suggestedActions: [UIMenuElement]) -> UIMenu? {
-            guard range.length > 0,
-                  let full = textView.text,
-                  let r = Range(range, in: full) else { return nil }
-            let selected = String(full[r]).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard range.length > 0, let attributed = textView.attributedText else { return nil }
+            let selected = SelectableGermanText.plainText(of: attributed, in: range)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
             guard !selected.isEmpty else { return nil }
 
             let translate = UIAction(title: parent.translateActionTitle,
@@ -265,5 +346,28 @@ struct SelectableGermanText: UIViewRepresentable {
             return word.isEmpty ? nil : word
         }
     }
+}
+
+/// Whether, and how often, a text prints the glossary's English inline after a German word.
+enum InlineGlossMode: String, CaseIterable, Identifiable {
+    case off
+    /// Once per entry, where it first appears: reads like a graded reader.
+    case first
+    case all
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .off:   "Off"
+        case .first: "First time"
+        case .all:   "Every time"
+        }
+    }
+}
+
+extension NSAttributedString.Key {
+    /// Marks an inline gloss: English the reader printed after a word, skipped by taps and selections.
+    static let inlineGloss = NSAttributedString.Key("dk.inlineGloss")
 }
 #endif

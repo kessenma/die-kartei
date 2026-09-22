@@ -87,6 +87,30 @@ enum ClassNotesDebugSeeder {
             entry.course = uni
         }
 
+        // The Grimm story with the teacher's vocab sheet as a deck: the reader's glossary case.
+        let sheetRows = VocabListParser.parse(vocabSheetText).rows.filter(\.isComplete)
+        let sheetCards: [VocabCard] = sheetRows.map { row in
+            let (word, article) = DocumentDeckService.splitArticle(row.german)
+            return VocabCard(germanWord: word, englishTranslation: row.english,
+                             wordType: article != nil ? "noun" : nil, article: article,
+                             exampleSentence: nil, conjugations: nil)
+        }
+        let sheetDeck = SavedDeck(topic: "Hänsel und Gretel Vokabelliste", wordCount: sheetCards.count,
+                                  includeExamples: false, includeGender: true, vocabCards: sheetCards)
+        sheetDeck.generatorRaw = "document"
+        sheetDeck.courseID = uni.id
+        context.insert(sheetDeck)
+
+        let storyEntry = ClassEntry(date: daysAgo(4), title: "Märchen: Hänsel und Gretel")
+        storyEntry.grammarFoci = [.praeteritum]
+        storyEntry.topics = ["Märchen"]
+        context.insert(storyEntry)
+        storyEntry.course = uni
+        let story = ClassMaterial(title: storyTitle, text: storyText, sourceKind: .pdf)
+        story.glossaryDeckID = sheetDeck.id
+        context.insert(story)
+        story.entry = storyEntry
+
         let worksheet = ClassMaterial(
             title: "Arbeitsblatt Wechselpräpositionen",
             text: worksheetText,
@@ -142,7 +166,7 @@ enum ClassNotesDebugSeeder {
         photo.entry = session2
 
         try? context.save()
-        return "seeded 2 courses, 5 entries, 2 handouts"
+        return "seeded 2 courses, 6 entries, 3 handouts, 1 deck"
     }
 
     /// The screen a `-classNotes.debugOpen` value names, over the seeded data (seeding first).
@@ -163,6 +187,8 @@ enum ClassNotesDebugSeeder {
             return uni?.sortedEntries.first { $0.title.hasPrefix("Kapitel 4") }.map { .editor($0) }
         case "handout":
             return tutor?.materials.first.map { .handout($0) }
+        case "story":
+            return uni?.materials.first { $0.title == storyTitle }.map { .handout($0) }
         case "builder":
             return .builder(DocumentDeckDraft(title: "Hänsel und Gretel Vokabelliste", text: vocabSheetText, sourceLabel: "PDF"))
         default:
@@ -208,6 +234,22 @@ enum ClassNotesDebugSeeder {
     Eine Schwäche von mir ist, dass ich manchmal zu genau bin.
     Ich habe drei Jahre Berufserfahrung im Bereich Personal.
     Ich könnte mir gut vorstellen, in Ihrem Unternehmen zu arbeiten.
+    """
+
+    static let storyTitle = "Hänsel und Gretel"
+
+    /// The opening of the Grimm story as PDFKit extracts it (one page), the text the vocab sheet
+    /// above belongs to.
+    static let storyText = """
+    Hänsel und Gretel
+
+    Vor einem großen Walde wohnte ein armer Holzhacker mit seiner Frau und seinen zwei Kindern; das Bübchen hieß Hänsel und das Mädchen Gretel. Er hatte wenig zu beißen und zu brechen, und einmal, als große Teuerung ins Land kam, konnte er das tägliche Brot nicht mehr schaffen. Wie er sich nun abends im Bette Gedanken machte und sich vor Sorgen herumwälzte, seufzte er und sprach zu seiner Frau: "Was soll aus uns werden? Wie können wir unsere armen Kinder ernähren da wir für uns selbst nichts mehr haben?" - "Weißt du was, Mann," antwortete die Frau, "wir wollen morgen in aller Frühe die Kinder hinaus in den Wald führen, wo er am dicksten ist. Da machen wir ihnen ein Feuer an und geben jedem noch ein Stückchen Brot, dann gehen wir an unsere Arbeit und lassen sie allein. Sie finden den Weg nicht wieder nach Haus, und wir sind sie los." - "Nein, Frau," sagte der Mann, "das tue ich nicht; wie sollt ich's übers Herz bringen, meine Kinder im Walde allein zu lassen! Die wilden Tiere würden bald kommen und sie zerreißen." - "Oh, du Narr," sagte sie, "dann müssen wir alle viere Hungers sterben, du kannst nur die Bretter für die Särge hobeln," und ließ ihm keine Ruhe, bis er einwilligte. "Aber die armen Kinder dauern mich doch," sagte der Mann.
+
+    Die zwei Kinder hatten vor Hunger auch nicht einschlafen können und hatten gehört, was die Stiefmutter zum Vater gesagt hatte. Gretel weinte bittere Tränen und sprach zu Hänsel: "Nun ist's um uns geschehen." - "Still, Gretel," sprach Hänsel, "gräme dich nicht, ich will uns schon helfen." Und als die Alten eingeschlafen waren, stand er auf, zog sein Röcklein an, machte die Untertüre auf und schlich sich hinaus. Da schien der Mond ganz hell, und die weißen Kieselsteine, die vor dem Haus lagen, glänzten wie lauter Batzen. Hänsel bückte sich und steckte so viele in sein Rocktäschlein, als nur hinein wollten. Dann ging er wieder zurück, sprach zu Gretel: "Sei getrost, liebes Schwesterchen, und schlaf nur ruhig ein, Gott wird uns nicht verlassen," und legte sich wieder in sein Bett.
+
+    Als der Tag anbrach, noch ehe die Sonne aufgegangen war, kam schon die Frau und weckte die beiden Kinder: "Steht auf, ihr Faulenzer, wir wollen in den Wald gehen und Holz holen." Dann gab sie jedem ein Stückchen Brot und sprach: "Da habt ihr etwas für den Mittag, aber eßt's nicht vorher auf, weiter kriegt ihr nichts." Gretel nahm das Brot unter die Schürze, weil Hänsel die Steine in der Tasche hatte. Danach machten sie sich alle zusammen auf den Weg nach dem Wald.
+
+    Als sie mitten in den Wald gekommen waren, sprach der Vater: "Nun sammelt Holz, ihr Kinder, ich will ein Feuer anmachen, damit ihr nicht friert." Hänsel und Gretel trugen Reisig zusammen, einen kleinen Berg hoch. Das Reisig ward angezündet, und als die Flamme recht hoch brannte, sagte die Frau: "Nun legt euch ans Feuer, ihr Kinder, und ruht euch aus, wir gehen in den Wald und hauen Holz. Wenn wir fertig sind, kommen wir wieder und holen euch ab." Hänsel und Gretel saßen um das Feuer, und als der Mittag kam, aß jedes sein Stücklein Brot. Und als sie so lange gesessen hatten, fielen ihnen die Augen vor Müdigkeit zu, und sie schliefen fest ein. Als sie endlich erwachten, war es schon finstere Nacht. Gretel fing an zu weinen, aber Hänsel tröstete sie: "Wart nur ein Weilchen, bis der Mond aufgegangen ist, dann wollen wir den Weg schon finden."
     """
 
     /// A teacher's vocabulary sheet exactly as PDFKit extracts it (one row per line, the columns

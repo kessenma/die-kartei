@@ -28,6 +28,9 @@ final class ClassMaterial {
     var lookupsData: Data? = nil
     /// The tutor that answered the lookups, kept so later lookups don't swap models.
     var modelRaw: String? = nil
+    /// The vocab deck (`SavedDeck.id`) whose words are marked in this text and answer a tap
+    /// without the model: the teacher's list for this story. Nil until picked (or defaulted).
+    var glossaryDeckIDRaw: String? = nil
 
     var entry: ClassEntry? = nil
 
@@ -63,6 +66,11 @@ final class ClassMaterial {
 
     var sourceKind: SourceKind { SourceKind(rawValue: sourceKindRaw) ?? .paste }
     var model: MLXModel? { modelRaw.flatMap { MLXModel(rawValue: $0) } }
+
+    var glossaryDeckID: UUID? {
+        get { glossaryDeckIDRaw.flatMap { UUID(uuidString: $0) } }
+        set { glossaryDeckIDRaw = newValue?.uuidString }
+    }
 
     /// The original is on disk (a failed write can leave a name behind with no file).
     var hasSnapshot: Bool { ClassMaterialStore.exists(snapshotFile) }

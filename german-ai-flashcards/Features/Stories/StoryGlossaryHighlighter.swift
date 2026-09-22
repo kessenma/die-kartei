@@ -8,6 +8,8 @@ struct GlossaryHighlight: Equatable {
     var words: [String: GlossaryEntry] = [:]
     /// Multi-word terms, matched case-insensitively as literal spans.
     var phrases: [String] = []
+    /// The entry behind each phrase, keyed by the lowercased phrase, for inline glosses.
+    var phraseEntries: [String: GlossaryEntry] = [:]
 
     static let none = GlossaryHighlight()
 
@@ -35,6 +37,7 @@ enum StoryGlossaryHighlighter {
 
         var targets: [Target] = []
         var phrases: [String] = []
+        var phraseEntries: [String: GlossaryEntry] = [:]
         for entry in glossary {
             let term = headword(from: entry.german)
             guard term.count >= 2 else { continue }
@@ -46,13 +49,14 @@ enum StoryGlossaryHighlighter {
             // uses them verbatim; otherwise fall back to their most distinctive word.
             if text.range(of: term, options: .caseInsensitive) != nil {
                 phrases.append(term)
+                phraseEntries[term.lowercased()] = entry
             } else if let longest = term.split(separator: " ").max(by: { $0.count < $1.count }),
                       longest.count >= 4 {
                 targets.append(Target(String(longest), entry: entry))
             }
         }
 
-        return GlossaryHighlight(words: surfaceForms(matching: targets, in: text), phrases: phrases)
+        return GlossaryHighlight(words: surfaceForms(matching: targets, in: text), phrases: phrases, phraseEntries: phraseEntries)
     }
 
     // MARK: - Headwords

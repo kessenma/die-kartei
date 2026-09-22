@@ -58,9 +58,21 @@ struct DocumentDeckBuilderView: View {
     private var courses: [ClassCourse] { allCourses.filter { !$0.isArchived } }
     private var selectedCourse: ClassCourse? { courses.first { $0.id == courseID } }
 
-    /// The tutor that will translate: one already on the device, never a download for a deck.
+    /// Tutors already on this device that it can run, best first: what the picker offers. Never a
+    /// download for a deck.
+    private var downloadedTutors: [MLXModel] {
+        let rank: (MLXModel) -> Int = { MLXModel.germanTutors.firstIndex(of: $0) ?? MLXModel.germanTutors.count }
+        return MLXModel.allCases
+            .filter { $0.isDownloaded && DeviceCapability.mayRun($0) }
+            .sorted { rank($0) < rank($1) }
+    }
+
+    /// The tutor that pairs and translates: the learner's document tutor when it is on the device,
+    /// else the best one that is.
     private var tutor: MLXModel {
-        StoryStudyService.followUpModel(wrote: nil, fallback: modelManager.selectedPaperModel)
+        let picked = modelManager.selectedPaperModel
+        if picked.isDownloaded, DeviceCapability.mayRun(picked) { return picked }
+        return downloadedTutors.first ?? picked
     }
     private var tutorOnDevice: Bool { tutor.isDownloaded }
 
@@ -139,13 +151,28 @@ struct DocumentDeckBuilderView: View {
                     }
                 }
             }
+            if !downloadedTutors.isEmpty {
+                Picker("Tutor", selection: Binding(
+                    get: { tutor },
+                    set: { modelManager.selectedPaperModel = $0 }
+                )) {
+                    ForEach(downloadedTutors) { model in
+                        Text(model.rawValue).tag(model)
+                    }
+                }
+            }
         } header: {
             Text("Deck").themedSectionHeader()
         } footer: {
-            Text(courses.isEmpty
-                 ? "From \(draft.sourceLabel.lowercased()) · \(draft.title)"
-                 : "A deck with a course shows on that course's page under Deutschkurs.")
-                .font(.caption2)
+            VStack(alignment: .leading, spacing: 4) {
+                if !courses.isEmpty {
+                    Text("A deck with a course shows on that course's page under Deutschkurs.")
+                }
+                Text(downloadedTutors.isEmpty
+                     ? "No tutor is on this device yet. A word list still becomes a deck; download a tutor in Settings ▸ Model to translate what has no English."
+                     : "The tutor translates rows without English and can re-read a list the reader got wrong. Only tutors already on this device are listed.")
+            }
+            .font(.caption2)
         }
         .themedListRow()
     }

@@ -283,3 +283,28 @@ nonisolated enum VocabListParser {
         return row
     }
 }
+
+/// The forms a teacher lists in one entry, split out so each can be found in a text:
+/// "der Kieselstein/ die Kieselsteine (pl)" → ["der Kieselstein", "die Kieselsteine"];
+/// "anzünden/ zündete…an/ hat angezündet" → ["anzünden", "zündete", "angezündet"].
+nonisolated enum VocabForms {
+    static func split(_ german: String) -> [String] {
+        var out: [String] = []
+        for part in german.components(separatedBy: CharacterSet(charactersIn: "/,;")) {
+            for alternative in part.components(separatedBy: "->") {
+                var form = alternative
+                    .replacingOccurrences(of: #"\((pl|pl\.|sg|Pl\.)\)"#, with: "", options: .regularExpression)
+                    .replacingOccurrences(of: #"^\s*(hat|ist|haben|sind)\s+"#, with: "", options: .regularExpression)
+                    .trimmingCharacters(in: .whitespaces)
+                // A separable verb written "zündete…an": the finite part is what a text shows.
+                if let dots = form.range(of: #"[…\.]{1,3}"#, options: .regularExpression),
+                   form.distance(from: form.startIndex, to: dots.lowerBound) > 2 {
+                    form = String(form[..<dots.lowerBound]).trimmingCharacters(in: .whitespaces)
+                }
+                form = form.trimmingCharacters(in: .punctuationCharacters).trimmingCharacters(in: .whitespaces)
+                if form.count >= 2 { out.append(form) }
+            }
+        }
+        return out.isEmpty ? [german] : out
+    }
+}

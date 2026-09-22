@@ -20,6 +20,16 @@ struct ClassMaterialDetailView: View {
     @Environment(\.appTheme) private var appTheme
     @Environment(ActivityRouter.self) private var router
 
+    @Query(sort: \SavedDeck.createdAt, order: .reverse) private var decks: [SavedDeck]
+
+    /// The vocab list's words found in this text, for the dotted underlines and instant answers.
+    @State private var glossary: GlossaryHighlight = .none
+    @State private var glossaryFound = 0
+    @State private var glossaryTotal = 0
+    /// Whether the English is printed inline after each glossed word. One setting for every
+    /// handout: a reading preference, not a property of the text.
+    @AppStorage("handout.inlineGlosses") private var inlineGlossesRaw = InlineGlossMode.off.rawValue
+
     @State private var inspector: WordInspectorModel?
     @State private var showHelp = false
     @State private var showDeckBuilder = false
@@ -28,6 +38,27 @@ struct ClassMaterialDetailView: View {
     @State private var addedCount: Int?
 
     private var course: ClassCourse? { material.entry?.course }
+
+    /// Decks on this course that hold cards: the candidates for "Vocab from".
+    private var courseDecks: [SavedDeck] {
+        guard let course else { return [] }
+        return decks.filter { $0.courseID == course.id && !$0.cards.isEmpty }
+    }
+    private var glossaryDeck: SavedDeck? {
+        guard let id = material.glossaryDeckID else { return nil }
+        return decks.first { $0.id == id }
+    }
+    /// The picker's options: the course's decks, plus a linked deck that has since left the course.
+    private var glossaryOptions: [SavedDeck] {
+        var options = courseDecks
+        if let glossaryDeck, !options.contains(where: { $0.id == glossaryDeck.id }) { options.append(glossaryDeck) }
+        return options
+    }
+    /// The newest deck made from a document on this course, else the newest with cards.
+    private var defaultGlossaryDeck: SavedDeck? {
+        courseDecks.first { $0.kind == .document } ?? courseDecks.first
+    }
+    private var inlineGlosses: InlineGlossMode { InlineGlossMode(rawValue: inlineGlossesRaw) ?? .off }
 
     /// The tutor the lookups run on: the one that answered earlier lookups here, else the
     /// learner's story tutor, else whatever is on disk. Never starts a download for one word.
@@ -41,6 +72,9 @@ struct ClassMaterialDetailView: View {
     var body: some View {
         List {
             headerSection
+            if !glossaryOptions.isEmpty {
+                vocabSection
+            }
             readSection
             lookupSection
             deckSection
@@ -90,6 +124,7 @@ struct ClassMaterialDetailView: View {
             }
         }
         .onAppear(perform: setUp)
+        .task(id: material.glossaryDeckIDRaw) { rebuildGlossary() }
         .onDisappear {
             // A lookup still waiting on a model load has no one to report to now.
             inspector?.tearDown()
@@ -133,13 +168,55 @@ struct ClassMaterialDetailView: View {
         .themedListRow()
     }
 
+    /// Which vocab list this text is read with, and whether its English is printed inline.
+    private var vocabSection: some View {
+        Section {
+            Picker("Vocab from", selection: Binding(
+                get: { material.glossaryDeckID },
+                set: { picked in
+                    material.glossaryDeckID = picked
+                    try? modelContext.save()
+                }
+            )) {
+                Text("None").tag(UUID?.none)
+                ForEach(glossaryOptions) { deck in
+                    Text(deck.topic.replacingOccurrences(of: "Class: ", with: "")).tag(Optional(deck.id))
+                }
+            }
+            if glossaryDeck != nil {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("English inline")
+                        .font(.subheadline)
+                    Picker("English inline", selection: $inlineGlossesRaw) {
+                        ForEach(InlineGlossMode.allCases) { mode in
+                            Text(mode.label).tag(mode.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+                .padding(.vertical, 2)
+            }
+        } header: {
+            Text("Vokabeln · Vocab").themedSectionHeader()
+        } footer: {
+            if glossaryDeck != nil {
+                Text("\(glossaryFound) of \(glossaryTotal) words from the list appear in this text, underlined with dots. Tap one for the teacher's English; no tutor needed. Inline English prints it right after the word, once per word or every time.")
+            } else {
+                Text("Pick the vocab list that goes with this text to mark its words in the handout.")
+            }
+        }
+        .themedListRow()
+    }
+
     private var readSection: some View {
         Section {
             JobPostingTextSurface(text: material.text, decorations: decorations, callbacks: callbacks)
         } header: {
             Text("Handout").themedSectionHeader()
         } footer: {
-            Text("Double-tap a word to translate it; select a phrase to translate it. Words you've saved are washed in color, words you looked up get a red dashed line.")
+            Text(glossaryDeck == nil
+                 ? "Double-tap a word to translate it; select a phrase to translate it. Words you've saved are washed in color, words you looked up get a red dashed line."
+                 : "Dotted words are on the vocab list. Double-tap any word to translate it; select a phrase to translate it. Saved words are washed in color, words you looked up get a red dashed line.")
         }
         .themedListRow()
     }
@@ -243,7 +320,9 @@ struct ClassMaterialDetailView: View {
     private var decorations: JobReadingDecorations {
         JobReadingDecorations(
             savedWords: savedWords,
-            lookedUpWords: Set(material.lookups.map { $0.german.lowercased() })
+            lookedUpWords: Set(material.lookups.map { $0.german.lowercased() }),
+            glossary: glossary,
+            inlineGlosses: inlineGlosses
         )
     }
 
@@ -267,9 +346,30 @@ struct ClassMaterialDetailView: View {
                 feedsCoach: modelManager.storyFeedsCoach,
                 context: modelContext
             )
-        } else {
-            inspector?.knownTranslations = ClassWordInspector.knownTranslations(for: material)
         }
+        // First visit with a vocab deck on the course: read with the newest one until told otherwise.
+        if material.glossaryDeckID == nil, let pick = defaultGlossaryDeck {
+            material.glossaryDeckID = pick.id
+            try? modelContext.save()
+        }
+        rebuildGlossary()
+    }
+
+    /// Mark the vocab list's words in the text and let the inspector answer them without the model.
+    /// The list's English wins over an earlier lookup for the same word: it is the teacher's.
+    private func rebuildGlossary() {
+        if let glossaryDeck {
+            let result = HandoutGlossary.highlight(deck: glossaryDeck, in: material.text)
+            glossary = result.highlight
+            glossaryFound = result.found
+            glossaryTotal = result.total
+        } else {
+            glossary = .none
+            glossaryFound = 0
+            glossaryTotal = 0
+        }
+        inspector?.knownTranslations = ClassWordInspector.knownTranslations(for: material)
+            .merging(glossary.wordTranslations) { _, fromList in fromList }
     }
 
     private func removeLookups(at offsets: IndexSet) {
@@ -278,6 +378,7 @@ struct ClassMaterialDetailView: View {
         material.setLookups(entries)
         try? modelContext.save()
         inspector?.knownTranslations = ClassWordInspector.knownTranslations(for: material)
+            .merging(glossary.wordTranslations) { _, fromList in fromList }
     }
 
     private func addAllToDeck() {

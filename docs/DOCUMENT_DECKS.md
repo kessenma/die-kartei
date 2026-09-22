@@ -53,6 +53,29 @@ guesses (all right), the title is picked up, `listConfidence` 0.84; the story an
 sheet score 0.09 / 0.05 and open in text mode. The same text is the `-classNotes.debugOpen builder`
 fixture (`ClassNotesDebugSeeder.vocabSheetText`).
 
+## A story read with its vocab list
+
+A class handout can be read with a deck as its glossary (`ClassMaterial.glossaryDeckIDRaw`,
+additive). The handout page's **Vokabeln · Vocab** section picks the deck (any deck on the course
+with cards; defaults to the newest document deck the first time) and shows how many of its cards
+were found in the text. `HandoutGlossary` turns the cards into `GlossaryEntry`s, one per listed
+form (`VocabForms.split`: "der Kieselstein/ die Kieselsteine (pl)" → two forms; "zündete…an" →
+"zündete"), and runs the story reader's `StoryGlossaryHighlighter` (word, lemma, inflections,
+verbatim phrases). Result: dotted underlines in the text, and the inspector answers a tap from the
+list (`knownTranslations`, the list winning over an earlier model lookup). Measured on the Hänsel
+und Gretel story with its sheet: 31 of 32 entries found (22 before the form split).
+
+**English inline** (`InlineGlossMode`, `@AppStorage("handout.inlineGlosses")`, Off / First time /
+Every time): `SelectableGermanText.inlineGlosses` inserts " (english)" after each glossed word or
+phrase in a smaller secondary face, tagged `NSAttributedString.Key.inlineGloss`; a tap on a gloss
+is ignored and a selection's text drops gloss runs (`plainText(of:in:)`), so Translate never
+carries the English along. Only the handout reader sets a mode: the read-along and gender ranges
+of the chat and story callers are computed against the plain text and would drift. Glosses are
+shortened to the first sense and 60 characters. `JobReadingDecorations` carries `glossary` and
+`inlineGlosses` to the text surface.
+
+Debug: `-classNotes.debugOpen story` opens the seeded story with the sheet's deck linked.
+
 ## Later
 
 - Two-column photos: OCR reads a table column by column at times; the tutor pairing covers it, a

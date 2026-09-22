@@ -105,7 +105,9 @@ from `PhotoScanListView` to `Features/Shared/`; `PDFTextExtractor.pageImages(fro
 - **`ClassMaterialDetailView`**: header (source pill, word count, entry, "Open the original" via
   Quick Look), the text surface (`JobPostingTextSurface` + `WordInspectorSheet`, built by
   `ClassWordInspector`), Unbekannte Wörter (speak, swipe to remove, Add all to the deck),
-  Flashcards. Phrase selection goes through the inspector (no phrase library anchor for a class).
+  Flashcards (+ *Make a deck from this handout*). **Vokabeln · Vocab**: the deck this text is read
+  with, its words dotted in the text and answered without the model, English inline on request
+  (`docs/DOCUMENT_DECKS.md`). Phrase selection goes through the inspector.
 - **`ClassMaterialListView`**: every handout; Library ▸ Reading ▸ Class Handouts.
 
 ## Decks
@@ -126,7 +128,8 @@ The course page lists them all; the hub lists every course-linked deck with its 
   3 entries, one overdue and one open homework, a pasted worksheet) and "[debug] HR-Deutsch mit
   Anna" (tutor, goal, 2 entries, a "photo" handout with a drawn page as its original).
 - `-classNotes.debugOpen <screen>` — seeds if needed and opens `hub` (or `1`), `course`, `entry`,
-  `editor`, `handout`, or `builder` (the flashcard builder over the real Hänsel vocab sheet) in a sheet.
+  `editor`, `handout`, `story` (the Grimm story with its vocab deck linked), or `builder` (the
+  flashcard builder over the real Hänsel vocab sheet) in a sheet.
 - `-classNotes.debugRemove 1` — removes both courses and their files.
 
 Only one presenting argument per launch (see `WhatsNewService`).
