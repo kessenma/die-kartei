@@ -110,6 +110,22 @@ struct UnifiedLibraryView: View {
                     }
                     .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 0))
                     .themedListRow()
+                    // Leading edge, so the trailing swipe stays Delete where muscle memory puts
+                    // it. `document(for:)` is nil for a deck that can't travel between devices.
+                    .swipeActions(edge: .leading) {
+                        if let document = DeckTransfer.document(for: deck) {
+                            ShareLink(
+                                item: document,
+                                preview: SharePreview(
+                                    deck.topic,
+                                    image: Image(systemName: "rectangle.stack.fill")
+                                )
+                            ) {
+                                Label("Share", systemImage: "square.and.arrow.up")
+                            }
+                            .tint(.blue)
+                        }
+                    }
                 }
                 .onDelete(perform: deleteDecks)
             }
@@ -368,6 +384,17 @@ private struct DeckStatsSheet: View {
             .navigationTitle(deck.topic)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                if let document = DeckTransfer.document(for: deck) {
+                    ToolbarItem(placement: .topBarLeading) {
+                        ShareLink(
+                            item: document,
+                            preview: SharePreview(
+                                deck.topic,
+                                image: Image(systemName: "rectangle.stack.fill")
+                            )
+                        )
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }

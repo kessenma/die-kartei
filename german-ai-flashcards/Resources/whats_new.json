@@ -47,6 +47,11 @@
           "title": "Nebeneinander lesen · Read side by side",
           "detail": "Translate a class handout on your phone and read it in German, in English, or both at once: side by side on an iPad, stacked on a phone, scrolling together sentence by sentence.",
           "symbol": "rectangle.split.2x1"
+        },
+        {
+          "title": "Deck teilen · Share a deck",
+          "detail": "Swipe a deck in the Library and send it to your other device by AirDrop, Messages, or Files. Your review progress goes with it, so a word you already know stays known.",
+          "symbol": "square.and.arrow.up"
         }
       ]
     },

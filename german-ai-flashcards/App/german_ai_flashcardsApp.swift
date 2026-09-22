@@ -57,6 +57,12 @@ struct german_ai_flashcardsApp: App {
     /// theme system is a no-op until the learner opts into another theme in Settings.
     @AppStorage(AppTheme.defaultsKey) private var appTheme: AppTheme = .klar
 
+    /// A `.kartei` file handed over by AirDrop / Files / Messages, decoded and waiting for the
+    /// learner to confirm. Held here rather than in the Library because a deck can arrive while
+    /// any tab is open, and the file is gone from the inbox by the time this is set.
+    @State private var pendingDeckImport: DeckImportRequest?
+    @State private var deckImportError: String?
+
     init() {
         // The Klassisch/Geschichte scene-style toggle was removed 2026-08-12 (the sets merged
         // into one curated scene per word); the key was user-visible in the preposition hub,
@@ -145,6 +151,28 @@ struct german_ai_flashcardsApp: App {
                             )
                         }
                     }
+                }
+                .onOpenURL { url in
+                    do {
+                        pendingDeckImport = DeckImportRequest(envelope: try DeckImporter.read(from: url))
+                    } catch {
+                        deckImportError = error.localizedDescription
+                    }
+                }
+                .sheet(item: $pendingDeckImport) { request in
+                    DeckImportSheet(request: request)
+                }
+                .alert(
+                    "Import failed",
+                    isPresented: Binding(
+                        get: { deckImportError != nil },
+                        set: { if !$0 { deckImportError = nil } }
+                    ),
+                    presenting: deckImportError
+                ) { _ in
+                    Button("OK", role: .cancel) {}
+                } message: { message in
+                    Text(message)
                 }
         }
         .modelContainer(container)
