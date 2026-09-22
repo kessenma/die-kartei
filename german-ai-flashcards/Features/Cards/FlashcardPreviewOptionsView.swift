@@ -7,6 +7,8 @@ struct FlashcardPreviewOptionsView: View {
     @Binding var showGermanFirst: Bool
     @Binding var showExamplesOnGermanSide: Bool
     @Binding var autoAdvance: Bool
+    /// Deal the cards in a random order at Start. Nil where the launcher fixes the order itself.
+    var shuffle: Binding<Bool>? = nil
     var showHints: Binding<Bool>? = nil
     var hasExamples: Bool
     var cards: [VocabCard] = []
@@ -71,6 +73,18 @@ struct FlashcardPreviewOptionsView: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(maxWidth: 240)
+            }
+        }
+
+        if let shuffle {
+            VStack(spacing: 8) {
+                Toggle("Shuffle the cards", isOn: shuffle)
+                    .frame(maxWidth: 280)
+                Text("A different order every time you start. Off: the deck's own order.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 280)
             }
         }
 

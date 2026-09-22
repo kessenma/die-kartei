@@ -212,4 +212,6 @@ struct DeckSessionProgress: Codable {
     /// Position in the plain/quiz play order, so a resume lands on the same card.
     var cardPosition: Int?
     var showGermanFirst: Bool?
+    /// The plain/quiz play order itself (a shuffled deal), so a resume keeps the same sequence.
+    var cardOrder: [Int]?
 }

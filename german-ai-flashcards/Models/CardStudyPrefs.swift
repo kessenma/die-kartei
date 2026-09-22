@@ -17,6 +17,8 @@ enum CardStudyPrefs {
     static let articleQuizKey = "cards.articleQuiz"
     /// A card rated Again comes back a few cards later in the same session.
     static let repeatMissedKey = "cards.repeatMissed"
+    /// Deal the cards in a fresh random order every time a session starts (off: the deck's order).
+    static let shuffleKey = "cards.shuffle"
 
     static func germanFirst(_ defaults: UserDefaults = .standard) -> Bool {
         defaults.object(forKey: germanFirstKey) == nil ? true : defaults.bool(forKey: germanFirstKey)

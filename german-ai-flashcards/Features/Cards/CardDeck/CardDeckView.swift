@@ -41,6 +41,7 @@ struct CardDeckView: View {
     @AppStorage(CardStudyPrefs.articleQuizKey) var articleQuiz = true
     /// A card rated Again comes back a few cards later in the same session.
     @AppStorage(CardStudyPrefs.repeatMissedKey) var repeatMissed = true
+    @AppStorage(CardStudyPrefs.shuffleKey) var shuffleCards = false
     @State var hasStarted = false
     @State var isFlipped = false
     @State var showExamplesOnGermanSide = true

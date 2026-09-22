@@ -52,6 +52,11 @@
           "title": "Deck teilen · Share a deck",
           "detail": "Swipe a deck in the Library and send it to your other device by AirDrop, Messages, or Files. Your review progress goes with it, so a word you already know stays known.",
           "symbol": "square.and.arrow.up"
+        },
+        {
+          "title": "Mischen · Shuffle",
+          "detail": "A Shuffle switch on the flashcard setup screen deals the cards in a fresh order every time you start.",
+          "symbol": "shuffle"
         }
       ]
     },

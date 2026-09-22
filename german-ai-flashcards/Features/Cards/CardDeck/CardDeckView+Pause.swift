@@ -64,7 +64,8 @@ extension CardDeckView {
             sessionDueCount: isSRSMode ? sessionDueCount : nil,
             sessionLapses: sessionLapses.isEmpty ? nil : sessionLapses.sorted(),
             cardPosition: isSRSMode ? nil : cardPosition,
-            showGermanFirst: showGermanFirst
+            showGermanFirst: showGermanFirst,
+            cardOrder: (isSRSMode || cardOrder.count != cards.count) ? nil : cardOrder
         )
         deck.pausedProgressData = try? JSONEncoder().encode(progress)
         deck.pausedAt = .now
@@ -94,8 +95,11 @@ extension CardDeckView {
         sessionLapses = Set(progress.sessionLapses ?? [])
         requeueCounts = [:]
         if let direction = progress.showGermanFirst { showGermanFirst = direction }
-        // The play order isn't persisted, so a cross-launch resume lands back in deck order;
-        // within a session this recovers the position in whatever order is live.
+        // A saved deal comes back as it was; a session saved before the order was persisted
+        // resumes in deck order, at the position it had.
+        if let order = progress.cardOrder, order.count == cards.count, Set(order) == Set(cards.indices) {
+            cardOrder = order
+        }
         cardPosition = progress.cardPosition ?? playOrder.firstIndex(of: progress.cardIndex) ?? 0
         sessionStartTime = Date.now - TimeInterval(elapsedSeconds)
         savedProgress = nil

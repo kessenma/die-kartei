@@ -33,6 +33,7 @@ extension CardDeckView {
                     showGermanFirst: $showGermanFirst,
                     showExamplesOnGermanSide: $showExamplesOnGermanSide,
                     autoAdvance: $localAutoAdvance,
+                    shuffle: $shuffleCards,
                     hasExamples: hasExamples,
                     cards: cards
                 )
@@ -214,19 +215,21 @@ extension CardDeckView {
         }
     }
 
-    /// Starts a fresh session from the top: deck order for plain/quiz play, the due set for SRS.
-    /// Shared by the Start button and `autoStart` launches.
+    /// Starts a fresh session from the top: deck order for plain/quiz play, the due set for SRS,
+    /// either one dealt at random when Shuffle is on. Shared by the Start button and `autoStart`
+    /// launches.
     func beginSession() {
         sessionStartTime = .now
         elapsedSeconds = 0
-        cardOrder = Array(cards.indices)
+        cardOrder = shuffleCards ? Array(cards.indices).shuffled() : Array(cards.indices)
         cardPosition = 0
-        currentIndex = 0
+        currentIndex = cardOrder.first ?? 0
         if isAnkiMode {
             ankiDueIndices = savedCards.enumerated().compactMap { index, card in
                 guard let next = card.nextReviewDate else { return index }
                 return next <= .now ? index : nil
             }
+            if shuffleCards { ankiDueIndices.shuffle() }
             ankiDuePosition = 0
             if !ankiDueIndices.isEmpty {
                 currentIndex = ankiDueIndices[0]
@@ -236,6 +239,7 @@ extension CardDeckView {
             ankiDueIndices = savedCards.enumerated().compactMap { index, card in
                 LeitnerService.isDue(box: card.leitnerBox, sessionNumber: sessionNumber) ? index : nil
             }
+            if shuffleCards { ankiDueIndices.shuffle() }
             ankiDuePosition = 0
             if !ankiDueIndices.isEmpty {
                 currentIndex = ankiDueIndices[0]
