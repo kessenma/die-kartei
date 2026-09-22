@@ -4,6 +4,31 @@
       "version": "unreleased",
       "highlights": [
         {
+          "title": "Tastatur · German keyboard",
+          "detail": "A new keyboard you can use in Mail, Gmail, Messages, and anywhere else you write. Type your message in English, tap Auf Deutsch, and it becomes natural German without leaving the app.",
+          "symbol": "keyboard"
+        },
+        {
+          "title": "Korrigieren · Fix your German",
+          "detail": "Write in German on the new keyboard, select what you wrote, and tap Korrigieren. It fixes the grammar and keeps your own words.",
+          "symbol": "checkmark.bubble"
+        },
+        {
+          "title": "Sie oder du",
+          "detail": "Choose whether the keyboard writes formally or informally before it starts, so an email to your landlord doesn't read like a message to a friend.",
+          "symbol": "person.2"
+        },
+        {
+          "title": "Umlaute ohne Umweg · Umlauts made easy",
+          "detail": "Hold a, o, u, or s on the new keyboard to reach ä, ö, ü, and ß, with spell-check you can switch between German and English.",
+          "symbol": "textformat.abc"
+        },
+        {
+          "title": "Nothing leaves your phone",
+          "detail": "The keyboard runs on Apple Intelligence on your device and never asks for Full Access, so it has no way to send what you type anywhere.",
+          "symbol": "lock.shield"
+        },
+        {
           "title": "Deutschkurs · Class notes",
           "detail": "Taking a German class? Log what each session covered, keep the handouts, track the homework, and turn the new words into flashcards for that course.",
           "symbol": "graduationcap.fill"

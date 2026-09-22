@@ -1,5 +1,5 @@
 import SwiftUI
-import UIKit   // VoiceGuideSheet (below) uses UIImage / UIApplication
+import UIKit   // VoiceGuideSheet (below) uses UIApplication.openSettingsURLString
 
 /// Learning ▸ Flashcards settings: flashcard study style plus the game-mechanic toggles (haptics,
 /// card matching, der/die/das coaching). Voice, reminders, and sources each moved to their own
@@ -186,7 +186,6 @@ struct CardSettingsView: View {
 struct VoiceGuideSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
-    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
         NavigationStack {
@@ -217,32 +216,32 @@ struct VoiceGuideSheet: View {
                 .themedListRow()
 
                 Section {
-                    stepRow(1, "Open the Settings app and tap the search bar at the bottom.",
-                            image: "voice-guide-settings-search")
-                    stepRow(2, "Type “voice”, then tap Voices under Accessibility → Live Speech.",
-                            image: "voice-guide-voice-search")
+                    SettingsStepRow(1, "Open the Settings app and tap the search bar at the bottom.",
+                                    image: "voice-guide-settings-search")
+                    SettingsStepRow(2, "Type “voice”, then tap Voices under Accessibility → Live Speech.",
+                                    image: "voice-guide-voice-search")
                 } header: {
                     Text("Quickest: search Settings").themedSectionHeader()
                 }
                 .themedListRow()
 
                 Section {
-                    stepRow(1, "Or open Settings and tap Accessibility.",
-                            image: "voice-guide-accessibility")
-                    stepRow(2, "Under Speech, tap Live Speech.",
-                            image: "voice-guide-live-speech")
+                    SettingsStepRow(1, "Or open Settings and tap Accessibility.",
+                                    image: "voice-guide-accessibility")
+                    SettingsStepRow(2, "Under Speech, tap Live Speech.",
+                                    image: "voice-guide-live-speech")
                 } header: {
                     Text("Or browse to it").themedSectionHeader()
                 }
                 .themedListRow()
 
                 Section {
-                    stepRow(1, "Scroll to Preferred Voices and tap Add Preferred Voice…",
-                            image: "voice-guide-add-voice")
-                    stepRow(2, "Choose German. On an English iPhone it's listed as “German”, not “Deutsch”.",
-                            image: "voice-guide-german")
-                    stepRow(3, "Tap the cloud icon next to a voice to download its Enhanced or Premium version. Skip the Siri voices (crossed out) — apps can't use those.",
-                            image: "voice-guide-voice-picker")
+                    SettingsStepRow(1, "Scroll to Preferred Voices and tap Add Preferred Voice…",
+                                    image: "voice-guide-add-voice")
+                    SettingsStepRow(2, "Choose German. On an English iPhone it's listed as “German”, not “Deutsch”.",
+                                    image: "voice-guide-german")
+                    SettingsStepRow(3, "Tap the cloud icon next to a voice to download its Enhanced or Premium version. Skip the Siri voices (crossed out) — apps can't use those.",
+                                    image: "voice-guide-voice-picker")
                 } header: {
                     Text("Download a German voice").themedSectionHeader()
                 } footer: {
@@ -290,36 +289,4 @@ struct VoiceGuideSheet: View {
         }
     }
 
-    /// A numbered instruction with an optional screenshot beneath it. The image
-    /// only renders when its asset exists in the catalog, so steps stay safe if
-    /// a screenshot is ever renamed or removed.
-    @ViewBuilder
-    private func stepRow(_ number: Int, _ text: String, image: String? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top, spacing: 10) {
-                Text("\(number)")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white)
-                    .frame(width: 22, height: 22)
-                    .background(Circle().fill(Color.accentColor))
-                Text(text)
-                    .font(.callout)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            if let image, UIImage(named: image) != nil {
-                Image(image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(12)))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: appTheme.innerRadius(12))
-                            .stroke(Color(uiColor: .separator), lineWidth: 0.5)
-                    )
-                    .padding(.leading, 32)
-            }
-        }
-        .padding(.vertical, 4)
-    }
 }
