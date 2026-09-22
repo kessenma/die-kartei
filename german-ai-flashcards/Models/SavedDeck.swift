@@ -28,8 +28,18 @@ final class SavedDeck {
     /// Seconds the model took to generate this deck's cards (0 = unknown / pre-existing deck).
     var generationTimeSeconds: Double
 
+    /// The Deutschkurs course this deck belongs to (`ClassCourse.id`), if any: the course's own
+    /// word deck, a deck built from one of its handouts, or a Library deck the learner linked.
+    /// Defaulted so the column is an additive migration.
+    var courseIDRaw: String? = nil
+
     var wordTypeFilter: WordTypeFilter {
         WordTypeFilter(rawValue: wordTypeFilterRaw) ?? .all
+    }
+
+    var courseID: UUID? {
+        get { courseIDRaw.flatMap { UUID(uuidString: $0) } }
+        set { courseIDRaw = newValue?.uuidString }
     }
 
     init(
@@ -85,8 +95,9 @@ final class SavedDeck {
         case pastTense, pastTenseSRS
         case grammar
         /// Real saved-word content built from the phrase library / a conversation / a paper / a story
-        /// / a job posting the learner studied / a class the learner is taking.
-        case phrase, conversation, paper, story, job, classNotes
+        /// / a job posting the learner studied / a class the learner is taking / a document (a vocab
+        /// sheet, a handout) the learner turned into cards.
+        case phrase, conversation, paper, story, job, classNotes, document
     }
 
     var kind: Kind {
@@ -102,6 +113,7 @@ final class SavedDeck {
         case "story": .story
         case "job": .job
         case "class": .classNotes
+        case "document": .document
         default: .generated // "" or an MLXModel.rawValue
         }
     }
@@ -112,6 +124,7 @@ final class SavedDeck {
         switch kind {
         case .job: "briefcase.fill"
         case .classNotes: "graduationcap.fill"
+        case .document: "doc.plaintext"
         case .story: "book.pages"
         case .paper: "doc.text"
         case .conversation: "bubble.left.and.bubble.right"
@@ -125,7 +138,7 @@ final class SavedDeck {
     /// not standalone content) — fixing the empty-`grammar`-deck leak the old string filter missed.
     var isBrowsableContent: Bool {
         switch kind {
-        case .generated, .phrase, .conversation, .paper, .story, .job, .classNotes: true
+        case .generated, .phrase, .conversation, .paper, .story, .job, .classNotes, .document: true
         case .goethe, .goetheSRS, .pastTense, .pastTenseSRS, .grammar: false
         }
     }

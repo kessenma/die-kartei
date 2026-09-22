@@ -108,19 +108,25 @@ from `PhotoScanListView` to `Features/Shared/`; `PDFTextExtractor.pageImages(fro
   Flashcards. Phrase selection goes through the inspector (no phrase library anchor for a class).
 - **`ClassMaterialListView`**: every handout; Library ▸ Reading ▸ Class Handouts.
 
-## Deck
+## Decks
 
-`ClassDeckStore` (`Features/ClassNotes/`): one deck per course, `"Class: <name>"`,
-`generatorRaw = "class"`, found by `course.deckID`. `saveWord` (feeds
-`LearnerMemoryService.noteVocabEncounters(source: "class")` unless `storyFeedsCoach` is off),
-`saveWords(of: entry)` (complete words only, marks `addedToDeck`), `saveAllLookups(for: material)`.
+A course can hold any number of decks; `SavedDeck.courseIDRaw` links them (additive column).
+- **The course's own word deck** — `ClassDeckStore` (`Features/ClassNotes/`): `"Class: <name>"`,
+  `generatorRaw = "class"`, found by `course.deckID`, tagged with `courseID` on creation. `saveWord`
+  (feeds `LearnerMemoryService.noteVocabEncounters(source: "class")` unless `storyFeedsCoach` is
+  off), `saveWords(of: entry)` (complete words only, marks `addedToDeck`), `saveAllLookups(for:)`.
+- **Decks from documents** — a vocab sheet or a handout turned into a deck (`docs/DOCUMENT_DECKS.md`),
+  from the course page's *Add a flashcard deck* or a handout's *Make a deck from this handout*.
+- **Linked Library decks** — `CourseDeckLinkView`; swipe on the course page to unlink.
+The course page lists them all; the hub lists every course-linked deck with its course.
 
 ## Debug launch arguments (DEBUG)
 
 - `-classNotes.debugSeed 1` — two courses: "[debug] Deutsch A2 an der Uni" (dated, 6 weeks in,
   3 entries, one overdue and one open homework, a pasted worksheet) and "[debug] HR-Deutsch mit
   Anna" (tutor, goal, 2 entries, a "photo" handout with a drawn page as its original).
-- `-classNotes.debugOpen 1` — seeds if needed and opens the hub in a sheet.
+- `-classNotes.debugOpen <screen>` — seeds if needed and opens `hub` (or `1`), `course`, `entry`,
+  `editor`, `handout`, or `builder` (the flashcard builder over the real Hänsel vocab sheet) in a sheet.
 - `-classNotes.debugRemove 1` — removes both courses and their files.
 
 Only one presenting argument per launch (see `WhatsNewService`).

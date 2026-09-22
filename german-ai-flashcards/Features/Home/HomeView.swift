@@ -28,6 +28,9 @@ struct HomeView: View {
     @FocusState private var isTopicFieldFocused: Bool
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appTheme) private var theme
+    @Environment(ActivityRouter.self) private var router
+    /// "Flashcards from a document": the other way to a deck, next to the topic form.
+    @State private var showDocumentDeck = false
     @State private var topic = ""
     @State private var isOptionsExpanded = false
     @State private var showingTenseInfo: TenseInfo?
@@ -100,6 +103,8 @@ struct HomeView: View {
 
                 generateSection
 
+                documentSection
+
                 if let error = service.errorMessage {
                     Section {
                         Label(error, systemImage: "exclamationmark.triangle")
@@ -118,6 +123,13 @@ struct HomeView: View {
                 // Stays up through the picture phase — one operation, two phases.
                 if service.isGenerating || service.isDrawingImages {
                     generatingOverlay
+                }
+            }
+            .sheet(isPresented: $showDocumentDeck) {
+                DocumentDeckImportView(modelManager: service.modelManager, mlxService: service.mlxService) { deck in
+                    DispatchQueue.main.async {
+                        router.launch(.cardDeck(DeckStore(modelContext: modelContext).session(for: deck, style: service.modelManager.flashcardStyle)))
+                    }
                 }
             }
             .alert(
@@ -435,6 +447,24 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
             .padding(.top, 4)
         }
+    }
+
+    /// The other door: cards from a document instead of a topic. Needs no model loaded for a
+    /// two-column word list; the tutor only steps in to translate what the learner highlighted.
+    private var documentSection: some View {
+        Section {
+            Button {
+                isTopicFieldFocused = false
+                showDocumentDeck = true
+            } label: {
+                Label("Flashcards from a document", systemImage: "doc.plaintext")
+            }
+        } header: {
+            Text("Oder aus einem Dokument · Or from a document").themedSectionHeader()
+        } footer: {
+            Text("A teacher's word list is paired into cards automatically. In a story or a handout, highlight the phrases you want; each becomes one card.")
+        }
+        .themedListRow()
     }
 
     private func addToQueue() {

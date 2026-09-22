@@ -32,6 +32,11 @@
           "title": "Deutschkurs · Class notes",
           "detail": "Taking a German class? Log what each session covered, keep the handouts, track the homework, and turn the new words into flashcards for that course.",
           "symbol": "graduationcap.fill"
+        },
+        {
+          "title": "Karten aus dem Dokument · Flashcards from a document",
+          "detail": "Turn a teacher's word list into a deck in one go, or highlight phrases in any PDF, photo, or text and make each one a card. Decks can live on a course.",
+          "symbol": "doc.plaintext"
         }
       ]
     },

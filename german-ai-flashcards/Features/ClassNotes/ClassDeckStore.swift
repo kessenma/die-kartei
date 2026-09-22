@@ -19,6 +19,7 @@ enum ClassDeckStore {
         if let existing = deck(for: course, context: context) { return existing }
         let created = SavedDeck(topic: "Class: \(course.name)", wordCount: 0, includeExamples: false, includeGender: true)
         created.generatorRaw = generatorRaw
+        created.courseID = course.id
         context.insert(created)
         course.deckID = created.id
         return created

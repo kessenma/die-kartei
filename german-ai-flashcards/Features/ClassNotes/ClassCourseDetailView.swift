@@ -19,13 +19,19 @@ struct ClassCourseDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(ActivityRouter.self) private var router
 
+    @Query(sort: \SavedDeck.createdAt, order: .reverse) private var decks: [SavedDeck]
+
     @State private var showEditor = false
     @State private var showEntryEditor = false
     @State private var importTarget: ClassHandoutTarget?
     @State private var openedEntry: ClassEntry?
+    @State private var showAddDeckChoice = false
+    @State private var showDocumentDeck = false
+    @State private var showDeckLink = false
     @AppStorage("classNotes.lastCourseID") private var lastCourseID = ""
 
-    private var deck: SavedDeck? { ClassDeckStore.deck(for: course, context: modelContext) }
+    /// Every deck on this course: its own word deck, decks built from its handouts, linked ones.
+    private var courseDecks: [SavedDeck] { decks.filter { $0.courseID == course.id } }
 
     /// Entries grouped for the list: "Woche N" for a dated course, else the month.
     private var groups: [(label: String, entries: [ClassEntry])] {
@@ -50,6 +56,7 @@ struct ClassCourseDetailView: View {
         List {
             headerSection
             actionsSection
+            decksSection
             if !course.openHomework.isEmpty {
                 homeworkSection
             }
@@ -88,6 +95,19 @@ struct ClassCourseDetailView: View {
             ClassMaterialImportView(course: target.course, entry: target.entry) { _ in
                 DispatchQueue.main.async { openedEntry = target.entry }
             }
+        }
+        .sheet(isPresented: $showDocumentDeck) {
+            DocumentDeckImportView(modelManager: modelManager, mlxService: mlxService, course: course) { _ in }
+        }
+        .sheet(isPresented: $showDeckLink) {
+            CourseDeckLinkView(course: course)
+        }
+        .confirmationDialog("Add a flashcard deck", isPresented: $showAddDeckChoice, titleVisibility: .visible) {
+            Button("From a document (PDF, photo, text)") { showDocumentDeck = true }
+            Button("Link a deck from the Library") { showDeckLink = true }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("A vocab sheet is paired into cards for you; in a handout or story you highlight the phrases you want.")
         }
         .onAppear { lastCourseID = course.id.uuidString }
     }
@@ -153,13 +173,67 @@ struct ClassCourseDetailView: View {
                 ActivityRow("Add a handout", "PDF, photo, or pasted text, filed under today", "doc.text.viewfinder")
             }
             .buttonStyle(.plain)
-            if let deck, !deck.cards.isEmpty {
+            Button {
+                showAddDeckChoice = true
+            } label: {
+                ActivityRow("Add a flashcard deck", "From a vocab sheet or a handout, or one you already have", "rectangle.stack.badge.plus")
+            }
+            .buttonStyle(.plain)
+        }
+        .themedListRow()
+    }
+
+    private var decksSection: some View {
+        Section {
+            if courseDecks.isEmpty {
+                Text("No decks yet. Words you log and save build the course's own deck; a vocab sheet becomes a deck of its own.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(courseDecks) { deck in
                 Button {
                     router.launch(.cardDeck(DeckStore(modelContext: modelContext).session(for: deck, style: modelManager.flashcardStyle)))
                 } label: {
-                    ActivityRow("Study the course deck", "\(deck.cards.count) cards from this course", "rectangle.stack.fill")
+                    HStack(spacing: 12) {
+                        Image(systemName: deck.kindSymbol ?? "rectangle.stack.fill")
+                            .font(.title3)
+                            .foregroundStyle(.tint)
+                            .frame(width: 32, height: 32)
+                            .background(Color.accentColor.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(deck.topic.replacingOccurrences(of: "Class: ", with: ""))
+                                .font(.body)
+                                .lineLimit(1)
+                            Text(deck.cards.isEmpty ? "No cards yet" : "\(deck.cards.count) cards")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "play.circle.fill")
+                            .foregroundStyle(.tint)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .disabled(deck.cards.isEmpty)
+                .swipeActions(edge: .trailing) {
+                    if deck.id != course.deckID {
+                        Button {
+                            deck.courseID = nil
+                            try? modelContext.save()
+                        } label: {
+                            Label("Unlink", systemImage: "link.badge.minus")
+                        }
+                    }
+                }
+            }
+        } header: {
+            Text("Decks").themedSectionHeader()
+        } footer: {
+            if !courseDecks.isEmpty {
+                Text("Also under Library ▸ Decks. Swipe to take a deck off the course; the deck itself stays.")
+                    .font(.caption2)
             }
         }
         .themedListRow()

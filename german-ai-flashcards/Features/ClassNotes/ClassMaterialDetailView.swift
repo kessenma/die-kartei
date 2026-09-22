@@ -22,6 +22,7 @@ struct ClassMaterialDetailView: View {
 
     @State private var inspector: WordInspectorModel?
     @State private var showHelp = false
+    @State private var showDeckBuilder = false
     @State private var previewURL: URL?
     /// Briefly the count after "Add all to deck", to confirm.
     @State private var addedCount: Int?
@@ -76,6 +77,18 @@ struct ClassMaterialDetailView: View {
             }
         }
         .quickLookPreview($previewURL)
+        .sheet(isPresented: $showDeckBuilder) {
+            DocumentDeckImportView(
+                modelManager: modelManager,
+                mlxService: mlxService,
+                course: course,
+                prefilled: DocumentDeckDraft(title: material.title, text: material.text, sourceLabel: "Handout")
+            ) { deck in
+                DispatchQueue.main.async {
+                    router.launch(.cardDeck(DeckStore(modelContext: modelContext).session(for: deck, style: modelManager.flashcardStyle)))
+                }
+            }
+        }
         .onAppear(perform: setUp)
         .onDisappear {
             // A lookup still waiting on a model load has no one to report to now.
@@ -186,6 +199,11 @@ struct ClassMaterialDetailView: View {
     private var deckSection: some View {
         let deck = course.flatMap { ClassDeckStore.deck(for: $0, context: modelContext) }
         Section {
+            Button {
+                showDeckBuilder = true
+            } label: {
+                Label("Make a deck from this handout", systemImage: "rectangle.stack.badge.plus")
+            }
             if let deck, !deck.cards.isEmpty {
                 Button {
                     router.launch(.cardDeck(DeckStore(modelContext: modelContext).session(for: deck, style: modelManager.flashcardStyle)))
@@ -204,6 +222,9 @@ struct ClassMaterialDetailView: View {
             }
         } header: {
             Text("Flashcards").themedSectionHeader()
+        } footer: {
+            Text("A word list is paired into cards automatically; in a text you highlight the phrases you want, one card each.")
+                .font(.caption2)
         }
         .themedListRow()
     }

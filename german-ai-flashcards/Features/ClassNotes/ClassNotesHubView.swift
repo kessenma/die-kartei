@@ -35,7 +35,7 @@ struct ClassNotesHubView: View {
 
     private var courses: [ClassCourse] { allCourses.filter { !$0.isArchived } }
     private var archivedCourses: [ClassCourse] { allCourses.filter(\.isArchived) }
-    private var classDecks: [SavedDeck] { decks.filter { $0.kind == .classNotes } }
+    private var classDecks: [SavedDeck] { decks.filter { $0.courseID != nil && !$0.cards.isEmpty } }
     private var openHomework: [ClassEntry] {
         allEntries.filter(\.hasOpenHomework).sorted(by: ClassCourse.homeworkOrder)
     }
@@ -282,7 +282,7 @@ struct ClassNotesHubView: View {
                     router.launch(.cardDeck(deckStore.session(for: deck, style: modelManager.flashcardStyle)))
                 } label: {
                     HStack(spacing: 12) {
-                        Image(systemName: "rectangle.stack.fill")
+                        Image(systemName: deck.kindSymbol ?? "rectangle.stack.fill")
                             .font(.title3)
                             .foregroundStyle(.tint)
                             .frame(width: 32, height: 32)
@@ -292,7 +292,8 @@ struct ClassNotesHubView: View {
                             Text(deck.topic.replacingOccurrences(of: "Class: ", with: ""))
                                 .font(.body)
                                 .lineLimit(1)
-                            Text("\(deck.cards.count) cards")
+                            let owner = allCourses.first { $0.id == deck.courseID }?.name
+                            Text([owner, "\(deck.cards.count) cards"].compactMap { $0 }.joined(separator: " · "))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -308,7 +309,7 @@ struct ClassNotesHubView: View {
         } header: {
             Text("Kursdecks · Class decks").themedSectionHeader()
         } footer: {
-            Text("One deck per course, built from the words you log and the ones you save from handouts. Also under Library ▸ Decks.")
+            Text("Each course's own word deck, plus decks made from its vocab sheets and handouts. Also under Library ▸ Decks.")
                 .font(.caption2)
         }
         .themedListRow()

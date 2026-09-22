@@ -41,6 +41,10 @@ struct SelectableGermanText: UIViewRepresentable {
     var onTapWord: (String) -> Void
     /// A multi-word selection the learner asked to translate 1:1.
     var onTranslateSelection: (String) -> Void
+    /// The edit-menu label and symbol for `onTranslateSelection`. The flashcard builder reuses the
+    /// gesture as "Add as card", where "Translate" would promise the wrong thing.
+    var translateActionTitle: String = "Translate"
+    var translateActionSymbol: String = "character.book.closed"
     /// A multi-word selection the learner wants to save into their phrase library. When nil, the
     /// "Save phrase" edit-menu action is omitted (e.g. for the user's own messages).
     var onSavePhrase: ((String) -> Void)? = nil
@@ -215,8 +219,8 @@ struct SelectableGermanText: UIViewRepresentable {
             let selected = String(full[r]).trimmingCharacters(in: .whitespacesAndNewlines)
             guard !selected.isEmpty else { return nil }
 
-            let translate = UIAction(title: "Translate",
-                                     image: UIImage(systemName: "character.book.closed")) { [weak self] _ in
+            let translate = UIAction(title: parent.translateActionTitle,
+                                     image: UIImage(systemName: parent.translateActionSymbol)) { [weak self] _ in
                 self?.parent.onTranslateSelection(selected)
             }
             var actions: [UIMenuElement] = [translate]

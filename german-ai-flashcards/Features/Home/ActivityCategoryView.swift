@@ -141,6 +141,8 @@ struct ActivityCategoryView: View {
     @Environment(ActivityRouter.self) private var router
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appTheme) private var theme
+    /// Vocabulary ▸ Flashcards from a document.
+    @State private var showDocumentDeck = false
 
     private var deckStore: DeckStore { DeckStore(modelContext: modelContext) }
 
@@ -157,6 +159,14 @@ struct ActivityCategoryView: View {
         .navigationBarTitleDisplayMode(.inline)
         .contentMargins(.bottom, 120, for: .scrollContent)
         .themedListScreen()
+        .sheet(isPresented: $showDocumentDeck) {
+            DocumentDeckImportView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService) { deck in
+                // Let the sheet finish dismissing before the player covers the screen.
+                DispatchQueue.main.async {
+                    router.launch(.cardDeck(deckStore.session(for: deck, style: coordinator.modelManager.flashcardStyle)))
+                }
+            }
+        }
     }
 
     // MARK: Rows (moved verbatim from HomeHubView's old sections)
@@ -170,6 +180,12 @@ struct ActivityCategoryView: View {
             } label: {
                 ActivityRow("Generate Flashcards", "Create AI vocabulary on any topic", "sparkles")
             }
+            Button {
+                showDocumentDeck = true
+            } label: {
+                ActivityRow("Flashcards from a Document", "A vocab sheet, a handout, a story: paired or highlighted", "doc.plaintext")
+            }
+            .buttonStyle(.plain)
             NavigationLink {
                 WortschatzHubView(coordinator: coordinator)
             } label: {

@@ -163,6 +163,8 @@ enum ClassNotesDebugSeeder {
             return uni?.sortedEntries.first { $0.title.hasPrefix("Kapitel 4") }.map { .editor($0) }
         case "handout":
             return tutor?.materials.first.map { .handout($0) }
+        case "builder":
+            return .builder(DocumentDeckDraft(title: "Hänsel und Gretel Vokabelliste", text: vocabSheetText, sourceLabel: "PDF"))
         default:
             return nil
         }
@@ -208,6 +210,52 @@ enum ClassNotesDebugSeeder {
     Ich könnte mir gut vorstellen, in Ihrem Unternehmen zu arbeiten.
     """
 
+    /// A teacher's vocabulary sheet exactly as PDFKit extracts it (one row per line, the columns
+    /// separated by a space, wrapped cells, ✓ on the quiz words), for the flashcard builder.
+    static let vocabSheetText = """
+    Vokabelliste für “Hänsel und Gretel”
+    Deutsch English Study for
+    Quiz?
+    der Holzhacker lumberjack ✓
+    das Bübchen old expression: young boy
+    große Teuerung old expression: price increase
+    das tägliche Brot nicht mehr schaffen old expression: not being able to provide bread
+    anymore/ not being able to feed the family anymore
+    die Sorge/ die Sorgen (pl) worry ✓
+    ernähren to feed ✓
+    in aller Frühe in the early morning ✓
+    zerreißen to rip into pieces ✓
+    der Narr old expression: idiot/ naïve person
+    “Nun ist’s um uns geschehen” “Now we are finished/ now we will die”
+    gräme dich nicht old expression: do not worry
+    der Kieselstein/ die Kieselsteine (pl) pebble stone ✓
+    die Batzen old expression: pieces of gold
+    das Reisig bundle of sticks
+    anzünden/ zündete…an/ hat
+    angezündet to ignite ✓
+    sich ausruhen -> ruht euch aus ruhte
+    sich…. aus/ hat sich ausgeruht to rest -> get some rest ✓
+    der Vorwurf/ die Vorwürfe (pl) accusation ✓
+    trösten to comfort ✓
+    das Bröcklein crumble
+    “Da wollen wir uns dranmachen” “Let’s get to it!” (in context: let us eat the cabin)
+    herausschleichen/ schlich…heraus/ ist
+    herausgeschlichen to sneak out ✓
+    die Witterung scent
+    der Bissen the bite
+    einsperren/ sperrte...ein/ hat
+    eingesperrt to lock someone up ✓
+    bitterlich bitterly ✓
+    trüb dull ✓
+    jammern to moan ✓
+    “Spar nur dein Geplärre” “Safe your annoying crying”
+    erlöst redeemed/ saved ✓
+    der Käfig/ die Käfige (pl) cage ✓
+    der Edelstein/ die Edelsteine (pl) gemstone ✓
+    hinüberbringen/ brachte…hinüber/ hat
+    hinüber gebracht here: to transport (to help across the water) ✓
+    """
+
     // MARK: - Drawing
 
     /// A page-shaped stand-in for a photographed handout, so "Open the original" has a file.
@@ -240,6 +288,7 @@ enum ClassNotesDebugScreen: Identifiable {
     case entry(ClassEntry)
     case editor(ClassEntry)
     case handout(ClassMaterial)
+    case builder(DocumentDeckDraft)
 
     var id: String {
         switch self {
@@ -248,6 +297,7 @@ enum ClassNotesDebugScreen: Identifiable {
         case .entry(let entry): "entry-\(entry.id)"
         case .editor(let entry): "editor-\(entry.id)"
         case .handout(let material): "handout-\(material.id)"
+        case .builder(let draft): "builder-\(draft.id)"
         }
     }
 }
@@ -269,6 +319,8 @@ struct ClassNotesDebugScreenView: View {
             ClassEntryEditorView(entry: entry, course: entry.course)
         case .handout(let material):
             ClassMaterialDetailView(material: material, modelManager: modelManager, mlxService: mlxService)
+        case .builder(let draft):
+            DocumentDeckBuilderView(draft: draft, modelManager: modelManager, mlxService: mlxService) { _ in }
         }
     }
 }

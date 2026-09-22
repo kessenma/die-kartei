@@ -157,7 +157,7 @@ struct DeckStore {
         var savedCards: [SavedCard] = []
 
         switch deck.kind {
-        case .generated, .phrase, .conversation, .paper, .story, .job, .classNotes:
+        case .generated, .phrase, .conversation, .paper, .story, .job, .classNotes, .document:
             // These store their cards on the deck.
             cards = deck.vocabCards
             savedCards = deck.cards.sorted { $0.sortOrder < $1.sortOrder }
