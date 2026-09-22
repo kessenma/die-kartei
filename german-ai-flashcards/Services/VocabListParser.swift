@@ -50,6 +50,10 @@ nonisolated enum VocabListParser {
     /// The English column often opens with one of these.
     private static let englishOpeners = ["to ", "the ", "a ", "an ", "old expression", "here:", "lit.", "literally", "in the ", "on the ", "at the ", "someone", "something", "sth", "sb"]
     private static let germanArticles: Set<String> = ["der", "die", "das", "ein", "eine", "einen", "einem", "einer", "sich", "den", "dem"]
+    /// ", -e" / ", ¨-er" / ", -" at the end of a noun entry: how sheets note the plural.
+    static let pluralEndingPattern = #",\s*¨?-\s*¨?[a-zäöüß]{0,3}$"#
+    /// "(m)", "(f.)", "n." after a noun.
+    static let genderMarkerPattern = #"(\(|\s)[mfn]\.?\)?$"#
 
     static func parse(_ text: String) -> Result {
         var rows: [VocabListRow] = []
@@ -153,7 +157,10 @@ nonisolated enum VocabListParser {
         // 1. An explicit separator settles it.
         for separator in explicitSeparators {
             if let range = line.range(of: separator) {
+                // "der Lehrer, - teacher": the dash is the sheet's "plural unchanged" mark, not a
+                // separator, so the comma it leaves behind goes too.
                 let left = String(line[..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
+                    .trimmingCharacters(in: CharacterSet(charactersIn: ", "))
                 let right = String(line[range.upperBound...]).trimmingCharacters(in: .whitespaces)
                 if !left.isEmpty, !right.isEmpty { return Split(kind: .mixed, german: left, english: right) }
             }
@@ -216,9 +223,23 @@ nonisolated enum VocabListParser {
 
         let rightLower = right.lowercased()
         let leftLower = left.lowercased()
-        let leftFirst = leftLower.split(separator: " ").first.map(String.init) ?? ""
+        let leftTokens = leftLower.split(separator: " ").map(String.init)
+        let leftFirst = leftTokens.first ?? ""
         let leftHasArticle = germanArticles.contains(leftFirst)
         let leftHasUmlaut = left.unicodeScalars.contains { "äöüßÄÖÜ".unicodeScalars.contains($0) }
+        // "das" alone is never the German column, whatever the recognizer makes of the rest
+        // ("das Gift, -e poison": "Gift" reads as English, but the noun belongs on the left).
+        if !left.isEmpty, leftTokens.allSatisfy({ germanArticles.contains($0) }) { score -= 2.5 }
+        // A noun's plural ending ("das Gift, -e", "der Apfel, ¨-", "die Lehrerin, -nen") or a
+        // gender marker closes the German column; a gloss never opens with either.
+        if leftLower.range(of: pluralEndingPattern, options: .regularExpression) != nil
+            || leftLower.range(of: genderMarkerPattern, options: .regularExpression) != nil {
+            score += 1.0; strong = true
+        }
+        if rightLower.range(of: #"^[¨\-]"#, options: .regularExpression) != nil
+            || rightLower.range(of: #"^\(?[mfn]\.?\)?(\s|$)"#, options: .regularExpression) != nil {
+            score -= 1.5
+        }
         // A column split needs a German-looking left side; an English line that happens to contain
         // "to …" mid-way (a wrapped gloss) is not two columns.
         let leftPlausible = left.isEmpty || leftHasArticle || leftHasUmlaut || leftGerman >= 0.3
@@ -290,7 +311,21 @@ nonisolated enum VocabListParser {
 nonisolated enum VocabForms {
     static func split(_ german: String) -> [String] {
         var out: [String] = []
-        for part in german.components(separatedBy: CharacterSet(charactersIn: "/,;")) {
+        var remaining = german
+        // "das Gift, -e" → the singular and the plural it spells out ("Gifte"); "¨" marks an umlaut.
+        if let ending = remaining.range(of: VocabListParser.pluralEndingPattern, options: .regularExpression) {
+            let singular = String(remaining[..<ending.lowerBound]).trimmingCharacters(in: .whitespaces)
+            let suffix = String(remaining[ending]).lowercased()
+            remaining = singular
+            let cleanSingular = singular.replacingOccurrences(of: VocabListParser.genderMarkerPattern, with: "", options: .regularExpression)
+                .trimmingCharacters(in: .whitespaces)
+            if let noun = cleanSingular.split(separator: " ").last.map(String.init), noun.count >= 2 {
+                var plural = suffix.contains("¨") ? umlauted(noun) : noun
+                plural += suffix.filter { $0.isLetter }
+                if plural.lowercased() != noun.lowercased() { out.append(plural) }
+            }
+        }
+        for part in remaining.components(separatedBy: CharacterSet(charactersIn: "/,;")) {
             for alternative in part.components(separatedBy: "->") {
                 var form = alternative
                     .replacingOccurrences(of: #"\((pl|pl\.|sg|Pl\.)\)"#, with: "", options: .regularExpression)
@@ -301,10 +336,25 @@ nonisolated enum VocabForms {
                    form.distance(from: form.startIndex, to: dots.lowerBound) > 2 {
                     form = String(form[..<dots.lowerBound]).trimmingCharacters(in: .whitespaces)
                 }
+                form = form.replacingOccurrences(of: VocabListParser.genderMarkerPattern, with: "", options: .regularExpression)
                 form = form.trimmingCharacters(in: .punctuationCharacters).trimmingCharacters(in: .whitespaces)
                 if form.count >= 2 { out.append(form) }
             }
         }
         return out.isEmpty ? [german] : out
+    }
+
+    /// The umlaut a plural marks: the last a/o/u of the stem, "Apfel" → "Äpfel", "Haus" → "Häus"
+    /// (an "au" becomes "äu"), "Tochter" → "Töchter".
+    static func umlauted(_ noun: String) -> String {
+        var chars = Array(noun)
+        guard let index = chars.lastIndex(where: { "aouAOU".contains($0) }) else { return noun }
+        let map: [Character: Character] = ["a": "ä", "o": "ö", "u": "ü", "A": "Ä", "O": "Ö", "U": "Ü"]
+        if "uU".contains(chars[index]), index > 0, "aA".contains(chars[index - 1]) {
+            chars[index - 1] = chars[index - 1] == "A" ? "Ä" : "ä"
+            return String(chars)
+        }
+        if let replacement = map[chars[index]] { chars[index] = replacement }
+        return String(chars)
     }
 }

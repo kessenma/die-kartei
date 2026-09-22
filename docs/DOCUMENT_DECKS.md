@@ -21,7 +21,11 @@ chooses.
   then two quoted segments (an idiom and its rendering); else every split point between words is
   scored: Apple's language recognizer on each side plus cues (an article, an umlaut, `(pl)` on the
   left; `to …`, `the …`, `old expression:`, `here:` on the right; a split whose left side does not
-  look German is penalized, so a wrapped English line is not mistaken for a row). Lines read as
+  look German is penalized, so a wrapped English line is not mistaken for a row; a left side that is
+  only an article is vetoed, since "Gift" reads as English and "das Gift, -e poison" must not
+  split after "das"; a plural ending ", -e" / ", ¨-er" / ", -" or a gender marker "(f)" closes
+  the German column). `VocabForms.split` spells the plural out ("Gifte", "Häuser", "Äpfel") so it
+  is found in a text. Lines read as
   German-only wait for the line that carries their English; English-only lines extend the row
   above. `Result.listConfidence` (rows per content line) tells a list from prose, so the builder
   opens a story in text mode. Guessed splits are flagged (`confident == false`).
