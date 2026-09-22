@@ -52,13 +52,15 @@ struct TransformBar: View {
                     .disabled(writer.isWorking)
                 }
 
-                Button(action: onDiagnostics) {
-                    Image(systemName: "stethoscope")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 28, height: 34)
+                if KeyboardDiagnostics.isAvailable {
+                    Button(action: onDiagnostics) {
+                        Image(systemName: "stethoscope")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 28, height: 34)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
             .opacity(writer.isWorking ? 0.5 : 1)
             .overlay {

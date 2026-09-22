@@ -39,3 +39,25 @@ enum ExtensionMemory {
         String(format: "footprint %.1f MB · available %.1f MB", footprintMB, availableMB)
     }
 }
+
+/// Whether the probe grid is reachable at all.
+///
+/// Mirrors the app's `ScreenshotSeeding.isAvailable`: DEBUG builds always, TestFlight betas by
+/// their sandbox receipt, and never in an App Store build. The probes print raw memory figures and
+/// can type a diagnostic log into whatever the person is writing, which is developer furniture and
+/// has no business in a keyboard someone installed to write German email with.
+enum KeyboardDiagnostics {
+    static var isAvailable: Bool {
+        #if DEBUG
+        return true
+        #else
+        // `Bundle.main` here is the .appex. The receipt belongs to the containing app, which sits
+        // two levels up (Die Kartei.app/PlugIns/Die Kartei Keyboard.appex).
+        let app = Bundle.main.bundleURL
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let sandbox = app.appendingPathComponent("_MASReceipt/sandboxReceipt")
+        return FileManager.default.fileExists(atPath: sandbox.path)
+        #endif
+    }
+}
