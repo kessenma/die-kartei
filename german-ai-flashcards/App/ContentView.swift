@@ -398,6 +398,12 @@ struct ContentView: View {
             if UserDefaults.standard.bool(forKey: "screenshots.debugRestore") {
                 print("[screenshots] restored: \(ScreenshotDataSeeder.restore(in: modelContext))")
             }
+            // `-deckTransfer.debugVerify 1` round-trips a deck through a `.kartei` file in one
+            // launch. Two simulators can't AirDrop to each other, so this is the only way to see
+            // the export/import pair work without two physical devices.
+            if UserDefaults.standard.bool(forKey: "deckTransfer.debugVerify") {
+                print(DeckImporter.runDebugVerification(in: modelContext))
+            }
             // The Wortschatz box on a simulator that can't tap. `-wortschatz.debugLegacyDecks 1`
             // recreates the three old per-level SRS decks and clears the merge flag, so the merge
             // below has input; `-wortschatz.debugMerge 1` re-runs the merge now;

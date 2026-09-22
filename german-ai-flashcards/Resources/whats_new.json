@@ -42,6 +42,11 @@
           "title": "Vokabeln im Text · Vocab in the story",
           "detail": "Read a class story with its vocab list: every listed word is underlined in the text, a tap shows the teacher's English instantly, and you can print the English inline.",
           "symbol": "text.book.closed"
+        },
+        {
+          "title": "Deck teilen · Share a deck",
+          "detail": "Swipe a deck in the Library and send it to your other device by AirDrop, Messages, or Files. Your review progress goes with it, so a word you already know stays known.",
+          "symbol": "square.and.arrow.up"
         }
       ]
     },
