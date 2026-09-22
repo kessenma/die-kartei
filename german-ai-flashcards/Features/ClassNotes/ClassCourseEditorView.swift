@@ -27,6 +27,8 @@ struct ClassCourseEditorView: View {
     @State private var name = ""
     @State private var kind: ClassCourse.Kind = .course
     @State private var teacher = ""
+    @State private var teacherEmail = ""
+    @State private var courseURL = ""
     @State private var goal = ""
     @State private var levelRaw = ""
     @State private var hasDates = false
@@ -37,7 +39,7 @@ struct ClassCourseEditorView: View {
     @State private var loaded = false
     @FocusState private var focused: Field?
 
-    private enum Field: Hashable { case name, teacher, goal }
+    private enum Field: Hashable { case name, teacher, email, link, goal }
 
     private var trimmedName: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
 
@@ -123,6 +125,22 @@ struct ClassCourseEditorView: View {
             TextField("Teacher or tutor", text: $teacher)
                 .focused($focused, equals: .teacher)
                 .submitLabel(.next)
+                .onSubmit { focused = .email }
+            TextField("Teacher's email", text: $teacherEmail)
+                .focused($focused, equals: .email)
+                .keyboardType(.emailAddress)
+                .textContentType(.emailAddress)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.next)
+                .onSubmit { focused = .link }
+            TextField("Course page (Moodle, Canvas…)", text: $courseURL)
+                .focused($focused, equals: .link)
+                .keyboardType(.URL)
+                .textContentType(.URL)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.next)
                 .onSubmit { focused = .goal }
             TextField("Goal", text: $goal, axis: .vertical)
                 .focused($focused, equals: .goal)
@@ -130,7 +148,7 @@ struct ClassCourseEditorView: View {
         } header: {
             Text("Details").themedSectionHeader()
         } footer: {
-            Text("The goal is what the course is for, in your words: \"pass the B1 exam\", \"HR German for job applications\". Optional, and the tutors will read it later.")
+            Text("All optional. The email and the course page become one-tap links on the course's page. The goal is what the course is for, in your words: \"pass the B1 exam\", \"HR German for job applications\"; the tutors will read it later.")
                 .font(.caption2)
         }
         .themedListRow()
@@ -197,6 +215,8 @@ struct ClassCourseEditorView: View {
             name = course.name
             kind = course.kind
             teacher = course.teacher ?? ""
+            teacherEmail = course.teacherEmail ?? ""
+            courseURL = course.courseURL ?? ""
             goal = course.goal ?? ""
             levelRaw = course.levelRaw ?? ""
             hasDates = course.startDate != nil
@@ -223,6 +243,8 @@ struct ClassCourseEditorView: View {
         target.name = trimmedName
         target.kindRaw = kind.rawValue
         target.teacher = optional(teacher)
+        target.teacherEmail = optional(teacherEmail)
+        target.courseURL = optional(courseURL, cap: 2_000)
         target.goal = optional(goal)
         target.levelRaw = levelRaw.isEmpty ? nil : levelRaw
         target.startDate = hasDates ? Calendar.current.startOfDay(for: startDate) : nil
@@ -242,9 +264,9 @@ struct ClassCourseEditorView: View {
         onDeleted()
     }
 
-    private func optional(_ text: String) -> String? {
+    private func optional(_ text: String, cap: Int = 120) -> String? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : String(trimmed.prefix(120))
+        return trimmed.isEmpty ? nil : String(trimmed.prefix(cap))
     }
 }
 

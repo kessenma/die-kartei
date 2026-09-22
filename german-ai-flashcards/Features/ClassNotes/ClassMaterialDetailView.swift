@@ -164,6 +164,17 @@ struct ClassMaterialDetailView: View {
                     Label("Open the original", systemImage: material.sourceKind == .pdf ? "doc.richtext" : "photo")
                 }
             }
+            NavigationLink {
+                HandoutTranslationReaderView(material: material, modelManager: modelManager, mlxService: mlxService)
+            } label: {
+                let translation = material.translation
+                Label(
+                    translation?.isComplete == true
+                        ? "Read in English or side by side"
+                        : (translation?.translatedCount ?? 0) > 0 ? "Continue the English translation" : "Translate the whole text",
+                    systemImage: "text.book.closed"
+                )
+            }
         }
         .themedListRow()
     }

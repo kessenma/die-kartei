@@ -42,6 +42,11 @@
           "title": "Vokabeln im Text · Vocab in the story",
           "detail": "Read a class story with its vocab list: every listed word is underlined in the text, a tap shows the teacher's English instantly, and you can print the English inline.",
           "symbol": "text.book.closed"
+        },
+        {
+          "title": "Nebeneinander lesen · Read side by side",
+          "detail": "Translate a class handout on your phone and read it in German, in English, or both at once: side by side on an iPad, stacked on a phone, scrolling together sentence by sentence.",
+          "symbol": "rectangle.split.2x1"
         }
       ]
     },

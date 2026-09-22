@@ -155,6 +155,16 @@ struct ClassCourseDetailView: View {
                 }
             }
             .padding(.vertical, 4)
+            if let url = course.pageURL {
+                Link(destination: url) {
+                    Label("Open the course page", systemImage: "link")
+                }
+            }
+            if let mail = course.teacherMailURL {
+                Link(destination: mail) {
+                    Label("Write to \(course.teacher ?? "the teacher")", systemImage: "envelope")
+                }
+            }
         }
         .themedListRow()
     }
@@ -290,7 +300,10 @@ struct ClassCourseDetailView: View {
                 NavigationLink {
                     ClassMaterialDetailView(material: material, modelManager: modelManager, mlxService: mlxService)
                 } label: {
-                    ClassMaterialRow(material: material)
+                    ClassMaterialRow(
+                        material: material,
+                        pairedDeckName: decks.first { $0.id == material.glossaryDeckID }?.topic.replacingOccurrences(of: "Class: ", with: "")
+                    )
                 }
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) {
@@ -312,6 +325,8 @@ struct ClassCourseDetailView: View {
 struct ClassMaterialRow: View {
     let material: ClassMaterial
     var showsEntry = false
+    /// The vocab deck this handout is read with, shown as a line under the title.
+    var pairedDeckName: String? = nil
 
     @Environment(\.appTheme) private var appTheme
 
@@ -327,6 +342,12 @@ struct ClassMaterialRow: View {
                 Text(material.title)
                     .font(.body)
                     .lineLimit(1)
+                if let pairedDeckName {
+                    Label(pairedDeckName, systemImage: "rectangle.stack")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
                 HStack(spacing: 8) {
                     if showsEntry, let entry = material.entry {
                         if let course = entry.course { Text(course.name) }

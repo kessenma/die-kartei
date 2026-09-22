@@ -2,6 +2,7 @@
 import Foundation
 import SwiftData
 import SwiftUI
+import NaturalLanguage
 import UIKit
 
 /// Two courses with entries and handouts, made without typing. The Deutschkurs screens sit two
@@ -38,6 +39,8 @@ enum ClassNotesDebugSeeder {
         // A semester course, six weeks in, with three logged classes and one open homework.
         let uni = ClassCourse(name: uniMarker, kind: .course)
         uni.teacher = "Frau Müller"
+        uni.teacherEmail = "mueller@example.edu"
+        uni.courseURL = "moodle.example.edu/course/view.php?id=1234"
         uni.levelRaw = CEFRLevel.a2.rawValue
         uni.startDate = calendar.date(byAdding: .weekOfYear, value: -6, to: today)
         uni.endDate = calendar.date(byAdding: .weekOfYear, value: 14, to: today)
@@ -108,6 +111,15 @@ enum ClassNotesDebugSeeder {
         storyEntry.course = uni
         let story = ClassMaterial(title: storyTitle, text: storyText, sourceKind: .pdf)
         story.glossaryDeckID = sheetDeck.id
+        // The English, paragraph by paragraph, spread over the German sentences the same way a
+        // block translation is (`HandoutTranslation.align`), so the side-by-side reader has data.
+        var translation = HandoutTranslation.skeleton(for: storyText)
+        for index in translation.paragraphs.indices where index < storyEnglish.count {
+            let sentences = HandoutTranslation.splitSentences(storyEnglish[index], language: .english)
+            translation.paragraphs[index].english = HandoutTranslation.align(sentences, toCount: translation.paragraphs[index].german.count)
+        }
+        story.setTranslation(translation)
+        story.translationModelRaw = "debug"
         context.insert(story)
         story.entry = storyEntry
 
@@ -189,6 +201,8 @@ enum ClassNotesDebugSeeder {
             return tutor?.materials.first.map { .handout($0) }
         case "story":
             return uni?.materials.first { $0.title == storyTitle }.map { .handout($0) }
+        case "translation":
+            return uni?.materials.first { $0.title == storyTitle }.map { .translation($0) }
         case "builder":
             return .builder(DocumentDeckDraft(title: "Hänsel und Gretel Vokabelliste", text: vocabSheetText, sourceLabel: "PDF"))
         default:
@@ -251,6 +265,15 @@ enum ClassNotesDebugSeeder {
 
     Als sie mitten in den Wald gekommen waren, sprach der Vater: "Nun sammelt Holz, ihr Kinder, ich will ein Feuer anmachen, damit ihr nicht friert." Hänsel und Gretel trugen Reisig zusammen, einen kleinen Berg hoch. Das Reisig ward angezündet, und als die Flamme recht hoch brannte, sagte die Frau: "Nun legt euch ans Feuer, ihr Kinder, und ruht euch aus, wir gehen in den Wald und hauen Holz. Wenn wir fertig sind, kommen wir wieder und holen euch ab." Hänsel und Gretel saßen um das Feuer, und als der Mittag kam, aß jedes sein Stücklein Brot. Und als sie so lange gesessen hatten, fielen ihnen die Augen vor Müdigkeit zu, und sie schliefen fest ein. Als sie endlich erwachten, war es schon finstere Nacht. Gretel fing an zu weinen, aber Hänsel tröstete sie: "Wart nur ein Weilchen, bis der Mond aufgegangen ist, dann wollen wir den Weg schon finden."
     """
+
+    /// The opening in English, one string per German paragraph.
+    static let storyEnglish = [
+        "Hansel and Gretel\n",
+        "Near a great forest there lived a poor woodcutter with his wife and his two children; the little boy was called Hansel and the girl Gretel. He had little to bite and to break, and once, when a great famine came over the land, he could no longer provide the daily bread. As he lay in bed one evening turning things over and tossing with worry, he sighed and said to his wife: \"What is to become of us? How can we feed our poor children when we have nothing left for ourselves?\" \"I'll tell you what, husband,\" answered the wife, \"tomorrow at first light we will take the children out into the forest, where it is thickest. There we will light them a fire and give each of them one more piece of bread, then we go to our work and leave them alone. They will not find the way home again, and we are rid of them.\" \"No, wife,\" said the man, \"I will not do that; how could I bring myself to leave my children alone in the forest! The wild animals would soon come and tear them to pieces.\" \"Oh, you fool,\" she said, \"then all four of us must starve to death, you may as well plane the boards for the coffins,\" and she gave him no peace until he agreed. \"But I do feel sorry for the poor children,\" said the man.",
+        "The two children had not been able to fall asleep for hunger either, and had heard what the stepmother said to the father. Gretel wept bitter tears and said to Hansel: \"Now it is all over for us.\" \"Hush, Gretel,\" said Hansel, \"don't grieve, I will find a way to help us.\" And when the old people had fallen asleep, he got up, put on his little coat, opened the lower half of the door and slipped outside. The moon shone brightly, and the white pebbles that lay in front of the house glittered like so many silver coins. Hansel bent down and stuffed as many into his little coat pocket as would fit. Then he went back and said to Gretel: \"Take heart, dear little sister, and sleep in peace, God will not forsake us,\" and lay down again in his bed.",
+        "When day broke, before the sun had even risen, the wife came and woke the two children: \"Get up, you lazybones, we are going into the forest to fetch wood.\" Then she gave each of them a little piece of bread and said: \"There is something for your midday meal, but don't eat it before then, you will get nothing more.\" Gretel took the bread under her apron, because Hansel had the stones in his pocket. Then they all set out together on the way to the forest.",
+        "When they had come to the middle of the forest, the father said: \"Now gather wood, children, I will make a fire so that you don't freeze.\" Hansel and Gretel gathered brushwood, a small mountain of it. The brushwood was lit, and when the flames were burning high, the wife said: \"Now lie down by the fire, children, and rest, we are going into the forest to cut wood. When we are done, we will come back and fetch you.\" Hansel and Gretel sat by the fire, and when midday came, each ate their little piece of bread. And when they had sat there so long, their eyes closed with tiredness and they fell fast asleep. When at last they woke, it was already dark night. Gretel began to cry, but Hansel comforted her: \"Just wait a little while until the moon has risen, then we will surely find the way.\""
+    ]
 
     /// A teacher's vocabulary sheet exactly as PDFKit extracts it (one row per line, the columns
     /// separated by a space, wrapped cells, ✓ on the quiz words), for the flashcard builder.
@@ -331,6 +354,7 @@ enum ClassNotesDebugScreen: Identifiable {
     case editor(ClassEntry)
     case handout(ClassMaterial)
     case builder(DocumentDeckDraft)
+    case translation(ClassMaterial)
 
     var id: String {
         switch self {
@@ -340,6 +364,7 @@ enum ClassNotesDebugScreen: Identifiable {
         case .editor(let entry): "editor-\(entry.id)"
         case .handout(let material): "handout-\(material.id)"
         case .builder(let draft): "builder-\(draft.id)"
+        case .translation(let material): "translation-\(material.id)"
         }
     }
 }
@@ -363,6 +388,8 @@ struct ClassNotesDebugScreenView: View {
             ClassMaterialDetailView(material: material, modelManager: modelManager, mlxService: mlxService)
         case .builder(let draft):
             DocumentDeckBuilderView(draft: draft, modelManager: modelManager, mlxService: mlxService) { _ in }
+        case .translation(let material):
+            HandoutTranslationReaderView(material: material, modelManager: modelManager, mlxService: mlxService)
         }
     }
 }

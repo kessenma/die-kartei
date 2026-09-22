@@ -34,7 +34,7 @@ side only, as `SavedDeck.cards` does.
 | field | meaning |
 |---|---|
 | `name`, `kindRaw` | the course, and `Kind`: `course` (group) / `tutor` / `selfStudy` |
-| `teacher?`, `goal?` | who teaches it; what it is for, in the learner's words |
+| `teacher?`, `teacherEmail?`, `courseURL?`, `goal?` | who teaches it (+ a `mailto:` link), the course page online (Moodle, Canvas; `pageURL` assumes https), what it is for |
 | `levelRaw?` | `CEFRLevel` the course is pitched at |
 | `startDate?`, `endDate?` | a semester has dates; `weekNumber(for:)` and `currentWeekLabel` ("Woche 7 von 20") derive from them |
 | `isArchived` | finished: off the hub's front page, notes and deck kept |
@@ -107,7 +107,21 @@ from `PhotoScanListView` to `Features/Shared/`; `PDFTextExtractor.pageImages(fro
   `ClassWordInspector`), Unbekannte Wörter (speak, swipe to remove, Add all to the deck),
   Flashcards (+ *Make a deck from this handout*). **Vokabeln · Vocab**: the deck this text is read
   with, its words dotted in the text and answered without the model, English inline on request
-  (`docs/DOCUMENT_DECKS.md`). Phrase selection goes through the inspector.
+  (`docs/DOCUMENT_DECKS.md`). *Translate the whole text* / *Read in English or side by side* →
+  `HandoutTranslationReaderView`. Phrase selection goes through the inspector.
+- **`HandoutTranslationReaderView`**: the handout in Deutsch / Beide / English (segmented,
+  `handout.translation.mode`). Beide is side by side when `horizontalSizeClass == .regular`
+  (iPad), English above German otherwise. Both panes bind one `topID` through
+  `scrollPosition(id:anchor: .top)` over a `scrollTargetLayout`, so scrolling either moves the
+  other to the same sentence; a tap on a sentence sets it; the ⋯ menu's *Highlight the top
+  sentence* (`handout.translation.highlightTop`) tints that sentence in both panes. Without a
+  translation the screen offers a tutor picker (downloaded models) and *Translate N sentences*
+  with progress and Stop; a stopped run resumes with *Continue translating*.
+  `HandoutTranslationService` sends each paragraph as numbered sentences (batches of 8) and
+  parses numbered lines; a batch whose numbering breaks is translated as a block, split with
+  `NLTokenizer`, and spread over the German sentences (`HandoutTranslation.align`). Saved on
+  `ClassMaterial.translationData` (`HandoutTranslation`: paragraphs of parallel sentence arrays)
+  after every paragraph, with `translationModelRaw`.
 - **`ClassMaterialListView`**: every handout; Library ▸ Reading ▸ Class Handouts.
 
 ## Decks
@@ -128,8 +142,9 @@ The course page lists them all; the hub lists every course-linked deck with its 
   3 entries, one overdue and one open homework, a pasted worksheet) and "[debug] HR-Deutsch mit
   Anna" (tutor, goal, 2 entries, a "photo" handout with a drawn page as its original).
 - `-classNotes.debugOpen <screen>` — seeds if needed and opens `hub` (or `1`), `course`, `entry`,
-  `editor`, `handout`, `story` (the Grimm story with its vocab deck linked), or `builder` (the
-  flashcard builder over the real Hänsel vocab sheet) in a sheet.
+  `editor`, `handout`, `story` (the Grimm story with its vocab deck linked), `translation` (that
+  story's side-by-side reader; the opening is seeded in English), or `builder` (the flashcard
+  builder over the real Hänsel vocab sheet) in a sheet.
 - `-classNotes.debugRemove 1` — removes both courses and their files.
 
 Only one presenting argument per launch (see `WhatsNewService`).

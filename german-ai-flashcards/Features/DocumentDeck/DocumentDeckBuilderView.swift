@@ -58,22 +58,10 @@ struct DocumentDeckBuilderView: View {
     private var courses: [ClassCourse] { allCourses.filter { !$0.isArchived } }
     private var selectedCourse: ClassCourse? { courses.first { $0.id == courseID } }
 
-    /// Tutors already on this device that it can run, best first: what the picker offers. Never a
-    /// download for a deck.
-    private var downloadedTutors: [MLXModel] {
-        let rank: (MLXModel) -> Int = { MLXModel.germanTutors.firstIndex(of: $0) ?? MLXModel.germanTutors.count }
-        return MLXModel.allCases
-            .filter { $0.isDownloaded && DeviceCapability.mayRun($0) }
-            .sorted { rank($0) < rank($1) }
-    }
-
-    /// The tutor that pairs and translates: the learner's document tutor when it is on the device,
-    /// else the best one that is.
-    private var tutor: MLXModel {
-        let picked = modelManager.selectedPaperModel
-        if picked.isDownloaded, DeviceCapability.mayRun(picked) { return picked }
-        return downloadedTutors.first ?? picked
-    }
+    /// Tutors already on this device, best first (`DocumentTutorChoice`); the one that pairs and
+    /// translates here is the learner's document tutor when it is among them.
+    private var downloadedTutors: [MLXModel] { DocumentTutorChoice.downloaded }
+    private var tutor: MLXModel { DocumentTutorChoice.current(modelManager) }
     private var tutorOnDevice: Bool { tutor.isDownloaded }
 
     private var chosenRows: [VocabListRow] {
@@ -151,16 +139,7 @@ struct DocumentDeckBuilderView: View {
                     }
                 }
             }
-            if !downloadedTutors.isEmpty {
-                Picker("Tutor", selection: Binding(
-                    get: { tutor },
-                    set: { modelManager.selectedPaperModel = $0 }
-                )) {
-                    ForEach(downloadedTutors) { model in
-                        Text(model.rawValue).tag(model)
-                    }
-                }
-            }
+            DocumentTutorPicker(modelManager: modelManager)
         } header: {
             Text("Deck").themedSectionHeader()
         } footer: {

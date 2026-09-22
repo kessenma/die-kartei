@@ -27,6 +27,10 @@ final class ClassCourse {
     var kindRaw: String = "course"
     /// The teacher or tutor, as the learner wants them named.
     var teacher: String? = nil
+    /// The teacher's email, for the one-tap "write to" on the course page.
+    var teacherEmail: String? = nil
+    /// The course's page online (Moodle, Canvas, the tutor's booking site), as typed.
+    var courseURL: String? = nil
     /// What the course is for, in the learner's words ("HR German for job applications").
     var goal: String? = nil
     /// Raw `CEFRLevel` the course is pitched at, when the learner knows it.
@@ -105,6 +109,19 @@ final class ClassCourse {
     }
 
     var isDated: Bool { startDate != nil }
+
+    /// The course page as a link, "https://" assumed when the learner typed none.
+    var pageURL: URL? {
+        guard let raw = trimmed(courseURL) else { return nil }
+        let withScheme = raw.contains("://") ? raw : "https://" + raw
+        return URL(string: withScheme)
+    }
+
+    /// "mailto:" for the teacher, when an email is on file.
+    var teacherMailURL: URL? {
+        guard let email = trimmed(teacherEmail), email.contains("@") else { return nil }
+        return URL(string: "mailto:" + email)
+    }
 
     /// The 1-based week of the course a date falls in, counted from the start of the week that
     /// holds `startDate`. Nil for an undated course, or for a date before it began.

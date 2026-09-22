@@ -31,6 +31,10 @@ final class ClassMaterial {
     /// The vocab deck (`SavedDeck.id`) whose words are marked in this text and answer a tap
     /// without the model: the teacher's list for this story. Nil until picked (or defaulted).
     var glossaryDeckIDRaw: String? = nil
+    /// Encoded `HandoutTranslation`: the English, sentence for sentence, once made.
+    var translationData: Data? = nil
+    /// The tutor that wrote the translation.
+    var translationModelRaw: String? = nil
 
     var entry: ClassEntry? = nil
 
@@ -70,6 +74,16 @@ final class ClassMaterial {
     var glossaryDeckID: UUID? {
         get { glossaryDeckIDRaw.flatMap { UUID(uuidString: $0) } }
         set { glossaryDeckIDRaw = newValue?.uuidString }
+    }
+
+    var translation: HandoutTranslation? {
+        guard let translationData else { return nil }
+        return try? JSONDecoder().decode(HandoutTranslation.self, from: translationData)
+    }
+
+    func setTranslation(_ translation: HandoutTranslation?) {
+        translationData = translation.flatMap { try? JSONEncoder().encode($0) }
+        if translation == nil { translationModelRaw = nil }
     }
 
     /// The original is on disk (a failed write can leave a name behind with no file).
