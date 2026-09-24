@@ -85,20 +85,18 @@ struct german_ai_flashcardsApp: App {
             JobPosting.self,
             ClassCourse.self, ClassEntry.self, ClassMaterial.self
         ])
-        let config = SwiftData.ModelConfiguration(schema: schema)
+        // `.none` is load-bearing. The parameter defaults to `.automatic`, which turns on SwiftData's
+        // own CloudKit mirroring the moment the app gains an iCloud container entitlement. This
+        // schema doesn't meet mirroring's rules, so the store would fail to open. iCloud Sync runs
+        // on CKSyncEngine instead (docs/ICLOUD_SYNC.md), and this store stays local.
+        let config = SwiftData.ModelConfiguration(schema: schema, cloudKitDatabase: .none)
 
         do {
             container = try ModelContainer(for: schema, configurations: [config])
         } catch {
-            // Schema changed — delete old store and recreate
-            print("SwiftData migration failed: \(error). Recreating store.")
-            let storeURL = config.url
-            try? FileManager.default.removeItem(at: storeURL)
-            // Also remove WAL/SHM files
-            let walURL = storeURL.appendingPathExtension("wal")
-            let shmURL = storeURL.appendingPathExtension("shm")
-            try? FileManager.default.removeItem(at: walURL)
-            try? FileManager.default.removeItem(at: shmURL)
+            // The store can't be opened (a migration SwiftData couldn't do). Move it aside rather
+            // than delete it, so the old file can still be rescued, and start fresh.
+            StoreRecovery.moveAside(storeURL: config.url, reason: error)
 
             do {
                 container = try ModelContainer(for: schema, configurations: [config])
