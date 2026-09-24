@@ -94,6 +94,21 @@ enum LearnerMemoryService {
         return "For context, this learner " + bits.joined(separator: "; ") + " — pay extra attention to these, but only flag what's actually wrong in this sentence."
     }
 
+    /// The structures the coach counts as shaky (`GrammarSkill.shakyThreshold`), worst-first.
+    /// The one shared reading of "needs work", so a flame on one screen means what it means on
+    /// the next. No profile yet means nothing is shaky.
+    static func shakyFocuses(_ profile: LearnerProfile?) -> [GrammarFocus] {
+        guard let profile else { return [] }
+        return profile.grammar
+            .compactMap { key, skill -> (GrammarFocus, Double)? in
+                guard skill.struggle >= GrammarSkill.shakyThreshold,
+                      let focus = GrammarFocus(rawValue: key) else { return nil }
+                return (focus, skill.struggle)
+            }
+            .sorted { $0.1 > $1.1 }
+            .map(\.0)
+    }
+
     private static func sortedGrammar(_ p: LearnerProfile, minStruggle: Double) -> [(label: String, struggle: Double)] {
         p.grammar
             .compactMap { key, skill -> (String, Double)? in

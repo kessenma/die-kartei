@@ -90,9 +90,9 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .artikel:
             "Every German noun has a grammatical gender shown by its article: der (masculine), die (feminine), das (neuter). Endings often give it away — “-ung”, “-heit” and “-keit” are feminine, “-chen” and “-lein” are neuter — but many just have to be learned with the noun."
         case .akkusativ:
-            "The direct object — the thing receiving the action. It changes the article: der → den. “Ich sehe den Mann.”"
+            "The direct object: what the verb acts on. Only the masculine article changes: der → den. “Ich sehe den Mann.”"
         case .dativ:
-            "The indirect object — to or for whom something happens. der → dem, die → der. “Ich gebe dem Kind das Buch.”"
+            "The receiver (to whom), and the object of Dativ verbs like helfen. der → dem, die → der. “Ich gebe dem Kind das Buch.”"
         case .genitiv:
             "Shows possession (“of”). Articles become des / der and masculine/neuter nouns often add -s. “das Auto des Mannes.”"
         case .modalverben:

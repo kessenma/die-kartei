@@ -135,15 +135,6 @@ struct DeckStore {
         )
     }
 
-    /// A grammar flip-card session (stats-only; no SRS card store).
-    func grammarFlipSession(cards: [VocabCard], topic: String, style: FlashcardStyle, label: String) -> StudySession {
-        StudySession(
-            cards: cards, topic: topic,
-            deckID: fetchOrCreateGrammarStatsDeck(for: topic)?.persistentModelID,
-            flashcardStyle: style, subDeckLabel: label
-        )
-    }
-
     /// Rebuild a resumable session for a deck with a paused snapshot (`pausedAt != nil`), for the
     /// Home ▸ Today "Resume" recommendation. Returns `nil` when the deck can't be reconstructed
     /// (e.g. grammar flip decks store no card payload) or the saved position is stale.

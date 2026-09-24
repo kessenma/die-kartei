@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "stories": [
+    {
+      "id": "ks-dat-a2-schluessel",
+      "unit": "dativ",
+      "level": "A2",
+      "source": "authored",
+      "reviewed": { "by": "", "date": "" },
+      "title": "Der verlorene Schlüssel",
+      "titleEnglish": "The lost key",
+      "question": {
+        "de": "Wo findet Jonas den Schlüssel?",
+        "en": "Where does Jonas find the key?",
+        "options": ["Beim Hund unter dem Tisch", "In der Tasche", "Auf dem Sofa"],
+        "answer": 0
+      },
+      "paragraphs": [
+        {
+          "de": "Es ist Montag, und Jonas hat um acht Uhr einen Termin. Aber er findet seinen Schlüssel nicht. Er sucht überall. Der Schlüssel ist nicht in der Tasche. Er liegt auch nicht auf dem Sofa. Jonas fragt seine Mutter: „Hast du meinen Schlüssel gesehen?“ Die Mutter lacht und zeigt unter den Tisch.",
+          "en": "It's Monday, and Jonas has an appointment at eight o'clock. But he can't find his key. He looks everywhere. The key isn't in the bag. It isn't on the sofa either. Jonas asks his mother: “Have you seen my key?” His mother laughs and points under the table."
+        },
+        {
+          "de": "Dort liegt der Hund. Er spielt mit dem Schlüssel! Jonas muss lachen. Er gibt dem Hund einen Keks. Dann nimmt er den Schlüssel. Das Tier ist traurig.",
+          "en": "The dog is lying there. He's playing with the key! Jonas has to laugh. He gives the dog a biscuit. Then he takes the key. The animal is sad."
+        },
+        {
+          "de": "Nach dem Termin hilft Jonas seiner Mutter in der Küche. Danach kauft er einen Ball für den Hund. Der Ball gefällt dem Hund sehr. Der Hund schläft zufrieden auf dem Boden. Jonas legt den Schlüssel jetzt immer auf den Schrank. So ist alles gut.",
+          "en": "After the appointment, Jonas helps his mother in the kitchen. Then he buys a ball for the dog. The dog really likes the ball. The dog sleeps happily on the floor. Now Jonas always puts the key on top of the cupboard. So all is well."
+        }
+      ],
+      "targets": [
+        { "phrase": "einen Termin", "case": "akkusativ", "genus": "m", "lemma": "Termin", "reason": "object", "trigger": "hat" },
+        { "phrase": "seinen Schlüssel", "case": "akkusativ", "genus": "m", "lemma": "Schlüssel", "reason": "object", "trigger": "findet" },
+        { "phrase": "Der Schlüssel", "case": "nominativ", "genus": "m", "lemma": "Schlüssel", "reason": "subject", "trigger": "ist" },
+        { "phrase": "der Tasche", "case": "dativ", "genus": "f", "lemma": "Tasche", "reason": "wechselWo", "trigger": "in" },
+        { "phrase": "dem Sofa", "case": "dativ", "genus": "n", "lemma": "Sofa", "reason": "wechselWo", "trigger": "auf" },
+        { "phrase": "seine Mutter", "case": "akkusativ", "genus": "f", "lemma": "Mutter", "reason": "object", "trigger": "fragt" },
+        { "phrase": "meinen Schlüssel", "case": "akkusativ", "genus": "m", "lemma": "Schlüssel", "reason": "object", "trigger": "gesehen" },
+        { "phrase": "Die Mutter", "case": "nominativ", "genus": "f", "lemma": "Mutter", "reason": "subject", "trigger": "lacht" },
+        { "phrase": "den Tisch", "case": "akkusativ", "genus": "m", "lemma": "Tisch", "reason": "wechselWohin", "trigger": "unter" },
+        { "phrase": "der Hund", "case": "nominativ", "genus": "m", "lemma": "Hund", "reason": "subject", "trigger": "liegt" },
+        { "phrase": "dem Schlüssel", "case": "dativ", "genus": "m", "lemma": "Schlüssel", "reason": "preposition", "trigger": "mit" },
+        { "phrase": "dem Hund", "case": "dativ", "genus": "m", "lemma": "Hund", "reason": "recipient", "trigger": "gibt" },
+        { "phrase": "einen Keks", "case": "akkusativ", "genus": "m", "lemma": "Keks", "reason": "object", "trigger": "gibt" },
+        { "phrase": "den Schlüssel", "case": "akkusativ", "genus": "m", "lemma": "Schlüssel", "reason": "object", "trigger": "nimmt" },
+        { "phrase": "Das Tier", "case": "nominativ", "genus": "n", "lemma": "Tier", "reason": "subject", "trigger": "ist" },
+        { "phrase": "dem Termin", "case": "dativ", "genus": "m", "lemma": "Termin", "reason": "preposition", "trigger": "Nach" },
+        { "phrase": "seiner Mutter", "case": "dativ", "genus": "f", "lemma": "Mutter", "reason": "dativeVerb", "trigger": "hilft" },
+        { "phrase": "der Küche", "case": "dativ", "genus": "f", "lemma": "Küche", "reason": "wechselWo", "trigger": "in" },
+        { "phrase": "einen Ball", "case": "akkusativ", "genus": "m", "lemma": "Ball", "reason": "object", "trigger": "kauft" },
+        { "phrase": "den Hund", "case": "akkusativ", "genus": "m", "lemma": "Hund", "reason": "preposition", "trigger": "für" },
+        { "phrase": "Der Ball", "case": "nominativ", "genus": "m", "lemma": "Ball", "reason": "subject", "trigger": "gefällt" },
+        { "phrase": "dem Hund", "case": "dativ", "genus": "m", "lemma": "Hund", "reason": "dativeVerb", "trigger": "gefällt" },
+        { "phrase": "Der Hund", "case": "nominativ", "genus": "m", "lemma": "Hund", "reason": "subject", "trigger": "schläft" },
+        { "phrase": "dem Boden", "case": "dativ", "genus": "m", "lemma": "Boden", "reason": "wechselWo", "trigger": "auf" },
+        { "phrase": "den Schlüssel", "case": "akkusativ", "genus": "m", "lemma": "Schlüssel", "reason": "object", "trigger": "legt" },
+        { "phrase": "den Schrank", "case": "akkusativ", "genus": "m", "lemma": "Schrank", "reason": "wechselWohin", "trigger": "auf" }
+      ],
+      "notTargets": []
+    }
+  ]
+}

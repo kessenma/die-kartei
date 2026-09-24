@@ -4,12 +4,7 @@ import SwiftUI
 /// all read the same way.
 enum ArticleStyle {
     static func symbol(for article: String) -> String {
-        switch article.lowercased() {
-        case "der": return "figure.stand"
-        case "die": return "figure.stand.dress"
-        case "das": return "figure.stand.dress.line.vertical.figure"
-        default: return "questionmark"
-        }
+        Gender(article: article)?.symbol ?? "questionmark"
     }
 
     static func color(for article: String) -> Color {

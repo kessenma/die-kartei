@@ -16,13 +16,9 @@ struct CorrectionSheetView: View {
     private func genderInfo(for article: String) -> (symbol: String, color: Color) {
         // Colors come from GenderPalette so this correction UI matches der/die/das on the cards
         // (blue/red/green) — the old blue/pink/purple read as a second, conflicting gender code.
-        // Symbols match FlashCardView's gender badge.
-        switch article.lowercased() {
-        case "der": return ("figure.stand", GenderPalette.color(.der))
-        case "die": return ("figure.stand.dress", GenderPalette.color(.die))
-        case "das": return ("figure.stand.dress.line.vertical.figure", GenderPalette.color(.das))
-        default: return ("questionmark", .secondary)
-        }
+        // Symbols come from `Gender.symbol`, the same glyphs as FlashCardView's badge.
+        guard let gender = Gender(article: article) else { return ("questionmark", .secondary) }
+        return (gender.symbol, gender.color)
     }
 
     var body: some View {

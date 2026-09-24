@@ -2301,7 +2301,8 @@
     "article": "der",
     "wordType": "noun",
     "translation": "ground, soil",
-    "example": ""
+    "example": "",
+    "plural": "\\u00a8-"
   },
   {
     "word": "Bogen",
@@ -5732,8 +5733,9 @@
     "word": "Geschwister",
     "article": "die",
     "wordType": "noun",
-    "translation": "sibling",
-    "example": ""
+    "translation": "siblings",
+    "example": "",
+    "plural": "only pl."
   },
   {
     "word": "Geschäft",
@@ -7873,8 +7875,9 @@
     "word": "Kosten",
     "article": "die",
     "wordType": "noun",
-    "translation": "to cost",
-    "example": ""
+    "translation": "costs",
+    "example": "",
+    "plural": "only pl."
   },
   {
     "word": "kostenlos",
@@ -8435,10 +8438,11 @@
   },
   {
     "word": "Lebensmittel",
-    "article": "die",
+    "article": "das",
     "wordType": "noun",
     "translation": "any item or substance intended for human consumption (excluding drugs other than alcohol), food, comestible",
-    "example": ""
+    "example": "",
+    "plural": "-"
   },
   {
     "word": "lecker",
@@ -9504,10 +9508,11 @@
   },
   {
     "word": "Möbel",
-    "article": "das",
+    "article": "die",
     "wordType": "noun",
-    "translation": "piece of furniture",
-    "example": ""
+    "translation": "furniture",
+    "example": "",
+    "plural": "only pl."
   },
   {
     "word": "möbliert",
@@ -9944,7 +9949,7 @@
   },
   {
     "word": "Nord",
-    "article": "die",
+    "article": "der",
     "wordType": "noun",
     "translation": "the north (used without article; a short form of Norden)",
     "example": ""
@@ -12920,7 +12925,7 @@
   },
   {
     "word": "Stadt",
-    "article": "der",
+    "article": "die",
     "wordType": "noun",
     "translation": "city (a large settlement)",
     "example": "",
@@ -14411,7 +14416,7 @@
   },
   {
     "word": "Universität",
-    "article": "der",
+    "article": "die",
     "wordType": "noun",
     "translation": "university",
     "example": "",
@@ -15862,7 +15867,7 @@
   },
   {
     "word": "Woche",
-    "article": "der",
+    "article": "die",
     "wordType": "noun",
     "translation": "week (period of seven days counting from Monday to Sunday, or from Sunday to Saturday)",
     "example": "",
@@ -16589,7 +16594,7 @@
   },
   {
     "word": "Zünder",
-    "article": "die",
+    "article": "der",
     "wordType": "noun",
     "translation": "fuze in an explosive, pyrotechnic device or military munition",
     "example": ""

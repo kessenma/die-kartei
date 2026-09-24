@@ -129,7 +129,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
 no border, no shadow, `.zero` rotation, `usesModelAccent = true`). So on Klar every `.themed*` modifier
 is a **no-op** — the invariant that lets us migrate incrementally without regressions.
 
-### `Models/GenderPalette.swift`
+### `Models/GrammarPalette.swift`
 
 `enum Gender { case der, die, das, plural }` + `static func color(_:) -> Color` with the four hexes
 above. Independent of `AppTheme`.
@@ -180,7 +180,9 @@ above. Independent of `AppTheme`.
    literal>)`. Capsules that should square off on Grundform: `theme.pillShape`.
 6. Fixed `Color.accentColor` → `.tint` as a `ShapeStyle` (`AnyShapeStyle(.tint)` where the ternary needs
    it). `.themedScreen()` sets the tint, so the accent then tracks the theme *and* the loaded model.
-7. Any `der/die/das` text or badge → `GenderPalette.color(_)`.
+7. Any `der/die/das` text or badge → `Gender.color` / `Gender.symbol`; any Nom/Akk/Dat/Gen label →
+   `GrammarCase.color` / `.symbol` (Wechsel: `CasePalette.wechsel`). All in `Models/GrammarPalette.swift`;
+   never reuse a gender hue for a case, and don't mark right/wrong in green/red where genders are colored.
 8. Add/extend `#Preview` to render the screen across all four themes.
 9. `build_sim`; confirm **Klar is pixel-identical to before**; check Grundform + Kritzel dark mode.
 
@@ -222,7 +224,7 @@ Overview — check off as each completes:
 
 **Create:**
 - [x] `Models/AppTheme.swift` — enum + all tokens for all four themes (values in §2 / §3).
-- [x] `Models/GenderPalette.swift` — `Gender` + `color(_:)`.
+- [x] `Models/GrammarPalette.swift` — `Gender` + `color(_:)`.
 - [x] `Features/Shared/ThemeEnvironment.swift` — `EnvironmentKey`, `ThemedBackground`, the `.themed*` modifiers.
 
 **Edit:**
@@ -607,7 +609,7 @@ phrases, response hints, Library, Settings tabs.
   at App ▸ Appearance, morphing icon header kept via a reusable `SettingsHeader`. Folded into Phase 1
   (was "theme picker in Settings"); Phase 10 now just themes the already-restructured screens.
 - **2026-07-27 (later still)** — **Phase 0 shipped.** Created `Models/AppTheme.swift` (all four themes'
-  tokens), `Models/GenderPalette.swift` (`Gender` + `color(_:)`, dark-brightened), and
+  tokens), `Models/GrammarPalette.swift` (`Gender` + `color(_:)`, dark-brightened), and
   `Features/Shared/ThemeEnvironment.swift` (`\.appTheme` + `\.modelTheme` env keys, `ThemedBackground`
   with Kritzel ruled-paper, and the `.themedScreen/.themedCard/.themedSectionHeader/.themedTitle/.themedNumber`
   modifiers). Wired `@AppStorage(AppTheme.defaultsKey)` + `.environment(\.appTheme,)` at the app root

@@ -14,10 +14,8 @@ struct TappableText: View {
     var font: Font = .title3
     let onTapWord: (String) -> Void
 
-    private struct Token { let text: String; let range: NSRange; let isWord: Bool }
-
     var body: some View {
-        let tokens = tokenize(text)
+        let tokens = WordTokenizer.tokenize(text)
         Text(attributed(tokens))
             .font(font)
             .tint(.primary)               // words are links; keep them looking like normal text
@@ -30,7 +28,7 @@ struct TappableText: View {
             })
     }
 
-    private func attributed(_ tokens: [Token]) -> AttributedString {
+    private func attributed(_ tokens: [WordToken]) -> AttributedString {
         var result = AttributedString()
         for (index, token) in tokens.enumerated() {
             var run = AttributedString(token.text)
@@ -52,39 +50,5 @@ struct TappableText: View {
             result += run
         }
         return result
-    }
-
-    /// Split into word / non-word runs, tracking each run's UTF-16 range (matches AVSpeech ranges).
-    private func tokenize(_ s: String) -> [Token] {
-        var tokens: [Token] = []
-        var current = ""
-        var startUTF16 = 0
-        var utf16pos = 0
-        var currentIsWord = false
-
-        func flush() {
-            guard !current.isEmpty else { return }
-            tokens.append(Token(
-                text: current,
-                range: NSRange(location: startUTF16, length: utf16pos - startUTF16),
-                isWord: currentIsWord
-            ))
-            current = ""
-        }
-
-        for ch in s {
-            let isWord = ch.isLetter || ch == "-" || ch == "'" || ch == "’"
-            if current.isEmpty {
-                current = String(ch); startUTF16 = utf16pos; currentIsWord = isWord
-            } else if isWord == currentIsWord {
-                current.append(ch)
-            } else {
-                flush()
-                current = String(ch); startUTF16 = utf16pos; currentIsWord = isWord
-            }
-            utf16pos += ch.utf16.count
-        }
-        flush()
-        return tokens
     }
 }

@@ -1013,6 +1013,34 @@ struct DayDetailSheet: View {
             ))
         }
 
+        // Kasus path: a story's Finden or Einsetzen, or a unit's Schnellrunde. The title is looked
+        // up from the story id, so a renamed story still reads right on old days.
+        let kasusRounds = (try? context.fetch(FetchDescriptor<KasusRound>(
+            predicate: #Predicate<KasusRound> { $0.date >= dayStart && $0.date < end }
+        ))) ?? []
+        for r in kasusRounds {
+            let step = r.step ?? .fill
+            let noun = switch step {
+            case .find:  "phrases"
+            case .fill:  "articles"
+            case .quick: "sentences"
+            }
+            var parts = ["\(r.askedCount) \(noun)", "\(r.firstTryCount)/\(r.askedCount) first try"]
+            if let hint = r.hintLevel { parts.append(hint.germanLabel) }
+            if r.durationSeconds > 0 { parts.append("\(r.durationSeconds)s") }
+            // "Kasus · Der verlorene Schlüssel · Einsetzen", "Kasus · Schnellrunde · Dativ".
+            let title = step == .quick
+                ? ["Kasus", step.germanLabel, r.unit?.germanTitle]
+                : ["Kasus", KasusStoryBank.bundled.story(id: r.storyID)?.title, step.germanLabel]
+            out.append(DayExercise(
+                time: r.date,
+                icon: r.unit?.symbol ?? "checklist",
+                tint: r.unit?.color ?? .purple,
+                title: title.compactMap { $0 }.joined(separator: " · "),
+                subtitle: parts.joined(separator: " · ")
+            ))
+        }
+
         // Story reading / listening stretches.
         let reading = (try? context.fetch(FetchDescriptor<StoryReadingSession>(
             predicate: #Predicate<StoryReadingSession> { $0.date >= dayStart && $0.date < end }

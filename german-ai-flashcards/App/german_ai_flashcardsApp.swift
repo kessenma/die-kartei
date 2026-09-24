@@ -80,6 +80,7 @@ struct german_ai_flashcardsApp: App {
             MatchingPairStat.self, MatchingRound.self,
             ArticleWordStat.self, ArticleRound.self,
             PrepositionStat.self, PrepositionRound.self,
+            KasusRound.self,
             StoryReadingSession.self, StoryQuizAttempt.self,
             BatchJob.self,
             JobPosting.self,

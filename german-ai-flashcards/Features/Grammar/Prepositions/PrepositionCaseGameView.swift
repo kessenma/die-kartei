@@ -12,7 +12,7 @@
 //  (`PrepositionService.recordRound` — stats, streak, learner profile) and gets a
 //  `PrepositionRoundFeedback` back for "missed again" and personal-best callouts.
 //
-//  Color convention: each case owns a fixed color (see `PrepositionCasePalette`), deliberately
+//  Color convention: each case owns a fixed color (see `CasePalette`), deliberately
 //  clear of the der/die/das gender hues. Mistakes shake and dim rather than flashing red.
 //
 
@@ -241,7 +241,7 @@ struct PrepositionCaseGameView: View {
     private func reveal(_ question: PrepositionQuestion) -> some View {
         VStack(spacing: 10) {
             HStack(spacing: 8) {
-                Text(question.governs.germanLabel.uppercased())
+                Label(question.governs.germanLabel.uppercased(), systemImage: question.governs.symbol)
                     .font(.caption.weight(.bold))
                     .tracking(1)
                     .foregroundStyle(.white)
@@ -307,7 +307,7 @@ struct PrepositionCaseGameView: View {
             handleTap(group)
         } label: {
             VStack(spacing: 2) {
-                Text(group.germanLabel)
+                Label(group.germanLabel, systemImage: group.symbol)
                     .font(.headline.weight(.bold))
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)

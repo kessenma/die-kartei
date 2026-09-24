@@ -57,6 +57,9 @@ struct ContentView: View {
     /// `-classNotes.debugOpen <screen>`: the Deutschkurs screens sit two or more taps into Home
     /// and need seeded courses to show anything. See `ClassNotesDebugSeeder`.
     @State private var classNotesDebugScreen: ClassNotesDebugScreen?
+    /// `-kasus.debugOpen hub|unit:<unit>`: the Grammatik hub and its unit screens, which sit two
+    /// or more taps into Home. The story player's screens launch through the router instead.
+    @State private var kasusDebugSheet: KasusDebugOpen?
     #endif
     @Environment(\.modelContext) private var modelContext
 
@@ -313,6 +316,23 @@ struct ContentView: View {
             }
             .environment(router)
         }
+        .sheet(item: $kasusDebugSheet) { open in
+            NavigationStack {
+                Group {
+                    if case .unit(let unit) = open {
+                        KasusUnitView(unit: unit)
+                    } else {
+                        GrammarHubView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+                    }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { kasusDebugSheet = nil }
+                    }
+                }
+            }
+            .environment(router)
+        }
         #endif
         .memoryPressureBanner()
         .memoryReadoutOverlay()
@@ -457,6 +477,43 @@ struct ContentView: View {
             }
             if UserDefaults.standard.bool(forKey: "wortschatz.debugRestore") {
                 print("[wortschatz] restored: \(WortschatzDebugSeeder.restore(in: modelContext))")
+            }
+            // `-kasus.debugVerify 1` prints the bundled stories' validator reports (targets, the
+            // per-proof tally, errors), every planted-error fixture and the forms round trip, then
+            // the service's blanks, options, grading and `KasusPath.next` checks.
+            if UserDefaults.standard.bool(forKey: "kasus.debugVerify") {
+                let report = KasusStoryBank.debugVerifyReport(lexicon: AppKasusLexicon())
+                    .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+                for line in report + KasusService.debugServiceReport() {
+                    print("[kasus.debugVerify] \(line)")
+                }
+            }
+            // `-kasus.debugVerifyRecord 1` runs recordRound on synthetic rounds in the live store and
+            // checks which ones may move a case skill (scaffolded picks, under three per case,
+            // f/n/pl Akkusativ at Genus-Hilfe and Nominativ must not), then puts it all back.
+            // `-kasus.debugVerifyRecord keep` leaves the rounds and the skill changes in place.
+            let verifyRecord = UserDefaults.standard.string(forKey: "kasus.debugVerifyRecord")?.lowercased()
+            if verifyRecord == "keep" || UserDefaults.standard.bool(forKey: "kasus.debugVerifyRecord") {
+                for line in KasusService.debugVerifyRecord(in: modelContext, keep: verifyRecord == "keep") {
+                    print("[kasus.debugVerifyRecord] \(line)")
+                }
+            }
+            // `-kasus.debugOpen hub|unit:<unit>|read|find|check|summary|fill|result` opens a
+            // Grammatik screen at launch, since this simulator can't tap its way there. The player
+            // screens open the bundled story, prefilled by `-kasus.debugAnswers right|mixed` and
+            // `-kasus.debugHint viel|genus|ohne`; prefilled answers are never recorded.
+            if let open = KasusDebugOpen.fromLaunchArguments() {
+                switch open {
+                case .hub, .unit:
+                    kasusDebugSheet = open
+                case .story(let screen):
+                    if let session = KasusDebugOpen.session(for: screen) {
+                        router.launch(.kasusStory(session))
+                    }
+                }
+                print("[kasus.debugOpen] open \(open.id)")
+            } else if let raw = UserDefaults.standard.string(forKey: "kasus.debugOpen") {
+                print("[kasus.debugOpen] no such screen: \(raw)")
             }
             #endif
 
@@ -697,6 +754,34 @@ struct ContentView: View {
                         mastered: mastered, missed: missed, seconds: durationSeconds,
                         in: modelContext
                     )
+                },
+                onDismiss: {
+                    router.dismiss()
+                }
+            )
+
+        case .caseEndings(let session):
+            CaseEndingsDrillView(
+                session: session,
+                onComplete: { result in
+                    // Streak and time (as grammar practice), a KasusRound for the calendar, and
+                    // the coach's per-case skills all live inside recordRound.
+                    KasusService.recordRound(result, in: modelContext)
+                },
+                onDismiss: {
+                    router.dismiss()
+                }
+            )
+
+        case .kasusStory(let session):
+            KasusStoryView(
+                session: session,
+                hapticMode: coordinator.modelManager.hapticFeedbackMode,
+                germanLevel: coordinator.modelManager.germanLevel,
+                onComplete: { result in
+                    // Called once per scored step (Finden, Einsetzen). Finden counts for the
+                    // streak only; recordRound decides which answers may move a case skill.
+                    KasusService.recordRound(result, in: modelContext)
                 },
                 onDismiss: {
                     router.dismiss()

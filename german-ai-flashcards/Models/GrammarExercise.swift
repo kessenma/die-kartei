@@ -35,10 +35,3 @@ struct GrammarExercise: Codable, Identifiable {
 struct GrammarExercisesFile: Codable {
     let categories: [GrammarCategory]
 }
-
-enum GrammarStudyMode: String, CaseIterable, Identifiable {
-    case multipleChoice = "Multiple Choice"
-    case flipCards = "Flip Cards"
-
-    var id: String { rawValue }
-}

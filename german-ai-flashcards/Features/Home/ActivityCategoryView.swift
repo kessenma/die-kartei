@@ -9,6 +9,7 @@
 //
 //  Only categories holding more than one tool get this page. Speaking, Listening, and Batch hold
 //  exactly one each, and a list of one is a tap in the way — their tiles push the tool itself.
+//  Grammar does the same: its tile pushes the Grammar hub, which already holds every grammar tool.
 //  `ActivityCategoryDestination` is the one place that decides which of the two a tile gets.
 //
 //  Card-producing launchers still route into the shared flashcard player via `ActivityRouter`;
@@ -47,7 +48,7 @@ enum ActivityCategory: String, CaseIterable, Identifiable {
     var subtitle: String {
         switch self {
         case .vocabulary: "Flashcards, Wortschatz, matching"
-        case .grammar:    "Drills and der · die · das"
+        case .grammar:    "Die vier Fälle · der · die · das · Präpositionen"
         case .reading:    "Stories, papers, scans"
         case .speaking:   "Conversation practice"
         case .listening:  "Your phrase library"
@@ -96,9 +97,10 @@ enum ActivityCategory: String, CaseIterable, Identifiable {
 
 /// What a hub tile pushes to.
 ///
-/// Vocabulary, Grammar, and Reading hold several tools each, so their tiles push the category page
-/// below — a screen worth landing on. Speaking, Listening, and Batch hold exactly one tool, so their
-/// tiles push that tool straight away rather than a page offering a single row. Keeping the choice
+/// Vocabulary and Reading hold several tools each, so their tiles push the category page below — a
+/// screen worth landing on. Speaking, Listening, and Batch hold exactly one tool, so their tiles
+/// push that tool straight away rather than a page offering a single row. Grammar pushes its hub
+/// directly for the same reason: the hub is already the page of grammar tools. Keeping the choice
 /// here means `HomeHubView` builds every tile the same way.
 struct ActivityCategoryDestination: View {
     let category: ActivityCategory
@@ -108,11 +110,16 @@ struct ActivityCategoryDestination: View {
 
     var body: some View {
         switch category {
-        case .vocabulary, .grammar, .reading:
+        case .vocabulary, .reading:
             ActivityCategoryView(
                 category: category,
                 coordinator: coordinator,
                 onGenerationComplete: onGenerationComplete
+            )
+        case .grammar:
+            GrammarHubView(
+                modelManager: coordinator.modelManager,
+                mlxService: coordinator.mlxService
             )
         case .speaking:
             ConversationListView(
@@ -197,33 +204,6 @@ struct ActivityCategoryView: View {
                 ActivityRow("Card Matching", "Fast form ↔ meaning warm-up", "square.grid.2x2.fill")
             }
 
-        case .grammar:
-            NavigationLink {
-                GrammarHubView(
-                    modelManager: coordinator.modelManager,
-                    mlxService: coordinator.mlxService,
-                    onStartFlipCards: launchGrammarFlip,
-                    onStartMultipleChoice: launchGrammarMC,
-                    onStartPastTenseStudy: launchPastTense
-                )
-            } label: {
-                ActivityRow("Grammar Exercises", "Akkusativ · Dativ · Perfekt · create your own with AI", "checklist")
-            }
-            NavigationLink {
-                ArticleGameSetupView(
-                    modelManager: coordinator.modelManager,
-                    mlxService: coordinator.mlxService
-                )
-            } label: {
-                ActivityRow("Der · Die · Das", "The article game — guess each noun's gender", "textformat.abc")
-            }
-            NavigationLink {
-                PrepositionHubView(modelManager: coordinator.modelManager,
-                                   mlxService: coordinator.mlxService)
-            } label: {
-                ActivityRow("Präpositionen", "Which case each preposition takes", "arrow.triangle.branch")
-            }
-
         case .reading:
             NavigationLink {
                 StoryListView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
@@ -241,25 +221,11 @@ struct ActivityCategoryView: View {
                 ActivityRow("Scan a Photo", "Extract German text from an image", "camera.viewfinder")
             }
 
-        // One tool apiece, so their tiles push it directly (`ActivityCategoryDestination`) and this
-        // page is never built for them.
-        case .speaking, .listening, .batch:
+        // One tool apiece (Grammar: its own hub), so their tiles push it directly
+        // (`ActivityCategoryDestination`) and this page is never built for them.
+        case .grammar, .speaking, .listening, .batch:
             EmptyView()
         }
-    }
-
-    // MARK: Launch helpers (card-producing → router)
-
-    private func launchPastTense(_ cards: [VocabCard], _ topic: String, _ style: FlashcardStyle, _ label: String) {
-        router.launch(.cardDeck(deckStore.pastTenseSession(cards: cards, topic: topic, style: style, label: label)))
-    }
-
-    private func launchGrammarFlip(_ cards: [VocabCard], _ topic: String, _ style: FlashcardStyle, _ label: String) {
-        router.launch(.cardDeck(deckStore.grammarFlipSession(cards: cards, topic: topic, style: style, label: label)))
-    }
-
-    private func launchGrammarMC(_ category: GrammarCategory, _ hints: Bool) {
-        router.launch(.grammarMultipleChoice(category: category, showHints: hints))
     }
 }
 

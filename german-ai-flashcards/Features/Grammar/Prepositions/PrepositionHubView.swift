@@ -82,7 +82,9 @@ struct PrepositionHubView: View {
                 .themedListRow()
             }
 
+            #if DEBUG
             renderTestSection.themedListRow()
+            #endif
         }
         .themedListScreen()
         .navigationTitle("Präpositionen")
@@ -372,8 +374,10 @@ struct PrepositionHubView: View {
 
     // MARK: - Animation gallery (tuning surface)
 
+    #if DEBUG
     /// Every preposition scene playing its live choreography, one per page — the place to
-    /// judge motion timings on a real device without driving to each drill.
+    /// judge motion timings on a real device without driving to each drill. Debug builds only:
+    /// a tuning surface, not something a learner should land on.
     private var renderTestSection: some View {
         Section {
             NavigationLink {
@@ -426,6 +430,7 @@ struct PrepositionHubView: View {
             TutorSceneLabView(modelManager: modelManager, mlxService: mlxService)
         }
     }
+    #endif
 
     // MARK: - Launch
 

@@ -73,22 +73,23 @@ nonisolated enum PrepositionCase: String, CaseIterable, Codable, Identifiable {
     }
 
     /// This group's fixed identity color, used on the drill buttons, the card's case tab and the
-    /// rules sheet so the color itself becomes a memory hook.
-    var color: Color { PrepositionCasePalette.color(self) }
-}
+    /// rules sheet so the color itself becomes a memory hook. From `CasePalette`, so a
+    /// preposition's case reads the same as that case everywhere else in the app.
+    var color: Color {
+        switch self {
+        case .akkusativ: GrammarCase.akkusativ.color
+        case .dativ:     GrammarCase.dativ.color
+        case .wechsel:   CasePalette.wechsel
+        case .genitiv:   GrammarCase.genitiv.color
+        }
+    }
 
-/// The case colors, resolved for light and dark.
-///
-/// Deliberately clear of `GenderPalette`'s der-blue / die-red / das-green: a preposition card can
-/// show both codings at once (the case tab and a colored article in its example), so reusing the
-/// gender hues would make one color mean two different things on the same screen.
-nonisolated enum PrepositionCasePalette {
-    static func color(_ group: PrepositionCase) -> Color {
-        switch group {
-        case .akkusativ: Color(light: 0xE2701A, dark: 0xF79542)   // orange
-        case .dativ:     Color(light: 0x0E8794, dark: 0x36C3D2)   // teal
-        case .wechsel:   Color(light: 0x7B4FD6, dark: 0xA98BF5)   // violet — "it depends"
-        case .genitiv:   Color(light: 0x5F6B7C, dark: 0x9BA9BC)   // slate
+    var symbol: String {
+        switch self {
+        case .akkusativ: GrammarCase.akkusativ.symbol
+        case .dativ:     GrammarCase.dativ.symbol
+        case .wechsel:   CasePalette.wechselSymbol
+        case .genitiv:   GrammarCase.genitiv.symbol
         }
     }
 }

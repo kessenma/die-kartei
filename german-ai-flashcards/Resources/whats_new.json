@@ -1,6 +1,31 @@
 {
   "releases": [
     {
+      "version": "unreleased",
+      "highlights": [
+        {
+          "title": "Kasus · Case endings",
+          "detail": "A one-screen table of der, den and dem with the rese, nese, mrmn code, and a quick drill to practice the endings.",
+          "symbol": "tablecells"
+        },
+        {
+          "title": "Kasus-Farben · Case colors",
+          "detail": "Each case now has its own color and icon wherever it's taught, and the quick lessons for Akkusativ, Dativ and Genitiv show the endings table with that case lit up.",
+          "symbol": "paintpalette"
+        },
+        {
+          "title": "Die vier Fälle · The four cases",
+          "detail": "Grammar is now one path through Nominativ, Akkusativ, Dativ and Genitiv, each with its rule and a quick round.",
+          "symbol": "square.grid.2x2"
+        },
+        {
+          "title": "Geschichten · Case stories",
+          "detail": "Mark the cases in a short story, then fill in its missing articles with gender hints. The first one is in Dativ.",
+          "symbol": "text.book.closed"
+        }
+      ]
+    },
+    {
       "version": "1.6",
       "date": "2026-09-16",
       "highlights": [

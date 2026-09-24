@@ -1677,8 +1677,9 @@
     "word": "Geschwister",
     "article": "die",
     "wordType": "noun",
-    "translation": "sibling",
-    "example": "(pl.) Ich habe leider keine Geschwister."
+    "translation": "siblings",
+    "example": "(pl.) Ich habe leider keine Geschwister.",
+    "plural": "only pl."
   },
   {
     "word": "Gespräch",
@@ -2720,8 +2721,9 @@
     "word": "Möbel",
     "article": "die",
     "wordType": "noun",
-    "translation": "piece of furniture",
-    "example": "(pl.) Sind die Möbel neu?"
+    "translation": "furniture",
+    "example": "(pl.) Sind die Möbel neu?",
+    "plural": "only pl."
   },
   {
     "word": "möchten",

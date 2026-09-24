@@ -236,12 +236,8 @@ struct FlashCardView: View {
     /// corner tab. One palette, three places.
     private var genderBadge: (symbol: String, color: Color)? {
         guard isShowingGerman, let gender else { return nil }
-        switch gender {
-        case .der:    return ("figure.stand", gender.color)
-        case .die:    return ("figure.stand.dress", gender.color)
-        case .das:    return ("figure.stand.dress.line.vertical.figure", gender.color)
-        case .plural: return nil
-        }
+        guard gender != .plural else { return nil }
+        return (gender.symbol, gender.color)
     }
 
     /// A slim colored tab down the card's leading edge — der blue, die red, das green — so gender is

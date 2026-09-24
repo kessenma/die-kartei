@@ -17,6 +17,7 @@ German for identity words and headings, plain English for explanation.
 - `docs/CLASS_NOTES.md` — Deutschkurs: courses, class entries, handouts, homework, the per-course deck.
 - `docs/DOCUMENT_DECKS.md` — flashcards from a document: the vocab-sheet pairer, phrase picking, decks on a course.
 - `docs/WORTSCHATZ.md` — the Goethe word box: merged index, one SRS deck, sessions, status, debug args.
+- `docs/KASUS.md` — the Grammatik case path: units, story format, validator, hint ladder, coach rules, adding a story, debug args.
 - `docs/PREPOSITION_3D.md` — the 3D preposition scenes and die Figur.
 - `docs/theme-upgrade.md` — the AppTheme system and its invariants.
 - `docs/MEMORY.md` — the memory budget, the one-heavy-resident invariant, Settings ▸ Speicher

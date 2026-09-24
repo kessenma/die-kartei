@@ -26,8 +26,6 @@ import RealityKit
 struct PyramidView: View {
     @Bindable var coordinator: GenerationCoordinator
 
-    @Environment(ActivityRouter.self) private var router
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.appTheme) private var theme
 
     @Query private var prepositionStats: [PrepositionStat]
@@ -48,8 +46,6 @@ struct PyramidView: View {
     @State private var focusedLayer: PyramidLayerID?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    private var deckStore: DeckStore { DeckStore(modelContext: modelContext) }
 
     private var layers: [PyramidLayerState] {
         PyramidService.layers(from: PyramidService.snapshot(
@@ -414,30 +410,12 @@ struct PyramidView: View {
         case .geschichtenA1:
             StoryListView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
         case .grammatikKern:
-            GrammarHubView(
-                modelManager: coordinator.modelManager,
-                mlxService: coordinator.mlxService,
-                onStartFlipCards: launchGrammarFlip,
-                onStartMultipleChoice: launchGrammarMC,
-                onStartPastTenseStudy: launchPastTense
-            )
+            GrammarHubView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
         case .vertiefungA2:
             WortschatzHubView(coordinator: coordinator, initialLevels: [.a2])
         case .spitze:
             ConversationListView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
         }
-    }
-
-    private func launchPastTense(_ cards: [VocabCard], _ topic: String, _ style: FlashcardStyle, _ label: String) {
-        router.launch(.cardDeck(deckStore.pastTenseSession(cards: cards, topic: topic, style: style, label: label)))
-    }
-
-    private func launchGrammarFlip(_ cards: [VocabCard], _ topic: String, _ style: FlashcardStyle, _ label: String) {
-        router.launch(.cardDeck(deckStore.grammarFlipSession(cards: cards, topic: topic, style: style, label: label)))
-    }
-
-    private func launchGrammarMC(_ category: GrammarCategory, _ hints: Bool) {
-        router.launch(.grammarMultipleChoice(category: category, showHints: hints))
     }
 }
 

@@ -48,17 +48,4 @@ enum GrammarExerciseService {
             exercises: exercises
         )
     }
-
-    static func toVocabCards(category: GrammarCategory) -> [VocabCard] {
-        category.exercises.map { exercise in
-            let filled = exercise.sentence.replacingOccurrences(of: "______", with: exercise.correctAnswer)
-            return VocabCard(
-                germanWord: exercise.sentence,
-                englishTranslation: "\(exercise.correctAnswer) · \(exercise.noun) (\(exercise.gender))",
-                wordType: "grammar",
-                article: exercise.correctAnswer,
-                exampleSentence: filled
-            )
-        }
-    }
 }
