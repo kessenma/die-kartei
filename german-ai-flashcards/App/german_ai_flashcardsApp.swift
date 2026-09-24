@@ -69,22 +69,7 @@ struct german_ai_flashcardsApp: App {
         // so stale devices exist.
         UserDefaults.standard.removeObject(forKey: "prepositions.sceneStyle")
 
-        let schema = Schema([
-            SavedDeck.self, SavedCard.self, QuizResult.self,
-            ChatConversation.self, ChatMessage.self,
-            StudyPaper.self,
-            StudyStory.self,
-            LearnedPhrase.self,
-            LearnerProfile.self, ArchivedMemoryItem.self,
-            StudyDay.self,
-            MatchingPairStat.self, MatchingRound.self,
-            ArticleWordStat.self, ArticleRound.self,
-            PrepositionStat.self, PrepositionRound.self,
-            StoryReadingSession.self, StoryQuizAttempt.self,
-            BatchJob.self,
-            JobPosting.self,
-            ClassCourse.self, ClassEntry.self, ClassMaterial.self
-        ])
+        let schema = Schema(AppSchema.models)
         // `.none` is load-bearing. The parameter defaults to `.automatic`, which turns on SwiftData's
         // own CloudKit mirroring the moment the app gains an iCloud container entitlement. This
         // schema doesn't meet mirroring's rules, so the store would fail to open. iCloud Sync runs

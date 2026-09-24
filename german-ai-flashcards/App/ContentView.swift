@@ -404,6 +404,12 @@ struct ContentView: View {
             if UserDefaults.standard.bool(forKey: "deckTransfer.debugVerify") {
                 print(DeckImporter.runDebugVerification(in: modelContext))
             }
+            // `-sync.debugVerify 1` syncs two temporary stores through an in-memory CloudKit
+            // stand-in with the real tracker/applier, checking counters add up and never double.
+            // No iCloud needed; results go to the console as `[sync.verify]` lines.
+            if UserDefaults.standard.bool(forKey: "sync.debugVerify") {
+                Task { print(await SyncDebugVerify.run()) }
+            }
             // The Wortschatz box on a simulator that can't tap. `-wortschatz.debugLegacyDecks 1`
             // recreates the three old per-level SRS decks and clears the merge flag, so the merge
             // below has input; `-wortschatz.debugMerge 1` re-runs the merge now;
