@@ -1,72 +1,12 @@
 {
   "releases": [
     {
-      "version": "unreleased",
-      "highlights": [
-        {
-          "title": "Tastatur · German keyboard",
-          "detail": "A new keyboard you can use in Mail, Gmail, Messages, and anywhere else you write. Type your message in English, tap Auf Deutsch, and it becomes natural German without leaving the app.",
-          "symbol": "keyboard"
-        },
-        {
-          "title": "Korrigieren · Fix your German",
-          "detail": "Write in German on the new keyboard, select what you wrote, and tap Korrigieren. It fixes the grammar and keeps your own words.",
-          "symbol": "checkmark.bubble"
-        },
-        {
-          "title": "Sie oder du",
-          "detail": "Choose whether the keyboard writes formally or informally before it starts, so an email to your landlord doesn't read like a message to a friend.",
-          "symbol": "person.2"
-        },
-        {
-          "title": "Umlaute ohne Umweg · Umlauts made easy",
-          "detail": "Hold a, o, u, or s on the new keyboard to reach ä, ö, ü, and ß, with spell-check you can switch between German and English.",
-          "symbol": "textformat.abc"
-        },
-        {
-          "title": "Nothing leaves your phone",
-          "detail": "The keyboard runs on Apple Intelligence on your device and never asks for Full Access, so it has no way to send what you type anywhere.",
-          "symbol": "lock.shield"
-        },
-        {
-          "title": "Deutschkurs · Class notes",
-          "detail": "Taking a German class? Log what each session covered, keep the handouts, track the homework, and turn the new words into flashcards for that course.",
-          "symbol": "graduationcap.fill"
-        },
-        {
-          "title": "Karten aus dem Dokument · Flashcards from a document",
-          "detail": "Turn a teacher's word list into a deck in one go, or highlight phrases in any PDF, photo, or text and make each one a card. Decks can live on a course.",
-          "symbol": "doc.plaintext"
-        },
-        {
-          "title": "Vokabeln im Text · Vocab in the story",
-          "detail": "Read a class story with its vocab list: every listed word is underlined in the text, a tap shows the teacher's English instantly, and you can print the English inline.",
-          "symbol": "text.book.closed"
-        },
-        {
-          "title": "Nebeneinander lesen · Read side by side",
-          "detail": "Translate a class handout on your phone and read it in German, in English, or both at once: side by side on an iPad, stacked on a phone, scrolling together sentence by sentence.",
-          "symbol": "rectangle.split.2x1"
-        },
-        {
-          "title": "Deck teilen · Share a deck",
-          "detail": "Swipe a deck in the Library and send it to your other device by AirDrop, Messages, or Files. Your review progress goes with it, so a word you already know stays known.",
-          "symbol": "square.and.arrow.up"
-        },
-        {
-          "title": "Mischen · Shuffle",
-          "detail": "A Shuffle switch on the flashcard setup screen deals the cards in a fresh order every time you start.",
-          "symbol": "shuffle"
-        }
-      ]
-    },
-    {
       "version": "1.6",
       "date": "2026-09-16",
       "highlights": [
         {
           "title": "Your tutor is loading · Download progress on Home",
-          "detail": "The card at the top of Home now shows a live bar and how far your teacher has got, so you can start a download and carry on working while it lands.",
+          "detail": "Home shows a live bar for the download, so you can carry on working while your teacher lands.",
           "symbol": "arrow.down.circle"
         },
         {
@@ -76,7 +16,7 @@
         },
         {
           "title": "Bewerbung · Job prep",
-          "detail": "Save a job posting from the browser, study its language, and rehearse the interview for that exact role.",
+          "detail": "Save a job posting from the browser, study its language, and rehearse the interview for that role.",
           "symbol": "briefcase"
         },
         {
@@ -86,12 +26,12 @@
         },
         {
           "title": "Dein Weg · Your journey",
-          "detail": "A timeline of your progress, with a quick „Weißt du es noch?“ check on words you learned a while ago.",
+          "detail": "A timeline of your progress, with a „Weißt du es noch?“ check on words you learned a while ago.",
           "symbol": "map"
         },
         {
           "title": "Placement answers you can revisit",
-          "detail": "The placement check keeps your answers so you can review them question by question and hand them to the coach.",
+          "detail": "The placement check keeps your answers, to review question by question or hand to the coach.",
           "symbol": "list.clipboard"
         },
         {
@@ -106,12 +46,12 @@
         },
         {
           "title": "Gespräch · Picking a chat back up",
-          "detail": "If a conversation is interrupted — you switch apps, or your iPad runs low on memory — reopening it offers to get the reply you were waiting for, instead of leaving the chat stuck.",
+          "detail": "If a chat is interrupted, reopening it offers to fetch the reply you were waiting for instead of leaving you stuck.",
           "symbol": "arrow.trianglehead.clockwise"
         },
         {
           "title": "Wortschatz · One word box for A1–B1",
-          "detail": "The three Goethe lists share one box now: a word learned at A1 stays learned at A2. Pick levels and word types, see what is due today, press Start.",
+          "detail": "The three Goethe lists share one box, so a word learned at A1 stays learned at A2. Pick your levels and word types and press Start.",
           "symbol": "archivebox"
         },
         {
@@ -126,7 +66,7 @@
         },
         {
           "title": "der · die · das? · Gender first",
-          "detail": "Nouns hide their article until you flip, so every card is a small gender check. Turn it off in Settings ▸ Cards.",
+          "detail": "Nouns hide their article until you flip, so every card is a gender check. Turn it off in Settings ▸ Cards.",
           "symbol": "questionmark.circle"
         },
         {
@@ -146,18 +86,73 @@
         },
         {
           "title": "Bilder · Picture layout",
-          "detail": "Story pictures are shown whole instead of cropped, and you can pick how they sit: short banners, full width, or with the text flowing around them.",
+          "detail": "Story pictures are shown whole instead of cropped, and you can pick how they sit in the text.",
           "symbol": "photo.on.rectangle.angled"
         },
         {
           "title": "Speicher · Memory",
-          "detail": "See what is using memory right now, and a log of any crashes, under Settings ▸ Speicher. Copy it to share when something goes wrong.",
+          "detail": "See what is using memory now, and a log of any crashes, under Settings ▸ Speicher.",
           "symbol": "memorychip"
         },
         {
           "title": "Stabiler · More stable",
-          "detail": "Runs more reliably on iPads and phones with less memory: pictures, tutors and the drawing model no longer compete for the same space.",
+          "detail": "Runs more reliably on iPads and phones with less memory: pictures, tutors and the drawing model no longer compete.",
           "symbol": "checkmark.shield"
+        },
+        {
+          "title": "Tastatur · German keyboard",
+          "detail": "A new keyboard for Mail, Messages, and anywhere you write: type in English, tap Auf Deutsch, and it becomes natural German.",
+          "symbol": "keyboard"
+        },
+        {
+          "title": "Korrigieren · Fix your German",
+          "detail": "Select what you wrote and tap Korrigieren: it fixes the grammar and keeps your own words.",
+          "symbol": "checkmark.bubble"
+        },
+        {
+          "title": "Sie oder du",
+          "detail": "Choose whether the keyboard writes formally or informally, so an email to your landlord doesn't read like a text to a friend.",
+          "symbol": "person.2"
+        },
+        {
+          "title": "Umlaute ohne Umweg · Umlauts made easy",
+          "detail": "Hold a, o, u, or s for ä, ö, ü, and ß, with spell-check in German or English.",
+          "symbol": "textformat.abc"
+        },
+        {
+          "title": "Nothing leaves your phone",
+          "detail": "It runs on Apple Intelligence on your device and never asks for Full Access.",
+          "symbol": "lock.shield"
+        },
+        {
+          "title": "Deutschkurs · Class notes",
+          "detail": "Log what each class covered, keep the handouts, track homework, and turn the new words into flashcards for that course.",
+          "symbol": "graduationcap.fill"
+        },
+        {
+          "title": "Karten aus dem Dokument · Flashcards from a document",
+          "detail": "Turn a teacher's word list into a deck in one go, or highlight phrases in any PDF, photo, or text to make cards.",
+          "symbol": "doc.plaintext"
+        },
+        {
+          "title": "Vokabeln im Text · Vocab in the story",
+          "detail": "Read a class story with its vocab list: listed words are underlined, and a tap shows the teacher's English.",
+          "symbol": "text.book.closed"
+        },
+        {
+          "title": "Nebeneinander lesen · Read side by side",
+          "detail": "Read a translated handout in German, in English, or both at once, scrolling together sentence by sentence.",
+          "symbol": "rectangle.split.2x1"
+        },
+        {
+          "title": "Deck teilen · Share a deck",
+          "detail": "Swipe a deck in the Library and send it by AirDrop, Messages, or Files. Your review progress goes with it.",
+          "symbol": "square.and.arrow.up"
+        },
+        {
+          "title": "Mischen · Shuffle",
+          "detail": "A Shuffle switch on the flashcard setup screen deals the cards in a fresh order every time you start.",
+          "symbol": "shuffle"
         }
       ]
     },

@@ -26,6 +26,10 @@ __pycache__/
 # assets live in german-ai-flashcards/Resources/, not here.
 tools/blender/renders/
 
+# Screenshots pulled back from App Store Connect for comparison. These are
+# Apple's re-encoded renditions, not the originals, so they are never sources.
+AppStore/downloaded/
+
 # Secrets / local config
 *.env
 .env*

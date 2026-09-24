@@ -8,6 +8,8 @@ German for identity words and headings, plain English for explanation.
 - `training/CLAUDE.md` — the ML fine-tune subproject (data rounds, eval suites, GPU-pod lessons).
   Its rules apply under `training/` only.
 - `docs/DEPLOY_SETUP.md` — how builds reach TestFlight and the App Store (`scripts/deploy.py`).
+- `AppStore/README.md` — the product page: description and keywords (`scripts/metadata.py`),
+  screenshots (`scripts/screenshots.py`), and where What's New fits.
 - `docs/GAMIFICATION.md` — XP, pyramid, placement quiz, streaks; debug launch arguments live here.
 - `docs/LEARNER_MEMORY.md` — the persistent learner profile and coaching memory.
 - `docs/SHORT_STORIES.md` — story mode and on-device illustrations.

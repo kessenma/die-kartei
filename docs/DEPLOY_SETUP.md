@@ -384,6 +384,63 @@ Or drive the module directly on a copy:
 `python3 scripts/whats_new.py check` validates the file; `render 1.4` prints what
 shipped.
 
+### The product page
+
+Everything the App Store listing shows lives under `AppStore/`, one home and one script
+per piece, and a `release` deploy pushes them all after the build lands and before
+`asc validate`:
+
+| What | Lives in | Script |
+|---|---|---|
+| Description, keywords, URLs, name | `AppStore/metadata/<locale>/` | `scripts/metadata.py` |
+| Screenshots | `AppStore/screenshots/<locale>/<display type>/` | `scripts/screenshots.py` |
+| What's New | `german-ai-flashcards/Resources/whats_new.json` | `scripts/whats_new.py` |
+
+`AppStore/README.md` is the index. Each script also runs on its own with
+`check` / `push --version X [--dry-run]` / `pull`, so any one piece can go up without
+building anything.
+
+```bash
+python3 scripts/metadata.py check
+python3 scripts/metadata.py push --version 1.6 --dry-run
+python3 scripts/metadata.py pull --version 1.6      # rewrite the files from ASC
+```
+
+One file per field; an empty or missing file leaves that field alone rather than
+clearing it. `description.md` is pushed verbatim — the App Store renders no Markdown,
+so `check` warns when Markdown syntax appears in it. `SKIP_METADATA=1` skips the push
+for one run.
+
+**What's New is deliberately not in `AppStore/metadata/`.** The app ships the same text
+(Settings ▸ About ▸ What's New), so the file has to live in the app bundle;
+`AppStore/whats_new.json` is a symlink to it. `scripts/metadata.py` has no
+`--whats-new` flag on purpose — one field with two writers is one field that drifts.
+
+### Screenshots
+
+App Store screenshots live in `AppStore/screenshots/<locale>/<display type>/`, one
+folder per App Store display type, and are pushed by `scripts/screenshots.py`. A
+`release` deploy uploads them after the build lands and before `asc validate`, so
+the readiness report sees them. TestFlight has no screenshots, so `beta` runs never
+touch them.
+
+```bash
+python3 scripts/screenshots.py check                       # sizes and order, locally
+python3 scripts/screenshots.py push --version 1.6 --dry-run
+python3 scripts/screenshots.py push --version 1.6
+python3 scripts/screenshots.py pull --version 1.5          # what the store shows now
+```
+
+Uploads are additive and matched by MD5 (`--skip-existing`), so a re-run is free and
+an unchanged image is never re-sent. Nothing is ever deleted: a file removed from
+the folder stays on the product page until it is removed in App Store Connect.
+An empty set folder is skipped, so an unfinished iPad set never blocks a release.
+`SKIP_SCREENSHOTS=1` leaves the product page alone for one run.
+
+The version has to exist in App Store Connect before a push, and a `release` deploy
+is what creates it — so the first push for a new version happens inside that deploy.
+`AppStore/screenshots/README.md` has the sizes and the export routine.
+
 ### Dry run — prove the build works without shipping anything
 
 Useful when you want to confirm the toolchain, certificate, and profile are all
@@ -457,6 +514,8 @@ Clean up with `rm -rf .asc/artifacts` when you're done.
 | `BUMP` | `minor` | Marketing-version step used by the version-ahead guard: `patch`, `minor`, `major` |
 | `CHANGELOG` | — | Overrides the TestFlight notes rendered from `whats_new.json` for one run |
 | `WHATS_NEW_ONLY` | — | `1` stops right after `whats_new.json` is stamped: no archive, no upload |
+| `SKIP_METADATA` | — | `1` skips the description/keywords push (`release` only) |
+| `SKIP_SCREENSHOTS` | — | `1` skips the App Store screenshot upload (`release` only) |
 | `TESTFLIGHT_GROUP` | `internal-die-Kartei` | Target beta group (name or ID) |
 | `NOTIFY_TESTERS` | — | `true` notifies testers after distribution |
 | `XCODE_PATH` | — | Pin a toolchain for one run, e.g. `/Applications/Xcode.app` |

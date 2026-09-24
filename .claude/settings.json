@@ -19,7 +19,27 @@
       "mcp__chrome-devtools__close_page",
       "Bash(xargs -I{} sed -n '{}p' Services/JobPostingScripts.swift)",
       "Bash(echo \"--- exit: $? \\(1 = clean\\) ---\")",
-      "Bash(grep -n 'settingsRouter\\\\|hasSeenOnboardingV2\\\\|fullScreenCover\\(isPresented: $showOnboardingWizard\\)' german-ai-flashcards/App/ContentView.swift)"
+      "Bash(grep -n 'settingsRouter\\\\|hasSeenOnboardingV2\\\\|fullScreenCover\\(isPresented: $showOnboardingWizard\\)' german-ai-flashcards/App/ContentView.swift)",
+      "Bash(plutil -lint german-ai-flashcards.xcodeproj/project.pbxproj)",
+      "Bash(xcodebuild -list -project german-ai-flashcards.xcodeproj)",
+      "Bash(xcodebuild build *)",
+      "Bash(plutil -p \"build/Debug-iphonesimulator/Die Kartei Keyboard.appex/Info.plist\")",
+      "Bash(plutil -extract CFBundleShortVersionString raw '/Users/ke/Library/Developer/Xcode/DerivedData/german-ai-flashcards-duernotlqjgwvfheysktjlinwyrj/Build/Products/Debug-iphonesimulator/Die Kartei.app/Info.plist')",
+      "Bash(plutil -extract CFBundleVersion raw '/Users/ke/Library/Developer/Xcode/DerivedData/german-ai-flashcards-duernotlqjgwvfheysktjlinwyrj/Build/Products/Debug-iphonesimulator/Die Kartei.app/Info.plist')",
+      "Bash(plutil -extract CFBundleShortVersionString raw '/Users/ke/Library/Developer/Xcode/DerivedData/german-ai-flashcards-duernotlqjgwvfheysktjlinwyrj/Build/Products/Debug-iphonesimulator/Die Kartei.app/Extensions/Die Kartei Keyboard.appex/Info.plist')",
+      "Bash(plutil -extract CFBundleVersion raw '/Users/ke/Library/Developer/Xcode/DerivedData/german-ai-flashcards-duernotlqjgwvfheysktjlinwyrj/Build/Products/Debug-iphonesimulator/Die Kartei.app/Extensions/Die Kartei Keyboard.appex/Info.plist')",
+      "Bash(find '/Users/ke/Library/Developer/Xcode/DerivedData/german-ai-flashcards-duernotlqjgwvfheysktjlinwyrj/Build/Products/Debug-iphonesimulator/Die Kartei.app' -name *.appex -maxdepth 3)",
+      "Bash(awk '/^## Troubleshooting/,0' docs/DEPLOY_SETUP.md)",
+      "Bash(git worktree *)",
+      "Bash(git branch *)",
+      "Bash(git commit -q -m 'Xcode normalizes the project file *)",
+      "Bash(git merge *)"
+    ],
+    "additionalDirectories": [
+      "/Users/ke/ws/german-flashcards/german-ai-flashcards-kurs/german-ai-flashcards/Models",
+      "/Users/ke/ws/german-flashcards/german-ai-flashcards-kurs/german-ai-flashcards/Services",
+      "/Users/ke/ws/german-flashcards/german-ai-flashcards-kurs/german-ai-flashcards/Features/ClassNotes",
+      "/Users/ke/ws/german-flashcards/german-ai-flashcards-kurs/german-ai-flashcards/Features/Shared"
     ]
   }
 }

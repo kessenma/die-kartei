@@ -55,6 +55,14 @@ with the stamped file. The rendered entry is the TestFlight "What to Test" text;
 and after the upload writes the same text into App Store Connect's What's New
 (en-US). Commit the stamped file afterwards.
 
+Product page: everything the App Store shows lives under AppStore/ — the description,
+keywords and URLs as one file per field in AppStore/metadata/<locale>/
+(scripts/metadata.py), and the screenshots in AppStore/screenshots/<locale>/<display
+type>/ (scripts/screenshots.py). `release` pushes both to the version after the build
+lands, skipping any empty file or set. What's New is the exception: it is generated
+from Resources/whats_new.json so the app can ship the same text. TestFlight has none
+of this, so `beta` never touches it.
+
 Environment:
   VERSION             marketing version to ship as, e.g. 1.5 (skips the prompt)
   BUMP                patch|minor|major       (default: minor)
@@ -64,6 +72,8 @@ Environment:
                       no upload) — a rehearsal of the notes step
   TESTFLIGHT_GROUP    beta group name or ID   (default: internal-die-Kartei)
   XCODE_PATH          developer dir or Xcode.app to pin for this run
+  SKIP_METADATA       1 to skip the description/keywords push (release only)
+  SKIP_SCREENSHOTS    1 to skip the App Store screenshot upload (release only)
   NOTIFY_TESTERS      true to notify testers after distribution
 """
 
@@ -77,7 +87,9 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 
-import whats_new  # scripts/ is sys.path[0] when run as `python3 scripts/deploy.py`
+import metadata  # scripts/ is sys.path[0] when run as `python3 scripts/deploy.py`
+import screenshots
+import whats_new
 
 ROOT = Path(__file__).resolve().parent.parent  # repo root (.xcodeproj lives here)
 MAX_LOGS = 10
@@ -346,8 +358,16 @@ def signing_args():
     """asc flags for archive + export.
 
     Nothing here overrides the project's own signing settings — see the note by
-    EXPORT_OPTIONS. The archive is given API-key credentials so automatic
+    EXPORT_OPTIONS. Both phases are given API-key credentials so automatic
     signing can refresh profiles without a signed-in Xcode GUI account.
+
+    Export needs them just as much as archive, and for a harsher reason. Archive
+    signs for development, where the team's wildcard profile (RHPLRY9X9P.*)
+    covers a bundle ID that was never registered — so a new app extension
+    archives green. Export signs for distribution, which has no wildcard: it
+    wants an App Store profile for that exact bundle ID, and without credentials
+    it can neither create one nor register the App ID, failing with "No Accounts"
+    and "No profiles for <bundle id> were found" after the full archive.
     """
     args = ["--export-options", str(EXPORT_OPTIONS)]
     for flag in (
@@ -357,6 +377,7 @@ def signing_args():
         "-authenticationKeyIssuerID", ASC_ISSUER_ID,
     ):
         args += ["--archive-xcodebuild-flag", flag]
+        args += ["--export-xcodebuild-flag", flag]
     return args
 
 
@@ -757,6 +778,63 @@ def push_app_store_whats_new(version, version_id):
         emit("".join(f"    {line}\n" for line in text.splitlines()))
 
 
+def push_metadata(version):
+    """Write AppStore/metadata (description, keywords, URLs, name) to the version.
+
+    Non-fatal, like What's New and screenshots. Never touches What's New itself —
+    that field is owned by whats_new.json and written by push_app_store_whats_new(),
+    and two writers for one field is how they drift.
+
+    Set SKIP_METADATA=1 to leave the product-page text alone for a run.
+    """
+    if os.environ.get("SKIP_METADATA") == "1":
+        log("⏭", "SKIP_METADATA=1: leaving the App Store description and keywords untouched.")
+        return
+    problems = metadata.check(verbose=False)
+    if problems:
+        log("⚠️", "Metadata not pushed:")
+        emit("".join(f"    {p}\n" for p in problems))
+        return
+    metadata.emit = emit  # tee into the run log; see push_screenshots
+    try:
+        if not metadata.push(version):
+            log("⚠️", "Some metadata did not update; check it in App Store Connect.")
+    except Exception as e:  # noqa: BLE001 - never lose an uploaded build to this
+        log("⚠️", f"Metadata push failed ({e}); edit it in App Store Connect.")
+
+
+def push_screenshots(version):
+    """Upload AppStore/screenshots to the App Store version.
+
+    Non-fatal, like What's New: the build is already uploaded, and a screenshot can
+    always be dragged into App Store Connect by hand. Additive and MD5-skipping, so
+    an unchanged set costs one API round-trip and nothing on the product page moves.
+    Sets with an empty folder are skipped — the iPad set can stay unfinished without
+    blocking a release, which also means a missing set is never reported as an error
+    here. `asc validate` below is what flags a version Apple won't accept.
+
+    Set SKIP_SCREENSHOTS=1 to leave the product page alone for a run.
+    """
+    if os.environ.get("SKIP_SCREENSHOTS") == "1":
+        log("⏭", "SKIP_SCREENSHOTS=1: leaving App Store screenshots untouched.")
+        return
+    problems = screenshots.check(verbose=False)
+    if problems:
+        log("⚠️", "Screenshots not uploaded:")
+        emit("".join(f"    {p}\n" for p in problems))
+        return
+    log("🖼", f"Uploading App Store screenshots for {version}...")
+    # Tee the module's own output into the run log; on its own it only writes to
+    # stdout, and a deploy log that stops short of the upload is the one you want
+    # when a screenshot lands in the wrong set.
+    screenshots.emit = emit
+    try:
+        if not screenshots.push(version):
+            log("⚠️", "Some screenshots did not upload; check them in App Store Connect.")
+    except Exception as e:  # noqa: BLE001 - never lose an uploaded build to this
+        log("⚠️", f"Screenshot upload failed ({e}); upload them in App Store Connect.")
+
+
 # --- changelog -------------------------------------------------------------
 
 def testflight_changelog(version):
@@ -901,8 +979,10 @@ def deploy_release():
         None,
     )
     if version_id:
-        # Notes first, so the readiness report below sees the field populated.
+        # Notes and screenshots first, so the readiness report below sees them populated.
         push_app_store_whats_new(version, version_id)
+        push_metadata(version)
+        push_screenshots(version)
         log("🔍", f"Validating version {version} ({version_id})...")
         asc_stream("validate", "--app", APP_ID, "--version-id", version_id, "--output", "table")
     else:
