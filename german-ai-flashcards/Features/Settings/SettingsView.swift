@@ -27,6 +27,17 @@ struct SettingsView: View {
             List {
                 SettingsHeader(icon: "gearshape", title: "Settings")
 
+                // There's no sign-in: sync rides on the device's Apple Account. The row says
+                // whether it's on; the screen behind it says why not and what to do.
+                Section("Account") {
+                    NavigationLink {
+                        ICloudSyncSettingsView()
+                    } label: {
+                        row("iCloud Sync", systemImage: "icloud", detail: syncSummary)
+                    }
+                }
+                .themedListRow()
+
                 Section("App") {
                     NavigationLink {
                         ThemePickerView()
@@ -166,6 +177,8 @@ struct SettingsView: View {
                     FlashcardsSettingsScreen(modelManager: modelManager)
                 case .memory:
                     MemorySettingsView()
+                case .sync:
+                    ICloudSyncSettingsView()
                 }
             }
         }
@@ -204,6 +217,14 @@ struct SettingsView: View {
     /// Trailing summary on the Gamification row: "Off", or the daily goal.
     private var gamificationSummary: String {
         modelManager.gamificationEnabled ? "\(modelManager.dailyGoalMinutes) min/day" : "Off"
+    }
+
+    /// Trailing summary on the iCloud Sync row.
+    private var syncSummary: String {
+        let sync = SyncManager.shared
+        guard sync.isEnabled, sync.refusalReason == nil else { return "Off" }
+        if sync.account == .noAccount { return "Not signed in" }
+        return sync.engineBusy ? "Syncing…" : "On"
     }
 
     /// Trailing summary on the Speicher row: how many crashes stand in the log, or the event count.

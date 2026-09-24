@@ -93,6 +93,18 @@ struct german_ai_flashcardsApp: App {
         let mm = MLXModelManager()
         _modelManager = State(initialValue: mm)
         _coordinator = State(initialValue: GenerationCoordinator(modelManager: mm))
+
+        // iCloud Sync starts here rather than in a view, so a silent push that wakes the app in
+        // the background finds the engine running. When another device's study lands, the
+        // practice reminders re-plan, so this device doesn't nag about a day already studied.
+        let syncContainer = container
+        SyncManager.shared.onRemoteChanges = { kinds in
+            guard kinds.contains(StudyDayCodec.spec.kind) else { return }
+            Task { @MainActor in
+                await PracticeReminderService.refresh(context: syncContainer.mainContext, modelManager: mm)
+            }
+        }
+        SyncManager.shared.configure(container: container)
     }
 
     var body: some Scene {
@@ -123,6 +135,10 @@ struct german_ai_flashcardsApp: App {
                     if phase == .background {
                         coordinator.mlxService.releaseMemory(reason: .background)
                     }
+                    // iCloud Sync: queue the latest edits before suspension; on return, send and
+                    // fetch (CloudKit pushes can be late or dropped).
+                    if phase == .background { SyncManager.shared.appWillResignActive() }
+                    if phase == .active { Task { await SyncManager.shared.appBecameActive() } }
                     // Keep practice reminders anchored to the real last-practice date: re-derive the
                     // ladder whenever the app enters or leaves the foreground. Leaving captures any
                     // practice done this session; entering picks up permission or settings changes.

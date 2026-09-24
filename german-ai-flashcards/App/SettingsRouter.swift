@@ -12,6 +12,8 @@ enum SettingsRoute: Hashable {
     case cards
     /// Settings ▸ Speicher — memory readings and the crash/memory log.
     case memory
+    /// Settings ▸ Account ▸ iCloud Sync.
+    case sync
 }
 
 /// Lets any screen ask to be taken to a Settings destination.

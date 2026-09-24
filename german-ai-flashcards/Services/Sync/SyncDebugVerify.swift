@@ -105,6 +105,30 @@ enum SyncDebugVerify {
         await rounds(phone, pad)
         check(fetchDeck("Reise", b) == nil, "delete: the deck is gone from the iPad")
         check(card("der Zug", b) == nil, "delete: its cards went with it")
+        // 5. Both devices build the Wortschatz box offline (2,825 cards each) and review a word:
+        //    canonical ids make it one deck, and only reviewed cards travel.
+        let words = GoetheVocabService.orderedWords.filter { $0.translation?.isEmpty == false }
+        if words.count >= 2,
+           let boxA = DeckStore(modelContext: a).fetchOrCreateWortschatzDeck(),
+           let boxB = DeckStore(modelContext: b).fetchOrCreateWortschatzDeck() {
+            check(boxA.id == boxB.id, "Wortschatz: both devices derived the same deck id")
+            let w1 = words[0].word, w2 = words[1].word
+            SpacedRepetitionService.apply(rating: .good, to: boxA.cards.first { $0.germanWord == w1 }!)
+            SpacedRepetitionService.apply(rating: .good, to: boxB.cards.first { $0.germanWord == w2 }!)
+            try? a.save()
+            try? b.save()
+            await rounds(phone, pad)
+            check(goetheDecks(a) == 1 && goetheDecks(b) == 1,
+                  "Wortschatz: one box per device after sync (\(goetheDecks(a)), \(goetheDecks(b)))")
+            let cardA2 = card(w2, a), cardB1 = card(w1, b)
+            check(cardA2?.repetitions == 1 && cardB1?.repetitions == 1,
+                  "Wortschatz: each device's review reached the other")
+            let syncedCards = server.records.keys.filter { $0.hasPrefix("SavedCard:") }.count
+            check(syncedCards == 2, "Wortschatz: only the 2 reviewed cards went to iCloud (\(syncedCards))")
+        } else {
+            check(false, "Wortschatz: couldn't build the box (word list empty?)")
+        }
+
         check(phone.pendingCount == 0 && pad.pendingCount == 0,
               "settled: nothing pending (\(phone.pendingCount), \(pad.pendingCount))")
 
@@ -146,6 +170,10 @@ enum SyncDebugVerify {
 
     private static func card(_ word: String, _ context: ModelContext) -> SavedCard? {
         (try? context.fetch(FetchDescriptor<SavedCard>(predicate: #Predicate { $0.germanWord == word })))?.first
+    }
+
+    private static func goetheDecks(_ context: ModelContext) -> Int {
+        (try? context.fetchCount(FetchDescriptor<SavedDeck>(predicate: #Predicate { $0.generatorRaw == "goethe-srs" }))) ?? -1
     }
 
     private static func count<T: PersistentModel>(_ type: T.Type, _ context: ModelContext) -> Int {

@@ -343,6 +343,8 @@ struct DeckStore {
         }
         let deck = SavedDeck(topic: topic, wordCount: 0, includeExamples: false, includeGender: false)
         deck.generatorRaw = "goethe"
+        // The same id on every device, so iCloud Sync sees one deck, not one per device.
+        deck.id = SyncSingletonDecks.deckID(generatorRaw: deck.generatorRaw, topic: topic)
         modelContext.insert(deck)
         try? modelContext.save()
         return deck
@@ -371,7 +373,7 @@ struct DeckStore {
             }
             var nextOrder = (deck.cards.map(\.sortOrder).max() ?? -1) + 1
             for word in words where !seen.contains(word.word) {
-                guard let card = Self.makeCard(for: word, sortOrder: nextOrder) else { continue }
+                guard let card = Self.makeCard(for: word, sortOrder: nextOrder, deckID: deck.id) else { continue }
                 deck.cards.append(card)
                 modelContext.insert(card)
                 nextOrder += 1
@@ -388,15 +390,19 @@ struct DeckStore {
             includeGender: true
         )
         deck.generatorRaw = "goethe-srs"
-        deck.cards = words.enumerated().compactMap { index, word in Self.makeCard(for: word, sortOrder: index) }
+        // Canonical ids for the deck and every card: two devices building the box offline create
+        // the same records, which sync merges instead of duplicating.
+        deck.id = SyncSingletonDecks.deckID(generatorRaw: deck.generatorRaw, topic: Self.wortschatzTopic)
+        let deckID = deck.id
+        deck.cards = words.enumerated().compactMap { index, word in Self.makeCard(for: word, sortOrder: index, deckID: deckID) }
         modelContext.insert(deck)
         try? modelContext.save()
         return deck
     }
 
-    private static func makeCard(for word: GoetheWord, sortOrder: Int) -> SavedCard? {
+    private static func makeCard(for word: GoetheWord, sortOrder: Int, deckID: UUID) -> SavedCard? {
         guard let translation = word.translation, !translation.isEmpty else { return nil }
-        return SavedCard(
+        let card = SavedCard(
             germanWord: word.word,
             englishTranslation: translation,
             wordType: word.rawWordType,
@@ -404,6 +410,8 @@ struct DeckStore {
             exampleSentence: word.example?.isEmpty == false ? word.example : nil,
             sortOrder: sortOrder
         )
+        card.id = SyncSingletonDecks.cardID(deckID: deckID, germanWord: word.word)
+        return card
     }
 
     func fetchOrCreatePastTenseStatsDeck(for topic: String) -> SavedDeck? {
@@ -415,6 +423,7 @@ struct DeckStore {
         if let existing = (try? modelContext.fetch(descriptor))?.first { return existing }
         let deck = SavedDeck(topic: topic, wordCount: 0, includeExamples: true, includeGender: false)
         deck.generatorRaw = "past-tense"
+        deck.id = SyncSingletonDecks.deckID(generatorRaw: deck.generatorRaw, topic: topic)
         modelContext.insert(deck)
         try? modelContext.save()
         return deck
@@ -439,6 +448,7 @@ struct DeckStore {
                     exampleSentence: card.exampleSentence,
                     sortOrder: nextOrder
                 )
+                saved.id = SyncSingletonDecks.cardID(deckID: deck.id, germanWord: card.germanWord)
                 deck.cards.append(saved)
                 modelContext.insert(saved)
                 nextOrder += 1
@@ -449,8 +459,10 @@ struct DeckStore {
 
         let deck = SavedDeck(topic: topic, wordCount: cards.count, includeExamples: true, includeGender: false)
         deck.generatorRaw = "past-tense-srs"
+        deck.id = SyncSingletonDecks.deckID(generatorRaw: deck.generatorRaw, topic: topic)
+        let deckID = deck.id
         deck.cards = cards.enumerated().map { index, card in
-            SavedCard(
+            let saved = SavedCard(
                 germanWord: card.germanWord,
                 englishTranslation: card.englishTranslation,
                 wordType: card.wordType,
@@ -458,6 +470,8 @@ struct DeckStore {
                 exampleSentence: card.exampleSentence,
                 sortOrder: index
             )
+            saved.id = SyncSingletonDecks.cardID(deckID: deckID, germanWord: card.germanWord)
+            return saved
         }
         modelContext.insert(deck)
         try? modelContext.save()
@@ -471,6 +485,7 @@ struct DeckStore {
         if let existing = (try? modelContext.fetch(descriptor))?.first { return existing }
         let deck = SavedDeck(topic: topic, wordCount: 0, includeExamples: false, includeGender: false)
         deck.generatorRaw = "grammar"
+        deck.id = SyncSingletonDecks.deckID(generatorRaw: deck.generatorRaw, topic: topic)
         modelContext.insert(deck)
         try? modelContext.save()
         return deck

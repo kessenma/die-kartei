@@ -43,6 +43,8 @@ final class SyncCoordinator {
     /// Scan for local changes (the first scan credits pre-sync data to its bootstrap slots), queue
     /// everything still owed to the server, and start watching saves.
     func start() {
+        // Singleton rows need their canonical ids before the first scan names their records.
+        SyncCanonicalizer.runIfNeeded(in: context)
         pushLocalChanges()
         requeueOwed()
         guard saveObserver == nil else { return }
