@@ -25,6 +25,10 @@ nonisolated enum SyncFieldRule: Sendable {
     case min
     /// True if either side is true.
     case or
+    /// An array of strings that only grows (fired celebrations): the sorted union.
+    case union
+    /// An object of numbers or dates where each key keeps its smallest value (badge earned dates).
+    case minMap
     /// An array of objects identified by `idField`. Adds from either side are kept. A removal
     /// (the item is in the ancestor but gone from one side) wins, unless the other side edited the
     /// item since the ancestor: then the edit wins. Output is sorted by `sortBy`, then id, so both
@@ -226,6 +230,22 @@ nonisolated enum SyncMerge {
             return (ln > rn) == (rule.isMax) ? l : r
         case .or:
             return .bool((l.boolValue ?? false) || (r.boolValue ?? false))
+        case .union:
+            let all = Set((l.arrayValue ?? []).compactMap(\.stringValue) + (r.arrayValue ?? []).compactMap(\.stringValue))
+            if all.isEmpty && l == .null && r == .null { return .null }
+            return .array(all.sorted().map(SyncJSON.string))
+        case .minMap:
+            let lm = l.objectValue ?? [:], rm = r.objectValue ?? [:]
+            var out: [String: SyncJSON] = [:]
+            for k in Set(lm.keys).union(rm.keys) {
+                switch (lm[k]?.doubleValue, rm[k]?.doubleValue) {
+                case let (a?, b?): out[k] = a <= b ? lm[k] : rm[k]
+                case (_?, nil): out[k] = lm[k]
+                case (nil, _?): out[k] = rm[k]
+                case (nil, nil): break
+                }
+            }
+            return out.isEmpty && l == .null && r == .null ? .null : .object(out)
         case let .set(idField, lowercasedID, item, sortBy):
             let id: (SyncJSON) -> String = { element in
                 if let s = element[idField]?.stringValue { return lowercasedID ? s.lowercased() : s }

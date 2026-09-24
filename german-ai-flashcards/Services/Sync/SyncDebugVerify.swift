@@ -53,9 +53,9 @@ enum SyncDebugVerify {
         guard seeded else { return report(lines, failures) }
 
         let phone = SyncCoordinator(context: a, identity: SyncIdentity(replica: "phone", store: "A"),
-                                    transport: FakeSyncTransport(server: server))
+                                    transport: FakeSyncTransport(server: server), includeDocuments: false)
         let pad = SyncCoordinator(context: b, identity: SyncIdentity(replica: "pad", store: "B"),
-                                  transport: FakeSyncTransport(server: server))
+                                  transport: FakeSyncTransport(server: server), includeDocuments: false)
         phone.start()
         pad.start()
         await rounds(phone, pad)

@@ -208,3 +208,22 @@ private func value(_ p: SyncPayload, _ key: String, _ spec: SyncKindSpec) -> Syn
         #expect(SyncRecordName(name.description) == name)
     }
 }
+
+@Suite struct UnionAndMinMapTests {
+    private let spec = SyncKindSpec(kind: "Progress", rules: ["fired": .union, "badges": .minMap])
+
+    @Test func firedCelebrationsUnionAndBadgesKeepTheEarliestDate() {
+        let a = SyncMerge.compose(base: nil, known: [
+            "fired": .array([.string("streak.7"), .string("layer.a1")]),
+            "badges": .object(["first-deck": .int(100), "week": .int(500)]),
+        ], spec: spec, slot: "a", now: 1)
+        let b = SyncMerge.compose(base: nil, known: [
+            "fired": .array([.string("streak.7"), .string("streak.14")]),
+            "badges": .object(["first-deck": .int(80), "story": .int(300)]),
+        ], spec: spec, slot: "b", now: 2)
+        let merged = SyncMerge.merge(ancestor: nil, local: a, remote: b, spec: spec)
+        #expect(merged["fired"] == .array([.string("layer.a1"), .string("streak.14"), .string("streak.7")]))
+        #expect(merged["badges"] == .object(["first-deck": .int(80), "week": .int(500), "story": .int(300)]))
+        #expect(merged == SyncMerge.merge(ancestor: nil, local: b, remote: a, spec: spec))
+    }
+}

@@ -29,12 +29,16 @@ final class SyncCoordinator {
     /// Called after server changes landed, with the kinds that changed (reminders, backfills).
     @ObservationIgnored var didApplyRemoteChanges: ((Set<String>) -> Void)?
 
-    init(context: ModelContext, identity: SyncIdentity, transport: any SyncTransport) {
+    init(context: ModelContext, identity: SyncIdentity, transport: any SyncTransport, includeDocuments: Bool = true) {
         self.context = context
         self.identity = identity
         self.transport = transport
         self.tracker = SyncChangeTracker(context: context, identity: identity)
         self.applier = SyncApplier(context: context, identity: identity)
+        if !includeDocuments {
+            tracker.documents = []
+            applier.documents = [:]
+        }
         transport.delegate = self
     }
 

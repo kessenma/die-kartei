@@ -35,6 +35,8 @@ final class SyncApplier {
     private let identity: SyncIdentity
     /// Returns true while a row must not be deleted from under the learner (a deck being studied).
     var isInUse: (String) -> Bool = { _ in false }
+    /// See `SyncChangeTracker.documents`.
+    var documents: [String: any SyncDocumentKind] = SyncDocuments.byKind
     private let log = Logger(subsystem: "kyle-essenmacher.german-ai-flashcards", category: "sync")
 
     init(context: ModelContext, identity: SyncIdentity) {
@@ -60,6 +62,12 @@ final class SyncApplier {
                     return s
                 }()
                 if state.serverStamp != nil, state.lastSeenTag == record.tag, state.heldPayload == nil { continue }
+
+                if SyncRegistry.byKind[name.kind] == nil, let document = documents[name.kind],
+                   document.spec.canRead(record.payload) {
+                    applyDocument(document, name: name, record: record, state: state, outcome: &outcome)
+                    continue
+                }
 
                 // A kind this build doesn't know (added by a newer build), or a newer breaking
                 // generation: keep it until an update can read it.
@@ -160,6 +168,30 @@ final class SyncApplier {
             outcome.inserted += 1
             outcome.changedKinds.insert(name.kind)
         }
+    }
+
+    private func applyDocument(
+        _ document: any SyncDocumentKind, name: SyncRecordName, record: SyncIncoming,
+        state: SyncRecordState, outcome: inout Outcome
+    ) {
+        state.serverStamp = record.stamp
+        state.lastSeenTag = record.tag
+        var copies = state.copies
+        let result = SyncRecordLogic.receive(
+            &copies, remote: record.payload, known: SyncDocuments.known(for: name), spec: document.spec,
+            slot: identity.replica, now: Date().timeIntervalSinceReferenceDate
+        )
+        state.copies = copies
+        state.heldPayload = nil
+        state.heldReason = nil
+        if let apply = result.apply {
+            document.apply(SyncMerge.flatten(apply, spec: document.spec), name: name)
+            outcome.changedKinds.insert(name.kind)
+            outcome.updated += 1
+        }
+        state.needsUpload = result.upload
+        state.updatedAt = .now
+        if result.upload { outcome.uploads.append(record.name) }
     }
 
     private func hold(_ state: SyncRecordState, _ record: SyncIncoming, reason: String) {

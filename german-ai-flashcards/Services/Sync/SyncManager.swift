@@ -34,6 +34,9 @@ final class SyncManager {
     @ObservationIgnored private var accountObserver: NSObjectProtocol?
     /// Runs after server changes land (reminders re-plan when another device studied today).
     @ObservationIgnored var onRemoteChanges: ((Set<String>) -> Void)?
+    /// The model manager caches the level and a few records in memory; synced values are written
+    /// through it so the UI sees them.
+    @ObservationIgnored weak var modelManager: MLXModelManager?
 
     static let enabledKey = "sync.enabled"
     static let userRecordKey = "sync.userRecordID"
@@ -71,6 +74,9 @@ final class SyncManager {
     }
 
     var isRunning: Bool { coordinator != nil }
+
+    /// What the seeders answer while sync runs: their invented progress would reach every device.
+    static let seedRefusal = "iCloud Sync is on. Seeding would copy invented progress to every device. Turn sync off first."
 
     func setEnabled(_ on: Bool) {
         UserDefaults.standard.set(on, forKey: Self.enabledKey)

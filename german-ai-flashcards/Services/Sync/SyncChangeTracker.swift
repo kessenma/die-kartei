@@ -22,6 +22,9 @@ final class SyncChangeTracker {
 
     private let context: ModelContext
     private let identity: SyncIdentity
+    /// Records outside SwiftData. Empty in the DEBUG round trip, whose two stores share one app's
+    /// UserDefaults and files.
+    var documents: [any SyncDocumentKind] = SyncDocuments.kinds
     private let log = Logger(subsystem: "kyle-essenmacher.german-ai-flashcards", category: "sync")
     static let pageSize = 200
 
@@ -80,6 +83,7 @@ final class SyncChangeTracker {
                 guard let key = id.syncKey, let state = SyncStoreMeta.state(localKey: key, in: context) else { continue }
                 if markDeleted(state) { outcome.deletes.append(state.recordName) }
             }
+            outcome.saves += noteDocuments(bootstrapping: false)
             if let lastToken { meta.historyToken = encodeToken(lastToken) }
             return outcome
         }
@@ -130,6 +134,7 @@ final class SyncChangeTracker {
                 }
             }
 
+            outcome.saves += noteDocuments(bootstrapping: bootstrapping)
             meta.initialScanDone = true
             if let latest { meta.historyToken = encodeToken(latest) }
             return outcome
@@ -181,6 +186,32 @@ final class SyncChangeTracker {
         state.needsUpload = upload
         state.updatedAt = .now
         return upload ? state.recordName : nil
+    }
+
+    /// Records outside SwiftData (UserDefaults progress, the journey and placement files): compared
+    /// with their last synced copy every pass, since history can't see them.
+    private func noteDocuments(bootstrapping: Bool) -> [String] {
+        var names: [String] = []
+        for kind in documents {
+            for (name, known) in kind.localRecords() {
+                let key = name.description
+                let state = SyncStoreMeta.states(named: [key], in: context)[key] ?? {
+                    let s = SyncRecordState(recordName: key, kind: name.kind)
+                    context.insert(s)
+                    return s
+                }()
+                var copies = state.copies
+                let slot = bootstrapping && copies.base == nil ? identity.slot(for: .perStore) : identity.replica
+                let upload = SyncRecordLogic.noteLocal(
+                    &copies, known: known, spec: kind.spec, slot: slot,
+                    now: Date().timeIntervalSinceReferenceDate
+                )
+                if copies != state.copies { state.copies = copies }
+                if state.needsUpload != upload { state.needsUpload = upload }
+                if upload { names.append(key) }
+            }
+        }
+        return names
     }
 
     /// A local delete. Returns true if the server must hear about it. A record the server never

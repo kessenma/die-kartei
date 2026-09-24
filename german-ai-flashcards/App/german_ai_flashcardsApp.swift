@@ -104,6 +104,7 @@ struct german_ai_flashcardsApp: App {
                 await PracticeReminderService.refresh(context: syncContainer.mainContext, modelManager: mm)
             }
         }
+        SyncManager.shared.modelManager = mm
         SyncManager.shared.configure(container: container)
     }
 
