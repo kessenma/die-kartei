@@ -196,7 +196,7 @@ struct GrammarHubView: View {
         .padding(.vertical, 4)
     }
 
-    /// One dot per story (filled once its Finden and Einsetzen are both played) and one for the
+    /// One dot per story (filled once its Markieren and Endungen are both played) and one for the
     /// Schnellrunde. Keyed on (storyID, unit, step), never on a title.
     private func progressDots(_ unit: KasusUnit) -> some View {
         let progress = KasusProgress(rounds: rounds)
@@ -261,7 +261,7 @@ struct GrammarHubView: View {
         }
     }
 
-    /// Last: Dativ · Einsetzen · today
+    /// Last: Dativ · Endungen · today
     private func lastRoundLine(_ entry: GrammarHistoryEntry) -> String {
         "Last: \(entry.shortLabel) · \(KasusHistoryFormat.relativeDay(entry.date))"
     }

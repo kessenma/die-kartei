@@ -7,7 +7,7 @@
 //  the same question; each used to answer it on its own, and the pyramid sent every case focus to
 //  the preposition hub.
 //
-//    akkusativ · dativ · genitiv     Einsetzen in the unit's least-recently-played story, or the
+//    akkusativ · dativ · genitiv     Endungen in the unit's least-recently-played story, or the
 //                                    unit's Schnellrunde while the unit has no story yet
 //    artikel                         a der/die/das round at the learner's level
 //    praepositionen · wechsel…       the preposition hub
@@ -23,7 +23,7 @@ import Foundation
 import SwiftData
 
 enum GrammarRoute: Hashable {
-    /// A Kasus unit: its least-recently-played story at Einsetzen, else its Schnellrunde.
+    /// A Kasus unit: its least-recently-played story at Endungen, else its Schnellrunde.
     case kasus(KasusUnit)
     /// A der/die/das round.
     case articleGame
@@ -96,8 +96,8 @@ enum GrammarRoute: Hashable {
 
     // MARK: Kasus
 
-    /// The unit's story at Einsetzen, the step that moves the case skill, or its Schnellrunde
-    /// while the unit has no story. The step bar still reaches Lesen and Finden.
+    /// The unit's story at Endungen, the step that moves the case skill, or its Schnellrunde
+    /// while the unit has no story. The step bar still reaches Lesen and Markieren.
     static func kasusActivity(for unit: KasusUnit, rounds: [KasusRound],
                               bank: KasusStoryBank = .bundled) -> Activity {
         if let story = practiceStory(for: unit, rounds: rounds, bank: bank) {

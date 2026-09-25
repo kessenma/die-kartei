@@ -6,20 +6,24 @@
 //  `PrepositionService`'s shape (a stateless enum over the caller's `ModelContext`):
 //
 //    sessions      what `.kasusStory` launches: a story, its unit, gemischt or not, where to start
-//    blanks        which articles Einsetzen hides, and the buttons each one offers
+//    Markieren     the round's result for recording (the round itself is KasusMarking.swift)
+//    Endungen      the gaps, ending buttons and grading live in KasusEndings.swift
+//    blanks        the old whole-article Einsetzen's blanks and buttons, until its view is gone
 //    grading       first pick only; the right case for another gender is a gender slip
-//    recording     `recordRound`: streak + time, one `KasusRound`, and the coach's case skills
+//    recording     `recordRound`: streak + time, one `KasusRound`, and the coach's case skills;
+//                  `markAnswersShown` flags a recorded round when Lösung zeigen is tapped
 //    progress      which steps are done, keyed on (storyID, unit, step), never on a display string
 //    the path      `KasusPath.next`: the hub's "Weiter" row
 //
-//  The coach only hears about answers that were the learner's own work. Finden is recognition
-//  and never moves a skill; Viel Hilfe never does; at Genus-Hilfe only masculine targets count
-//  (the f/n/pl Akkusativ forms equal the tag); at Ohne Hilfe everything counts unless the Tipp
-//  showed the case or the answer, or showed the gender of an f/n/pl Akkusativ. The Schnellrunde
-//  names each noun with its article, so its f/n/pl Akkusativ answers are left out the same way.
-//  Slips (right case, wrong gender or number) say nothing about the case, so they're left out,
-//  and a case needs `minItemsPerCase` such answers before its skill moves at all. Nominativ has
-//  no skill, so it only ever counts for the streak. The same precedent as
+//  The coach only hears about answers that were the learner's own work. Markieren (and the old
+//  Finden) is recognition and never moves a skill; Lernhilfe and Viel Hilfe never do; at
+//  Genus-Hilfe only masculine targets count (the f/n/pl Akkusativ forms equal the tag); at Ohne
+//  Hilfe everything counts unless the Tipp showed the case or the answer, or showed the gender
+//  of an f/n/pl Akkusativ. An answer Lösung zeigen showed, or a gap left empty, never counts.
+//  The Schnellrunde names each noun with its article, so its f/n/pl Akkusativ answers are left
+//  out the same way. Slips (right case, wrong gender or number) say nothing about the case, so
+//  they're left out, and a case needs `minItemsPerCase` such answers before its skill moves at
+//  all. Nominativ has no skill, so it only ever counts for the streak. The same precedent as
 //  `PrepositionAnswerOutcome.scaffolded`.
 //
 
@@ -28,9 +32,14 @@ import SwiftData
 
 // MARK: - Hint level
 
-/// The Einsetzen hint ladder. One segmented control, remembered in `kasus.hintLevel`.
+/// The Endungen hint ladder, most help first. One control, remembered in `kasus.hintLevel`.
 enum KasusHintLevel: String, CaseIterable, Identifiable {
-    /// The gender tag, the trigger underlined, and only the noun's own gender on the buttons.
+    /// Lernhilfe: the case table in the exercise with the focused gap's cell highlighted (its
+    /// case row, its gender column, the ending showing), the gender and case chips, the gender
+    /// tag, the trigger underlined and fewer buttons. Practically the answer, so it never counts.
+    case lern
+    /// The case table (no highlight), the gender tag, the trigger underlined, and only the noun's
+    /// own gender on the buttons.
     case viel
     /// The m/f/n/pl tag after the noun; the whole family on the buttons.
     case genus
@@ -44,6 +53,7 @@ enum KasusHintLevel: String, CaseIterable, Identifiable {
 
     var germanLabel: String {
         switch self {
+        case .lern:  "Lernhilfe"
         case .viel:  "Viel Hilfe"
         case .genus: "Genus-Hilfe"
         case .ohne:  "Ohne Hilfe"
@@ -52,6 +62,7 @@ enum KasusHintLevel: String, CaseIterable, Identifiable {
 
     var englishLabel: String {
         switch self {
+        case .lern:  "Learning help"
         case .viel:  "Lots of help"
         case .genus: "Gender shown"
         case .ohne:  "No hints"
@@ -79,16 +90,24 @@ enum KasusHintLevel: String, CaseIterable, Identifiable {
     /// "Noch mal · eine Stufe schwerer". Nil at the top.
     var harder: KasusHintLevel? {
         switch self {
+        case .lern:  .viel
         case .viel:  .genus
         case .genus: .ohne
         case .ohne:  nil
         }
     }
+
+    /// Lernhilfe and Viel Hilfe show so much that no answer given there moves the coach.
+    var neverCountsTowardSkill: Bool { self == .lern || self == .viel }
+
+    /// Both show the case table in the exercise; Lernhilfe also highlights the gap's cell.
+    var showsCaseTable: Bool { self == .lern || self == .viel }
 }
 
 // MARK: - Steps and sessions
 
-/// The story player's screens, in order. Only Finden and Einsetzen are scored.
+/// The story player's screens, in order. Only Markieren (`finden`) and Endungen (`einsetzen`) are
+/// scored; the case names are older than the exercises they now stand for.
 enum KasusStep: String, CaseIterable, Identifiable {
     case lesen, finden, einsetzen, ergebnis
 
@@ -97,8 +116,8 @@ enum KasusStep: String, CaseIterable, Identifiable {
     var germanLabel: String {
         switch self {
         case .lesen:     "Lesen"
-        case .finden:    "Finden"
-        case .einsetzen: "Einsetzen"
+        case .finden:    "Markieren"
+        case .einsetzen: "Endungen"
         case .ergebnis:  "Ergebnis"
         }
     }
@@ -106,8 +125,8 @@ enum KasusStep: String, CaseIterable, Identifiable {
     var englishLabel: String {
         switch self {
         case .lesen:     "Read"
-        case .finden:    "Mark the cases"
-        case .einsetzen: "Fill in the articles"
+        case .finden:    "Mark the case"
+        case .einsetzen: "Fill in the endings"
         case .ergebnis:  "Result"
         }
     }
@@ -150,28 +169,45 @@ struct KasusPrefill: Hashable {
 
     var answers: Answers?
     var hint: KasusHintLevel?
+    /// Both exercises' feedback mode for that launch, without overwriting the stored ones.
+    var feedback: KasusFeedbackMode? = nil
 
     #if DEBUG
-    /// `-kasus.debugAnswers right|mixed` and `-kasus.debugHint viel|genus|ohne`. Nil when neither
-    /// is set.
+    /// `-kasus.debugAnswers right|mixed`, `-kasus.debugHint lern|viel|genus|ohne` and
+    /// `-kasus.debugFeedback sofort|amEnde`. Nil when none is set.
     static func fromLaunchArguments(_ defaults: UserDefaults = .standard) -> KasusPrefill? {
         let answers = defaults.string(forKey: "kasus.debugAnswers").flatMap { Answers(rawValue: $0.lowercased()) }
         let hint = defaults.string(forKey: "kasus.debugHint").flatMap { KasusHintLevel(rawValue: $0.lowercased()) }
-        guard answers != nil || hint != nil else { return nil }
-        return KasusPrefill(answers: answers, hint: hint)
+        let feedback = defaults.string(forKey: "kasus.debugFeedback").flatMap(KasusFeedbackMode.parse)
+        guard answers != nil || hint != nil || feedback != nil else { return nil }
+        return KasusPrefill(answers: answers, hint: hint, feedback: feedback)
     }
     #endif
 }
 
-/// A story validated once for a session: the located targets every step renders.
+/// A story validated once for a session: the located targets every step renders, and the story
+/// as numbered sentences with every word classified for Markieren.
 struct KasusPlayableStory {
     let story: KasusStory
     let report: KasusReport
+    /// The numbered sentences both story exercises show (Lesen keeps the paragraphs).
+    let numbered: KasusNumberedStory
+
+    init(story: KasusStory, report: KasusReport, lexicon: some KasusLexicon) {
+        self.story = story
+        self.report = report
+        numbered = KasusNumberedStory.build(story: story, targets: report.located, lexicon: lexicon)
+    }
 
     /// Every target found in the text, in reading order.
     var targets: [KasusLocatedTarget] { report.located }
-    /// The ones Finden may mark and score.
+    /// The ones Markieren may count and score.
     var gradable: [KasusLocatedTarget] { report.located.filter(\.gradable) }
+    var sentences: [KasusSentence] { numbered.sentences }
+
+    func target(_ index: Int) -> KasusLocatedTarget? {
+        report.located.first { $0.index == index }
+    }
 }
 
 // MARK: - Einsetzen blanks
@@ -192,9 +228,9 @@ struct KasusBlank: Identifiable, Hashable {
 
     /// Viel Hilfe and Genus-Hilfe: the raised m/f/n/pl tag after the noun, in `Gender.color`.
     var showsGenderTag: Bool { hintLevel != .ohne }
-    /// Viel Hilfe: the trigger gets an underline (`target.triggerRange`). Not on a bare time
-    /// phrase, where the verb next to it isn't what decides.
-    var underlinesTrigger: Bool { hintLevel == .viel && !isBareTimePhrase }
+    /// Lernhilfe and Viel Hilfe: the trigger gets an underline (`target.triggerRange`). Not on a
+    /// bare time phrase, where the verb next to it isn't what decides.
+    var underlinesTrigger: Bool { hintLevel.showsCaseTable && !isBareTimePhrase }
     /// A time phrase with no preposition („jeden Tag“): being a time phrase is what makes it
     /// Akkusativ, so there's no deciding word to point at, and the Tipp says so instead.
     var isBareTimePhrase: Bool { target.spec.reason == .time && target.preposition == nil }
@@ -241,7 +277,8 @@ enum KasusPickOutcome: Hashable {
 
 // MARK: - Finden marks
 
-/// A gradable target after Prüfen.
+/// A gradable target after the old Finden's Prüfen. Markieren grades words instead
+/// (`KasusMarkVerdict`); this stays until the brush-sorting view is gone.
 enum KasusFindMark: Hashable {
     /// Painted with its own case's brush.
     case right
@@ -258,7 +295,8 @@ enum KasusFindMark: Hashable {
 struct KasusItemResult: Hashable {
     let kasus: GrammarCase
     let genus: Gender
-    /// Right on the first pick (Einsetzen, Schnellrunde) or painted with the right brush (Finden).
+    /// Right on the first pick (Endungen, Schnellrunde), every word marked (Markieren), or painted
+    /// with the right brush (the old Finden).
     let firstTry: Bool
     /// Right case, wrong gender (or wrong number on a noun like Schlüssel). Practice for the
     /// streak, but it says nothing about the case.
@@ -270,9 +308,18 @@ struct KasusItemResult: Hashable {
     /// The round history's copy of this answer: its sentence, the pick and why. Nil in the debug
     /// checks' synthetic rounds.
     var record: KasusRoundItem? = nil
+    /// Lösung zeigen showed the answer before the learner gave one. Never counts, and isn't
+    /// answered for the streak.
+    var revealed: Bool = false
+    /// Am Ende: the gap was still empty at Prüfen. Asked, but not answered.
+    var unanswered: Bool = false
+
+    /// The learner gave an answer (right or wrong): what the streak counts.
+    var isAnswered: Bool { !revealed && !unanswered }
 }
 
-/// A finished Finden, Einsetzen or Schnellrunde, handed to `KasusService.recordRound`.
+/// A finished Markieren, Endungen or Schnellrunde (or an old Finden or Einsetzen), handed to
+/// `KasusService.recordRound`.
 struct KasusRoundResult {
     /// The story's id, or `KasusService.quickRoundID(for:)` for a Schnellrunde.
     let storyID: String
@@ -282,22 +329,57 @@ struct KasusRoundResult {
     var hintLevel: KasusHintLevel? = nil
     let items: [KasusItemResult]
     let durationSeconds: Int
-    /// Finden only: how many phrases were painted. The unpainted ones are in `items` (as missed)
-    /// for the score, but nobody answered them.
+    /// The old Finden only: how many phrases were painted. The unpainted ones are in `items` (as
+    /// missed) for the score, but nobody answered them.
     var paintedCount: Int? = nil
+    /// Markieren and Endungen: which mode the round ran in.
+    var feedbackMode: KasusFeedbackMode? = nil
+    /// Markieren: the case the round asked.
+    var markCase: GrammarCase? = nil
+    /// Markieren: the word counts behind the class sheet's score. When set, it, not `items`, is
+    /// what the counts, the score and the per-case tally read: `items` are phrase-level history.
+    var markScore: KasusMarkScore? = nil
+    /// Lösung zeigen was tapped before the round was recorded (Endungen in Sofort, giving up on
+    /// the last gaps). After recording, `KasusService.markAnswersShown(roundID:in:)` flags it.
+    var revealedAnswers: Bool = false
+    /// Ties the stored `KasusRound` to this result, so Lösung zeigen can find it later. Use the
+    /// round's own id (`KasusMarkRound.id`, `KasusEndingsRound.id`).
+    var id: UUID = UUID()
 
-    var askedCount: Int { items.count }
-    /// What the streak and XP count: every answer, but in Finden only the painted phrases.
-    var answeredCount: Int { paintedCount ?? items.count }
-    var firstTryCount: Int { items.filter(\.firstTry).count }
-    var score: Double { items.isEmpty ? 0 : Double(firstTryCount) / Double(items.count) }
+    /// Markieren: the words to find. Otherwise one per item.
+    var askedCount: Int { markScore?.caseWords ?? items.count }
+    /// What the streak and XP count. Markieren: the words to find (recognition, like the old
+    /// Finden's painted phrases), or none when nothing was marked (Prüfen straight away, to see
+    /// the answers). Otherwise every answer the learner gave: an empty gap or one Lösung zeigen
+    /// filled in isn't one.
+    var answeredCount: Int {
+        if let markScore { return markScore.right + markScore.wrong > 0 ? markScore.caseWords : 0 }
+        return paintedCount ?? items.filter(\.isAnswered).count
+    }
+    /// Markieren: the words marked right. Otherwise the items right on the first pick.
+    var firstTryCount: Int { markScore?.right ?? items.filter(\.firstTry).count }
+    /// Markieren: words marked wrong. Zero everywhere else.
+    var wrongCount: Int { markScore?.wrong ?? 0 }
+    /// Markieren: the class sheet's max(0, right − wrong) / words. Otherwise the first-try share.
+    var score: Double {
+        if let markScore { return markScore.fraction }
+        return items.isEmpty ? 0 : Double(firstTryCount) / Double(items.count)
+    }
 
+    /// First tries per case. Markieren: its one case, with the class sheet's points (right minus
+    /// wrong), so the case bars agree with the score and marking everything fills nothing.
     var perCase: [GrammarCase: KasusRound.CaseTally] {
-        items.reduce(into: [:]) { tally, item in
+        if let markScore, let markCase {
+            return [markCase: .init(asked: markScore.caseWords, firstTry: markScore.points)]
+        }
+        return items.reduce(into: [:]) { tally, item in
             tally[item.kasus, default: .init()].asked += 1
             if item.firstTry { tally[item.kasus, default: .init()].firstTry += 1 }
         }
     }
+
+    /// Something to record: an answer, or a marking round with words to find.
+    var isEmpty: Bool { items.isEmpty && (markScore?.caseWords ?? 0) == 0 }
 }
 
 /// One `applyDrillResult` call `recordRound` made.
@@ -305,6 +387,29 @@ struct KasusSkillMove: Hashable {
     let focus: GrammarFocus
     let correct: Int
     let total: Int
+}
+
+// MARK: - Feedback mode per exercise
+
+extension KasusFeedbackMode {
+    /// The `@AppStorage` key for an exercise: `.find` is Markieren, `.fill` Endungen (the
+    /// Schnellrunde has no mode and reads as Endungen).
+    static func storageKey(for step: KasusRoundStep) -> String {
+        step == .find ? markStorageKey : endingsStorageKey
+    }
+
+    /// Markieren: Am Ende. Endungen: Sofort.
+    static func defaultMode(for step: KasusRoundStep) -> KasusFeedbackMode {
+        step == .find ? markDefault : endingsDefault
+    }
+
+    static func current(for step: KasusRoundStep, defaults: UserDefaults = .standard) -> KasusFeedbackMode {
+        resolve(stored: defaults.string(forKey: storageKey(for: step)) ?? "", default: defaultMode(for: step))
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? { isEmpty ? nil : self }
 }
 
 // MARK: - Service
@@ -336,14 +441,15 @@ enum KasusService {
 
     static func prepare(_ story: KasusStory, lexicon: some KasusLexicon) -> KasusPlayableStory {
         KasusPlayableStory(story: story,
-                           report: KasusValidator.validate(story, source: story.source, lexicon: lexicon))
+                           report: KasusValidator.validate(story, source: story.source, lexicon: lexicon),
+                           lexicon: lexicon)
     }
 
     static func prepare(_ session: KasusSession) -> KasusPlayableStory? {
         session.story.map { prepare($0) }
     }
 
-    // MARK: Finden
+    // MARK: Finden (the old brush sorting, until its view is gone)
 
     /// How many targets each brush has to find: the instruction's count per brush.
     static func findCounts(in playable: KasusPlayableStory, unit: KasusUnit) -> [GrammarCase: Int] {
@@ -398,6 +504,78 @@ enum KasusService {
         return KasusRoundResult(storyID: storyID, unit: unit, step: .find, items: items,
                                 durationSeconds: durationSeconds,
                                 paintedCount: marks.values.filter { $0 != .missed }.count)
+    }
+
+    // MARK: Markieren
+
+    /// The cases Markieren asks in this story, in the unit's order: the first round's case, then
+    /// each „Nächster Fall · Next case“ (`KasusUnit.markCases`, minus cases with no words here).
+    static func markCases(in playable: KasusPlayableStory, unit: KasusUnit) -> [GrammarCase] {
+        KasusMarking.cases(for: unit, in: playable.numbered)
+    }
+
+    /// A fresh Markieren round for one case.
+    static func markRound(_ kasus: GrammarCase, in playable: KasusPlayableStory,
+                          mode: KasusFeedbackMode) -> KasusMarkRound {
+        KasusMarkRound(kasus: kasus, text: playable.numbered, mode: mode)
+    }
+
+    /// What a tap on a word says after Prüfen (Fertig in Sofort): a target word's explanation,
+    /// led by its real case when the round asked another; why an ungraded word isn't counted; or
+    /// why a plain word isn't part of a phrase in the asked case. In the `KasusRich` markup.
+    static func markNote(for wordID: Int, in round: KasusMarkRound, playable: KasusPlayableStory) -> String? {
+        guard let word = playable.numbered.word(wordID) else { return nil }
+        return KasusMarking.note(for: word, asked: round.kasus, in: playable.numbered,
+                                 targets: playable.targets, story: playable.story)
+    }
+
+    /// Markieren's round, for `recordRound`: at the first attempt's Prüfen (Am Ende) or Fertig
+    /// (Sofort). The counts are words (`markScore`: the words to find, marked right, marked
+    /// wrong); the items are the history, one per phrase in reading order: every target of the
+    /// asked case (right, partly marked or missed, with how many of its words were marked), every
+    /// other case's target with a word marked (`wrongPick`, the pick being the asked case), and
+    /// every plain word marked (`wrongMark`). Ungraded words leave no trace.
+    static func markResult(_ round: KasusMarkRound, storyID: String, unit: KasusUnit,
+                           in playable: KasusPlayableStory, durationSeconds: Int) -> KasusRoundResult {
+        let story = playable.story
+        var items: [KasusItemResult] = []
+        var seen = Set<Int>()
+        for word in playable.numbered.words {
+            switch word.role {
+            case .target(let index, let kasus, _):
+                guard seen.insert(index).inserted, let target = playable.target(index) else { continue }
+                let words = playable.numbered.words(ofTarget: index)
+                let marked = words.filter { round.marked.contains($0.id) }
+                let outcome: KasusItemOutcome
+                if kasus == round.kasus {
+                    outcome = marked.count == words.count ? .right : marked.isEmpty ? .missed : .partial
+                } else {
+                    guard !marked.isEmpty else { continue }
+                    outcome = .wrongPick
+                }
+                var record = KasusRoundItem.story(
+                    target, in: story,
+                    pick: kasus == round.kasus ? marked.map(\.text).joined(separator: " ").nilIfEmpty : round.kasus.rawValue,
+                    outcome: outcome, explanation: explanation(for: target, in: story))
+                record.markedWords = marked.count
+                record.wordCount = words.count
+                if round.answersShown, outcome == .missed || outcome == .partial { record.revealed = true }
+                items.append(KasusItemResult(kasus: kasus, genus: target.genus, firstTry: outcome == .right,
+                                             targetIndex: index, record: record))
+            case .plain:
+                guard round.marked.contains(word.id), let sentence = playable.numbered.sentence(word.sentenceNumber) else { continue }
+                let note = KasusMarking.note(for: word, asked: round.kasus, in: playable.numbered,
+                                             targets: playable.targets, story: story)
+                items.append(KasusItemResult(kasus: round.kasus, genus: .der, firstTry: false,
+                                             record: .markedWord(word, in: sentence, asked: round.kasus, explanation: note)))
+            case .ungraded:
+                continue
+            }
+        }
+        return KasusRoundResult(storyID: storyID, unit: unit, step: .find, items: items,
+                                durationSeconds: durationSeconds, feedbackMode: round.mode,
+                                markCase: round.kasus, markScore: round.score,
+                                revealedAnswers: round.answersShown, id: round.id)
     }
 
     // MARK: Einsetzen
@@ -456,7 +634,7 @@ enum KasusService {
                                                 includeGenitive: includeGenitive)
         var forms: [String]
         switch hint {
-        case .viel:
+        case .lern, .viel:
             let viel = KasusForms.vielHilfeOptions(answer: target.answer, family: parsed.family,
                                                    stem: parsed.stem, genus: target.genus,
                                                    includeGenitive: includeGenitive)
@@ -568,7 +746,8 @@ enum KasusService {
 
     /// Whether one answer may move the coach's case skill. See the header for the rules.
     static func countsTowardSkill(_ item: KasusItemResult, step: KasusRoundStep, hint: KasusHintLevel?) -> Bool {
-        guard item.kasus.focus != nil, !item.slip else { return false }
+        // A gap Lösung zeigen filled, or one left empty, was never the learner's answer.
+        guard item.kasus.focus != nil, !item.slip, item.isAnswered else { return false }
         // The f/n/pl Akkusativ is the dictionary form (die Katze · die Katze), so once the gender
         // is on screen, so is the answer.
         let genderGivesItAway = item.kasus == .akkusativ && item.genus != .der
@@ -580,9 +759,9 @@ enum KasusService {
             return !genderGivesItAway
         case .fill:
             switch hint {
-            case .viel?, nil: return false
-            case .genus?:     return item.genus == .der
-            case .ohne?:      return !item.tipp.revealsCase && !(item.tipp >= .gender && genderGivesItAway)
+            case .lern?, .viel?, nil: return false
+            case .genus?:             return item.genus == .der
+            case .ohne?:              return !item.tipp.revealsCase && !(item.tipp >= .gender && genderGivesItAway)
             }
         }
     }
@@ -600,12 +779,13 @@ enum KasusService {
     }
 
     /// Fold one finished step in: the streak, time and XP (every answer is practice, however much
-    /// help was on screen; in Finden only the painted phrases were answered), one `KasusRound` for
+    /// help was on screen; Markieren counts its words to find, the old Finden its painted phrases,
+    /// and a gap nobody answered isn't practice), one `KasusRound` for
     /// the calendar, the step marks and Verlauf, and the coach's case skills from the answers that
     /// count. Returns the skill moves it made.
     @discardableResult
     static func recordRound(_ result: KasusRoundResult, in context: ModelContext) -> [KasusSkillMove] {
-        guard !result.items.isEmpty else { return [] }
+        guard !result.isEmpty else { return [] }
 
         StudyLogService.record(.grammar(result.answeredCount), seconds: result.durationSeconds, in: context)
 
@@ -639,8 +819,28 @@ enum KasusService {
             durationSeconds: result.durationSeconds,
             perCase: result.perCase,
             items: items,
-            date: date
+            date: date,
+            feedbackModeRaw: result.feedbackMode?.rawValue ?? "",
+            markCaseRaw: result.markCase?.rawValue ?? "",
+            wrongCount: result.wrongCount,
+            revealedAnswers: result.revealedAnswers,
+            roundKey: result.id.uuidString
         )
+    }
+
+    /// Lösung zeigen after the round was recorded: finds the stored round by the result's id and
+    /// flags it (`KasusRound.applyAnswersShown()`). Nothing else moves: the streak and the coach
+    /// already heard only what was answered before. Returns false when no round has that id
+    /// (a DEBUG prefill, a retry that was never recorded).
+    @discardableResult
+    static func markAnswersShown(roundID: UUID, in context: ModelContext) -> Bool {
+        let key = roundID.uuidString
+        guard let round = try? context.fetch(FetchDescriptor<KasusRound>(
+            predicate: #Predicate<KasusRound> { $0.roundKey == key }
+        )).first else { return false }
+        round.applyAnswersShown()
+        try? context.save()
+        return true
     }
 
     // MARK: Progress
@@ -669,8 +869,49 @@ enum KasusService {
         return picks
     }
 
-    /// Paint for `-kasus.debugAnswers` in Finden: every brush-case target right, or with one in
-    /// four missed and one in five on the wrong brush.
+    /// Marks for `-kasus.debugAnswers` in Markieren, as word ids to `tap`: every word of the
+    /// asked case, or (mixed) every fourth phrase of it left unmarked and the first plain word of
+    /// every fifth sentence marked wrongly.
+    static func debugMarks(for round: KasusMarkRound, answers: KasusPrefill.Answers) -> [Int] {
+        var ids: [Int] = []
+        var phrases = 0
+        var lastTarget: Int?
+        for word in round.text.words {
+            guard case .target(let index, let kasus, _) = word.role, kasus == round.kasus else { continue }
+            if index != lastTarget {
+                phrases += 1
+                lastTarget = index
+            }
+            if answers == .mixed, phrases % 4 == 0 { continue }
+            ids.append(word.id)
+        }
+        if answers == .mixed {
+            for sentence in round.text.sentences where sentence.number % 5 == 0 {
+                if let plain = sentence.words.first(where: { $0.role == .plain }) { ids.append(plain.id) }
+            }
+        }
+        return ids
+    }
+
+    /// Endings for `-kasus.debugAnswers` in Endungen: all right, or about one in three wrong (a
+    /// gender or number slip where the gap has one, otherwise a case miss).
+    static func debugEndingPicks(for gaps: [KasusEndingGap], answers: KasusPrefill.Answers) -> [Int: String] {
+        var picks: [Int: String] = [:]
+        for (i, gap) in gaps.enumerated() {
+            guard answers == .mixed, i % 3 == 1 else {
+                picks[gap.id] = gap.answer
+                continue
+            }
+            let wrong = gap.options.filter { grade(ending: $0, for: gap) != .right }
+            let slip = wrong.first { grade(ending: $0, for: gap).isSlip }
+            let miss = wrong.first { grade(ending: $0, for: gap) == .caseMiss }
+            picks[gap.id] = (i % 2 == 1 ? slip ?? miss : miss ?? slip) ?? gap.answer
+        }
+        return picks
+    }
+
+    /// Paint for `-kasus.debugAnswers` in the old Finden: every brush-case target right, or with
+    /// one in four missed and one in five on the wrong brush.
     static func debugPaint(in playable: KasusPlayableStory, unit: KasusUnit,
                            answers: KasusPrefill.Answers) -> [Int: GrammarCase] {
         let brushes = unit.findenBrushes
@@ -697,11 +938,12 @@ enum KasusService {
             if !ok { failures += 1 }
             lines.append("  \(ok ? "PASS" : "FAIL")  \(label): \(actual)\(ok ? "" : " (expected \(expected))")")
         }
-        func tally(_ blanks: [KasusBlank]) -> String {
-            let counts = blanks.reduce(into: [GrammarCase: Int]()) { $0[$1.kasus, default: 0] += 1 }
+        func tally(_ cases: [GrammarCase]) -> String {
+            let counts = cases.reduce(into: [GrammarCase: Int]()) { $0[$1, default: 0] += 1 }
             return GrammarCase.allCases.compactMap { kasus in counts[kasus].map { "\(kasus.short) \($0)" } }
                 .joined(separator: " · ")
         }
+        func tally(_ blanks: [KasusBlank]) -> String { tally(blanks.map(\.kasus)) }
 
         // The KasusPath expectations below were written for this one story; the Phase 2 stories
         // would move them, so the checks run on a bank of just this story.
@@ -770,6 +1012,86 @@ enum KasusService {
             lines.append("  capitalised „\(first.target.surface)“: \(first.options.joined(separator: " · "))")
         }
 
+        // Markieren: the numbered sentences, the word roles and the class sheet's score.
+        let numbered = playable.numbered
+        check("numbered sentences", "\(numbered.sentences.count), first „\(numbered.sentences.first?.text ?? "")“",
+              "19, first „Es ist Montag, und Jonas hat um acht Uhr einen Termin.“")
+        check("words to mark per case", GrammarCase.allCases.compactMap { kasus in
+            let count = numbered.caseWords(kasus).count
+            return count > 0 ? "\(kasus.short) \(count)" : nil
+        }.joined(separator: " · "), "Nom 12 · Akk 22 · Dat 18")
+        check("Markieren rounds, Dativ unit", markCases(in: playable, unit: .dativ).map(\.short).joined(separator: " → "),
+              "Dat → Akk → Nom")
+        let firstLine = numbered.sentences.first?.words.map { word -> String in
+            switch word.role {
+            case .target(_, let kasus, let part): "\(word.text)[\(kasus.short) \(part.rawValue)]"
+            case .ungraded(let reason, _):         "\(word.text)(\(reason.rawValue))"
+            case .plain:                           word.text
+            }
+        }.joined(separator: " ") ?? ""
+        lines.append("  1. " + firstLine)
+        var mark = markRound(.dativ, in: playable, mode: .amEnde)
+        let dative = numbered.caseWords(.dativ)
+        for word in dative.dropLast(2) { mark.tap(word.id) }
+        for word in numbered.caseWords(.akkusativ).prefix(2) { mark.tap(word.id) }
+        mark.check()
+        check("Markieren Dativ, 2 words missed + 2 Akk words marked",
+              "\(mark.score.scoreLabel) · \(mark.score.countsLabel)", "14 / 18 · 16 richtig · 2 falsch · 2 übersehen")
+        var allMarked = markRound(.dativ, in: playable, mode: .amEnde)
+        for word in numbered.words { allMarked.tap(word.id) }
+        allMarked.check()
+        check("Markieren, every word marked", allMarked.score.scoreLabel, "0 / 18")
+        var sofort = markRound(.dativ, in: playable, mode: .sofort)
+        let sofortRight = dative.first.flatMap { sofort.tap($0.id) }
+        let sofortWrong = numbered.caseWords(.nominativ).first.flatMap { sofort.tap($0.id) }
+        func verdictName(_ verdict: KasusMarkVerdict?) -> String {
+            switch verdict {
+            case .right?: "right"
+            case .wrong?: "wrong"
+            case nil:     "nothing"
+            default:      "other"
+            }
+        }
+        check("Markieren Sofort judges each tap", "\(verdictName(sofortRight)) · \(verdictName(sofortWrong))", "right · wrong")
+
+        // Endungen: definite and ein articles only, the endings as buttons.
+        check("Endungen gaps, Dativ", tally(endingGaps(in: playable, unit: .dativ, mixed: false, hint: .genus).map(\.kasus)), "Dat 8")
+        let gaps = endingGaps(in: playable, unit: .dativ, mixed: true, hint: .ohne)
+        check("Endungen gaps gemischt, Ohne Hilfe (possessives stay written)", tally(gaps.map(\.kasus)), "Nom 6 · Akk 8 · Dat 8")
+        if let boden = gaps.first(where: { $0.target.noun == "Boden" }),
+           let tasche = gaps.first(where: { $0.target.surface == "der Tasche" }),
+           let key = gaps.first(where: { $0.target.surface == "den Schlüssel" }),
+           let termin = gaps.first(where: { $0.target.surface == "einen Termin" }),
+           let capital = gaps.first(where: { $0.target.surface == "Der Schlüssel" }) {
+            func buttons(_ endings: [String]) -> String { endings.map(KasusEndingGap.label).joined(separator: " ") }
+            check("„dem Boden“ as a gap", "\(boden.gapText) · \(buttons(boden.options))", "d__ · -er -ie -as -en -em")
+            check("„Der Schlüssel“ keeps its capital", capital.gapText, "D__")
+            check("„einen Termin“ as a gap", "\(termin.gapText) · \(buttons(termin.options))", "ein__ · – -e -en -em -er")
+            check("Viel Hilfe buttons „dem Boden“", buttons(endingOptions(for: boden.target, hint: .viel, includeGenitive: false)), "-er -en -em")
+            check("Lernhilfe buttons „einen Termin“", buttons(endingOptions(for: termin.target, hint: .lern, includeGenitive: false)), "– -en -em")
+            check("Genitiv in play adds -es", buttons(endingOptions(for: termin.target, hint: .ohne, includeGenitive: true)), "– -e -en -em -er -es")
+            func gradedEnding(_ ending: String, _ gap: KasusEndingGap) -> String {
+                switch grade(ending: ending, for: gap) {
+                case .right:                 "right"
+                case .genderSlip(let other): "gender slip (\(other?.columnLabel ?? "?"))"
+                case .numberSlip:            "number slip"
+                case .caseMiss:              "case miss"
+                }
+            }
+            check("-em on „d__ Boden“", gradedEnding("em", boden), "right")
+            check("-er on „d__ Boden“", gradedEnding("er", boden), "case miss")
+            check("-em on „d__ Tasche“", gradedEnding("em", tasche), "gender slip (m)")
+            check("-ie on „d__ Schlüssel“", gradedEnding("ie", key), "number slip")
+            check("– on „ein__ Termin“", gradedEnding("", termin), "case miss")
+            let lern = endingGap(for: boden.target, hint: .lern, includeGenitive: false)
+            check("Lernhilfe on „d__ Boden“: table, highlighted cell, chips",
+                  lern.map { "\($0.showsCaseTable) · \($0.cell.kasus.short) × \($0.cell.genus.columnLabel) · \($0.highlightsCell) · \($0.genderChip)" } ?? "",
+                  "true · Dat × m · true · Boden · m")
+        } else {
+            failures += 1
+            lines.append("  FAIL  a gap the Endungen checks need is missing")
+        }
+
         check("hint default A1", KasusHintLevel.defaultLevel(for: .a1).rawValue, "genus")
         check("hint default A2", KasusHintLevel.defaultLevel(for: .a2).rawValue, "genus")
         check("hint default B1", KasusHintLevel.defaultLevel(for: .b1).rawValue, "ohne")
@@ -785,10 +1107,10 @@ enum KasusService {
         check("hero A1, nothing played", describe(KasusPath.next(profile: nil, level: .a1, rounds: none, bank: bank)),
               "dativ · „\(story.title)“ · Lesen")
         let findOnly = played([(story.id, .dativ, .find)])
-        check("hero B1, Finden played", describe(KasusPath.next(profile: nil, level: .b1, rounds: findOnly, bank: bank)),
-              "dativ · „\(story.title)“ · Einsetzen")
+        check("hero B1, Markieren played", describe(KasusPath.next(profile: nil, level: .b1, rounds: findOnly, bank: bank)),
+              "dativ · „\(story.title)“ · Endungen")
         // Akkusativ has no story yet, so its Schnellrunde is the first unfinished step from A2.
-        check("hero A2, Finden played", describe(KasusPath.next(profile: nil, level: .a2, rounds: findOnly, bank: bank)),
+        check("hero A2, Markieren played", describe(KasusPath.next(profile: nil, level: .a2, rounds: findOnly, bank: bank)),
               "akkusativ · Schnellrunde · Nom + Akk")
         let storyDone = played([(story.id, .dativ, .find), (story.id, .dativ, .fill)])
         check("hero A2, story done", describe(KasusPath.next(profile: nil, level: .a2, rounds: storyDone, bank: bank)),
@@ -801,7 +1123,7 @@ enum KasusService {
         let shaky = LearnerProfile()
         shaky.grammar = [GrammarFocus.dativ.rawValue: GrammarSkill(struggle: 0.6, lastSeen: Date(), samples: [])]
         check("hero, Dativ shaky, all done", describe(KasusPath.next(profile: shaky, level: .b1, rounds: everything, bank: bank)),
-              "dativ · „\(story.title)“ · Einsetzen")
+              "dativ · „\(story.title)“ · Endungen")
 
         lines.append(failures == 0 ? "Service ALL OK" : "Service \(failures) FAILED")
         return lines
@@ -813,7 +1135,8 @@ enum KasusService {
 
     /// `-kasus.debugVerifyRecord 1`: runs `recordRound` on synthetic rounds in the live store and
     /// checks each one against the rules: every round adds its answered items to today's
-    /// `grammarExercises` and one `KasusRound`, and only the last two may move a case skill.
+    /// `grammarExercises` and one `KasusRound`, and only the last two may move a case skill. The
+    /// Markieren round is also read back: its asked case, wrong marks and class score.
     /// Afterwards the coach's skills, the rounds and the day's count are put back, unless the
     /// argument is `keep`. Returns printable lines; the caller adds the prefix.
     static func debugVerifyRecord(in context: ModelContext, keep: Bool) -> [String] {
@@ -832,14 +1155,18 @@ enum KasusService {
         func struggle(_ focus: GrammarFocus) -> Double? { profile.grammar[focus.rawValue]?.struggle }
         func show(_ value: Double?) -> String { value.map { String(format: "%.2f", $0) } ?? "–" }
         func item(_ kasus: GrammarCase, _ genus: Gender, _ right: Bool,
-                  slip: Bool = false, tipp: KasusTipp = .none) -> KasusItemResult {
-            KasusItemResult(kasus: kasus, genus: genus, firstTry: right, slip: slip, tipp: tipp)
+                  slip: Bool = false, tipp: KasusTipp = .none, revealed: Bool = false) -> KasusItemResult {
+            KasusItemResult(kasus: kasus, genus: genus, firstTry: right, slip: slip, tipp: tipp, revealed: revealed)
         }
         func round(_ step: KasusRoundStep, _ unit: KasusUnit, _ hint: KasusHintLevel?,
                    _ items: [KasusItemResult], painted: Int? = nil) -> KasusRoundResult {
             KasusRoundResult(storyID: debugVerifyStoryID, unit: unit, step: step, hintLevel: hint,
                              items: items, durationSeconds: 0, paintedCount: painted)
         }
+        // Markieren counts words: 10 Dativ words, 8 marked, 2 other words marked → „6 / 10“.
+        let marking = KasusRoundResult(storyID: debugVerifyStoryID, unit: .dativ, step: .find, items: [],
+                                       durationSeconds: 0, feedbackMode: .amEnde, markCase: .dativ,
+                                       markScore: KasusMarkScore(caseWords: 10, right: 8, wrong: 2))
         // The two rounds that should move a skill push it whichever way it has room to go, so the
         // change always shows: all wrong raises struggle, all right lowers it.
         let datRight = (struggle(.dativ) ?? 0) >= 0.8
@@ -871,6 +1198,13 @@ enum KasusService {
             ("Finden · 6 Akk + 6 Dat marked, 5 painted, all wrong (recognition only; 5 answered)",
              round(.find, .dativ, nil, Array(repeating: item(.akkusativ, .der, false), count: 6)
                    + Array(repeating: item(.dativ, .der, false), count: 6), painted: 5), []),
+            ("Lernhilfe · 5 Akk m, all wrong (the table shows the answer; never counts)",
+             round(.fill, .akkusativ, .lern, Array(repeating: item(.akkusativ, .der, false), count: 5)), []),
+            ("Ohne Hilfe · 2 Dat wrong + 4 Dat Lösung zeigen filled (2 answered, under 3)",
+             round(.fill, .dativ, .ohne, Array(repeating: item(.dativ, .die, false), count: 2)
+                   + Array(repeating: item(.dativ, .die, false, revealed: true), count: 4)), []),
+            ("Markieren · Dativ, 10 words: 8 marked + 2 wrong marks (recognition only; 10 answered)",
+             marking, []),
             ("Ohne Hilfe · 4 Dat \(datRight ? "right" : "wrong") + 2 Nom → moves Dativ",
              round(.fill, .dativ, .ohne, Array(repeating: item(.dativ, .die, datRight), count: 4)
                    + Array(repeating: item(.nominativ, .die, false), count: 2)), [.dativ]),
@@ -911,6 +1245,16 @@ enum KasusService {
             }
             if profile.grammar.keys.contains(GrammarCase.nominativ.rawValue) {
                 problems.append("a nominativ skill key exists")
+            }
+            if scenario.result.markScore != nil {
+                let debugID = debugVerifyStoryID
+                var newest = FetchDescriptor<KasusRound>(predicate: #Predicate<KasusRound> { $0.storyID == debugID },
+                                                         sortBy: [SortDescriptor(\.date, order: .reverse)])
+                newest.fetchLimit = 1
+                let stored = (try? context.fetch(newest))?.first
+                let read = stored.map { "\($0.stepLabel) · \($0.markScore?.scoreLabel ?? "no score") · \($0.wrongCount) wrong" } ?? "not stored"
+                skills.append(read)
+                if read != "Markieren · Dativ · 6 / 10 · 2 wrong" { problems.append("stored as \(read)") }
             }
             failures += problems.isEmpty ? 0 : 1
             lines.append("#\(i + 1) \(scenario.name)")
@@ -972,7 +1316,7 @@ struct KasusProgress {
         latest[Key(storyID: storyID, unitRaw: unit.rawValue, stepRaw: step.rawValue)]
     }
 
-    /// The last Finden or Einsetzen of a story. Nil when it was never played.
+    /// The last Markieren or Endungen (or Finden or Einsetzen) of a story. Nil when never played.
     func lastPlayed(storyID: String, unit: KasusUnit) -> Date? {
         [KasusRoundStep.find, .fill].compactMap { lastPlayed(storyID: storyID, unit: unit, step: $0) }.max()
     }
@@ -987,7 +1331,7 @@ struct KasusProgress {
         return lastPlayed(storyID: story.id, unit: unit)
     }
 
-    /// Finden and Einsetzen both played: the story's dot fills.
+    /// Markieren and Endungen both played: the story's dot fills.
     func isFinished(_ story: KasusStory) -> Bool {
         isDone(story, step: .find) && isDone(story, step: .fill)
     }
@@ -1035,7 +1379,7 @@ struct KasusHero: Hashable {
         return nil
     }
 
-    /// „Der verlorene Schlüssel“ · Einsetzen, Wiederholen · „Der verlorene Schlüssel“, or
+    /// „Der verlorene Schlüssel“ · Endungen, Wiederholen · „Der verlorene Schlüssel“, or
     /// Schnellrunde · Nom + Akk + Dat.
     var subtitle: String {
         switch action {
@@ -1063,7 +1407,7 @@ enum KasusPath {
     ///   1. a shaky akk/dat/gen case whose unit has a story → that unit's least-recently-played
     ///      story (Lesen if it was never played, else Einsetzen, the step that moves the skill);
     ///   2. an unplayed story, the start unit's first;
-    ///   3. the first unfinished step from the start unit on (Finden, Einsetzen, Schnellrunde);
+    ///   3. the first unfinished step from the start unit on (Markieren, Endungen, Schnellrunde);
     ///   4. the story played longest ago, "Wiederholen".
     /// The start unit comes from the learner's level (A1 → Nominativ, A2 → Akkusativ,
     /// B1+ → Dativ); nothing is ever written back.

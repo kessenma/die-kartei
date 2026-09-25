@@ -23,7 +23,7 @@ enum Activity: Identifiable {
     case cloze(ClozeSession)
     /// The case-endings drill: a Kasus unit's Schnellrunde, configured by a `CaseEndingsSession`.
     case caseEndings(CaseEndingsSession)
-    /// A Kasus story (Lesen → Finden → Einsetzen → Ergebnis), configured by a `KasusSession`.
+    /// A Kasus story (Lesen → Markieren → Endungen → Ergebnis), configured by a `KasusSession`.
     case kasusStory(KasusSession)
 
     var id: String {

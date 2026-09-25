@@ -5,7 +5,7 @@
 //  One case on the Grammatik path. Every unit runs the same loop, top to bottom:
 //
 //    Die Regel · The rule        a few lines, the endings table with this case lit, the Kasus-Check
-//    Geschichten · Stories       the bundled stories for this unit (Lesen → Finden → Einsetzen)
+//    Geschichten · Stories       the bundled stories for this unit (Lesen → Markieren → Endungen)
 //    Schnellrunde · Quick round  the endings drill, limited to the unit's cases
 //    Deine Runden · Your rounds  the unit's last three rounds, and all of them in Verlauf
 //    Mehr dazu · Also for this   the preposition cards on this case's group (3D stills), or
@@ -158,7 +158,7 @@ struct KasusUnitView: View {
                 Text("Geschichten · Stories")
                     .themedSectionHeader()
             } footer: {
-                Text("Read the story, mark the cases, then fill in the articles. About 8 minutes.")
+                Text("Read the story, mark the cases, then fill in the endings. About 8 minutes.")
             }
             .themedListRow()
         }
@@ -168,7 +168,7 @@ struct KasusUnitView: View {
         let found = progress.isDone(storyID: story.id, unit: unit, step: .find)
         let filled = progress.isDone(storyID: story.id, unit: unit, step: .fill)
         return Button {
-            // Pick up where it was left: Einsetzen once Finden is done, otherwise from the top.
+            // Pick up where it was left: Endungen once Markieren is done, otherwise from the top.
             let start: KasusStep = found && !filled ? .einsetzen : .lesen
             router.launch(.kasusStory(KasusSession(storyID: story.id, unit: unit, startStep: start)))
         } label: {
@@ -183,7 +183,7 @@ struct KasusUnitView: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(.primary)
-                    Text("\(story.level) · Finden \(stepMark(found)) · Einsetzen \(stepMark(filled))")
+                    Text("\(story.level) · Markieren \(stepMark(found)) · Endungen \(stepMark(filled))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -196,7 +196,7 @@ struct KasusUnitView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(story.title), \(story.level). Finden \(found ? "done" : "not yet"), Einsetzen \(filled ? "done" : "not yet").")
+        .accessibilityLabel("\(story.title), \(story.level). Markieren \(found ? "done" : "not yet"), Endungen \(filled ? "done" : "not yet").")
     }
 
     /// ✓ once the step has been played, ○ before.
@@ -443,7 +443,7 @@ struct KasusUnitView: View {
     .modelContainer(for: [LearnerProfile.self, StudyDay.self, KasusRound.self], inMemory: true)
 }
 
-#Preview("Kasus unit · Finden played") {
+#Preview("Kasus unit · Markieren played") {
     let container = try! ModelContainer(
         for: LearnerProfile.self, StudyDay.self, KasusRound.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)

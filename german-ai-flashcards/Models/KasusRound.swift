@@ -2,7 +2,10 @@
 //  KasusRound.swift
 //  german-ai-flashcards
 //
-//  One scored step on the Grammatik path: a story's Finden or Einsetzen, or a unit's Schnellrunde.
+//  One scored step on the Grammatik path: a story's Markieren (one case) or Endungen, or a unit's
+//  Schnellrunde. Rounds from before Markieren and Endungen replaced the brush-sorting Finden and
+//  the whole-article Einsetzen keep their step raw values (find, fill) and have no feedback mode,
+//  which is how `stepLabel` tells them apart.
 //  Written by `KasusService.recordRound`, read by the day detail in the streak calendar, the story
 //  rows' step marks and the hub's "Weiter" pick (`KasusPath.next`).
 //
@@ -11,7 +14,10 @@
 //
 //  Each round also keeps its answers (`items`, one `KasusRoundItem` each: the sentence, the pick,
 //  the answer and why), which is what Verlauf's round detail shows. Rounds recorded before that
-//  have none and show their counts only.
+//  have none and show their counts only. A Markieren round counts words, not items: `askedCount`
+//  is the words to find, `firstTryCount` those marked, `wrongCount` the words marked wrongly, and
+//  its score is the class sheet's (`markScore`). Lösung zeigen after recording sets
+//  `revealedAnswers` on the same row (`KasusService.markAnswersShown`).
 //
 //  Additive, with every field defaulted: the store recreates itself when a migration fails, so a
 //  new model must never be the thing that makes one fail.
@@ -20,16 +26,26 @@
 import Foundation
 import SwiftData
 
-/// Which exercise a `KasusRound` records.
+/// Which exercise a `KasusRound` records. The raw values are stored; never rename one.
 nonisolated enum KasusRoundStep: String, Codable, CaseIterable {
-    /// Finden: mark the cases in the story. Counts for the streak only.
+    /// Markieren: mark every word in one case (before it, Finden's brush sorting). Counts for the
+    /// streak only.
     case find
-    /// Einsetzen: fill in the articles.
+    /// Endungen: fill in the article endings (before it, Einsetzen's whole articles).
     case fill
     /// Schnellrunde: the endings drill for one unit.
     case quick
 
     var germanLabel: String {
+        switch self {
+        case .find:  "Markieren"
+        case .fill:  "Endungen"
+        case .quick: "Schnellrunde"
+        }
+    }
+
+    /// The name the step had before Markieren and Endungen, for rounds recorded then.
+    var legacyGermanLabel: String {
         switch self {
         case .find:  "Finden"
         case .fill:  "Einsetzen"
@@ -57,6 +73,18 @@ final class KasusRound {
     /// Encoded `[KasusRoundItem]`, in reading (or question) order. Nil on rounds recorded before
     /// the history kept answers, and on the debug checks' synthetic rounds.
     var itemsData: Data? = nil
+    /// A `KasusFeedbackMode` raw value (sofort · amEnde) for Markieren and Endungen. Empty on the
+    /// Schnellrunde and on rounds from before the two exercises.
+    var feedbackModeRaw: String = ""
+    /// Markieren: the `GrammarCase` raw value the round asked. Empty otherwise.
+    var markCaseRaw: String = ""
+    /// Markieren: words marked that weren't in the asked case. The class score is
+    /// max(0, firstTryCount − wrongCount) / askedCount.
+    var wrongCount: Int = 0
+    /// Lösung zeigen was tapped on this round, before or after it was recorded.
+    var revealedAnswers: Bool = false
+    /// `KasusRoundResult.id`, so Lösung zeigen after recording finds this row. Empty on older rounds.
+    var roundKey: String = ""
 
     init(
         storyID: String,
@@ -68,7 +96,12 @@ final class KasusRound {
         durationSeconds: Int,
         perCase: [GrammarCase: CaseTally] = [:],
         items: [KasusRoundItem] = [],
-        date: Date = Date()
+        date: Date = Date(),
+        feedbackModeRaw: String = "",
+        markCaseRaw: String = "",
+        wrongCount: Int = 0,
+        revealedAnswers: Bool = false,
+        roundKey: String = ""
     ) {
         self.date = date
         self.storyID = storyID
@@ -80,6 +113,11 @@ final class KasusRound {
         self.durationSeconds = durationSeconds
         self.perCase = perCase
         self.items = items
+        self.feedbackModeRaw = feedbackModeRaw
+        self.markCaseRaw = markCaseRaw
+        self.wrongCount = wrongCount
+        self.revealedAnswers = revealedAnswers
+        self.roundKey = roundKey
     }
 
     /// One case's share of the round.
@@ -92,6 +130,57 @@ final class KasusRound {
     var step: KasusRoundStep? { KasusRoundStep(rawValue: stepRaw) }
     var hintLevel: KasusHintLevel? { KasusHintLevel(rawValue: hintLevelRaw) }
     var isQuickRound: Bool { step == .quick }
+    var feedbackMode: KasusFeedbackMode? { KasusFeedbackMode(rawValue: feedbackModeRaw) }
+    /// Markieren's asked case. Nil on every other round, the old Finden's included.
+    var markCase: GrammarCase? { GrammarCase(rawValue: markCaseRaw) }
+    /// A Markieren round (one case, counted in words), not an old brush-sorting Finden.
+    var isMarkingRound: Bool { step == .find && markCase != nil }
+    /// Recorded before Markieren and Endungen replaced Finden and Einsetzen.
+    var isLegacyStoryRound: Bool { (step == .find || step == .fill) && feedbackModeRaw.isEmpty }
+
+    /// „Markieren · Dativ“, „Endungen“, „Schnellrunde“, or the old „Finden“ / „Einsetzen“ for a
+    /// round recorded before those two exercises.
+    var stepLabel: String {
+        guard let step else { return "" }
+        if isLegacyStoryRound { return step.legacyGermanLabel }
+        if let markCase { return "\(step.germanLabel) · \(markCase.name)" }
+        return step.germanLabel
+    }
+
+    /// Markieren's score the class sheet's way: „6 / 10“, with the right, wrong and missed words.
+    /// Nil for every other round.
+    var markScore: KasusMarkScore? {
+        guard isMarkingRound else { return nil }
+        return KasusMarkScore(caseWords: askedCount, right: firstTryCount, wrong: wrongCount)
+    }
+
+    /// „Lösung angezeigt · Answers shown“, for a round whose answers Lösung zeigen showed.
+    static let answersShownLabel = "Lösung angezeigt · Answers shown"
+
+    /// Lösung zeigen after the round was recorded: the round and every answer it showed are
+    /// flagged. A gap left empty becomes `revealed`; a wrong or missed answer keeps its outcome
+    /// (it was the learner's) and gains `revealed`. In Markieren only the missed and partly
+    /// marked phrases were shown; a wrong mark was the learner's and stays as it was, as
+    /// `KasusService.markResult` does it. The counts don't change.
+    func applyAnswersShown() {
+        revealedAnswers = true
+        let marking = isMarkingRound
+        items = items.map { item in
+            var item = item
+            switch item.outcome {
+            case .unanswered:
+                item.outcomeRaw = KasusItemOutcome.revealed.rawValue
+                item.revealed = true
+            case .right, .revealed:
+                break
+            case .wrongPick where marking, .wrongMark where marking:
+                break
+            default:
+                item.revealed = true
+            }
+            return item
+        }
+    }
 
     /// The answers, in reading order. Empty for a round recorded before the history kept them.
     var items: [KasusRoundItem] {
@@ -102,8 +191,13 @@ final class KasusRound {
         set { itemsData = newValue.isEmpty ? nil : try? JSONEncoder().encode(newValue) }
     }
 
+    /// First tries per case. A Markieren round reads its one case from `markScore` (the class
+    /// sheet's points), whatever was stored, so its bars always agree with its score.
     var perCase: [GrammarCase: CaseTally] {
         get {
+            if let markScore, let markCase {
+                return [markCase: CaseTally(asked: markScore.caseWords, firstTry: markScore.points)]
+            }
             guard let perCaseData,
                   let raw = try? JSONDecoder().decode([String: CaseTally].self, from: perCaseData)
             else { return [:] }
@@ -129,10 +223,20 @@ nonisolated enum KasusItemOutcome: String, Codable, CaseIterable {
     case genderSlip
     /// Right case, the plural of a noun that reads the same („die Schlüssel“ for one key).
     case numberSlip
-    /// Finden: its case had a brush, and it wasn't painted.
+    /// Markieren: none of its words marked. The old Finden: its case had a brush, and it wasn't
+    /// painted.
     case missed
+    /// Markieren: a word marked in a phrase of another case (the pick is the asked case). The old
     /// Finden: painted with another case's brush, or painted when its case had none.
     case wrongPick
+    /// Markieren: some of its words marked, not all.
+    case partial
+    /// Markieren: an ordinary word marked (a verb, a preposition …). No case, no gender.
+    case wrongMark
+    /// Endungen, Am Ende: the gap was still empty at Prüfen.
+    case unanswered
+    /// Endungen: Lösung zeigen filled the gap before the learner answered it.
+    case revealed
 
     var isRight: Bool { self == .right }
 
@@ -144,6 +248,10 @@ nonisolated enum KasusItemOutcome: String, Codable, CaseIterable {
         case .numberSlip: "Singular/Plural"
         case .missed:     "Übersehen"
         case .wrongPick:  "Anderer Fall"
+        case .partial:    "Teilweise"
+        case .wrongMark:  "Falsch markiert"
+        case .unanswered: "Leer"
+        case .revealed:   "Lösung angezeigt"
         }
     }
 
@@ -155,7 +263,18 @@ nonisolated enum KasusItemOutcome: String, Codable, CaseIterable {
         case .numberSlip: "Wrong number"
         case .missed:     "Not marked"
         case .wrongPick:  "Marked as another case"
+        case .partial:    "Only partly marked"
+        case .wrongMark:  "Marked, but has no case here"
+        case .unanswered: "Left empty"
+        case .revealed:   "Answer shown"
         }
+    }
+
+    /// The English label in a round's history. In Markieren a `wrongPick` is a word of another
+    /// case's phrase marked in this case's round: it *is* another case, whereas the old Finden
+    /// painted it with another case's brush.
+    func englishLabel(inMarkingRound marking: Bool) -> String {
+        marking && self == .wrongPick ? "It's another case" : englishLabel
     }
 
     var symbol: String {
@@ -166,6 +285,10 @@ nonisolated enum KasusItemOutcome: String, Codable, CaseIterable {
         case .numberSlip: "number.circle"
         case .missed:     "eye.slash"
         case .wrongPick:  "paintbrush.pointed"
+        case .partial:    "circle.lefthalf.filled"
+        case .wrongMark:  "xmark.circle"
+        case .unanswered: "circle.dashed"
+        case .revealed:   "eye"
         }
     }
 }
@@ -197,6 +320,12 @@ nonisolated struct KasusRoundItem: Codable, Hashable {
     /// False for a pronoun („mir“), whose genus is no noun's gender, so a view leaves it
     /// uncolored. Nil on items saved before it existed, which were all article phrases.
     var hasNounGender: Bool?
+    /// Lösung zeigen showed this answer: a gap it filled, or a wrong or missed answer shown after
+    /// Prüfen. Nil (false) on items from before it existed.
+    var revealed: Bool? = nil
+    /// Markieren: how many of the phrase's words were marked, and how many it has. Nil elsewhere.
+    var markedWords: Int? = nil
+    var wordCount: Int? = nil
 
     init(sentence: String, phraseStart: Int?, phrase: String, answer: String, pick: String?,
          kasus: GrammarCase, genus: Gender, outcome: KasusItemOutcome, explanation: String,
@@ -217,8 +346,9 @@ nonisolated struct KasusRoundItem: Codable, Hashable {
     var kasus: GrammarCase? { GrammarCase(rawValue: caseRaw) }
     var genus: Gender? { Gender(rawValue: genusRaw) }
     var outcome: KasusItemOutcome { KasusItemOutcome(rawValue: outcomeRaw) ?? .caseMiss }
-    /// Finden's painted brush.
+    /// Finden's painted brush; Markieren's asked case on a `wrongPick` or `wrongMark`.
     var pickedCase: GrammarCase? { pick.flatMap(GrammarCase.init(rawValue:)) }
+    var wasRevealed: Bool { revealed ?? false }
     /// The gender whose color the answer wears; nil for a pronoun. An item saved before
     /// `hasNounGender` existed is judged by its answer.
     var formGenus: Gender? {
@@ -246,6 +376,21 @@ nonisolated struct KasusRoundItem: Codable, Hashable {
                               answer: target.answer, pick: pick, kasus: target.kasus, genus: target.genus,
                               outcome: outcome, explanation: explanation, targetIndex: target.index,
                               hasNounGender: target.hasNounGender)
+    }
+}
+
+extension KasusRoundItem {
+    /// Markieren: an ordinary word marked in a round that asked `asked`. The phrase is the word,
+    /// with no answer and no gender; the explanation says why it isn't part of the case.
+    static func markedWord(_ word: KasusWord, in sentence: KasusSentence, asked: GrammarCase,
+                           explanation: String) -> KasusRoundItem {
+        var item = KasusRoundItem(sentence: sentence.text, phraseStart: word.range.location, phrase: word.text,
+                                  answer: "", pick: asked.rawValue, kasus: asked, genus: .der,
+                                  outcome: .wrongMark, explanation: explanation, hasNounGender: false)
+        item.genusRaw = ""
+        item.markedWords = 1
+        item.wordCount = 1
+        return item
     }
 }
 

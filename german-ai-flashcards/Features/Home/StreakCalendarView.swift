@@ -1013,25 +1013,32 @@ struct DayDetailSheet: View {
             ))
         }
 
-        // Kasus path: a story's Finden or Einsetzen, or a unit's Schnellrunde. The title is looked
-        // up from the story id, so a renamed story still reads right on old days.
+        // Kasus path: a story's Markieren or Endungen (Finden or Einsetzen on older days), or a
+        // unit's Schnellrunde. The title is looked up from the story id, so a renamed story still
+        // reads right on old days.
         let kasusRounds = (try? context.fetch(FetchDescriptor<KasusRound>(
             predicate: #Predicate<KasusRound> { $0.date >= dayStart && $0.date < end }
         ))) ?? []
         for r in kasusRounds {
             let step = r.step ?? .fill
             let noun = switch step {
-            case .find:  "phrases"
-            case .fill:  "articles"
+            case .find:  r.isMarkingRound ? "words" : "phrases"
+            case .fill:  r.isLegacyStoryRound ? "articles" : "endings"
             case .quick: "sentences"
             }
-            var parts = ["\(r.askedCount) \(noun)", "\(r.firstTryCount)/\(r.askedCount) first try"]
+            var parts = ["\(r.askedCount) \(noun)"]
+            if let score = r.markScore {
+                parts.append(score.scoreLabel)
+            } else {
+                parts.append("\(r.firstTryCount)/\(r.askedCount) first try")
+            }
             if let hint = r.hintLevel { parts.append(hint.germanLabel) }
+            if r.revealedAnswers { parts.append("Lösung angezeigt") }
             if r.durationSeconds > 0 { parts.append("\(r.durationSeconds)s") }
-            // "Kasus · Der verlorene Schlüssel · Einsetzen", "Kasus · Schnellrunde · Dativ".
+            // "Kasus · Der verlorene Schlüssel · Markieren · Dativ", "Kasus · Schnellrunde · Dativ".
             let title = step == .quick
                 ? ["Kasus", step.germanLabel, r.unit?.germanTitle]
-                : ["Kasus", KasusStoryBank.bundled.story(id: r.storyID)?.title, step.germanLabel]
+                : ["Kasus", KasusStoryBank.bundled.story(id: r.storyID)?.title, r.stepLabel]
             out.append(DayExercise(
                 time: r.date,
                 icon: r.unit?.symbol ?? "checklist",

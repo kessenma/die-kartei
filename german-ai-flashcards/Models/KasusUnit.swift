@@ -4,8 +4,8 @@
 //
 //  The Grammatik path, one unit per case: Nominativ → Akkusativ → Dativ → Genitiv → Alle Fälle.
 //  Every unit runs the same loop (Regel → Geschichte → Schnellrunde), so a unit only has to say
-//  which cases are in play, which ones the Finden exercise hands out brushes for, its soft level
-//  label and the few rule lines its Regel card opens with.
+//  which cases are in play, which ones Markieren asks and in what order, its soft level label and
+//  the few rule lines its Regel card opens with.
 //
 //  Earlier cases stay in play as the path goes on, so no round past Nominativ is single-case: a
 //  round of nothing but Dativ has the same answer every time. The level labels are a guide,
@@ -83,8 +83,23 @@ enum KasusUnit: String, CaseIterable, Identifiable {
         }
     }
 
-    /// The brushes Finden hands out. Akkusativ marks only its own case, so the hunt is for the
-    /// one form that changed; from Dativ on, every case in play gets a brush.
+    /// The cases Markieren asks, one round each, in this order: the unit's own case first, then
+    /// the ones before it, newest first („Nächster Fall · Next case“). Akkusativ adds Nominativ,
+    /// Dativ adds Akkusativ and Nominativ, Genitiv the other three; Alle Fälle runs the table
+    /// order. A case the story has no words of is skipped (`KasusMarking.cases(for:in:)`).
+    var markCases: [GrammarCase] {
+        switch self {
+        case .nominativ:  [.nominativ]
+        case .akkusativ:  [.akkusativ, .nominativ]
+        case .dativ:      [.dativ, .akkusativ, .nominativ]
+        case .genitiv:    [.genitiv, .dativ, .akkusativ, .nominativ]
+        case .alleFaelle: GrammarCase.allCases
+        }
+    }
+
+    /// The brushes the old brush-sorting Finden hands out, which Markieren replaces. Akkusativ
+    /// marks only its own case, so the hunt is for the one form that changed; from Dativ on,
+    /// every case in play gets a brush.
     var findenBrushes: [GrammarCase] {
         switch self {
         case .nominativ:              [.nominativ]

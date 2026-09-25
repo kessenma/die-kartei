@@ -5,11 +5,12 @@
 //  One paragraph of a Kasus story as a single SwiftUI `Text` built from an `AttributedString` of
 //  link runs, with taps caught by `.environment(\.openURL)`: the `TappableText` technique. One
 //  `Text` means the paragraph wraps like prose, and the whole of a phrase is one run, so tapping
-//  any of its words selects the phrase.
+//  any of its words selects the phrase. Lesen shows its paragraphs with it; Markieren and Endungen
+//  show numbered sentences of word chips instead (`KasusSentences`).
 //
 //    plain    spaces and punctuation, never tappable
-//    target   one case-marked phrase, `kasus://t/<index>` (Finden)
-//    blank    an Einsetzen gap and the noun after it, `kasus://b/<index>`
+//    target   one case-marked phrase, `kasus://t/<index>`
+//    blank    a gap and the noun after it, `kasus://b/<index>`
 //    word     any other word, `kasus://w/<n>`, so a tap outside a phrase can still say something
 //    tag      a small raised m/f/n/pl (or sg/pl) after a blank's noun
 //

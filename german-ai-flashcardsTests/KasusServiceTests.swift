@@ -3,8 +3,9 @@
 //  german-ai-flashcardsTests
 //
 //  Sessions, blanks, answer buttons and grading on „Der verlorene Schlüssel“, the examples the
-//  `-kasus.debugVerify 1` service block prints, plus Finden's marks, the round results and the
-//  hub's "Weiter" pick (`KasusPath.next`) over synthetic history.
+//  `-kasus.debugVerify 1` service block prints (and the block itself), plus the old Finden's
+//  marks, the round results and the hub's "Weiter" pick (`KasusPath.next`) over synthetic history.
+//  Markieren and Endungen have their own suites (KasusMarkingTests, KasusEndingsTests).
 //
 
 import Foundation
@@ -93,6 +94,9 @@ struct KasusServiceTests {
         #expect(KasusHintLevel.resolve(stored: "", level: .a1) == .genus)
         #expect(KasusHintLevel.resolve(stored: "viel", level: .b1) == .viel)
         #expect(KasusHintLevel.resolve(stored: "unknown", level: .b2) == .ohne)
+        #expect(KasusHintLevel.allCases.first == .lern, "Lernhilfe comes first")
+        #expect(KasusHintLevel.lern.harder == .viel)
+        #expect(KasusHintLevel.resolve(stored: "lern", level: .b1) == .lern)
         #expect(KasusHintLevel.viel.harder == .genus)
         #expect(KasusHintLevel.genus.harder == .ohne)
         #expect(KasusHintLevel.ohne.harder == nil)
@@ -289,9 +293,16 @@ struct KasusServiceTests {
         #expect(KasusService.offersHarder(fill(.genus, right: 8, of: 10)))
         #expect(!KasusService.offersHarder(fill(.genus, right: 7, of: 10)))
         #expect(!KasusService.offersHarder(fill(.ohne, right: 10, of: 10)), "nothing above Ohne Hilfe")
+        #expect(KasusService.offersHarder(fill(.lern, right: 9, of: 10)), "Lernhilfe → Viel Hilfe")
         let quick = KasusService.quickResult(unit: .dativ, items: fill(.genus, right: 10, of: 10).items, durationSeconds: 0)
         #expect(!KasusService.offersHarder(quick))
         #expect(quick.storyID == "quick-dativ")
+    }
+
+    @Test("The -kasus.debugVerify service block reads ALL OK")
+    func debugServiceReport() {
+        let lines = KasusService.debugServiceReport()
+        #expect(lines.last == "Service ALL OK", "\(lines.filter { $0.contains("FAIL") }.joined(separator: "\n"))")
     }
 
     // MARK: The path
@@ -317,14 +328,14 @@ struct KasusServiceTests {
         let everything = storyDone + played(KasusUnit.allCases.map { (KasusService.quickRoundID(for: $0), $0, .quick) })
 
         #expect(next(.a1, []) == "dativ · \(title) · Lesen")
-        #expect(next(.b1, findOnly) == "dativ · \(title) · Einsetzen")
+        #expect(next(.b1, findOnly) == "dativ · \(title) · Endungen")
         #expect(next(.a2, findOnly) == "akkusativ · Schnellrunde · Nom + Akk")
         #expect(next(.a2, storyDone) == "akkusativ · Schnellrunde · Nom + Akk")
         #expect(next(.b1, storyDone) == "dativ · Schnellrunde · Nom + Akk + Dat")
         #expect(next(.b1, everything) == "dativ · Wiederholen · \(title)")
         let shaky = LearnerProfile()
         shaky.grammar = [GrammarFocus.dativ.rawValue: GrammarSkill(struggle: 0.6, lastSeen: Date(), samples: [])]
-        #expect(next(.b1, everything, profile: shaky) == "dativ · \(title) · Einsetzen")
+        #expect(next(.b1, everything, profile: shaky) == "dativ · \(title) · Endungen")
 
         // With every bundled story, each level starts on its own unit's first story.
         let a1 = KasusPath.next(profile: nil, level: .a1, rounds: [], bank: bundled)

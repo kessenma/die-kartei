@@ -80,14 +80,21 @@ struct GenderTag: View {
 
 /// The endings table on its own, so the reference screen and the quick lesson share one layout.
 /// With `highlight`, the other rows fade back so one case stands out.
+///
+/// `compact` is Endungen's version inside the story player's tray: smaller type, no code word and
+/// no noun-ending line, and each form split where Endungen splits it (d·**em**, ein·**em**), so
+/// the table reads like the ending buttons under it. `highlightCell` (Lernhilfe) rings one cell,
+/// the gap's case row × gender column, and lets the rest step back.
 struct CaseEndingsTable: View {
     var cases: [GrammarCase] = GrammarCase.allCases
     var highlight: GrammarCase?
+    var highlightCell: KasusTableCell? = nil
+    var compact = false
 
     @Environment(\.appTheme) private var appTheme
 
     var body: some View {
-        Grid(alignment: .center, horizontalSpacing: 6, verticalSpacing: 14) {
+        Grid(alignment: .center, horizontalSpacing: compact ? 4 : 6, verticalSpacing: compact ? 3 : 14) {
             GridRow {
                 Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
                 ForEach(Gender.allCases) { gender in
@@ -95,11 +102,12 @@ struct CaseEndingsTable: View {
                         Image(systemName: gender.symbol)
                             .font(.caption2)
                         Text(gender.columnLabel)
-                            .font(.subheadline.weight(.bold))
+                            .font(compact ? .caption.weight(.bold) : .subheadline.weight(.bold))
                     }
                     .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity, minHeight: 26)
+                    .frame(maxWidth: .infinity, minHeight: compact ? 20 : 26)
                     .background(gender.color, in: RoundedRectangle(cornerRadius: appTheme.innerRadius(6), style: .continuous))
+                    .opacity(highlightCell == nil || highlightCell?.genus == gender ? 1 : 0.45)
                     .accessibilityLabel(gender.genderName)
                 }
             }
@@ -107,21 +115,36 @@ struct CaseEndingsTable: View {
                 GridRow {
                     VStack(alignment: .leading, spacing: 2) {
                         // Not `CaseLabel`: inside a List a Label takes the row's wide icon slot,
-                        // and „Nom“ truncated to „N…“ in this 62-point column.
-                        HStack(spacing: 3) {
-                            Image(systemName: kasus.symbol)
+                        // and „Nom“ truncated to „N…“ in this 62-point column. At the largest
+                        // text sizes the icon goes first, then the word shrinks, so it never
+                        // breaks into one letter per line.
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: 3) {
+                                Image(systemName: kasus.symbol)
+                                Text(kasus.short)
+                            }
                             Text(kasus.short)
+                            Text(kasus.short)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
                         }
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(kasus.color)
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(kasus.name)
-                        codeText(kasus)
-                            .font(.title3.weight(.heavy))
+                        if !compact {
+                            codeText(kasus)
+                                .font(.title3.weight(.heavy))
+                        }
                     }
-                    .frame(width: 62, alignment: .leading)
+                    .frame(width: compact ? 50 : 62, alignment: .leading)
+                    .opacity(highlightCell == nil || highlightCell?.kasus == kasus ? 1 : 0.45)
                     ForEach(Gender.allCases) { gender in
-                        cell(kasus, gender)
+                        if compact {
+                            compactCell(kasus, gender)
+                        } else {
+                            cell(kasus, gender)
+                        }
                     }
                 }
                 .opacity(highlight == nil || highlight == kasus ? 1 : 0.3)
@@ -152,6 +175,35 @@ struct CaseEndingsTable: View {
         .frame(maxWidth: .infinity)
         .minimumScaleFactor(0.8)
         .lineLimit(1)
+    }
+
+    /// d·**em** over ein·**em**; the plural, which has no ein, shows (k)ein·**e**. No ending
+    /// reads ein**–**, like Endungen's „–“ button. The highlighted cell is ringed and washed in
+    /// its case color with its ending bold.
+    private func compactCell(_ kasus: GrammarCase, _ gender: Gender) -> some View {
+        let article = kasus.article(gender)
+        let einEnding = kasus.einEnding(gender)
+        let isLit = highlightCell == KasusTableCell(kasus: kasus, genus: gender)
+        let dimmed = highlightCell != nil && !isLit
+        let shape = RoundedRectangle(cornerRadius: appTheme.innerRadius(6), style: .continuous)
+        return VStack(spacing: 1) {
+            Text(ending("d", String(article.dropFirst()), gender))
+                .font(.footnote)
+            Text(ending(gender == .plural ? "(k)ein" : "ein", einEnding.isEmpty ? "–" : einEnding, gender))
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+        .padding(.vertical, 2)
+        .frame(maxWidth: .infinity)
+        .background(isLit ? kasus.color.opacity(0.16) : .clear, in: shape)
+        .overlay {
+            if isLit { shape.strokeBorder(kasus.color, lineWidth: 2) }
+        }
+        .opacity(dimmed ? 0.4 : 1)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(isLit ? .isSelected : [])
     }
 }
 

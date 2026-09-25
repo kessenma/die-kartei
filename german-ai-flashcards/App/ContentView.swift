@@ -60,7 +60,8 @@ struct ContentView: View {
     /// `-kasus.debugOpen hub|unit:<unit>`: the Grammatik hub and its unit screens, which sit two
     /// or more taps into Home. The story player's screens launch through the router instead.
     @State private var kasusDebugSheet: KasusDebugOpen?
-    /// `-kasus.debugOpen history|round`: Verlauf, or the newest Kasus round's detail.
+    /// `-kasus.debugOpen history|round|round-mark`: Verlauf, or the newest Kasus (or Markieren)
+    /// round's detail.
     @State private var kasusHistoryDebug: KasusHistoryDebugScreen?
     #endif
     @Environment(\.modelContext) private var modelContext
@@ -517,10 +518,11 @@ struct ContentView: View {
             if let seed = UserDefaults.standard.string(forKey: "kasus.debugSeedRounds") {
                 print("[kasus.debugSeedRounds] " + KasusDebugSeeder.run(seed, in: modelContext))
             }
-            // `-kasus.debugOpen hub|unit:<unit>|quick:<unit>|read|find|check|summary|fill|result` opens a
-            // Grammatik screen at launch, since this simulator can't tap its way there. The player
-            // screens open the bundled story, prefilled by `-kasus.debugAnswers right|mixed` and
-            // `-kasus.debugHint viel|genus|ohne`; prefilled answers are never recorded.
+            // `-kasus.debugOpen hub|unit:<unit>|quick:<unit>|read|mark|mark-checked|mark-revealed|fill|
+            // fill-checked|result` opens a Grammatik screen at launch, since this simulator can't tap
+            // its way there. The player screens open the bundled story (`-kasus.debugStory <id>`),
+            // prefilled by `-kasus.debugAnswers right|mixed`, `-kasus.debugHint lern|viel|genus|ohne`
+            // and `-kasus.debugFeedback sofort|amEnde`; prefilled answers are never recorded.
             if let open = KasusDebugOpen.fromLaunchArguments() {
                 switch open {
                 case .hub, .unit:
@@ -534,7 +536,8 @@ struct ContentView: View {
                 }
                 print("[kasus.debugOpen] open \(open.id)")
             } else if let screen = KasusHistoryDebugScreen.fromLaunchArguments() {
-                // `history` (Verlauf) or `round` (the newest Kasus round's detail).
+                // `history` (Verlauf), `round` (the newest Kasus round's detail) or `round-mark`
+                // (the newest Markieren round's).
                 kasusHistoryDebug = screen
                 print("[kasus.debugOpen] open \(screen.id)")
             } else if let raw = UserDefaults.standard.string(forKey: "kasus.debugOpen") {
@@ -813,9 +816,13 @@ struct ContentView: View {
                 hapticMode: coordinator.modelManager.hapticFeedbackMode,
                 germanLevel: coordinator.modelManager.germanLevel,
                 onComplete: { result in
-                    // Called once per scored step (Finden, Einsetzen). Finden counts for the
-                    // streak only; recordRound decides which answers may move a case skill.
+                    // Called once per scored round (Markieren, Endungen). Markieren counts for
+                    // the streak only; recordRound decides which answers may move a case skill.
                     KasusService.recordRound(result, in: modelContext)
+                },
+                onAnswersShown: { roundID in
+                    // Lösung zeigen after that round was recorded: flags the same KasusRound.
+                    KasusService.markAnswersShown(roundID: roundID, in: modelContext)
                 },
                 onDismiss: {
                     router.dismiss()

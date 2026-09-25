@@ -2,72 +2,53 @@
 //  KasusStoryView.swift
 //  german-ai-flashcards
 //
-//  The story player: Lesen → Finden → Einsetzen → Ergebnis over one validated Kasus story,
-//  presented full screen through `ActivityRouter` as `.kasusStory`. The two class exercises on
+//  The story player: Lesen → Markieren → Endungen → Ergebnis over one validated Kasus story,
+//  presented full screen through `ActivityRouter` as `.kasusStory`. The two class worksheets on
 //  one text:
 //
 //    Lesen      the paragraphs, an English toggle for each, one comprehension question (unscored)
-//    Finden     mark the cases: paint each article + noun phrase with a case brush, then Prüfen
-//    Einsetzen  fill in the articles, with the hint ladder (Viel Hilfe · Genus-Hilfe · Ohne Hilfe)
+//    Markieren  mark every word in one case, the numbered sentences as chips (`KasusMarkView`)
+//    Endungen   fill in the article endings on their stems, with four help levels
+//               (`KasusEndingsView`)
 //    Ergebnis   per-case counts, the time, the misses in their sentences, and what to try next
 //
-//  The text is `KasusText`: one `Text` per paragraph whose styling never moves a line (wash,
-//  underline, strikethrough, color). Case labels, chips and explanations live in the bottom tray.
-//  Case colors mark cases; gender colors mark only articles and gender tags; nothing is ever
-//  red or green for right and wrong. The right/wrong signal (the verdict line, the answer
-//  buttons, the dot strip) is `KasusFeedback`, the same one the Schnellrunde gives. Every
-//  explanation renders through `Text(kasusRich:)`, so it may carry the `KasusRich` markup.
+//  Both exercises show the story as numbered sentences (`KasusSentences`) and judge either after
+//  each answer („Sofort“) or at Prüfen („Am Ende“), each remembering its own choice. Case colors
+//  mark cases; gender colors mark only articles and gender tags; nothing is ever red or green
+//  for right and wrong. The right/wrong signal is `KasusFeedback`, the same one the Schnellrunde
+//  gives, and every explanation renders through `Text(kasusRich:)`.
 //
-//  `KasusService` does the thinking (blanks, options, grading, explanations). Finden (at its first
-//  Prüfen) and Einsetzen (the moment its last gap gets a first pick) each hand their round to
-//  `onComplete` once, and `ContentView` passes it to `KasusService.recordRound`: Finden counts
-//  for the streak only, Einsetzen can move a case skill.
+//  This view holds each exercise's state (`KasusMarkPlay`, `KasusEndingsPlay`), so the step bar
+//  can hop between them without losing a mark. `KasusService` does the thinking. Each round is
+//  handed to `onComplete` once, on its first attempt (Markieren at Prüfen or Fertig, Endungen
+//  when its last gap is answered or at Prüfen), and `ContentView` passes it to
+//  `KasusService.recordRound`: Markieren counts for the streak only, Endungen can move a case
+//  skill. Lösung zeigen after that goes to `onAnswersShown`, which flags the same round.
 //
 
 import SwiftUI
 
 /// Where the player opens. Real sessions start at `session.startStep`; previews and the DEBUG
-/// `-kasus.debugOpen` argument can also open Finden already checked or at its summary, and
-/// Ergebnis after a played round.
+/// `-kasus.debugOpen` argument can also open Markieren checked or with its answers shown,
+/// Endungen checked (Am Ende), and Ergebnis after a played round.
 enum KasusStoryScreen: String, CaseIterable, Identifiable {
-    case read, find, check, summary, fill, result
+    case read
+    case mark
+    case markChecked = "mark-checked"
+    case markRevealed = "mark-revealed"
+    case fill
+    case fillChecked = "fill-checked"
+    case result
 
     var id: String { rawValue }
 
     var step: KasusStep {
         switch self {
-        case .read:                   .lesen
-        case .find, .check, .summary: .finden
-        case .fill:                   .einsetzen
-        case .result:                 .ergebnis
+        case .read:                                .lesen
+        case .mark, .markChecked, .markRevealed:   .finden
+        case .fill, .fillChecked:                  .einsetzen
+        case .result:                              .ergebnis
         }
-    }
-}
-
-/// Time spent on one step, paused while the learner is on another, so Finden and Einsetzen never
-/// bank each other's minutes when the step bar hops between them.
-private struct StepClock {
-    private var banked: TimeInterval = 0
-    private var runningSince: Date?
-
-    /// From zero, running.
-    mutating func restart() {
-        banked = 0
-        runningSince = Date()
-    }
-
-    mutating func resume() {
-        if runningSince == nil { runningSince = Date() }
-    }
-
-    mutating func pause() {
-        guard let runningSince else { return }
-        banked += Date().timeIntervalSince(runningSince)
-        self.runningSince = nil
-    }
-
-    var seconds: Int {
-        max(0, Int(banked + (runningSince.map { Date().timeIntervalSince($0) } ?? 0)))
     }
 }
 
@@ -78,15 +59,15 @@ struct KasusStoryView: View {
     let germanLevel: CEFRLevel
     /// Previews only; real sessions start at `session.startStep`.
     var openAt: KasusStoryScreen? = nil
-    /// Called once per scored step with its result.
+    /// Called once per scored round with its result.
     var onComplete: (KasusRoundResult) -> Void
+    /// Lösung zeigen on a round that was already handed to `onComplete`: its result's id.
+    var onAnswersShown: (UUID) -> Void = { _ in }
     var onDismiss: () -> Void
 
     @Environment(\.appTheme) private var appTheme
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @AppStorage(KasusHintLevel.storageKey) private var hintRaw = ""
-
-    /// Finden's own stages: painting, the checked marks, redoing the misses, the sort grid.
-    private enum FindPhase { case painting, checked, retrying, summary }
 
     /// Validated once, on appear: the init runs on every re-render of the cover.
     @State private var playable: KasusPlayableStory?
@@ -100,49 +81,9 @@ struct KasusStoryView: View {
     @State private var questionOrder: [Int] = []
     @State private var questionPick: Int?
 
-    // Finden
-    @State private var findPhase: FindPhase = .painting
-    @State private var brush: GrammarCase = .nominativ
-    /// Target index → the brush it's painted with.
-    @State private var paint: [Int: GrammarCase] = [:]
-    /// What the text shows after Prüfen. "Noch mal die Fehler" rewrites the redone ones.
-    @State private var marks: [Int: KasusFindMark] = [:]
-    /// The first Prüfen, the one that's scored and recorded.
-    @State private var findResult: KasusRoundResult?
-    /// The phrases open again during "Noch mal die Fehler".
-    @State private var retry: Set<Int> = []
-    @State private var selectedTarget: Int?
-    @State private var note: String?
-    @State private var showAllCases = false
-    @State private var findClock = StepClock()
-    /// DEBUG prefill: the paint wasn't the learner's, so nothing is recorded.
-    @State private var findPrefilled = false
+    @State private var markPlay = KasusMarkPlay()
+    @State private var endingsPlay = KasusEndingsPlay()
 
-    // Einsetzen
-    /// DEBUG `-kasus.debugHint`, which wins over the stored level without overwriting it.
-    @State private var hintOverride: KasusHintLevel?
-    @State private var mixed = false
-    @State private var roundHint: KasusHintLevel = .genus
-    @State private var blanks: [KasusBlank] = []
-    /// Blank id → the first pick. Later taps don't count.
-    @State private var picks: [Int: String] = [:]
-    /// Blank id → how far the Tipp went before the first pick.
-    @State private var tipps: [Int: KasusTipp] = [:]
-    @State private var activeBlank: Int?
-    /// A right pick waiting out its 800 ms before moving on (long enough to see „Richtig!“), and
-    /// the task that will move on.
-    @State private var pendingAdvance: Int?
-    @State private var advanceTask: Task<Void, Never>?
-    @State private var fillRound = 0
-    @State private var fillClock = StepClock()
-    @State private var fillPrefilled = false
-    /// Set, and handed to `onComplete`, the moment the last open gap gets its first pick.
-    @State private var fillResult: KasusRoundResult?
-
-    // Haptics
-    @State private var correctCount = 0
-    @State private var wrongCount = 0
-    @State private var slipCount = 0
     /// The step's height, which caps how tall the tray's explanation may grow before it scrolls.
     @State private var stepHeight: CGFloat = 0
 
@@ -167,10 +108,7 @@ struct KasusStoryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        cancelAdvance()
-                        onDismiss()
-                    } label: {
+                    Button(action: onDismiss) {
                         Image(systemName: "xmark")
                     }
                     .accessibilityLabel("Close")
@@ -189,25 +127,15 @@ struct KasusStoryView: View {
             }
         }
         .onAppear(perform: setUp)
-        .onDisappear(perform: cancelAdvance)
         .sheet(isPresented: $showKasusCheck) {
             KasusCheckSheet()
-        }
-        .sensoryFeedback(.success, trigger: correctCount) { old, new in
-            new > old && hapticMode.playsSuccess
-        }
-        .sensoryFeedback(.error, trigger: wrongCount) { old, new in
-            new > old && hapticMode.playsError
-        }
-        .sensoryFeedback(.impact(weight: .light), trigger: slipCount) { old, new in
-            new > old && hapticMode.playsError
         }
         .tint(appTheme.accent(model: nil))
     }
 
     // MARK: - Steps
 
-    /// Lesen · Finden · Einsetzen, in the navigation bar. Any step can be opened from here; a
+    /// Lesen · Markieren · Endungen, in the navigation bar. Any step can be opened from here; a
     /// checkmark means it's been played.
     private var stepBar: some View {
         HStack(spacing: 2) {
@@ -236,41 +164,64 @@ struct KasusStoryView: View {
             }
         }
         .minimumScaleFactor(0.8)
+        // A navigation bar stops growing at the larger sizes; so does this, or „Markieren“ turns
+        // into „Marki…“ on a small phone.
+        .dynamicTypeSize(...DynamicTypeSize.xLarge)
     }
 
     private func isPlayed(_ item: KasusStep) -> Bool {
         switch item {
         case .lesen:     questionPick != nil
-        case .finden:    findResult != nil
-        case .einsetzen: fillResult != nil
+        case .finden:    markPlay.isPlayed
+        case .einsetzen: endingsPlay.isPlayed
         case .ergebnis:  false
         }
     }
 
-    /// Switches steps. A pending auto-advance is dropped, and only the step being shown keeps its
-    /// clock running.
+    /// Switches steps, starting an exercise the first time it's opened. Only the step being
+    /// shown keeps its clock running.
     private func go(to target: KasusStep) {
-        note = nil
-        selectedTarget = nil
-        cancelAdvance()
-        findClock.pause()
-        fillClock.pause()
+        guard let playable else { return }
+        markPlay.clock.pause()
+        endingsPlay.clock.pause()
         switch target {
-        case .finden:
-            step = .finden
-            if findResult == nil { findClock.resume() }
-        case .einsetzen, .ergebnis:
-            if fillResult != nil {
-                step = .ergebnis
-            } else {
-                if blanks.isEmpty { startFillRound() }
-                step = .einsetzen
-                fillClock.resume()
-            }
         case .lesen:
             step = .lesen
+        case .finden:
+            if markPlay.round == nil {
+                markPlay.start(in: playable, unit: unit, mode: markMode)
+            } else if markPlay.round?.isChecked == false {
+                markPlay.clock.resume()
+            }
+            step = .finden
+        case .einsetzen:
+            if endingsPlay.round == nil {
+                endingsPlay.start(in: playable, unit: unit, germanLevel: germanLevel)
+            } else if endingsPlay.round?.isFinished == false {
+                endingsPlay.clock.resume()
+            }
+            step = .einsetzen
+        case .ergebnis:
+            step = endingsPlay.round?.isFinished == true ? .ergebnis : .einsetzen
         }
     }
+
+    private var markMode: KasusFeedbackMode {
+        markPlay.modeOverride ?? KasusFeedbackMode.current(for: .find)
+    }
+
+    /// How tall the tray's verdict and explanation may grow before they scroll: about a third of
+    /// the step (a fifth at the accessibility sizes), so the story keeps some room and the
+    /// buttons stay on screen.
+    private var trayTextCap: CGFloat {
+        guard stepHeight > 0 else { return .infinity }
+        return max(90, stepHeight * (dynamicTypeSize.isAccessibilitySize ? 0.2 : 0.3))
+    }
+
+    /// How tall the tray's content may grow before it scrolls (its main button, and Endungen's
+    /// chips and ending buttons, stay pinned under it): two fifths of the step, which only the
+    /// largest text sizes, or a four-case table on a small phone, reach.
+    private var trayCap: CGFloat { stepHeight > 0 ? max(200, stepHeight * 0.4) : .infinity }
 
     @ViewBuilder
     private func stepContent(_ playable: KasusPlayableStory) -> some View {
@@ -278,20 +229,28 @@ struct KasusStoryView: View {
         case .lesen:
             readStep(playable.story)
         case .finden:
-            if findPhase == .summary {
-                findSummary(playable)
-            } else {
-                findStep(playable)
-            }
+            KasusMarkStepView(play: $markPlay, playable: playable, unit: unit, hapticMode: hapticMode,
+                              trayTextCap: trayTextCap, trayCap: trayCap, onComplete: onComplete,
+                              onAnswersShown: onAnswersShown, onFinished: { go(to: .einsetzen) })
         case .einsetzen:
-            fillStep(playable)
+            endingsStep(playable)
         case .ergebnis:
-            if let fillResult {
-                resultStep(fillResult, playable: playable)
+            if let round = endingsPlay.round, round.isFinished {
+                resultStep(round, playable: playable)
             } else {
-                fillStep(playable)
+                endingsStep(playable)
             }
         }
+    }
+
+    private func endingsStep(_ playable: KasusPlayableStory) -> some View {
+        KasusEndingsStepView(play: $endingsPlay, playable: playable, unit: unit, germanLevel: germanLevel,
+                             hapticMode: hapticMode, trayTextCap: trayTextCap, trayCap: trayCap,
+                             onComplete: onComplete,
+                             onAnswersShown: onAnswersShown, onShowResult: {
+                                 endingsPlay.clock.pause()
+                                 step = .ergebnis
+                             })
     }
 
     // MARK: - Setup
@@ -301,88 +260,33 @@ struct KasusStoryView: View {
         didSetUp = true
         guard let playable = KasusService.prepare(session) else { return }
         self.playable = playable
-        mixed = session.mixed
-        hintOverride = session.prefill?.hint
-        brush = unit.findenBrushes.first ?? .nominativ
         questionOrder = Array(playable.story.question.options.indices).shuffled()
+        markPlay.modeOverride = session.prefill?.feedback
+        endingsPlay.modeOverride = session.prefill?.feedback
+        endingsPlay.hintOverride = session.prefill?.hint
+        endingsPlay.mixed = session.mixed
 
         var screen = openAt
         #if DEBUG
         if screen == nil, session.prefill != nil, case .story(let debugScreen)? = KasusDebugOpen.fromLaunchArguments() {
             screen = debugScreen
         }
+        // Checking is Am Ende's, so that screen opens in it whatever is stored.
+        if screen == .fillChecked { endingsPlay.modeOverride = .amEnde }
         #endif
         step = screen?.step ?? session.startStep
-        if step == .finden { findClock.restart() }
-        if step == .einsetzen || step == .ergebnis { startFillRound() }
+        if step == .finden { markPlay.start(in: playable, unit: unit, mode: markMode) }
+        if step == .einsetzen || step == .ergebnis {
+            endingsPlay.start(in: playable, unit: unit, germanLevel: germanLevel)
+        }
         #if DEBUG
         if let screen { applyDebugPrefill(screen, in: playable) }
         #endif
-        // Ergebnis needs a played round; without one, start the round instead.
-        if step == .ergebnis, fillResult == nil { step = .einsetzen }
+        // Ergebnis needs a finished round; without one, start the round instead.
+        if step == .ergebnis, endingsPlay.round?.isFinished != true { step = .einsetzen }
     }
 
     // MARK: - Shared pieces
-
-    private func titleBlock(_ story: KasusStory) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(story.title)
-                .font(.title2.weight(.bold))
-            Text("\(story.titleEnglish) · \(story.level) · \(unit.germanTitle)")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private func instruction(_ german: String, _ english: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(german)
-                .font(.subheadline.weight(.semibold))
-            Text(english)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private func targets(in paragraph: Int, _ playable: KasusPlayableStory) -> [KasusLocatedTarget] {
-        playable.targets.filter { $0.paragraphIndex == paragraph }
-    }
-
-    /// How tall the tray's verdict and explanation may grow before they scroll: about a third of
-    /// the step, so at the largest text sizes the story keeps some room and Weiter stays on screen.
-    private var trayTextCap: CGFloat { stepHeight > 0 ? max(110, stepHeight * 0.3) : .infinity }
-
-    /// The bottom tray: where case labels, chips, options and explanations live, so the story
-    /// text above never has to make room for them.
-    private func tray<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            content()
-        }
-        .padding(.horizontal)
-        .padding(.top, 12)
-        .padding(.bottom, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            if appTheme == .klar {
-                Rectangle().fill(.bar).ignoresSafeArea()
-            } else {
-                appTheme.surface.ignoresSafeArea()
-            }
-        }
-        .overlay(alignment: .top) { Divider() }
-    }
-
-    private func noteLine(_ text: String) -> some View {
-        Label {
-            Text(kasusRich: text)
-        } icon: {
-            Image(systemName: "info.circle")
-        }
-        .font(.caption)
-        .foregroundStyle(.secondary)
-        .fixedSize(horizontal: false, vertical: true)
-    }
 
     /// The code word with each letter in its column's gender color, as the endings table shows it.
     private func codeWord(_ kasus: GrammarCase) -> Text {
@@ -425,7 +329,7 @@ struct KasusStoryView: View {
     private func readStep(_ story: KasusStory) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                titleBlock(story)
+                KasusStoryHeader(story: story, unit: unit)
                 ForEach(Array(story.paragraphs.enumerated()), id: \.offset) { index, paragraph in
                     VStack(alignment: .leading, spacing: 8) {
                         KasusText(segments: [KasusTextSegment(text: paragraph.de, kind: .plain)])
@@ -452,11 +356,11 @@ struct KasusStoryView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .safeAreaInset(edge: .bottom) {
-            tray {
+            KasusTray {
                 Button {
                     go(to: .finden)
                 } label: {
-                    Text("Fälle suchen · Find the cases")
+                    Text("Markieren · Mark the case")
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
@@ -516,881 +420,131 @@ struct KasusStoryView: View {
         .disabled(answered)
     }
 
-    // MARK: - Finden
-
-    private func findStep(_ playable: KasusPlayableStory) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                titleBlock(playable.story)
-                instruction(findGerman(playable), findEnglish(playable))
-                ForEach(Array(playable.story.paragraphs.enumerated()), id: \.offset) { index, paragraph in
-                    KasusText(segments: findSegments(index, paragraph.de, playable)) { tap in
-                        handleFindTap(tap, playable)
-                    }
-                }
-            }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .safeAreaInset(edge: .bottom) {
-            tray { findTray(playable) }
-        }
-    }
-
-    /// A one-brush unit marks one case only, and says so: painting every phrase would put the
-    /// other cases on the wrong brush. A story that also marks pronouns or contractions names
-    /// them, since "article + noun" alone would have the learner skip „ihn“ and „am Ende“.
-    private func findGerman(_ playable: KasusPlayableStory) -> String {
-        let brushes = unit.findenBrushes
-        let (pronouns, contractions) = findExtras(playable)
-        let also = contractions.map { ", auch \($0) …" } ?? ""
-        let plus = pronouns.map { " und die Pronomen \($0)" } ?? ""
-        if brushes.count == 1, let only = brushes.first {
-            let words = contractions.map { " (auch mit \($0) …)" } ?? ""
-            return "„Markiere jede Nominalgruppe im \(only.name)\(words)\(plus).“"
-        }
-        return "„Markiere jede Nominalgruppe mit Artikelwort (der, ein, mein …\(also))\(plus).“"
-    }
-
-    private func findEnglish(_ playable: KasusPlayableStory) -> String {
-        let brushes = unit.findenBrushes
-        let (pronouns, contractions) = findExtras(playable)
-        let extras = [contractions.map { "\($0) … too" }, pronouns.map { "or \($0)" }].compactMap { $0 }
-        let also = extras.isEmpty ? "" : " (\(extras.joined(separator: "; ")))"
-        if brushes.count == 1, let only = brushes.first {
-            return "Find every \(only.name) phrase, article + noun\(also), and tap it to mark it."
-        }
-        return "Find every article + noun phrase\(also), pick its case below, and tap the phrase to mark it."
-    }
-
-    /// What the instruction adds for a story with spot-only targets: the case-visible pronouns of
-    /// the cases being marked („mich, dich, ihn“), and example contractions („im, zum“). Nil for
-    /// a kind the story doesn't mark. The examples are generic, so they never point at an answer.
-    private func findExtras(_ playable: KasusPlayableStory) -> (pronouns: String?, contractions: String?) {
-        let brushes = Set(unit.findenBrushes)
-        let kinds = Set(playable.gradable.map(\.kind))
-        var pronouns: String?
-        if kinds.contains(.pronoun) {
-            let words = ["mich", "mir", "dich", "dir", "ihn", "ihm"].filter { word in
-                KasusForms.pronoun(word).map { brushes.contains($0.kasus) } ?? false
-            }
-            if !words.isEmpty { pronouns = words.joined(separator: ", ") }
-        }
-        var contractions: String?
-        if kinds.contains(.contraction) {
-            contractions = brushes.contains(.dativ) ? "im, zum" : brushes.contains(.akkusativ) ? "ins, fürs" : nil
-        }
-        return (pronouns, contractions)
-    }
-
-    /// Finden marks gradable targets only; everything else reads as words. No underline before
-    /// Prüfen: every article in an authored story is a target, so the hunt is real.
-    private func findSegments(_ index: Int, _ text: String, _ playable: KasusPlayableStory) -> [KasusTextSegment] {
-        KasusText.segments(paragraph: text, targets: targets(in: index, playable), linkWords: true) { target in
-            guard target.gradable else { return nil }
-            return [KasusTextSegment(text: target.surface, kind: .target(target.index), style: findStyle(target))]
-        }
-    }
-
-    private func findStyle(_ target: KasusLocatedTarget) -> KasusTextStyle {
-        if findPhase == .summary, showAllCases {
-            return KasusTextStyle(wash: target.kasus.color.opacity(0.26))
-        }
-        let selected = selectedTarget == target.index
-        if let mark = marks[target.index] {
-            var style: KasusTextStyle
-            switch mark {
-            case .right:
-                style = KasusTextStyle(wash: target.kasus.color.opacity(0.3))
-            case .wrongPick:
-                style = KasusTextStyle(foreground: .secondary, wash: Color.gray.opacity(0.18),
-                                       strikethrough: .init(pattern: .solid, color: .secondary))
-            case .missed:
-                style = KasusTextStyle(underline: .init(pattern: .dot, color: target.kasus.color))
-            }
-            if selected { style.underline = .init(pattern: .solid, color: target.kasus.color) }
-            return style
-        }
-        var style = KasusTextStyle()
-        if let painted = paint[target.index] { style.wash = painted.color.opacity(0.2) }
-        if selected { style.underline = .init(pattern: .solid, color: .secondary) }
-        return style
-    }
-
-    private func handleFindTap(_ tap: KasusTap, _ playable: KasusPlayableStory) {
-        guard case .target(let index) = tap,
-              let target = playable.targets.first(where: { $0.index == index }) else {
-            selectedTarget = nil
-            note = KasusService.nonTargetNote
-            return
-        }
-        switch findPhase {
-        case .painting:
-            paintTap(target)
-        case .retrying:
-            if retry.contains(index) {
-                paintTap(target)
-            } else {
-                note = nil
-                selectedTarget = index
-            }
-        case .checked, .summary:
-            note = nil
-            selectedTarget = selectedTarget == index ? nil : index
-        }
-    }
-
-    /// Paint with the selected brush; the same brush again clears it. A case the unit hasn't
-    /// reached reads as plain prose and can't be painted.
-    private func paintTap(_ target: KasusLocatedTarget) {
-        selectedTarget = nil
-        guard unit.casesInPlay.contains(target.kasus) else {
-            let marking = unit.findenBrushes.map(\.short).joined(separator: ", ")
-            note = "{\(target.kasus.short.lowercased()):\(target.kasus.name)} comes later on the path. Here you're marking \(marking)."
-            return
-        }
-        note = nil
-        paint[target.index] = paint[target.index] == brush ? nil : brush
-    }
-
-    @ViewBuilder
-    private func findTray(_ playable: KasusPlayableStory) -> some View {
-        switch findPhase {
-        case .painting, .retrying:
-            if let note { noteLine(note) }
-            if let selectedTarget, let target = playable.targets.first(where: { $0.index == selectedTarget }) {
-                findExplanation(target, story: playable.story)
-            }
-            brushRow(playable)
-            Button {
-                check(playable)
-            } label: {
-                Text(findPhase == .retrying ? "Prüfen · Check again" : "Prüfen · Check")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .disabled(findPhase == .painting && paint.isEmpty)
-            if findPhase == .retrying {
-                Text("Not scored. Only the phrases you missed are open again.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        case .checked:
-            if let note { noteLine(note) }
-            if let selectedTarget, let target = playable.targets.first(where: { $0.index == selectedTarget }) {
-                findExplanation(target, story: playable.story)
-            } else {
-                findScore(playable)
-            }
-            HStack(spacing: 10) {
-                if marks.values.contains(where: { $0 != .right }) {
-                    Button {
-                        startRetry()
-                    } label: {
-                        Text("Noch mal die Fehler")
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                }
-                Button {
-                    selectedTarget = nil
-                    findPhase = .summary
-                } label: {
-                    Text("Weiter")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-            }
-        case .summary:
-            if let selectedTarget, let target = playable.targets.first(where: { $0.index == selectedTarget }) {
-                findExplanation(target, story: playable.story)
-            }
-            Button {
-                go(to: .einsetzen)
-            } label: {
-                Text("Weiter: Artikel einsetzen")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-        }
-    }
-
-    /// One chip per brush in the case's color and symbol, with how many are painted so far out of
-    /// how many there are to find.
-    private func brushRow(_ playable: KasusPlayableStory) -> some View {
-        let counts = KasusService.findCounts(in: playable, unit: unit)
-        return HStack(spacing: 8) {
-            ForEach(unit.findenBrushes) { kasus in
-                let selected = brush == kasus
-                let painted = paint.values.filter { $0 == kasus }.count
-                Button {
-                    brush = kasus
-                } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: kasus.symbol)
-                        Text(kasus.short)
-                            .fontWeight(.semibold)
-                        Text("\(painted)/\(counts[kasus] ?? 0)")
-                            .monospacedDigit()
-                            .opacity(0.85)
-                    }
-                    .font(.subheadline)
-                    .lineLimit(1)
-                    .padding(.horizontal, 11)
-                    .padding(.vertical, 7)
-                    .foregroundStyle(selected ? Color.white : kasus.color)
-                    .background(selected ? kasus.color : kasus.color.opacity(0.12), in: appTheme.pillShape)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("\(kasus.name), \(painted) of \(counts[kasus] ?? 0) marked")
-                .accessibilityAddTraits(selected ? .isSelected : [])
-            }
-        }
-        .minimumScaleFactor(0.8)
-    }
-
-    /// After Prüfen: the verdict, a dot per phrase in reading order (its case color when right, a
-    /// hollow ring when missed or on the wrong brush), and what went wrong.
-    private func findScore(_ playable: KasusPlayableStory) -> some View {
-        let right = marks.values.filter { $0 == .right }.count
-        let missed = marks.values.filter { $0 == .missed }.count
-        let wrong = marks.count - right - missed
-        var detail: [String] = []
-        if missed > 0 { detail.append("\(missed) missed") }
-        if wrong > 0 { detail.append("\(wrong) on the wrong case") }
-        let brushes = unit.findenBrushes
-        return VStack(alignment: .leading, spacing: 8) {
-            KasusFeedbackHeader(verdict: right == marks.count ? .right : .miss,
-                                kasus: brushes.count == 1 ? brushes.first : nil,
-                                detail: "\(right) of \(marks.count)")
-            KasusProgressStrip(marks: findMarks(playable), showsScore: false)
-            Text((detail.isEmpty ? "" : detail.joined(separator: " · ") + ". ") + "Tap a phrase to see why it has its case.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    /// Finden's marks as strip dots, in reading order.
-    private func findMarks(_ playable: KasusPlayableStory) -> [KasusProgressStrip.Mark] {
-        let byIndex = Dictionary(uniqueKeysWithValues: playable.targets.map { ($0.index, $0) })
-        return marks.keys.sorted().map { index in
-            guard marks[index] == .right, let target = byIndex[index] else { return .miss }
-            return .right(target.kasus)
-        }
-    }
-
-    /// The tray's word on one phrase: the verdict once checked, its true case, what went wrong if
-    /// anything, and why.
-    private func findExplanation(_ target: KasusLocatedTarget, story: KasusStory) -> some View {
-        KasusCappedScroll(maxHeight: trayTextCap, spacing: 6) {
-            if let mark = marks[target.index] {
-                KasusFeedbackHeader(verdict: mark == .right ? .right : .miss, kasus: target.kasus)
-                    .id(target.index)
-            }
-            HStack(spacing: 6) {
-                Text("„\(target.surface)“")
-                    .fontWeight(.semibold)
-                switch marks[target.index] {
-                case .wrongPick(let painted)?:
-                    Text("· marked \(painted.name)")
-                        .foregroundStyle(.secondary)
-                case .missed?:
-                    Text("· not marked")
-                        .foregroundStyle(.secondary)
-                case .right?:
-                    EmptyView()
-                case nil:
-                    CaseLabel(kasus: target.kasus, style: .name)
-                        .fontWeight(.semibold)
-                }
-            }
-            .font(.subheadline)
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            Text(kasusRich: KasusService.explanation(for: target, in: story))
-                .font(.footnote)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private func check(_ playable: KasusPlayableStory) {
-        let graded = KasusService.gradeFind(paint: paint, in: playable, unit: unit)
-        note = nil
-        selectedTarget = nil
-        switch findPhase {
-        case .painting:
-            marks = graded
-            findPhase = .checked
-            findClock.pause()
-            let result = KasusService.findResult(storyID: playable.story.id, unit: unit, marks: graded,
-                                                 in: playable, durationSeconds: findClock.seconds)
-            findResult = result
-            if result.firstTryCount == result.askedCount { correctCount += 1 } else { wrongCount += 1 }
-            if !findPrefilled { onComplete(result) }
-        case .retrying:
-            // Unscored: only the redone phrases change. One left unpainted whose case has no brush
-            // is now right by being left alone, so it loses its mark.
-            for index in retry { marks[index] = graded[index] }
-            retry = []
-            findPhase = .checked
-        case .checked, .summary:
-            break
-        }
-    }
-
-    /// "Noch mal die Fehler": clear the wrong and missed phrases and let them be painted again.
-    private func startRetry() {
-        retry = Set(marks.filter { $0.value != .right }.map(\.key))
-        for index in retry {
-            paint[index] = nil
-            marks[index] = nil
-        }
-        selectedTarget = nil
-        note = nil
-        findPhase = .retrying
-    }
-
-    // MARK: - Finden summary
-
-    private func findSummary(_ playable: KasusPlayableStory) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                if let findResult {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Gefunden · What you marked")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                        Text("\(findResult.firstTryCount) of \(findResult.askedCount)")
-                            .font(.largeTitle.weight(.bold))
-                    }
-                    caseRows(findResult.perCase)
-                }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Sortiert · By case and gender")
-                        .font(.subheadline.weight(.semibold))
-                    sortGrid(playable)
-                    Text("Same case and gender, same last letter: the code from the endings table.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding()
-                .themedCard()
-
-                Toggle("Alle Fälle zeigen · Show every case", isOn: $showAllCases)
-                    .font(.subheadline)
-
-                ForEach(Array(playable.story.paragraphs.enumerated()), id: \.offset) { index, paragraph in
-                    KasusText(segments: findSegments(index, paragraph.de, playable)) { tap in
-                        handleFindTap(tap, playable)
-                    }
-                }
-            }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .safeAreaInset(edge: .bottom) {
-            tray { findTray(playable) }
-        }
-    }
-
-    /// The story's phrases sorted into the endings table's layout: case rows, gender columns,
-    /// each cell the articles that landed there. Off: the cases Finden asked about. On: every case.
-    /// Pronouns stay out, since their genus is no noun's gender; a contraction lists the article
-    /// inside it („im“ → dem).
-    private func sortGrid(_ playable: KasusPlayableStory) -> some View {
-        let brushes = Set(unit.findenBrushes)
-        let shown = playable.gradable.filter { $0.hasNounGender && (showAllCases || brushes.contains($0.kasus)) }
-        let rows = GrammarCase.allCases.filter { kasus in shown.contains { $0.kasus == kasus } }
-        return Grid(alignment: .topLeading, horizontalSpacing: 6, verticalSpacing: 12) {
-            GridRow {
-                Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
-                ForEach(Gender.allCases) { gender in
-                    GenderTag(gender: gender)
-                        .frame(maxWidth: .infinity)
-                }
-            }
-            ForEach(rows) { kasus in
-                GridRow(alignment: .top) {
-                    CaseLabel(kasus: kasus)
-                        .font(.caption.weight(.semibold))
-                        .lineLimit(1)
-                        .frame(width: 54, alignment: .leading)
-                    ForEach(Gender.allCases) { gender in
-                        sortCell(shown.filter { $0.kasus == kasus && $0.genus == gender }, gender: gender)
-                    }
-                }
-            }
-        }
-    }
-
-    private struct SortEntry: Hashable {
-        let form: String
-        var count: Int
-    }
-
-    /// The articles in one cell, each once with a count, in the gender's color.
-    private func sortCell(_ targets: [KasusLocatedTarget], gender: Gender) -> some View {
-        var forms: [SortEntry] = []
-        for target in targets {
-            let form = target.caseForm
-            if let i = forms.firstIndex(where: { $0.form == form }) {
-                forms[i].count += 1
-            } else {
-                forms.append(SortEntry(form: form, count: 1))
-            }
-        }
-        return VStack(spacing: 2) {
-            if forms.isEmpty {
-                Text("–")
-                    .foregroundStyle(.tertiary)
-            } else {
-                ForEach(forms, id: \.form) { entry in
-                    HStack(spacing: 2) {
-                        Text(entry.form)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(gender.color)
-                        if entry.count > 1 {
-                            Text("×\(entry.count)")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-            }
-        }
-        .font(.caption)
-        .lineLimit(1)
-        .minimumScaleFactor(0.7)
-        .frame(maxWidth: .infinity)
-    }
-
-    // MARK: - Einsetzen
-
-    private func fillStep(_ playable: KasusPlayableStory) -> some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    titleBlock(playable.story)
-                    instruction("„Setz die Artikel ein.“", fillEnglish)
-                    hintControl
-                    ForEach(Array(playable.story.paragraphs.enumerated()), id: \.offset) { index, paragraph in
-                        KasusText(segments: fillSegments(index, paragraph.de, playable)) { tap in
-                            if case .blank(let id) = tap, blanks.contains(where: { $0.id == id }) {
-                                pendingAdvance = nil
-                                activeBlank = id
-                            }
-                        }
-                        .id(index)
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .onChange(of: activeParagraph) { _, paragraph in
-                guard let paragraph else { return }
-                withAnimation(.easeInOut(duration: 0.25)) { proxy.scrollTo(paragraph, anchor: .top) }
-            }
-            .onAppear {
-                // Coming back to a round in progress: bring its gap into view. The first
-                // paragraph is already on screen, under the title.
-                guard let paragraph = activeParagraph, paragraph > 0 else { return }
-                proxy.scrollTo(paragraph, anchor: .top)
-            }
-        }
-        .safeAreaInset(edge: .bottom) {
-            tray { fillTray(playable) }
-                .animation(.snappy(duration: 0.25), value: picks)
-        }
-    }
-
-    private var activeParagraph: Int? {
-        activeBlank.flatMap { id in blanks.first { $0.id == id }?.target.paragraphIndex }
-    }
-
-    private var fillEnglish: String {
-        let cases = GrammarCase.allCases.filter { kasus in blanks.contains { $0.kasus == kasus } }
-        let named = cases.map(\.name).joined(separator: " and ")
-        return "Fill in each gap: \(blanks.count) \(named) articles. Every other article stays as a model."
-    }
-
-    /// The hint ladder. Fixed once the first article is picked, so a round is played at one level.
-    @ViewBuilder
-    private var hintControl: some View {
-        let available = KasusService.availableHintLevels(unit: unit, mixed: mixed)
-        VStack(alignment: .leading, spacing: 6) {
-            if available.count > 1 {
-                Picker("Hilfe", selection: hintSelection) {
-                    ForEach(available) { level in
-                        Text(level.germanLabel).tag(level)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .disabled(!picks.isEmpty)
-            }
-            Text(hintDescription(roundHint))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private var hintSelection: Binding<KasusHintLevel> {
-        Binding(
-            get: { roundHint },
-            set: { level in
-                if hintOverride != nil {
-                    hintOverride = level
-                } else {
-                    hintRaw = level.rawValue
-                }
-                startFillRound()
-            }
-        )
-    }
-
-    private func hintDescription(_ level: KasusHintLevel) -> String {
-        switch level {
-        case .viel:  "\(level.englishLabel): the gender after each noun, the word that decides underlined, and fewer choices."
-        case .genus: "\(level.englishLabel): the gender after each noun, like the worksheet in class."
-        case .ohne:  "\(level.englishLabel). Tipp shows one clue at a time: the word that decides, the gender, the case."
-        }
-    }
-
-    /// Blanks in place of their articles, a raised gender tag after the noun where the level
-    /// shows one (there from the start, so answering never moves the line), and the deciding word
-    /// underlined for the focused blank at Viel Hilfe or once the Tipp has shown it.
-    private func fillSegments(_ index: Int, _ text: String, _ playable: KasusPlayableStory) -> [KasusTextSegment] {
-        let byID = Dictionary(uniqueKeysWithValues: blanks.map { ($0.id, $0) })
-        var trigger: NSRange?
-        if let active = activeBlank.flatMap({ byID[$0] }), active.target.paragraphIndex == index,
-           picks[active.id] == nil, !active.isBareTimePhrase,
-           active.underlinesTrigger || (tipps[active.id] ?? .none) >= .trigger {
-            trigger = active.target.triggerRange
-        }
-        return KasusText.segments(
-            paragraph: text,
-            targets: targets(in: index, playable),
-            wordStyle: { range in
-                guard let trigger, NSIntersectionRange(trigger, range).length > 0 else { return nil }
-                return KasusTextStyle(underline: .init(pattern: .dash, color: .secondary))
-            },
-            render: { target in
-                byID[target.index].map { blankSegments($0, in: text) }
-            }
-        )
-    }
-
-    private func blankSegments(_ blank: KasusBlank, in paragraph: String) -> [KasusTextSegment] {
-        let target = blank.target
-        let restStart = NSMaxRange(target.determinerRange)
-        let rest = (paragraph as NSString).substring(with: NSRange(location: restStart,
-                                                                   length: NSMaxRange(target.range) - restStart))
-        let isActive = activeBlank == blank.id
-        let wash: Color? = isActive ? Color.primary.opacity(0.1) : nil
-        var out = answerSegments(blank, kind: .blank(blank.id), wash: wash)
-        out.append(KasusTextSegment(text: rest, kind: .blank(blank.id)))
-        if blank.showsGenderTag {
-            out.append(KasusText.tag(blank.genus.columnLabel, color: blank.genus.color))
-        } else if blank.showsNumberTag {
-            out.append(KasusText.tag(blank.numberTag, color: .secondary))
-        }
-        return out
-    }
-
-    /// The article slot: the gap, the answer in its gender color, or ~~pick~~ answer.
-    private func answerSegments(_ blank: KasusBlank, kind: KasusTextSegment.Kind, wash: Color? = nil) -> [KasusTextSegment] {
-        guard let pick = picks[blank.id] else {
-            return [KasusTextSegment(text: KasusText.gap(for: blank.options), kind: kind,
-                                     style: KasusTextStyle(foreground: .secondary, wash: wash))]
-        }
-        // The answer sits on a light wash of its gender color, so an answered gap reads as filled
-        // at a glance. A focused gap keeps the focus wash.
-        let color = blank.genus.color
-        let answer = KasusTextSegment(text: blank.answer, kind: kind,
-                                      style: KasusTextStyle(foreground: color, wash: wash ?? color.opacity(0.14),
-                                                            underline: .init(pattern: .solid, color: color)))
-        if KasusService.grade(pick, for: blank).isRight { return [answer] }
-        return [
-            KasusTextSegment(text: pick, kind: kind,
-                             style: KasusTextStyle(foreground: .secondary, wash: wash,
-                                                   strikethrough: .init(pattern: .solid, color: .secondary))),
-            KasusTextSegment(text: " ", kind: kind, style: KasusTextStyle(wash: wash)),
-            answer,
-        ]
-    }
-
-    /// The Einsetzen tray, top to bottom: a dot per gap with the score (and the Tipp at Ohne
-    /// Hilfe), the verdict and its why once picked, the answer buttons, then Weiter. The buttons
-    /// stay put after a pick and show it: the right one filled in its gender color, a wrong one
-    /// struck through and shaken, the answer lit.
-    @ViewBuilder
-    private func fillTray(_ playable: KasusPlayableStory) -> some View {
-        if let id = activeBlank, let blank = blanks.first(where: { $0.id == id }) {
-            let chosen = picks[blank.id]
-            HStack(spacing: 12) {
-                KasusProgressStrip(marks: fillMarks(active: blank.id))
-                if chosen == nil, blank.hintLevel == .ohne {
-                    tippButton(blank)
-                }
-            }
-            .frame(minHeight: 28)
-            if let chosen {
-                KasusCappedScroll(maxHeight: trayTextCap) {
-                    fillFeedback(blank, pick: chosen, story: playable.story)
-                }
-            } else if (tipps[blank.id] ?? .none) > .none {
-                tippReveals(blank)
-            }
-            KasusOptionGrid(options: blank.options, answer: blank.answer, kasus: blank.kasus, picked: chosen,
-                            columns: KasusOptionGrid.columns(for: blank.options), rowHeight: 50) { option in
-                pick(option, for: blank)
-            }
-            .id(blank.id)
-            if let chosen, !(KasusService.grade(chosen, for: blank).isRight && pendingAdvance == blank.id) {
-                advanceButton(from: blank)
-            }
-        } else if fillResult != nil {
-            Button {
-                showResult()
-            } label: {
-                Text("Ergebnis · Result")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-        } else if blanks.isEmpty {
-            noteLine("No gaps in this story at this level. Try another help level above.")
-        }
-    }
-
-    /// One dot per gap in reading order: its case color once right on the first pick, a ring
-    /// once not, the focus ring on `active`.
-    private func fillMarks(active: Int?) -> [KasusProgressStrip.Mark] {
-        blanks.map { blank in
-            if let pick = picks[blank.id] {
-                switch KasusVerdict(KasusService.grade(pick, for: blank)) {
-                case .right: return .right(blank.kasus)
-                case .slip:  return .slip
-                case .miss:  return .miss
-                }
-            }
-            return blank.id == active ? .current : .upcoming
-        }
-    }
-
-    private func tippButton(_ blank: KasusBlank) -> some View {
-        let reached = tipps[blank.id] ?? .none
-        return Button {
-            tipps[blank.id] = reached.next ?? .answer
-        } label: {
-            Label("Tipp", systemImage: "lightbulb")
-                .font(.subheadline.weight(.medium))
-        }
-        .buttonStyle(.bordered)
-        .controlSize(.small)
-        .disabled(reached == .answer)
-    }
-
-    /// What the Tipp has shown so far, in order: the deciding word, the gender, the case, the
-    /// article. Showing the case or the article means the pick won't count for the coach.
-    private func tippReveals(_ blank: KasusBlank) -> some View {
-        let reached = tipps[blank.id] ?? .none
-        return HStack(spacing: 8) {
-            if reached >= .trigger {
-                // A bare time phrase has no deciding word; the verb next to it would mislead.
-                Text(blank.isBareTimePhrase ? "A time phrase: wann? wie oft?" : "Look at „\(blank.target.spec.trigger)“")
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            if reached >= .gender {
-                GenderTag(gender: blank.genus)
-            }
-            if reached >= .kasus {
-                CaseLabel(kasus: blank.kasus, style: .name)
-                    .fontWeight(.semibold)
-            }
-            if reached >= .answer {
-                Text(blank.answer)
-                    .fontWeight(.bold)
-                    .foregroundStyle(blank.genus.color)
-            }
-        }
-        .font(.subheadline)
-    }
-
-    /// After a pick: the verdict with the case („Richtig!“, „Fast · Almost“ for a gender or
-    /// number slip, „Nicht ganz · Not quite“), then why. A right pick shows only the verdict while
-    /// the next gap comes up; opened again later, it explains too.
-    @ViewBuilder
-    private func fillFeedback(_ blank: KasusBlank, pick: String, story: KasusStory) -> some View {
-        let outcome = KasusService.grade(pick, for: blank)
-        KasusFeedbackHeader(verdict: KasusVerdict(outcome), kasus: blank.kasus)
-        if !(outcome.isRight && pendingAdvance == blank.id) {
-            Text(kasusRich: outcome.isRight
-                 ? KasusService.explanation(for: blank.target, in: story)
-                 : KasusService.feedback(for: outcome, pick: pick, target: blank.target, in: story) ?? "")
-                .font(.footnote)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private func advanceButton(from blank: KasusBlank) -> some View {
-        let isLast = !blanks.contains { picks[$0.id] == nil }
-        return Button {
-            advance(from: blank.id)
-        } label: {
-            Text(isLast ? "Ergebnis · Result" : "Weiter")
-                .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
-    }
-
-    private func pick(_ option: String, for blank: KasusBlank) {
-        guard picks[blank.id] == nil else { return }
-        picks[blank.id] = option
-        // The round is recorded here, right or wrong, so closing from the last explanation still
-        // counts it.
-        recordFillIfComplete()
-        let outcome = KasusService.grade(option, for: blank)
-        guard outcome.isRight else {
-            // A slip only gets a light tap: it was close, and the header says „Fast“, not wrong.
-            if outcome.isSlip { slipCount += 1 } else { wrongCount += 1 }
-            return
-        }
-        correctCount += 1
-        pendingAdvance = blank.id
-        let round = fillRound
-        advanceTask?.cancel()
-        advanceTask = Task {
-            try? await Task.sleep(for: .milliseconds(800))
-            // Only if nothing moved in the meantime: still Einsetzen, the same round, the same gap.
-            guard !Task.isCancelled, step == .einsetzen, round == fillRound,
-                  pendingAdvance == blank.id, activeBlank == blank.id else { return }
-            pendingAdvance = nil
-            advance(from: blank.id)
-        }
-    }
-
-    private func cancelAdvance() {
-        advanceTask?.cancel()
-        advanceTask = nil
-        pendingAdvance = nil
-    }
-
-    /// The next open gap after this one, wrapping to any left earlier; Ergebnis when none are.
-    private func advance(from id: Int) {
-        pendingAdvance = nil
-        let order = blanks.map(\.id)
-        let start = (order.firstIndex(of: id) ?? -1) + 1
-        let next = order[start...].first { picks[$0] == nil } ?? order.first { picks[$0] == nil }
-        if let next {
-            activeBlank = next
-        } else {
-            showResult()
-        }
-    }
-
-    private func startFillRound() {
-        guard let playable else { return }
-        let preferred = hintOverride ?? KasusHintLevel.resolve(stored: hintRaw, level: germanLevel)
-        roundHint = KasusService.effectiveHintLevel(preferred, unit: unit, mixed: mixed)
-        blanks = KasusService.blanks(in: playable, unit: unit, mixed: mixed, hint: roundHint)
-        picks = [:]
-        tipps = [:]
-        cancelAdvance()
-        activeBlank = blanks.first?.id
-        fillResult = nil
-        fillClock.restart()
-        fillPrefilled = false
-        fillRound += 1
-    }
-
-    /// Once every gap has its first pick: builds the round and hands it to `onComplete`, once.
-    private func recordFillIfComplete() {
-        guard fillResult == nil, let playable, !blanks.isEmpty,
-              blanks.allSatisfy({ picks[$0.id] != nil }) else { return }
-        fillClock.pause()
-        let result = KasusService.fillResult(storyID: playable.story.id, unit: unit, hint: roundHint,
-                                             blanks: blanks, picks: picks, tipps: tipps,
-                                             durationSeconds: fillClock.seconds, story: playable.story)
-        fillResult = result
-        if !fillPrefilled { onComplete(result) }
-    }
-
-    /// Ergebnis, for a round that's been recorded.
-    private func showResult() {
-        guard fillResult != nil else { return }
-        cancelAdvance()
-        activeBlank = nil
-        step = .ergebnis
-    }
-
     // MARK: - Ergebnis
 
-    private func resultStep(_ result: KasusRoundResult, playable: KasusPlayableStory) -> some View {
-        let misses = blanks.filter { blank in
-            picks[blank.id].map { !KasusService.grade($0, for: blank).isRight } ?? false
-        }
+    /// Endungen's result, for the round on screen (a Noch mal shows its own picks; what was
+    /// recorded is the first attempt). In Am Ende the misses keep their answers back until
+    /// Lösung zeigen, the same as in the exercise.
+    private func resultStep(_ round: KasusEndingsRound, playable: KasusPlayableStory) -> some View {
+        let result = KasusService.endingsResult(round, storyID: playable.story.id, unit: unit,
+                                                durationSeconds: endingsPlay.clock.seconds, story: playable.story)
+        let misses = round.gaps.filter { round.outcome(for: $0.id)?.isRight != true }
+        let answersShow = round.mode == .sofort || round.answersShown
         return ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Ergebnis · Result")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.secondary)
-                    Text("\(result.firstTryCount) of \(result.askedCount)")
-                        .font(.largeTitle.weight(.bold))
-                    Text("right on the first try")
+                    // „5 / 8 richtig“, as the tray says it after Prüfen.
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text("\(result.firstTryCount) / \(result.askedCount)")
+                            .font(.largeTitle.weight(.bold))
+                            .monospacedDigit()
+                        Text("richtig")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
+                    }
+                    Text(round.mode == .sofort ? "Right on the first try" : "Right at Prüfen")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
 
-                KasusProgressStrip(marks: fillMarks(active: nil), showsScore: false)
+                KasusProgressStrip(marks: resultMarks(round), showsScore: false)
 
                 caseRows(result.perCase)
 
                 HStack(spacing: 14) {
                     Label(timeString(result.durationSeconds), systemImage: "timer")
-                    Label(roundHint.germanLabel, systemImage: "lightbulb")
-                    if mixed {
+                    Label(round.hint.germanLabel, systemImage: "lightbulb")
+                    Label(round.mode.germanLabel, systemImage: round.mode == .sofort ? "bolt" : "checklist")
+                    if endingsPlay.mixed {
                         Label("Gemischt", systemImage: "shuffle")
                     }
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+
+                if round.answersShown {
+                    Label(KasusRound.answersShownLabel, systemImage: "eye")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
 
                 if !misses.isEmpty {
                     VStack(alignment: .leading, spacing: 14) {
                         Text("Die Fehler · Your misses")
                             .font(.subheadline.weight(.semibold))
-                        ForEach(misses) { blank in
-                            missRow(blank, story: playable.story)
+                        if !answersShow {
+                            HStack(spacing: 10) {
+                                Text("The answers stay hidden until you ask for them.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Spacer(minLength: 4)
+                                Button("Lösung zeigen") {
+                                    if let id = endingsPlay.showAnswers() { onAnswersShown(id) }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                            }
+                        }
+                        ForEach(misses) { gap in
+                            missRow(gap, round: round, story: playable.story, showsAnswer: answersShow)
                         }
                     }
                 }
 
-                resultButtons(result)
+                resultButtons(result, round: round)
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
-    /// A miss in its sentence, corrected in place, with why.
-    private func missRow(_ blank: KasusBlank, story: KasusStory) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            KasusText(segments: missSegments(blank, story: story), font: .body)
-            if let pick = picks[blank.id] {
-                Text(kasusRich: KasusService.feedback(for: KasusService.grade(pick, for: blank), pick: pick,
-                                                      target: blank.target, in: story) ?? "")
+    private func resultMarks(_ round: KasusEndingsRound) -> [KasusProgressStrip.Mark] {
+        round.gaps.map { gap in
+            guard let outcome = round.outcome(for: gap.id) else { return .miss }
+            switch KasusVerdict(outcome) {
+            case .right: return .right(gap.kasus)
+            case .slip:  return .slip
+            case .miss:  return .miss
+            }
+        }
+    }
+
+    /// A miss in its sentence, ~~pick~~ answer (or ~~pick~~ d__ while the answer is hidden),
+    /// with why once the answers show.
+    private func missRow(_ gap: KasusEndingGap, round: KasusEndingsRound, story: KasusStory,
+                         showsAnswer: Bool) -> some View {
+        let pick = round.pick(for: gap.id)
+        let why: String? = if !showsAnswer {
+            nil
+        } else if let pick {
+            KasusService.endingFeedback(for: KasusService.grade(ending: pick, for: gap), ending: pick, gap: gap, in: story)
+        } else {
+            KasusService.explanation(for: gap.target, in: story)
+        }
+        return VStack(alignment: .leading, spacing: 6) {
+            if let number = playable?.numbered.sentenceNumber(ofTarget: gap.id) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text("\(number).")
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                    Text(missSentence(gap, pick: pick, showsAnswer: showsAnswer, sentence: number))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .font(.body)
+            }
+            if pick == nil {
+                Text(round.revealed.contains(gap.id) ? KasusRound.answersShownLabel : "Leer · Left empty")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            if let why {
+                Text(kasusRich: why)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1398,38 +552,45 @@ struct KasusStoryView: View {
         }
     }
 
-    private func missSegments(_ blank: KasusBlank, story: KasusStory) -> [KasusTextSegment] {
-        let target = blank.target
-        let paragraph = story.paragraphs[target.paragraphIndex].de as NSString
-        let sentence = target.sentenceRange
-        guard sentence.location <= target.range.location,
-              NSMaxRange(target.range) <= NSMaxRange(sentence),
-              NSMaxRange(sentence) <= paragraph.length else {
-            return answerSegments(blank, kind: .plain)
+    private func missSentence(_ gap: KasusEndingGap, pick: String?, showsAnswer: Bool, sentence number: Int) -> AttributedString {
+        guard let sentence = playable?.numbered.sentence(number) else { return AttributedString(gap.target.surface) }
+        var out = AttributedString()
+        for (i, word) in sentence.words.enumerated() {
+            if i > 0 { out += AttributedString(" ") }
+            guard word.role.targetIndex == gap.id, word.role.part == .determiner else {
+                out += AttributedString(word.display)
+                continue
+            }
+            out += AttributedString(word.leading)
+            if let pick {
+                var struck = AttributedString(gap.form(pick))
+                struck.strikethroughStyle = .single
+                struck.foregroundColor = .secondary
+                out += struck + AttributedString(" ")
+            }
+            var answer = AttributedString(showsAnswer ? gap.answerForm : gap.gapText)
+            if showsAnswer {
+                answer.foregroundColor = gap.genus.color
+                answer.inlinePresentationIntent = .stronglyEmphasized
+                answer.underlineStyle = Text.LineStyle(pattern: .solid, color: gap.kasus.color)
+            } else {
+                answer.foregroundColor = .secondary
+            }
+            out += answer + AttributedString(word.trailing)
         }
-        let before = paragraph.substring(with: NSRange(location: sentence.location,
-                                                       length: target.range.location - sentence.location))
-        let restStart = NSMaxRange(target.determinerRange)
-        let rest = paragraph.substring(with: NSRange(location: restStart,
-                                                     length: NSMaxRange(sentence) - restStart))
-        var out = [KasusTextSegment(text: String(before.drop(while: \.isWhitespace)), kind: .plain)]
-        out += answerSegments(blank, kind: .plain)
-        // The noun keeps its leading space; only what trails the sentence goes.
-        let trimmedRest = String(rest.reversed().drop(while: \.isWhitespace).reversed())
-        out.append(KasusTextSegment(text: trimmedRest, kind: .plain))
         return out
     }
 
     @ViewBuilder
-    private func resultButtons(_ result: KasusRoundResult) -> some View {
+    private func resultButtons(_ result: KasusRoundResult, round: KasusEndingsRound) -> some View {
         let harder = KasusService.offersHarder(result) ? result.hintLevel?.harder : nil
-        let mixedDiffers = KasusService.blankCases(unit: unit, mixed: true, hint: roundHint)
-            != KasusService.blankCases(unit: unit, mixed: false, hint: roundHint)
+        let mixedDiffers = KasusService.blankCases(unit: unit, mixed: true, hint: round.hint)
+            != KasusService.blankCases(unit: unit, mixed: false, hint: round.hint)
         VStack(spacing: 10) {
             if let harder {
                 Button {
-                    if hintOverride != nil { hintOverride = harder } else { hintRaw = harder.rawValue }
-                    playAgain(mixed: mixed)
+                    if endingsPlay.hintOverride != nil { endingsPlay.hintOverride = harder } else { hintRaw = harder.rawValue }
+                    playAgain(mixed: endingsPlay.mixed)
                 } label: {
                     VStack(spacing: 2) {
                         Text("Noch mal · eine Stufe schwerer")
@@ -1442,13 +603,13 @@ struct KasusStoryView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
             }
-            if mixedDiffers {
+            if mixedDiffers, !endingsPlay.mixed {
                 Button {
                     playAgain(mixed: true)
                 } label: {
                     VStack(spacing: 2) {
                         Text("Noch mal · gemischt")
-                        Text(mixedSubtitle)
+                        Text(mixedSubtitle(round.hint))
                             .font(.caption)
                             .opacity(0.8)
                     }
@@ -1457,27 +618,27 @@ struct KasusStoryView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.large)
             }
-            if harder == nil && !mixedDiffers {
-                Button {
-                    playAgain(mixed: mixed)
-                } label: {
-                    Text("Noch mal")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
+            Button {
+                // The same gaps again, unrecorded, like the exercise's own Noch mal.
+                endingsPlay.retry()
+                step = .einsetzen
+            } label: {
+                Text("Noch mal · Retry")
+                    .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.bordered)
+            .controlSize(.large)
             Button("Fertig", action: onDismiss)
                 .frame(maxWidth: .infinity)
                 .padding(.top, 4)
         }
     }
 
-    /// Which cases a gemischt round blanks at this level: „Akkusativ and Dativ gaps“. Below Ohne
+    /// Which cases a gemischt round asks at this level: „Akkusativ and Dativ gaps“. Below Ohne
     /// Hilfe that leaves the Nominativ out.
-    private var mixedSubtitle: String {
+    private func mixedSubtitle(_ hint: KasusHintLevel) -> String {
         let cases = GrammarCase.allCases
-            .filter(KasusService.blankCases(unit: unit, mixed: true, hint: roundHint).contains)
+            .filter(KasusService.blankCases(unit: unit, mixed: true, hint: hint).contains)
             .map(\.name)
         let listed = cases.count > 1
             ? cases.dropLast().joined(separator: ", ") + " and " + (cases.last ?? "")
@@ -1485,9 +646,11 @@ struct KasusStoryView: View {
         return "\(listed) gaps"
     }
 
+    /// A new round (another level, or gemischt): recorded when it's finished.
     private func playAgain(mixed: Bool) {
-        self.mixed = mixed
-        startFillRound()
+        guard let playable else { return }
+        endingsPlay.mixed = mixed
+        endingsPlay.start(in: playable, unit: unit, germanLevel: germanLevel)
         step = .einsetzen
     }
 
@@ -1495,39 +658,67 @@ struct KasusStoryView: View {
 
     #if DEBUG
     /// Fills a screen for `-kasus.debugOpen` and previews, so a simulator that can't tap can still
-    /// show painted, checked and answered states. Never recorded: the answers aren't the learner's.
+    /// show marked, checked and answered states. Never recorded: the answers aren't the learner's.
     private func applyDebugPrefill(_ screen: KasusStoryScreen, in playable: KasusPlayableStory) {
-        let needsAnswers: Set<KasusStoryScreen> = [.check, .summary, .result]
-        guard let answers = session.prefill?.answers ?? (needsAnswers.contains(screen) ? .mixed : nil) else { return }
+        let needsAnswers: Set<KasusStoryScreen> = [.markChecked, .markRevealed, .fillChecked, .result]
+        let answers = session.prefill?.answers ?? (needsAnswers.contains(screen) ? .mixed : nil)
         switch screen {
         case .read:
             break
-        case .find, .check, .summary:
-            paint = KasusService.debugPaint(in: playable, unit: unit, answers: answers)
-            findPrefilled = true
-            guard screen != .find else { return }
-            check(playable)
-            if screen == .summary {
-                findPhase = .summary
-            } else {
-                // The first miss in reading order, so the tray and the text agree run to run.
-                selectedTarget = marks.filter { $0.value != .right }.keys.min()
-            }
-        case .fill, .result:
-            let all = KasusService.debugPicks(for: blanks, answers: answers)
-            let answered = screen == .result ? blanks : Array(blanks.dropLast(3))
-            for blank in answered { picks[blank.id] = all[blank.id] }
-            fillPrefilled = true
-            if screen == .result {
-                recordFillIfComplete()
-                showResult()
-            } else {
-                // Land on the last wrong pick, so the tray shows its explanation.
-                let lastWrong = answered.last { blank in
-                    picks[blank.id].map { !KasusService.grade($0, for: blank).isRight } ?? false
+        case .mark, .markChecked, .markRevealed:
+            guard var round = markPlay.round else { return }
+            markPlay.prefilled = true
+            var last: (id: Int, verdict: KasusMarkVerdict?)?
+            if let answers {
+                for id in KasusService.debugMarks(for: round, answers: answers) {
+                    last = (id, round.tap(id))
                 }
-                activeBlank = lastWrong?.id ?? blanks.first { picks[$0.id] == nil }?.id
             }
+            markPlay.round = round
+            if screen == .mark {
+                if round.mode == .sofort, let last {
+                    markPlay.selectedWord = last.id
+                    markPlay.lastVerdict = last.verdict
+                }
+                return
+            }
+            _ = markPlay.check(storyID: playable.story.id, unit: unit, in: playable)
+            if screen == .markRevealed {
+                _ = markPlay.showAnswers()
+            } else if let checked = markPlay.round {
+                // The first wrong mark in reading order, so the tray and the text agree run to run.
+                markPlay.selectedWord = checked.marked.sorted().first { checked.verdict(for: $0) == .wrong }
+            }
+        case .fill, .fillChecked, .result:
+            guard var round = endingsPlay.round else { return }
+            if let answers {
+                let picks = KasusService.debugEndingPicks(for: round.gaps, answers: answers)
+                let answered: ArraySlice<KasusEndingGap> = switch screen {
+                case .fill:        round.gaps.dropLast(3)
+                case .fillChecked: round.gaps.dropLast(1)
+                default:           round.gaps[...]
+                }
+                for gap in answered {
+                    if let ending = picks[gap.id] { round.choose(ending, for: gap.id) }
+                }
+            }
+            switch screen {
+            case .fill:
+                // Land on the last wrong pick, so the tray shows its explanation, else the first
+                // empty gap.
+                let lastWrong = round.gaps.last { round.outcome(for: $0.id).map { !$0.isRight } ?? false }
+                endingsPlay.activeGap = lastWrong?.id ?? round.gaps.first { round.pick(for: $0.id) == nil }?.id
+            case .fillChecked:
+                round.check()
+                endingsPlay.activeGap = nil
+            default:
+                round.check()
+                endingsPlay.activeGap = nil
+                step = .ergebnis
+            }
+            endingsPlay.round = round
+            endingsPlay.prefilled = true
+            _ = endingsPlay.resultIfFinished(storyID: playable.story.id, unit: unit, story: playable.story)
         }
     }
     #endif
@@ -1536,12 +727,14 @@ struct KasusStoryView: View {
 // MARK: - DEBUG launch argument
 
 #if DEBUG
-/// `-kasus.debugOpen hub|unit:<unit>|quick:<unit>|read|find|check|summary|fill|result`: the
-/// Grammatik screens sit several taps deep and this simulator can't tap. The player screens open
-/// the bundled Dativ story (or `-kasus.debugStory <id>`), prefilled from `-kasus.debugAnswers right|mixed` and
-/// `-kasus.debugHint viel|genus|ohne` (check, summary and result fall back to mixed answers, since
-/// they need some). `quick:<unit>` opens that unit's Schnellrunde, prefilled from
-/// `-kasus.debugAnswers` and `-kasus.debugQuickState right|wrong|slip|done`.
+/// `-kasus.debugOpen hub|unit:<unit>|quick:<unit>|read|mark|mark-checked|mark-revealed|fill|
+/// fill-checked|result`: the Grammatik screens sit several taps deep and this simulator can't
+/// tap. The player screens open the bundled Dativ story (or `-kasus.debugStory <id>`),
+/// prefilled from `-kasus.debugAnswers right|mixed`, `-kasus.debugHint lern|viel|genus|ohne` and
+/// `-kasus.debugFeedback sofort|amEnde` (mark-checked, mark-revealed, fill-checked and result
+/// fall back to mixed answers, since they need some; fill-checked always runs Am Ende).
+/// `quick:<unit>` opens that unit's Schnellrunde, prefilled from `-kasus.debugAnswers` and
+/// `-kasus.debugQuickState right|wrong|slip|done`.
 enum KasusDebugOpen: Identifiable, Hashable {
     case hub
     case unit(KasusUnit)
@@ -1605,12 +798,12 @@ enum KasusDebugOpen: Identifiable, Hashable {
 // MARK: - Previews
 
 private func previewPlayer(_ screen: KasusStoryScreen, answers: KasusPrefill.Answers? = .mixed,
-                           hint: KasusHintLevel? = .genus) -> some View {
+                           hint: KasusHintLevel? = .genus, feedback: KasusFeedbackMode? = nil) -> some View {
     TabView {
         ForEach(AppTheme.allCases) { theme in
             KasusStoryView(
                 session: KasusSession(storyID: "ks-dat-a2-schluessel", unit: .dativ, startStep: screen.step,
-                                      prefill: KasusPrefill(answers: answers, hint: hint)),
+                                      prefill: KasusPrefill(answers: answers, hint: hint, feedback: feedback)),
                 hapticMode: .all,
                 germanLevel: .a2,
                 openAt: screen,
@@ -1624,9 +817,12 @@ private func previewPlayer(_ screen: KasusStoryScreen, answers: KasusPrefill.Ans
 }
 
 #Preview("Lesen · 4 themes") { previewPlayer(.read, answers: nil) }
-#Preview("Finden · 4 themes") { previewPlayer(.find) }
-#Preview("Finden geprüft · 4 themes") { previewPlayer(.check) }
-#Preview("Finden sortiert · 4 themes") { previewPlayer(.summary) }
-#Preview("Einsetzen · 4 themes") { previewPlayer(.fill) }
-#Preview("Einsetzen Ohne Hilfe · 4 themes") { previewPlayer(.fill, hint: .ohne) }
+#Preview("Markieren · 4 themes") { previewPlayer(.mark) }
+#Preview("Markieren Sofort · 4 themes") { previewPlayer(.mark, feedback: .sofort) }
+#Preview("Markieren geprüft · 4 themes") { previewPlayer(.markChecked) }
+#Preview("Markieren Lösung · 4 themes") { previewPlayer(.markRevealed) }
+#Preview("Endungen Lernhilfe · 4 themes") { previewPlayer(.fill, answers: nil, hint: .lern) }
+#Preview("Endungen Viel Hilfe · 4 themes") { previewPlayer(.fill, hint: .viel) }
+#Preview("Endungen Ohne Hilfe · 4 themes") { previewPlayer(.fill, hint: .ohne) }
+#Preview("Endungen geprüft · 4 themes") { previewPlayer(.fillChecked) }
 #Preview("Ergebnis · 4 themes") { previewPlayer(.result) }

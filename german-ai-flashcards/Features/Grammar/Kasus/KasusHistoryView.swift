@@ -5,7 +5,8 @@
 //  Verlauf · Your rounds: every scored grammar round, newest first and grouped by day, so a
 //  round's result is still there after its Ergebnis has closed.
 //
-//    Fälle            Finden, Einsetzen and Schnellrunde (`KasusRound`); a tap opens the answers
+//    Fälle            Markieren, Endungen and Schnellrunde (`KasusRound`, and the older Finden and
+//                     Einsetzen); a tap opens the answers
 //    Der · Die · Das  the article game (`ArticleRound`): score and count
 //    Präpositionen    the Kasus drill (`PrepositionRound`): score and count
 //
@@ -69,9 +70,10 @@ struct GrammarHistoryEntry: Identifiable {
         }
     }
 
+    /// A Markieren round counts its class-sheet points (right minus wrong), like its score.
     var firstTry: Int {
         switch source {
-        case .kasus(let round):       round.firstTryCount
+        case .kasus(let round):       round.markScore?.points ?? round.firstTryCount
         case .article(let round):     round.firstTryCount
         case .preposition(let round): round.firstTryCount
         }
@@ -85,14 +87,14 @@ struct GrammarHistoryEntry: Identifiable {
         }
     }
 
-    /// „Der verlorene Schlüssel“ · Einsetzen, Schnellrunde · Dativ, Der · Die · Das. For the hub's
-    /// one-line "last round".
+    /// Dativ · Endungen, Dativ · Markieren · Akkusativ, Schnellrunde · Dativ, Der · Die · Das.
+    /// For the hub's one-line "last round".
     var shortLabel: String {
         switch source {
         case .kasus(let round):
             round.isQuickRound
                 ? round.displayTitle(showsUnit: true)
-                : "\(round.unit?.germanTitle ?? "Kasus") · \(round.step?.germanLabel ?? "")"
+                : "\(round.unit?.germanTitle ?? "Kasus") · \(round.unitStepLabel)"
         case .article:     "Der · Die · Das"
         case .preposition: "Präpositionen"
         }
@@ -130,17 +132,33 @@ extension KasusRound {
         return unit?.germanTitle ?? "Kasus"
     }
 
-    /// Einsetzen · Genus-Hilfe · 3m 12s, or 10 Sätze · 1m 5s for a Schnellrunde.
+    /// Endungen · Genus-Hilfe · 3m 12s, Markieren · Dativ · 4m 11s, or 10 Sätze · 1m 5s for a
+    /// Schnellrunde. (A row shows „Lösung angezeigt“ as an eye in front.)
     func displayDetail() -> String {
         var parts: [String] = []
         switch step {
         case .quick?: parts.append("\(askedCount) Sätze")
-        case let step?: parts.append(step.germanLabel)
+        case .some: parts.append(stepLabel)
         case nil: break
         }
         if let hintLevel { parts.append(hintLevel.germanLabel) }
         if durationSeconds > 0 { parts.append(KasusHistoryFormat.duration(durationSeconds)) }
         return parts.joined(separator: " · ")
+    }
+
+    /// The step under a line that already names the unit: „Markieren“ when the round asked the
+    /// unit's own case, „Markieren · Akkusativ“ when it asked another („Nächster Fall“).
+    var unitStepLabel: String {
+        guard let step else { return "" }
+        if isLegacyStoryRound { return step.legacyGermanLabel }
+        if let markCase, markCase != unit?.focusCase { return "\(step.germanLabel) · \(markCase.name)" }
+        return step.germanLabel
+    }
+
+    /// The score a row shows: Markieren's class-sheet points out of its words, else first tries.
+    var rowScore: (right: Int, asked: Int) {
+        if let markScore { return (markScore.points, markScore.caseWords) }
+        return (firstTryCount, askedCount)
     }
 }
 
@@ -388,14 +406,21 @@ struct KasusRoundRow: View {
                     .fontWeight(.medium)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
-                Text(round.displayDetail())
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                Group {
+                    if round.revealedAnswers {
+                        Text("\(Image(systemName: "eye")) \(round.displayDetail())")
+                            .accessibilityLabel("\(round.displayDetail()), \(KasusRound.answersShownLabel)")
+                    } else {
+                        Text(round.displayDetail())
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
                 CaseTallyStrip(perCase: round.perCase)
             }
             Spacer(minLength: 8)
-            HistoryScore(firstTry: round.firstTryCount, asked: round.askedCount,
+            HistoryScore(firstTry: round.rowScore.right, asked: round.rowScore.asked,
                          caption: groupedByDay ? nil : KasusHistoryFormat.relativeDay(round.date, capitalized: true))
         }
         .padding(.vertical, 3)
@@ -589,10 +614,12 @@ struct CaseTallyBars: View {
 // MARK: - DEBUG
 
 #if DEBUG
-/// `-kasus.debugOpen history|round`: Verlauf, or the newest Kasus round's detail, since this
-/// simulator can't tap its way there. Pair with `-kasus.debugSeedRounds 1` on a fresh store.
+/// `-kasus.debugOpen history|round|round-mark`: Verlauf, the newest Kasus round's detail, or the
+/// newest Markieren round's, since this simulator can't tap its way there. Pair with
+/// `-kasus.debugSeedRounds 1` on a fresh store.
 enum KasusHistoryDebugScreen: String, Identifiable {
     case history, round
+    case roundMark = "round-mark"
 
     var id: String { rawValue }
 
@@ -601,7 +628,8 @@ enum KasusHistoryDebugScreen: String, Identifiable {
     }
 }
 
-/// What the debug sheet shows: Verlauf, or the newest round that kept its answers.
+/// What the debug sheet shows: Verlauf, the newest round that kept its answers, or the newest
+/// Markieren round that did (one with a miss or a wrong mark first, so there is something to see).
 struct KasusHistoryDebugView: View {
     let screen: KasusHistoryDebugScreen
 
@@ -612,12 +640,20 @@ struct KasusHistoryDebugView: View {
         case .history:
             KasusHistoryView()
         case .round:
-            if let round = rounds.first(where: { $0.isListed && $0.itemsData != nil }) ?? rounds.first {
-                KasusRoundDetailView(round: round)
-            } else {
-                ContentUnavailableView("No Kasus rounds", systemImage: "clock.arrow.circlepath",
-                                       description: Text("Launch with -kasus.debugSeedRounds 1 first."))
-            }
+            detail(rounds.first(where: { $0.isListed && $0.itemsData != nil }) ?? rounds.first)
+        case .roundMark:
+            let marking = rounds.filter { $0.isListed && $0.isMarkingRound && $0.itemsData != nil }
+            detail(marking.first { $0.firstTryCount < $0.askedCount || $0.wrongCount > 0 } ?? marking.first)
+        }
+    }
+
+    @ViewBuilder
+    private func detail(_ round: KasusRound?) -> some View {
+        if let round {
+            KasusRoundDetailView(round: round)
+        } else {
+            ContentUnavailableView("No Kasus rounds", systemImage: "clock.arrow.circlepath",
+                                   description: Text("Launch with -kasus.debugSeedRounds 1 first."))
         }
     }
 }

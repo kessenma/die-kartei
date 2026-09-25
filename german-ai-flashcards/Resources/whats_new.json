@@ -20,7 +20,7 @@
         },
         {
           "title": "Geschichten · Case stories",
-          "detail": "Seven short stories to mark the cases in and then fill in the missing articles, with gender hints if you want them: Nominativ and Akkusativ at A1, Dativ at A2, and Genitiv and Alle Fälle at B1.",
+          "detail": "Seven short stories to read and then work through like a class worksheet: Nominativ and Akkusativ at A1, Dativ at A2, and Genitiv and Alle Fälle at B1.",
           "symbol": "text.book.closed"
         },
         {
@@ -40,8 +40,18 @@
         },
         {
           "title": "Richtig! · Clearer right and wrong",
-          "detail": "Each answer shows at once whether you got it, with the right article in its gender color and a dot per question, and the quick round puts the sentence up large with the buttons at the bottom.",
+          "detail": "Each answer shows clearly whether you got it, with the right article in its gender color and a dot per question, and the quick round puts the sentence up large with the buttons at the bottom.",
           "symbol": "checkmark.circle"
+        },
+        {
+          "title": "Markieren · Mark the case",
+          "detail": "Like the class worksheet: tap every word in one case (the article, any adjective and the noun) in the story's numbered sentences, then check to see what you got right, what you missed and your score, or show the answers.",
+          "symbol": "highlighter"
+        },
+        {
+          "title": "Endungen · Fill in the endings",
+          "detail": "Fill each d__ and ein__ gap by tapping its ending (-em, -er, or – for none), with a Lernhilfe level that lights up the right cell of the endings table, the choice to check each answer right away or all at the end, and Show answers when you're stuck.",
+          "symbol": "character.cursor.ibeam"
         }
       ]
     },

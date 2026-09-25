@@ -8,8 +8,13 @@ import SwiftData
 /// Schnellrunde's own questions, so their sentences and explanations are the app's; one Schnellrunde
 /// is stored without answers, the way rounds from before Verlauf look.
 ///
+/// Today's story rounds are the current exercises: Markieren in the Dativ (Am Ende, with misses and
+/// wrong marks), Markieren in the Akkusativ (Sofort, all right) and Endungen at Genus-Hilfe (Am
+/// Ende, answers shown afterwards). Three days ago is an Einsetzen from before Endungen, so the
+/// history's old labels have something to show too.
+///
 /// Only rounds are inserted: no streak, XP or coach change. The story rounds use the real story
-/// id, so they do mark its Finden and Einsetzen as played. Idempotent: the seeded rows' dates are
+/// id, so they do mark its Markieren and Endungen as played. Idempotent: the seeded rows' dates are
 /// remembered in UserDefaults, and a run that finds them does nothing. `-kasus.debugSeedRounds
 /// remove` deletes exactly those rows.
 enum KasusDebugSeeder {
@@ -38,25 +43,41 @@ enum KasusDebugSeeder {
 
         var kasus: [KasusRound] = []
 
-        // Today: Finden with one phrase in four missed and one in five on the wrong brush, then
-        // Einsetzen at Genus-Hilfe with about one gap in three wrong.
-        let paint = KasusService.debugPaint(in: playable, unit: unit, answers: .mixed)
-        let marks = KasusService.gradeFind(paint: paint, in: playable, unit: unit)
-        let find = KasusService.findResult(storyID: story.id, unit: unit, marks: marks, in: playable,
-                                           durationSeconds: 251)
-        kasus.append(KasusService.round(for: find, date: now.addingTimeInterval(-50 * 60)))
+        // Today: Markieren in the unit's case with one phrase in four missed and a few wrong marks,
+        // then „Nächster Fall“ all right in Sofort, then Endungen at Genus-Hilfe with about one gap
+        // in three wrong, checked at the end, and Lösung zeigen afterwards.
+        let cases = KasusService.markCases(in: playable, unit: unit)
+        if let first = cases.first {
+            var mark = KasusService.markRound(first, in: playable, mode: .amEnde)
+            for id in KasusService.debugMarks(for: mark, answers: .mixed) { mark.tap(id) }
+            mark.check()
+            let find = KasusService.markResult(mark, storyID: story.id, unit: unit, in: playable, durationSeconds: 251)
+            kasus.append(KasusService.round(for: find, date: now.addingTimeInterval(-55 * 60)))
+        }
+        if cases.count > 1 {
+            var next = KasusService.markRound(cases[1], in: playable, mode: .sofort)
+            for id in KasusService.debugMarks(for: next, answers: .right) { next.tap(id) }
+            next.check()
+            let find = KasusService.markResult(next, storyID: story.id, unit: unit, in: playable, durationSeconds: 140)
+            kasus.append(KasusService.round(for: find, date: now.addingTimeInterval(-50 * 60)))
+        }
 
-        let genus = KasusService.blanks(in: playable, unit: unit, mixed: false, hint: .genus)
-        let fill = KasusService.fillResult(storyID: story.id, unit: unit, hint: .genus, blanks: genus,
-                                           picks: KasusService.debugPicks(for: genus, answers: .mixed),
-                                           durationSeconds: 204, story: story)
-        kasus.append(KasusService.round(for: fill, date: now.addingTimeInterval(-40 * 60)))
+        var endings = KasusService.endingsRound(in: playable, unit: unit, mixed: false, hint: .genus, mode: .amEnde)
+        for (id, ending) in KasusService.debugEndingPicks(for: endings.gaps, answers: .mixed) {
+            endings.choose(ending, for: id)
+        }
+        endings.check()
+        let fill = KasusService.endingsResult(endings, storyID: story.id, unit: unit, durationSeconds: 204, story: story)
+        let filled = KasusService.round(for: fill, date: now.addingTimeInterval(-40 * 60))
+        filled.applyAnswersShown()
+        kasus.append(filled)
 
         // Yesterday and the day before: two Schnellrunden.
         kasus.append(quickRound(.nominativ, wrongEvery: 7, seconds: 68, date: day(1, 19, 40)))
         kasus.append(quickRound(.akkusativ, wrongEvery: 3, seconds: 97, date: day(2, 18, 5)))
 
-        // Three days ago: Einsetzen gemischt at Ohne Hilfe, one gap in five wrong.
+        // Three days ago: an Einsetzen from before Endungen, gemischt at Ohne Hilfe, one gap in
+        // five wrong. No feedback mode, so the history labels it „Einsetzen“.
         let ohne = KasusService.blanks(in: playable, unit: unit, mixed: true, hint: .ohne)
         var ohnePicks: [Int: String] = [:]
         for (i, blank) in ohne.enumerated() {

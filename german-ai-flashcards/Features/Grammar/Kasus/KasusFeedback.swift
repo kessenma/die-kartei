@@ -2,7 +2,7 @@
 //  KasusFeedback.swift
 //  german-ai-flashcards
 //
-//  The right/wrong signal every case exercise shares, so the Schnellrunde, Finden and Einsetzen
+//  The right/wrong signal every case exercise shares, so the Schnellrunde, Markieren and Endungen
 //  answer the same way:
 //
 //    KasusVerdict         right · almost (a gender or number slip) · not quite, with its words
@@ -125,6 +125,9 @@ struct KasusFeedbackHeader: View {
 /// The answer buttons, in rows of `columns` with the last row centred. Before a pick every button
 /// is live; after it the picked one says right or wrong, the answer lights up, and the rest step
 /// back. Give the grid a new `.id` per question so the shake and the pop start fresh.
+///
+/// With `graded` off (Endungen „Am Ende“, before Prüfen) a pick is only a choice: it shows in the
+/// tint, never right or wrong, and every button stays live so it can change.
 struct KasusOptionGrid: View {
     let options: [String]
     /// Compared ignoring case, like every Kasus grade.
@@ -132,6 +135,7 @@ struct KasusOptionGrid: View {
     /// The question's case, whose color the right button takes.
     let kasus: GrammarCase
     let picked: String?
+    var graded = true
     var columns: Int = 3
     var rowHeight: CGFloat = 58
     var font: Font = .title3.weight(.semibold)
@@ -146,7 +150,7 @@ struct KasusOptionGrid: View {
                     kasus: kasus,
                     font: font
                 ) {
-                    guard picked == nil else { return }
+                    guard !graded || picked == nil else { return }
                     onPick(option)
                 }
             }
@@ -159,6 +163,7 @@ struct KasusOptionGrid: View {
 
     private func state(of option: String) -> KasusOptionButton.Look {
         guard let picked else { return .open }
+        guard graded else { return option == picked ? .selected : .open }
         if option == picked { return isAnswer(option) ? .pickedRight : .pickedWrong }
         if isAnswer(option) { return .revealed }
         return .passive
@@ -170,11 +175,13 @@ struct KasusOptionGrid: View {
     }
 }
 
-/// One answer button and its five looks.
+/// One answer button and its six looks.
 struct KasusOptionButton: View {
     enum Look: Hashable {
         /// Waiting for a pick.
         case open
+        /// Chosen but not judged yet (Endungen „Am Ende“): outlined in the tint, still live.
+        case selected
         /// Picked, and right: filled in the case color with a checkmark.
         case pickedRight
         /// Picked, and wrong: grey, struck through, an xmark, and a shake.
@@ -228,7 +235,7 @@ struct KasusOptionButton: View {
             SpringKeyframe(1.0, duration: 0.3)
         }
         .animation(.easeOut(duration: 0.2), value: state)
-        .allowsHitTesting(state == .open)
+        .allowsHitTesting(state == .open || state == .selected)
         .accessibilityLabel(option)
         .accessibilityValue(accessibilityValue)
     }
@@ -244,7 +251,7 @@ struct KasusOptionButton: View {
         switch state {
         case .pickedRight, .revealed: "checkmark"
         case .pickedWrong:            "xmark"
-        case .open, .passive:         nil
+        case .open, .passive, .selected: nil
         }
     }
 
@@ -254,7 +261,7 @@ struct KasusOptionButton: View {
         case .pickedRight:              Color(.systemBackground)
         case .revealed:                 kasus.color
         case .pickedWrong:              .secondary
-        case .open, .passive:           .primary
+        case .open, .passive, .selected: .primary
         }
     }
 
@@ -263,23 +270,25 @@ struct KasusOptionButton: View {
         case .pickedRight:  AnyShapeStyle(kasus.color)
         case .revealed:     AnyShapeStyle(kasus.color.opacity(0.12))
         case .pickedWrong:  AnyShapeStyle(Color.secondary.opacity(0.14))
+        case .selected:     AnyShapeStyle(.tint.opacity(0.16))
         case .open, .passive:  AnyShapeStyle(appTheme.surface)
         }
     }
 
-    private var stroke: Color {
+    private var stroke: AnyShapeStyle {
         switch state {
-        case .revealed:     kasus.color
-        case .pickedRight:  .clear
-        case .pickedWrong:  Color.secondary.opacity(0.3)
+        case .revealed:     AnyShapeStyle(kasus.color)
+        case .selected:     AnyShapeStyle(.tint)
+        case .pickedRight:  AnyShapeStyle(.clear)
+        case .pickedWrong:  AnyShapeStyle(Color.secondary.opacity(0.3))
         case .open, .passive:
-            appTheme.cardBorderWidth > 0 ? appTheme.cardBorderColor : Color.primary.opacity(0.14)
+            AnyShapeStyle(appTheme.cardBorderWidth > 0 ? appTheme.cardBorderColor : Color.primary.opacity(0.14))
         }
     }
 
     private var strokeWidth: CGFloat {
         switch state {
-        case .revealed:  2.5
+        case .revealed, .selected:  2.5
         case .open, .passive: max(1, appTheme.cardBorderWidth)
         default:         1
         }
@@ -290,6 +299,7 @@ struct KasusOptionButton: View {
         case .pickedRight:  "Your pick, right"
         case .pickedWrong:  "Your pick, not right"
         case .revealed:     "The answer"
+        case .selected:     "Your choice"
         case .open, .passive: ""
         }
     }
@@ -371,7 +381,7 @@ struct KasusProgressStrip: View {
         marks.filter { $0 != .current && $0 != .upcoming }.count
     }
 
-    /// Past this many marks (a B1 story's Finden has 51) the dots keep a fixed size and wrap onto
+    /// Past this many marks (a B1 story's round can have 51) the dots keep a fixed size and wrap onto
     /// more rows, instead of shrinking until a ring can't be told from a filled dot.
     private static let wrapThreshold = 20
     private var wraps: Bool { marks.count > Self.wrapThreshold }
@@ -510,7 +520,7 @@ private struct KasusHeightCap: Layout {
             VStack(alignment: .leading, spacing: 22) {
                 KasusProgressStrip(marks: [.right(.nominativ), .right(.akkusativ), .miss, .slip,
                                            .right(.dativ), .current, .upcoming, .upcoming, .upcoming, .upcoming])
-                // A B1 story's Finden: wraps instead of shrinking.
+                // A long B1 round: wraps instead of shrinking.
                 KasusProgressStrip(marks: (0..<41).map { i in
                     i % 7 == 3 ? .miss : i % 11 == 5 ? .slip : .right(GrammarCase.allCases[i % 4])
                 }, showsScore: false)

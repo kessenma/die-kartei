@@ -1,10 +1,10 @@
 # Grammatik — the case path and the Kasus stories
 
-One path through the four cases, Nominativ → Akkusativ → Dativ → Genitiv → Alle Fälle, where
-every unit runs the same loop: **Regel → Geschichte (Lesen → Finden → Einsetzen → Ergebnis) →
-Schnellrunde**. The stories are the two exercises from a German class on one text: mark the cases,
-then fill in the articles. A deterministic validator is the answer key; it gates the bundled
-stories now and will gate the tutor's stories later (Phase 3).
+One path through the four cases, Nominativ → Akkusativ → Dativ → Genitiv → Alle Fälle, where every
+unit runs the same loop: **Regel → Geschichte (Lesen → Markieren → Endungen → Ergebnis) →
+Schnellrunde**. The stories are the two worksheets from a German class on one text: mark every word
+in a case, then fill in the article endings. A deterministic validator is the answer key; it gates
+the bundled stories now and will gate the tutor's stories later (Phase 3).
 
 Status legend: ✅ done · ⬜ open
 
@@ -12,7 +12,7 @@ Status legend: ✅ done · ⬜ open
 
 | Piece | File |
 |---|---|
-| Units (cases in play, brushes, level labels, rule lines, start unit) | `Models/KasusUnit.swift` |
+| Units (cases in play, Markieren's case order, level labels, rule lines, start unit) | `Models/KasusUnit.swift` |
 | Story format (stored fields, reasons, located targets) | `Models/KasusStory.swift` |
 | Forms engine (determiner families, table lookups, options, slips, noun endings, word lists) | `Models/KasusForms.swift` |
 | Validator (locate, prove, issue codes, policy) | `Services/KasusValidator.swift` |
@@ -20,13 +20,20 @@ Status legend: ✅ done · ⬜ open
 | Loader, `AppKasusLexicon`, the DEBUG assert | `Services/KasusStoryBank.swift` |
 | Planted-error fixtures, golden numbers, table round trip (DEBUG) | `Services/KasusFixtures.swift` |
 | Sessions, blanks, grading, `recordRound`, progress, `KasusPath` (the hero) | `Services/KasusService.swift` |
+| Numbered sentences, word roles, the Markieren round and score, feedback modes (Foundation only) | `Services/KasusMarking.swift` |
+| Endungen: gaps, ending buttons, grading an ending, the Endungen round | `Services/KasusEndings.swift` |
 | The round record | `Models/KasusRound.swift` |
 | Bundled stories | `Resources/kasus_stories.json` |
 | Hub | `Features/Grammar/GrammarHubView.swift` |
 | Unit screen, story player, story text, Kasus-Check card | `Features/Grammar/Kasus/` |
+| The story player: step bar, Lesen, Ergebnis, the exercises' state, DEBUG screens | `Features/Grammar/Kasus/KasusStoryView.swift` |
+| Markieren's screen and state (`KasusMarkPlay`) | `Features/Grammar/Kasus/KasusMarkView.swift` |
+| Endungen's screen and state (`KasusEndingsPlay`, `KasusGapState`) | `Features/Grammar/Kasus/KasusEndingsView.swift` |
+| Numbered sentences as word chips (`KasusSentenceList`, `KasusWordFlow`, `KasusChip`) | `Features/Grammar/Kasus/KasusSentences.swift` |
+| Tray with a pinned footer, step clock, header, options pill | `Features/Grammar/Kasus/KasusPlayerParts.swift` |
 | Right/wrong signal: verdict header, answer buttons, progress strip, capped tray scroll | `Features/Grammar/Kasus/KasusFeedback.swift` |
 | The `{m:den}` / `{dat:Dativ}` / `**bold**` markup and `Text(kasusRich:)` | `Features/Grammar/Kasus/KasusRichText.swift` |
-| Endings table + Schnellrunde (`CaseEndingsDrillView`) | `Features/Grammar/CaseEndingsView.swift` |
+| Endings table (and its compact tray version with a highlighted cell) + Schnellrunde (`CaseEndingsDrillView`) | `Features/Grammar/CaseEndingsView.swift` |
 | Day detail in the calendar | `Features/Home/StreakCalendarView.swift` |
 | Verlauf (every round by day) and a round's answers | `Features/Grammar/Kasus/KasusHistoryView.swift`, `KasusRoundDetailView.swift` |
 | Sample rounds for the simulator (DEBUG) | `Services/KasusDebugSeeder.swift` |
@@ -35,21 +42,21 @@ Status legend: ✅ done · ⬜ open
 
 ## The path
 
-| Unit | Cases in play | Finden brushes | Label |
+| Unit | Cases in play | Markieren asks, in order | Label |
 |---|---|---|---|
 | Nominativ | nom | nom | A1 |
-| Akkusativ | nom, akk | akk | A1 |
-| Dativ | nom, akk, dat | nom, akk, dat | A1–A2 |
-| Genitiv | all | all | B1 |
-| Alle Fälle | all | all | B1 |
+| Akkusativ | nom, akk | akk, nom | A1 |
+| Dativ | nom, akk, dat | dat, akk, nom | A1–A2 |
+| Genitiv | all | gen, dat, akk, nom | B1 |
+| Alle Fälle | all | nom, akk, dat, gen | B1 |
 
 **Entry.** Home ▸ Grammar pushes the hub directly, and so does the pyramid's Grammatik-Kern
 layer. The hub has four sections: **Weiter** (one hero row), **Die vier Fälle** (a row per unit,
-with a dot per story, filled once its Finden and Einsetzen are both played, one for the
+with a dot per story, filled once its Markieren and Endungen are both played, one for the
 Schnellrunde, and a flame on a case the coach has as shaky), **Verlauf** (one row with the last
 round's score) and **Werkzeuge** (Präpositionen, Der · Die · Das, Die Endungen). A unit screen
 has **Die Regel** (open until the unit's first round), **Geschichten** (one row per story:
-level, Finden ✓/○, Einsetzen ✓/○), the **Schnellrunde**, the endings drill limited to the
+level, Markieren ✓/○, Endungen ✓/○), the **Schnellrunde**, the endings drill limited to the
 unit's cases, **Deine Runden** (the unit's last three rounds and "Alle anzeigen") and **Mehr
 dazu**: the preposition cards opened on the case's group, with a 3D still (Akkusativ →
 `.akkusativ`; Dativ → `.dativ` and "Wo oder Wohin?" → `.wechsel`; Genitiv → `.genitiv`; Alle
@@ -61,16 +68,20 @@ path's `KasusRound`s and the article game's and the preposition drill's rounds (
 an all-time strip shows the first-try share per case. A Kasus round opens its detail: score, what
 it did for the coach, a bar per case with its code word, then every answer in its sentence, misses
 first (~~pick~~ **answer**, the answer in its gender color and the phrase underlined in its case
-color, the outcome and the explanation); right answers keep their why folded until tapped. Rounds
-from before `items` existed show their counts only.
+color, the outcome and the explanation); right answers keep their why folded until tapped. A
+Markieren round shows its case („Markieren · Dativ“), the class-sheet score („6 / 10“ over „8
+richtig · 2 falsch · 2 übersehen“, also the row's score in Verlauf), a word marked that has no case
+there struck through, and a partly marked phrase with its word count. A round whose answers Lösung
+zeigen showed carries „Lösung angezeigt · Answers shown“ (an eye in the Verlauf row, and on each
+answer it showed). Rounds from before `items` existed show their counts only.
 
 Levels are soft labels, never gates. The hub's **Weiter** row (`KasusPath.next`) is derived on
 every render and never stored. First rule that fits:
 
 1. a shaky akk/dat/gen case whose unit has a story → its least-recently-played story (Lesen if
-   never played, else Einsetzen);
+   never played, else Endungen);
 2. an unplayed story, from the start unit on;
-3. the first unfinished step from the start unit (Finden, Einsetzen, then the Schnellrunde);
+3. the first unfinished step from the start unit (Markieren, Endungen, then the Schnellrunde);
 4. the story played longest ago ("Wiederholen").
 
 The start unit comes from `germanLevel` (A1 → Nominativ, A2 → Akkusativ, B1+ → Dativ) and is never
@@ -99,13 +110,13 @@ why}]`, `paragraphs [{de, en}]`, `targets`.
 particular order. `why` is one of `pronoun` („Ich kaufe ihr neue Schuhe“: „ihr“ is „to her“, not
 an article), `demonstrative`, `relative` (a relative „der“), `idiom` („am besten“, „zum Glück“)
 or `contraction`. Since Phase 2 dieser/jeder/welcher, contractions and the pronouns mich, mir,
-dich, dir, ihn, ihm are targets themselves: contractions and pronouns are spot-only (marked in
-Finden, never blanked), and a pronoun target may leave out `genus` and `lemma`. A story that
-targets one of those pronouns targets all of them.
+dich, dir, ihn, ihm are targets themselves: contractions and pronouns are spot-only (never a
+gap; in Markieren a pronoun counts and a contraction never does), and a pronoun target may leave
+out `genus` and `lemma`. A story that targets one of those pronouns targets all of them.
 
 **Target kinds** (`KasusTargetKind`, derived at load):
 
-- **article:** determiner + noun, the only kind Einsetzen blanks. dieser/jeder/welcher are a
+- **article:** determiner + noun, the only kind that becomes a gap. dieser/jeder/welcher are a
   family of their own (`KasusFamily.derWord`: the definite article's endings on a stem; „jede“ +
   plural is impossible, like „eine Kinder“) and blank like any article.
 - **contraction** („im Garten“, „zum Arzt“, „ins Kino“): read as preposition + article
@@ -136,8 +147,8 @@ authored explanation; every one is built from the proof (`KasusExplanation`).
 ### The bundled stories
 
 Seven, all `authored`, none `reviewed` yet. Numbers are the golden ones `-kasus.debugVerify`
-checks (targets · per case · per proof); "spot-only" counts contractions + pronouns, which Finden
-marks and Einsetzen never blanks.
+checks (targets · per case · per proof); "spot-only" counts contractions + pronouns, which never
+become gaps.
 
 | id · title | Unit · level | Words | Cases | Proofs (form · prep · copula · label) | Spot-only |
 |---|---|---|---|---|---|
@@ -195,38 +206,132 @@ unanimous → the Goethe rows compared per level → a reliable suffix → unver
 
 ## The exercises
 
-**Finden.** Tap a phrase to paint it with the selected brush; nothing is underlined before Prüfen,
-since an authored story has full coverage. When the story marks pronouns or contractions, the
-instruction names them (the pronouns of the cases being marked, and generic examples such as
-„im, zum …“), so "article + noun" doesn't have the learner skip „ihn“ or „am Ende“. The sort grid leaves
-pronouns out and lists a contraction under the article inside it. The first Prüfen is scored:
-right = solid wash, wrong brush = struck-through grey, missed = dotted underline in the true case's
-color, and painting a phrase whose case has no brush is a wrong pick. After Prüfen the tray shows
-the verdict, one dot per phrase and what went wrong; tapping a phrase shows its own verdict, what
-was marked and why. "Noch mal die Fehler" is not scored.
-Finden counts for the streak and XP (the painted phrases only), never the coach.
+The two class worksheets on one text. Markieren and Endungen replaced the brush-sorting Finden and
+the whole-article Einsetzen in the player (Phase 3a). `KasusStep.finden` / `.einsetzen` and
+`KasusRoundStep.find` / `.fill` keep their names and raw values, but read „Markieren“ and
+„Endungen“; a round recorded before keeps „Finden“ / „Einsetzen“ (`KasusRound.stepLabel`).
 
-**The text** (`KasusText`) is one `Text` per paragraph of link runs. Inside it the only styling is
-a wash, an underline, a strikethrough and a color, so painting or answering never moves a line;
-a phrase or a blank never breaks across a line (its spaces are no-break spaces). Case labels,
-chips and explanations live in the bottom tray.
+**Numbered sentences** (`KasusSentences.swift`). Both exercises show the story one sentence per row,
+numbered straight across paragraphs (`KasusPlayableStory.numbered`), the number hanging in a column
+as wide as the widest one („9.“ and „10.“ end on the same line). Every word is a chip in a wrapping
+flow (`KasusWordFlow`, 2 pt across and 5 pt between lines, each chip's tap area grown into half of
+each gap and dimmed while pressed), padded so a short „den“ is an easy tap; punctuation rides along
+in `leading` / `trailing`, and a class-style tag („(m)“) sits between a noun and its punctuation. A
+chip's look (wash, outline, strikethrough, a small ✓ / ✗ badge in its corner, a ring when the tray
+is talking about it) never changes its width, so marking or checking never moves a line; only a
+wrong ending shown as ~~der~~ dem widens its chip. Lesen keeps the paragraphs (`KasusText`). The
+validator's own splitter and words are used, so every target lands on whole words. Each word has a
+role:
 
-**Einsetzen.** Blanks are the unit's case ("gemischt": every case in play); every other article
-stays visible as a model. Hint ladder, stored in `kasus.hintLevel`, default Genus-Hilfe at A1–A2
-and Ohne Hilfe from B1. The Nominativ unit only runs at Ohne Hilfe, since its blanks would give
-themselves away with a gender tag. The level locks after the first pick.
-
-| Level | Shows | Options | Moves the case skill? |
+| Role | Words | Marked in a round of its case | Marked in another round |
 |---|---|---|---|
-| Viel Hilfe | gender tag, trigger underlined | the noun's own gender through the cases, plus one other form when fewer than 3 | no |
-| Genus-Hilfe | raised m/f/n/pl tag | the whole family (des/eines once Genitiv is in play) | masculine only |
-| Ohne Hilfe | a Tipp button: trigger → gender → case → answer; sg/pl tag on nouns like Schlüssel (not in the Dativ, where the plural adds -n) and on n-nouns outside the Nominativ (den Nachbarn) | the whole family | yes, unless the Tipp showed the case or answer (or the gender of an f/n/pl Akkusativ) |
+| `target` (determiner · adjective · noun · pronoun) | every word of a gradable article or pronoun target | right | wrong |
+| `plain` | verbs, prepositions, adverbs … | – | wrong |
+| `ungraded(contraction)` | a contraction phrase and its noun („zum Geburtstag“, „Zum Glück“) | never counted | never counted |
+| `ungraded(pronoun)` | pronouns other than the six (or the six in a story that doesn't mark them) | never counted | never counted |
+| `ungraded(noArticle)` | a capitalised word inside a sentence with no article (names, bare nouns), with the quantifier or adjective leading into it („viele Leute“, „mit großer Freude“, „nächsten Montag“; -e/-en only where the word before couldn't be the verb's subject, so „Wir trinken Kaffee“ keeps *trinken* plain), and every number word („zwanzig Kisten“, „um sechs“) | never counted | never counted |
+| `ungraded(sentenceStart)` | a capitalised word opening a sentence or quote with no article that isn't a known function word (probably a name) | never counted | never counted |
+| `ungraded(superlative)` | *am* + a word in -sten („am liebsten“, „am besten“), unless a noun follows an ordinary -sten word („am nächsten Morgen“ is an + dem) | never counted | never counted |
+| `ungraded(idiom / standalone / unchecked)` | an idiom notTarget; an article word with no noun („Das ist …“); a phrase the validator couldn't grade („ein paar Entwürfe“) | never counted | never counted |
 
-A time phrase with no preposition („jeden Tag“) has no deciding word: neither Viel Hilfe nor the
-Tipp underlines the verb next to it, and the Tipp's first clue reads "A time phrase: wann? wie
-oft?".
+After Prüfen a tap shows `KasusMarking.note`: a target word's explanation (led by its real case
+when the round asked another), why an ungraded word doesn't count („*zum* = *zu* + dem:
+contractions aren't counted here.“), or why a plain word isn't part of the phrase („*mit* decides
+the case of „dem Schlüssel“ (Dativ), but it isn't part of it.“). The ungraded notes say "not
+counted here", never that no case shows, since an ending often does: „No article in front: names
+and phrases without one aren't counted in this exercise.“, „Numbers don't change with the case“,
+„Only *mich, mir, dich, dir, ihn* and *ihm* are counted in this exercise.“, and a name with a
+Genitiv -s before a noun gets „*Saras* = Sara's: a name with *-s* is in the Genitiv, but names
+aren't counted here.“ The Nominativ's instruction adds "Pronouns like *er* and *sie* aren't
+counted."
 
-Grading is the first pick only, ignoring case. Three kinds of wrong:
+**Feedback mode**, per exercise (`KasusFeedbackMode`, `kasus.markFeedback` /
+`kasus.endingsFeedback`), in the options pill next to the instruction: „Sofort · After each answer“
+judges each tap or pick with the `KasusFeedback` signal; „Am Ende · Check at the end“ judges
+everything at Prüfen, then Lösung zeigen, then Noch mal. Defaults: Markieren Am Ende, Endungen
+Sofort. The mode (and Endungen's help level) can't change while a round is under way (a pick made or
+a Tipp taken: `KasusEndingsRound.settingsLocked`, so a rebuilt round can't forget a Tipp); changed
+after Prüfen it starts a fresh attempt of the same round, which isn't recorded again.
+
+**Markieren** (`KasusMarkView`). One case per round, „Markiere alle Wörter im Dativ.“ with
+"Tap every word in the Dativ: the article, any adjective and the noun." (and the case's pronouns
+when the story marks them). Order per unit (`KasusUnit.markCases`, skipping a case with no words
+in the story): Nominativ → nom; Akkusativ → akk, nom; Dativ → dat, akk, nom; Genitiv → gen, dat,
+akk, nom; Alle Fälle → nom, akk, dat, gen, shown as „Dat › Akk › Nom“ under the instruction.
+
+- Am Ende: a tap marks a word (a light wash in the asked case's color), a second tap unmarks it;
+  the tray counts „5 marked · 18 words to find“ above Prüfen. Prüfen (Fertig in Sofort) with
+  nothing marked asks first and then records a round that answered nothing (no streak or XP):
+  it's how to give up and see the answers.
+- Sofort: each tap is judged at once (✓ on the case-color wash, or a grey ✗ struck through) with
+  the verdict header; a wrong tap says why without naming a phrase still to be found, a word that
+  never counts says so and stays unmarked. Fertig shows what was missed.
+- After Prüfen / Fertig: right = ✓ on a wash in the case color, wrong = grey ✗ struck through,
+  missed = a dashed outline in the case color. The tray has the score („6 / 10“, „8 richtig · 2
+  falsch · 2 übersehen“; max(0, right − wrong) / words to find, so marking everything scores low),
+  „Alle Fälle“ (every phrase washed in its own case's color, the verdicts kept; only after Prüfen,
+  and off again after Noch mal, a mode switch or the next case), „Lösung zeigen“ (the missed words
+  wash in the case color and the first of them scrolls above the tray; recorded, flagging only the
+  missed and partly marked phrases, never a wrong mark), „Noch mal“ (clears, unrecorded) and
+  „Nächster Fall · Akkusativ“ (a new round, recorded on its own), or „Weiter: Endungen“ after the
+  last case. A tap on any word shows its note.
+- Recognition only: streak and XP count the words to find, the coach never hears of it. Its
+  per-case tally (Verlauf's bars, a row's strip, the round detail's „Nach Fall“) is the class
+  score's points, right minus wrong, so the bars agree with „6 / 10“ and marking everything fills
+  nothing (`KasusRound.perCase` reads it from `markScore` on older rows too).
+
+**Endungen** (`KasusEndingsView`). Only definite (der … des) and ein (ein … eines) articles become
+gaps, with the stem as written („D__“, „d__“, „ein__“); possessives, kein and dieser stay written
+out, and so do the adjective and noun endings. Buttons: -er -ie -as -en -em (-es) and – -e -en
+-em -er (-es); -es only once Genitiv is in play. Gap selection is the old Einsetzen's
+(`blankCases`: the unit's case, every case in play when gemischt, the Nominativ only at Ohne
+Hilfe). A chosen ending goes back on its stem and is graded as before. Four help levels, one
+control in the options pill (`kasus.hintLevel`, default Genus-Hilfe at A1–A2 and Ohne Hilfe from
+B1; the Nominativ unit runs at Ohne Hilfe only):
+
+| Level | Shows | Buttons | Moves the case skill? |
+|---|---|---|---|
+| Lernhilfe (first) | the endings table in the tray with the gap's cell (case row × gender column) ringed in the case color and its ending bold, the gender and case chips above the buttons, the „(m)“ tag, the trigger underlined | the noun's own gender, padded to 3 | no |
+| Viel Hilfe | the table (nothing ringed), the gender chip and tag, the trigger underlined | the noun's own gender, padded to 3 | no |
+| Genus-Hilfe | the gender chip („Bruder · m“) and tag | the whole row | masculine only |
+| Ohne Hilfe | the Tipp button (trigger → gender → case → answer), the sg/pl tag | the whole row | unless the Tipp showed the case or answer (or the gender of an f/n/pl Akkusativ) |
+
+The table is `CaseEndingsTable(compact:)` for the unit's cases in play („Endungstabelle“): small
+type, each form split where Endungen splits it (d·**em**, ein·**em**, and ein·**–** where the
+buttons say „–“), folding to one line („Tabelle zeigen“, remembered
+in `kasus.endingsTableOpen`). At the largest text sizes a row label drops its icon, then shrinks,
+rather than break „Nom“ into one letter per line. A time phrase with no preposition („jeden Tag“) has no deciding
+word: nothing is underlined, and the Tipp's first clue reads "A time phrase: wann? wie oft?".
+
+The tray reads top to bottom: the dots (Sofort) or „3 of 8 filled“ (Am Ende) with the Tipp and,
+in Sofort, „Lösung“; the verdict and why once picked (Sofort); the table; then, pinned, the
+gender and case chips, the ending buttons and the main button. Only the part above the chips
+scrolls when the tray runs out of room, so a four-case table at Lernhilfe (Genitiv, Alle Fälle)
+never pushes the buttons out of reach.
+
+- Sofort: the first pick is graded and locked, with the `KasusFeedback` signal. Right: the gap fills
+  with the answer, its letters in the gender color on a wash in the case color (✓ in the corner;
+  never a gender-colored wash, so a right feminine „der“ never sits on red), and the next gap comes
+  up after 800 ms. Wrong: ~~der~~ dem in the text, the verdict and why (a slip gets its slip note),
+  and Weiter. The table folds away once a gap is judged. „Lösung“ fills every gap not picked yet
+  (never counted) and finishes the round.
+- Am Ende: tap any gap and pick freely (a pick shows only as chosen; the next empty gap comes up;
+  tapping the chosen ending again empties the gap). Prüfen with gaps still empty asks first
+  („3 gaps are still empty · An empty gap counts as not answered.“), even with none filled, which
+  is how to give up and see the answers. After Prüfen: ✓ or a grey ✗
+  on every gap, but a wrong gap keeps its answer back until „Lösung zeigen“ (a tap says only how
+  it was wrong and in which case), so „Noch mal“ is still a real try; an empty gap has a dashed
+  outline. Then Ergebnis.
+- The footer (the chips, the ending buttons, then Weiter, Prüfen or Ergebnis) is pinned under
+  the tray, and the main button holds its place with a hint before Weiter appears, so the ending
+  buttons never move under a finger and a quick second tap can't land on Prüfen.
+- A fresh round (or coming back to one) scrolls the focused gap's sentence to just above the
+  tray when the tray covers it (at Lernhilfe it takes almost half the screen), and again if the
+  tray settles at another height in the first second (its content animates in); a gap already in
+  view doesn't move. The clock stops at any finish, a Noch mal's too, so Ergebnis's time holds.
+
+Grading ignores capitalisation and takes the first pick in Sofort, the pick standing at Prüfen in
+Am Ende. Three kinds of wrong:
 
 - **Gender slip:** the right case for another singular gender („in dem Tasche“).
 - **Number slip:** the right case in the other number on a noun that reads the same in both
@@ -237,16 +342,19 @@ Grading is the first pick only, ignoring case. Three kinds of wrong:
   „auf der Boden“ is the Nominativ left unchanged, a case miss, even though „der“ is also the
   feminine Dativ.
 
-The tray reads top to bottom: the progress strip and score (and the Tipp button), the verdict
-with its explanation, the answer buttons (they keep showing the pick), then Weiter. Right: the
-article fills in its gender color, „Richtig!“ shows, and the next gap comes up after 800 ms.
-Wrong: ~~pick~~ **answer** in the text, the verdict and explanation (a slip gets its slip note),
-and Weiter. An answered gap keeps a light wash of its gender color, and coming back to a round in
-progress scrolls to its gap. Never green or red for right and wrong (see below). Einsetzen is
-recorded the moment its last gap gets a first pick, right or wrong.
+**The tray** (`KasusTray`) is the same for every step: its content scrolls past 40% of the step (the
+largest text sizes, or a four-case table on a small phone) while the footer stays in view; a verdict
+and its why scroll past 30% (20% at the accessibility sizes). At the accessibility sizes a checked
+round's Lösung zeigen, Noch mal (and Markieren's Alle Fälle) move into the pinned footer as one row
+of bordered buttons, their German where it fits and the icon alone where it doesn't
+(`KasusFooterLabel`), so a long note can't scroll them out of sight. The step bar stops growing at
+the navigation bar's size so „Markieren“ never truncates.
 
-**Ergebnis.** Per-case counts, time, the hint level, the misses in their sentences with their
-explanations, "Noch mal · eine Stufe schwerer" at 80% or more, and "Noch mal · gemischt".
+**Ergebnis** (Endungen's). The round on screen: „5 / 8 richtig“ (as the tray and the round detail
+write it), per-case counts, time, help level and mode, the
+misses in their numbered sentences with their explanations (held back in Am Ende until Lösung
+zeigen, which it offers too), „Noch mal · eine Stufe schwerer“ at 80% or more, „Noch mal ·
+gemischt“ and „Noch mal · Retry“ (the same gaps, unrecorded).
 
 **Explanations** follow the Kasus-Check order and end with the code word, for example
 `„nach“ always takes the Dativ. Masculine Dativ in „mrmn“ is m: dem.`: each code letter wears
@@ -269,7 +377,7 @@ the card), „Der Mann gibt dem Kind einen Ball“ run through them, and a link 
 
 ## Right and wrong (`KasusFeedback`)
 
-One signal for Einsetzen, Finden after Prüfen and the Schnellrunde:
+One signal for Endungen, Markieren in Sofort and the Schnellrunde:
 
 | | Header | Answer buttons | Strip dot | Haptic |
 |---|---|---|---|---|
@@ -278,11 +386,13 @@ One signal for Einsetzen, Finden after Prüfen and the Schnellrunde:
 | Miss | „Nicht ganz · Not quite“, grey | the pick shakes, greys out, is struck through with an ✗; the answer is outlined in the case color with a ✓; the rest fade | hollow grey ring | error |
 
 - The strip (`KasusProgressStrip`) has one dot per question and a running ✓ count; past 20 marks
-  the dots keep their size and wrap onto more rows (a B1 Finden has 51).
+  the dots keep their size and wrap onto more rows.
 - `KasusCappedScroll` holds the verdict and its explanation at their own height up to about 30%
   of the screen and scrolls past that, so at accessibility text sizes a long why never pushes the
   buttons or Weiter off screen. At large sizes the header's case label moves to a second line and
   a button's ✓/✗ gives way to the word.
+- Endungen's Am Ende buttons have a sixth look, chosen (outlined in the tint, still live), so a
+  choice never reads as right or wrong before Prüfen.
 - Haptics follow `hapticMode`. Right and wrong are never green or red. The answer buttons take the
   question's case color (the same color as its progress dot), never the gender color, because a
   right „die“ filled die-red read as wrong. Forms keep their gender color in the sentence and the
@@ -315,7 +425,7 @@ Today's weak spot, Coach's Notes' "Practice this", the pyramid's rows and a clas
 
 | Focus | Route | Opens |
 |---|---|---|
-| akkusativ, dativ, genitiv | `.kasus(unit)`, launch | Einsetzen in the unit's least-recently-played story (even one never played), or its Schnellrunde while the unit has no story |
+| akkusativ, dativ, genitiv | `.kasus(unit)`, launch | Endungen in the unit's least-recently-played story (even one never played), or its Schnellrunde while the unit has no story |
 | artikel | `.articleGame`, launch | a der/die/das round from the Goethe list at the learner's level, with tricky nouns mixed in, using the setup screen's round size and "Bring back tricky nouns" |
 | praepositionen, wechselpraepositionen | `.prepositionHub`, push | `PrepositionHubView` |
 | everything else (Perfekt, Präteritum, Futur, Konjunktiv II, Modalverben, Adjektivendungen) | `.lesson(focus)`, sheet | `GrammarLessonSheet` |
@@ -334,13 +444,15 @@ Both activities (`.kasusStory`, `.caseEndings`) come back through `ContentView.a
 call `recordRound` once per scored step.
 
 - Streak, time and XP: `StudyLogService.record(.grammar(answered), seconds:)`, XP at 2 per item.
-  Time is per step: hopping between Finden and Einsetzen pauses the other's clock.
+  Time is per step: hopping between Markieren and Endungen pauses the other's clock.
 - One `KasusRound` per scored step (below).
-- The coach (`applyDrillResult`) only from Einsetzen and the Schnellrunde, only unscaffolded first
-  picks, only a case with at least 3 of them, once per case per round. Left out: Viel Hilfe;
-  f/n/pl at Genus-Hilfe; at Ohne Hilfe a Tipp that showed the case or answer, or the gender of an
-  f/n/pl Akkusativ; f/n/pl Akkusativ in the Schnellrunde (its header names the article); every
-  slip. Nominativ writes nothing, and no `GrammarFocus` was added. Finden never reaches the coach.
+- The coach (`applyDrillResult`) only from Endungen (and Einsetzen) and the Schnellrunde, only
+  unscaffolded first picks, only a case with at least 3 of them, once per case per round. Left
+  out: Lernhilfe and Viel Hilfe; f/n/pl at Genus-Hilfe; at Ohne Hilfe a Tipp that showed the case
+  or answer, or the gender of an f/n/pl Akkusativ; f/n/pl Akkusativ in the Schnellrunde (its
+  header names the article); every slip; every answer Lösung zeigen filled and every gap left
+  empty. Nominativ writes nothing, and no `GrammarFocus` was added. Markieren (and Finden) never
+  reaches the coach; its streak count is the words to find.
 
 ### `KasusRound`
 
@@ -352,11 +464,16 @@ A SwiftData model, additive, every field defaulted (registered in `german_ai_fla
 | `storyID` | the story's id, or `quick-<unit>` for a Schnellrunde |
 | `unitRaw` | a `KasusUnit` raw value |
 | `stepRaw` | `find` · `fill` · `quick` (`KasusRoundStep`) |
-| `hintLevelRaw` | `viel` · `genus` · `ohne` for Einsetzen; empty otherwise |
-| `askedCount`, `firstTryCount` | items asked, right on the first pick |
+| `hintLevelRaw` | `lern` · `viel` · `genus` · `ohne` for Endungen (and Einsetzen); empty otherwise |
+| `askedCount`, `firstTryCount` | items asked, right on the first pick. Markieren: the words to find, the words marked right |
+| `wrongCount` | Markieren: words marked that weren't in the asked case. Score = max(0, firstTry − wrong) / asked (`markScore`) |
+| `markCaseRaw` | Markieren: the case the round asked; empty otherwise (and on the old Finden) |
+| `feedbackModeRaw` | `sofort` · `amEnde` for Markieren and Endungen; empty on the Schnellrunde and on rounds from before them, which is how `stepLabel` knows to say „Finden“ / „Einsetzen“ |
+| `revealedAnswers` | Lösung zeigen was tapped („Lösung angezeigt · Answers shown“) |
+| `roundKey` | the result's id, so Lösung zeigen after recording finds the row |
 | `durationSeconds` | that step's own clock |
-| `perCaseData` | encoded `[case: {asked, firstTry}]` |
-| `itemsData` | encoded `[KasusRoundItem]`, one per answer: sentence, phrase (and where it starts), answer, pick (a Finden pick is the painted case), case, gender, outcome (`right`, `caseMiss`, `genderSlip`, `numberSlip`, `missed`, `wrongPick`; stable raw values), whether it counted toward the coach, the explanation in `KasusRich` markup (a slip stores its slip note), the target's index, and `hasNounGender` (false for a pronoun; nil on items saved before it, where the round detail checks the answer's form instead). Built by `KasusService.round(for:date:)`, which also sets the counts-toward-coach flag; the Schnellrunde's come from `EndingsQuestion.roundItem(pick:)`. Nil on older rounds and the record check's synthetic ones |
+| `perCaseData` | encoded `[case: {asked, firstTry}]`. A Markieren round reads its tally from `markScore` instead (points, not right words) |
+| `itemsData` | encoded `[KasusRoundItem]`, one per answer: sentence, phrase (and where it starts), answer, pick (a Finden pick is the painted case), case, gender, outcome (`right`, `caseMiss`, `genderSlip`, `numberSlip`, `missed`, `wrongPick`, and since Phase 3a `partial` and `wrongMark` for Markieren, `unanswered` and `revealed` for Endungen; stable raw values), `revealed` (Lösung zeigen showed it), `markedWords` / `wordCount` (Markieren), whether it counted toward the coach, the explanation in `KasusRich` markup (a slip stores its slip note), the target's index, and `hasNounGender` (false for a pronoun; nil on items saved before it, where the round detail checks the answer's form instead). Built by `KasusService.round(for:date:)`, which also sets the counts-toward-coach flag; the Schnellrunde's come from `EndingsQuestion.roundItem(pick:)`. Nil on older rounds and the record check's synthetic ones |
 
 The calendar's day detail, the story rows' ✓/○, the hub's dots and `KasusPath.next` all key on
 (storyID, unitRaw, stepRaw), never on a display string, so a retitled story keeps its history.
@@ -401,7 +518,7 @@ or that the role behind a die/das/seine answer is the right one. Those are the t
 
 ## Tests (`german-ai-flashcardsTests`)
 
-A Swift Testing target in the `german-ai-flashcards` scheme; `test_sim` runs its 58 tests. Debug
+A Swift Testing target in the `german-ai-flashcards` scheme; `test_sim` runs its 98 tests. Debug
 only, since they use `KasusFixtures` and `KasusStoryBank.only`. They read the bundled JSON
 directly instead of `KasusStoryBank.bundled`, whose DEBUG assert would stop the whole run on one
 broken story instead of failing one test.
@@ -411,8 +528,11 @@ broken story instead of failing one test.
 | `KasusFormsTests` | every cell of the endings table for 12 determiner families, both ways; the 184-cell round trip; option sets; gender and number slips; plurals, n-nouns, the Genitiv -s; contractions against `prepositions.json`; the six pronouns; decoding a target |
 | `KasusValidatorTests` | each of the 46 fixtures raises exactly its code; every bundled story passes with its golden numbers and keeps the `KasusLocatedTarget` contract; generated-story and story-level rules; severities; issue codes stay stable |
 | `KasusExplanationTests` | every target's explanation is clean markup, the Finden note only on label targets; pinned lines; every rule line, the Kasus-Check card and every Schnellrunde feedback are clean markup |
-| `KasusServiceTests` | blanks per hint level, options, grading, the sg/pl tag, feedback, the Einsetzen and Finden results, the harder-round offer, the Weiter row |
-| `KasusRecordingTests` | which answers count toward the coach, the twelve record-check rounds, `recordRound` against an in-memory store |
+| `KasusServiceTests` | blanks per hint level, options, grading, the sg/pl tag, feedback, the Einsetzen and Finden results, the harder-round offer, the Weiter row, the debugVerify service block |
+| `KasusMarkingTests` | sentence numbering and punctuation on every story, every target word classified with its case, the words that never count, each unit's case order, the class score, Am Ende and Sofort rounds, pinned notes, the instruction, the Markieren result, feedback-mode keys and defaults |
+| `KasusEndingsTests` | both families' ending rows, gap selection, every gap's stem and buttons on every story, pinned buttons, ending grading with slips, what each hint level shows, Sofort and Am Ende rounds, empty and revealed gaps, Lernhilfe never counting |
+| `KasusRecordingTests` | which answers count toward the coach, the fifteen record-check rounds, `recordRound` against an in-memory store, the Markieren round's stored fields, Lösung zeigen after recording, rounds from before Phase 3a |
+| `KasusPlayStateTests` | the players' state (`KasusMarkPlay`, `KasusEndingsPlay`): a round recorded once at the first Prüfen or last pick, never after Noch mal or a mode switch; Lösung zeigen flagging the recorded attempt; Nächster Fall recorded on its own; „Alle Fälle“ off after Noch mal, a mode switch and the next case; a DEBUG prefill never handed on; a Tipp locking the help level and mode |
 
 A wording change to an explanation moves the pinned lines in `KasusExplanationTests.swift`; a
 change to a story's text moves its golden numbers in `KasusFixtures.golden`.
@@ -485,26 +605,33 @@ Bus“; „jede Kinder“ and „Dieses Mann“ must fail), and an untargeted co
 der-word each raising `coverage.untargetedDeterminer`. The round
 trip checks that `compatibleCases` gives back every real cell of the endings table. The service
 block checks blanks per hint level, the options, grading (right, case miss, gender slip, number
-slip), the sg/pl tags, the default hint per level, and `KasusPath.next` over seven synthetic
-histories.
+slip), the sg/pl tags, the numbered sentences and each word's role (printed for sentence 1), the
+words to mark per case, the Markieren case order and class score (and that marking everything
+scores 0), Sofort marking, the Endungen gaps, stems and buttons per help level, ending grading,
+Lernhilfe's highlighted cell, the default hint per level, and `KasusPath.next` over seven
+synthetic histories.
 
-**`-kasus.debugVerifyRecord 1`** runs `recordRound` on twelve synthetic rounds in the live store and
+**`-kasus.debugVerifyRecord 1`** runs `recordRound` on fifteen synthetic rounds in the live store and
 checks what each one moved, then puts everything back (`keep` leaves the rounds and the skill
 changes; they are filed under `debug-verify-record`, so they never mark a real step done).
-Expected: rounds #1–#10 (Viel Hilfe, under 3 per case, f/n/pl Akkusativ at Genus-Hilfe, a Tipp
+Expected: rounds #1–#13 (Viel Hilfe, under 3 per case, f/n/pl Akkusativ at Genus-Hilfe, a Tipp
 that showed the answer, gender slips, a gender Tipp on f/n/pl Akkusativ, Nominativ, f/n/pl
-Akkusativ in the Schnellrunde, Finden) move no skill; #11 moves Dativ and #12 moves Akkusativ.
+Akkusativ in the Schnellrunde, Finden, Lernhilfe, answers Lösung zeigen filled, Markieren with
+wrong marks) move no skill; #14 moves Dativ and #15 moves Akkusativ. The Markieren round is read
+back too: `Markieren · Dativ · 6 / 10 · 2 wrong`.
 
 ```
 #1 Viel Hilfe · 5 Akk m, all wrong (scaffolded)
    grammarExercises +5 · KasusRound +1 · akk –→– · dat –→– · gen –→– · PASS
 …
-#11 Ohne Hilfe · 4 Dat wrong + 2 Nom → moves Dativ
+#13 Markieren · Dativ, 10 words: 8 marked + 2 wrong marks (recognition only; 10 answered)
+   grammarExercises +10 · KasusRound +1 · akk –→– · dat –→– · gen –→– · Markieren · Dativ · 6 / 10 · 2 wrong · PASS
+#14 Ohne Hilfe · 4 Dat wrong + 2 Nom → moves Dativ
    grammarExercises +6 · KasusRound +1 · akk –→– · dat –→0.20 · gen –→– · PASS
-#12 Genus-Hilfe · 3 Akk m wrong + 3 Akk f → moves Akkusativ (m only, exactly 3)
+#15 Genus-Hilfe · 3 Akk m wrong + 3 Akk f → moves Akkusativ (m only, exactly 3)
    grammarExercises +6 · KasusRound +1 · akk –→0.20 · dat 0.20→0.20 · gen –→– · PASS
-ALL OK · 12 rounds
-restored: coach skills, 12 rounds removed, grammarExercises −55
+ALL OK · 15 rounds
+restored: coach skills, 15 rounds removed, grammarExercises −72
 ```
 
 **`-kasus.debugOpen <screen>`** opens a Grammatik screen at launch, since the simulator can't tap
@@ -516,22 +643,27 @@ its way there, and prints `[kasus.debugOpen] open <screen>`:
 | `unit:<unit>` | a unit screen in a sheet: `nominativ`, `akkusativ`, `dativ`, `genitiv`, `alleFaelle` |
 | `quick:<unit>` | the unit's Schnellrunde |
 | `read` | the first bundled story („Der verlorene Schlüssel“) at Lesen; `-kasus.debugStory <id>` picks another for every player screen |
-| `find` | Finden, painted if `-kasus.debugAnswers` is given |
-| `check` | Finden after Prüfen, the first miss in the tray |
-| `summary` | Finden's sort grid |
-| `fill` | Einsetzen, all but the last three gaps answered if `-kasus.debugAnswers` is given |
+| `mark` | Markieren, its first case, marked if `-kasus.debugAnswers` is given (in Sofort the last tap's verdict in the tray) |
+| `mark-checked` | Markieren after Prüfen, the first wrong mark's note in the tray |
+| `mark-revealed` | Markieren after Prüfen and Lösung zeigen |
+| `fill` | Endungen, all but the last three gaps answered if `-kasus.debugAnswers` is given (Sofort: the last wrong one's verdict in the tray) |
+| `fill-checked` | Endungen in Am Ende (whatever is stored) after Prüfen, the last gap left empty |
 | `result` | Ergebnis |
 | `history` | Verlauf, in a sheet |
 | `round` | the newest Kasus round that kept its answers, in a sheet |
+| `round-mark` | the newest Markieren round that kept its answers (one with a miss or a wrong mark first), in a sheet |
 
-- `-kasus.debugAnswers right|mixed` prefills the answers. `mixed` gets about one gap in three
-  wrong in Einsetzen, and in Finden leaves one phrase in four unpainted and paints one in five
-  with the wrong brush. `check`, `summary` and `result` use `mixed` when it isn't given.
-  Prefilled answers are never recorded.
-- `-kasus.debugHint viel|genus|ohne` picks the hint level for that launch without overwriting the
-  stored one.
+- `-kasus.debugAnswers right|mixed` prefills the answers (`KasusService.debugMarks`,
+  `debugEndingPicks`). `mixed` gets about one gap in three wrong in Endungen, and in Markieren
+  leaves one phrase in four unmarked and marks the first plain word of every fifth sentence.
+  `mark-checked`, `mark-revealed`, `fill-checked` and `result` use `mixed` when it isn't given.
+  Prefilled answers are never recorded (a Nächster Fall or another help level after them is).
+- `-kasus.debugHint lern|viel|genus|ohne` picks the help level for that launch without overwriting
+  the stored one; `-kasus.debugFeedback sofort|amEnde` does the same for both feedback modes
+  (`KasusPrefill.feedback`). Changing either in the options pill then changes only that launch.
 - `-kasus.debugStory <id>` opens `read` … `result` on that story instead of the first, e.g.
-  `-kasus.debugOpen check -kasus.debugStory ks-nom-a1-foto -kasus.debugAnswers mixed`.
+  `-kasus.debugOpen mark-checked -kasus.debugStory ks-nom-a1-foto -kasus.debugAnswers mixed`.
+- `-app.theme klar|sanft|kritzel|grundform` shows the player in another theme.
 - `-kasus.debugQuickState right|wrong|slip|done`, with `quick:<unit>`, answers the Schnellrunde's
   next question that way (`done` finishes the round); with `-kasus.debugAnswers right|mixed` the
   first four are answered first. Never recorded.
@@ -542,9 +674,11 @@ its way there, and prints `[kasus.debugOpen] open <screen>`:
   level.
 
 **`-kasus.debugSeedRounds 1`** inserts most of a week of rounds so Verlauf has something to show:
-Finden and Einsetzen (Genus-Hilfe, mixed answers) on the bundled Dativ story today, the Nominativ
-and Akkusativ Schnellrunden, a gemischt Einsetzen at Ohne Hilfe, one Dativ Schnellrunde stored
-without answers (how older rounds look), and two der/die/das and two preposition rounds. The
+today Markieren in the Dativ (Am Ende, misses and wrong marks), Markieren in the Akkusativ
+(Sofort, all right) and Endungen at Genus-Hilfe (Am Ende, answers shown afterwards) on the bundled
+Dativ story; the Nominativ and Akkusativ Schnellrunden; an Einsetzen from before Endungen (the old
+label); one Dativ Schnellrunde stored without answers (how older rounds look); and two
+der/die/das and two preposition rounds. The
 Kasus rounds are built by the service, so their sentences and explanations are real. Nothing
 else moves (no streak, XP or coach), but the story rounds do mark its steps as played. It is
 idempotent: the rows' dates are kept in UserDefaults and a second run prints `already seeded`;
@@ -568,6 +702,25 @@ entries all go through `GrammarRoute` now (the `praep-*` categories stay for the
   B1), contraction/pronoun/dieser targets, `GrammarRoute`, the "Mehr dazu" rows, and the Swift
   Testing target `german-ai-flashcardsTests` (`test_sim` on the `german-ai-flashcards` scheme; Debug
   only, since it uses the DEBUG fixtures).
+- ✅ Phase 3a engine: numbered sentences, word roles, Markieren (one case per round, the class
+  score), Endungen (stem + ending gaps, ending buttons, Lernhilfe), feedback modes, the new
+  `KasusRound` fields, Lösung zeigen after recording. 28 new tests.
+- ✅ Phase 3a views: Markieren and Endungen in the player on numbered sentences of word chips, the
+  Lernhilfe table with its ringed cell, the options pill (help level, feedback mode), Lösung zeigen
+  wired to `markAnswersShown` (`onAnswersShown`), a pinned tray footer, and Verlauf / the round
+  detail / the calendar showing `stepLabel`, the class score and „Lösung angezeigt“.
+- ⬜ The old Finden / Einsetzen APIs no screen calls any more (`gradeFind`, `findResult`,
+  `findCounts`, `nonTargetNote`, `KasusFindMark`, `blanks`, `KasusBlank`, `options`, `fillResult`,
+  `debugPaint`, `debugPicks`, `findenBrushes`) can go, with the tests, `debugServiceReport` lines
+  and record-check round that still use them.
+- ⬜ Markieren's wash, badges and shake/pop, and Endungen's pinned chips, buttons and footer, not
+  yet felt on a device; the chip size (title3, 5 pt padding, 5 pt between lines, tap area into
+  half of each gap) is a first guess worth checking with a thumb.
+- ⬜ Teacher notes from the review: „Letzten Sommer“ and „Nächsten Montag“ open their sentences, so
+  they're never counted; making them time targets (Akk, like „jeden Sommer“) needs a validator
+  rule for a phrase without an article. The Nominativ unit's Endungen still runs at Ohne Hilfe
+  with the whole row of buttons (the spec kept the old blank rules); a Lernhilfe there would be
+  the teacher's call.
 - ⬜ Phase 3: tutor-written stories in the same format, gated by the validator, with a Lab.
 - ⬜ No bundled story has a teacher review yet (`reviewed` is empty), and the seven new label
   targets need the teacher's check too.
@@ -575,6 +728,7 @@ entries all go through `GrammarRoute` now (the `praep-*` categories stay for the
   Goethe list doesn't give.
 - ⬜ In the endings table the three-line cells (Dativ plural, Genitiv m/n) draw their article at
   about 80% size, a little higher than the rest of the row.
-- ⬜ Before Prüfen, the Nominativ brush's graphite wash is close to the grey of a wrong pick after
-  it (the strikethrough tells them apart).
-- ⬜ Device verdict in all four themes; only Klar has been seen, in the simulator.
+- ⬜ In a Nominativ Markieren round, a marked word's graphite wash is close to the grey of a wrong
+  mark after Prüfen (the ✗ and the strikethrough tell them apart).
+- ⬜ Device verdict in all four themes; the new screens were seen in the simulator in Klar and
+  Grundform (Bauhaus), and at the largest text size on a small phone.

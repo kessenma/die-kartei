@@ -5,8 +5,11 @@
 //  One Kasus round, opened from Verlauf or a unit's "Deine Runden": the score, what it did for
 //  the coach, the tally per case, then every answer in its sentence, misses first. A miss shows
 //  ~~pick~~ **answer** (the answer in its gender color, the phrase underlined in its case color)
-//  and why; a right answer keeps its why folded until tapped. Rounds recorded before the history
-//  kept answers show the counts only.
+//  and why; a right answer keeps its why folded until tapped. A Markieren round shows the case it
+//  asked and the class sheet's score („6 / 10“, 8 richtig · 2 falsch · 2 übersehen), a word
+//  marked that has no case there struck through, and a phrase marked only partly with its count.
+//  „Lösung angezeigt“ marks a round (and each answer) whose answers Lösung zeigen showed. Rounds
+//  recorded before the history kept answers show the counts only.
 //
 
 import SwiftUI
@@ -53,7 +56,7 @@ struct KasusRoundDetailView: View {
                         rightRow(item, offset: offset)
                     }
                 } header: {
-                    Text("Richtig · Right first try")
+                    Text(round.isMarkingRound ? "Richtig markiert · Marked right" : "Richtig · Right first try")
                         .themedSectionHeader()
                 } footer: {
                     Text("Tap a sentence to see why.")
@@ -95,12 +98,31 @@ struct KasusRoundDetailView: View {
                     }
                 }
 
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text("\(round.firstTryCount) of \(round.askedCount)")
-                        .themedLabel(.largeTitle.weight(.bold), size: 34)
-                        .monospacedDigit()
-                    Text(isFinden ? "marked right" : "right on the first try")
-                        .font(.subheadline)
+                if let score = round.markScore {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(score.scoreLabel)
+                            .themedLabel(.largeTitle.weight(.bold), size: 34)
+                            .monospacedDigit()
+                        Text(score.countsLabel)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityElement(children: .combine)
+                } else {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        // „5 / 8“, the way the tray and Ergebnis write it.
+                        Text("\(round.firstTryCount) / \(round.askedCount)")
+                            .themedLabel(.largeTitle.weight(.bold), size: 34)
+                            .monospacedDigit()
+                        Text(isFinden ? "marked right" : round.feedbackMode == .amEnde ? "right at Prüfen" : "right on the first try")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if round.revealedAnswers {
+                    Label(KasusRound.answersShownLabel, systemImage: "eye")
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
@@ -114,12 +136,13 @@ struct KasusRoundDetailView: View {
         }
     }
 
-    /// Dativ · Einsetzen · Genus-Hilfe
+    /// Dativ · Endungen · Genus-Hilfe · Sofort, Dativ · Markieren · Akkusativ · Am Ende
     private var stepLine: String {
         var parts = [round.unit?.germanTitle ?? "Kasus"]
-        if let step = round.step, step != .quick { parts.append(step.germanLabel) }
+        if let step = round.step, step != .quick { parts.append(round.unitStepLabel) }
         if round.isQuickRound { parts.append("\(round.askedCount) Sätze") }
         if let hint = round.hintLevel { parts.append(hint.germanLabel) }
+        if let mode = round.feedbackMode { parts.append(mode.germanLabel) }
         return parts.joined(separator: " · ")
     }
 
@@ -142,9 +165,11 @@ struct KasusRoundDetailView: View {
             let names = moved.map(\.name).joined(separator: " and ")
             return "Moved the coach's \(names) skill, from \(counting.count) of your own answers."
         }
-        if round.step == .find { return "Finden is for spotting cases, so it never moves the coach." }
+        if round.step == .find { return "\(round.stepLabel) is for spotting cases, so it never moves the coach." }
         if round.unit == .nominativ { return "Nominativ has no coach skill, so this counted for the streak." }
-        if round.hintLevel == .viel { return "Viel Hilfe counts for the streak but never moves the coach." }
+        if let hint = round.hintLevel, hint.neverCountsTowardSkill {
+            return "\(hint.germanLabel) counts for the streak but never moves the coach."
+        }
         return "Didn't move the coach: a case needs \(KasusService.minItemsPerCase) answers without help."
     }
 
@@ -167,11 +192,17 @@ struct KasusRoundDetailView: View {
             HStack(spacing: 6) {
                 Image(systemName: item.outcome.symbol)
                     .accessibilityHidden(true)
-                Text("\(item.outcome.germanLabel) · \(item.outcome.englishLabel)")
+                Text("\(item.outcome.germanLabel) · \(item.outcome.englishLabel(inMarkingRound: round.isMarkingRound))")
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
+                if item.wasRevealed, item.outcome != .revealed {
+                    Image(systemName: "eye")
+                        .accessibilityLabel("Answer shown")
+                }
                 Spacer(minLength: 8)
-                if let kasus = item.kasus {
+                // A wrongly marked word has no case; its item keeps the asked one, which the
+                // header already names, so a tag here would read as the word's own case.
+                if let kasus = item.kasus, item.outcome != .wrongMark {
                     HStack(spacing: 3) {
                         Image(systemName: kasus.symbol)
                             .accessibilityHidden(true)
@@ -189,6 +220,11 @@ struct KasusRoundDetailView: View {
 
             if isFinden {
                 findenLine(item)
+                if item.outcome == .partial, let marked = item.markedWords, let count = item.wordCount {
+                    Text("\(marked) of \(count) words marked")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Text(kasusRich: item.explanation)
@@ -269,6 +305,13 @@ struct KasusRoundDetailView: View {
         guard let range = phraseRange(item) else { return Text(text) }
 
         var out = AttributedString(String(text[..<range.lowerBound]))
+        // Markieren: a word marked that has no case here, struck through in grey.
+        if item.outcome == .wrongMark {
+            var word = AttributedString(String(text[range]))
+            word.strikethroughStyle = .single
+            word.foregroundColor = .secondary
+            return Text(out + word + AttributedString(String(text[range.upperBound...])))
+        }
         if !isFinden, let pick = item.pick, !item.outcome.isRight {
             var struck = AttributedString(pick)
             struck.strikethroughStyle = .single
