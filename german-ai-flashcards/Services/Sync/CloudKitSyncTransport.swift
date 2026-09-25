@@ -28,6 +28,8 @@ final class CloudKitSyncTransport: SyncTransport {
 
     let container = CKContainer(identifier: containerID)
     private var engine: CKSyncEngine?
+    /// The engine started without saved state, so its next fetch covers the whole zone.
+    private var fullFetchPending = false
     private let storeTag: String
     private let stateURL: URL
     /// Records parked after `quotaExceeded`, re-added on the next foreground or Sync Now.
@@ -45,9 +47,11 @@ final class CloudKitSyncTransport: SyncTransport {
 
     func start() {
         guard engine == nil else { return }
+        let saved = loadState()
+        fullFetchPending = saved == nil
         var configuration = CKSyncEngine.Configuration(
             database: container.privateCloudDatabase,
-            stateSerialization: loadState(),
+            stateSerialization: saved,
             delegate: self
         )
         configuration.automaticallySync = true
@@ -233,7 +237,11 @@ extension CloudKitSyncTransport: CKSyncEngineDelegate {
 
         case .willFetchChanges, .willSendChanges:
             onActivity?(true)
-        case .didFetchChanges, .didSendChanges:
+        case .didFetchChanges:
+            onActivity?(false)
+            delegate?.transportDidFinishFetch(wasFullFetch: fullFetchPending)
+            fullFetchPending = false
+        case .didSendChanges:
             onActivity?(false)
 
         case .sentDatabaseChanges, .willFetchRecordZoneChanges, .didFetchRecordZoneChanges:

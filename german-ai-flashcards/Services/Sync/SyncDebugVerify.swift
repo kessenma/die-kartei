@@ -56,9 +56,18 @@ enum SyncDebugVerify {
                                     transport: FakeSyncTransport(server: server), includeDocuments: false)
         let pad = SyncCoordinator(context: b, identity: SyncIdentity(replica: "pad", store: "B"),
                                   transport: FakeSyncTransport(server: server), includeDocuments: false)
+        // Their own fingerprint keys, so the round trip never touches the app's real sync state.
+        phone.zoneInstanceKey = "sync.verify.zone.phone"
+        pad.zoneInstanceKey = "sync.verify.zone.pad"
+        defer {
+            UserDefaults.standard.removeObject(forKey: phone.zoneInstanceKey)
+            UserDefaults.standard.removeObject(forKey: pad.zoneInstanceKey)
+        }
         phone.start()
         pad.start()
         await rounds(phone, pad)
+        check(phone.knownZoneInstance != nil && phone.knownZoneInstance == pad.knownZoneInstance,
+              "first sync: both devices share one zone fingerprint")
 
         // 1. First sync: independent pre-sync histories add up; content crosses over.
         check(today(a)?.cardsReviewed == 17 && today(b)?.cardsReviewed == 17,
@@ -128,6 +137,26 @@ enum SyncDebugVerify {
         } else {
             check(false, "Wortschatz: couldn't build the box (word list empty?)")
         }
+
+        // 5b. The phone runs a Debug build (another database, empty), studies there, then goes
+        //     back to TestFlight. The fingerprint check notices both switches; nothing doubles.
+        let before = today(a)?.cardsReviewed ?? -1
+        let production = server, development = FakeSyncServer()
+        let phoneTransport = phone.transport as! FakeSyncTransport
+        phoneTransport.server = development
+        phoneTransport.resetFetchState()   // a Debug build has its own engine state
+        await phone.syncNow()
+        await phone.syncNow()
+        check(development.records.keys.contains { $0.hasPrefix("StudyDay:") } && development.records.count > 5,
+              "database switch: the empty Development database received everything (\(development.records.count) records)")
+        StudyLogService.record(.cards(4), seconds: 20, in: a)
+        await phone.syncNow()
+        phoneTransport.server = production
+        phoneTransport.resetFetchState()
+        await rounds(phone, pad)
+        check(today(a)?.cardsReviewed == before + 4 && today(b)?.cardsReviewed == before + 4,
+              "database switch and back: +4 once on both, not doubled (\(before) → \(today(a)?.cardsReviewed ?? -1), \(today(b)?.cardsReviewed ?? -1))")
+        check(phone.knownZoneInstance == pad.knownZoneInstance, "database switch and back: fingerprints agree again")
 
         // 6. Content: a story with lookups from both devices, a chat continued on the other
         //    device (time adds up), coaching memory from both, a stat seen on both, class notes.

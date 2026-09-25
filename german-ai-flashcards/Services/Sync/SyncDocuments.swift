@@ -34,6 +34,7 @@ enum SyncDocuments {
         JourneySyncDocument(),
         PlacementAttemptsSyncDocument(),
         FileSyncDocument(),
+        DeviceSyncDocument(),
     ]
 
     static let byKind: [String: any SyncDocumentKind] =

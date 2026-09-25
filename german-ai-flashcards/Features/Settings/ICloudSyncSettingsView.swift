@@ -33,6 +33,10 @@ struct ICloudSyncSettingsView: View {
             if sync.accountSwitchPending { accountSwitchSection }
 
             if sync.isRunning, let coordinator = sync.coordinator {
+                devicesSection(coordinator)
+            }
+
+            if sync.isRunning, let coordinator = sync.coordinator {
                 Section {
                     Button {
                         run { await sync.syncNow() }
@@ -53,6 +57,12 @@ struct ICloudSyncSettingsView: View {
                         LabeledContent("Can't sync", value: "\(coordinator.stuckCount)")
                             .foregroundStyle(.orange)
                     }
+                    if !coordinator.disagreement.isEmpty {
+                        Label("Your devices still disagree after a repair. Try Repair Sync on each.",
+                              systemImage: "exclamationmark.arrow.triangle.2.circlepath")
+                            .font(.footnote)
+                            .foregroundStyle(.orange)
+                    }
                 } footer: {
                     Text("Repair checks every item against iCloud and fetches everything again. It's safe any time: nothing is counted twice.")
                 }
@@ -60,13 +70,17 @@ struct ICloudSyncSettingsView: View {
             }
 
             Section {
-                Label("Flashcards and their review schedule", systemImage: "rectangle.stack")
-                Label("Study days, streak and XP", systemImage: "flame")
-                Label("Phrases you saved", systemImage: "text.quote")
+                Label("Flashcards, Wortschatz and their review schedule", systemImage: "rectangle.stack")
+                Label("Study days, streak, XP and stats", systemImage: "flame")
+                Label("Your level, placement checks and badges", systemImage: "figure.stairs")
+                Label("Stories, papers and the words you looked up", systemImage: "book.pages")
+                Label("Conversations and coaching memory", systemImage: "bubble.left.and.bubble.right")
+                Label("Deutschkurs notes, handouts and job postings", systemImage: "graduationcap")
+                Label("Card pictures, illustrations and PDFs", systemImage: "photo.on.rectangle")
             } header: {
                 Text("What syncs").themedSectionHeader()
             } footer: {
-                Text("Downloaded models, voices and the crash log stay on each device.")
+                Text("Downloaded models, voices, settings and the crash log stay on each device. Pictures and PDFs use your iCloud storage.")
             }
             .themedListRow()
 
@@ -160,6 +174,59 @@ struct ICloudSyncSettingsView: View {
         if sync.storageFull { return ("externaldrive.badge.exclamationmark", "iCloud storage is full. Free some space in Settings.", .orange) }
         if isBusy { return ("arrow.triangle.2.circlepath.icloud", "Syncing…", .accentColor) }
         return ("checkmark.icloud", "On", .green)
+    }
+
+    // MARK: Devices
+
+    /// Every device's heartbeat: the visible sign of a device that stopped syncing or runs an
+    /// older app.
+    @ViewBuilder
+    private func devicesSection(_ coordinator: SyncCoordinator) -> some View {
+        let peers = coordinator.peers()
+        if !peers.isEmpty {
+            let mine = peers.first { $0.isThisDevice }?.appVersion
+            Section {
+                ForEach(peers) { peer in
+                    HStack {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(peer.isThisDevice ? "\(peer.model) (this one)" : peer.model)
+                                if let synced = peer.lastSyncAt {
+                                    Text("Synced \(synced, style: .relative) ago · \(peer.appVersion)")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                } else {
+                                    Text(peer.appVersion).font(.caption).foregroundStyle(.secondary)
+                                }
+                            }
+                        } icon: {
+                            Image(systemName: symbol(for: peer.model))
+                        }
+                        Spacer()
+                        if !peer.isThisDevice, let mine, peer.appVersion != mine {
+                            Text("Different version").font(.caption).foregroundStyle(.orange)
+                        } else if peer.stuck > 0 {
+                            Text("\(peer.stuck) stuck").font(.caption).foregroundStyle(.orange)
+                        } else if peer.hasPending {
+                            Text("Sending…").font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } header: {
+                Text("Your devices").themedSectionHeader()
+            } footer: {
+                Text("A device that runs an older version holds back what it can't read yet and catches up after it updates.")
+            }
+            .themedListRow()
+        }
+    }
+
+    private func symbol(for model: String) -> String {
+        switch model {
+        case let m where m.hasPrefix("iPad"): "ipad"
+        case let m where m.hasPrefix("iPhone"): "iphone"
+        case let m where m.contains("Mac"): "laptopcomputer"
+        default: "desktopcomputer"
+        }
     }
 
     private var accountSwitchSection: some View {

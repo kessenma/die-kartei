@@ -35,6 +35,9 @@ protocol SyncTransportDelegate: AnyObject {
     func transportUnknownItem(_ name: String)
     func transportDidDelete(_ name: String)
     func transportFetched(_ records: [SyncIncoming], deleted: [String])
+    /// A fetch cycle finished. `wasFullFetch`: it started from no change token, so it saw the whole
+    /// zone (how a new or different database is told apart from an unchanged one).
+    func transportDidFinishFetch(wasFullFetch: Bool)
     /// A save failed for a reason that isn't a conflict or transient (too large, invalid).
     func transportFailed(_ name: String, error: String)
 }
@@ -44,7 +47,8 @@ protocol SyncTransportDelegate: AnyObject {
 @MainActor
 final class FakeSyncTransport: SyncTransport {
     weak var delegate: (any SyncTransportDelegate)?
-    let server: FakeSyncServer
+    /// Swappable, to play a device moving between databases (Debug ↔ TestFlight).
+    var server: FakeSyncServer
     private var saves: [String] = []
     private var deletes: [String] = []
     private var token = 0
@@ -90,6 +94,7 @@ final class FakeSyncTransport: SyncTransport {
             server.delete(name)
             delegate.transportDidDelete(name)
         }
+        let fullFetch = token == 0
         let changes = server.changes(since: token)
         token = changes.token
         let incoming = changes.changed.map {
@@ -97,5 +102,6 @@ final class FakeSyncTransport: SyncTransport {
                          stamp: Data(String($0.stored.tag).utf8), tag: String($0.stored.tag))
         }
         delegate.transportFetched(incoming, deleted: changes.deleted)
+        delegate.transportDidFinishFetch(wasFullFetch: fullFetch)
     }
 }

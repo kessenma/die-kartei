@@ -100,7 +100,9 @@ final class SyncManager {
               let container else { return }
         let storeTag = Self.storeIdentifier(for: container) ?? "unknown"
         let identity = SyncIdentity(replica: SyncIdentity.replicaID(), store: storeTag)
-        let transport = CloudKitSyncTransport(storeTag: storeTag)
+        // The engine's saved state belongs to one store *and* one CloudKit database: a Debug build
+        // (Development) must not reuse a TestFlight build's (Production) change tokens.
+        let transport = CloudKitSyncTransport(storeTag: storeTag + "|" + Self.environmentName)
         let coordinator = SyncCoordinator(context: container.mainContext, identity: identity, transport: transport)
         transport.onAccountChange = { [weak self] change in self?.accountChanged(change) }
         transport.onZoneDeleted = { [weak self] reason in self?.zoneDeleted(reason) }
@@ -144,6 +146,7 @@ final class SyncManager {
         let database = CKContainer(identifier: CloudKitSyncTransport.containerID).privateCloudDatabase
         _ = try await database.modifyRecordZones(saving: [], deleting: [CloudKitSyncTransport.zoneID])
         coordinator?.forgetServer()
+        coordinator?.knownZoneInstance = nil
         setEnabled(false)
         notice = "iCloud data deleted. This device keeps its data; turn sync on to upload it again."
     }
@@ -208,6 +211,8 @@ final class SyncManager {
     }
 
     private func zoneDeleted(_ reason: CKDatabase.DatabaseChange.Deletion.Reason) {
+        // The next zone gets a new fingerprint.
+        coordinator?.knownZoneInstance = nil
         switch reason {
         case .encryptedDataReset:
             // iCloud reset its end-to-end keys: upload everything again.

@@ -28,6 +28,21 @@ final class SyncCoordinator {
 
     /// Called after server changes landed, with the kinds that changed (reminders, backfills).
     @ObservationIgnored var didApplyRemoteChanges: ((Set<String>) -> Void)?
+    /// Where the zone fingerprint this device last saw is kept (see `SyncHealth.swift`).
+    @ObservationIgnored var zoneInstanceKey = "sync.zoneInstance"
+    /// When a learner-made record last changed here or arrived from the server. Heartbeats written
+    /// before it can't be compared.
+    private(set) var lastRecordChangeAt: Date?
+    /// Kinds this device and a settled peer still disagree on after a repair.
+    private(set) var disagreement: [String] = []
+    @ObservationIgnored static let autoRepairKey = "sync.lastAutoRepairAt"
+    /// Bumped whenever a server copy changes; digests are cached against it.
+    @ObservationIgnored var serverCopiesVersion = 0
+    @ObservationIgnored var digestCache: (version: Int, value: [String: SyncDigest])?
+    /// The current fetch cycle delivered the zone fingerprint.
+    @ObservationIgnored var sawZoneFingerprint = false
+    /// Waiting uploads, not counting heartbeats and the fingerprint.
+    private(set) var learnerPendingCount = 0
 
     init(context: ModelContext, identity: SyncIdentity, transport: any SyncTransport, includeDocuments: Bool = true) {
         self.context = context
@@ -49,6 +64,9 @@ final class SyncCoordinator {
     func start() {
         // Singleton rows need their canonical ids before the first scan names their records.
         SyncCanonicalizer.runIfNeeded(in: context)
+        if tracker.documents.contains(where: { $0.spec.kind == Self.heartbeatKind }) {
+            DeviceSyncDocument.current = { [weak self] in self?.heartbeat() }
+        }
         pushLocalChanges()
         requeueOwed()
         guard saveObserver == nil else { return }
@@ -80,6 +98,7 @@ final class SyncCoordinator {
             try await transport.syncNow()
             lastSyncedAt = .now
             lastError = nil
+            await checkDrift()
         } catch {
             lastError = error.localizedDescription
             note("sync failed: \(error.localizedDescription)")
@@ -103,6 +122,15 @@ final class SyncCoordinator {
     /// Forget the server's copies (zone deleted, database or account switched) while keeping every
     /// counter slot, so a later re-upload merges by max and can't double anything.
     func forgetServer() {
+        forgetServerCopies()
+        transport.resetFetchState()
+        requeueOwed()
+        refreshCounts()
+    }
+
+    /// The store half of `forgetServer`, safe to run inside a transport event.
+    func forgetServerCopies() {
+        serverCopiesVersion += 1
         _ = try? SyncWriter.write(context) {
             for state in SyncStoreMeta.allStates(in: context) {
                 var copies = state.copies
@@ -114,9 +142,36 @@ final class SyncCoordinator {
                 if state.pendingDelete { context.delete(state) }
             }
         }
-        transport.resetFetchState()
-        requeueOwed()
-        refreshCounts()
+    }
+
+    /// Refetch the whole zone and re-send everything owed, outside the current transport event
+    /// (CKSyncEngine mustn't be rebuilt from inside its own handler).
+    func scheduleFullResync() {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            transport.resetFetchState()
+            requeueOwed()
+            refreshCounts()
+        }
+    }
+
+    /// Two settled devices that disagree: repair once, at most once a day. If they still disagree
+    /// afterwards, the screen says so and offers Repair Sync.
+    func checkDrift() async {
+        let peers = peers().filter { !$0.isThisDevice }
+        let differing = Set(peers.flatMap { disagreements(with: $0, lastLocalChangeAt: lastRecordChangeAt) })
+        guard !differing.isEmpty else {
+            disagreement = []
+            return
+        }
+        let last = UserDefaults.standard.object(forKey: Self.autoRepairKey) as? Date ?? .distantPast
+        if Date.now.timeIntervalSince(last) > 24 * 3600 {
+            UserDefaults.standard.set(Date.now, forKey: Self.autoRepairKey)
+            note("devices disagree on \(differing.sorted().joined(separator: ", ")): repairing")
+            await repair()
+        } else {
+            disagreement = differing.sorted()
+        }
     }
 
     // MARK: Local changes
@@ -135,6 +190,10 @@ final class SyncCoordinator {
         do {
             let outcome = try tracker.processHistory()
             if !outcome.isEmpty {
+                let learnerRecords = (outcome.saves + outcome.deletes).filter {
+                    !Self.digestExcluded.contains(String($0.prefix { $0 != ":" }))
+                }
+                if !learnerRecords.isEmpty { lastRecordChangeAt = .now }
                 transport.enqueue(saves: outcome.saves, deletes: outcome.deletes)
                 note("local: \(outcome.saves.count) changed, \(outcome.deletes.count) deleted")
             }
@@ -156,11 +215,13 @@ final class SyncCoordinator {
 
     private func refreshCounts() {
         let states = SyncStoreMeta.allStates(in: context)
-        pendingCount = states.filter { $0.needsUpload || $0.pendingDelete }.count
+        let pending = states.filter { $0.needsUpload || $0.pendingDelete }
+        pendingCount = pending.count
+        learnerPendingCount = pending.filter { !Self.digestExcluded.contains($0.kind) }.count
         stuckCount = states.filter(\.isStuck).count
     }
 
-    private func note(_ message: String) {
+    func note(_ message: String) {
         log.info("\(message, privacy: .public)")
         events.insert("\(Date.now.formatted(date: .omitted, time: .standard))  \(message)", at: 0)
         if events.count > 100 { events.removeLast(events.count - 100) }
@@ -182,6 +243,7 @@ extension SyncCoordinator: SyncTransportDelegate {
     }
 
     func transportDidSave(_ name: String, sent: SyncPayload, stamp: Data, tag: String) {
+        serverCopiesVersion += 1
         _ = try? SyncWriter.write(context) {
             guard let state = SyncStoreMeta.states(named: [name], in: context)[name] else { return }
             var copies = state.copies
@@ -196,8 +258,10 @@ extension SyncCoordinator: SyncTransportDelegate {
     }
 
     func transportConflict(_ name: String, server: SyncIncoming) {
+        let records = interceptZoneFingerprint([server], fromConflict: true)
+        guard !records.isEmpty else { return }
         do {
-            let outcome = try applier.apply([server], deleted: [])
+            let outcome = try applier.apply(records, deleted: [])
             if !outcome.changedKinds.isEmpty { didApplyRemoteChanges?(outcome.changedKinds) }
         } catch {
             note("conflict merge failed for \(name): \(error.localizedDescription)")
@@ -205,6 +269,7 @@ extension SyncCoordinator: SyncTransportDelegate {
     }
 
     func transportUnknownItem(_ name: String) {
+        serverCopiesVersion += 1
         _ = try? SyncWriter.write(context) {
             guard let state = SyncStoreMeta.states(named: [name], in: context)[name] else { return }
             var copies = state.copies
@@ -217,6 +282,7 @@ extension SyncCoordinator: SyncTransportDelegate {
     }
 
     func transportDidDelete(_ name: String) {
+        serverCopiesVersion += 1
         _ = try? SyncWriter.write(context) {
             if let state = SyncStoreMeta.states(named: [name], in: context)[name], state.pendingDelete {
                 context.delete(state)
@@ -226,8 +292,11 @@ extension SyncCoordinator: SyncTransportDelegate {
 
     func transportFetched(_ records: [SyncIncoming], deleted: [String]) {
         guard !records.isEmpty || !deleted.isEmpty else { return }
+        let records = interceptZoneFingerprint(records, fromConflict: false)
+        serverCopiesVersion += 1
         do {
             let outcome = try applier.apply(records, deleted: deleted)
+            if !outcome.changedKinds.subtracting(Self.digestExcluded).isEmpty { lastRecordChangeAt = .now }
             transport.enqueue(saves: outcome.uploads, deletes: [])
             if outcome.inserted + outcome.updated + outcome.deleted + outcome.held > 0 {
                 note("fetched: +\(outcome.inserted) ~\(outcome.updated) −\(outcome.deleted) held \(outcome.held)")
@@ -236,6 +305,19 @@ extension SyncCoordinator: SyncTransportDelegate {
         } catch {
             note("applying fetched changes failed: \(error.localizedDescription)")
         }
+    }
+
+    func transportDidFinishFetch(wasFullFetch: Bool) {
+        if wasFullFetch, !sawZoneFingerprint, knownZoneInstance != nil {
+            // The whole zone came back without the fingerprint this device knows: a database that
+            // never had this learner's data (a first Debug run on Development) or a new zone.
+            note("full fetch found no zone fingerprint: new or different database, sending everything")
+            forgetServerCopies()
+            knownZoneInstance = nil
+            requeueOwed()
+        }
+        sawZoneFingerprint = false
+        createZoneFingerprintIfNeeded()
     }
 
     func transportFailed(_ name: String, error: String) {
