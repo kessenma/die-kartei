@@ -81,7 +81,7 @@ final class StoryImageCache {
             forName: UIApplication.didReceiveMemoryWarningNotification,
             object: nil,
             queue: .main
-        ) { _ in
+        ) { [weak self] _ in
             Task { @MainActor [weak self] in self?.purge() }
         }
         MemoryDiagnostics.register(Self.contributorKey, name: "Story pictures") { [weak self] in

@@ -81,6 +81,7 @@ import json
 import os
 import plistlib
 import re
+import shutil
 import subprocess
 import sys
 import zipfile
@@ -95,6 +96,7 @@ ROOT = Path(__file__).resolve().parent.parent  # repo root (.xcodeproj lives her
 MAX_LOGS = 10
 ARTIFACTS = ROOT / ".asc" / "artifacts"  # where `asc publish` leaves the .xcarchive/.ipa
 STAMP_SCRIPT = ROOT / "scripts" / "stamp-release-os.sh"  # run by the target's last build phase
+ASC_INSTALL_DIR = Path.home() / ".local" / "bin"  # where the asc installer drops the binary
 
 # --- App identity ----------------------------------------------------------
 # NOTE: the numeric App Store Connect ID is required. `asc` accepts a bundle ID
@@ -216,6 +218,26 @@ def asc_stream(*args):
 
 
 # --- guards ----------------------------------------------------------------
+
+def ensure_asc():
+    """Make `asc` resolvable, or abort before anything else runs.
+
+    The installer puts it in ~/.local/bin, which a shell often adds only in ~/.zshrc. The VS Code
+    tasks run `zsh -l -c`, which never reads .zshrc, so they see `asc` only when VS Code happened
+    to inherit an interactive shell's PATH. Without this check the burned-train and version-ahead
+    guards (best-effort by design) silently skip themselves and the run then dies on the first
+    mandatory call with a bare FileNotFoundError.
+    """
+    if shutil.which("asc"):
+        return
+    if (ASC_INSTALL_DIR / "asc").exists():
+        # Into our own environment, so every subprocess finds it, including the ones
+        # metadata.py and screenshots.py start.
+        os.environ["PATH"] = f"{ASC_INSTALL_DIR}{os.pathsep}{os.environ.get('PATH', '')}"
+        log("🧭", f"asc was not on PATH; using {ASC_INSTALL_DIR / 'asc'}")
+        return
+    die("`asc` is not on PATH or in ~/.local/bin. Install it per docs/DEPLOY_SETUP.md section 3.")
+
 
 def ensure_release_xcode():
     """Abort if a BETA Xcode is selected.
@@ -902,6 +924,7 @@ def setup_build_log():
 # --- deploy modes ----------------------------------------------------------
 
 def deploy_beta():
+    ensure_asc()
     ensure_release_xcode()
     ensure_release_host_stamp()
     ensure_signing()
@@ -940,6 +963,7 @@ def deploy_beta():
 
 
 def deploy_release():
+    ensure_asc()
     ensure_release_xcode()
     ensure_release_host_stamp()
     ensure_signing()

@@ -48,7 +48,8 @@
         "&& echo '── local version ──' && asc xcode version view --project german-ai-flashcards.xcodeproj --target 'Die Kartei' --configuration Release --output json",
         "&& echo '── recent builds ──' && asc builds list --app 6770390331 --sort -uploadedDate --limit 3 --processing-state all --output table"
       ],
-      "options": { "cwd": "${workspaceFolder}" },
+      // Tasks run `zsh -l -c`, which skips ~/.zshrc; add asc's install dir explicitly.
+      "options": { "cwd": "${workspaceFolder}", "env": { "PATH": "${env:HOME}/.local/bin:${env:PATH}" } },
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
     },

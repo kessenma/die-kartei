@@ -529,7 +529,11 @@ mode.
 ## Troubleshooting
 
 **`asc: command not found`** — the installer writes to `~/.local/bin`. Add it to
-`PATH`, or re-run the install with `INSTALL_DIR=/usr/local/bin`.
+`PATH`, or re-run the install with `INSTALL_DIR=/usr/local/bin`. Put the `PATH`
+line in `~/.zprofile`, not `~/.zshrc`: the VS Code tasks run `zsh -l -c`, a
+non-interactive login shell that never reads `.zshrc`, so they only see `asc` when
+VS Code happened to inherit an interactive shell's PATH. `deploy.py` falls back to
+`~/.local/bin/asc` on its own and stops at once if `asc` is in neither place.
 
 **The Xcode app won't launch** (`_LSOpenURLsWithCompletionHandler() failed …
 error -10664`). A newer macOS can refuse to launch an older Xcode's GUI — on this
