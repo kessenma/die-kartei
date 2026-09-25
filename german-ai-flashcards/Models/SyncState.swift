@@ -9,6 +9,9 @@ import SwiftData
 /// ever moved aside, the fresh store starts with no sync state and refills from iCloud.
 @Model
 final class SyncRecordState {
+    // Looked up by name, by local row and by kind on every pass.
+    #Index<SyncRecordState>([\.recordName], [\.localKey], [\.kind])
+
     /// `<Kind>:<UUID>` (`SyncRecordName`). Bound once when the row is first seen and never
     /// recomputed, so a key that depends on the time zone can't drift.
     var recordName: String = ""

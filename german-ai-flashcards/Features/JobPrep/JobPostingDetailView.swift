@@ -168,11 +168,13 @@ struct JobPostingDetailView: View {
             )
         }
         .onAppear {
+            SyncInUse.begin(posting.id)
             setUp()
             readingTimer.start()
             posting.lastOpenedAt = .now
         }
         .onDisappear {
+            SyncInUse.end(posting.id)
             flushReading()
             webModel?.tearDown()
             webModel = nil

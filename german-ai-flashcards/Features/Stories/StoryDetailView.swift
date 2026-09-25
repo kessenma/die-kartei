@@ -156,6 +156,7 @@ struct StoryDetailView: View {
             }
         }
         .onAppear {
+            SyncInUse.begin(story.id)
             setUp()
             readingTimer.start()
         }
@@ -188,6 +189,7 @@ struct StoryDetailView: View {
                                   storyID: story.id)
         }
         .onDisappear {
+            SyncInUse.end(story.id)
             imageCache.purge()
             // A lookup still waiting on a model load has no one to report to now.
             inspector?.tearDown()

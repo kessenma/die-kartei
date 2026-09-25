@@ -58,7 +58,7 @@ extension SyncCoordinator {
         var byKind: [String: [(name: String, payloadHash: String)]] = [:]
         for state in SyncStoreMeta.allStates(in: context) where !Self.digestExcluded.contains(state.kind) {
             guard let data = state.serverPayload else { continue }
-            let hash = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+            let hash = Data(SHA256.hash(data: data)).base64EncodedString()
             byKind[state.kind, default: []].append((state.recordName, hash))
         }
         let value = byKind.mapValues { SyncDigest(entries: $0) }
@@ -88,7 +88,7 @@ extension SyncCoordinator {
 
         let name = heartbeatName
         let previous = SyncStoreMeta.states(named: [name.description], in: context)[name.description]?.copies.base
-        if let previous, SyncMerge.flatten(previous, spec: DeviceSyncDocument().spec).filter({ $0.key != "writtenAt" })
+        if let previous, SyncMerge.flatten(previous, spec: DeviceSyncDocument().spec).filter({ $0.key != "writtenAt" && $0.value != .null })
             == f.payload.filter({ $0.value != .null }) {
             return (name, SyncMerge.flatten(previous, spec: DeviceSyncDocument().spec))
         }
@@ -162,7 +162,12 @@ extension SyncCoordinator {
               let remote = meta.payload["instance"]?.stringValue
         else { return records }
         sawZoneFingerprint = true
-        if let known = knownZoneInstance, known != remote, !fromConflict {
+        // A fingerprint this device made but the server never confirmed was only a race with
+        // another device's first sync: adopt theirs. A confirmed one that differs means another
+        // database.
+        let metaState = SyncStoreMeta.states(named: [meta.name], in: context)[meta.name]
+        let confirmed = metaState?.serverStamp != nil || metaState?.serverPayload != nil
+        if let known = knownZoneInstance, known != remote, !fromConflict, confirmed {
             note("different iCloud database (zone \(remote.prefix(8)) ≠ \(known.prefix(8))): re-syncing")
             forgetServerCopies()
             scheduleFullResync()

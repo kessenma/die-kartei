@@ -414,6 +414,11 @@ struct ContentView: View {
             if UserDefaults.standard.bool(forKey: "sync.debugOpen") {
                 settingsRouter.route = .sync
             }
+            // `-sync.debugSeedSchema 1` puts every KarteiItem field into the Development schema
+            // before a Production deploy (docs/ICLOUD_SYNC.md ▸ Shipping). Needs a signed-in device.
+            if UserDefaults.standard.bool(forKey: "sync.debugSeedSchema") {
+                Task { print("[sync] " + (await SyncManager.shared.seedDevelopmentSchema())) }
+            }
             // The Wortschatz box on a simulator that can't tap. `-wortschatz.debugLegacyDecks 1`
             // recreates the three old per-level SRS decks and clears the merge flag, so the merge
             // below has input; `-wortschatz.debugMerge 1` re-runs the merge now;

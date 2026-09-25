@@ -71,6 +71,9 @@ final class SyncCoordinator {
         }
         pushLocalChanges()
         requeueOwed()
+        // Nothing is open at launch: deletes deferred for a screen the app was killed on apply now.
+        applyDeferredDeletes()
+        retryHeldGenerations()
         guard saveObserver == nil else { return }
         saveObserver = NotificationCenter.default.addObserver(
             forName: ModelContext.didSave, object: context, queue: .main
@@ -94,6 +97,7 @@ final class SyncCoordinator {
     /// Push local changes, then send and fetch.
     func syncNow() async {
         pushLocalChanges()
+        requeueOwed()
         isSyncing = true
         defer { isSyncing = false; refreshCounts() }
         do {
@@ -140,8 +144,8 @@ final class SyncCoordinator {
                 state.copies = copies
                 state.serverStamp = nil
                 state.lastSeenTag = nil
+                // A pending delete stays owed: it goes to whichever server comes next.
                 state.needsUpload = copies.pending != nil && !state.pendingDelete
-                if state.pendingDelete { context.delete(state) }
             }
         }
     }
@@ -216,11 +220,16 @@ final class SyncCoordinator {
     }
 
     private func refreshCounts() {
-        let states = SyncStoreMeta.allStates(in: context)
-        let pending = states.filter { $0.needsUpload || $0.pendingDelete }
-        pendingCount = pending.count
-        learnerPendingCount = pending.filter { !Self.digestExcluded.contains($0.kind) }.count
-        stuckCount = states.filter(\.isStuck).count
+        let device = Self.heartbeatKind, meta = Self.metaKind
+        pendingCount = count(#Predicate { $0.needsUpload || $0.pendingDelete })
+        learnerPendingCount = count(#Predicate {
+            ($0.needsUpload || $0.pendingDelete) && $0.kind != device && $0.kind != meta
+        })
+        stuckCount = count(#Predicate { $0.failureCount >= 5 })
+    }
+
+    private func count(_ predicate: Predicate<SyncRecordState>) -> Int {
+        (try? context.fetchCount(FetchDescriptor(predicate: predicate))) ?? 0
     }
 
     func note(_ message: String) {
@@ -236,6 +245,7 @@ extension SyncCoordinator: SyncTransportDelegate {
     func outgoing(_ name: String) -> SyncOutgoing? {
         guard let state = SyncStoreMeta.states(named: [name], in: context)[name],
               state.needsUpload, !state.pendingDelete, !state.isStuck,
+              state.heldReason != "generation",  // never save over a newer build's record
               let pending = state.copies.pending
         else { return nil }
         let file = SyncRecordName(name).flatMap { recordName in
@@ -246,8 +256,14 @@ extension SyncCoordinator: SyncTransportDelegate {
 
     func transportDidSave(_ name: String, sent: SyncPayload, stamp: Data, tag: String) {
         serverCopiesVersion += 1
+        var follow: (saves: [String], deletes: [String]) = ([], [])
+        defer { transport.enqueue(saves: follow.saves, deletes: follow.deletes) }
         _ = try? SyncWriter.write(context) {
-            guard let state = SyncStoreMeta.states(named: [name], in: context)[name] else { return }
+            guard let state = SyncStoreMeta.states(named: [name], in: context)[name], !state.pendingDelete else {
+                // Deleted here while this save was in flight: the delete has to follow it.
+                follow.deletes.append(name)
+                return
+            }
             var copies = state.copies
             SyncRecordLogic.didSave(&copies, sent: sent)
             state.copies = copies
@@ -256,6 +272,9 @@ extension SyncCoordinator: SyncTransportDelegate {
             state.needsUpload = copies.pending != nil
             state.failureCount = 0
             state.lastError = nil
+            // Edited again while this save was in flight. The engine dropped the queued change
+            // when the save succeeded, so queue the newer copy now.
+            if state.needsUpload { follow.saves.append(name) }
         }
     }
 
@@ -305,12 +324,17 @@ extension SyncCoordinator: SyncTransportDelegate {
             }
             if !outcome.changedKinds.isEmpty { didApplyRemoteChanges?(outcome.changedKinds) }
         } catch {
-            note("applying fetched changes failed: \(error.localizedDescription)")
+            // The engine's change token has already moved past these; fetch the zone again.
+            note("applying fetched changes failed: \(error.localizedDescription); refetching")
+            scheduleFullResync()
         }
     }
 
     func transportDidFinishFetch(wasFullFetch: Bool) {
-        if wasFullFetch, !sawZoneFingerprint, knownZoneInstance != nil {
+        let metaName = Self.zoneRecordName
+        let metaState = SyncStoreMeta.states(named: [metaName], in: context)[metaName]
+        let confirmed = metaState?.serverStamp != nil || metaState?.serverPayload != nil
+        if wasFullFetch, !sawZoneFingerprint, knownZoneInstance != nil, confirmed {
             // The whole zone came back without the fingerprint this device knows: a database that
             // never had this learner's data (a first Debug run on Development) or a new zone.
             note("full fetch found no zone fingerprint: new or different database, sending everything")
@@ -321,6 +345,21 @@ extension SyncCoordinator: SyncTransportDelegate {
         sawZoneFingerprint = false
         hasCompletedFetch = true
         createZoneFingerprintIfNeeded()
+    }
+
+    /// Records held because an older build couldn't read them: this build may be the update.
+    func retryHeldGenerations() {
+        let reason = "generation"
+        let held = (try? context.fetch(FetchDescriptor<SyncRecordState>(predicate: #Predicate { $0.heldReason == reason }))) ?? []
+        let readable = held.compactMap { state -> SyncIncoming? in
+            guard let data = state.heldPayload, let payload = try? SyncJSON(data: data).objectValue,
+                  let name = SyncRecordName(state.recordName),
+                  let spec = SyncRegistry.byKind[name.kind]?.spec ?? SyncDocuments.byKind[name.kind]?.spec,
+                  spec.canRead(payload)
+            else { return nil }
+            return SyncIncoming(name: state.recordName, payload: payload, stamp: state.serverStamp ?? Data(), tag: "")
+        }
+        if !readable.isEmpty { transportFetched(readable, deleted: []) }
     }
 
     /// Deletes that arrived while their row was open on screen.

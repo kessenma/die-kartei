@@ -68,6 +68,17 @@ final class SyncApplier {
                 }()
                 if state.serverStamp != nil, state.lastSeenTag == record.tag, state.heldPayload == nil { continue }
 
+                // Deleted here, with the delete still on its way: it wins over this edit. Remember
+                // the server's copy (the queued delete ignores tags) but don't bring the row back.
+                if state.pendingDelete {
+                    var copies = state.copies
+                    copies.server = record.payload
+                    state.copies = copies
+                    state.serverStamp = record.stamp
+                    state.lastSeenTag = record.tag
+                    continue
+                }
+
                 if SyncRegistry.byKind[name.kind] == nil, let document = documents[name.kind],
                    document.spec.canRead(record.payload) {
                     applyDocument(document, name: name, record: record, state: state, outcome: &outcome)
@@ -194,31 +205,40 @@ final class SyncApplier {
         _ document: any SyncDocumentKind, name: SyncRecordName, record: SyncIncoming,
         state: SyncRecordState, outcome: inout Outcome
     ) {
-        state.serverStamp = record.stamp
-        state.lastSeenTag = record.tag
         var copies = state.copies
         let result = SyncRecordLogic.receive(
-            &copies, remote: record.payload, known: SyncDocuments.known(for: name), spec: document.spec,
-            slot: identity.replica, now: Date().timeIntervalSinceReferenceDate
+            &copies, remote: record.payload, known: document.known(for: name, hint: record.payload),
+            spec: document.spec, slot: identity.replica, now: Date().timeIntervalSinceReferenceDate
         )
-        state.copies = copies
-        state.heldPayload = nil
-        state.heldReason = nil
         if let apply = result.apply {
-            document.apply(SyncMerge.flatten(apply, spec: document.spec), name: name, file: record.fileURL)
+            guard document.apply(SyncMerge.flatten(apply, spec: document.spec), name: name, file: record.fileURL) else {
+                // It didn't land (a file that couldn't be written, say). Don't record it as held
+                // by this device: the next pass would read the missing file as a local delete and
+                // delete it everywhere. Hold it for the next full fetch (Repair) instead.
+                state.heldPayload = SyncJSON.object(record.payload).canonicalData
+                state.heldReason = "file"
+                outcome.held += 1
+                return
+            }
             outcome.changedKinds.insert(name.kind)
             outcome.updated += 1
         }
+        state.serverStamp = record.stamp
+        state.lastSeenTag = record.tag
+        state.copies = copies
+        state.heldPayload = nil
+        state.heldReason = nil
         state.needsUpload = result.upload
         state.updatedAt = .now
         if result.upload { outcome.uploads.append(record.name) }
     }
 
+    /// Keep a server copy this device can't apply yet. The state's stamp and copies stay at what
+    /// this device last understood: taking the held record's stamp would let an older build's next
+    /// edit save over a newer build's record (the tag would match).
     private func hold(_ state: SyncRecordState, _ record: SyncIncoming, reason: String) {
         state.heldPayload = SyncJSON.object(record.payload).canonicalData
         state.heldReason = reason
-        state.serverStamp = record.stamp
-        state.lastSeenTag = record.tag
         state.updatedAt = .now
     }
 

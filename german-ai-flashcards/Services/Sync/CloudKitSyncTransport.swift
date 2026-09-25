@@ -25,11 +25,16 @@ final class CloudKitSyncTransport: SyncTransport {
     var onZoneDeleted: ((CKDatabase.DatabaseChange.Deletion.Reason) -> Void)?
     var onQuotaExceeded: (() -> Void)?
     var onActivity: ((Bool) -> Void)?
+    /// Whether this device has ever synced with the zone. A zone that goes missing after that was
+    /// deleted on purpose (Delete iCloud Data, iOS Settings) and must not be made again.
+    var zoneWasSeen: () -> Bool = { false }
 
     let container = CKContainer(identifier: containerID)
     private var engine: CKSyncEngine?
     /// The engine started without saved state, so its next fetch covers the whole zone.
     private var fullFetchPending = false
+    /// The Kartei zone's part of the current fetch failed, so it can't count as complete.
+    private var fetchFailed = false
     private let storeTag: String
     private let stateURL: URL
     /// Records parked after `quotaExceeded`, re-added on the next foreground or Sync Now.
@@ -57,8 +62,11 @@ final class CloudKitSyncTransport: SyncTransport {
         configuration.automaticallySync = true
         let engine = CKSyncEngine(configuration)
         self.engine = engine
-        // Idempotent: saving an existing zone is a no-op on the server.
-        engine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: Self.zoneID))])
+        // Only a device that has never met the zone creates it. Recreating it on every launch would
+        // undo a Delete iCloud Data made on another device before this one heard about it.
+        if !zoneWasSeen() {
+            engine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: Self.zoneID))])
+        }
     }
 
     func stop() {
@@ -118,8 +126,11 @@ final class CloudKitSyncTransport: SyncTransport {
             record["payload"] = data as CKRecordValue
             record["payloadAsset"] = nil
         } else {
-            let url = FileManager.default.temporaryDirectory.appendingPathComponent("sync-\(UUID().uuidString).json")
-            try? data.write(to: url)
+            // One file per record, overwritten on each send, so retries don't pile up files.
+            let dir = URL.cachesDirectory.appendingPathComponent("SyncOutbox", isDirectory: true)
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            let url = dir.appendingPathComponent(SyncNameUUID.make(id.recordName).uuidString + ".json")
+            try? data.write(to: url, options: .atomic)
             record["payload"] = nil
             record["payloadAsset"] = CKAsset(fileURL: url)
         }
@@ -158,6 +169,13 @@ final class CloudKitSyncTransport: SyncTransport {
 
     // MARK: Engine state
 
+    /// Forget the saved engine state (after the zone was deleted): the next engine starts fresh.
+    static func discardSavedState() {
+        let url = URL.applicationSupportDirectory.appendingPathComponent("Sync", isDirectory: true)
+            .appendingPathComponent("engine-state.json")
+        try? FileManager.default.removeItem(at: url)
+    }
+
     private struct SavedState: Codable {
         var storeTag: String
         var state: CKSyncEngine.State.Serialization
@@ -181,6 +199,9 @@ final class CloudKitSyncTransport: SyncTransport {
 
 extension CloudKitSyncTransport: CKSyncEngineDelegate {
     func handleEvent(_ event: CKSyncEngine.Event, syncEngine: CKSyncEngine) async {
+        // An engine replaced by `resetFetchState` may still deliver a last event or two; its state
+        // and results belong to the old engine.
+        guard syncEngine === engine else { return }
         switch event {
         case .stateUpdate(let update):
             saveState(update.stateSerialization)
@@ -208,18 +229,27 @@ extension CloudKitSyncTransport: CKSyncEngineDelegate {
             for id in sent.deletedRecordIDs { delegate?.transportDidDelete(id.recordName) }
             var retry: [CKSyncEngine.PendingRecordZoneChange] = []
             var needZone = false
+            var zoneGone = false
             for failure in sent.failedRecordSaves {
                 let name = failure.record.recordID.recordName
                 switch failure.error.code {
                 case .serverRecordChanged:
+                    // Retry only after a merge. A big record's server copy can arrive without its
+                    // payload asset; then the next fetch brings it and re-queues the merge.
                     if let server = failure.error.serverRecord, let incoming = Self.incoming(server) {
                         delegate?.transportConflict(name, server: incoming)
+                        retry.append(.saveRecord(failure.record.recordID))
                     }
-                    retry.append(.saveRecord(failure.record.recordID))
-                case .zoneNotFound, .userDeletedZone:
-                    needZone = true
-                    delegate?.transportUnknownItem(name)
-                    retry.append(.saveRecord(failure.record.recordID))
+                case .userDeletedZone:
+                    zoneGone = true
+                case .zoneNotFound:
+                    if zoneWasSeen() {
+                        zoneGone = true
+                    } else {
+                        needZone = true
+                        delegate?.transportUnknownItem(name)
+                        retry.append(.saveRecord(failure.record.recordID))
+                    }
                 case .unknownItem:
                     delegate?.transportUnknownItem(name)
                     retry.append(.saveRecord(failure.record.recordID))
@@ -227,7 +257,8 @@ extension CloudKitSyncTransport: CKSyncEngineDelegate {
                     parked.insert(name)
                     onQuotaExceeded?()
                 case .networkFailure, .networkUnavailable, .zoneBusy, .serviceUnavailable,
-                     .notAuthenticated, .requestRateLimited, .accountTemporarilyUnavailable:
+                     .notAuthenticated, .requestRateLimited, .accountTemporarilyUnavailable,
+                     .operationCancelled, .serverResponseLost:
                     break  // the engine retries these itself
                 default:
                     delegate?.transportFailed(name, error: failure.error.localizedDescription)
@@ -235,6 +266,11 @@ extension CloudKitSyncTransport: CKSyncEngineDelegate {
             }
             for (id, error) in sent.failedRecordDeletes where error.code == .unknownItem {
                 delegate?.transportDidDelete(id.recordName)  // already gone
+            }
+            if zoneGone {
+                // Deleted on purpose somewhere: stop, don't make it again.
+                onZoneDeleted?(.deleted)
+                return
             }
             if needZone {
                 syncEngine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: Self.zoneID))])
@@ -245,12 +281,16 @@ extension CloudKitSyncTransport: CKSyncEngineDelegate {
             onActivity?(true)
         case .didFetchChanges:
             onActivity?(false)
-            delegate?.transportDidFinishFetch(wasFullFetch: fullFetchPending)
-            fullFetchPending = false
+            // Complete only if the zone's part succeeded; a failed first fetch stays "pending full".
+            delegate?.transportDidFinishFetch(wasFullFetch: fullFetchPending && !fetchFailed)
+            if !fetchFailed { fullFetchPending = false }
+            fetchFailed = false
+        case .didFetchRecordZoneChanges(let done):
+            if done.zoneID == Self.zoneID, done.error != nil { fetchFailed = true }
         case .didSendChanges:
             onActivity?(false)
 
-        case .sentDatabaseChanges, .willFetchRecordZoneChanges, .didFetchRecordZoneChanges:
+        case .sentDatabaseChanges, .willFetchRecordZoneChanges:
             break
         @unknown default:
             log.info("Unhandled CKSyncEngine event")

@@ -25,7 +25,10 @@ final class SyncManager {
     private(set) var engineBusy = false
     private(set) var storageFull = false
     /// A different Apple Account signed in: sync is paused until the learner chooses.
-    private(set) var accountSwitchPending = false
+    /// Kept across launches: a relaunch must not quietly merge into the other account.
+    private(set) var accountSwitchPending = UserDefaults.standard.bool(forKey: "sync.accountSwitchPending") {
+        didSet { UserDefaults.standard.set(accountSwitchPending, forKey: "sync.accountSwitchPending") }
+    }
     /// Why sync turned itself off, shown on the screen (iCloud data deleted elsewhere).
     private(set) var notice: String?
 
@@ -91,8 +94,13 @@ final class SyncManager {
     func configure(container: ModelContainer) {
         self.container = container
         observeAccount()
-        startIfPossible()
-        Task { await refreshAccount() }
+        // Just after launch rather than inside App.init: the first scan of a large store takes a
+        // moment, and it mustn't hold up the first frame. A silent-push launch still gets here
+        // within the same wake.
+        Task { @MainActor in
+            startIfPossible()
+            await refreshAccount()
+        }
     }
 
     private func startIfPossible() {
@@ -103,6 +111,7 @@ final class SyncManager {
         // The engine's saved state belongs to one store *and* one CloudKit database: a Debug build
         // (Development) must not reuse a TestFlight build's (Production) change tokens.
         let transport = CloudKitSyncTransport(storeTag: storeTag + "|" + Self.environmentName)
+        transport.zoneWasSeen = { [weak self] in self?.coordinator?.knownZoneInstance != nil }
         let coordinator = SyncCoordinator(context: container.mainContext, identity: identity, transport: transport)
         transport.onAccountChange = { [weak self] change in self?.accountChanged(change) }
         transport.onZoneDeleted = { [weak self] reason in self?.zoneDeleted(reason) }
@@ -154,13 +163,43 @@ final class SyncManager {
     /// Delete this app's data from iCloud (every device's copy there). Local data stays; sync turns
     /// off here, and the other devices turn off when they see the zone go.
     func deleteICloudData() async throws {
+        // Stop first, so nothing re-creates the zone or re-sends while it goes.
+        let coordinator = self.coordinator
+        stopSync()
         let database = CKContainer(identifier: CloudKitSyncTransport.containerID).privateCloudDatabase
         _ = try await database.modifyRecordZones(saving: [], deleting: [CloudKitSyncTransport.zoneID])
-        coordinator?.forgetServer()
+        coordinator?.forgetServerCopies()
         coordinator?.knownZoneInstance = nil
-        setEnabled(false)
+        CloudKitSyncTransport.discardSavedState()
+        UserDefaults.standard.set(false, forKey: Self.enabledKey)
         notice = "iCloud data deleted. This device keeps its data; turn sync on to upload it again."
     }
+
+    #if DEBUG
+    /// `-sync.debugSeedSchema 1`: save one record that sets every `KarteiItem` field, so the
+    /// Development schema has them all before it's deployed to Production. (`payloadAsset` and `file`
+    /// only exist after a large payload or a picture has been saved, and Production rejects fields
+    /// it doesn't know.)
+    func seedDevelopmentSchema() async -> String {
+        let database = CKContainer(identifier: CloudKitSyncTransport.containerID).privateCloudDatabase
+        do {
+            _ = try await database.modifyRecordZones(saving: [CKRecordZone(zoneID: CloudKitSyncTransport.zoneID)], deleting: [])
+            let asset = FileManager.default.temporaryDirectory.appendingPathComponent("schema-seed.json")
+            try Data("{}".utf8).write(to: asset)
+            let record = CKRecord(recordType: CloudKitSyncTransport.recordType,
+                                  recordID: CloudKitSyncTransport.recordID("Meta:schema-seed"))
+            record["kind"] = "Meta" as CKRecordValue
+            record["payload"] = Data("{}".utf8) as CKRecordValue
+            record["payloadAsset"] = CKAsset(fileURL: asset)
+            record["file"] = CKAsset(fileURL: asset)
+            _ = try await database.modifyRecords(saving: [record], deleting: [])
+            _ = try await database.modifyRecords(saving: [], deleting: [record.recordID])
+            return "schema seeded: KarteiItem has kind, payload, payloadAsset, file. Deploy it in the CloudKit Console."
+        } catch {
+            return "schema seed failed: \(error.localizedDescription)"
+        }
+    }
+    #endif
 
     // MARK: Account
 

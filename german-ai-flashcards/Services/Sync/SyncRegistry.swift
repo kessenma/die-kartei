@@ -133,6 +133,15 @@ enum SyncStoreMeta {
         (try? context.fetch(FetchDescriptor<SyncRecordState>())) ?? []
     }
 
+    /// Whether the row behind a stored local key still exists.
+    static func modelExists(localKey: String, kind: String, in context: ModelContext) -> Bool {
+        guard let data = localKey.data(using: .utf8),
+              let id = try? JSONDecoder().decode(PersistentIdentifier.self, from: data),
+              let handler = SyncRegistry.byKind[kind]
+        else { return false }
+        return handler.model(for: id, in: context) != nil
+    }
+
     /// The local row a state points at, if it still exists.
     static func model(for state: SyncRecordState, in context: ModelContext) -> (any PersistentModel)? {
         guard let key = state.localKey, let data = key.data(using: .utf8),

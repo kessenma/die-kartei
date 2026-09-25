@@ -119,11 +119,23 @@ final class SyncChangeTracker {
                     for model in models {
                         guard handler.includes(model), let key = model.persistentModelID.syncKey else { continue }
                         seen.insert(key)
-                        let state = byKey[key] ?? handler.recordName(for: model).flatMap { byName[$0.description] }
+                        // Resolve (or create) the state from the maps loaded above, never with a
+                        // fetch per row: fetches see every unsaved insert of this pass, which made the
+                        // first scan quadratic in the number of rows.
+                        var state = byKey[key] ?? handler.recordName(for: model).flatMap { byName[$0.description] }
+                        if state == nil, let name = handler.recordName(for: model) {
+                            let created = SyncRecordState(recordName: name.description, kind: handler.kind)
+                            context.insert(created)
+                            byName[name.description] = created
+                            state = created
+                        }
                         if let name = noteLocal(model, handler: handler, bootstrapping: bootstrapping, existing: state) {
                             outcome.saves.append(name)
                         }
+                        if let state, state.localKey == key { byKey[key] = state }
                     }
+                    // A page at a time, so an interrupted first scan resumes rather than restarts.
+                    try context.save()
                     if models.count < Self.pageSize { break }
                     offset += Self.pageSize
                 }
@@ -173,9 +185,19 @@ final class SyncChangeTracker {
                 context.insert(state)
             }
         }
+        // A delete from another device is waiting for this row's screen to close: the delete wins,
+        // so edits made meanwhile aren't sent (they'd re-create the record on the server).
+        if state.heldReason == SyncApplier.deferredDelete { return nil }
+        // Two live rows claiming one record (StudyDay twins before they're folded): keep the
+        // binding rather than flip it, which would move one row's counts onto the other.
+        if let bound = state.localKey, bound != key, SyncStoreMeta.modelExists(localKey: bound, kind: handler.kind, in: context) {
+            log.error("Two rows map to \(state.recordName, privacy: .public); keeping the first")
+            return nil
+        }
         state.localKey = key
 
         var copies = state.copies
+        let previousPending = copies.pending
         // Counters first seen during the initial scan predate sync: bootstrap slot. Anything else
         // was studied on this install since sync came on: this replica's slot.
         let slot = bootstrapping && copies.base == nil
@@ -189,6 +211,11 @@ final class SyncChangeTracker {
         state.pendingDelete = false
         state.needsUpload = upload
         state.updatedAt = .now
+        // A new version gets a fresh set of tries: a record stuck on an old error can recover.
+        if upload, copies.pending != previousPending {
+            state.failureCount = 0
+            state.lastError = nil
+        }
         return upload ? state.recordName : nil
     }
 
@@ -199,26 +226,33 @@ final class SyncChangeTracker {
         var deletedDocuments: [String] = []
         for kind in documents {
             let local = kind.localRecords()
+            // One fetch per kind: the File kind can have hundreds of records.
+            let kindName = kind.spec.kind
+            let d = FetchDescriptor<SyncRecordState>(predicate: #Predicate { $0.kind == kindName })
+            var existing = Dictionary(((try? context.fetch(d)) ?? []).map { ($0.recordName, $0) }, uniquingKeysWith: { a, _ in a })
             if kind.tracksDeletions {
                 let present = Set(local.map { $0.name.description })
-                let kindName = kind.spec.kind
-                let d = FetchDescriptor<SyncRecordState>(predicate: #Predicate { $0.kind == kindName })
-                for state in (try? context.fetch(d)) ?? [] where !present.contains(state.recordName) && !state.pendingDelete {
+                for state in existing.values where !present.contains(state.recordName) && !state.pendingDelete
+                    && state.heldReason == nil {
                     if markDeleted(state) { deletedDocuments.append(state.recordName) }
                 }
             }
             for (name, known) in local {
                 let key = name.description
-                let state = SyncStoreMeta.states(named: [key], in: context)[key] ?? {
+                let state = existing[key] ?? {
                     let s = SyncRecordState(recordName: key, kind: name.kind)
                     context.insert(s)
+                    existing[key] = s
                     return s
                 }()
                 var copies = state.copies
-                let slot = bootstrapping && copies.base == nil ? identity.slot(for: .perStore) : identity.replica
+                let fresh = bootstrapping && copies.base == nil
+                let slot = fresh ? identity.slot(for: .perStore) : identity.replica
+                // A fresh device's first look at its settings is mostly defaults. Stamped as the
+                // oldest possible change, they never beat a real choice already on the server.
                 let upload = SyncRecordLogic.noteLocal(
                     &copies, known: known, spec: kind.spec, slot: slot,
-                    now: Date().timeIntervalSinceReferenceDate
+                    now: fresh ? 0 : Date().timeIntervalSinceReferenceDate
                 )
                 if copies != state.copies { state.copies = copies }
                 if state.needsUpload != upload { state.needsUpload = upload }
@@ -231,7 +265,10 @@ final class SyncChangeTracker {
     /// A local delete. Returns true if the server must hear about it. A record the server never
     /// had just loses its state.
     private func markDeleted(_ state: SyncRecordState) -> Bool {
-        if state.serverPayload == nil && state.serverStamp == nil {
+        // Only a record that was never handed to the server can go quietly. One with an upload
+        // owed may already be on its way (a save in flight); its delete must follow it, and a
+        // delete of a record the server never got is harmless (`unknownItem` counts as done).
+        if state.serverPayload == nil && state.serverStamp == nil && !state.needsUpload {
             context.delete(state)
             return false
         }

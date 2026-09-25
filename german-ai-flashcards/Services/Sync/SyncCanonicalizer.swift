@@ -12,7 +12,8 @@ import SwiftData
 @MainActor
 enum SyncCanonicalizer {
     /// Bump to run the pass again after adding a canonical kind.
-    static let version = 1
+    /// 2: exact-word card ids (1 lowercased them) and one StudyDay row per date.
+    static let version = 2
     private static let log = Logger(subsystem: "kyle-essenmacher.german-ai-flashcards", category: "sync")
 
     static func runIfNeeded(in context: ModelContext) {
@@ -44,6 +45,8 @@ enum SyncCanonicalizer {
             changes += canonicalizeCards(of: keeper, synced: synced, in: context)
         }
 
+        changes += foldStudyDayTwins(in: context)
+
         meta.canonicalizedVersion = version
         try? context.save()
         if changes > 0 { log.notice("Canonicalized \(changes) singleton deck/card ids") }
@@ -55,7 +58,7 @@ enum SyncCanonicalizer {
         var changes = 0
         var byWord: [String: SavedCard] = [:]
         for card in deck.cards.sorted(by: { ($1.interval, $1.repetitions) < ($0.interval, $0.repetitions) }) {
-            let word = card.germanWord.lowercased()
+            let word = card.germanWord  // exact: sie and Sie are two cards
             if byWord[word] != nil {
                 context.delete(card)
                 changes += 1
@@ -71,11 +74,38 @@ enum SyncCanonicalizer {
         return changes
     }
 
+    /// One StudyDay per calendar date. A time-zone change used to start a second row for the same
+    /// date; both map to one sync record, so fold them: counts add, the latest activity wins.
+    private static func foldStudyDayTwins(in context: ModelContext) -> Int {
+        let days = (try? context.fetch(FetchDescriptor<StudyDay>(sortBy: [SortDescriptor(\.dayStart)]))) ?? []
+        var changes = 0
+        for group in Dictionary(grouping: days, by: { SyncDayKey.key(for: $0.dayStart) }).values where group.count > 1 {
+            let keeper = group[0]
+            for twin in group.dropFirst() {
+                keeper.cardsReviewed += twin.cardsReviewed
+                keeper.grammarExercises += twin.grammarExercises
+                keeper.conversations += twin.conversations
+                keeper.storySeconds += twin.storySeconds
+                keeper.storyQuestions += twin.storyQuestions
+                keeper.cardSeconds += twin.cardSeconds
+                keeper.grammarSeconds += twin.grammarSeconds
+                keeper.conversationSeconds += twin.conversationSeconds
+                keeper.storyQuizSeconds += twin.storyQuizSeconds
+                keeper.newWordsIntroduced += twin.newWordsIntroduced
+                keeper.newWordsBonus += twin.newWordsBonus
+                keeper.lastActivityAt = max(keeper.lastActivityAt, twin.lastActivityAt)
+                context.delete(twin)
+                changes += 1
+            }
+        }
+        return changes
+    }
+
     /// Move a duplicate deck's progress into the keeper, then delete it.
     private static func fold(_ extra: SavedDeck, into keeper: SavedDeck, in context: ModelContext) {
-        var keeperWords = Dictionary(keeper.cards.map { ($0.germanWord.lowercased(), $0) }, uniquingKeysWith: { a, _ in a })
+        var keeperWords = Dictionary(keeper.cards.map { ($0.germanWord, $0) }, uniquingKeysWith: { a, _ in a })
         for card in extra.cards {
-            let word = card.germanWord.lowercased()
+            let word = card.germanWord
             if let existing = keeperWords[word] {
                 if (card.interval, card.repetitions) > (existing.interval, existing.repetitions) {
                     existing.easeFactor = card.easeFactor

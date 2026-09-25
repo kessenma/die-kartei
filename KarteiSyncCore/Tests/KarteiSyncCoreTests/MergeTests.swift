@@ -227,3 +227,42 @@ private func value(_ p: SyncPayload, _ key: String, _ spec: SyncKindSpec) -> Syn
         #expect(merged == SyncMerge.merge(ancestor: nil, local: b, remote: a, spec: spec))
     }
 }
+
+@Suite struct FreshDeviceTests {
+    // Mirrors ProgressSyncDocument: the level group is ordered by when it was chosen, and a fresh
+    // device's first look at its defaults is composed with `_t = 0`.
+    private let spec = SyncKindSpec(
+        kind: "Progress",
+        groups: [SyncFieldGroup(fields: ["germanLevel", "germanLevelDeclared", "germanLevelSetAt"],
+                                orderBy: ["germanLevelSetAt"])]
+    )
+
+    @Test func anUnchosenDefaultNeverReplacesAChosenLevel() {
+        let phone = SyncMerge.compose(base: nil, known: [
+            "germanLevel": .string("B1"), "germanLevelDeclared": .bool(true), "germanLevelSetAt": .int(5_000),
+            "placementResult": .object(["level": .string("B1")]),
+        ], spec: spec, slot: "phone", now: 5_000)
+        // A fresh iPad: the default level travels as absent, and its first compose is stamped 0.
+        let pad = SyncMerge.compose(base: nil, known: [
+            "germanLevel": .null, "germanLevelDeclared": .null, "germanLevelSetAt": .null,
+            "placementResult": .null,
+        ], spec: spec, slot: "pad", now: 0)
+        for merged in [SyncMerge.merge(ancestor: nil, local: pad, remote: phone, spec: spec),
+                       SyncMerge.merge(ancestor: nil, local: phone, remote: pad, spec: spec)] {
+            #expect(merged["germanLevel"] == .string("B1"))
+            #expect(merged["germanLevelDeclared"] == .bool(true))
+            #expect(merged["placementResult"] != nil)
+        }
+    }
+
+    @Test func aLaterChoiceOnEitherDeviceWins() {
+        let old = SyncMerge.compose(base: nil, known: [
+            "germanLevel": .string("A2"), "germanLevelDeclared": .bool(true), "germanLevelSetAt": .int(1_000),
+        ], spec: spec, slot: "a", now: 9_999)
+        let newer = SyncMerge.compose(base: nil, known: [
+            "germanLevel": .string("B2"), "germanLevelDeclared": .bool(false), "germanLevelSetAt": .int(2_000),
+        ], spec: spec, slot: "b", now: 1)
+        let merged = SyncMerge.merge(ancestor: nil, local: old, remote: newer, spec: spec)
+        #expect(merged["germanLevel"] == .string("B2"))
+    }
+}

@@ -24,8 +24,10 @@ enum SyncSingletonDecks {
     }
 
     /// Canonical card id inside a singleton deck: one card per German word.
+    /// The exact word, never lowercased: the Goethe lists hold 34 pairs that differ only by
+    /// case (sie/Sie, essen/Essen), and each is its own card.
     static func cardID(deckID: UUID, germanWord: String) -> UUID {
-        SyncNameUUID.make("card", deckID.uuidString, germanWord.lowercased())
+        SyncNameUUID.make("card", deckID.uuidString, germanWord)
     }
 }
 
@@ -132,7 +134,9 @@ enum SavedCardCodec: SyncCodec {
 
     static func includes(_ card: SavedCard) -> Bool {
         guard let deck = card.deck else { return false }
-        if deck.generatorRaw == "goethe-srs" { return card.firstReviewedAt != nil }
+        // Reviewed means reviewed: words studied before `firstReviewedAt` existed (1.6 and earlier)
+        // have review counts but no date.
+        if deck.generatorRaw == "goethe-srs" { return card.firstReviewedAt != nil || card.totalReviews > 0 }
         return true
     }
 

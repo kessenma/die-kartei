@@ -7,7 +7,10 @@ import SwiftData
 /// midnight) still matches on a device in another time zone.
 private enum ClassDayKey {
     static func key(_ date: Date?) -> String? {
-        date.map { SyncDayKey.key(for: Calendar.current.startOfDay(for: $0)) }
+        // Stored values are already local midnight where they were written; SyncDayKey's +12 h is
+        // what keeps them on the same date read from another time zone. Re-applying startOfDay
+        // here would shift a date written further east a day earlier.
+        date.map { SyncDayKey.key(for: $0) }
     }
 
     static func date(_ key: String?) -> Date? {

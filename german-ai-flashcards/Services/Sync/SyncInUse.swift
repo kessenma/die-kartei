@@ -24,7 +24,7 @@ enum SyncInUse {
     static func blocks(_ name: String, lastPayload: SyncPayload?) -> Bool {
         guard !open.isEmpty, let record = SyncRecordName(name) else { return false }
         if open[record.id] != nil { return true }
-        for parentKey in ["deck", "conversation"] {
+        for parentKey in ["deck", "conversation", "course", "entry"] {
             if let parent = lastPayload?.uuid(parentKey), open[parent] != nil { return true }
         }
         return false

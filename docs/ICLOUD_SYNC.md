@@ -130,7 +130,9 @@ property to a synced model means adding it to its codec**, or it won't travel.
 Before the **first** TestFlight build with sync:
 1. Build to a device once from Xcode (automatic signing registers the iCloud container
    `iCloud.kyle-essenmacher.german-ai-flashcards` and the push capability on the App ID).
-2. Run the app with sync on (`-sync.enable 1`) so `KarteiItem` and the zone exist in Development.
+2. On that device (signed in to iCloud), launch once with `-sync.debugSeedSchema 1`. It saves one
+   record that sets every `KarteiItem` field (`payloadAsset` and `file` otherwise exist only after a
+   big payload or a picture was saved), then deletes it; the fields stay in the schema.
 3. CloudKit Console ▸ the container ▸ Schema ▸ **Deploy Schema Changes** to Production (or
    `xcrun cktool`). TestFlight uses Production; without this, sync fails there.
 

@@ -13,7 +13,10 @@ protocol SyncDocumentKind {
     func apply(_ flat: SyncPayload, name: SyncRecordName)
     /// Records of this kind can disappear locally (files); a vanished one is deleted on the server.
     var tracksDeletions: Bool { get }
-    func apply(_ flat: SyncPayload, name: SyncRecordName, file: URL?)
+    /// Returns false if the record couldn't be written locally.
+    func apply(_ flat: SyncPayload, name: SyncRecordName, file: URL?) -> Bool
+    /// Local fields for one record. `hint` is the incoming copy (a file's path).
+    func known(for name: SyncRecordName, hint: SyncPayload?) -> SyncPayload?
     /// The record is gone from the server. `payload` is the last copy this device had.
     func delete(_ name: SyncRecordName, payload: SyncPayload?)
     /// The asset that travels with a record, if any.
@@ -22,7 +25,13 @@ protocol SyncDocumentKind {
 
 extension SyncDocumentKind {
     var tracksDeletions: Bool { false }
-    func apply(_ flat: SyncPayload, name: SyncRecordName, file: URL?) { apply(flat, name: name) }
+    func apply(_ flat: SyncPayload, name: SyncRecordName, file: URL?) -> Bool {
+        apply(flat, name: name)
+        return true
+    }
+    func known(for name: SyncRecordName, hint: SyncPayload?) -> SyncPayload? {
+        localRecords().first { $0.name == name }?.known
+    }
     func delete(_ name: SyncRecordName, payload: SyncPayload?) {}
     func fileURL(for name: SyncRecordName, payload: SyncPayload) -> URL? { nil }
 }
@@ -42,7 +51,7 @@ enum SyncDocuments {
 
     /// Local fields for one document record, or nil if this device doesn't have it.
     static func known(for name: SyncRecordName) -> SyncPayload? {
-        byKind[name.kind]?.localRecords().first { $0.name == name }?.known
+        byKind[name.kind]?.known(for: name, hint: nil)
     }
 }
 
@@ -68,7 +77,11 @@ struct ProgressSyncDocument: SyncDocumentKind {
             "fired": .union,
         ],
         // The level and whether the learner declared it are one choice.
-        groups: [SyncFieldGroup(fields: ["germanLevel", "germanLevelDeclared"], orderBy: [])]
+        // The level and whether the learner declared it are one choice, ordered by when it was
+        // made. A level nobody chose (the default a fresh install writes) travels as absent, so it
+        // can never replace a real one.
+        groups: [SyncFieldGroup(fields: ["germanLevel", "germanLevelDeclared", "germanLevelSetAt"],
+                                orderBy: ["germanLevelSetAt"])]
     )
 
     private var defaults: UserDefaults { .standard }
@@ -76,8 +89,16 @@ struct ProgressSyncDocument: SyncDocumentKind {
 
     func localRecords() -> [(name: SyncRecordName, known: SyncPayload)] {
         var f = SyncFields()
-        f.set("germanLevel", defaults.string(forKey: "german.level"))
-        f.set("germanLevelDeclared", defaults.bool(forKey: "german.level.declared"))
+        var levelSetAt = defaults.object(forKey: MLXModelManager.germanLevelSetAtKey) as? Date
+        if levelSetAt == nil, defaults.bool(forKey: "german.level.declared") || defaults.data(forKey: "placement.result") != nil {
+            // Chosen before the date was kept: the oldest possible date, so it beats "not chosen"
+            // but not any choice made since.
+            levelSetAt = Date(timeIntervalSinceReferenceDate: 1)
+            defaults.set(levelSetAt, forKey: MLXModelManager.germanLevelSetAtKey)
+        }
+        f.set("germanLevel", levelSetAt == nil ? nil : defaults.string(forKey: "german.level"))
+        f.set("germanLevelDeclared", levelSetAt == nil ? nil : defaults.bool(forKey: "german.level.declared"))
+        f.set("germanLevelSetAt", levelSetAt)
         f.set("placementResult", jsonData: defaults.data(forKey: "placement.result"))
         f.set("placementSeen", defaults.bool(forKey: "placement.seen"))
         f.set("placementHandoffAt", defaults.object(forKey: "placement.handoff.lastAttemptAt") as? Date)
@@ -93,15 +114,22 @@ struct ProgressSyncDocument: SyncDocumentKind {
 
     func apply(_ flat: SyncPayload, name: SyncRecordName) {
         let manager = SyncManager.shared.modelManager
-        if let level = flat.string("germanLevel") {
+        if let level = flat.string("germanLevel"), let setAt = flat.date("germanLevelSetAt") {
             defaults.set(level, forKey: "german.level")
             if manager?.germanLevelRaw != level { manager?.germanLevelRaw = level }
+            if let declared = flat.bool("germanLevelDeclared") {
+                defaults.set(declared, forKey: "german.level.declared")
+                if manager?.germanLevelIsDeclared != declared { manager?.germanLevelIsDeclared = declared }
+            }
+            // After the setters above: their didSet stamps "now", and the choice was made then.
+            defaults.set(setAt, forKey: MLXModelManager.germanLevelSetAtKey)
         }
-        if let declared = flat.bool("germanLevelDeclared") {
-            defaults.set(declared, forKey: "german.level.declared")
-            if manager?.germanLevelIsDeclared != declared { manager?.germanLevelIsDeclared = declared }
+        // The merged copy is the truth: no result there means it was put away on some device.
+        if let result = flat.jsonData("placementResult") {
+            defaults.set(result, forKey: "placement.result")
+        } else {
+            defaults.removeObject(forKey: "placement.result")
         }
-        if let result = flat.jsonData("placementResult") { defaults.set(result, forKey: "placement.result") }
         if flat.bool("placementSeen") == true { defaults.set(true, forKey: "placement.seen") }
         if let at = flat.date("placementHandoffAt") { defaults.set(at, forKey: "placement.handoff.lastAttemptAt") }
         if let badges = flat["badges"]?.objectValue {
@@ -117,7 +145,9 @@ struct ProgressSyncDocument: SyncDocumentKind {
         }
         if let level = flat.int("maxLevelSeen") { defaults.set(level, forKey: "celebration.maxLevelSeen") }
         // Celebrations already shown on another device are marked shown here, so they don't fire twice.
-        for key in flat.strings("fired") ?? [] { defaults.set(true, forKey: Self.celebrationPrefix + key) }
+        for key in flat.strings("fired") ?? [] where key != "maxLevelSeen" {
+            defaults.set(true, forKey: Self.celebrationPrefix + key)
+        }
     }
 
     /// `achievements.earnedAt` is `[badgeID: Date]` written by a default `JSONEncoder` (dates as
@@ -129,7 +159,9 @@ struct ProgressSyncDocument: SyncDocumentKind {
 
     private func firedCelebrations() -> [String] {
         defaults.dictionaryRepresentation()
-            .filter { $0.key.hasPrefix(Self.celebrationPrefix) && ($0.value as? Bool) == true }
+            // Real booleans only: `celebration.maxLevelSeen` is a number, and 1 reads as `true`.
+            .filter { $0.key.hasPrefix(Self.celebrationPrefix) && $0.key != "celebration.maxLevelSeen"
+                && CFGetTypeID($0.value as CFTypeRef) == CFBooleanGetTypeID() && ($0.value as? Bool) == true }
             .map { String($0.key.dropFirst(Self.celebrationPrefix.count)) }
             .sorted()
     }
@@ -300,16 +332,40 @@ struct FileSyncDocument: SyncDocumentKind {
 
     func apply(_ flat: SyncPayload, name: SyncRecordName) {}
 
-    func apply(_ flat: SyncPayload, name: SyncRecordName, file: URL?) {
-        guard let path = flat.string("path"), let file, let dest = destination(path) else { return }
+    func apply(_ flat: SyncPayload, name: SyncRecordName, file: URL?) -> Bool {
+        guard let path = flat.string("path"), let file, let dest = destination(path) else { return false }
         let fm = FileManager.default
-        try? fm.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try? fm.removeItem(at: dest)
-        guard (try? fm.copyItem(at: file, to: dest)) != nil else { return }
+        do {
+            try fm.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
+            // Copy beside the destination, then swap: a failed copy (no space) leaves the old file.
+            let staged = dest.deletingLastPathComponent().appendingPathComponent(".sync-\(UUID().uuidString)")
+            try fm.copyItem(at: file, to: staged)
+            if fm.fileExists(atPath: dest.path) {
+                _ = try fm.replaceItemAt(dest, withItemAt: staged)
+            } else {
+                try fm.moveItem(at: staged, to: dest)
+            }
+        } catch {
+            return false
+        }
         // Match the sender's date so the next pass doesn't see a "changed" file and send it back.
         if let modified = flat.double("modified") {
             try? fm.setAttributes([.modificationDate: Date(timeIntervalSinceReferenceDate: modified)], ofItemAtPath: dest.path)
         }
+        return true
+    }
+
+    /// One file's fields, by statting just that path instead of listing every folder.
+    func known(for name: SyncRecordName, hint: SyncPayload?) -> SyncPayload? {
+        guard let path = hint?.string("path"), let url = destination(path),
+              let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey, .contentModificationDateKey]),
+              values.isRegularFile == true
+        else { return nil }
+        var f = SyncFields()
+        f.set("path", path)
+        f.set("size", values.fileSize)
+        f.set("modified", values.contentModificationDate.map { $0.timeIntervalSinceReferenceDate.rounded(.down) })
+        return f.payload
     }
 
     func delete(_ name: SyncRecordName, payload: SyncPayload?) {
