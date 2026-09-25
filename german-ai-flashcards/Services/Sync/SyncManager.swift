@@ -138,6 +138,17 @@ final class SyncManager {
 
     func syncNow() async { await coordinator?.syncNow() }
 
+    /// Wait (up to `timeout`) for the first completed fetch: onboarding on a new device waits for
+    /// the learner's level to arrive before asking for it.
+    func waitForFirstFetch(timeout: Duration) async {
+        let deadline = ContinuousClock.now + timeout
+        while ContinuousClock.now < deadline {
+            if coordinator == nil || coordinator?.hasCompletedFetch == true { return }
+            if account == .noAccount || account == .restricted { return }
+            try? await Task.sleep(for: .milliseconds(250))
+        }
+    }
+
     func repair() async { await coordinator?.repair() }
 
     /// Delete this app's data from iCloud (every device's copy there). Local data stays; sync turns

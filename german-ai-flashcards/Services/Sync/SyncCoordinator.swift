@@ -41,6 +41,8 @@ final class SyncCoordinator {
     @ObservationIgnored var digestCache: (version: Int, value: [String: SyncDigest])?
     /// The current fetch cycle delivered the zone fingerprint.
     @ObservationIgnored var sawZoneFingerprint = false
+    /// At least one fetch has finished since launch.
+    private(set) var hasCompletedFetch = false
     /// Waiting uploads, not counting heartbeats and the fingerprint.
     private(set) var learnerPendingCount = 0
 
@@ -317,7 +319,20 @@ extension SyncCoordinator: SyncTransportDelegate {
             requeueOwed()
         }
         sawZoneFingerprint = false
+        hasCompletedFetch = true
         createZoneFingerprintIfNeeded()
+    }
+
+    /// Deletes that arrived while their row was open on screen.
+    func applyDeferredDeletes() {
+        let reason = SyncApplier.deferredDelete
+        let held = (try? context.fetch(FetchDescriptor<SyncRecordState>(
+            predicate: #Predicate { $0.heldReason == reason }
+        ))) ?? []
+        guard !held.isEmpty else { return }
+        let names = held.map(\.recordName)
+        for state in held { state.heldReason = nil }
+        transportFetched([], deleted: names)
     }
 
     func transportFailed(_ name: String, error: String) {

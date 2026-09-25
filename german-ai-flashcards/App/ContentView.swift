@@ -544,10 +544,18 @@ struct ContentView: View {
     /// skip it.
     private func offerWizardIfNeeded() {
         guard !hasSeenOnboardingV2 else { return }
-        hasSeenOnboardingV2 = true
-        hasSeenOnboardingWizard = true
-        hasSeenHeroModelIntro = true
         Task { @MainActor in
+            // A new device with iCloud Sync on: give the first fetch a moment. If this learner
+            // already onboarded on another device, their level and placement arrive (and with them
+            // the onboarded flag), and asking again would overwrite the real answers. The tutor
+            // download is still offered by the Home tutor card.
+            if SyncManager.shared.isRunning {
+                await SyncManager.shared.waitForFirstFetch(timeout: .seconds(10))
+                if UserDefaults.standard.bool(forKey: "hasSeenOnboardingV2") { return }
+            }
+            hasSeenOnboardingV2 = true
+            hasSeenOnboardingWizard = true
+            hasSeenHeroModelIntro = true
             try? await Task.sleep(for: .seconds(0.5))
             showOnboardingWizard = true
         }

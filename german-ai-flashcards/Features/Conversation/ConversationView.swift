@@ -56,6 +56,7 @@ struct ConversationView: View {
             }
         }
         .onAppear {
+            SyncInUse.begin(conversation.id)
             if engine == nil {
                 let e = ConversationEngine(
                     conversation: conversation, config: config,
@@ -66,7 +67,10 @@ struct ConversationView: View {
                 e.onAppear()
             }
         }
-        .onDisappear { engine?.tearDown() }
+        .onDisappear {
+            engine?.tearDown()
+            SyncInUse.end(conversation.id)
+        }
         .memoryContext("Chat")
         .sheet(isPresented: $showSummary) {
             if let summary {

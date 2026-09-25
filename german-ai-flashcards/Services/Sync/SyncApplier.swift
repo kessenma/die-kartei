@@ -33,10 +33,11 @@ final class SyncApplier {
         var held = 0
     }
 
+    static let deferredDelete = "delete"
     private let context: ModelContext
     private let identity: SyncIdentity
     /// Returns true while a row must not be deleted from under the learner (a deck being studied).
-    var isInUse: (String) -> Bool = { _ in false }
+    var isInUse: (String, SyncPayload?) -> Bool = { name, payload in SyncInUse.blocks(name, lastPayload: payload) }
     /// See `SyncChangeTracker.documents`.
     var documents: [String: any SyncDocumentKind] = SyncDocuments.byKind
     private let log = Logger(subsystem: "kyle-essenmacher.german-ai-flashcards", category: "sync")
@@ -51,6 +52,8 @@ final class SyncApplier {
             var outcome = Outcome()
             var states = SyncStoreMeta.states(named: incoming.map(\.name) + deleted, in: context)
             var needsKey: [(SyncRecordState, any PersistentModel)] = []
+            // Decks whose card set changed here: a paused session indexes cards by position.
+            var reshuffled: [SavedDeck] = []
 
             let ordered = incoming.sorted {
                 (SyncRegistry.order[kindOf($0.name)] ?? .max) < (SyncRegistry.order[kindOf($1.name)] ?? .max)
@@ -103,6 +106,7 @@ final class SyncApplier {
                     } else if let created = handler.insert(flat, name: name, in: context) {
                         needsKey.append((state, created))
                         outcome.inserted += 1
+                        if let deck = (created as? SavedCard)?.deck { reshuffled.append(deck) }
                     } else {
                         // The parent (deck, chat, course) hasn't arrived yet.
                         hold(state, record, reason: "parent:" + (handler.parent(of: flat)?.description ?? "?"))
@@ -120,7 +124,11 @@ final class SyncApplier {
 
             for name in deleted {
                 guard let state = states[name] else { continue }
-                if isInUse(name) { continue }  // retried on the next fetch after the learner is done
+                if isInUse(name, state.copies.base) {
+                    // Applied when the screen closes (`SyncCoordinator.applyDeferredDeletes`).
+                    state.heldReason = Self.deferredDelete
+                    continue
+                }
                 var copies = state.copies
                 if SyncRecordLogic.receiveDeletion(&copies) {
                     // Edited here since the server's last copy: the edit wins and re-creates it.
@@ -138,6 +146,7 @@ final class SyncApplier {
                 } else if let model = SyncStoreMeta.model(for: state, in: context),
                    let handler = SyncRegistry.byKind[state.kind] {
                     dropStates(of: handler.cascadeChildren(of: model))
+                    if let deck = (model as? SavedCard)?.deck { reshuffled.append(deck) }
                     context.delete(model)
                     outcome.changedKinds.insert(state.kind)
                     outcome.deleted += 1
@@ -146,6 +155,11 @@ final class SyncApplier {
             }
 
             releaseHeldChildren(&outcome, needsKey: &needsKey)
+
+            for deck in reshuffled where deck.pausedAt != nil && !deck.isDeleted {
+                deck.pausedProgressData = nil
+                deck.pausedAt = nil
+            }
 
             // Permanent ids exist only after a save.
             if !needsKey.isEmpty {
