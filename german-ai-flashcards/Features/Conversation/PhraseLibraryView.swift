@@ -77,9 +77,9 @@ struct PhraseLibraryView: View {
                 .themedListRow()
             }
         }
-        // Clear both the floating FAB and the app's global NavBar (a ZStack overlay in
-        // ContentView that sits on top of this view), so the last row is fully reachable.
-        .contentMargins(.bottom, 170, for: .scrollContent)
+        // Clear the floating FAB so the last row is fully reachable. The app's NavBar is already
+        // cleared by the safe area ContentView gives every tab.
+        .contentMargins(.bottom, 80, for: .scrollContent)
         // Pick up the loaded model's brand color, mirroring Home's per-model tint. Innermost so it
         // wins over `.themedListScreen()`'s own tint: on Klar this resolves to the loaded model's
         // brand accent (pixel-identical to the old `.tint(activeTheme?.accent)`); identity themes
@@ -135,9 +135,8 @@ struct PhraseLibraryView: View {
         }
         .accessibilityLabel("Add phrase")
         .padding(.trailing, 20)
-        // The app's global NavBar (ContentView ZStack overlay) covers ~96pt at the bottom;
-        // sit the button just above it rather than behind it.
-        .padding(.bottom, 110)
+        // The safe area already ends above the app's NavBar, so this is only breathing room.
+        .padding(.bottom, 16)
     }
 
     /// Brand theme of the model currently loaded in memory (same source Home uses), or `nil` when

@@ -153,6 +153,17 @@ final class CloudKitSyncTransport: SyncTransport {
                             fileURL: (record["file"] as? CKAsset)?.fileURL)
     }
 
+    /// What a record weighs on the wire: its JSON (inline or as an asset) plus any file it carries.
+    static func byteSize(_ record: CKRecord) -> Int64 {
+        func size(_ asset: CKAsset?) -> Int64 {
+            guard let url = asset?.fileURL,
+                  let bytes = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize else { return 0 }
+            return Int64(bytes)
+        }
+        let inline = Int64((record["payload"] as? Data)?.count ?? 0)
+        return inline + size(record["payloadAsset"] as? CKAsset) + size(record["file"] as? CKAsset)
+    }
+
     static func encodeSystemFields(_ record: CKRecord) -> Data {
         let coder = NSKeyedArchiver(requiringSecureCoding: true)
         record.encodeSystemFields(with: coder)
@@ -218,6 +229,9 @@ extension CloudKitSyncTransport: CKSyncEngineDelegate {
             let incoming = changes.modifications.compactMap { Self.incoming($0.record) }
             let deleted = changes.deletions.map(\.recordID.recordName)
             delegate?.transportFetched(incoming, deleted: deleted)
+            delegate?.transportProgress(.received(
+                records: changes.modifications.count + changes.deletions.count,
+                bytes: changes.modifications.reduce(0) { $0 + Self.byteSize($1.record) }))
 
         case .sentRecordZoneChanges(let sent):
             for record in sent.savedRecords {
@@ -227,6 +241,9 @@ extension CloudKitSyncTransport: CKSyncEngineDelegate {
                                            tag: record.recordChangeTag ?? "")
             }
             for id in sent.deletedRecordIDs { delegate?.transportDidDelete(id.recordName) }
+            delegate?.transportProgress(.sent(
+                records: sent.savedRecords.count + sent.deletedRecordIDs.count,
+                bytes: sent.savedRecords.reduce(0) { $0 + Self.byteSize($1) }))
             var retry: [CKSyncEngine.PendingRecordZoneChange] = []
             var needZone = false
             var zoneGone = false
@@ -277,10 +294,15 @@ extension CloudKitSyncTransport: CKSyncEngineDelegate {
             }
             if !retry.isEmpty { syncEngine.state.add(pendingRecordZoneChanges: retry) }
 
-        case .willFetchChanges, .willSendChanges:
+        case .willFetchChanges:
             onActivity?(true)
+            delegate?.transportProgress(.fetchStarted)
+        case .willSendChanges:
+            onActivity?(true)
+            delegate?.transportProgress(.sendStarted)
         case .didFetchChanges:
             onActivity?(false)
+            delegate?.transportProgress(.fetchFinished)
             // Complete only if the zone's part succeeded; a failed first fetch stays "pending full".
             delegate?.transportDidFinishFetch(wasFullFetch: fullFetchPending && !fetchFailed)
             if !fetchFailed { fullFetchPending = false }
@@ -289,6 +311,7 @@ extension CloudKitSyncTransport: CKSyncEngineDelegate {
             if done.zoneID == Self.zoneID, done.error != nil { fetchFailed = true }
         case .didSendChanges:
             onActivity?(false)
+            delegate?.transportProgress(.sendFinished)
 
         case .sentDatabaseChanges, .willFetchRecordZoneChanges:
             break

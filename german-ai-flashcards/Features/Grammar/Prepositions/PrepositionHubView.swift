@@ -407,11 +407,9 @@ struct PrepositionHubView: View {
             // Also not a preposition scene. The onboarding download pitch, judged against the
             // wizard's own copy — throwaway until it is settled.
             //
-            // A cover rather than a push, and that is not a style choice: the app's NavBar is an
-            // overlay in ContentView's ZStack that runs through the bottom safe area, so a
-            // pushed screen's own action bar ends up underneath it. The real wizard is presented
-            // as a cover for the same reason, so mocking it as one is also the only way the
-            // geometry being judged is the geometry that will ship.
+            // A cover rather than a push: the real wizard is presented as a cover, with no NavBar
+            // under it, so mocking it as one is the only way the geometry being judged is the
+            // geometry that will ship.
             Button {
                 showsTutorLab = true
             } label: {

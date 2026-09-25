@@ -15,6 +15,17 @@ protocol SyncTransport: AnyObject {
     func resetFetchState()
 }
 
+/// What the transport is doing, for the iCloud Sync screen's progress. CloudKit reports no totals
+/// for a fetch, so receiving is counted as it goes; sending is measured against what was queued.
+enum SyncTransportProgress {
+    case sendStarted
+    case sent(records: Int, bytes: Int64)
+    case sendFinished
+    case fetchStarted
+    case received(records: Int, bytes: Int64)
+    case fetchFinished
+}
+
 /// What goes up for one record.
 struct SyncOutgoing {
     var payload: SyncPayload
@@ -38,6 +49,7 @@ protocol SyncTransportDelegate: AnyObject {
     /// A fetch cycle finished. `wasFullFetch`: it started from no change token, so it saw the whole
     /// zone (how a new or different database is told apart from an unchanged one).
     func transportDidFinishFetch(wasFullFetch: Bool)
+    func transportProgress(_ progress: SyncTransportProgress)
     /// A save failed for a reason that isn't a conflict or transient (too large, invalid).
     func transportFailed(_ name: String, error: String)
 }
@@ -68,6 +80,8 @@ final class FakeSyncTransport: SyncTransport {
         guard let delegate else { return }
         let queue = saves
         saves = []
+        delegate.transportProgress(.sendStarted)
+        defer { delegate.transportProgress(.fetchFinished) }
         for name in queue {
             for _ in 0..<5 {
                 guard let out = delegate.outgoing(name) else { break }
@@ -76,6 +90,7 @@ final class FakeSyncTransport: SyncTransport {
                 switch server.save(name, payload: payload, basedOn: tag) {
                 case .saved(let newTag):
                     delegate.transportDidSave(name, sent: payload, stamp: Data(String(newTag).utf8), tag: String(newTag))
+                    delegate.transportProgress(.sent(records: 1, bytes: Int64(SyncJSON.object(payload).canonicalData.count)))
                 case let .conflict(serverPayload, serverTag):
                     delegate.transportConflict(name, server: SyncIncoming(
                         name: name, payload: serverPayload,
@@ -94,6 +109,8 @@ final class FakeSyncTransport: SyncTransport {
             server.delete(name)
             delegate.transportDidDelete(name)
         }
+        delegate.transportProgress(.sendFinished)
+        delegate.transportProgress(.fetchStarted)
         let fullFetch = token == 0
         let changes = server.changes(since: token)
         token = changes.token
@@ -102,6 +119,9 @@ final class FakeSyncTransport: SyncTransport {
                          stamp: Data(String($0.stored.tag).utf8), tag: String($0.stored.tag))
         }
         delegate.transportFetched(incoming, deleted: changes.deleted)
+        delegate.transportProgress(.received(
+            records: incoming.count + changes.deleted.count,
+            bytes: incoming.reduce(0) { $0 + Int64(SyncJSON.object($1.payload).canonicalData.count) }))
         delegate.transportDidFinishFetch(wasFullFetch: fullFetch)
     }
 }

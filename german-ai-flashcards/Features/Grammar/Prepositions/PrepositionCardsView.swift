@@ -260,9 +260,9 @@ struct PrepositionCardsView: View {
             .disabled(index >= cards.count - 1)
         }
         .padding(.horizontal, 24)
-        // Clears the app's floating tab bar — the list screens buy the same room with
-        // `.contentMargins(.bottom, 120)`, which a plain VStack can't use.
-        .padding(.bottom, 100)
+        // The safe area already ends above the app's NavBar (ContentView), so this is only
+        // breathing room.
+        .padding(.bottom, 16)
     }
 }
 

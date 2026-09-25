@@ -16,6 +16,14 @@ final class SyncCoordinator {
     private(set) var stuckCount = 0
     /// Recent engine events, newest first (shown in DEBUG builds).
     private(set) var events: [String] = []
+    /// The sync in progress, for the screen's progress bar (`SyncProgress.swift`).
+    var activity = SyncActivity()
+    /// The last finished sync: what went up and what came down.
+    var lastSession: SyncSessionSummary? = SyncCoordinator.loadLastSession(key: "sync.lastSession")
+    /// Where `lastSession` is kept. The DEBUG round trip uses its own keys (like `zoneInstanceKey`).
+    @ObservationIgnored var lastSessionKey = "sync.lastSession" {
+        didSet { lastSession = Self.loadLastSession(key: lastSessionKey) }
+    }
 
     @ObservationIgnored let context: ModelContext
     @ObservationIgnored let identity: SyncIdentity
@@ -218,6 +226,9 @@ final class SyncCoordinator {
             deletes: owed.filter(\.pendingDelete).map(\.recordName)
         )
     }
+
+    /// Counts before a send starts, so the progress bar knows what's waiting.
+    func refreshCountsForProgress() { refreshCounts() }
 
     private func refreshCounts() {
         let device = Self.heartbeatKind, meta = Self.metaKind

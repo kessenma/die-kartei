@@ -40,6 +40,10 @@ final class SyncRecordState {
     var failureCount: Int = 0
     var lastError: String? = nil
     var updatedAt: Date = Date.distantPast
+    /// Size of the server copy's payload, and for a `File` record the file it carries: what this
+    /// record takes up in the learner's iCloud (the iCloud Sync screen totals these).
+    var serverBytes: Int = 0
+    var fileBytes: Int = 0
 
     init(recordName: String, kind: String) {
         self.recordName = recordName
@@ -56,6 +60,8 @@ final class SyncRecordState {
         set {
             serverPayload = newValue.server.map { SyncJSON.object($0).canonicalData }
             pendingPayload = newValue.pending.map { SyncJSON.object($0).canonicalData }
+            serverBytes = serverPayload?.count ?? 0
+            fileBytes = kind == "File" ? Int(newValue.server?["size"]?.int64Value ?? 0) : 0
         }
     }
 

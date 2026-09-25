@@ -149,6 +149,15 @@ extension SyncCoordinator {
 extension SyncCoordinator {
     static var zoneRecordName: String { SyncRecordName(kind: metaKind, id: SyncNameUUID.make("zone")).description }
 
+    /// The server has this zone's fingerprint: it was saved there, or fetched from there. Only
+    /// then does a missing zone mean "deleted". A fingerprint made locally before the zone ever
+    /// existed on the server (a first fetch that found nothing) proves nothing.
+    var zoneConfirmed: Bool {
+        let name = Self.zoneRecordName
+        let state = SyncStoreMeta.states(named: [name], in: context)[name]
+        return knownZoneInstance != nil && (state?.serverStamp != nil || state?.serverPayload != nil)
+    }
+
     var knownZoneInstance: String? {
         get { UserDefaults.standard.string(forKey: zoneInstanceKey) }
         set { UserDefaults.standard.set(newValue, forKey: zoneInstanceKey) }

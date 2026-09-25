@@ -47,10 +47,6 @@ struct JobPostingDetailView: View {
     @State private var readingTimer = StoryReadingTimer()
     @State private var wordsSaved = 0
 
-    /// Clearance for the floating tab bar under a pushed screen (`contentMargins` does the same
-    /// for the lists).
-    private static let bottomClearance: CGFloat = 96
-
     /// The tutor the lookups run on: the one that answered earlier lookups here, else the
     /// learner's story tutor, else whatever is on disk. Never starts a download for one word.
     private var postingModel: MLXModel {
@@ -226,7 +222,6 @@ struct JobPostingDetailView: View {
         .themedScreen()
         .safeAreaInset(edge: .bottom) {
             immersiveBar
-                .padding(.bottom, Self.bottomClearance)
         }
     }
 

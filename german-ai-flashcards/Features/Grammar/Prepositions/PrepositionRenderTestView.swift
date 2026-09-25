@@ -158,8 +158,8 @@ struct PrepositionSceneGalleryView: View {
             .disabled(index >= preps.count - 1)
         }
         .padding(.horizontal, 24)
-        // Clears the app's floating tab bar — same convention as the preposition cards pager.
-        .padding(.bottom, 100)
+        // Same breathing room as the preposition cards pager; the safe area clears the NavBar.
+        .padding(.bottom, 16)
     }
 }
 

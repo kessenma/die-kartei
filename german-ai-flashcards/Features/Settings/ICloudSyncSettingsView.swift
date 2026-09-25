@@ -9,6 +9,8 @@ struct ICloudSyncSettingsView: View {
     @State private var confirmingDelete = false
     @State private var deleteError: String?
     @State private var working = false
+    /// What's in iCloud, by kind. Refreshed when a sync finishes.
+    @State private var storage: [SyncStorageLine] = []
 
     var body: some View {
         Form {
@@ -69,20 +71,7 @@ struct ICloudSyncSettingsView: View {
                 .themedListRow()
             }
 
-            Section {
-                Label("Flashcards, Wortschatz and their review schedule", systemImage: "rectangle.stack")
-                Label("Study days, streak, XP and stats", systemImage: "flame")
-                Label("Your level, placement checks and badges", systemImage: "figure.stairs")
-                Label("Stories, papers and the words you looked up", systemImage: "book.pages")
-                Label("Conversations and coaching memory", systemImage: "bubble.left.and.bubble.right")
-                Label("Deutschkurs notes, handouts and job postings", systemImage: "graduationcap")
-                Label("Card pictures, illustrations and PDFs", systemImage: "photo.on.rectangle")
-            } header: {
-                Text("What syncs").themedSectionHeader()
-            } footer: {
-                Text("Downloaded models, voices, settings and the crash log stay on each device. Pictures and PDFs use your iCloud storage.")
-            }
-            .themedListRow()
+            storageSection
 
             Section {
                 Button(role: .destructive) {
@@ -119,8 +108,13 @@ struct ICloudSyncSettingsView: View {
             #endif
         }
         .themedListScreen()
+        // Clear of the floating tab bar, like the other Settings screens.
+        .contentMargins(.bottom, 120)
         .navigationBarTitleDisplayMode(.inline)
         .task { await sync.refreshAccount() }
+        .task(id: sync.coordinator?.lastSession?.finishedAt) {
+            storage = sync.coordinator?.storageSummary() ?? []
+        }
         .alert("Delete your iCloud data?", isPresented: $confirmingDelete) {
             Button("Delete", role: .destructive) {
                 run {
@@ -155,9 +149,80 @@ struct ICloudSyncSettingsView: View {
         } icon: {
             Image(systemName: symbol).foregroundStyle(tint)
         }
+        if let coordinator = sync.coordinator {
+            progressRows(coordinator)
+        }
         if let notice = sync.notice {
             Text(notice).font(.footnote).foregroundStyle(.secondary)
         }
+    }
+
+    // MARK: Progress
+
+    /// While syncing: how far the upload is, and what has come down so far. CloudKit doesn't say how
+    /// much a download will bring, so receiving counts up. Afterwards: what the last sync moved.
+    @ViewBuilder
+    private func progressRows(_ coordinator: SyncCoordinator) -> some View {
+        let activity = coordinator.activity
+        if activity.sending, activity.sendTotal > 0 {
+            VStack(alignment: .leading, spacing: 4) {
+                ProgressView(value: Double(min(activity.sent, activity.sendTotal)), total: Double(activity.sendTotal))
+                Text("Sending \(activity.sent) of \(activity.sendTotal) · \(bytes(activity.sentBytes))")
+                    .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+            }
+        }
+        if activity.receiving || (activity.isActive && activity.received > 0) {
+            HStack(spacing: 8) {
+                if activity.receiving { ProgressView().controlSize(.small) }
+                Text("Receiving \(activity.received) items · \(bytes(activity.receivedBytes))")
+                    .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+            }
+        }
+        if !activity.isActive, let last = coordinator.lastSession {
+            Text("Last sync: " + moved(sent: last.sent, sentBytes: last.sentBytes,
+                                       received: last.received, receivedBytes: last.receivedBytes))
+                .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+        }
+    }
+
+    /// "12 sent (40 KB) · 3 received (8 KB)", leaving out a direction that moved nothing.
+    private func moved(sent: Int, sentBytes: Int64, received: Int, receivedBytes: Int64) -> String {
+        var parts: [String] = []
+        if sent > 0 { parts.append("\(sent) sent (\(bytes(sentBytes)))") }
+        if received > 0 { parts.append("\(received) received (\(bytes(receivedBytes)))") }
+        return parts.isEmpty ? "already up to date" : parts.joined(separator: " · ")
+    }
+
+    private func bytes(_ count: Int64) -> String {
+        count.formatted(.byteCount(style: .file))
+    }
+
+    // MARK: Storage
+
+    /// What's in iCloud, by kind. Before anything has synced, the same list says what will.
+    private var storageSection: some View {
+        Section {
+            if storage.isEmpty {
+                ForEach(SyncCoordinator.storageCategories) { line in
+                    Label(line.title, systemImage: line.symbol)
+                }
+            } else {
+                LabeledContent("Total", value: bytes(storage.reduce(0) { $0 + $1.bytes }))
+                    .fontWeight(.semibold)
+                ForEach(storage) { line in
+                    LabeledContent {
+                        Text("\(line.records) · \(bytes(line.bytes))").monospacedDigit()
+                    } label: {
+                        Label(line.title, systemImage: line.symbol)
+                    }
+                }
+            }
+        } header: {
+            Text(storage.isEmpty ? "What syncs" : "In your iCloud").themedSectionHeader()
+        } footer: {
+            Text("This lives in Die Kartei's private iCloud database, not in iCloud Drive, so it doesn't show up in the Files app. To see its size or remove it: Settings ▸ your name ▸ iCloud ▸ Manage Account Storage ▸ Die Kartei. Downloaded models, voices, settings and the crash log stay on each device.")
+        }
+        .themedListRow()
     }
 
     private var isBusy: Bool { sync.engineBusy || (sync.coordinator?.isSyncing ?? false) }

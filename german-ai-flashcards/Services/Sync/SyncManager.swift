@@ -111,7 +111,7 @@ final class SyncManager {
         // The engine's saved state belongs to one store *and* one CloudKit database: a Debug build
         // (Development) must not reuse a TestFlight build's (Production) change tokens.
         let transport = CloudKitSyncTransport(storeTag: storeTag + "|" + Self.environmentName)
-        transport.zoneWasSeen = { [weak self] in self?.coordinator?.knownZoneInstance != nil }
+        transport.zoneWasSeen = { [weak self] in self?.coordinator?.zoneConfirmed == true }
         let coordinator = SyncCoordinator(context: container.mainContext, identity: identity, transport: transport)
         transport.onAccountChange = { [weak self] change in self?.accountChanged(change) }
         transport.onZoneDeleted = { [weak self] reason in self?.zoneDeleted(reason) }

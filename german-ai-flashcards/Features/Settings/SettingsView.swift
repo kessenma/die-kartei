@@ -289,6 +289,7 @@ private struct ModelSettingsScreen: View {
             ModelSettingsView(modelManager: modelManager, mlxService: mlxService)
         }
         .themedListScreen()
+        .defaultScrollAnchor(.bottom) // TEMP-NAVBAR-VERIFY
         .navigationBarTitleDisplayMode(.inline)
     }
 }

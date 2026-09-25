@@ -59,9 +59,12 @@ enum SyncDebugVerify {
         // Their own fingerprint keys, so the round trip never touches the app's real sync state.
         phone.zoneInstanceKey = "sync.verify.zone.phone"
         pad.zoneInstanceKey = "sync.verify.zone.pad"
+        phone.lastSessionKey = "sync.verify.session.phone"
+        pad.lastSessionKey = "sync.verify.session.pad"
         defer {
-            UserDefaults.standard.removeObject(forKey: phone.zoneInstanceKey)
-            UserDefaults.standard.removeObject(forKey: pad.zoneInstanceKey)
+            for key in [phone.zoneInstanceKey, pad.zoneInstanceKey, phone.lastSessionKey, pad.lastSessionKey] {
+                UserDefaults.standard.removeObject(forKey: key)
+            }
         }
         phone.start()
         pad.start()

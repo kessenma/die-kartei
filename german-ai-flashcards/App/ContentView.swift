@@ -42,6 +42,10 @@ struct ContentView: View {
 
     @State private var settingsResetToken: Int = 0
     @State private var homeResetToken: Int = 0
+    /// How far the NavBar reaches above the bottom safe area, measured off the bar itself. Added
+    /// to every tab's bottom safe area, so lists, forms, scroll views and pinned bottom bars clear
+    /// the bar without a hand-set margin. Zero while the keyboard is up: the bar is behind it.
+    @State private var navBarClearance: CGFloat = 0
     @State private var pendingSelection: CardSelectionPayload?
     @State private var pendingIllustration: PendingIllustration?
     @State private var saveError: String?
@@ -155,6 +159,11 @@ struct ContentView: View {
             // crossfades the background. Each tab's own List still has to opt into showing it
             // through (`.themedListScreen()`); on Klar this is the system grouped color either way.
             .themedScreen()
+            // The NavBar floats over the tabs rather than taking room from them, so this is what
+            // keeps their content out from under it. Safe area, not padding: backgrounds still run
+            // to the screen edge, and it reaches every pushed screen through the NavigationStacks.
+            // Covers and sheets present above the bar and get their own safe area, untouched.
+            .safeAreaPadding(.bottom, navBarClearance)
 
             VStack {
                 Spacer()
@@ -183,6 +192,12 @@ struct ContentView: View {
                         }
                     }
                 )
+                // The bar runs through the bottom safe area, so only the part above it is new
+                // ground for the tabs to clear. With the keyboard up the inset covers the whole
+                // bar and this comes out zero.
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    max(0, proxy.size.height - proxy.safeAreaInsets.bottom)
+                } action: { navBarClearance = $0; print("[navbar-verify] clearance \($0)") } // TEMP-NAVBAR-VERIFY
             }
             // The bar's column runs through the bottom safe area so the bar can sit on the screen
             // edge rather than floating above the home indicator; the Spacer takes up the slack and
