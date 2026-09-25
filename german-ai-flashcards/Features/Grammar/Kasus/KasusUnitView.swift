@@ -534,13 +534,13 @@ struct KasusUnitView: View {
         }
     }
     .environment(ActivityRouter())
-    .modelContainer(for: [LearnerProfile.self, StudyDay.self, KasusRound.self, GeneratedKasusStory.self], inMemory: true)
+    .inMemoryModelContainer(for: [LearnerProfile.self, StudyDay.self, KasusRound.self, GeneratedKasusStory.self])
 }
 
 #Preview("Kasus unit · Markieren played") {
     let container = try! ModelContainer(
         for: LearnerProfile.self, StudyDay.self, KasusRound.self, GeneratedKasusStory.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none)
     )
     container.mainContext.insert(KasusRound(
         storyID: "ks-dat-a2-schluessel", unitRaw: KasusUnit.dativ.rawValue, stepRaw: KasusRoundStep.find.rawValue,

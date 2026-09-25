@@ -109,7 +109,11 @@ struct ClassCourseDetailView: View {
         } message: {
             Text("A vocab sheet is paired into cards for you; in a handout or story you highlight the phrases you want.")
         }
-        .onAppear { lastCourseID = course.id.uuidString }
+        .onAppear {
+            SyncInUse.begin(course.id)
+            lastCourseID = course.id.uuidString
+        }
+        .onDisappear { SyncInUse.end(course.id) }
     }
 
     // MARK: - Sections

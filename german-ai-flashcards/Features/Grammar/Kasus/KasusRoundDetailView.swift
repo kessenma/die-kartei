@@ -379,5 +379,5 @@ struct KasusRoundDetailView: View {
     return NavigationStack {
         KasusRoundDetailView(round: round)
     }
-    .modelContainer(for: KasusRound.self, inMemory: true)
+    .inMemoryModelContainer(for: [KasusRound.self])
 }

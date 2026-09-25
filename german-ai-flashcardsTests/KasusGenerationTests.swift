@@ -540,7 +540,7 @@ struct KasusGenerationTests {
     @Test("A generated story round-trips through the store and plays like a bundled one")
     func storeRoundTrip() async throws {
         let container = try ModelContainer(for: GeneratedKasusStory.self, KasusRound.self,
-                                           configurations: SwiftData.ModelConfiguration(isStoredInMemoryOnly: true))
+                                           configurations: SwiftData.ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none))
         let context = ModelContext(container)
         let generator = KasusStoryGenerator(writer: KasusGenerationFixtures.writer(for: .dativ, .good), lexicon: lexicon)
         let result = await generator.generate(KasusGenerationFixtures.request(for: .dativ))

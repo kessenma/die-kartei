@@ -457,5 +457,5 @@ private struct URLImportView: View {
         }
         .environment(\.appTheme, theme)
     }
-    .modelContainer(for: StudyPaper.self, inMemory: true)
+    .inMemoryModelContainer(for: [StudyPaper.self])
 }

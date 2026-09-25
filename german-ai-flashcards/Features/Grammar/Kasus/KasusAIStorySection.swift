@@ -270,7 +270,7 @@ private enum KasusAIStoryPreview {
     static func container() -> ModelContainer {
         let container = try! ModelContainer(
             for: GeneratedKasusStory.self, KasusRound.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         )
         let plan = KasusGenerationFixtures.plan(for: .dativ)
         let check = KasusStoryCheck.run(raw: KasusGenerationFixtures.output(for: .dativ, .good), plan: plan)

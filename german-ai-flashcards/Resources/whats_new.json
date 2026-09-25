@@ -52,6 +52,11 @@
           "title": "Endungen · Fill in the endings",
           "detail": "Fill each d__ and ein__ gap by tapping its ending (-em, -er, or – for none), with a Lernhilfe level that lights up the right cell of the endings table, the choice to check each answer right away or all at the end, and Show answers when you're stuck.",
           "symbol": "character.cursor.ibeam"
+        },
+        {
+          "title": "iCloud-Sync · iCloud Sync",
+          "detail": "Your cards, progress, streak, stories and conversations now stay the same on your iPhone and iPad, through your own iCloud.",
+          "symbol": "icloud"
         }
       ]
     },

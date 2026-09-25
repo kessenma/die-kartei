@@ -53,6 +53,7 @@ enum WortschatzDebugSeeder {
     /// 5% lapsed, 8% scheduled — deterministic, so a re-seed reproduces the same picture.
     @discardableResult
     static func seed(in context: ModelContext) -> String {
+        if SyncManager.shared.isRunning { return SyncManager.seedRefusal }
         let store = DeckStore(modelContext: context)
         guard let deck = store.fetchOrCreateWortschatzDeck() else { return "no Wortschatz deck" }
         if !hasBackup {
@@ -151,6 +152,7 @@ enum WortschatzDebugSeeder {
     /// merged deck exists, because the merge only reads decks whose topic differs from it.
     @discardableResult
     static func createLegacyDecks(in context: ModelContext) -> String {
+        if SyncManager.shared.isRunning { return SyncManager.seedRefusal }
         guard DeckStore(modelContext: context).fetchWortschatzDeck() == nil else {
             return "a Wortschatz deck already exists; restore or delete it first"
         }

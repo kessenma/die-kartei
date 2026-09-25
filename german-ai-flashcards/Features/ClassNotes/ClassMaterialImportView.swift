@@ -439,6 +439,6 @@ struct ClassMaterialPasteView: View {
     return ForEach(AppTheme.allCases) { theme in
         ClassMaterialImportView(course: course, entry: entry) { _ in }
             .environment(\.appTheme, theme)
-            .modelContainer(for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self], inMemory: true)
+            .inMemoryModelContainer(for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self])
     }
 }

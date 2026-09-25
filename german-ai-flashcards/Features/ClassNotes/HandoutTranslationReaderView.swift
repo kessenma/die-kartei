@@ -278,7 +278,7 @@ private func translationReaderPreview(_ theme: AppTheme) -> some View {
         HandoutTranslationReaderView(material: material, modelManager: MLXModelManager(), mlxService: MLXGenerationService())
     }
     .environment(\.appTheme, theme)
-    .modelContainer(for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self], inMemory: true)
+    .inMemoryModelContainer(for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self])
 }
 
 #Preview("Translation · System")  { translationReaderPreview(.klar) }

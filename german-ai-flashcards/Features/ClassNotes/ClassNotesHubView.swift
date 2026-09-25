@@ -335,6 +335,13 @@ enum ClassEntryStore {
             return existing
         }
         let entry = ClassEntry(date: today)
+        // The same id on every device for (course, day): two devices filing today's first handout
+        // offline create one entry, not two.
+        let derived = SyncNameUUID.make("class-entry", course.id.uuidString, SyncDayKey.key(for: today))
+        // Only if no row has it yet (an entry made today and later moved to another date keeps it).
+        if (try? context.fetchCount(FetchDescriptor<ClassEntry>(predicate: #Predicate { $0.id == derived }))) == 0 {
+            entry.id = derived
+        }
         context.insert(entry)
         entry.course = course
         course.updatedAt = .now

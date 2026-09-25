@@ -69,37 +69,19 @@ struct german_ai_flashcardsApp: App {
         // so stale devices exist.
         UserDefaults.standard.removeObject(forKey: "prepositions.sceneStyle")
 
-        let schema = Schema([
-            SavedDeck.self, SavedCard.self, QuizResult.self,
-            ChatConversation.self, ChatMessage.self,
-            StudyPaper.self,
-            StudyStory.self,
-            LearnedPhrase.self,
-            LearnerProfile.self, ArchivedMemoryItem.self,
-            StudyDay.self,
-            MatchingPairStat.self, MatchingRound.self,
-            ArticleWordStat.self, ArticleRound.self,
-            PrepositionStat.self, PrepositionRound.self,
-            KasusRound.self, GeneratedKasusStory.self,
-            StoryReadingSession.self, StoryQuizAttempt.self,
-            BatchJob.self,
-            JobPosting.self,
-            ClassCourse.self, ClassEntry.self, ClassMaterial.self
-        ])
-        let config = SwiftData.ModelConfiguration(schema: schema)
+        let schema = Schema(AppSchema.models)
+        // `.none` is load-bearing. The parameter defaults to `.automatic`, which turns on SwiftData's
+        // own CloudKit mirroring the moment the app gains an iCloud container entitlement. This
+        // schema doesn't meet mirroring's rules, so the store would fail to open. iCloud Sync runs
+        // on CKSyncEngine instead (docs/ICLOUD_SYNC.md), and this store stays local.
+        let config = SwiftData.ModelConfiguration(schema: schema, cloudKitDatabase: .none)
 
         do {
             container = try ModelContainer(for: schema, configurations: [config])
         } catch {
-            // Schema changed — delete old store and recreate
-            print("SwiftData migration failed: \(error). Recreating store.")
-            let storeURL = config.url
-            try? FileManager.default.removeItem(at: storeURL)
-            // Also remove WAL/SHM files
-            let walURL = storeURL.appendingPathExtension("wal")
-            let shmURL = storeURL.appendingPathExtension("shm")
-            try? FileManager.default.removeItem(at: walURL)
-            try? FileManager.default.removeItem(at: shmURL)
+            // The store can't be opened (a migration SwiftData couldn't do). Move it aside rather
+            // than delete it, so the old file can still be rescued, and start fresh.
+            StoreRecovery.moveAside(storeURL: config.url, reason: error)
 
             do {
                 container = try ModelContainer(for: schema, configurations: [config])
@@ -111,6 +93,19 @@ struct german_ai_flashcardsApp: App {
         let mm = MLXModelManager()
         _modelManager = State(initialValue: mm)
         _coordinator = State(initialValue: GenerationCoordinator(modelManager: mm))
+
+        // iCloud Sync starts here rather than in a view, so a silent push that wakes the app in
+        // the background finds the engine running. When another device's study lands, the
+        // practice reminders re-plan, so this device doesn't nag about a day already studied.
+        let syncContainer = container
+        SyncManager.shared.onRemoteChanges = { kinds in
+            guard kinds.contains(StudyDayCodec.spec.kind) else { return }
+            Task { @MainActor in
+                await PracticeReminderService.refresh(context: syncContainer.mainContext, modelManager: mm)
+            }
+        }
+        SyncManager.shared.modelManager = mm
+        SyncManager.shared.configure(container: container)
     }
 
     var body: some Scene {
@@ -141,6 +136,10 @@ struct german_ai_flashcardsApp: App {
                     if phase == .background {
                         coordinator.mlxService.releaseMemory(reason: .background)
                     }
+                    // iCloud Sync: queue the latest edits before suspension; on return, send and
+                    // fetch (CloudKit pushes can be late or dropped).
+                    if phase == .background { SyncManager.shared.appWillResignActive() }
+                    if phase == .active { Task { await SyncManager.shared.appBecameActive() } }
                     // Keep practice reminders anchored to the real last-practice date: re-derive the
                     // ladder whenever the app enters or leaves the foreground. Leaving captures any
                     // practice done this session; entering picks up permission or settings changes.

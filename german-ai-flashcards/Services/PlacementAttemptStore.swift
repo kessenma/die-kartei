@@ -27,7 +27,7 @@ enum PlacementAttemptStore {
 
     /// Roughly 6 KB per attempt, so the cap is ~240 KB on disk. This is a runaway backstop, not a
     /// product limit: a learner retaking monthly for three years lands at 36.
-    static let cap = 40
+    nonisolated static let cap = 40
 
     private static let directoryName = "Placement"
     private static let fileName = "attempts.json"
@@ -81,6 +81,11 @@ enum PlacementAttemptStore {
 
     static func deleteAll() {
         write([])
+    }
+
+    /// iCloud Sync hands over the merged history from every device: newest first, capped.
+    static func replaceAll(_ attempts: [PlacementAttempt]) {
+        write(Array(attempts.sorted { $0.takenAt > $1.takenAt }.prefix(cap)))
     }
 
     /// Records a finished run.

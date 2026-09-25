@@ -538,7 +538,7 @@ private func hubPreview(_ theme: AppTheme) -> some View {
     .environment(ActivityRouter())
     .environment(SettingsRouter())
     .environment(\.appTheme, theme)
-    .modelContainer(for: [SavedDeck.self, SavedCard.self, QuizResult.self, StudyDay.self], inMemory: true)
+    .inMemoryModelContainer(for: [SavedDeck.self, SavedCard.self, QuizResult.self, StudyDay.self])
 }
 
 #Preview("Wortschatz · System")   { hubPreview(.klar) }

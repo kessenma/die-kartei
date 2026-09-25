@@ -276,6 +276,6 @@ struct ClassCourseEditorView: View {
     ForEach(AppTheme.allCases) { theme in
         ClassCourseEditorView(course: nil, defaultLevel: .a2)
             .environment(\.appTheme, theme)
-            .modelContainer(for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self], inMemory: true)
+            .inMemoryModelContainer(for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self])
     }
 }

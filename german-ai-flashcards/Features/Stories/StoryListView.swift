@@ -278,7 +278,7 @@ struct CEFRLevelChip: View {
 #Preview("Short stories · 4 themes") {
     let container = try! ModelContainer(
         for: StudyStory.self, StoryReadingSession.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none)
     )
     // Enough spread that every filter has something to bite on. The picture files don't exist in a
     // preview, so illustrated rows show the placeholder — which is the row height that matters.

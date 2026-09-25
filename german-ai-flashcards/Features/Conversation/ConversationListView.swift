@@ -341,6 +341,6 @@ struct ConversationRow: View {
             ConversationListView(modelManager: MLXModelManager(), mlxService: MLXGenerationService())
         }
         .environment(\.appTheme, theme)
-        .modelContainer(for: [ChatConversation.self, SavedDeck.self], inMemory: true)
+        .inMemoryModelContainer(for: [ChatConversation.self, SavedDeck.self])
     }
 }

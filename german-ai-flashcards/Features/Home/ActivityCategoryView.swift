@@ -337,7 +337,7 @@ private func categoryPreview(_ theme: AppTheme) -> some View {
     }
     .environment(ActivityRouter())
     .environment(\.appTheme, theme)
-    .modelContainer(for: [SavedDeck.self, StudyDay.self], inMemory: true)
+    .inMemoryModelContainer(for: [SavedDeck.self, StudyDay.self])
 }
 
 #Preview("Category · System")   { categoryPreview(.klar) }

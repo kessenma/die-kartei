@@ -1062,7 +1062,7 @@ enum EndingsDebugState: String {
 
 #Preview("Case endings") {
     NavigationStack { CaseEndingsView() }
-        .modelContainer(for: [LearnerProfile.self, StudyDay.self], inMemory: true)
+        .inMemoryModelContainer(for: [LearnerProfile.self, StudyDay.self])
 }
 
 #Preview("Case endings · 4 themes") {
@@ -1073,7 +1073,7 @@ enum EndingsDebugState: String {
                 .tabItem { Text(theme.label) }
         }
     }
-    .modelContainer(for: [LearnerProfile.self, StudyDay.self], inMemory: true)
+    .inMemoryModelContainer(for: [LearnerProfile.self, StudyDay.self])
 }
 
 #Preview("Schnellrunde · 4 themes") {
@@ -1088,5 +1088,5 @@ enum EndingsDebugState: String {
             .tabItem { Text(theme.label) }
         }
     }
-    .modelContainer(for: [LearnerProfile.self, StudyDay.self], inMemory: true)
+    .inMemoryModelContainer(for: [LearnerProfile.self, StudyDay.self])
 }

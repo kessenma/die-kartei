@@ -61,10 +61,14 @@ struct DeckImportSheet: View {
 
                 if existing != nil {
                     Section {
-                        Button {
-                            perform(.replace)
-                        } label: {
-                            Label("Replace my copy", systemImage: "arrow.triangle.2.circlepath")
+                        // With iCloud Sync on, the deck is already the same on every device, and
+                        // replacing would write older counts over synced ones.
+                        if !SyncManager.shared.isRunning {
+                            Button {
+                                perform(.replace)
+                            } label: {
+                                Label("Replace my copy", systemImage: "arrow.triangle.2.circlepath")
+                            }
                         }
                         Button {
                             perform(.keepBoth)
@@ -75,7 +79,9 @@ struct DeckImportSheet: View {
                         Text("You already have this deck")
                             .themedSectionHeader()
                     } footer: {
-                        Text("Replacing takes the arriving deck's cards and progress. Keeping both leaves your copy untouched and adds a second one.")
+                        Text(SyncManager.shared.isRunning
+                             ? "iCloud Sync already keeps this deck the same on your devices. Keeping both adds a second copy."
+                             : "Replacing takes the arriving deck's cards and progress. Keeping both leaves your copy untouched and adds a second one.")
                     }
                 } else {
                     Section {

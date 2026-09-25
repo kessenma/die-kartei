@@ -58,6 +58,6 @@ struct ClassMaterialListView: View {
         }
         .environment(ActivityRouter())
         .environment(\.appTheme, theme)
-        .modelContainer(for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self, SavedDeck.self, SavedCard.self], inMemory: true)
+        .inMemoryModelContainer(for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self, SavedDeck.self, SavedCard.self])
     }
 }

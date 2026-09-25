@@ -40,7 +40,7 @@ struct KasusRecordingTests {
     /// outlives the context.
     private func store() throws -> (container: ModelContainer, context: ModelContext) {
         let container = try ModelContainer(for: LearnerProfile.self, StudyDay.self, KasusRound.self,
-                                           configurations: SwiftData.ModelConfiguration(isStoredInMemoryOnly: true))
+                                           configurations: SwiftData.ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none))
         return (container, ModelContext(container))
     }
 

@@ -25,6 +25,7 @@ enum StoryDebugSeeder {
     @discardableResult
     @MainActor
     static func seed(in context: ModelContext) -> StudyStory? {
+        if SyncManager.shared.isRunning { return nil }  // SyncManager.seedRefusal
         if let existing = existing(in: context) { return existing }
 
         let story = StudyStory(topic: "Ein Tag in Berlin", level: .a2, genre: .alltag)

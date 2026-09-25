@@ -121,8 +121,13 @@ enum StudyLogService {
     }
 
     private static func fetchOrCreate(_ dayStart: Date, in context: ModelContext) -> StudyDay {
-        let descriptor = FetchDescriptor<StudyDay>(predicate: #Predicate { $0.dayStart == dayStart })
-        if let existing = try? context.fetch(descriptor).first {
+        // Match the calendar date, not the exact instant: after a time-zone change, today's
+        // midnight is a different instant than the one the row was made with, and a second row
+        // for the same date would split the day (and, with iCloud Sync, share one record).
+        let key = SyncDayKey.key(for: dayStart)
+        let lo = dayStart.addingTimeInterval(-14 * 3600), hi = dayStart.addingTimeInterval(14 * 3600)
+        let descriptor = FetchDescriptor<StudyDay>(predicate: #Predicate { $0.dayStart >= lo && $0.dayStart <= hi })
+        if let existing = (try? context.fetch(descriptor))?.first(where: { SyncDayKey.key(for: $0.dayStart) == key }) {
             return existing
         }
         let created = StudyDay(dayStart: dayStart)

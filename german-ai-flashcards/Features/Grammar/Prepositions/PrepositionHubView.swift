@@ -516,5 +516,5 @@ struct PrepositionHubView: View {
         }
     }
     .environment(ActivityRouter())
-    .modelContainer(for: [PrepositionRound.self, PrepositionStat.self], inMemory: true)
+    .inMemoryModelContainer(for: [PrepositionRound.self, PrepositionStat.self])
 }

@@ -565,7 +565,7 @@ private func previewSheet(_ fixture: KasusCannedOutput, unit: KasusUnit = .dativ
             .tabItem { Text(theme.label) }
         }
     }
-    .modelContainer(for: [GeneratedKasusStory.self, KasusRound.self], inMemory: true)
+    .inMemoryModelContainer(for: [GeneratedKasusStory.self, KasusRound.self])
 }
 
 #Preview("Generation · passes · 4 themes") { previewSheet(.good) }

@@ -127,12 +127,12 @@ final class ConversationEngine: WordInspecting {
     private var pendingModelAction: (() -> Void)?
 
     // Timer
+    /// When the running stretch started; nil while paused. Only the seconds of this sitting are
+    /// ever *added* to `conversation.durationSeconds` (and to the day log). The stored total is
+    /// never overwritten, because iCloud Sync merges it as a per-device counter: time spent on
+    /// this chat on the other device lands in it too, and a write-back of an older total here
+    /// would erase that.
     private var appearedAt: Date?
-    private var baseDuration: Int
-    /// How much of `conversation.durationSeconds` has already been banked into the day log. Seeded
-    /// from the stored duration so re-opening an old chat replays none of its history; only the
-    /// seconds added in this sitting get logged.
-    private var loggedSeconds: Int
 
     var isRecording: Bool { speechRecognizer.isRecording }
     var liveTranscript: String { speechRecognizer.transcript }
@@ -181,8 +181,6 @@ final class ConversationEngine: WordInspecting {
         self.config = cfg
         self.inputMode = cfg.inputMode
         self.systemPrompt = ConversationPrompts.systemPrompt(for: cfg)
-        self.baseDuration = conversation.durationSeconds
-        self.loggedSeconds = conversation.durationSeconds
     }
 
     // MARK: - Lifecycle
@@ -221,39 +219,37 @@ final class ConversationEngine: WordInspecting {
 
     func dismissStrandedTurnNotice() { strandedTurnNotice = nil }
 
-    /// Live elapsed seconds for the header timer.
+    /// Live elapsed seconds for the header timer: the stored total plus the running stretch.
     func elapsedSeconds() -> Int {
-        guard let appearedAt else { return baseDuration }
-        return baseDuration + Int(Date().timeIntervalSince(appearedAt))
+        guard let appearedAt else { return conversation.durationSeconds }
+        return conversation.durationSeconds + Int(Date().timeIntervalSince(appearedAt))
     }
 
     /// Persist the running duration (call on disappear / end).
     func commitDuration() {
-        conversation.durationSeconds = elapsedSeconds()
-        baseDuration = conversation.durationSeconds
-        if appearedAt != nil { appearedAt = Date() }
-        bankStudyTime()
+        if let appearedAt {
+            addTime(Int(Date().timeIntervalSince(appearedAt)))
+            self.appearedAt = Date()
+        }
         save()
     }
 
     /// Stop the timer accruing while the app is backgrounded / not actively in view.
     func pause() {
         guard let appearedAt else { return }
-        baseDuration += Int(Date().timeIntervalSince(appearedAt))
+        addTime(Int(Date().timeIntervalSince(appearedAt)))
         self.appearedAt = nil
-        conversation.durationSeconds = baseDuration
-        bankStudyTime()
         save()
     }
 
-    /// Hand the seconds added since the last commit to the day log. Done as a running delta rather
-    /// than once at the end so time still lands on the calendar for a chat that's abandoned, never
-    /// summarized, or spread over several sittings — and never double-counts a resummarized one.
-    private func bankStudyTime() {
-        let delta = conversation.durationSeconds - loggedSeconds
-        guard delta > 0 else { return }
-        loggedSeconds = conversation.durationSeconds
-        StudyLogService.recordTime(.conversation, seconds: delta, in: modelContext)
+    /// Add a stretch to the chat's total and hand the same seconds to the day log. Done as it goes
+    /// rather than once at the end, so time still lands on the calendar for a chat that's abandoned,
+    /// never summarized, or spread over several sittings, and a resummarized one is never counted
+    /// twice.
+    private func addTime(_ seconds: Int) {
+        guard seconds > 0 else { return }
+        conversation.durationSeconds += seconds
+        StudyLogService.recordTime(.conversation, seconds: seconds, in: modelContext)
     }
 
     /// Resume counting when the user returns to the foreground.

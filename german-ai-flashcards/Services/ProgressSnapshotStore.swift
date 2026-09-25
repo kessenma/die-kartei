@@ -96,8 +96,8 @@ enum ProgressSnapshotStore {
 
     /// Runaway backstops, not product limits: 520 weekly snapshots is ten years; 600 milestones
     /// is a long journey. Oldest rows fall off first only at these extremes.
-    static let snapshotCap = 520
-    static let milestoneCap = 600
+    nonisolated static let snapshotCap = 520
+    nonisolated static let milestoneCap = 600
 
     private static let directoryName = "Progress"
     private static let fileName = "journey.json"

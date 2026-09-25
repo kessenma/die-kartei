@@ -185,6 +185,7 @@ enum ScreenshotDataSeeder {
     @discardableResult
     static func fill(in context: ModelContext) -> String {
         guard ScreenshotSeeding.isAvailable else { return "Not available in this build." }
+        if SyncManager.shared.isRunning { return SyncManager.seedRefusal }
 
         // A second fill undoes the first, so the real data underneath is still the thing backed up.
         if ScreenshotSeedBackupStore.exists { _ = restore(in: context) }

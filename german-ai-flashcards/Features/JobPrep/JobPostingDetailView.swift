@@ -168,11 +168,13 @@ struct JobPostingDetailView: View {
             )
         }
         .onAppear {
+            SyncInUse.begin(posting.id)
             setUp()
             readingTimer.start()
             posting.lastOpenedAt = .now
         }
         .onDisappear {
+            SyncInUse.end(posting.id)
             flushReading()
             webModel?.tearDown()
             webModel = nil
@@ -638,7 +640,7 @@ private func jobPostingDetailPreview() -> some View {
         }
         .environment(ActivityRouter())
         .environment(\.appTheme, theme)
-        .modelContainer(for: [JobPosting.self, SavedDeck.self, SavedCard.self, ChatConversation.self], inMemory: true)
+        .inMemoryModelContainer(for: [JobPosting.self, SavedDeck.self, SavedCard.self, ChatConversation.self])
     }
 }
 

@@ -261,6 +261,11 @@ final class PaperStudyService {
             vocabCards: vocab
         )
         deck.generatorRaw = "paper"
+        // Reuse the linked id only when that deck isn't here (it hasn't arrived from the other
+        // device yet); a regenerate next to a local deck keeps getting a fresh one.
+        if paper.deckID.flatMap({ SavedDeckCodec.fetchDeck(id: $0, in: modelContext) }) == nil {
+            deck.id = SyncSingletonDecks.linkedDeckID(existing: paper.deckID, kind: "paper", parentID: paper.id)
+        }
         modelContext.insert(deck)
         paper.deckID = deck.id
         try? modelContext.save()

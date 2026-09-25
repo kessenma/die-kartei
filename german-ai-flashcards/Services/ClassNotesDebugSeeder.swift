@@ -29,6 +29,7 @@ enum ClassNotesDebugSeeder {
     @discardableResult
     @MainActor
     static func seed(in context: ModelContext) -> String {
+        if SyncManager.shared.isRunning { return SyncManager.seedRefusal }
         let found = existing(in: context)
         if !found.isEmpty { return "already seeded (\(found.count) courses)" }
 

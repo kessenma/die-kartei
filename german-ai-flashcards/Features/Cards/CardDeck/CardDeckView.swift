@@ -334,6 +334,7 @@ struct CardDeckView: View {
             }
         }
         .onAppear {
+            SyncInUse.begin(deckUUID)
             localStyle = flashcardStyle
             localAutoAdvance = autoAdvance
             if localCards.isEmpty { localCards = cards }
@@ -393,6 +394,7 @@ struct CardDeckView: View {
             if hasStarted, !showQuizSummary, !isPaused {
                 savePauseProgress()
             }
+            SyncInUse.end(deckUUID)
         }
         .memoryContext("Deck study")
         // Keyed on the summary flag too: the loop exits when the session ends, and "Try Again"

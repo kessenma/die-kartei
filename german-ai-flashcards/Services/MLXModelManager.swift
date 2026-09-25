@@ -148,8 +148,14 @@ class MLXModelManager {
     /// It replaced `chatLevelRaw` + `storyLevelRaw`, which were last-used memories masquerading as
     /// defaults — the reason no declared default could be respected before.
     var germanLevelRaw: String {
-        didSet { UserDefaults.standard.set(germanLevelRaw, forKey: "german.level") }
+        didSet {
+            UserDefaults.standard.set(germanLevelRaw, forKey: "german.level")
+            UserDefaults.standard.set(Date.now, forKey: Self.germanLevelSetAtKey)
+        }
     }
+    /// When the learner last chose a level (declared it, or adopted a placement). iCloud Sync orders
+    /// competing levels by it. Never written by init: a default nobody chose must not travel.
+    static let germanLevelSetAtKey = "german.level.setAt"
     /// Typed accessor for the level anchor.
     var germanLevel: CEFRLevel {
         get { CEFRLevel(rawValue: germanLevelRaw) ?? .a2 }
@@ -158,7 +164,10 @@ class MLXModelManager {
     /// True when the learner chose the level themselves, false when a placement check set it.
     /// Drives copy only ("You set this" vs "From your check") — never behaviour.
     var germanLevelIsDeclared: Bool {
-        didSet { UserDefaults.standard.set(germanLevelIsDeclared, forKey: "german.level.declared") }
+        didSet {
+            UserDefaults.standard.set(germanLevelIsDeclared, forKey: "german.level.declared")
+            UserDefaults.standard.set(Date.now, forKey: Self.germanLevelSetAtKey)
+        }
     }
 
     /// Remembered conversation-setup defaults (so a new chat reuses the last choices).

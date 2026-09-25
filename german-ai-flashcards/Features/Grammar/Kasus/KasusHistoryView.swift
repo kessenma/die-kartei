@@ -684,7 +684,7 @@ struct KasusHistoryDebugView: View {
     NavigationStack {
         KasusHistoryView()
     }
-    .modelContainer(for: [KasusRound.self, ArticleRound.self, PrepositionRound.self, GeneratedKasusStory.self], inMemory: true)
+    .inMemoryModelContainer(for: [KasusRound.self, ArticleRound.self, PrepositionRound.self, GeneratedKasusStory.self])
 }
 
 /// A small in-memory history for the previews: two story steps, a Schnellrunde, and one round of
@@ -694,7 +694,7 @@ enum KasusHistoryPreview {
         let container = try! ModelContainer(
             for: KasusRound.self, ArticleRound.self, PrepositionRound.self,
             LearnerProfile.self, StudyDay.self, GeneratedKasusStory.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         )
         let context = container.mainContext
         let now = Date()

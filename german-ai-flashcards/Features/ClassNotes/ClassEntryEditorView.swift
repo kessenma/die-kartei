@@ -442,6 +442,6 @@ struct ClassWordListPasteSheet: View {
     ForEach(AppTheme.allCases) { theme in
         ClassEntryEditorView(entry: nil, course: nil)
             .environment(\.appTheme, theme)
-            .modelContainer(for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self], inMemory: true)
+            .inMemoryModelContainer(for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self])
     }
 }

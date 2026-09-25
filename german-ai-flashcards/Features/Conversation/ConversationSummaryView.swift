@@ -278,5 +278,5 @@ struct WrapLayout: Layout {
         modelManager: nil,
         onDone: {}
     )
-    .modelContainer(for: [ChatConversation.self], inMemory: true)
+    .inMemoryModelContainer(for: [ChatConversation.self])
 }

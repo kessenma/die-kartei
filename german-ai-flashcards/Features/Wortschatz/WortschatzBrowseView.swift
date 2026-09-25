@@ -228,5 +228,5 @@ struct WortschatzBrowseView: View {
         }
         .environment(\.appTheme, theme)
     }
-    .modelContainer(for: [SavedDeck.self, SavedCard.self, ArticleWordStat.self, MatchingPairStat.self], inMemory: true)
+    .inMemoryModelContainer(for: [SavedDeck.self, SavedCard.self, ArticleWordStat.self, MatchingPairStat.self])
 }

@@ -639,7 +639,7 @@ struct StoryQuizView: View {
 #Preview("Story quiz · 4 themes") {
     let container = try! ModelContainer(
         for: StudyStory.self,
-        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none)
     )
     let story = StudyStory(topic: "Ein Tag im Park", level: .a2, genre: .alltag)
     story.title = "Ein Tag im Park"

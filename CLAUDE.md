@@ -22,6 +22,9 @@ German for identity words and headings, plain English for explanation.
 - `docs/theme-upgrade.md` — the AppTheme system and its invariants.
 - `docs/MEMORY.md` — the memory budget, the one-heavy-resident invariant, Settings ▸ Speicher
   (crash/memory log), and how to measure on a device.
+- `docs/ICLOUD_SYNC.md` — iCloud Sync on CKSyncEngine: why not SwiftData mirroring, the invariants
+  (per-device counters, canonical ids, `cloudKitDatabase: .none`), merge rules, Development vs
+  Production, the one-time schema deploy. Adding a field to a synced model means adding it to its codec.
 - `docs/FUTURE_FEATURES.md` — ideas not yet built.
 
 ## What's New maintenance

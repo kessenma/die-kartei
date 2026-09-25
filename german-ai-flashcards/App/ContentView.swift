@@ -476,6 +476,21 @@ struct ContentView: View {
             if UserDefaults.standard.bool(forKey: "deckTransfer.debugVerify") {
                 print(DeckImporter.runDebugVerification(in: modelContext))
             }
+            // `-sync.debugVerify 1` syncs two temporary stores through an in-memory CloudKit
+            // stand-in with the real tracker/applier, checking counters add up and never double.
+            // No iCloud needed; results go to the console as `[sync.verify]` lines.
+            if UserDefaults.standard.bool(forKey: "sync.debugVerify") {
+                Task { print(await SyncDebugVerify.run()) }
+            }
+            // `-sync.debugOpen 1` opens Settings ▸ Account ▸ iCloud Sync (this simulator can't tap).
+            if UserDefaults.standard.bool(forKey: "sync.debugOpen") {
+                settingsRouter.route = .sync
+            }
+            // `-sync.debugSeedSchema 1` puts every KarteiItem field into the Development schema
+            // before a Production deploy (docs/ICLOUD_SYNC.md ▸ Shipping). Needs a signed-in device.
+            if UserDefaults.standard.bool(forKey: "sync.debugSeedSchema") {
+                Task { print("[sync] " + (await SyncManager.shared.seedDevelopmentSchema())) }
+            }
             // The Wortschatz box on a simulator that can't tap. `-wortschatz.debugLegacyDecks 1`
             // recreates the three old per-level SRS decks and clears the merge flag, so the merge
             // below has input; `-wortschatz.debugMerge 1` re-runs the merge now;
@@ -690,10 +705,18 @@ struct ContentView: View {
     /// skip it.
     private func offerWizardIfNeeded() {
         guard !hasSeenOnboardingV2 else { return }
-        hasSeenOnboardingV2 = true
-        hasSeenOnboardingWizard = true
-        hasSeenHeroModelIntro = true
         Task { @MainActor in
+            // A new device with iCloud Sync on: give the first fetch a moment. If this learner
+            // already onboarded on another device, their level and placement arrive (and with them
+            // the onboarded flag), and asking again would overwrite the real answers. The tutor
+            // download is still offered by the Home tutor card.
+            if SyncManager.shared.isRunning {
+                await SyncManager.shared.waitForFirstFetch(timeout: .seconds(10))
+                if UserDefaults.standard.bool(forKey: "hasSeenOnboardingV2") { return }
+            }
+            hasSeenOnboardingV2 = true
+            hasSeenOnboardingWizard = true
+            hasSeenHeroModelIntro = true
             try? await Task.sleep(for: .seconds(0.5))
             showOnboardingWizard = true
         }
@@ -998,5 +1021,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView(coordinator: GenerationCoordinator(modelManager: MLXModelManager()))
-        .modelContainer(for: SavedDeck.self, inMemory: true)
+        .inMemoryModelContainer(for: [SavedDeck.self])
 }

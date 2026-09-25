@@ -492,7 +492,7 @@ private func documentDeckBuilderPreview(_ theme: AppTheme) -> some View {
     }
     .environment(ActivityRouter())
     .environment(\.appTheme, theme)
-    .modelContainer(for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self, SavedDeck.self, SavedCard.self], inMemory: true)
+    .inMemoryModelContainer(for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self, SavedDeck.self, SavedCard.self])
 }
 
 #Preview("Builder · System")  { documentDeckBuilderPreview(.klar) }

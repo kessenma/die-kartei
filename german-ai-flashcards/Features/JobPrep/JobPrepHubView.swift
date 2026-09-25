@@ -384,6 +384,6 @@ struct JobPostingRow: View {
         }
         .environment(ActivityRouter())
         .environment(\.appTheme, theme)
-        .modelContainer(for: [JobPosting.self, ChatConversation.self, SavedDeck.self, SavedCard.self], inMemory: true)
+        .inMemoryModelContainer(for: [JobPosting.self, ChatConversation.self, SavedDeck.self, SavedCard.self])
     }
 }

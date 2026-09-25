@@ -25,6 +25,7 @@ enum KasusDebugSeeder {
     }
 
     static func seed(in context: ModelContext) -> String {
+        if SyncManager.shared.isRunning { return SyncManager.seedRefusal }
         let found = seeded(in: context)
         if found.count > 0 {
             return "already seeded (\(found.count) rounds); -kasus.debugSeedRounds remove takes them out"
