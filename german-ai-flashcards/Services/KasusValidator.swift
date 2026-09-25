@@ -12,6 +12,10 @@
 //  main-verb sein/werden/bleiben/heißen (`.copula`). Still several → `.label`: only the annotation
 //  decides, which an authored story may rely on and a generated one may not.
 //
+//  A contraction („im“, „zur“) is read as its preposition + article, so it is proven by the
+//  article's form or by its own preposition; a case-visible pronoun (mich, mir …) by its form.
+//  Both are spot-only targets: gradable, never blankable.
+//
 
 import Foundation
 
@@ -109,6 +113,11 @@ struct KasusReport {
         allIssues.reduce(into: [:]) { $0[$1.code, default: 0] += 1 }
     }
 
+    /// Located targets per kind: how many are spot-only contractions and pronouns.
+    var kindTally: [KasusTargetKind: Int] {
+        located.reduce(into: [:]) { $0[$1.kind, default: 0] += 1 }
+    }
+
     /// Labelled case counts over located targets ("Nom 6 · Akk 11 · Dat 9").
     var casesLine: String {
         let counts = located.reduce(into: [GrammarCase: Int]()) { $0[$1.kasus, default: 0] += 1 }
@@ -202,7 +211,9 @@ enum KasusValidator {
         }
 
         // Coverage: every determiner (or contraction) that opens a noun phrase starts a target or
-        // sits inside a notTargets phrase.
+        // sits inside a notTargets phrase. A story that targets one case-visible pronoun targets
+        // all of them (mich, mir, dich, dir, ihn, ihm), so Finden's hunt stays complete.
+        let targetsPronouns = results.contains { $0.located?.kind == .pronoun }
         for (p, paragraph) in paragraphs.enumerated() {
             let starts = Set(results.compactMap { result -> Int? in
                 guard let located = result.located, located.paragraphIndex == p else { return nil }
@@ -213,19 +224,25 @@ enum KasusValidator {
             }
             for (i, token) in paragraph.tokens.enumerated() {
                 let lower = token.text.lowercased()
-                guard KasusForms.parseDeterminer(lower) != nil || KasusForms.contractions[lower] != nil,
-                      let nounIndex = nounAfterDeterminer(at: i, in: paragraph)
-                else { continue }
+                let phraseEnd: String.Index
+                if targetsPronouns, KasusForms.pronoun(lower) != nil {
+                    phraseEnd = token.range.upperBound
+                } else if KasusForms.parseDeterminer(lower) != nil || KasusForms.contractions[lower] != nil,
+                          let nounIndex = nounAfterDeterminer(at: i, in: paragraph) {
+                    phraseEnd = paragraph.tokens[nounIndex].range.upperBound
+                } else {
+                    continue
+                }
                 let location = NSRange(token.range, in: paragraph.text).location
                 if starts.contains(location) { continue }
                 if exempt.contains(where: { $0.contains(token.range.lowerBound) }) { continue }
-                let phrase = paragraph.text[token.range.lowerBound..<paragraph.tokens[nounIndex].range.upperBound]
+                let phrase = paragraph.text[token.range.lowerBound..<phraseEnd]
                 storyIssue(.untargetedDeterminer,
                            "„\(phrase)“ in paragraph \(p + 1) is neither a target nor a notTarget")
             }
         }
 
-        // Gradable, per source policy.
+        // Gradable, per source policy. Only an article target can be blanked.
         results = results.map { result in
             guard var located = result.located else { return result }
             let hasError = result.issues.contains { $0.severity == .error }
@@ -235,7 +252,7 @@ enum KasusValidator {
                 if case .verified = located.genderVerdict {} else { gradable = false }
             }
             located.gradable = gradable
-            located.blankable = gradable
+            located.blankable = gradable && located.kind == .article && located.parsed != nil
             return .init(index: result.index, spec: result.spec, located: located, issues: result.issues)
         }
         let located = results.compactMap(\.located)
@@ -357,18 +374,40 @@ enum KasusValidator {
         let lemma = spec.lemma.trimmingCharacters(in: .whitespaces)
         let noun = nounToken.text
 
+        // What opens the phrase: a lone case-visible pronoun, a contraction + noun, or an article.
+        let pronoun = firstIndex != nil && isSingleWord ? KasusForms.pronoun(determinerToken.text) : nil
+        let contraction = firstIndex != nil && !isSingleWord ? KasusForms.contraction(determinerToken.text) : nil
+        let kind: KasusTargetKind = pronoun != nil ? .pronoun : contraction != nil ? .contraction : .article
+        // „zur“ reads as „zur (zu + der)“ in a message.
+        let formLabel = contraction.map { "„\(determinerToken.text)“ (\($0.preposition) + \($0.article))" }
+            ?? "„\(determinerToken.text)“"
+
         // Determiner and the cases its form allows.
         var parsed = KasusForms.parseDeterminer(determinerToken.text)
-        if isSingleWord { parsed = nil }
-        if parsed == nil {
-            let why = isSingleWord ? "is one word; a target is determiner + noun" : "doesn't start with der/ein/kein or a possessive"
+        if isSingleWord || kind != .article { parsed = nil }
+        if parsed == nil, kind == .article {
+            let why = isSingleWord
+                ? "is one word; a target is determiner + noun, or one of mich, mir, dich, dir, ihn, ihm"
+                : "doesn't start with an article word (der, ein, kein, a possessive, dieser) or a contraction"
             issues.append(issue(.unknownDeterminer, "„\(spec.phrase)“ \(why)"))
         }
-        let candidates = parsed.map { KasusForms.compatibleCases($0, genus: spec.genus) } ?? []
+        let candidates: Set<GrammarCase> = switch kind {
+        case .article:     parsed.map { KasusForms.compatibleCases($0, genus: spec.genus) } ?? []
+        case .contraction: contraction.map { KasusForms.compatibleCases(determiner: $0.article, genus: spec.genus) } ?? []
+        case .pronoun:     pronoun.map { [$0.kasus] } ?? []
+        }
 
-        // Gender, always on the singular lemma. The curated lists come before the lexicon.
+        // Gender, always on the singular lemma. The curated lists come before the lexicon. A
+        // pronoun has no lemma to look up: ihn stands for a masculine noun, ihm for a masculine or
+        // neuter one, and the ich/du forms have no gender to check.
         let verdict: KasusLexiconVerdict
-        if let dual = KasusForms.dualGenders(of: lemma) {
+        if let pronoun {
+            verdict = .verified(spec.genus)
+            if let genders = pronoun.genders, !genders.contains(spec.genus) {
+                let names = Gender.allCases.filter(genders.contains).map(\.genderName).joined(separator: " or ")
+                issues.append(issue(.lexGender, "„\(determinerToken.text)“ stands for a \(names) noun, not \(spec.genus.genderName)"))
+            }
+        } else if let dual = KasusForms.dualGenders(of: lemma) {
             verdict = spec.genus == .plural || dual.contains(spec.genus)
                 ? .verified(spec.genus)
                 : .conflict(Gender.allCases.filter(dual.contains))
@@ -398,17 +437,24 @@ enum KasusValidator {
         }
         var singularGender: Gender?
         if case .verified(let gender) = verdict, gender != .plural { singularGender = gender }
-        let goethePlural = lemma.isEmpty ? nil : lexicon.goethePlural(forLemma: lemma)
-        let sameInPlural = KasusForms.mightBeSameInPlural(lemma: lemma, genus: singularGender, goethePlural: goethePlural)
+        let goethePlural = lemma.isEmpty || pronoun != nil ? nil : lexicon.goethePlural(forLemma: lemma)
+        let sameInPlural = pronoun == nil
+            && KasusForms.mightBeSameInPlural(lemma: lemma, genus: singularGender, goethePlural: goethePlural)
         // A Dativ plural adds -n (den Schlüsseln), so there only a noun already ending in -n or -s
-        // (dem Mädchen) could be either number.
-        let numberAmbiguous = sameInPlural && !KasusForms.isPluraleTantum(lemma)
-            && noun.caseInsensitiveCompare(lemma) == .orderedSame
+        // (dem Mädchen) could be either number. An n-noun outside the Nominativ reads the same in
+        // both numbers too (den Nachbarn · die Nachbarn). Only a blank shows the tag, so spot-only
+        // targets never need it.
+        let bareNounAmbiguous = sameInPlural && noun.caseInsensitiveCompare(lemma) == .orderedSame
             && (spec.kasus != .dativ || noun.hasSuffix("n") || noun.hasSuffix("s"))
+        let nNounAmbiguous = pronoun == nil
+            && KasusForms.nNounReadsAsPlural(noun: noun, lemma: lemma, kasus: spec.kasus)
+        let numberAmbiguous = kind == .article && !KasusForms.isPluraleTantum(lemma)
+            && (bareNounAmbiguous || nNounAmbiguous)
 
         // The preposition: directly in front of the phrase, with nothing but a space between. The
         // authored trigger may also reach back across „und/oder + noun phrase“, or follow the noun
-        // as a postposition.
+        // as a postposition. A contraction carries its own preposition („im“ → in), whatever
+        // stands before it („bis zum“ is still zu).
         func context(_ token: KasusScanner.Token, _ position: KasusPrepositionContext.Position,
                      coordinated: Bool) -> KasusPrepositionContext? {
             let word = token.text.lowercased()
@@ -427,10 +473,19 @@ enum KasusValidator {
                                            viaCoordination: coordinated, range: NSRange(token.range, in: text))
         }
         var governing: KasusPrepositionContext?
-        if firstIndex != nil, first > 0, paragraph.isWhitespaceGap(tokens[first - 1], determinerToken) {
+        if let contraction {
+            governing = KasusPrepositionContext(word: contraction.preposition,
+                                                cases: lexicon.prepositionCases(contraction.preposition) ?? [],
+                                                isTwoWay: lexicon.isTwoWay(contraction.preposition),
+                                                position: .before, viaCoordination: false,
+                                                range: NSRange(determinerToken.range, in: text))
+        } else if firstIndex != nil, first > 0, paragraph.isWhitespaceGap(tokens[first - 1], determinerToken) {
             governing = context(tokens[first - 1], .before, coordinated: false)
         }
+        // A contraction target's trigger may name the contraction („am“) or its preposition („an“).
+        let triggerIsContraction = contraction != nil && triggerLower == determinerToken.text.lowercased()
         let triggerIsPreposition = triggerLower == "entlang" || lexicon.prepositionCases(triggerLower) != nil
+            || triggerIsContraction
         if governing == nil, firstIndex != nil, triggerIsPreposition {
             if first > 1, KasusForms.coordinators.contains(tokens[first - 1].text.lowercased()),
                paragraph.isWhitespaceGap(tokens[first - 1], determinerToken) {
@@ -455,8 +510,9 @@ enum KasusValidator {
         }
         // bis, um, ohne … open clauses and zu-infinitives too („um dem Hund zu helfen“), so they
         // only count when the reason is `preposition` or the trigger names them („seit“ for a time).
+        // A contraction („ums“) is always a preposition.
         var effective = governing
-        if let word = governing?.word, KasusForms.softPrepositions.contains(word),
+        if contraction == nil, let word = governing?.word, KasusForms.softPrepositions.contains(word),
            spec.reason != .preposition, triggerLower != word {
             effective = nil
         }
@@ -480,16 +536,23 @@ enum KasusValidator {
             }
         }
 
-        // Morphology: the determiner against the table, then the noun's own endings.
-        if parsed != nil {
+        // Morphology: the determiner against the table, then the noun's own endings. A pronoun is
+        // one word with one case.
+        if let pronoun {
+            if pronoun.kasus != spec.kasus {
+                issues.append(issue(.caseMismatch, "„\(determinerToken.text)“ is \(pronoun.kasus.name), not \(spec.kasus.name) (the \(spec.kasus.name) is „\(pronoun.otherCase)“)"))
+            }
+        } else if parsed != nil || contraction != nil {
             if candidates.isEmpty {
-                issues.append(issue(.impossibleForm, "„\(determinerToken.text)“ can't go with a \(spec.genus.genderName) noun in any case"))
+                issues.append(issue(.impossibleForm, "\(formLabel) can't go with a \(spec.genus.genderName) noun in any case"))
             } else if !candidates.contains(spec.kasus) {
                 let fits = GrammarCase.allCases.filter(candidates.contains).map(\.name).joined(separator: " or ")
-                issues.append(issue(.caseMismatch, "„\(determinerToken.text)“ with a \(spec.genus.genderName) noun is \(fits), not \(spec.kasus.name)"))
+                issues.append(issue(.caseMismatch, "\(formLabel) with a \(spec.genus.genderName) noun is \(fits), not \(spec.kasus.name)"))
             }
         }
-        if spec.genus == .plural {
+        if pronoun != nil {
+            // No noun, so no plural, n-noun or Genitiv -s to check.
+        } else if spec.genus == .plural {
             // The plural the Goethe marker spells (Hund -e → Hunde), with the Dativ -n on top.
             // Without a marker, only the two things every plural shows.
             let known = KasusForms.isPluraleTantum(lemma)
@@ -505,13 +568,13 @@ enum KasusValidator {
                 issues.append(issue(.pluralForm, "Dativ plural nouns end in -n (or -s): „\(noun)“"))
             }
         }
-        if spec.genus == .der, spec.kasus != .nominativ, KasusForms.isNDeklination(lemma) {
+        if pronoun == nil, spec.genus == .der, spec.kasus != .nominativ, KasusForms.isNDeklination(lemma) {
             let wanted = lemma + KasusForms.nDeklinationEnding(lemma: lemma, kasus: spec.kasus)
             if noun.caseInsensitiveCompare(wanted) != .orderedSame {
                 issues.append(issue(.nDeklination, "\(lemma) is an n-noun: \(spec.kasus.name) needs \(wanted), not „\(noun)“"))
             }
         }
-        if spec.kasus == .genitiv, spec.genus == .der || spec.genus == .das,
+        if pronoun == nil, spec.kasus == .genitiv, spec.genus == .der || spec.genus == .das,
            !KasusForms.isNDeklination(lemma), !KasusForms.isAdjectivalNoun(lemma),
            !KasusForms.isGenitiveSingular(noun, of: lemma) {
             issues.append(issue(.genitiveS, "masculine and neuter Genitiv nouns take -(e)s: „\(noun)“"))
@@ -522,7 +585,7 @@ enum KasusValidator {
         if trigger.isEmpty {
             issues.append(issue(.triggerMissing, "no trigger"))
         } else if spec.reason.needsPreposition || (spec.reason == .time && triggerIsPreposition) {
-            if let governing, governing.word == triggerLower {
+            if let governing, governing.word == triggerLower || triggerIsContraction {
                 triggerRange = governing.range
             } else {
                 let found = governing.map { "the preposition there is „\($0.word)“" } ?? "no preposition stands next to it"
@@ -605,7 +668,9 @@ enum KasusValidator {
             genderVerdict: verdict,
             numberAmbiguous: numberAmbiguous,
             gradable: false,
-            blankable: false
+            blankable: false,
+            kind: kind,
+            contractedArticle: contraction?.article
         )
         return (located, issues)
     }

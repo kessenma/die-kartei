@@ -110,45 +110,47 @@ enum KasusUnit: String, CaseIterable, Identifiable {
     /// The case color, or neutral for Alle Fälle: graphite already means Nominativ.
     var color: Color { focusCase?.color ?? .secondary }
 
-    /// The Regel card's opening lines. Short, and in Kasus-Check order: preposition first, then
-    /// the noun it hangs on, the subject, sein, the receiver, and Akkusativ for the rest.
+    /// The Regel card's opening lines, in the `KasusRich` markup (bold key terms, italic German,
+    /// forms in their gender color, case words in their case color). Short, and in Kasus-Check
+    /// order: preposition first, then the noun it hangs on, the subject, sein, the receiver, and
+    /// Akkusativ for the rest.
     var ruleLines: [String] {
         switch self {
         case .nominativ:
             [
-                "The Nominativ names the subject: whoever or whatever does the verb. „Der Hund schläft.“",
-                "The verb agrees with the subject, and each clause has one: „Die Kinder spielen.“",
-                "It is the dictionary form, so der, die, das and ein, eine stay as you learned them.",
-                "After sein, werden, bleiben and heißen, the other noun is Nominativ too: „Das ist der Hund.“",
+                "The {nom:Nominativ} names the **subject**: whoever or whatever does the verb. „{m:Der} *Hund schläft.*“",
+                "The verb agrees with the subject, and each clause has one: „{pl:Die} *Kinder spielen.*“",
+                "It is the **dictionary form**, so {m:der}, {f:die}, {n:das} and {m:ein}, {f:eine}, {n:ein} stay as you learned them.",
+                "After *sein, werden, bleiben* and *heißen*, the other noun is {nom:Nominativ} too: „*Das ist* {m:der} *Hund.*“",
             ]
         case .akkusativ:
             [
-                "The Akkusativ marks the direct object: what the verb acts on. „Ich sehe den Hund.“",
-                "Only the masculine changes: der → den, ein → einen. Die, das and the plural stay as they are.",
-                "durch, für, gegen, ohne and um always take the Akkusativ: „für den Hund“.",
-                "fragen, anrufen and besuchen can feel like they need a receiver, but they take the Akkusativ: „Ich frage den Lehrer.“",
+                "The {akk:Akkusativ} marks the **direct object**: what the verb acts on. „*Ich sehe* {m:den} *Hund.*“",
+                "Only the **masculine** changes: {m:der} → {m:den}, {m:ein} → {m:einen}. {f:Die}, {n:das} and the plural {pl:die} stay as they are.",
+                "*durch, für, gegen, ohne* and *um* always take the {akk:Akkusativ}: „*für* {m:den} *Hund*“.",
+                "*fragen, anrufen* and *besuchen* can feel like they need a receiver, but they take the {akk:Akkusativ}: „*Ich frage* {m:den} *Lehrer.*“",
             ]
         case .dativ:
             [
-                "The Dativ marks the receiver: to whom something is given, shown or told. „Er gibt dem Hund einen Keks.“",
-                "Some verbs always take it: helfen, danken, gefallen, gehören, schmecken. „Ich helfe der Frau.“",
-                "aus, bei, mit, nach, seit, von and zu always take the Dativ: „mit dem Hund“.",
-                "Two-way prepositions (in, an, auf…) take the Dativ for a place, Wo?: „Der Hund liegt unter dem Tisch.“",
-                "der → dem, die → der, das → dem, and the plural takes den with -n on the noun: „mit den Kindern“.",
+                "The {dat:Dativ} marks the **receiver**: to whom something is given, shown or told. „*Er gibt* {m:dem} *Hund* {m:einen} *Keks.*“",
+                "Some verbs always take it: *helfen, danken, gefallen, gehören, schmecken*. „*Ich helfe* {f:der} *Frau.*“",
+                "*aus, bei, mit, nach, seit, von* and *zu* always take the {dat:Dativ}: „*mit* {m:dem} *Hund*“.",
+                "**Two-way** prepositions (*in, an, auf…*) take the {dat:Dativ} for a place, {wechsel:Wo?}: „{m:Der} *Hund liegt unter* {m:dem} *Tisch.*“",
+                "{m:der} → {m:dem}, {f:die} → {f:der}, {n:das} → {n:dem}, and the plural takes {pl:den} with **-n** on the noun: „*mit* {pl:den} *Kinder*{pl:n}“.",
             ]
         case .genitiv:
             [
-                "The Genitiv says whose or of what: „das Auto des Mannes“, „das Ende der Woche“.",
-                "Masculine and neuter take des, and the noun adds -s or -es: des Hundes, des Kindes.",
-                "Feminine and plural take der, and the noun stays as it is: der Frau, der Kinder.",
-                "wegen, trotz and während take the Genitiv in writing: „wegen des Wetters“. In speech you will often hear the Dativ instead.",
+                "The {gen:Genitiv} says **whose** or **of what**: „*das Auto* {m:des} *Mannes*“, „*das Ende* {f:der} *Woche*“.",
+                "**Masculine** and **neuter** take **des**, and the noun adds **-s** or **-es**: {m:des} *Vater*{m:s}, {n:des} *Kind*{n:es}.",
+                "**Feminine** and **plural** take **der**, and the noun stays as it is: {f:der} *Frau*, {pl:der} *Kinder*.",
+                "*wegen, trotz* and *während* take the {gen:Genitiv} in writing: „*wegen* {n:des} *Wetters*“. In speech you will often hear the {dat:Dativ} instead.",
             ]
         case .alleFaelle:
             [
-                "Run the Kasus-Check from the top; the first question that fits decides the case.",
-                "A preposition in front decides first: für → Akkusativ, mit → Dativ, wegen → Genitiv.",
-                "Hanging on another noun („der Name ___“) → Genitiv. The subject, or what sein equates it with → Nominativ.",
-                "The receiver, or the object of a Dativ verb like helfen → Dativ. Anything else → Akkusativ.",
+                "Run the **Kasus-Check** from the top; the first question that fits decides the case.",
+                "A **preposition** in front decides first: *für* → {akk:Akkusativ}, *mit* → {dat:Dativ}, *wegen* → {gen:Genitiv}.",
+                "Hanging on **another noun** („*der Name* ___“) → {gen:Genitiv}. The **subject**, or what *sein* equates it with → {nom:Nominativ}.",
+                "The **receiver**, or the object of a **Dativ verb** like *helfen* → {dat:Dativ}. Anything else → {akk:Akkusativ}.",
             ]
         }
     }

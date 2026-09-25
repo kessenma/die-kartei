@@ -14,7 +14,9 @@
 //  The text is `KasusText`: one `Text` per paragraph whose styling never moves a line (wash,
 //  underline, strikethrough, color). Case labels, chips and explanations live in the bottom tray.
 //  Case colors mark cases; gender colors mark only articles and gender tags; nothing is ever
-//  red or green for right and wrong.
+//  red or green for right and wrong. The right/wrong signal (the verdict line, the answer
+//  buttons, the dot strip) is `KasusFeedback`, the same one the Schnellrunde gives. Every
+//  explanation renders through `Text(kasusRich:)`, so it may carry the `KasusRich` markup.
 //
 //  `KasusService` does the thinking (blanks, options, grading, explanations). Finden (at its first
 //  Prüfen) and Einsetzen (the moment its last gap gets a first pick) each hand their round to
@@ -127,7 +129,8 @@ struct KasusStoryView: View {
     /// Blank id → how far the Tipp went before the first pick.
     @State private var tipps: [Int: KasusTipp] = [:]
     @State private var activeBlank: Int?
-    /// A right pick waiting out its 600 ms before moving on, and the task that will move on.
+    /// A right pick waiting out its 800 ms before moving on (long enough to see „Richtig!“), and
+    /// the task that will move on.
     @State private var pendingAdvance: Int?
     @State private var advanceTask: Task<Void, Never>?
     @State private var fillRound = 0
@@ -139,6 +142,9 @@ struct KasusStoryView: View {
     // Haptics
     @State private var correctCount = 0
     @State private var wrongCount = 0
+    @State private var slipCount = 0
+    /// The step's height, which caps how tall the tray's explanation may grow before it scrolls.
+    @State private var stepHeight: CGFloat = 0
 
     private var unit: KasusUnit { session.unit }
 
@@ -157,6 +163,7 @@ struct KasusStoryView: View {
             .background {
                 if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
             }
+            .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { stepHeight = $0 }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -190,6 +197,9 @@ struct KasusStoryView: View {
             new > old && hapticMode.playsSuccess
         }
         .sensoryFeedback(.error, trigger: wrongCount) { old, new in
+            new > old && hapticMode.playsError
+        }
+        .sensoryFeedback(.impact(weight: .light), trigger: slipCount) { old, new in
             new > old && hapticMode.playsError
         }
         .tint(appTheme.accent(model: nil))
@@ -339,6 +349,10 @@ struct KasusStoryView: View {
         playable.targets.filter { $0.paragraphIndex == paragraph }
     }
 
+    /// How tall the tray's verdict and explanation may grow before they scroll: about a third of
+    /// the step, so at the largest text sizes the story keeps some room and Weiter stays on screen.
+    private var trayTextCap: CGFloat { stepHeight > 0 ? max(110, stepHeight * 0.3) : .infinity }
+
     /// The bottom tray: where case labels, chips, options and explanations live, so the story
     /// text above never has to make room for them.
     private func tray<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
@@ -360,10 +374,14 @@ struct KasusStoryView: View {
     }
 
     private func noteLine(_ text: String) -> some View {
-        Label(text, systemImage: "info.circle")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
+        Label {
+            Text(kasusRich: text)
+        } icon: {
+            Image(systemName: "info.circle")
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     /// The code word with each letter in its column's gender color, as the endings table shows it.
@@ -504,7 +522,7 @@ struct KasusStoryView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 titleBlock(playable.story)
-                instruction(findGerman, findEnglish)
+                instruction(findGerman(playable), findEnglish(playable))
                 ForEach(Array(playable.story.paragraphs.enumerated()), id: \.offset) { index, paragraph in
                     KasusText(segments: findSegments(index, paragraph.de, playable)) { tap in
                         handleFindTap(tap, playable)
@@ -520,21 +538,49 @@ struct KasusStoryView: View {
     }
 
     /// A one-brush unit marks one case only, and says so: painting every phrase would put the
-    /// other cases on the wrong brush.
-    private var findGerman: String {
+    /// other cases on the wrong brush. A story that also marks pronouns or contractions names
+    /// them, since "article + noun" alone would have the learner skip „ihn“ and „am Ende“.
+    private func findGerman(_ playable: KasusPlayableStory) -> String {
         let brushes = unit.findenBrushes
+        let (pronouns, contractions) = findExtras(playable)
+        let also = contractions.map { ", auch \($0) …" } ?? ""
+        let plus = pronouns.map { " und die Pronomen \($0)" } ?? ""
         if brushes.count == 1, let only = brushes.first {
-            return "„Markiere jede Nominalgruppe im \(only.name).“"
+            let words = contractions.map { " (auch mit \($0) …)" } ?? ""
+            return "„Markiere jede Nominalgruppe im \(only.name)\(words)\(plus).“"
         }
-        return "„Markiere jede Nominalgruppe mit Artikelwort (der, ein, mein …).“"
+        return "„Markiere jede Nominalgruppe mit Artikelwort (der, ein, mein …\(also))\(plus).“"
     }
 
-    private var findEnglish: String {
+    private func findEnglish(_ playable: KasusPlayableStory) -> String {
         let brushes = unit.findenBrushes
+        let (pronouns, contractions) = findExtras(playable)
+        let extras = [contractions.map { "\($0) … too" }, pronouns.map { "or \($0)" }].compactMap { $0 }
+        let also = extras.isEmpty ? "" : " (\(extras.joined(separator: "; ")))"
         if brushes.count == 1, let only = brushes.first {
-            return "Find every \(only.name) phrase, article + noun, and tap it to mark it."
+            return "Find every \(only.name) phrase, article + noun\(also), and tap it to mark it."
         }
-        return "Find every article + noun phrase, pick its case below, and tap the phrase to mark it."
+        return "Find every article + noun phrase\(also), pick its case below, and tap the phrase to mark it."
+    }
+
+    /// What the instruction adds for a story with spot-only targets: the case-visible pronouns of
+    /// the cases being marked („mich, dich, ihn“), and example contractions („im, zum“). Nil for
+    /// a kind the story doesn't mark. The examples are generic, so they never point at an answer.
+    private func findExtras(_ playable: KasusPlayableStory) -> (pronouns: String?, contractions: String?) {
+        let brushes = Set(unit.findenBrushes)
+        let kinds = Set(playable.gradable.map(\.kind))
+        var pronouns: String?
+        if kinds.contains(.pronoun) {
+            let words = ["mich", "mir", "dich", "dir", "ihn", "ihm"].filter { word in
+                KasusForms.pronoun(word).map { brushes.contains($0.kasus) } ?? false
+            }
+            if !words.isEmpty { pronouns = words.joined(separator: ", ") }
+        }
+        var contractions: String?
+        if kinds.contains(.contraction) {
+            contractions = brushes.contains(.dativ) ? "im, zum" : brushes.contains(.akkusativ) ? "ins, fürs" : nil
+        }
+        return (pronouns, contractions)
     }
 
     /// Finden marks gradable targets only; everything else reads as words. No underline before
@@ -600,7 +646,7 @@ struct KasusStoryView: View {
         selectedTarget = nil
         guard unit.casesInPlay.contains(target.kasus) else {
             let marking = unit.findenBrushes.map(\.short).joined(separator: ", ")
-            note = "\(target.kasus.name) comes later on the path. Here you're marking \(marking)."
+            note = "{\(target.kasus.short.lowercased()):\(target.kasus.name)} comes later on the path. Here you're marking \(marking)."
             return
         }
         note = nil
@@ -635,7 +681,7 @@ struct KasusStoryView: View {
             if let selectedTarget, let target = playable.targets.first(where: { $0.index == selectedTarget }) {
                 findExplanation(target, story: playable.story)
             } else {
-                findScoreLine
+                findScore(playable)
             }
             HStack(spacing: 10) {
                 if marks.values.contains(where: { $0 != .right }) {
@@ -709,49 +755,67 @@ struct KasusStoryView: View {
         .minimumScaleFactor(0.8)
     }
 
-    private var findScoreLine: some View {
+    /// After Prüfen: the verdict, a dot per phrase in reading order (its case color when right, a
+    /// hollow ring when missed or on the wrong brush), and what went wrong.
+    private func findScore(_ playable: KasusPlayableStory) -> some View {
         let right = marks.values.filter { $0 == .right }.count
         let missed = marks.values.filter { $0 == .missed }.count
         let wrong = marks.count - right - missed
         var detail: [String] = []
         if missed > 0 { detail.append("\(missed) missed") }
         if wrong > 0 { detail.append("\(wrong) on the wrong case") }
-        return VStack(alignment: .leading, spacing: 2) {
-            Text("\(right) of \(marks.count) right" + (detail.isEmpty ? "" : " · " + detail.joined(separator: " · ")))
-                .font(.subheadline.weight(.semibold))
-            Text("Tap a phrase to see why it has its case.")
+        let brushes = unit.findenBrushes
+        return VStack(alignment: .leading, spacing: 8) {
+            KasusFeedbackHeader(verdict: right == marks.count ? .right : .miss,
+                                kasus: brushes.count == 1 ? brushes.first : nil,
+                                detail: "\(right) of \(marks.count)")
+            KasusProgressStrip(marks: findMarks(playable), showsScore: false)
+            Text((detail.isEmpty ? "" : detail.joined(separator: " · ") + ". ") + "Tap a phrase to see why it has its case.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
-    /// The tray's word on one phrase: its true case, what went wrong if anything, and why.
+    /// Finden's marks as strip dots, in reading order.
+    private func findMarks(_ playable: KasusPlayableStory) -> [KasusProgressStrip.Mark] {
+        let byIndex = Dictionary(uniqueKeysWithValues: playable.targets.map { ($0.index, $0) })
+        return marks.keys.sorted().map { index in
+            guard marks[index] == .right, let target = byIndex[index] else { return .miss }
+            return .right(target.kasus)
+        }
+    }
+
+    /// The tray's word on one phrase: the verdict once checked, its true case, what went wrong if
+    /// anything, and why.
     private func findExplanation(_ target: KasusLocatedTarget, story: KasusStory) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        KasusCappedScroll(maxHeight: trayTextCap, spacing: 6) {
+            if let mark = marks[target.index] {
+                KasusFeedbackHeader(verdict: mark == .right ? .right : .miss, kasus: target.kasus)
+                    .id(target.index)
+            }
             HStack(spacing: 6) {
                 Text("„\(target.surface)“")
                     .fontWeight(.semibold)
-                CaseLabel(kasus: target.kasus, style: .name)
-                    .fontWeight(.semibold)
                 switch marks[target.index] {
                 case .wrongPick(let painted)?:
-                    Text("not \(painted.name)")
+                    Text("· marked \(painted.name)")
                         .foregroundStyle(.secondary)
                 case .missed?:
-                    Text("not marked")
+                    Text("· not marked")
                         .foregroundStyle(.secondary)
                 case .right?:
-                    Image(systemName: "checkmark")
-                        .foregroundStyle(target.kasus.color)
-                case nil:
                     EmptyView()
+                case nil:
+                    CaseLabel(kasus: target.kasus, style: .name)
+                        .fontWeight(.semibold)
                 }
             }
             .font(.subheadline)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
-            Text(KasusService.explanation(for: target, in: story))
-                .font(.caption)
+            Text(kasusRich: KasusService.explanation(for: target, in: story))
+                .font(.footnote)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -840,9 +904,11 @@ struct KasusStoryView: View {
 
     /// The story's phrases sorted into the endings table's layout: case rows, gender columns,
     /// each cell the articles that landed there. Off: the cases Finden asked about. On: every case.
+    /// Pronouns stay out, since their genus is no noun's gender; a contraction lists the article
+    /// inside it („im“ → dem).
     private func sortGrid(_ playable: KasusPlayableStory) -> some View {
         let brushes = Set(unit.findenBrushes)
-        let shown = playable.gradable.filter { showAllCases || brushes.contains($0.kasus) }
+        let shown = playable.gradable.filter { $0.hasNounGender && (showAllCases || brushes.contains($0.kasus)) }
         let rows = GrammarCase.allCases.filter { kasus in shown.contains { $0.kasus == kasus } }
         return Grid(alignment: .topLeading, horizontalSpacing: 6, verticalSpacing: 12) {
             GridRow {
@@ -875,7 +941,7 @@ struct KasusStoryView: View {
     private func sortCell(_ targets: [KasusLocatedTarget], gender: Gender) -> some View {
         var forms: [SortEntry] = []
         for target in targets {
-            let form = target.determiner.lowercased()
+            let form = target.caseForm
             if let i = forms.firstIndex(where: { $0.form == form }) {
                 forms[i].count += 1
             } else {
@@ -932,9 +998,16 @@ struct KasusStoryView: View {
                 guard let paragraph else { return }
                 withAnimation(.easeInOut(duration: 0.25)) { proxy.scrollTo(paragraph, anchor: .top) }
             }
+            .onAppear {
+                // Coming back to a round in progress: bring its gap into view. The first
+                // paragraph is already on screen, under the title.
+                guard let paragraph = activeParagraph, paragraph > 0 else { return }
+                proxy.scrollTo(paragraph, anchor: .top)
+            }
         }
         .safeAreaInset(edge: .bottom) {
             tray { fillTray(playable) }
+                .animation(.snappy(duration: 0.25), value: picks)
         }
     }
 
@@ -998,7 +1071,7 @@ struct KasusStoryView: View {
         let byID = Dictionary(uniqueKeysWithValues: blanks.map { ($0.id, $0) })
         var trigger: NSRange?
         if let active = activeBlank.flatMap({ byID[$0] }), active.target.paragraphIndex == index,
-           picks[active.id] == nil,
+           picks[active.id] == nil, !active.isBareTimePhrase,
            active.underlinesTrigger || (tipps[active.id] ?? .none) >= .trigger {
             trigger = active.target.triggerRange
         }
@@ -1038,9 +1111,11 @@ struct KasusStoryView: View {
             return [KasusTextSegment(text: KasusText.gap(for: blank.options), kind: kind,
                                      style: KasusTextStyle(foreground: .secondary, wash: wash))]
         }
+        // The answer sits on a light wash of its gender color, so an answered gap reads as filled
+        // at a glance. A focused gap keeps the focus wash.
         let color = blank.genus.color
         let answer = KasusTextSegment(text: blank.answer, kind: kind,
-                                      style: KasusTextStyle(foreground: color, wash: wash,
+                                      style: KasusTextStyle(foreground: color, wash: wash ?? color.opacity(0.14),
                                                             underline: .init(pattern: .solid, color: color)))
         if KasusService.grade(pick, for: blank).isRight { return [answer] }
         return [
@@ -1052,46 +1127,62 @@ struct KasusStoryView: View {
         ]
     }
 
+    /// The Einsetzen tray, top to bottom: a dot per gap with the score (and the Tipp at Ohne
+    /// Hilfe), the verdict and its why once picked, the answer buttons, then Weiter. The buttons
+    /// stay put after a pick and show it: the right one filled in its gender color, a wrong one
+    /// struck through and shaken, the answer lit.
     @ViewBuilder
     private func fillTray(_ playable: KasusPlayableStory) -> some View {
-        if let id = activeBlank, let position = blanks.firstIndex(where: { $0.id == id }) {
-            let blank = blanks[position]
-            if let pick = picks[blank.id] {
-                fillFeedback(blank, pick: pick, story: playable.story)
-            } else {
-                HStack {
-                    Text("Lücke \(position + 1) von \(blanks.count)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    if blank.hintLevel == .ohne {
-                        tippButton(blank)
-                    }
-                }
-                if (tipps[blank.id] ?? .none) > .none {
-                    tippReveals(blank)
-                }
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: 8)], spacing: 8) {
-                    ForEach(blank.options, id: \.self) { option in
-                        Button {
-                            pick(option, for: blank)
-                        } label: {
-                            Text(option)
-                                .font(.headline)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                                .frame(maxWidth: .infinity, minHeight: 34)
-                        }
-                        .buttonStyle(.bordered)
-                    }
+        if let id = activeBlank, let blank = blanks.first(where: { $0.id == id }) {
+            let chosen = picks[blank.id]
+            HStack(spacing: 12) {
+                KasusProgressStrip(marks: fillMarks(active: blank.id))
+                if chosen == nil, blank.hintLevel == .ohne {
+                    tippButton(blank)
                 }
             }
+            .frame(minHeight: 28)
+            if let chosen {
+                KasusCappedScroll(maxHeight: trayTextCap) {
+                    fillFeedback(blank, pick: chosen, story: playable.story)
+                }
+            } else if (tipps[blank.id] ?? .none) > .none {
+                tippReveals(blank)
+            }
+            KasusOptionGrid(options: blank.options, answer: blank.answer, kasus: blank.kasus, picked: chosen,
+                            columns: KasusOptionGrid.columns(for: blank.options), rowHeight: 50) { option in
+                pick(option, for: blank)
+            }
+            .id(blank.id)
+            if let chosen, !(KasusService.grade(chosen, for: blank).isRight && pendingAdvance == blank.id) {
+                advanceButton(from: blank)
+            }
         } else if fillResult != nil {
-            Button("Ergebnis · Result") { showResult() }
-                .buttonStyle(.borderedProminent)
-                .frame(maxWidth: .infinity)
+            Button {
+                showResult()
+            } label: {
+                Text("Ergebnis · Result")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
         } else if blanks.isEmpty {
             noteLine("No gaps in this story at this level. Try another help level above.")
+        }
+    }
+
+    /// One dot per gap in reading order: its case color once right on the first pick, a ring
+    /// once not, the focus ring on `active`.
+    private func fillMarks(active: Int?) -> [KasusProgressStrip.Mark] {
+        blanks.map { blank in
+            if let pick = picks[blank.id] {
+                switch KasusVerdict(KasusService.grade(pick, for: blank)) {
+                case .right: return .right(blank.kasus)
+                case .slip:  return .slip
+                case .miss:  return .miss
+                }
+            }
+            return blank.id == active ? .current : .upcoming
         }
     }
 
@@ -1114,7 +1205,8 @@ struct KasusStoryView: View {
         let reached = tipps[blank.id] ?? .none
         return HStack(spacing: 8) {
             if reached >= .trigger {
-                Text("Look at „\(blank.target.spec.trigger)“")
+                // A bare time phrase has no deciding word; the verb next to it would mislead.
+                Text(blank.isBareTimePhrase ? "A time phrase: wann? wie oft?" : "Look at „\(blank.target.spec.trigger)“")
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
@@ -1134,43 +1226,19 @@ struct KasusStoryView: View {
         .font(.subheadline)
     }
 
-    /// After a pick. Right: the case and a short confirmation while the next gap comes up.
-    /// Wrong: the case, the gender-slip note or the full explanation, and Weiter.
+    /// After a pick: the verdict with the case („Richtig!“, „Fast · Almost“ for a gender or
+    /// number slip, „Nicht ganz · Not quite“), then why. A right pick shows only the verdict while
+    /// the next gap comes up; opened again later, it explains too.
     @ViewBuilder
     private func fillFeedback(_ blank: KasusBlank, pick: String, story: KasusStory) -> some View {
         let outcome = KasusService.grade(pick, for: blank)
-        HStack(spacing: 6) {
-            CaseLabel(kasus: blank.kasus, style: .name)
-                .fontWeight(.semibold)
-            Text("„\(blank.target.surface)“")
-                .foregroundStyle(.secondary)
-            if outcome.isRight {
-                Image(systemName: "checkmark")
-                    .foregroundStyle(blank.kasus.color)
-            } else if outcome.isGenderSlip {
-                Text("Gender slip")
-                    .foregroundStyle(.secondary)
-            } else if outcome == .numberSlip {
-                Text("Number slip")
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .font(.subheadline)
-        .lineLimit(1)
-        .minimumScaleFactor(0.8)
-
-        if outcome.isRight {
-            if pendingAdvance != blank.id {
-                Text(KasusService.explanation(for: blank.target, in: story))
-                    .font(.caption)
-                    .fixedSize(horizontal: false, vertical: true)
-                advanceButton(from: blank)
-            }
-        } else {
-            Text(KasusService.feedback(for: outcome, pick: pick, target: blank.target, in: story) ?? "")
-                .font(.caption)
+        KasusFeedbackHeader(verdict: KasusVerdict(outcome), kasus: blank.kasus)
+        if !(outcome.isRight && pendingAdvance == blank.id) {
+            Text(kasusRich: outcome.isRight
+                 ? KasusService.explanation(for: blank.target, in: story)
+                 : KasusService.feedback(for: outcome, pick: pick, target: blank.target, in: story) ?? "")
+                .font(.footnote)
                 .fixedSize(horizontal: false, vertical: true)
-            advanceButton(from: blank)
         }
     }
 
@@ -1192,8 +1260,10 @@ struct KasusStoryView: View {
         // The round is recorded here, right or wrong, so closing from the last explanation still
         // counts it.
         recordFillIfComplete()
-        guard KasusService.grade(option, for: blank).isRight else {
-            wrongCount += 1
+        let outcome = KasusService.grade(option, for: blank)
+        guard outcome.isRight else {
+            // A slip only gets a light tap: it was close, and the header says „Fast“, not wrong.
+            if outcome.isSlip { slipCount += 1 } else { wrongCount += 1 }
             return
         }
         correctCount += 1
@@ -1201,7 +1271,7 @@ struct KasusStoryView: View {
         let round = fillRound
         advanceTask?.cancel()
         advanceTask = Task {
-            try? await Task.sleep(for: .milliseconds(600))
+            try? await Task.sleep(for: .milliseconds(800))
             // Only if nothing moved in the meantime: still Einsetzen, the same round, the same gap.
             guard !Task.isCancelled, step == .einsetzen, round == fillRound,
                   pendingAdvance == blank.id, activeBlank == blank.id else { return }
@@ -1251,7 +1321,7 @@ struct KasusStoryView: View {
         fillClock.pause()
         let result = KasusService.fillResult(storyID: playable.story.id, unit: unit, hint: roundHint,
                                              blanks: blanks, picks: picks, tipps: tipps,
-                                             durationSeconds: fillClock.seconds)
+                                             durationSeconds: fillClock.seconds, story: playable.story)
         fillResult = result
         if !fillPrefilled { onComplete(result) }
     }
@@ -1282,6 +1352,8 @@ struct KasusStoryView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
+
+                KasusProgressStrip(marks: fillMarks(active: nil), showsScore: false)
 
                 caseRows(result.perCase)
 
@@ -1317,8 +1389,8 @@ struct KasusStoryView: View {
         VStack(alignment: .leading, spacing: 6) {
             KasusText(segments: missSegments(blank, story: story), font: .body)
             if let pick = picks[blank.id] {
-                Text(KasusService.feedback(for: KasusService.grade(pick, for: blank), pick: pick,
-                                           target: blank.target, in: story) ?? "")
+                Text(kasusRich: KasusService.feedback(for: KasusService.grade(pick, for: blank), pick: pick,
+                                                      target: blank.target, in: story) ?? "")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1464,31 +1536,41 @@ struct KasusStoryView: View {
 // MARK: - DEBUG launch argument
 
 #if DEBUG
-/// `-kasus.debugOpen hub|unit:<unit>|read|find|check|summary|fill|result`: the Grammatik screens
-/// sit several taps deep and this simulator can't tap. The player screens open the bundled Dativ
-/// story, prefilled from `-kasus.debugAnswers right|mixed` and `-kasus.debugHint viel|genus|ohne`
-/// (check, summary and result fall back to mixed answers, since they need some).
+/// `-kasus.debugOpen hub|unit:<unit>|quick:<unit>|read|find|check|summary|fill|result`: the
+/// Grammatik screens sit several taps deep and this simulator can't tap. The player screens open
+/// the bundled Dativ story (or `-kasus.debugStory <id>`), prefilled from `-kasus.debugAnswers right|mixed` and
+/// `-kasus.debugHint viel|genus|ohne` (check, summary and result fall back to mixed answers, since
+/// they need some). `quick:<unit>` opens that unit's Schnellrunde, prefilled from
+/// `-kasus.debugAnswers` and `-kasus.debugQuickState right|wrong|slip|done`.
 enum KasusDebugOpen: Identifiable, Hashable {
     case hub
     case unit(KasusUnit)
+    case quick(KasusUnit)
     case story(KasusStoryScreen)
 
     var id: String {
         switch self {
         case .hub:                "hub"
         case .unit(let unit):     "unit:\(unit.rawValue)"
+        case .quick(let unit):    "quick:\(unit.rawValue)"
         case .story(let screen):  screen.rawValue
         }
     }
 
     init?(argument raw: String) {
         let value = raw.trimmingCharacters(in: .whitespaces)
+        func unitNamed(after prefix: String) -> KasusUnit? {
+            let name = value.dropFirst(prefix.count).lowercased()
+            return KasusUnit.allCases.first { $0.rawValue.lowercased() == name }
+        }
         if value.lowercased() == "hub" {
             self = .hub
         } else if value.lowercased().hasPrefix("unit:") {
-            let name = value.dropFirst("unit:".count).lowercased()
-            guard let unit = KasusUnit.allCases.first(where: { $0.rawValue.lowercased() == name }) else { return nil }
+            guard let unit = unitNamed(after: "unit:") else { return nil }
             self = .unit(unit)
+        } else if value.lowercased().hasPrefix("quick:") {
+            guard let unit = unitNamed(after: "quick:") else { return nil }
+            self = .quick(unit)
         } else if let screen = KasusStoryScreen(rawValue: value.lowercased()) {
             self = .story(screen)
         } else {
@@ -1501,11 +1583,21 @@ enum KasusDebugOpen: Identifiable, Hashable {
     }
 
     /// The session a player screen launches. Its prefill is never nil, which is how the player
-    /// knows to read the screen from the launch argument.
+    /// knows to read the screen from the launch argument. `-kasus.debugStory <id>` picks another
+    /// bundled story than the first.
     static func session(for screen: KasusStoryScreen) -> KasusSession? {
-        guard let story = KasusStoryBank.bundled.stories.first, let unit = story.unit else { return nil }
+        let stories = KasusStoryBank.bundled.stories
+        let wanted = UserDefaults.standard.string(forKey: "kasus.debugStory")
+        let picked = wanted.flatMap { id in stories.first { $0.id == id } } ?? stories.first
+        guard let story = picked, let unit = story.unit else { return nil }
         return KasusSession(storyID: story.id, unit: unit, startStep: screen.step,
                             prefill: KasusPrefill.fromLaunchArguments() ?? KasusPrefill())
+    }
+
+    /// The Schnellrunde `quick:<unit>` launches, with a prefill so the drill reads its state from
+    /// the launch arguments.
+    static func quickSession(for unit: KasusUnit) -> CaseEndingsSession {
+        CaseEndingsSession(unit: unit, prefill: KasusPrefill.fromLaunchArguments() ?? KasusPrefill())
     }
 }
 #endif

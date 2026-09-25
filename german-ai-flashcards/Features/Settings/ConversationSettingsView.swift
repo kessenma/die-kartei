@@ -160,7 +160,7 @@ struct ConversationSettingsView: View {
         Section {
             Toggle("Personalized coaching", isOn: $modelManager.chatPersonalizedCoaching)
             NavigationLink {
-                CoachNotesView()
+                CoachNotesView(modelManager: modelManager)
             } label: {
                 Label("Coach's Notes", systemImage: "brain.head.profile")
             }

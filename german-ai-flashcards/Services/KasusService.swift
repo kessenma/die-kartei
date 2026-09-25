@@ -192,8 +192,12 @@ struct KasusBlank: Identifiable, Hashable {
 
     /// Viel Hilfe and Genus-Hilfe: the raised m/f/n/pl tag after the noun, in `Gender.color`.
     var showsGenderTag: Bool { hintLevel != .ohne }
-    /// Viel Hilfe: the trigger gets an underline (`target.triggerRange`).
-    var underlinesTrigger: Bool { hintLevel == .viel }
+    /// Viel Hilfe: the trigger gets an underline (`target.triggerRange`). Not on a bare time
+    /// phrase, where the verb next to it isn't what decides.
+    var underlinesTrigger: Bool { hintLevel == .viel && !isBareTimePhrase }
+    /// A time phrase with no preposition („jeden Tag“): being a time phrase is what makes it
+    /// Akkusativ, so there's no deciding word to point at, and the Tipp says so instead.
+    var isBareTimePhrase: Bool { target.spec.reason == .time && target.preposition == nil }
     /// Ohne Hilfe, for a noun that reads the same in the plural (Schlüssel): a sg/pl tag, since
     /// the article is the only thing that would otherwise say which.
     var showsNumberTag: Bool { hintLevel == .ohne && target.numberAmbiguous }
@@ -263,6 +267,9 @@ struct KasusItemResult: Hashable {
     var tipp: KasusTipp = .none
     /// The story target, for "misses in their sentences". Nil for Schnellrunde items.
     var targetIndex: Int? = nil
+    /// The round history's copy of this answer: its sentence, the pick and why. Nil in the debug
+    /// checks' synthetic rounds.
+    var record: KasusRoundItem? = nil
 }
 
 /// A finished Finden, Einsetzen or Schnellrunde, handed to `KasusService.recordRound`.
@@ -373,8 +380,20 @@ enum KasusService {
                            in playable: KasusPlayableStory, durationSeconds: Int) -> KasusRoundResult {
         let items = playable.gradable.compactMap { target -> KasusItemResult? in
             guard let mark = marks[target.index] else { return nil }
+            let record: KasusRoundItem
+            switch mark {
+            case .right:
+                record = .story(target, in: playable.story, pick: target.kasus.rawValue, outcome: .right,
+                                explanation: explanation(for: target, in: playable.story))
+            case .wrongPick(let painted):
+                record = .story(target, in: playable.story, pick: painted.rawValue, outcome: .wrongPick,
+                                explanation: explanation(for: target, in: playable.story))
+            case .missed:
+                record = .story(target, in: playable.story, pick: nil, outcome: .missed,
+                                explanation: explanation(for: target, in: playable.story))
+            }
             return KasusItemResult(kasus: target.kasus, genus: target.genus, firstTry: mark == .right,
-                                   targetIndex: target.index)
+                                   targetIndex: target.index, record: record)
         }
         return KasusRoundResult(storyID: storyID, unit: unit, step: .find, items: items,
                                 durationSeconds: durationSeconds,
@@ -453,14 +472,18 @@ enum KasusService {
     // MARK: Grading
 
     /// First pick only, ignoring case. A wrong pick that is the right case for another singular
-    /// gender is a gender slip, and the plural of the right case on a noun like Schlüssel is a
-    /// number slip; neither is a case miss. Anything the noun's own gender takes in another case
-    /// is a case miss.
+    /// gender is a gender slip, and the other number in the right case on a noun that reads the
+    /// same in both (Schlüssel, Nachbarn) is a number slip; neither is a case miss. Anything the
+    /// noun's own gender takes in another case is a case miss.
     static func grade(_ pick: String, for target: KasusLocatedTarget) -> KasusPickOutcome {
         if pick.caseInsensitiveCompare(target.answer) == .orderedSame { return .right }
         guard let parsed = target.parsed else { return .caseMiss }
+        // A plural answer's singular comes from the lemma's own gender.
+        var singularGenus: Gender?
+        if case .verified(let gender) = target.genderVerdict, gender != .plural { singularGenus = gender }
         if target.numberAmbiguous,
            KasusForms.isRightCaseWrongNumber(pick: pick, answerCase: target.kasus, genus: target.genus,
+                                             singularGenus: singularGenus,
                                              family: parsed.family, stem: parsed.stem) {
             return .numberSlip
         }
@@ -477,16 +500,23 @@ enum KasusService {
     }
 
     /// Einsetzen's round, for `recordRound`. `picks` holds each blank's first pick; a blank with
-    /// no pick is left out. `tipps` is how far the Tipp went on each (Ohne Hilfe).
+    /// no pick is left out. `tipps` is how far the Tipp went on each (Ohne Hilfe). `story` gives
+    /// each answer its sentence for the round history; nil looks the id up in the bundled bank.
     static func fillResult(storyID: String, unit: KasusUnit, hint: KasusHintLevel, blanks: [KasusBlank],
                            picks: [Int: String], tipps: [Int: KasusTipp] = [:],
-                           durationSeconds: Int) -> KasusRoundResult {
+                           durationSeconds: Int, story: KasusStory? = nil) -> KasusRoundResult {
+        let story = story ?? KasusStoryBank.bundled.story(id: storyID)
         let items = blanks.compactMap { blank -> KasusItemResult? in
             guard let pick = picks[blank.id] else { return nil }
             let outcome = grade(pick, for: blank)
+            let record = story.map { story in
+                KasusRoundItem.story(blank.target, in: story, pick: pick, outcome: outcome.itemOutcome,
+                                     explanation: feedback(for: outcome, pick: pick, target: blank.target, in: story)
+                                        ?? explanation(for: blank.target, in: story))
+            }
             return KasusItemResult(kasus: blank.kasus, genus: blank.genus, firstTry: outcome.isRight,
                                    slip: outcome.isSlip, tipp: tipps[blank.id] ?? .none,
-                                   targetIndex: blank.id)
+                                   targetIndex: blank.id, record: record)
         }
         return KasusRoundResult(storyID: storyID, unit: unit, step: .fill, hintLevel: hint, items: items,
                                 durationSeconds: durationSeconds)
@@ -523,7 +553,7 @@ enum KasusService {
                                                    kasus: target.kasus)
         case .numberSlip:
             return KasusExplanation.numberSlipNote(pick: pick, answer: target.answer, kasus: target.kasus,
-                                                   noun: target.noun)
+                                                   noun: target.noun, answerIsPlural: target.genus == .plural)
         case .caseMiss:
             return explanation(for: target, in: story)
         }
@@ -571,24 +601,15 @@ enum KasusService {
 
     /// Fold one finished step in: the streak, time and XP (every answer is practice, however much
     /// help was on screen; in Finden only the painted phrases were answered), one `KasusRound` for
-    /// the calendar and the step marks, and the coach's case skills from the answers that count.
-    /// Returns the skill moves it made.
+    /// the calendar, the step marks and Verlauf, and the coach's case skills from the answers that
+    /// count. Returns the skill moves it made.
     @discardableResult
     static func recordRound(_ result: KasusRoundResult, in context: ModelContext) -> [KasusSkillMove] {
         guard !result.items.isEmpty else { return [] }
 
         StudyLogService.record(.grammar(result.answeredCount), seconds: result.durationSeconds, in: context)
 
-        context.insert(KasusRound(
-            storyID: result.storyID,
-            unitRaw: result.unit.rawValue,
-            stepRaw: result.step.rawValue,
-            hintLevelRaw: result.hintLevel?.rawValue ?? "",
-            askedCount: result.askedCount,
-            firstTryCount: result.firstTryCount,
-            durationSeconds: result.durationSeconds,
-            perCase: result.perCase
-        ))
+        context.insert(round(for: result))
 
         let moves = skillMoves(for: result)
         for move in moves {
@@ -598,6 +619,28 @@ enum KasusService {
 
         try? context.save()
         return moves
+    }
+
+    /// The `KasusRound` a result is stored as, with each answer's history row and whether it
+    /// counted toward the coach. Not inserted.
+    static func round(for result: KasusRoundResult, date: Date = Date()) -> KasusRound {
+        let items = result.items.compactMap { item -> KasusRoundItem? in
+            guard var record = item.record else { return nil }
+            record.countsTowardSkill = countsTowardSkill(item, step: result.step, hint: result.hintLevel)
+            return record
+        }
+        return KasusRound(
+            storyID: result.storyID,
+            unitRaw: result.unit.rawValue,
+            stepRaw: result.step.rawValue,
+            hintLevelRaw: result.hintLevel?.rawValue ?? "",
+            askedCount: result.askedCount,
+            firstTryCount: result.firstTryCount,
+            durationSeconds: result.durationSeconds,
+            perCase: result.perCase,
+            items: items,
+            date: date
+        )
     }
 
     // MARK: Progress
@@ -660,7 +703,9 @@ enum KasusService {
                 .joined(separator: " · ")
         }
 
-        let bank = KasusStoryBank.bundled
+        // The KasusPath expectations below were written for this one story; the Phase 2 stories
+        // would move them, so the checks run on a bank of just this story.
+        let bank = KasusStoryBank.bundled.only(["ks-dat-a2-schluessel"])
         guard let story = bank.story(id: "ks-dat-a2-schluessel") else {
             return ["Service: the bundled Dativ story is missing", "1 FAILED"]
         }

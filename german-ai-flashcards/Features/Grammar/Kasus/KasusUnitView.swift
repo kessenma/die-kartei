@@ -7,6 +7,9 @@
 //    Die Regel · The rule        a few lines, the endings table with this case lit, the Kasus-Check
 //    Geschichten · Stories       the bundled stories for this unit (Lesen → Finden → Einsetzen)
 //    Schnellrunde · Quick round  the endings drill, limited to the unit's cases
+//    Deine Runden · Your rounds  the unit's last three rounds, and all of them in Verlauf
+//    Mehr dazu · Also for this   the preposition cards on this case's group (3D stills), or
+//                                der · die · das for the Nominativ
 //
 //  Rows that start a round end in a play glyph; rows that navigate get the list's chevron (the
 //  same rule as `PrepositionHubView.sourceRow`).
@@ -17,6 +20,10 @@ import SwiftData
 
 struct KasusUnitView: View {
     let unit: KasusUnit
+    /// For the Nominativ's der · die · das row, which can make its own AI topics. Without them
+    /// that row is left out.
+    let modelManager: MLXModelManager?
+    let mlxService: MLXGenerationService?
 
     @Environment(ActivityRouter.self) private var router
     @Environment(\.appTheme) private var appTheme
@@ -31,12 +38,20 @@ struct KasusUnitView: View {
     /// Questions in one Schnellrunde.
     private let quickRoundCount = 10
 
+    init(unit: KasusUnit, modelManager: MLXModelManager? = nil, mlxService: MLXGenerationService? = nil) {
+        self.unit = unit
+        self.modelManager = modelManager
+        self.mlxService = mlxService
+    }
+
     var body: some View {
         List {
             headerSection.themedListRow()
             ruleSection.themedListRow()
             storiesSection
             quickRoundSection.themedListRow()
+            roundsSection.themedListRow()
+            moreSection.themedListRow()
         }
         .themedListScreen()
         .navigationTitle(unit.germanTitle)
@@ -99,7 +114,7 @@ struct KasusUnitView: View {
                                 .fill(unit.color)
                                 .frame(width: 5, height: 5)
                                 .padding(.top, 7)
-                            Text(line)
+                            Text(kasusRich: line)
                                 .font(.subheadline)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -224,6 +239,192 @@ struct KasusUnitView: View {
             Text("Pick the article that fits the sentence. Every miss shows which case it is and why.")
         }
     }
+
+    // MARK: - Deine Runden
+
+    /// This unit's rounds, newest first, without the record check's synthetic ones.
+    private var unitRounds: [KasusRound] {
+        rounds.filter { $0.unitRaw == unit.rawValue && $0.isListed }.sorted { $0.date > $1.date }
+    }
+
+    @ViewBuilder
+    private var roundsSection: some View {
+        let played = unitRounds
+        if !played.isEmpty {
+            Section {
+                ForEach(played.prefix(3)) { round in
+                    NavigationLink {
+                        KasusRoundDetailView(round: round)
+                    } label: {
+                        KasusRoundRow(round: round, showsUnit: false)
+                    }
+                }
+                NavigationLink {
+                    KasusHistoryView(unit: unit)
+                } label: {
+                    Text(played.count > 3 ? "Alle anzeigen · All \(played.count)" : "Alle anzeigen · Show all")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.tint)
+                }
+            } header: {
+                Text("Deine Runden · Your rounds")
+                    .themedSectionHeader()
+            }
+        }
+    }
+
+    // MARK: - Mehr dazu
+
+    /// Where else this case gets practised: the preposition cards opened on its group (and the
+    /// two-way ones for Dativ), or der · die · das for the Nominativ, whose form is the one the
+    /// dictionary gives.
+    private enum MoreLink: Hashable {
+        case cards(PrepositionCase?)
+        case articles
+    }
+
+    private var moreLinks: [MoreLink] {
+        let articles: [MoreLink] = modelManager != nil && mlxService != nil ? [.articles] : []
+        switch unit {
+        case .nominativ:  return articles
+        case .akkusativ:  return [.cards(.akkusativ)]
+        case .dativ:      return [.cards(.dativ), .cards(.wechsel)]
+        case .genitiv:    return [.cards(.genitiv)]
+        case .alleFaelle: return [.cards(nil)] + articles
+        }
+    }
+
+    @ViewBuilder
+    private var moreSection: some View {
+        let links = moreLinks
+        if !links.isEmpty {
+            Section {
+                ForEach(links, id: \.self) { link in
+                    NavigationLink {
+                        moreDestination(link)
+                    } label: {
+                        moreRow(link)
+                    }
+                }
+            } header: {
+                Text("Mehr dazu · Also for this case")
+                    .themedSectionHeader()
+            } footer: {
+                Text(links == [.articles]
+                     ? "The Nominativ is the dictionary form, so knowing a noun's gender is knowing its article."
+                     : "Cards with a 3D scene for each preposition: what it means, its case, and examples.")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func moreDestination(_ link: MoreLink) -> some View {
+        switch link {
+        case .cards(let group):
+            PrepositionCardsView(initialGroup: group)
+        case .articles:
+            if let modelManager, let mlxService {
+                ArticleGameSetupView(modelManager: modelManager, mlxService: mlxService)
+            }
+        }
+    }
+
+    /// A tile for the still, the title, one line under it.
+    private func moreRow(_ link: MoreLink) -> some View {
+        HStack(spacing: 12) {
+            moreIcon(link)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(moreTitle(link))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+                Text(kasusRich: moreSubtitle(link))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    private func moreTitle(_ link: MoreLink) -> String {
+        switch link {
+        case .cards(.akkusativ?): "Präpositionen mit Akkusativ"
+        case .cards(.dativ?):     "Präpositionen mit Dativ"
+        case .cards(.wechsel?):   "Wo oder Wohin? · Two-way"
+        case .cards(.genitiv?):   "Präpositionen mit Genitiv"
+        case .cards(nil):         "Alle Präpositionen · Every group"
+        case .articles:           "Der · Die · Das"
+        }
+    }
+
+    /// In the `KasusRich` markup, so case words and forms carry their colors.
+    private func moreSubtitle(_ link: MoreLink) -> String {
+        switch link {
+        case .cards(.wechsel?):
+            return "{wechsel:Wo?} → {dat:Dativ} · {wechsel:Wohin?} → {akk:Akkusativ}"
+        case .cards(.akkusativ?):
+            return "für · ohne · durch · gegen · um"
+        case .cards(.dativ?):
+            return "mit · nach · bei · seit · von · zu · aus"
+        case .cards(.genitiv?):
+            return "wegen · trotz · während · statt"
+        case .cards(nil):
+            return "{akk:Akk} · {dat:Dat} · {wechsel:Wechsel} · {gen:Gen}, in 3D"
+        case .articles:
+            return "Every noun's gender: {m:der}, {f:die} or {n:das}"
+        }
+    }
+
+    /// Which render a row shows, and where its subject sits: the renders leave a wide empty
+    /// margin, and each one's subject sits somewhere else in it.
+    private struct Still {
+        let word: String
+        let state: String
+        let zoom: CGFloat
+        /// The subject's center, as a fraction of the render.
+        let focus: CGPoint
+    }
+
+    private func sceneStill(for link: MoreLink) -> Still? {
+        switch link {
+        case .cards(.akkusativ?): Still(word: "für", state: "dat", zoom: 1.3, focus: CGPoint(x: 0.46, y: 0.56))
+        case .cards(.dativ?):     Still(word: "mit", state: "dat", zoom: 1.5, focus: CGPoint(x: 0.62, y: 0.56))
+        case .cards(.wechsel?):   Still(word: "wohinwo", state: "akk", zoom: 1.3, focus: CGPoint(x: 0.4, y: 0.5))
+        case .cards(.genitiv?):   Still(word: "wegen", state: "dat", zoom: 1.05, focus: CGPoint(x: 0.5, y: 0.55))
+        case .cards(nil):         Still(word: "auf", state: "dat", zoom: 1.25, focus: CGPoint(x: 0.42, y: 0.6))
+        case .articles:           nil
+        }
+    }
+
+    /// A still of the group's scene on a tile, never a live canvas (one RealityKit view per
+    /// screen). A plain chip when there is no still.
+    @ViewBuilder
+    private func moreIcon(_ link: MoreLink) -> some View {
+        let tile = RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous)
+        let side: CGFloat = 60
+        let still = sceneStill(for: link)
+        if let still, let image = PrepositionScene.image(for: still.word, state: still.state) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .frame(width: side, height: side)
+                .scaleEffect(still.zoom)
+                .offset(x: (0.5 - still.focus.x) * side * still.zoom,
+                        y: (0.5 - still.focus.y) * side * still.zoom)
+                .frame(width: side, height: 46)
+                .background(Color.secondary.opacity(0.06))
+                .clipShape(tile)
+                .accessibilityHidden(true)
+        } else {
+            Image(systemName: link == .articles ? "textformat.abc" : "arrow.triangle.branch")
+                .font(.title3)
+                .foregroundStyle(.tint)
+                .frame(width: 60, height: 46)
+                .background(.tint.opacity(0.12), in: tile)
+                .accessibilityHidden(true)
+        }
+    }
 }
 
 // MARK: - Previews
@@ -256,4 +457,18 @@ struct KasusUnitView: View {
     }
     .environment(ActivityRouter())
     .modelContainer(container)
+}
+
+#Preview("Kasus unit · rounds + Mehr dazu · 4 themes") {
+    TabView {
+        ForEach(AppTheme.allCases) { theme in
+            NavigationStack {
+                KasusUnitView(unit: .dativ)
+            }
+            .environment(\.appTheme, theme)
+            .tabItem { Text(theme.label) }
+        }
+    }
+    .environment(ActivityRouter())
+    .modelContainer(KasusHistoryPreview.container())
 }

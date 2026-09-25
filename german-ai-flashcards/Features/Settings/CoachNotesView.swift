@@ -6,12 +6,17 @@ import SwiftData
 /// archive of everything it has cleaned out (with restore / pin). Mirrors the on-device profile
 /// that steers conversations; nothing here is sent anywhere.
 struct CoachNotesView: View {
+    /// The level anchor for a practice pick, and what the preposition hub needs to open.
+    var modelManager: MLXModelManager
+
     @Environment(\.modelContext) private var modelContext
     @Environment(ActivityRouter.self) private var router
     @Query private var profiles: [LearnerProfile]
     @Query(sort: \ArchivedMemoryItem.archivedAt, order: .reverse) private var archived: [ArchivedMemoryItem]
 
     @State private var showResetConfirm = false
+    /// "Practice this" on a preposition focus pushes the hub from here, outside the List.
+    @State private var showPrepositionHub = false
 
     private var profile: LearnerProfile? { profiles.first }
 
@@ -59,6 +64,9 @@ struct CoachNotesView: View {
         }
         .navigationTitle("Coach's Notes")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(isPresented: $showPrepositionHub) {
+            PrepositionHubView(modelManager: modelManager)
+        }
         .alert("Reset coaching memory?", isPresented: $showResetConfirm) {
             Button("Reset everything", role: .destructive) {
                 LearnerMemoryService.reset(in: modelContext)
@@ -122,7 +130,9 @@ struct CoachNotesView: View {
         if !grammarRows.isEmpty {
             Section {
                 ForEach(grammarRows, id: \.focus) { row in
-                    GrammarConfidenceRow(focus: row.focus, skill: row.skill)
+                    let route = GrammarRoute(row.focus)
+                    GrammarConfidenceRow(focus: row.focus, skill: row.skill,
+                                         practice: route.hasExercise ? { practise(route) } : nil)
                 }
             } header: {
                 Text("Grammar").themedSectionHeader()
@@ -277,6 +287,19 @@ struct CoachNotesView: View {
     private func save() {
         try? modelContext.save()
     }
+
+    /// "Practice this": a case opens its story (or Schnellrunde), Artikel a der/die/das round,
+    /// the preposition focuses their hub.
+    private func practise(_ route: GrammarRoute) {
+        switch route.resolve(in: modelContext, level: modelManager.germanLevel) {
+        case .launch(let activity):
+            router.launch(activity)
+        case .prepositionHub:
+            showPrepositionHub = true
+        case .lesson:
+            break // The row's own lesson is already open.
+        }
+    }
 }
 
 // MARK: - Grammar confidence row
@@ -284,16 +307,16 @@ struct CoachNotesView: View {
 private struct GrammarConfidenceRow: View {
     let focus: GrammarFocus
     let skill: GrammarSkill
+    /// Opens the focus's exercise (`GrammarRoute`). Nil when the lesson is all there is.
+    var practice: (() -> Void)?
 
-    @Environment(ActivityRouter.self) private var router
     @State private var showLesson = false
 
     private var confidence: Double { max(0, min(1, 1 - skill.struggle)) }
 
     /// Shaky structures get a just-in-time mini-lesson: a 30-second explanation plus, when one
-    /// exists, a one-tap drill — turning a diagnostic bar into something actionable (FUTURE #4).
+    /// exists, a one-tap exercise — turning a diagnostic bar into something actionable (FUTURE #4).
     private var isShaky: Bool { skill.struggle >= GrammarSkill.shakyThreshold }
-    private var drill: GrammarCategory? { GrammarExerciseService.category(for: focus) }
 
     private var color: Color {
         switch skill.struggle {
@@ -358,9 +381,9 @@ private struct GrammarConfidenceRow: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 2)
 
-            if let drill {
+            if let practice {
                 Button {
-                    router.launch(.grammarMultipleChoice(category: drill, showHints: true))
+                    practice()
                 } label: {
                     Label("Practice this", systemImage: "checklist")
                         .font(.caption.weight(.semibold))

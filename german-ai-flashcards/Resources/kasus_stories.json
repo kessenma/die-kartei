@@ -58,6 +58,377 @@
         { "phrase": "den Schrank", "case": "akkusativ", "genus": "m", "lemma": "Schrank", "reason": "wechselWohin", "trigger": "auf" }
       ],
       "notTargets": []
+    },
+    {
+      "id": "ks-nom-a1-foto",
+      "unit": "nominativ",
+      "level": "A1",
+      "source": "authored",
+      "reviewed": { "by": "", "date": "" },
+      "title": "Das alte Foto",
+      "titleEnglish": "The old photo",
+      "question": {
+        "de": "Wer ist der Junge auf dem Foto?",
+        "en": "Who is the boy in the photo?",
+        "options": ["Mein Vater", "Opa Karl", "Ein Freund"],
+        "answer": 0
+      },
+      "paragraphs": [
+        {
+          "de": "Das ist ein Foto von früher. Es ist schon sehr alt. Links steht ein Mann. Der Mann ist mein Opa. Er heißt Karl. Neben Opa sitzt eine Frau. Das ist meine Oma. Sie lacht.",
+          "en": "This is a photo from long ago. It is already very old. On the left stands a man. The man is my grandpa. His name is Karl. Next to Grandpa sits a woman. That's my grandma. She is laughing."
+        },
+        {
+          "de": "Vorne sitzt ein Junge. Das ist mein Vater! Er ist hier sechs Jahre alt. Der Junge hat einen Hund. Der Hund heißt Bello. Er ist klein und frech.",
+          "en": "In front sits a boy. That's my dad! Here he is six years old. The boy has a dog. The dog is called Bello. He is small and cheeky."
+        },
+        {
+          "de": "Rechts steht ein Mädchen. Das ist Tante Anna. Hinten ist ein Garten. Der Garten ist heute noch da. Jetzt spiele ich dort. Das Foto ist ein Schatz.",
+          "en": "On the right stands a girl. That's Aunt Anna. At the back there is a garden. The garden is still there today. Now I play there. The photo is a treasure."
+        }
+      ],
+      "targets": [
+        { "phrase": "ein Foto", "case": "nominativ", "genus": "n", "lemma": "Foto", "reason": "predicate", "trigger": "ist" },
+        { "phrase": "ein Mann", "case": "nominativ", "genus": "m", "lemma": "Mann", "reason": "subject", "trigger": "steht" },
+        { "phrase": "Der Mann", "case": "nominativ", "genus": "m", "lemma": "Mann", "reason": "subject", "trigger": "ist" },
+        { "phrase": "mein Opa", "case": "nominativ", "genus": "m", "lemma": "Opa", "reason": "predicate", "trigger": "ist" },
+        { "phrase": "eine Frau", "case": "nominativ", "genus": "f", "lemma": "Frau", "reason": "subject", "trigger": "sitzt" },
+        { "phrase": "meine Oma", "case": "nominativ", "genus": "f", "lemma": "Oma", "reason": "predicate", "trigger": "ist" },
+        { "phrase": "ein Junge", "case": "nominativ", "genus": "m", "lemma": "Junge", "reason": "subject", "trigger": "sitzt" },
+        { "phrase": "mein Vater", "case": "nominativ", "genus": "m", "lemma": "Vater", "reason": "predicate", "trigger": "ist" },
+        { "phrase": "Der Junge", "case": "nominativ", "genus": "m", "lemma": "Junge", "reason": "subject", "trigger": "hat" },
+        { "phrase": "einen Hund", "case": "akkusativ", "genus": "m", "lemma": "Hund", "reason": "object", "trigger": "hat" },
+        { "phrase": "Der Hund", "case": "nominativ", "genus": "m", "lemma": "Hund", "reason": "subject", "trigger": "heißt" },
+        { "phrase": "ein Mädchen", "case": "nominativ", "genus": "n", "lemma": "Mädchen", "reason": "subject", "trigger": "steht" },
+        { "phrase": "ein Garten", "case": "nominativ", "genus": "m", "lemma": "Garten", "reason": "subject", "trigger": "ist" },
+        { "phrase": "Der Garten", "case": "nominativ", "genus": "m", "lemma": "Garten", "reason": "subject", "trigger": "ist" },
+        { "phrase": "Das Foto", "case": "nominativ", "genus": "n", "lemma": "Foto", "reason": "subject", "trigger": "ist" },
+        { "phrase": "ein Schatz", "case": "nominativ", "genus": "m", "lemma": "Schatz", "reason": "predicate", "trigger": "ist" }
+      ],
+      "notTargets": []
+    },
+    {
+      "id": "ks-akk-a1-picknick",
+      "unit": "akkusativ",
+      "level": "A1",
+      "source": "authored",
+      "reviewed": { "by": "", "date": "" },
+      "title": "Das Picknick",
+      "titleEnglish": "The picnic",
+      "question": {
+        "de": "Wer frisst den Kuchen?",
+        "en": "Who eats the cake?",
+        "options": ["Rex", "Ali", "Tom"],
+        "answer": 0
+      },
+      "paragraphs": [
+        {
+          "de": "Heute ist Samstag. Tom packt einen Korb für das Picknick. Er nimmt einen Kuchen und einen Saft. Dann ruft er seinen Freund Ali an.",
+          "en": "Today is Saturday. Tom packs a basket for the picnic. He takes a cake and a juice. Then he calls his friend Ali."
+        },
+        {
+          "de": "Ali bringt seinen Hund mit. Der Hund heißt Rex. Sie gehen durch die Stadt und den Park. Dort gibt es einen Kiosk. Sie finden einen Platz. Tom öffnet den Korb.",
+          "en": "Ali brings his dog along. The dog is called Rex. They walk through the town and the park. There is a kiosk there. They find a spot. Tom opens the basket."
+        },
+        {
+          "de": "Aber Rex ist schneller. Er frisst den Kuchen! Jetzt gibt es keinen Kuchen. Ali ruft: „Rex, das ist nicht für dich!“ Tom lacht nur. Sie trinken den Saft und spielen mit Rex. Der Tag ist trotzdem schön.",
+          "en": "But Rex is quicker. He eats the cake! Now there is no cake. Ali shouts: “Rex, that's not for you!” Tom just laughs. They drink the juice and play with Rex. The day is lovely all the same."
+        }
+      ],
+      "targets": [
+        { "phrase": "einen Korb", "case": "akkusativ", "genus": "m", "lemma": "Korb", "reason": "object", "trigger": "packt" },
+        { "phrase": "das Picknick", "case": "akkusativ", "genus": "n", "lemma": "Picknick", "reason": "preposition", "trigger": "für" },
+        { "phrase": "einen Kuchen", "case": "akkusativ", "genus": "m", "lemma": "Kuchen", "reason": "object", "trigger": "nimmt" },
+        { "phrase": "einen Saft", "case": "akkusativ", "genus": "m", "lemma": "Saft", "reason": "object", "trigger": "nimmt" },
+        { "phrase": "seinen Freund", "case": "akkusativ", "genus": "m", "lemma": "Freund", "reason": "object", "trigger": "ruft an" },
+        { "phrase": "seinen Hund", "case": "akkusativ", "genus": "m", "lemma": "Hund", "reason": "object", "trigger": "bringt mit" },
+        { "phrase": "Der Hund", "case": "nominativ", "genus": "m", "lemma": "Hund", "reason": "subject", "trigger": "heißt" },
+        { "phrase": "die Stadt", "case": "akkusativ", "genus": "f", "lemma": "Stadt", "reason": "preposition", "trigger": "durch" },
+        { "phrase": "den Park", "case": "akkusativ", "genus": "m", "lemma": "Park", "reason": "preposition", "trigger": "durch" },
+        { "phrase": "einen Kiosk", "case": "akkusativ", "genus": "m", "lemma": "Kiosk", "reason": "object", "trigger": "gibt" },
+        { "phrase": "einen Platz", "case": "akkusativ", "genus": "m", "lemma": "Platz", "reason": "object", "trigger": "finden" },
+        { "phrase": "den Korb", "case": "akkusativ", "genus": "m", "lemma": "Korb", "reason": "object", "trigger": "öffnet" },
+        { "phrase": "den Kuchen", "case": "akkusativ", "genus": "m", "lemma": "Kuchen", "reason": "object", "trigger": "frisst" },
+        { "phrase": "keinen Kuchen", "case": "akkusativ", "genus": "m", "lemma": "Kuchen", "reason": "object", "trigger": "gibt" },
+        { "phrase": "dich", "case": "akkusativ", "reason": "preposition", "trigger": "für" },
+        { "phrase": "den Saft", "case": "akkusativ", "genus": "m", "lemma": "Saft", "reason": "object", "trigger": "trinken" },
+        { "phrase": "Der Tag", "case": "nominativ", "genus": "m", "lemma": "Tag", "reason": "subject", "trigger": "ist" }
+      ],
+      "notTargets": []
+    },
+    {
+      "id": "ks-akk-a1-berlin",
+      "unit": "akkusativ",
+      "level": "A1",
+      "source": "authored",
+      "reviewed": { "by": "", "date": "" },
+      "title": "Besuch in Berlin",
+      "titleEnglish": "A visit to Berlin",
+      "question": {
+        "de": "Wo ist der Schirm am Ende?",
+        "en": "Where is the umbrella at the end?",
+        "options": ["Bei Paul", "Bei Anna", "Im Bus"],
+        "answer": 0
+      },
+      "paragraphs": [
+        {
+          "de": "Anna besucht ihren Bruder Paul in Berlin. Paul hat einen Plan für den Tag. Zuerst trinken sie einen Kaffee. Dann nehmen sie den Bus.",
+          "en": "Anna visits her brother Paul in Berlin. Paul has a plan for the day. First they have a coffee. Then they take the bus."
+        },
+        {
+          "de": "Der Bus fährt durch die Stadt. Anna sieht einen Fluss und einen Turm. Der Turm ist sehr hoch. Sie macht Fotos für ihre Mutter. Der Himmel ist blau. Doch plötzlich regnet es.",
+          "en": "The bus drives through the city. Anna sees a river and a tower. The tower is very tall. She takes photos for her mother. The sky is blue. But suddenly it starts to rain."
+        },
+        {
+          "de": "Anna hat keinen Schirm. Paul kauft einen Schirm für sie. Der Schirm ist rot. Anna findet ihn toll. Aber abends fährt sie ohne ihn nach Hause. Der Schirm bleibt bei Paul.",
+          "en": "Anna has no umbrella. Paul buys an umbrella for her. The umbrella is red. Anna thinks it's great. But in the evening she goes home without it. The umbrella stays with Paul."
+        }
+      ],
+      "targets": [
+        { "phrase": "ihren Bruder", "case": "akkusativ", "genus": "m", "lemma": "Bruder", "reason": "object", "trigger": "besucht" },
+        { "phrase": "einen Plan", "case": "akkusativ", "genus": "m", "lemma": "Plan", "reason": "object", "trigger": "hat" },
+        { "phrase": "den Tag", "case": "akkusativ", "genus": "m", "lemma": "Tag", "reason": "preposition", "trigger": "für" },
+        { "phrase": "einen Kaffee", "case": "akkusativ", "genus": "m", "lemma": "Kaffee", "reason": "object", "trigger": "trinken" },
+        { "phrase": "den Bus", "case": "akkusativ", "genus": "m", "lemma": "Bus", "reason": "object", "trigger": "nehmen" },
+        { "phrase": "Der Bus", "case": "nominativ", "genus": "m", "lemma": "Bus", "reason": "subject", "trigger": "fährt" },
+        { "phrase": "die Stadt", "case": "akkusativ", "genus": "f", "lemma": "Stadt", "reason": "preposition", "trigger": "durch" },
+        { "phrase": "einen Fluss", "case": "akkusativ", "genus": "m", "lemma": "Fluss", "reason": "object", "trigger": "sieht" },
+        { "phrase": "einen Turm", "case": "akkusativ", "genus": "m", "lemma": "Turm", "reason": "object", "trigger": "sieht" },
+        { "phrase": "Der Turm", "case": "nominativ", "genus": "m", "lemma": "Turm", "reason": "subject", "trigger": "ist" },
+        { "phrase": "ihre Mutter", "case": "akkusativ", "genus": "f", "lemma": "Mutter", "reason": "preposition", "trigger": "für" },
+        { "phrase": "Der Himmel", "case": "nominativ", "genus": "m", "lemma": "Himmel", "reason": "subject", "trigger": "ist" },
+        { "phrase": "keinen Schirm", "case": "akkusativ", "genus": "m", "lemma": "Schirm", "reason": "object", "trigger": "hat" },
+        { "phrase": "einen Schirm", "case": "akkusativ", "genus": "m", "lemma": "Schirm", "reason": "object", "trigger": "kauft" },
+        { "phrase": "Der Schirm", "case": "nominativ", "genus": "m", "lemma": "Schirm", "reason": "subject", "trigger": "ist" },
+        { "phrase": "ihn", "case": "akkusativ", "reason": "object", "trigger": "findet" },
+        { "phrase": "ihn", "case": "akkusativ", "reason": "preposition", "trigger": "ohne" },
+        { "phrase": "Der Schirm", "case": "nominativ", "genus": "m", "lemma": "Schirm", "reason": "subject", "trigger": "bleibt" }
+      ],
+      "notTargets": []
+    },
+    {
+      "id": "ks-dat-a2-umzug",
+      "unit": "dativ",
+      "level": "A2",
+      "source": "authored",
+      "reviewed": { "by": "", "date": "" },
+      "title": "Der Umzug",
+      "titleEnglish": "The move",
+      "question": {
+        "de": "Wer hilft Max mit dem Sofa?",
+        "en": "Who helps Max with the sofa?",
+        "options": ["Ein Nachbar", "Lisa", "Sein Freund"],
+        "answer": 0
+      },
+      "paragraphs": [
+        {
+          "de": "Am Samstag zieht Lisa um. Um sieben Uhr ruft sie ihren Bruder an: „Kannst du mir helfen?“ Max kommt sofort mit dem Auto von seinem Freund.",
+          "en": "On Saturday Lisa is moving house. At seven o'clock she calls her brother: “Can you help me?” Max comes straight away in his friend's car."
+        },
+        {
+          "de": "Lisas Wohnung ist ganz oben, und es gibt keinen Aufzug. Lisa bleibt beim Auto. Max trägt zwanzig Kisten nach oben. Mit den Kisten ist er schnell fertig. Aber das Sofa ist zu schwer für ihn.",
+          "en": "Lisa's flat is right at the top, and there is no lift. Lisa stays with the car. Max carries twenty boxes upstairs. He is soon done with the boxes. But the sofa is too heavy for him."
+        },
+        {
+          "de": "Zum Glück kommt ein Nachbar aus dem Haus. Er hilft ihm sofort. Zusammen tragen sie das Sofa in die Wohnung. Jetzt steht es im Wohnzimmer. Lisa ist glücklich, weil der Blick so schön ist.",
+          "en": "Luckily a neighbour comes out of the building. He helps him straight away. Together they carry the sofa into the flat. Now it stands in the living room. Lisa is happy because the view is so lovely."
+        },
+        {
+          "de": "Am Abend bringt Lisa einen Kuchen zum Nachbarn. Sie dankt dem Mann für seine Hilfe. Der Kuchen schmeckt ihm sehr gut. Nach dem Umzug tut Max der Rücken weh. Er hat zwanzig Kisten getragen! Lisa gibt ihrem Bruder einen Kuss.",
+          "en": "In the evening Lisa takes a cake to the neighbour. She thanks the man for his help. He really likes the cake. After the move, Max's back hurts. He carried twenty boxes! Lisa gives her brother a kiss."
+        }
+      ],
+      "targets": [
+        { "phrase": "Am Samstag", "case": "dativ", "genus": "m", "lemma": "Samstag", "reason": "time", "trigger": "Am" },
+        { "phrase": "ihren Bruder", "case": "akkusativ", "genus": "m", "lemma": "Bruder", "reason": "object", "trigger": "ruft an" },
+        { "phrase": "mir", "case": "dativ", "reason": "dativeVerb", "trigger": "helfen" },
+        { "phrase": "dem Auto", "case": "dativ", "genus": "n", "lemma": "Auto", "reason": "preposition", "trigger": "mit" },
+        { "phrase": "seinem Freund", "case": "dativ", "genus": "m", "lemma": "Freund", "reason": "preposition", "trigger": "von" },
+        { "phrase": "keinen Aufzug", "case": "akkusativ", "genus": "m", "lemma": "Aufzug", "reason": "object", "trigger": "gibt" },
+        { "phrase": "beim Auto", "case": "dativ", "genus": "n", "lemma": "Auto", "reason": "preposition", "trigger": "beim" },
+        { "phrase": "den Kisten", "case": "dativ", "genus": "pl", "lemma": "Kiste", "reason": "preposition", "trigger": "Mit" },
+        { "phrase": "das Sofa", "case": "nominativ", "genus": "n", "lemma": "Sofa", "reason": "subject", "trigger": "ist" },
+        { "phrase": "ihn", "case": "akkusativ", "reason": "preposition", "trigger": "für" },
+        { "phrase": "ein Nachbar", "case": "nominativ", "genus": "m", "lemma": "Nachbar", "reason": "subject", "trigger": "kommt" },
+        { "phrase": "dem Haus", "case": "dativ", "genus": "n", "lemma": "Haus", "reason": "preposition", "trigger": "aus" },
+        { "phrase": "ihm", "case": "dativ", "reason": "dativeVerb", "trigger": "hilft" },
+        { "phrase": "das Sofa", "case": "akkusativ", "genus": "n", "lemma": "Sofa", "reason": "object", "trigger": "tragen" },
+        { "phrase": "die Wohnung", "case": "akkusativ", "genus": "f", "lemma": "Wohnung", "reason": "wechselWohin", "trigger": "in" },
+        { "phrase": "im Wohnzimmer", "case": "dativ", "genus": "n", "lemma": "Wohnzimmer", "reason": "wechselWo", "trigger": "im" },
+        { "phrase": "der Blick", "case": "nominativ", "genus": "m", "lemma": "Blick", "reason": "subject", "trigger": "ist" },
+        { "phrase": "Am Abend", "case": "dativ", "genus": "m", "lemma": "Abend", "reason": "time", "trigger": "Am" },
+        { "phrase": "einen Kuchen", "case": "akkusativ", "genus": "m", "lemma": "Kuchen", "reason": "object", "trigger": "bringt" },
+        { "phrase": "zum Nachbarn", "case": "dativ", "genus": "m", "lemma": "Nachbar", "reason": "preposition", "trigger": "zum" },
+        { "phrase": "dem Mann", "case": "dativ", "genus": "m", "lemma": "Mann", "reason": "dativeVerb", "trigger": "dankt" },
+        { "phrase": "seine Hilfe", "case": "akkusativ", "genus": "f", "lemma": "Hilfe", "reason": "preposition", "trigger": "für" },
+        { "phrase": "Der Kuchen", "case": "nominativ", "genus": "m", "lemma": "Kuchen", "reason": "subject", "trigger": "schmeckt" },
+        { "phrase": "ihm", "case": "dativ", "reason": "dativeVerb", "trigger": "schmeckt" },
+        { "phrase": "dem Umzug", "case": "dativ", "genus": "m", "lemma": "Umzug", "reason": "preposition", "trigger": "Nach" },
+        { "phrase": "der Rücken", "case": "nominativ", "genus": "m", "lemma": "Rücken", "reason": "subject", "trigger": "tut" },
+        { "phrase": "ihrem Bruder", "case": "dativ", "genus": "m", "lemma": "Bruder", "reason": "recipient", "trigger": "gibt" },
+        { "phrase": "einen Kuss", "case": "akkusativ", "genus": "m", "lemma": "Kuss", "reason": "object", "trigger": "gibt" }
+      ],
+      "notTargets": [{ "phrase": "Zum Glück", "why": "idiom" }]
+    },
+    {
+      "id": "ks-gen-b1-grossmutter",
+      "unit": "genitiv",
+      "level": "B1",
+      "source": "authored",
+      "reviewed": { "by": "", "date": "" },
+      "title": "Das Haus meiner Großmutter",
+      "titleEnglish": "My grandmother's house",
+      "question": {
+        "de": "Was gibt es heute statt der Rosen?",
+        "en": "What is there today instead of the roses?",
+        "options": ["Einen Parkplatz", "Einen Spielplatz", "Einen Garten"],
+        "answer": 0
+      },
+      "paragraphs": [
+        {
+          "de": "Als Kind verbrachte ich jeden Sommer bei meiner Großmutter. Ich liebte diesen Ort. Sie wohnte am Ende des Dorfes, direkt neben dem Wald. Der Weg zum Haus war lang und steil. Der Garten des Hauses war riesig. Hinter dem Zaun wohnte ein Nachbar. Der Hund des Nachbarn weckte uns jeden Tag um sechs.",
+          "en": "As a child I spent every summer at my grandmother's. I loved this place. She lived at the end of the village, right next to the forest. The path to the house was long and steep. The garden of the house was huge. Behind the fence lived a neighbour. The neighbour's dog woke us every day at six."
+        },
+        {
+          "de": "Im Wohnzimmer stand noch der Schreibtisch meines Großvaters. Niemand durfte ihn benutzen. Die Küche war das Herz des Hauses, und dort roch es immer nach Kaffee und Kuchen. Jeden Sonntag backte sie einen Kuchen für den Nachbarn. Während der Ferien half ich oft in der Küche. Dabei erzählte sie mir Geschichten aus ihrer Kindheit.",
+          "en": "My grandfather's desk still stood in the living room. Nobody was allowed to use it. The kitchen was the heart of the house, and it always smelled of coffee and cake there. Every Sunday she baked a cake for the neighbour. During the holidays I often helped in the kitchen. As we worked, she told me stories from her childhood."
+        },
+        {
+          "de": "Trotz ihres Alters arbeitete sie stundenlang im Garten. Sie kannte den Namen jedes Vogels und sprach mit den Pflanzen wie mit Freunden. Wegen des Wetters machte sie sich nie Sorgen. „Regen ist gut für die Rosen“, sagte sie immer. Am Abend saßen wir oft auf der Bank vor dem Haus. Dann hörten wir den Vögeln zu.",
+          "en": "Despite her age she worked in the garden for hours. She knew the name of every bird and talked to the plants as if they were friends. She never worried about the weather. “Rain is good for the roses,” she always said. In the evening we often sat on the bench in front of the house. Then we listened to the birds."
+        },
+        {
+          "de": "Letzten Sommer bin ich wieder ins Dorf gefahren. Heute wohnen dort Leute aus Hamburg. Statt der Rosen gibt es jetzt einen Parkplatz. Lange habe ich vor dem Zaun gestanden. Ein Mann aus dem Haus hat mich freundlich gegrüßt. Der Wald ist zum Glück noch da. Und für mich bleibt es immer das Haus meiner Großmutter.",
+          "en": "Last summer I went back to the village. People from Hamburg live there now. Instead of the roses there is a car park. I stood in front of the fence for a long time. A man from the house greeted me kindly. Luckily the forest is still there. And for me it will always be my grandmother's house."
+        }
+      ],
+      "targets": [
+        { "phrase": "jeden Sommer", "case": "akkusativ", "genus": "m", "lemma": "Sommer", "reason": "object", "trigger": "verbrachte" },
+        { "phrase": "meiner Großmutter", "case": "dativ", "genus": "f", "lemma": "Großmutter", "reason": "preposition", "trigger": "bei" },
+        { "phrase": "diesen Ort", "case": "akkusativ", "genus": "m", "lemma": "Ort", "reason": "object", "trigger": "liebte" },
+        { "phrase": "am Ende", "case": "dativ", "genus": "n", "lemma": "Ende", "reason": "wechselWo", "trigger": "am" },
+        { "phrase": "des Dorfes", "case": "genitiv", "genus": "n", "lemma": "Dorf", "reason": "attribute", "trigger": "Ende" },
+        { "phrase": "dem Wald", "case": "dativ", "genus": "m", "lemma": "Wald", "reason": "wechselWo", "trigger": "neben" },
+        { "phrase": "Der Weg", "case": "nominativ", "genus": "m", "lemma": "Weg", "reason": "subject", "trigger": "war" },
+        { "phrase": "zum Haus", "case": "dativ", "genus": "n", "lemma": "Haus", "reason": "preposition", "trigger": "zum" },
+        { "phrase": "Der Garten", "case": "nominativ", "genus": "m", "lemma": "Garten", "reason": "subject", "trigger": "war" },
+        { "phrase": "des Hauses", "case": "genitiv", "genus": "n", "lemma": "Haus", "reason": "attribute", "trigger": "Garten" },
+        { "phrase": "dem Zaun", "case": "dativ", "genus": "m", "lemma": "Zaun", "reason": "wechselWo", "trigger": "Hinter" },
+        { "phrase": "ein Nachbar", "case": "nominativ", "genus": "m", "lemma": "Nachbar", "reason": "subject", "trigger": "wohnte" },
+        { "phrase": "Der Hund", "case": "nominativ", "genus": "m", "lemma": "Hund", "reason": "subject", "trigger": "weckte" },
+        { "phrase": "des Nachbarn", "case": "genitiv", "genus": "m", "lemma": "Nachbar", "reason": "attribute", "trigger": "Hund" },
+        { "phrase": "jeden Tag", "case": "akkusativ", "genus": "m", "lemma": "Tag", "reason": "time", "trigger": "weckte" },
+        { "phrase": "Im Wohnzimmer", "case": "dativ", "genus": "n", "lemma": "Wohnzimmer", "reason": "wechselWo", "trigger": "Im" },
+        { "phrase": "der Schreibtisch", "case": "nominativ", "genus": "m", "lemma": "Schreibtisch", "reason": "subject", "trigger": "stand" },
+        { "phrase": "meines Großvaters", "case": "genitiv", "genus": "m", "lemma": "Großvater", "reason": "attribute", "trigger": "Schreibtisch" },
+        { "phrase": "ihn", "case": "akkusativ", "reason": "object", "trigger": "benutzen" },
+        { "phrase": "Die Küche", "case": "nominativ", "genus": "f", "lemma": "Küche", "reason": "subject", "trigger": "war" },
+        { "phrase": "das Herz", "case": "nominativ", "genus": "n", "lemma": "Herz", "reason": "predicate", "trigger": "war" },
+        { "phrase": "des Hauses", "case": "genitiv", "genus": "n", "lemma": "Haus", "reason": "attribute", "trigger": "Herz" },
+        { "phrase": "Jeden Sonntag", "case": "akkusativ", "genus": "m", "lemma": "Sonntag", "reason": "time", "trigger": "backte" },
+        { "phrase": "einen Kuchen", "case": "akkusativ", "genus": "m", "lemma": "Kuchen", "reason": "object", "trigger": "backte" },
+        { "phrase": "den Nachbarn", "case": "akkusativ", "genus": "m", "lemma": "Nachbar", "reason": "preposition", "trigger": "für" },
+        { "phrase": "der Ferien", "case": "genitiv", "genus": "pl", "lemma": "Ferien", "reason": "preposition", "trigger": "Während" },
+        { "phrase": "der Küche", "case": "dativ", "genus": "f", "lemma": "Küche", "reason": "wechselWo", "trigger": "in" },
+        { "phrase": "mir", "case": "dativ", "reason": "recipient", "trigger": "erzählte" },
+        { "phrase": "ihrer Kindheit", "case": "dativ", "genus": "f", "lemma": "Kindheit", "reason": "preposition", "trigger": "aus" },
+        { "phrase": "ihres Alters", "case": "genitiv", "genus": "n", "lemma": "Alter", "reason": "preposition", "trigger": "Trotz" },
+        { "phrase": "im Garten", "case": "dativ", "genus": "m", "lemma": "Garten", "reason": "wechselWo", "trigger": "im" },
+        { "phrase": "den Namen", "case": "akkusativ", "genus": "m", "lemma": "Name", "reason": "object", "trigger": "kannte" },
+        { "phrase": "jedes Vogels", "case": "genitiv", "genus": "m", "lemma": "Vogel", "reason": "attribute", "trigger": "Namen" },
+        { "phrase": "den Pflanzen", "case": "dativ", "genus": "pl", "lemma": "Pflanze", "reason": "preposition", "trigger": "mit" },
+        { "phrase": "des Wetters", "case": "genitiv", "genus": "n", "lemma": "Wetter", "reason": "preposition", "trigger": "Wegen" },
+        { "phrase": "die Rosen", "case": "akkusativ", "genus": "pl", "lemma": "Rose", "reason": "preposition", "trigger": "für" },
+        { "phrase": "Am Abend", "case": "dativ", "genus": "m", "lemma": "Abend", "reason": "time", "trigger": "Am" },
+        { "phrase": "der Bank", "case": "dativ", "genus": "f", "lemma": "Bank", "reason": "wechselWo", "trigger": "auf" },
+        { "phrase": "dem Haus", "case": "dativ", "genus": "n", "lemma": "Haus", "reason": "wechselWo", "trigger": "vor" },
+        { "phrase": "den Vögeln", "case": "dativ", "genus": "pl", "lemma": "Vogel", "reason": "dativeVerb", "trigger": "hörten zu" },
+        { "phrase": "ins Dorf", "case": "akkusativ", "genus": "n", "lemma": "Dorf", "reason": "wechselWohin", "trigger": "ins" },
+        { "phrase": "der Rosen", "case": "genitiv", "genus": "pl", "lemma": "Rose", "reason": "preposition", "trigger": "Statt" },
+        { "phrase": "einen Parkplatz", "case": "akkusativ", "genus": "m", "lemma": "Parkplatz", "reason": "object", "trigger": "gibt" },
+        { "phrase": "dem Zaun", "case": "dativ", "genus": "m", "lemma": "Zaun", "reason": "wechselWo", "trigger": "vor" },
+        { "phrase": "Ein Mann", "case": "nominativ", "genus": "m", "lemma": "Mann", "reason": "subject", "trigger": "gegrüßt" },
+        { "phrase": "dem Haus", "case": "dativ", "genus": "n", "lemma": "Haus", "reason": "preposition", "trigger": "aus" },
+        { "phrase": "mich", "case": "akkusativ", "reason": "object", "trigger": "gegrüßt" },
+        { "phrase": "Der Wald", "case": "nominativ", "genus": "m", "lemma": "Wald", "reason": "subject", "trigger": "ist" },
+        { "phrase": "mich", "case": "akkusativ", "reason": "preposition", "trigger": "für" },
+        { "phrase": "das Haus", "case": "nominativ", "genus": "n", "lemma": "Haus", "reason": "predicate", "trigger": "bleibt" },
+        { "phrase": "meiner Großmutter", "case": "genitiv", "genus": "f", "lemma": "Großmutter", "reason": "attribute", "trigger": "Haus" }
+      ],
+      "notTargets": [{ "phrase": "zum Glück", "why": "idiom" }]
+    },
+    {
+      "id": "ks-alle-b1-gespraech",
+      "unit": "alleFaelle",
+      "level": "B1",
+      "source": "authored",
+      "reviewed": { "by": "", "date": "" },
+      "title": "Das Vorstellungsgespräch",
+      "titleEnglish": "The job interview",
+      "question": {
+        "de": "Warum kommt Sara zu spät?",
+        "en": "Why is Sara late?",
+        "options": ["Der Zug hält wegen einer Störung.", "Sie hat verschlafen.", "Sie findet das Büro nicht."],
+        "answer": 0
+      },
+      "paragraphs": [
+        {
+          "de": "Heute ist Saras Vorstellungsgespräch bei einer Firma in München. Seit einem Jahr sucht sie einen Job als Grafikerin. Diesen Job möchte sie unbedingt bekommen. Das ist ihre Chance! In der Nacht hat sie kaum geschlafen. Neben der Tür steht schon ihr Rucksack mit den Entwürfen. Sie trinkt nur schnell einen Tee und nimmt den Zug um sieben Uhr.",
+          "en": "Today is Sara's job interview at a company in Munich. She has been looking for a job as a graphic designer for a year. She really wants to get this job. This is her chance! She hardly slept last night. Her backpack with her designs is already waiting by the door. She just has a quick cup of tea and catches the seven o'clock train."
+        },
+        {
+          "de": "Doch wegen einer Störung hält der Zug plötzlich mitten auf der Strecke. Lange passiert nichts. Im Zug ist es heiß und voll. Sara schaut ständig auf die Uhr. Dann ruft sie den Chef an. Herr Weber bleibt ganz ruhig. „Kein Problem“, sagt er. „Wir warten auf Sie.“",
+          "en": "But because of a fault the train suddenly stops in the middle of nowhere. For a long time nothing happens. It is hot and crowded on the train. Sara keeps looking at the clock. Then she calls the boss. Mr Weber stays completely calm. “No problem,” he says. “We'll wait for you.”"
+        },
+        {
+          "de": "Mit einer Stunde Verspätung steht Sara endlich im Büro. Herr Weber begrüßt sie freundlich. Ein Kollege bringt Sara einen Kaffee. Am Anfang ist sie noch nervös, aber das geht schnell vorbei. Während des Gesprächs vergisst sie den Stress mit dem Zug. Herr Weber stellt viele Fragen zu ihrer Ausbildung. Dann zeigt sie dem Chef ein paar Entwürfe. Ein Entwurf gefällt ihm besonders gut.",
+          "en": "An hour late, Sara is finally standing in the office. Mr Weber greets her warmly. A colleague brings Sara a coffee. At first she is still nervous, but that soon passes. During the interview she forgets the stress with the train. Mr Weber asks a lot of questions about her training. Then she shows the boss a few designs. He likes one design especially."
+        },
+        {
+          "de": "Am Ende des Gesprächs fragt er: „Wann können Sie anfangen?“ „Am liebsten sofort!“, antwortet Sara. Sie kann es kaum glauben. Auf dem Weg nach Hause ruft sie ihren Vater an. Ihr Vater freut sich sehr. Trotz der Verspätung hat sich der Tag gelohnt. Nächsten Montag fängt Sara bei der Firma an.",
+          "en": "At the end of the interview he asks: “When can you start?” “Right away, if I can!” Sara answers. She can hardly believe it. On the way home she calls her father. Her father is delighted. Despite the delay, the day was worth it. Next Monday Sara starts at the company."
+        }
+      ],
+      "targets": [
+        { "phrase": "einer Firma", "case": "dativ", "genus": "f", "lemma": "Firma", "reason": "preposition", "trigger": "bei" },
+        { "phrase": "einem Jahr", "case": "dativ", "genus": "n", "lemma": "Jahr", "reason": "time", "trigger": "Seit" },
+        { "phrase": "einen Job", "case": "akkusativ", "genus": "m", "lemma": "Job", "reason": "object", "trigger": "sucht" },
+        { "phrase": "Diesen Job", "case": "akkusativ", "genus": "m", "lemma": "Job", "reason": "object", "trigger": "bekommen" },
+        { "phrase": "ihre Chance", "case": "nominativ", "genus": "f", "lemma": "Chance", "reason": "predicate", "trigger": "ist" },
+        { "phrase": "der Nacht", "case": "dativ", "genus": "f", "lemma": "Nacht", "reason": "time", "trigger": "In" },
+        { "phrase": "der Tür", "case": "dativ", "genus": "f", "lemma": "Tür", "reason": "wechselWo", "trigger": "Neben" },
+        { "phrase": "ihr Rucksack", "case": "nominativ", "genus": "m", "lemma": "Rucksack", "reason": "subject", "trigger": "steht" },
+        { "phrase": "den Entwürfen", "case": "dativ", "genus": "pl", "lemma": "Entwurf", "reason": "preposition", "trigger": "mit" },
+        { "phrase": "einen Tee", "case": "akkusativ", "genus": "m", "lemma": "Tee", "reason": "object", "trigger": "trinkt" },
+        { "phrase": "den Zug", "case": "akkusativ", "genus": "m", "lemma": "Zug", "reason": "object", "trigger": "nimmt" },
+        { "phrase": "einer Störung", "case": "genitiv", "genus": "f", "lemma": "Störung", "reason": "preposition", "trigger": "wegen" },
+        { "phrase": "der Zug", "case": "nominativ", "genus": "m", "lemma": "Zug", "reason": "subject", "trigger": "hält" },
+        { "phrase": "der Strecke", "case": "dativ", "genus": "f", "lemma": "Strecke", "reason": "wechselWo", "trigger": "auf" },
+        { "phrase": "Im Zug", "case": "dativ", "genus": "m", "lemma": "Zug", "reason": "wechselWo", "trigger": "Im" },
+        { "phrase": "die Uhr", "case": "akkusativ", "genus": "f", "lemma": "Uhr", "reason": "prepObject", "trigger": "auf" },
+        { "phrase": "den Chef", "case": "akkusativ", "genus": "m", "lemma": "Chef", "reason": "object", "trigger": "ruft an" },
+        { "phrase": "einer Stunde", "case": "dativ", "genus": "f", "lemma": "Stunde", "reason": "preposition", "trigger": "Mit" },
+        { "phrase": "im Büro", "case": "dativ", "genus": "n", "lemma": "Büro", "reason": "wechselWo", "trigger": "im" },
+        { "phrase": "Ein Kollege", "case": "nominativ", "genus": "m", "lemma": "Kollege", "reason": "subject", "trigger": "bringt" },
+        { "phrase": "einen Kaffee", "case": "akkusativ", "genus": "m", "lemma": "Kaffee", "reason": "object", "trigger": "bringt" },
+        { "phrase": "Am Anfang", "case": "dativ", "genus": "m", "lemma": "Anfang", "reason": "time", "trigger": "Am" },
+        { "phrase": "des Gesprächs", "case": "genitiv", "genus": "n", "lemma": "Gespräch", "reason": "preposition", "trigger": "Während" },
+        { "phrase": "den Stress", "case": "akkusativ", "genus": "m", "lemma": "Stress", "reason": "object", "trigger": "vergisst" },
+        { "phrase": "dem Zug", "case": "dativ", "genus": "m", "lemma": "Zug", "reason": "preposition", "trigger": "mit" },
+        { "phrase": "ihrer Ausbildung", "case": "dativ", "genus": "f", "lemma": "Ausbildung", "reason": "preposition", "trigger": "zu" },
+        { "phrase": "dem Chef", "case": "dativ", "genus": "m", "lemma": "Chef", "reason": "recipient", "trigger": "zeigt" },
+        { "phrase": "Ein Entwurf", "case": "nominativ", "genus": "m", "lemma": "Entwurf", "reason": "subject", "trigger": "gefällt" },
+        { "phrase": "ihm", "case": "dativ", "reason": "dativeVerb", "trigger": "gefällt" },
+        { "phrase": "Am Ende", "case": "dativ", "genus": "n", "lemma": "Ende", "reason": "time", "trigger": "Am" },
+        { "phrase": "des Gesprächs", "case": "genitiv", "genus": "n", "lemma": "Gespräch", "reason": "attribute", "trigger": "Ende" },
+        { "phrase": "dem Weg", "case": "dativ", "genus": "m", "lemma": "Weg", "reason": "wechselWo", "trigger": "Auf" },
+        { "phrase": "ihren Vater", "case": "akkusativ", "genus": "m", "lemma": "Vater", "reason": "object", "trigger": "ruft an" },
+        { "phrase": "Ihr Vater", "case": "nominativ", "genus": "m", "lemma": "Vater", "reason": "subject", "trigger": "freut" },
+        { "phrase": "der Verspätung", "case": "genitiv", "genus": "f", "lemma": "Verspätung", "reason": "preposition", "trigger": "Trotz" },
+        { "phrase": "der Tag", "case": "nominativ", "genus": "m", "lemma": "Tag", "reason": "subject", "trigger": "gelohnt" },
+        { "phrase": "der Firma", "case": "dativ", "genus": "f", "lemma": "Firma", "reason": "preposition", "trigger": "bei" }
+      ],
+      "notTargets": [{ "phrase": "Kein Problem", "why": "idiom" }, { "phrase": "Am liebsten", "why": "idiom" }]
     }
   ]
 }

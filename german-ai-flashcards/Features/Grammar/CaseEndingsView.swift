@@ -8,7 +8,8 @@
 //  their case color and symbol (both from GrammarPalette). The drill is generated from the
 //  same `GrammarCase` table, so the two can never disagree. It is every Kasus unit's
 //  Schnellrunde, limited to that unit's cases and presented through `ActivityRouter`
-//  (`.caseEndings`); this screen is the reference only.
+//  (`.caseEndings`); this screen is the reference only. The drill's right/wrong signal is
+//  `KasusFeedback`, shared with the story player, and its explanations are `KasusRich` markup.
 //
 
 import SwiftUI
@@ -157,17 +158,19 @@ struct CaseEndingsTable: View {
 // MARK: - Reference view
 
 struct CaseEndingsView: View {
+    @State private var showKasusCheck = false
+
     var body: some View {
         List {
             Section {
                 CaseEndingsTable()
                     .padding(.vertical, 6)
             } footer: {
-                Text("The last letter of each article spells the code on the left. The noun itself changes in two places: + n in the dative plural, + s on masculine and neuter in the genitive.")
+                Text(kasusRich: "The last letter of each article spells the code on the left. The noun itself changes in two places: **+ n** in the {dat:Dativ} plural, **+ s** on masculine and neuter in the {gen:Genitiv}.")
             }
             .themedListRow()
 
-            questionSection
+            kasusCheckSection
                 .themedListRow()
             einWordSection
                 .themedListRow()
@@ -179,24 +182,41 @@ struct CaseEndingsView: View {
         .themedListScreen()
         .navigationTitle("Kasus · Case Endings")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showKasusCheck) {
+            KasusCheckSheet()
+        }
     }
 
-    private var questionSection: some View {
+    /// Which row of the table: the Kasus-Check's six questions in short, then one sentence run
+    /// through them. The full card, with examples and traps, is a tap away.
+    private var kasusCheckSection: some View {
         Section {
-            ForEach(GrammarCase.allCases) { kasus in
+            ForEach(KasusCheckSheet.steps) { step in
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Image(systemName: kasus.symbol)
-                        .foregroundStyle(kasus.color)
-                        .frame(width: 24)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("\(kasus.name) · \(kasus.role)")
-                            .font(.subheadline.weight(.medium))
-                        Text(kasus.question)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    Text("\(step.id)")
+                        .font(.subheadline.weight(.bold).monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .frame(width: 16, alignment: .trailing)
+                    Text(kasusRich: step.short)
+                        .font(.subheadline)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 6)
+                    HStack(spacing: 8) {
+                        // Not `CaseLabel`: inside a List a Label takes the row's wide icon slot.
+                        ForEach(step.answers, id: \.kasus) { answer in
+                            HStack(spacing: 2) {
+                                Image(systemName: answer.kasus.symbol)
+                                Text(answer.kasus.short)
+                            }
+                            .foregroundStyle(answer.kasus.color)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(answer.kasus.name)
+                        }
                     }
+                    .font(.caption.weight(.semibold))
+                    .fixedSize()
                 }
-                .padding(.vertical, 2)
+                .padding(.vertical, 1)
             }
             VStack(alignment: .leading, spacing: 8) {
                 Text(ending("De", "r", .der) + plain(" Mann gibt ") + ending("de", "m", .das)
@@ -207,21 +227,37 @@ struct CaseEndingsView: View {
                     caseChip(.dativ, "dem Kind")
                     caseChip(.akkusativ, "einen Ball")
                 }
-                Text("Who gives? The man. To whom? The child. Gives what? A ball.")
+                Text(kasusRich: "No preposition, nothing hangs on another noun. *Der Mann* is the **subject** → {nom:Nominativ}. *dem Kind* is the **receiver** → {dat:Dativ}. *einen Ball* is none of these → {akk:Akkusativ}.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.vertical, 4)
+            Button {
+                showKasusCheck = true
+            } label: {
+                Label("Der Kasus-Check · with examples", systemImage: "questionmark.circle")
+                    .font(.subheadline.weight(.medium))
+            }
         } header: {
-            Text("Ask the question")
+            Text("Welcher Fall? · Which case?")
                 .themedSectionHeader()
+        } footer: {
+            Text("Ask in order; the first question that fits decides the case.")
         }
     }
 
     private func caseChip(_ kasus: GrammarCase, _ phrase: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
-            CaseLabel(kasus: kasus)
-                .font(.caption2.weight(.semibold))
+            // Not `CaseLabel`: inside a List a Label takes the row's wide icon slot.
+            HStack(spacing: 3) {
+                Image(systemName: kasus.symbol)
+                Text(kasus.short)
+            }
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(kasus.color)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(kasus.name)
             Text(phrase)
                 .font(.caption)
         }
@@ -230,9 +266,9 @@ struct CaseEndingsView: View {
     private var einWordSection: some View {
         Section {
             VStack(alignment: .leading, spacing: 6) {
-                Text("ein, mein, dein, kein and friends take the same code letters as the article: den → einen, dem → einem, der → einer.")
+                Text(kasusRich: "*ein, mein, dein, kein* and friends take the **same code letters** as the article: {m:den} → {m:einen}, {m:dem} → {m:einem}, {f:der} → {f:einer}.")
                     .font(.subheadline)
-                Text("Three spots have no ending at all: masculine Nominativ and neuter Nominativ/Akkusativ.")
+                Text(kasusRich: "Three spots have **no ending** at all: masculine {nom:Nominativ} and neuter {nom:Nominativ} and {akk:Akkusativ}.")
                     .font(.subheadline)
                 Text(ending("De", "r", .der) + plain(" Hund → ein Hund   ·   ") + ending("da", "s", .das) + plain(" Kind → ein Kind"))
                     .font(.caption)
@@ -250,7 +286,7 @@ struct CaseEndingsView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(plain("die Kinder → mit ") + ending("de", "n", .plural) + plain(" ") + ending("Kinder", "n", .plural))
                     .font(.subheadline)
-                Text("Plurals that already end in -n or -s stay as they are: mit den Frauen, mit den Autos.")
+                Text(kasusRich: "Plurals that already end in **-n** or **-s** stay as they are: *mit* {pl:den} *Frauen*, *mit* {pl:den} *Autos*.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -271,7 +307,7 @@ struct CaseEndingsView: View {
                 Text(plain("das Auto ") + ending("de", "s", .der) + plain(" ") + ending("Mann", "es", .der)
                      + plain("  ·  die Tasche ") + ending("de", "r", .die) + plain(" Frau"))
                     .font(.subheadline)
-                Text("Masculine and neuter nouns add -s (short words often -es). Feminine and plural nouns don't change. In everyday speech „von dem Mann“ often replaces it; writing and exams expect the Genitiv.")
+                Text(kasusRich: "**Masculine** and **neuter** nouns add **-s** (short words often **-es**). **Feminine** and **plural** nouns don't change. In everyday speech „*von* {m:dem} *Mann*“ often replaces it; writing and exams expect the {gen:Genitiv}.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -370,7 +406,8 @@ enum EndingsDeterminer: CaseIterable {
 }
 
 /// A sentence with a blank; `{N}` is the noun. `why` names the case trigger in Kasus-Check terms
-/// (preposition, another noun, subject, sein, receiver or Dativ verb, otherwise Akkusativ).
+/// (preposition, another noun, subject, sein, receiver or Dativ verb, otherwise Akkusativ), in the
+/// `KasusRich` markup.
 struct EndingsFrame {
     let kasus: GrammarCase
     let singular: String
@@ -378,16 +415,16 @@ struct EndingsFrame {
     let why: String
 
     static let all: [EndingsFrame] = [
-        .init(kasus: .nominativ, singular: "Das ist ___ {N}.", plural: "Das sind ___ {N}.", why: "„sein“ links it back to the subject, so it stays Nominativ"),
-        .init(kasus: .nominativ, singular: "Hier kommt ___ {N}.", plural: "Hier kommen ___ {N}.", why: "It's the subject of „kommen“, so Nominativ"),
-        .init(kasus: .akkusativ, singular: "Ich sehe ___ {N}.", plural: "Ich sehe ___ {N}.", why: "It's what „sehen“ acts on: the direct object, so Akkusativ"),
-        .init(kasus: .akkusativ, singular: "Kennst du ___ {N}?", plural: "Kennst du ___ {N}?", why: "It's what „kennen“ acts on: the direct object, so Akkusativ"),
-        .init(kasus: .akkusativ, singular: "Wir besuchen ___ {N}.", plural: "Wir besuchen ___ {N}.", why: "It's what „besuchen“ acts on, so Akkusativ. „besuchen“ can feel like it has a receiver, but it takes the Akkusativ"),
-        .init(kasus: .dativ, singular: "Ich helfe ___ {N}.", plural: "Ich helfe ___ {N}.", why: "„helfen“ is one of the verbs that always take the Dativ"),
-        .init(kasus: .dativ, singular: "Wir sprechen mit ___ {N}.", plural: "Wir sprechen mit ___ {N}.", why: "„mit“ always takes the Dativ"),
-        .init(kasus: .dativ, singular: "Das Buch gehört ___ {N}.", plural: "Das Buch gehört ___ {N}.", why: "„gehören“ takes the Dativ: the thing owned is the subject, the owner is Dativ"),
-        .init(kasus: .genitiv, singular: "Das ist der Name ___ {N}.", plural: "Das sind die Namen ___ {N}.", why: "It hangs on another noun (der Name), so Genitiv"),
-        .init(kasus: .genitiv, singular: "Wegen ___ {N} bleiben wir zu Hause.", plural: "Wegen ___ {N} bleiben wir zu Hause.", why: "„wegen“ takes the Genitiv"),
+        .init(kasus: .nominativ, singular: "Das ist ___ {N}.", plural: "Das sind ___ {N}.", why: "„*sein*“ links it back to the **subject**, so it stays {nom:Nominativ}"),
+        .init(kasus: .nominativ, singular: "Hier kommt ___ {N}.", plural: "Hier kommen ___ {N}.", why: "It's the **subject** of „*kommen*“, so {nom:Nominativ}"),
+        .init(kasus: .akkusativ, singular: "Ich sehe ___ {N}.", plural: "Ich sehe ___ {N}.", why: "It's what „*sehen*“ acts on: the **direct object**, so {akk:Akkusativ}"),
+        .init(kasus: .akkusativ, singular: "Kennst du ___ {N}?", plural: "Kennst du ___ {N}?", why: "It's what „*kennen*“ acts on: the **direct object**, so {akk:Akkusativ}"),
+        .init(kasus: .akkusativ, singular: "Wir besuchen ___ {N}.", plural: "Wir besuchen ___ {N}.", why: "It's what „*besuchen*“ acts on, so {akk:Akkusativ}. „*besuchen*“ can feel like it has a receiver, but it takes the {akk:Akkusativ}"),
+        .init(kasus: .dativ, singular: "Ich helfe ___ {N}.", plural: "Ich helfe ___ {N}.", why: "„*helfen*“ is one of the verbs that always take the {dat:Dativ}"),
+        .init(kasus: .dativ, singular: "Wir sprechen mit ___ {N}.", plural: "Wir sprechen mit ___ {N}.", why: "„*mit*“ always takes the {dat:Dativ}"),
+        .init(kasus: .dativ, singular: "Das Buch gehört ___ {N}.", plural: "Das Buch gehört ___ {N}.", why: "„*gehören*“ takes the {dat:Dativ}: the thing owned is the subject, the **owner** is {dat:Dativ}"),
+        .init(kasus: .genitiv, singular: "Das ist der Name ___ {N}.", plural: "Das sind die Namen ___ {N}.", why: "It hangs on **another noun** (*der Name*), so {gen:Genitiv}"),
+        .init(kasus: .genitiv, singular: "Wegen ___ {N} bleiben wir zu Hause.", plural: "Wegen ___ {N} bleiben wir zu Hause.", why: "„*wegen*“ takes the {gen:Genitiv}"),
     ]
 }
 
@@ -423,22 +460,57 @@ struct EndingsQuestion: Identifiable {
         return (pieces.first ?? "", pieces.dropFirst().first ?? "")
     }
 
+    /// Why, in the `KasusRich` markup: the frame's Kasus-Check reason, then the code-word line
+    /// with the code letters in their gender colors („Masculine Dativ in „mrmn“ is m: dem.“), and
+    /// the noun's own ending where it has one.
     var explanation: String {
-        let ending = kasus.einEnding(gender)
+        let tag = gender.columnLabel
         var text = "\(frame.why). "
-        if determiner != .definite && ending.isEmpty {
-            text += "\(gender.genderName.capitalized) \(kasus.name) is one of the spots with no ending: \(answer)."
+        if determiner != .definite && kasus.einEnding(gender).isEmpty {
+            text += "*\(gender.genderName.capitalized)* \(Self.caseWord(kasus)) is one of the spots with **no ending**: {\(tag):\(answer)}."
         } else {
             let letter = kasus.article(gender).suffix(1)
-            text += "\(gender.genderName.capitalized) in „\(kasus.code)“ is \(letter): \(answer)."
+            text += "*\(gender.genderName.capitalized)* \(Self.caseWord(kasus)) in „\(Self.codeWord(kasus))“ is {\(tag):\(letter)}: {\(tag):\(answer)}."
         }
         if isPlural && kasus == .dativ && noun.dativePlural != noun.plural {
-            text += " The noun adds -n too: \(noun.dativePlural)."
+            text += " The noun adds **-n** too: *\(noun.plural)*{\(tag):n}."
         }
         if !isPlural && kasus == .genitiv && noun.genitive != noun.singular {
-            text += " The noun adds -\(noun.genitive.dropFirst(noun.singular.count)) too: \(noun.genitive)."
+            text += " The noun adds **-\(noun.genitive.dropFirst(noun.singular.count))** too: *\(noun.genitive)*."
         }
         return text
+    }
+
+    /// A gender slip's own, softer line: the case was right, only the gender wasn't. The pick
+    /// wears the color of the gender it belongs to.
+    func slipNote(_ pick: String) -> String {
+        let (family, stem) = determiner.kasusFamily
+        let tag = gender.columnLabel
+        let name = "*\(noun.singular)*"
+        let others = KasusForms.gendersOfSlip(pick: pick, kasus: kasus, genus: gender, family: family, stem: stem)
+        if let other = others.first {
+            // „dem“ is masculine and neuter alike: named both ways, and bold rather than one color.
+            let picked = others.count == 1 ? "{\(other.columnLabel):\(pick)}" : "**\(pick)**"
+            let genders = others.map(\.genderName).joined(separator: " or ")
+            return "Right case, wrong gender: \(picked) is \(genders) \(Self.caseWord(kasus)). \(name) is \(gender.genderName), so {\(tag):\(answer)}."
+        }
+        return "Right case, wrong gender. \(name) is \(gender.genderName), so {\(tag):\(answer)}."
+    }
+
+    /// What the drill says after a first pick: the slip note for a gender slip, the explanation
+    /// for everything else.
+    func feedback(pick: String) -> String {
+        pick != answer && isGenderSlip(pick) ? slipNote(pick) : explanation
+    }
+
+    /// The case's name in its case color: `{dat:Dativ}`.
+    static func caseWord(_ kasus: GrammarCase) -> String {
+        "{\(kasus.short.lowercased()):\(kasus.name)}"
+    }
+
+    /// The code word with each letter in its column's gender color, as the table prints it.
+    static func codeWord(_ kasus: GrammarCase) -> String {
+        zip(kasus.code, Gender.allCases).map { "{\($1.columnLabel):\($0)}" }.joined()
     }
 
     /// How many of `count` questions each case gets. Nominativ is the easy baseline, so it weighs
@@ -514,33 +586,60 @@ struct CaseEndingsSession: Identifiable {
     /// The unit's own case, which gets the biggest share. Nil spreads the round evenly.
     let emphasis: GrammarCase?
     let title: String
+    /// Set only by the DEBUG `-kasus.debugOpen quick:<unit>` argument, so a simulator that can't
+    /// tap can still show an answered question. Nil in every real session.
+    var prefill: KasusPrefill? = nil
 
     /// The unit's cases in play, weighted toward its own case (Alle Fälle spreads evenly).
-    init(unit: KasusUnit) {
+    init(unit: KasusUnit, prefill: KasusPrefill? = nil) {
         self.unit = unit
         cases = unit.casesInPlay
         emphasis = unit.focusCase
         title = "Schnellrunde · \(unit.germanTitle)"
+        self.prefill = prefill
     }
 }
 
+/// The Schnellrunde. The sentence is the hero, centered in the free space; the answer buttons sit
+/// in the thumb zone at the bottom, and the verdict with its explanation slides in between them,
+/// so nothing is ever pushed off screen. A strip of dots at the top keeps the round's score.
 struct CaseEndingsDrillView: View {
     let session: CaseEndingsSession
+    var hapticMode: HapticFeedbackMode
     /// Called once per finished round; `ContentView` hands it to `KasusService.recordRound`.
     var onComplete: (KasusRoundResult) -> Void
     var onDismiss: () -> Void
 
     @Environment(\.appTheme) private var appTheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    /// The sentence's size: Large Title on a phone, and it follows Dynamic Type.
+    @ScaledMetric(relativeTo: .largeTitle) private var heroSize: CGFloat = 34
 
     @State private var questions: [EndingsQuestion]
     @State private var index = 0
     @State private var picked: String?
     @State private var results: [KasusItemResult] = []
+    /// Each question's first pick, in order, for the misses under the summary.
+    @State private var picks: [String] = []
     @State private var startedAt = Date()
+    @State private var didSetUp = false
+    /// DEBUG prefill: the answers weren't the learner's, so the round is never recorded.
+    @State private var prefilled = false
 
-    init(session: CaseEndingsSession, onComplete: @escaping (KasusRoundResult) -> Void,
-         onDismiss: @escaping () -> Void) {
+    // Haptics
+    @State private var correctCount = 0
+    @State private var wrongCount = 0
+    @State private var slipCount = 0
+    /// The question screen's height, which caps the feedback card.
+    @State private var playHeight: CGFloat = 0
+
+    /// Wide enough for a sentence in large type; iPad centers it.
+    private let contentWidth: CGFloat = 640
+
+    init(session: CaseEndingsSession, hapticMode: HapticFeedbackMode = .all,
+         onComplete: @escaping (KasusRoundResult) -> Void, onDismiss: @escaping () -> Void) {
         self.session = session
+        self.hapticMode = hapticMode
         self.onComplete = onComplete
         self.onDismiss = onDismiss
         _questions = State(initialValue: EndingsQuestion.round(cases: session.cases, emphasis: session.emphasis))
@@ -550,20 +649,21 @@ struct CaseEndingsDrillView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    if isFinished {
+            Group {
+                if isFinished {
+                    ScrollView {
                         summary
-                    } else {
-                        questionCard(questions[index])
+                            .padding()
+                            .frame(maxWidth: contentWidth)
+                            .frame(maxWidth: .infinity)
                     }
+                } else {
+                    play(questions[index])
                 }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .background {
-                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
-            }
+            // The article game's ground: the grouped grey on Klar, so the white answer buttons
+            // stand off it, and each identity theme's own paper elsewhere.
+            .background(ThemedBackground().ignoresSafeArea())
             .navigationTitle(session.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -575,60 +675,110 @@ struct CaseEndingsDrillView: View {
                 }
             }
         }
+        .onAppear(perform: setUp)
+        .sensoryFeedback(.success, trigger: correctCount) { old, new in
+            new > old && hapticMode.playsSuccess
+        }
+        .sensoryFeedback(.error, trigger: wrongCount) { old, new in
+            new > old && hapticMode.playsError
+        }
+        .sensoryFeedback(.impact(weight: .light), trigger: slipCount) { old, new in
+            new > old && hapticMode.playsError
+        }
         // Presented from the root cover, outside any themed stack, so it sets its own tint.
         .tint(appTheme.accent(model: nil))
     }
 
     // MARK: Question
 
-    private func questionCard(_ q: EndingsQuestion) -> some View {
-        VStack(alignment: .leading, spacing: 18) {
-            ProgressView(value: Double(index), total: Double(questions.count))
-            Text("\(index + 1) of \(questions.count)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+    private func play(_ q: EndingsQuestion) -> some View {
+        VStack(spacing: 0) {
+            KasusProgressStrip(marks: marks)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .frame(maxWidth: contentWidth)
 
-            nounHeader(q)
-                .font(.subheadline)
-
-            sentence(q)
-                .font(.title2.weight(.semibold))
-                .fixedSize(horizontal: false, vertical: true)
-
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 10)], spacing: 10) {
-                ForEach(q.options, id: \.self) { option in
-                    optionButton(option, question: q)
+            // The sentence, centered in whatever the answer panel leaves; it scrolls rather than
+            // clip when a long explanation meets a small phone.
+            GeometryReader { geo in
+                ScrollView {
+                    prompt(q)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: contentWidth)
+                        .frame(maxWidth: .infinity, minHeight: geo.size.height)
                 }
+                .scrollBounceBehavior(.basedOnSize)
             }
 
-            if picked != nil {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(spacing: 8) {
-                        CaseLabel(kasus: q.kasus, style: .name)
-                            .font(.subheadline.weight(.semibold))
-                        Spacer()
-                        Image(systemName: picked == q.answer ? "checkmark.circle.fill" : "xmark.circle")
-                            .foregroundStyle(picked == q.answer ? AnyShapeStyle(q.kasus.color) : AnyShapeStyle(.secondary))
-                    }
-                    HStack(alignment: .top, spacing: 8) {
-                        Text(q.explanation)
-                            .font(.subheadline)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Button {
-                        picked = nil
-                        index += 1
-                        if isFinished { record() }
-                    } label: {
-                        Text(index + 1 == questions.count ? "See results" : "Weiter")
+            answerPanel(q)
+                .padding(.horizontal)
+                .padding(.bottom, 6)
+                .frame(maxWidth: contentWidth)
+                // Sized first, so at the largest text sizes the sentence scrolls instead of
+                // Weiter being squeezed onto the buttons.
+                .layoutPriority(1)
+        }
+        .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { playHeight = $0 }
+        .animation(.snappy(duration: 0.3), value: picked)
+    }
+
+    private func prompt(_ q: EndingsQuestion) -> some View {
+        VStack(spacing: 22) {
+            nounHeader(q)
+                .font(.headline)
+            sentence(q, picked: picked)
+                // Bigger on an iPad, where Large Title looks lost in the middle of the screen.
+                .font(.system(size: sizeClass == .regular ? heroSize * 1.4 : heroSize, weight: .semibold))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// The verdict and its why (once picked), the answer buttons, then Weiter. The buttons never
+    /// move: the slot under them holds a hint until Weiter takes its place. The card scrolls past
+    /// about a third of the screen, so at the largest text sizes Weiter stays reachable.
+    private func answerPanel(_ q: EndingsQuestion) -> some View {
+        VStack(spacing: 12) {
+            if let picked {
+                feedbackCard(q, picked: picked)
+                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .bottom)))
+            }
+            KasusOptionGrid(options: q.options, answer: q.answer, kasus: q.kasus, picked: picked,
+                            columns: 3, rowHeight: 58) { option in
+                choose(option, for: q)
+            }
+            .id(q.id)
+            Group {
+                if picked != nil {
+                    Button(action: next) {
+                        Text(index + 1 == questions.count ? "Ergebnis · Results" : "Weiter")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                } else {
+                    Text("Tap the article that fits.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
-                .padding()
-                .themedCard()
             }
+            .frame(minHeight: 50)
         }
+    }
+
+    /// The card keeps its frame and shadow; only what's inside scrolls once it passes the cap.
+    private func feedbackCard(_ q: EndingsQuestion, picked: String) -> some View {
+        let verdict: KasusVerdict = picked == q.answer ? .right : q.isGenderSlip(picked) ? .slip : .miss
+        return KasusCappedScroll(maxHeight: playHeight > 0 ? max(110, playHeight * 0.32) : .infinity) {
+            KasusFeedbackHeader(verdict: verdict, kasus: q.kasus)
+            Text(kasusRich: q.feedback(pick: picked))
+                .font(.subheadline)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .themedCard()
     }
 
     /// Which noun the blank belongs to. A Nominativ blank shows the gender tag instead of
@@ -651,47 +801,61 @@ struct CaseEndingsDrillView: View {
         }
     }
 
-    private func sentence(_ q: EndingsQuestion) -> Text {
+    /// The sentence with its gap. Answered: the answer in its gender color, bold, and a wrong
+    /// pick struck through in grey in front of it.
+    private func sentence(_ q: EndingsQuestion, picked: String?) -> Text {
         let (before, after) = q.parts
         var blank: AttributedString
         if let picked {
             blank = AttributedString(q.answer)
             blank.foregroundColor = q.gender.color
-            blank.underlineStyle = .single
+            blank.inlinePresentationIntent = .stronglyEmphasized
             if picked != q.answer {
-                var wrong = AttributedString(picked + " ")
+                var wrong = AttributedString(picked)
                 wrong.strikethroughStyle = .single
                 wrong.foregroundColor = .secondary
-                blank = wrong + blank
+                blank = wrong + AttributedString(" ") + blank
             }
         } else {
-            blank = AttributedString("____")
+            blank = AttributedString("_____")
             blank.foregroundColor = .secondary
         }
         return Text(AttributedString(before) + blank + AttributedString(after))
     }
 
-    private func optionButton(_ option: String, question q: EndingsQuestion) -> some View {
-        let isAnswer = option == q.answer
-        let tint: Color? = {
-            guard let picked else { return nil }
-            if isAnswer { return q.kasus.color }
-            if option == picked { return .gray }
-            return nil
-        }()
-        return Button {
-            guard picked == nil else { return }
-            picked = option
-            results.append(KasusItemResult(kasus: q.kasus, genus: q.gender, firstTry: isAnswer,
-                                           slip: !isAnswer && q.isGenderSlip(option)))
-        } label: {
-            Text(option)
-                .font(.headline)
-                .frame(maxWidth: .infinity, minHeight: 36)
+    /// One dot per question: its case color once right, a hollow ring once not, the ring for
+    /// the question being asked.
+    private var marks: [KasusProgressStrip.Mark] {
+        questions.indices.map { i in
+            if i < results.count {
+                let result = results[i]
+                return result.firstTry ? .right(result.kasus) : result.slip ? .slip : .miss
+            }
+            return i == index ? .current : .upcoming
         }
-        .buttonStyle(.bordered)
-        .tint(tint)
-        .disabled(picked != nil && tint == nil)
+    }
+
+    /// The first pick counts; the buttons lock after it.
+    private func choose(_ option: String, for q: EndingsQuestion, haptics: Bool = true) {
+        guard picked == nil else { return }
+        let isAnswer = option == q.answer
+        picked = option
+        picks.append(option)
+        results.append(KasusItemResult(kasus: q.kasus, genus: q.gender, firstTry: isAnswer,
+                                       slip: !isAnswer && q.isGenderSlip(option),
+                                       record: q.roundItem(pick: option)))
+        guard haptics else { return }
+        // A slip only gets a light tap: it was close, and the header says „Fast“, not wrong.
+        if isAnswer { correctCount += 1 } else if q.isGenderSlip(option) { slipCount += 1 } else { wrongCount += 1 }
+    }
+
+    /// Once per answered question: a fast double tap on Weiter while it fades out must not skip a
+    /// question or record the round twice.
+    private func next() {
+        guard picked != nil, !isFinished else { return }
+        picked = nil
+        index += 1
+        if isFinished { record() }
     }
 
     // MARK: Summary
@@ -699,8 +863,17 @@ struct CaseEndingsDrillView: View {
     private var summary: some View {
         let correct = results.filter(\.firstTry).count
         return VStack(alignment: .leading, spacing: 18) {
-            Text("\(correct) of \(results.count)")
-                .font(.largeTitle.weight(.bold))
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Ergebnis · Result")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Text("\(correct) of \(results.count)")
+                    .font(.largeTitle.weight(.bold))
+                Text("right on the first try")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            KasusProgressStrip(marks: marks, showsScore: false)
             ForEach(GrammarCase.allCases) { kasus in
                 let rows = results.filter { $0.kasus == kasus }
                 if !rows.isEmpty {
@@ -717,36 +890,138 @@ struct CaseEndingsDrillView: View {
                     .font(.subheadline)
                 }
             }
+            if !misses.isEmpty {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Die Fehler · Your misses")
+                        .font(.subheadline.weight(.semibold))
+                    ForEach(misses, id: \.question.id) { miss in
+                        VStack(alignment: .leading, spacing: 6) {
+                            sentence(miss.question, picked: miss.pick)
+                                .font(.body)
+                            Text(kasusRich: miss.question.feedback(pick: miss.pick))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                .padding(.top, 4)
+            }
             Button {
                 questions = EndingsQuestion.round(cases: session.cases, emphasis: session.emphasis)
                 results = []
+                picks = []
+                picked = nil
                 index = 0
                 startedAt = Date()
+                prefilled = false
             } label: {
                 Text("Noch eine Runde · Again").frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            Button("Done", action: onDismiss)
+            .controlSize(.large)
+            Button("Fertig", action: onDismiss)
                 .frame(maxWidth: .infinity)
         }
+    }
+
+    /// The questions missed on the first pick, with that pick.
+    private var misses: [(question: EndingsQuestion, pick: String)] {
+        zip(questions, picks).filter { $0.1 != $0.0.answer }.map { ($0.0, $0.1) }
     }
 
     /// Hands the round up for `KasusService.recordRound`: the streak, a `KasusRound` for the
     /// calendar, and the coach's per-case skills (a case needs three answers; Nominativ has none).
     private func record() {
+        guard !prefilled else { return }
         onComplete(KasusService.quickResult(
             unit: session.unit,
             items: results,
             durationSeconds: Int(Date().timeIntervalSince(startedAt))
         ))
     }
+
+    // MARK: Setup
+
+    private func setUp() {
+        guard !didSetUp else { return }
+        didSetUp = true
+        #if DEBUG
+        applyDebugPrefill()
+        #endif
+    }
+
+    #if DEBUG
+    /// `-kasus.debugAnswers right|mixed` plays the first four questions (mixed gets one in three
+    /// wrong), and `-kasus.debugQuickState right|wrong|slip|done` answers the next one that way,
+    /// or the whole round for the summary. Never recorded, and no haptics.
+    private func applyDebugPrefill() {
+        guard let prefill = session.prefill else { return }
+        let state = EndingsDebugState.fromLaunchArguments()
+        guard prefill.answers != nil || state != nil else { return }
+        let answers = prefill.answers ?? .mixed
+        prefilled = true
+        let played = state == .done ? questions.count : min(4, questions.count - 1)
+        // A slip needs a singular question whose family has one; bring one forward.
+        if state == .slip,
+           let slippable = questions.indices.dropFirst(played).first(where: { Self.debugWrong(questions[$0], slip: true) != nil }) {
+            questions.swapAt(played, slippable)
+        }
+        for i in 0..<played {
+            let q = questions[i]
+            let wrong = answers == .mixed && i % 3 == 1
+            index = i
+            choose(wrong ? Self.debugWrong(q, slip: i % 2 == 0) ?? Self.debugWrong(q, slip: false) ?? q.answer : q.answer,
+                   for: q, haptics: false)
+            picked = nil
+        }
+        index = played
+        guard !isFinished, let state else { return }
+        let q = questions[index]
+        switch state {
+        case .right: choose(q.answer, for: q, haptics: false)
+        case .wrong: choose(Self.debugWrong(q, slip: false) ?? q.answer, for: q, haptics: false)
+        case .slip:  choose(Self.debugWrong(q, slip: true) ?? Self.debugWrong(q, slip: false) ?? q.answer, for: q, haptics: false)
+        case .done:  break
+        }
+    }
+
+    /// A wrong option: a gender slip, or a case miss.
+    private static func debugWrong(_ q: EndingsQuestion, slip: Bool) -> String? {
+        q.options.first { $0 != q.answer && q.isGenderSlip($0) == slip }
+    }
+    #endif
 }
+
+#if DEBUG
+/// `-kasus.debugQuickState right|wrong|slip|done`, with `-kasus.debugOpen quick:<unit>`: the
+/// question the Schnellrunde opens on, answered right, with a case miss or with a gender slip, or
+/// the round played through to its summary.
+enum EndingsDebugState: String {
+    case right, wrong, slip, done
+
+    static func fromLaunchArguments(_ defaults: UserDefaults = .standard) -> EndingsDebugState? {
+        defaults.string(forKey: "kasus.debugQuickState").flatMap { EndingsDebugState(rawValue: $0.lowercased()) }
+    }
+}
+#endif
 
 // MARK: - Previews
 
 #Preview("Case endings") {
     NavigationStack { CaseEndingsView() }
         .modelContainer(for: [LearnerProfile.self, StudyDay.self], inMemory: true)
+}
+
+#Preview("Case endings · 4 themes") {
+    TabView {
+        ForEach(AppTheme.allCases) { theme in
+            NavigationStack { CaseEndingsView() }
+                .environment(\.appTheme, theme)
+                .tabItem { Text(theme.label) }
+        }
+    }
+    .modelContainer(for: [LearnerProfile.self, StudyDay.self], inMemory: true)
 }
 
 #Preview("Schnellrunde · 4 themes") {

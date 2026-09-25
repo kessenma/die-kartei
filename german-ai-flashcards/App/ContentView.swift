@@ -60,6 +60,8 @@ struct ContentView: View {
     /// `-kasus.debugOpen hub|unit:<unit>`: the Grammatik hub and its unit screens, which sit two
     /// or more taps into Home. The story player's screens launch through the router instead.
     @State private var kasusDebugSheet: KasusDebugOpen?
+    /// `-kasus.debugOpen history|round`: Verlauf, or the newest Kasus round's detail.
+    @State private var kasusHistoryDebug: KasusHistoryDebugScreen?
     #endif
     @Environment(\.modelContext) private var modelContext
 
@@ -320,7 +322,8 @@ struct ContentView: View {
             NavigationStack {
                 Group {
                     if case .unit(let unit) = open {
-                        KasusUnitView(unit: unit)
+                        KasusUnitView(unit: unit, modelManager: coordinator.modelManager,
+                                      mlxService: coordinator.mlxService)
                     } else {
                         GrammarHubView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
                     }
@@ -330,6 +333,17 @@ struct ContentView: View {
                         Button("Close") { kasusDebugSheet = nil }
                     }
                 }
+            }
+            .environment(router)
+        }
+        .sheet(item: $kasusHistoryDebug) { screen in
+            NavigationStack {
+                KasusHistoryDebugView(screen: screen)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { kasusHistoryDebug = nil }
+                        }
+                    }
             }
             .environment(router)
         }
@@ -498,7 +512,12 @@ struct ContentView: View {
                     print("[kasus.debugVerifyRecord] \(line)")
                 }
             }
-            // `-kasus.debugOpen hub|unit:<unit>|read|find|check|summary|fill|result` opens a
+            // `-kasus.debugSeedRounds 1` inserts most of a week of Kasus, der/die/das and preposition
+            // rounds (with answers) for Verlauf; `remove` takes exactly those out again.
+            if let seed = UserDefaults.standard.string(forKey: "kasus.debugSeedRounds") {
+                print("[kasus.debugSeedRounds] " + KasusDebugSeeder.run(seed, in: modelContext))
+            }
+            // `-kasus.debugOpen hub|unit:<unit>|quick:<unit>|read|find|check|summary|fill|result` opens a
             // Grammatik screen at launch, since this simulator can't tap its way there. The player
             // screens open the bundled story, prefilled by `-kasus.debugAnswers right|mixed` and
             // `-kasus.debugHint viel|genus|ohne`; prefilled answers are never recorded.
@@ -506,14 +525,28 @@ struct ContentView: View {
                 switch open {
                 case .hub, .unit:
                     kasusDebugSheet = open
+                case .quick(let unit):
+                    router.launch(.caseEndings(KasusDebugOpen.quickSession(for: unit)))
                 case .story(let screen):
                     if let session = KasusDebugOpen.session(for: screen) {
                         router.launch(.kasusStory(session))
                     }
                 }
                 print("[kasus.debugOpen] open \(open.id)")
+            } else if let screen = KasusHistoryDebugScreen.fromLaunchArguments() {
+                // `history` (Verlauf) or `round` (the newest Kasus round's detail).
+                kasusHistoryDebug = screen
+                print("[kasus.debugOpen] open \(screen.id)")
             } else if let raw = UserDefaults.standard.string(forKey: "kasus.debugOpen") {
                 print("[kasus.debugOpen] no such screen: \(raw)")
+            }
+            // `-kasus.debugRoute 1` prints where every GrammarFocus goes from Today, Coach's Notes,
+            // the pyramid and a class entry (`GrammarRoute`), resolved against the live store,
+            // and whether a case, article or preposition focus falls back to the lesson sheet.
+            if UserDefaults.standard.bool(forKey: "kasus.debugRoute") {
+                for line in GrammarRoute.debugReport(in: modelContext, level: coordinator.modelManager.germanLevel) {
+                    print("[kasus.debugRoute] \(line)")
+                }
             }
             #endif
 
@@ -667,7 +700,7 @@ struct ContentView: View {
                         durationSeconds: durationSeconds
                     )
                     // Drill scores feed the coach's memory: `grammaticalCase` carries the
-                    // GrammarFocus raw value for bundled (akkusativ/dativ) and AI categories.
+                    // GrammarFocus raw value for the bundled praep-* and AI categories.
                     if let focus = GrammarFocus(rawValue: category.grammaticalCase) {
                         LearnerMemoryService.applyDrillResult(
                             focus: focus, correct: correct, total: total, in: modelContext
@@ -763,6 +796,7 @@ struct ContentView: View {
         case .caseEndings(let session):
             CaseEndingsDrillView(
                 session: session,
+                hapticMode: coordinator.modelManager.hapticFeedbackMode,
                 onComplete: { result in
                     // Streak and time (as grammar practice), a KasusRound for the calendar, and
                     // the coach's per-case skills all live inside recordRound.

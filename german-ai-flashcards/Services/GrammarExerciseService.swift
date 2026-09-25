@@ -1,5 +1,7 @@
 import Foundation
 
+/// The bundled fill-in-the-blank sets (`grammar_exercises.json`): today only the preposition ones,
+/// which the preposition hub lists. A grammar focus finds its practice through `GrammarRoute`.
 enum GrammarExerciseService {
     private static var cache: [GrammarCategory]?
 
@@ -11,26 +13,6 @@ enum GrammarExerciseService {
         else { return [] }
         cache = file.categories
         return file.categories
-    }
-
-    /// The multiple-choice drill category matching a grammar focus, if one ships in the bundle.
-    /// Akkusativ, Dativ and the two preposition focuses have exercises today; every other
-    /// structure returns `nil` (its just-in-time lesson falls back to the explanation + a
-    /// conversation nudge). `rotation` (e.g. a day index) picks among the categories for that
-    /// key so repeated practice varies.
-    static func category(for focus: GrammarFocus, rotation: Int = 0) -> GrammarCategory? {
-        let caseKey: String
-        switch focus {
-        case .akkusativ:             caseKey = "akkusativ"
-        case .dativ:                 caseKey = "dativ"
-        case .praepositionen:        caseKey = "praepositionen"
-        case .wechselpraepositionen: caseKey = "wechselpraepositionen"
-        default:                     return nil
-        }
-        let categories = loadCategories().filter { $0.grammaticalCase == caseKey }
-        guard !categories.isEmpty else { return nil }
-        // Wrap defensively so any (even negative) rotation lands on a valid index.
-        return categories[((rotation % categories.count) + categories.count) % categories.count]
     }
 
     /// Wrap AI-generated exercises in an on-the-fly category so they run in the existing

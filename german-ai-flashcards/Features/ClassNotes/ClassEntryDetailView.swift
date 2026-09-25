@@ -2,8 +2,9 @@
 //  ClassEntryDetailView.swift
 //  german-ai-flashcards
 //
-//  One logged class: what it covered (each grammar point opens its quick lesson), the new words
-//  (into the course deck in one tap), the notes, the homework with its tick, and the handouts.
+//  One logged class: what it covered (each grammar point opens its quick lesson, and a tagged case
+//  its story through `GrammarRoute`), the new words (into the course deck in one tap), the notes,
+//  the homework with its tick, and the handouts.
 //
 
 import SwiftUI
@@ -119,6 +120,28 @@ struct ClassEntryDetailView: View {
                     }
                 }
                 .padding(.vertical, 4)
+            }
+            ForEach(kasusUnits(foci)) { unit in
+                Button {
+                    practise(unit)
+                } label: {
+                    practiseLabel(unit)
+                }
+            }
+            // The same routes Today and the coach take for these two focuses.
+            if foci.contains(where: { GrammarRoute($0) == .articleGame }) {
+                Button(action: practiseArticles) {
+                    practiceRow("Der · Die · Das üben · Practise the articles",
+                                "a round of nouns at your level", systemImage: "textformat.abc")
+                }
+            }
+            if foci.contains(where: { GrammarRoute($0) == .prepositionHub }) {
+                NavigationLink {
+                    PrepositionHubView(modelManager: modelManager, mlxService: mlxService)
+                } label: {
+                    practiceRow("Präpositionen · Prepositions",
+                                "which case each one takes", systemImage: "arrow.triangle.branch")
+                }
             }
         } header: {
             Text("Behandelt · Covered").themedSectionHeader()
@@ -253,6 +276,64 @@ struct ClassEntryDetailView: View {
         .themedListRow()
     }
 
+    // MARK: - Case practice
+
+    /// The Kasus units behind the tagged case focuses (Akkusativ, Dativ, Genitiv), in path order.
+    private func kasusUnits(_ foci: [GrammarFocus]) -> [KasusUnit] {
+        let units = Set(foci.compactMap { focus -> KasusUnit? in
+            if case .kasus(let unit) = GrammarRoute(focus) { return unit }
+            return nil
+        })
+        return KasusUnit.allCases.filter(units.contains)
+    }
+
+    /// The unit's story, or its Schnellrunde while it has none: the pick Today and the coach make.
+    private func practiseLabel(_ unit: KasusUnit) -> some View {
+        let hasStory = GrammarRoute.hasStory(unit)
+        return Label {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(hasStory ? "Mit einer Geschichte üben · Practise with a story" : "Schnellrunde · Quick round")
+                Text(hasStory ? "\(unit.germanTitle) · fill in the articles"
+                              : "\(unit.germanTitle) · the endings drill, until there's a story")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } icon: {
+            Image(systemName: unit.symbol)
+                .foregroundStyle(unit.color)
+        }
+    }
+
+    private func practise(_ unit: KasusUnit) {
+        if case .launch(let activity) = GrammarRoute.kasus(unit).resolve(in: modelContext, level: modelManager.germanLevel) {
+            router.launch(activity)
+        }
+    }
+
+    private func practiceRow(_ title: String, _ subtitle: String, systemImage: String) -> some View {
+        Label {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } icon: {
+            Image(systemName: systemImage)
+                .foregroundStyle(.tint)
+        }
+    }
+
+    /// A der/die/das round from the Goethe list at the learner's level; the lesson if that ever
+    /// comes back empty.
+    private func practiseArticles() {
+        switch GrammarRoute.articleGame.resolve(in: modelContext, level: modelManager.germanLevel) {
+        case .launch(let activity): router.launch(activity)
+        case .lesson(let focus):    lessonFocus = focus
+        case .prepositionHub:       break
+        }
+    }
+
     // MARK: - Actions
 
     private func addWordsToDeck() {
@@ -286,7 +367,8 @@ private func classEntryPreview(_ theme: AppTheme) -> some View {
     .environment(ActivityRouter())
     .environment(\.appTheme, theme)
     .modelContainer(
-        for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self, SavedDeck.self, SavedCard.self],
+        for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self, SavedDeck.self, SavedCard.self,
+              KasusRound.self],
         inMemory: true
     )
 }

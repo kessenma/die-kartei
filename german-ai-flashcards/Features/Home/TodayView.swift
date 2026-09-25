@@ -113,8 +113,17 @@ struct TodaySection: View {
             Button { launchReview() } label: { rowLabel(rec, hero: hero, chevron: true) }
                 .buttonStyle(.plain)
         case .grammar(let focus):
-            Button { launchGrammar(focus) } label: { rowLabel(rec, hero: hero, chevron: true) }
-                .buttonStyle(.plain)
+            // `GrammarRoute` decides; the preposition hub is a push, the rest a tap.
+            if GrammarRoute(focus).presentation == .push {
+                NavigationLink {
+                    PrepositionHubView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+                } label: {
+                    rowLabel(rec, hero: hero)
+                }
+            } else {
+                Button { launchGrammar(focus) } label: { rowLabel(rec, hero: hero, chevron: true) }
+                    .buttonStyle(.plain)
+            }
         case .chat:
             NavigationLink {
                 ConversationListView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
@@ -287,12 +296,15 @@ struct TodaySection: View {
     }
 
     private func launchGrammar(_ focus: GrammarFocus) {
-        // Akkusativ / Dativ ship with a drill (rotated by day for variety); every other
-        // structure falls back to the 30-second explanation.
-        if let category = GrammarExerciseService.category(for: focus, rotation: dayIndex) {
-            router.launch(.grammarMultipleChoice(category: category, showHints: true))
-        } else {
+        // A case opens its story (or Schnellrunde), Artikel a der/die/das round, and every
+        // structure without an exercise the 30-second explanation.
+        switch GrammarRoute(focus).resolve(in: modelContext, level: coordinator.modelManager.germanLevel) {
+        case .launch(let activity):
+            router.launch(activity)
+        case .lesson(let focus):
             lessonFocus = focus
+        case .prepositionHub:
+            break // A NavigationLink in `row(_:hero:)`.
         }
     }
 

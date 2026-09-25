@@ -131,10 +131,10 @@ the Today screen) with a "Practice this" button that launches a focused `Grammar
   `LearnerProfile` grammar map. **Low effort, high payoff** — mostly wiring existing pieces together.
 - **Shipped:** shaky Coach's Notes grammar bars now expand into a "Quick lesson" (the `explanation`)
   with a **Practice this** button that launches the focused drill via `ActivityRouter`; Today
-  already surfaced the lesson fallback. Shared `GrammarExerciseService.category(for:rotation:)` maps
-  a `GrammarFocus` → its drill (Akkusativ/Dativ ship exercises today; others show the lesson + a
-  "watch for it in your next chat" nudge), and `GrammarSkill.shakyThreshold` unifies the weakness
-  cutoff across Today and Coach's Notes.
+  already surfaced the lesson fallback. Shared `GrammarRoute` (was `GrammarExerciseService.category(for:)`)
+  maps a `GrammarFocus` → its practice (a case → a Kasus story or Schnellrunde, Artikel → der/die/das,
+  prepositions → the hub; others show the lesson + a "watch for it in your next chat" nudge), and
+  `GrammarSkill.shakyThreshold` unifies the weakness cutoff across Today and Coach's Notes.
 
 ### 5. Spaced re-encounter *inside* conversation  💎💎  🔨 M  — ✅ Shipped
 The memory already feeds recent vocab into the prompt. Make it *deliberately SRS-timed*: when a word

@@ -76,13 +76,19 @@ nonisolated enum KasusStorySource: String, Codable, Hashable {
 }
 
 /// One case-marked phrase: determiner + noun, no adjectives until adjective endings are checked.
+/// The determiner may also be a contraction („im Garten“: in + dem), and the phrase may be a lone
+/// pronoun that shows its case (mich, mir, dich, dir, ihn, ihm). Both of those are spot-only:
+/// Finden marks them, Einsetzen never blanks them (`KasusLocatedTarget.kind`).
 nonisolated struct KasusTargetSpec: Codable, Hashable {
     /// Exactly as it appears in the text; the first letter may differ in case.
     let phrase: String
     let kasus: GrammarCase
-    /// m · f · n · pl in the JSON. The plural carries the number.
+    /// m · f · n · pl in the JSON. The plural carries the number. A pronoun target may leave it
+    /// out: ihn and ihm default to m (write n for an ihm that stands for a neuter noun), and the
+    /// ich/du forms have no gender, so theirs is an unused m.
     let genus: Gender
     /// The singular dictionary form, always, even for a plural target. Gender is checked on it.
+    /// A pronoun target may leave it out; it defaults to the Nominativ (ich, du, er).
     let lemma: String
     let reason: KasusReason
     /// The word that decides the case: the preposition, or the verb.
@@ -110,13 +116,27 @@ nonisolated struct KasusTargetSpec: Codable, Hashable {
                                                    debugDescription: "unknown case \(caseRaw)")
         }
         self.kasus = kasus
-        let genusRaw = try container.decode(String.self, forKey: .genus)
-        guard let genus = Gender(columnLabel: genusRaw) else {
-            throw DecodingError.dataCorruptedError(forKey: .genus, in: container,
-                                                   debugDescription: "unknown genus \(genusRaw) (m, f, n or pl)")
+        let pronoun = KasusForms.pronoun(phrase)
+        if let genusRaw = try container.decodeIfPresent(String.self, forKey: .genus) {
+            guard let genus = Gender(columnLabel: genusRaw) else {
+                throw DecodingError.dataCorruptedError(forKey: .genus, in: container,
+                                                       debugDescription: "unknown genus \(genusRaw) (m, f, n or pl)")
+            }
+            self.genus = genus
+        } else if pronoun != nil {
+            genus = .der
+        } else {
+            throw DecodingError.keyNotFound(CodingKeys.genus, .init(codingPath: container.codingPath,
+                                                                     debugDescription: "only a pronoun target may leave out genus"))
         }
-        self.genus = genus
-        lemma = try container.decode(String.self, forKey: .lemma)
+        if let lemma = try container.decodeIfPresent(String.self, forKey: .lemma) {
+            self.lemma = lemma
+        } else if let pronoun {
+            lemma = pronoun.nominative
+        } else {
+            throw DecodingError.keyNotFound(CodingKeys.lemma, .init(codingPath: container.codingPath,
+                                                                     debugDescription: "only a pronoun target may leave out lemma"))
+        }
         reason = try container.decode(KasusReason.self, forKey: .reason)
         trigger = try container.decode(String.self, forKey: .trigger)
     }
@@ -132,8 +152,10 @@ nonisolated struct KasusTargetSpec: Codable, Hashable {
     }
 }
 
-/// A determiner phrase the coverage rule should let through: a pronoun, a relative „die“, an idiom,
-/// a contraction („am Montag“) while contractions can't be targets.
+/// A determiner phrase the coverage rule should let through: a pronoun that looks like an article
+/// („ihr“), a relative „die“, an idiom („zum Glück“, „am besten“, „Kein Problem“), or a reflexive
+/// mich/dich in a story that targets pronouns. `contraction` and `demonstrative` are for phrases a
+/// story chooses not to mark; contractions and dieser/jeder/welcher can be targets now.
 nonisolated struct KasusNotTarget: Codable, Hashable {
     let phrase: String
     let why: Kind
@@ -199,9 +221,25 @@ nonisolated enum KasusProof: String, CaseIterable, Hashable {
     case label         // several cases fit; a human checked the role
 }
 
+/// What opens a target phrase. Only `.article` targets can become Einsetzen blanks.
+nonisolated enum KasusTargetKind: String, Hashable {
+    /// A determiner + noun: der, ein, kein, a possessive, or dieser/jeder/welcher. Markable and
+    /// blankable.
+    case article
+    /// A contraction + noun („im Garten“, „zur Schule“). Spot-only: marked in Finden, never
+    /// blanked, since the gap would have to hold a preposition too.
+    case contraction
+    /// A lone pronoun whose form shows the case (mich, mir, dich, dir, ihn, ihm). Spot-only.
+    case pronoun
+
+    /// Marked in Finden and scored there, never an Einsetzen blank.
+    var isSpotOnly: Bool { self != .article }
+}
+
 /// The preposition governing a target, as found in the text.
 nonisolated struct KasusPrepositionContext: Hashable {
-    /// Lowercased: „Nach“ at a sentence start is "nach".
+    /// Lowercased: „Nach“ at a sentence start is "nach". For a contraction, the preposition inside
+    /// it: "in" for „im“ (`range` still covers „im“).
     let word: String
     let cases: Set<GrammarCase>
     let isTwoWay: Bool
@@ -220,6 +258,24 @@ nonisolated struct KasusPrepositionContext: Hashable {
 /// Ranges are UTF-16 `NSRange`s into `story.paragraphs[paragraphIndex].de`: the convention
 /// `TappableText` uses, so a renderer can intersect them with its own word runs. Convert with
 /// `Range(range, in: paragraph)` when a `String.Index` range is handier.
+///
+/// What a view can rely on for each `kind` (every field below stays non-optional as before):
+///
+/// | Field | `.article` „den Ball“ | `.contraction` „im Garten“ | `.pronoun` „mir“ |
+/// |---|---|---|---|
+/// | `range` | den Ball | im Garten | mir |
+/// | `determinerRange`, `determiner` | den | im (the whole token) | mir (the whole token) |
+/// | `nounRange`, `noun` | Ball | Garten | mir (the same token) |
+/// | `parsed`, `family` | the family | nil | nil |
+/// | `caseForm` | den | dem (the article inside) | mir |
+/// | `contractedArticle` | nil | dem | nil |
+/// | `preposition?.word` | as found | in (its `range` is „im“) | as found |
+/// | `blankable` | = `gradable` | false | false |
+/// | `hasNounGender` | true | true | false: genus is the referent's, or an unused m |
+///
+/// So a phrase that is spot-only (`kind.isSpotOnly`) is painted and checked in Finden like any
+/// other, but never reaches Einsetzen, `KasusService.options` or `grade`, and a gender display
+/// (the sort grid's m/f/n/pl columns) should leave pronouns out.
 nonisolated struct KasusLocatedTarget: Identifiable, Hashable {
     /// Position in `story.targets`.
     let index: Int
@@ -227,7 +283,9 @@ nonisolated struct KasusLocatedTarget: Identifiable, Hashable {
     let paragraphIndex: Int
     /// The whole phrase, determiner to noun.
     let range: NSRange
+    /// The first token: the determiner, the contraction, or the pronoun itself.
     let determinerRange: NSRange
+    /// The last token: the noun, or for a pronoun the pronoun itself.
     let nounRange: NSRange
     /// The sentence the phrase sits in, for "misses in their sentences".
     let sentenceRange: NSRange
@@ -238,9 +296,11 @@ nonisolated struct KasusLocatedTarget: Identifiable, Hashable {
     let surface: String
     let determiner: String
     let noun: String
-    /// Nil when the first word is no known determiner (np.unknownDeterminer).
+    /// Nil when the first word is no known determiner (np.unknownDeterminer), and always nil for a
+    /// contraction or a pronoun, which have no family of forms to choose from.
     let parsed: KasusDeterminer?
-    /// Every case the determiner fits with this gender, by form alone.
+    /// Every case the determiner fits with this gender, by form alone. For a contraction, what its
+    /// article fits („ins“: das + n → Nominativ or Akkusativ); for a pronoun, its one case.
     let candidates: Set<GrammarCase>
     /// The preposition that decides the case. Nil when there is none, or when it is a soft one
     /// (um, ohne, seit …) that isn't acting as a preposition here: the reason isn't `preposition`
@@ -253,14 +313,20 @@ nonisolated struct KasusLocatedTarget: Identifiable, Hashable {
     let proof: KasusProof
     /// The lemma's gender, as the lexicon (or the plural-only / dual-gender lists) reports it.
     let genderVerdict: KasusLexiconVerdict
-    /// The noun reads the same in the plural (Schlüssel), so Ohne Hilfe shows an sg/pl tag.
+    /// The noun reads the same in the other number (Schlüssel; an n-noun's Nachbarn outside the
+    /// Nominativ), so Ohne Hilfe shows an sg/pl tag and the other number's article in the right
+    /// case is a number slip.
     let numberAmbiguous: Bool
     /// Can be marked in Finden and scored. Authored: no errors. Generated: also form-, preposition-
     /// or copula-proven, with a verified gender.
     var gradable: Bool
-    /// Can become an Einsetzen blank. Every gradable Phase 1 target (no contractions or pronouns
-    /// yet).
+    /// Can become an Einsetzen blank: a gradable `.article` target. Contractions and pronouns
+    /// never are.
     var blankable: Bool
+    /// What opens the phrase. Defaulted, so older call sites of the memberwise init still build.
+    var kind: KasusTargetKind = .article
+    /// For a contraction, the article inside it, lowercased: "dem" for „im“, "der" for „zur“.
+    var contractedArticle: String? = nil
 
     var id: Int { index }
     var kasus: GrammarCase { spec.kasus }
@@ -268,4 +334,10 @@ nonisolated struct KasusLocatedTarget: Identifiable, Hashable {
     var family: KasusFamily? { parsed?.family }
     /// The Einsetzen answer: the determiner as written. Grading ignores case.
     var answer: String { determiner }
+    /// The word whose form shows the case, lowercased: the determiner („den“), the article inside
+    /// a contraction („dem“ in „im“), or the pronoun („mir“). What a sort grid lists.
+    var caseForm: String { contractedArticle ?? determiner.lowercased() }
+    /// False for a pronoun: its genus is the gender of whoever it stands for (or an unused m for
+    /// the ich/du forms), not a noun's, so gender displays leave it out.
+    var hasNounGender: Bool { kind != .pronoun }
 }

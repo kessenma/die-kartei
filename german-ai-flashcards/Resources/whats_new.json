@@ -5,12 +5,12 @@
       "highlights": [
         {
           "title": "Kasus · Case endings",
-          "detail": "A one-screen table of der, den and dem with the rese, nese, mrmn code, and a quick drill to practice the endings.",
+          "detail": "A one-screen table of der, den and dem with the rese, nese, mrmn code, the six questions that tell you which case a phrase is in, and a quick drill for the endings.",
           "symbol": "tablecells"
         },
         {
           "title": "Kasus-Farben · Case colors",
-          "detail": "Each case now has its own color and icon wherever it's taught, and the quick lessons for Akkusativ, Dativ and Genitiv show the endings table with that case lit up.",
+          "detail": "Each case now has its own color and icon wherever it's taught, rules and explanations put key words in bold and every article in its gender color, and the quick lessons for Akkusativ, Dativ and Genitiv show the endings table with that case lit up.",
           "symbol": "paintpalette"
         },
         {
@@ -20,8 +20,28 @@
         },
         {
           "title": "Geschichten · Case stories",
-          "detail": "Mark the cases in a short story, then fill in its missing articles with gender hints. The first one is in Dativ.",
+          "detail": "Seven short stories to mark the cases in and then fill in the missing articles, with gender hints if you want them: Nominativ and Akkusativ at A1, Dativ at A2, and Genitiv and Alle Fälle at B1.",
           "symbol": "text.book.closed"
+        },
+        {
+          "title": "Verlauf · Your rounds",
+          "detail": "Every grammar round you play is kept, day by day, with your score per case. Open a story or quick round to see each answer again, with why.",
+          "symbol": "clock.arrow.circlepath"
+        },
+        {
+          "title": "Mehr dazu · Also for this case",
+          "detail": "Each case links to the preposition cards that take it, with their 3D scenes, and Nominativ to der · die · das.",
+          "symbol": "cube"
+        },
+        {
+          "title": "Gezielt üben · Practice that fits",
+          "detail": "A weak case on Today or in Coach's Notes opens a story to fill in or a quick round, Artikel opens a der/die/das round, and a class entry tagged with a case, Artikel or prepositions gets its own practice row.",
+          "symbol": "arrow.triangle.branch"
+        },
+        {
+          "title": "Richtig! · Clearer right and wrong",
+          "detail": "Each answer shows at once whether you got it, with the right article in its gender color and a dot per question, and the quick round puts the sentence up large with the buttons at the bottom.",
+          "symbol": "checkmark.circle"
         }
       ]
     },

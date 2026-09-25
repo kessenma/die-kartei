@@ -7,7 +7,9 @@
 //  (a preposition in front, gefallen, fragen), and every case explanation in the app follows the
 //  same order, so the reason a round gives is always one of these six steps.
 //
-//  Reached from the Grammar hub's toolbar and each unit's Regel card.
+//  Reached from the Grammar hub's toolbar, the story player, each unit's Regel card and the
+//  endings table, which lists the steps' short forms (`KasusCheckSheet.steps`) from here. Every
+//  line is `KasusRich` markup: forms in their gender color, case words in their case color.
 //
 
 import SwiftUI
@@ -15,9 +17,11 @@ import SwiftUI
 struct KasusCheckSheet: View {
     @Environment(\.dismiss) private var dismiss
 
-    private struct Step: Identifiable {
+    struct Step: Identifiable {
         let id: Int
         let question: String
+        /// The question in a few words, for the endings table's summary.
+        let short: String
         /// What the step decides. Step one lists several, since the preposition picks.
         let answers: [(kasus: GrammarCase, example: String?)]
         let lines: [String]
@@ -25,56 +29,62 @@ struct KasusCheckSheet: View {
         var note: String? = nil
     }
 
-    private let steps: [Step] = [
+    static let steps: [Step] = [
         Step(
             id: 1,
-            question: "Is there a preposition in front?",
+            question: "Is there a **preposition** in front?",
+            short: "A **preposition** in front? It decides.",
             answers: [
-                (.akkusativ, "für den Hund"),
-                (.dativ, "mit dem Hund"),
-                (.genitiv, "wegen des Hundes"),
+                (.akkusativ, "für {m:den} Hund"),
+                (.dativ, "mit {m:dem} Hund"),
+                (.genitiv, "wegen {m:des} Hundes"),
             ],
             lines: [
                 "Then the preposition decides.",
-                "Two-way prepositions (in, an, auf…) take the Dativ for a place (Wo?) and the Akkusativ for a direction (Wohin?).",
-                "In time phrases an, in, vor and zwischen take the Dativ: „am Montag“, „vor dem Termin“.",
-                "A verb with its own preposition fixes the case: „warten auf“ + Akkusativ.",
+                "**Two-way** prepositions (*in, an, auf…*) take the {dat:Dativ} for a place ({wechsel:Wo?}) and the {akk:Akkusativ} for a direction ({wechsel:Wohin?}).",
+                "In time phrases *an, in, vor* and *zwischen* take the {dat:Dativ}: „*am Montag*“, „*vor* {m:dem} *Termin*“.",
+                "A verb with its own preposition fixes the case: „*warten auf*“ + {akk:Akkusativ}.",
             ]
         ),
         Step(
             id: 2,
-            question: "Does it hang on another noun?",
+            question: "Does it hang on **another noun**?",
+            short: "Hangs on **another noun**?",
             answers: [(.genitiv, nil)],
-            lines: ["Whose or of what: „der Name des Hundes“, „das Ende der Woche“."]
+            lines: ["Whose or of what: „*der Name* {m:des} *Hundes*“, „*das Ende* {f:der} *Woche*“."]
         ),
         Step(
             id: 3,
-            question: "Is it the subject?",
+            question: "Is it the **subject**?",
+            short: "The **subject**?",
             answers: [(.nominativ, nil)],
-            lines: ["The verb agrees with it, and each clause has one: „Der Hund spielt.“"],
-            note: "With gefallen, gehören and schmecken, the thing is the subject and the person is Dativ: „Der Ball gefällt dem Hund.“"
+            lines: ["The verb agrees with it, and each clause has one: „{m:Der} *Hund spielt.*“"],
+            note: "With *gefallen, gehören* and *schmecken*, the thing is the subject and the person is {dat:Dativ}: „{m:Der} *Ball gefällt* {m:dem} *Hund.*“"
         ),
         Step(
             id: 4,
-            question: "Does sein, werden, bleiben or heißen equate it with the subject?",
+            question: "Does *sein, werden, bleiben* or *heißen* equate it with the subject?",
+            short: "Equal to the subject after *sein*?",
             answers: [(.nominativ, nil)],
-            lines: ["The noun on the other side of the verb is Nominativ too: „Das ist der Hund.“ „Er bleibt mein Freund.“"]
+            lines: ["The noun on the other side of the verb is {nom:Nominativ} too: „*Das ist* {m:der} *Hund.*“ „*Er bleibt* {m:mein} *Freund.*“"]
         ),
         Step(
             id: 5,
-            question: "Is it the receiver, or does a Dativ verb govern it?",
+            question: "Is it the **receiver**, or does a **Dativ verb** govern it?",
+            short: "The **receiver**, or a **Dativ verb**?",
             answers: [(.dativ, nil)],
             lines: [
-                "To whom something is given, shown or told: „Er gibt dem Hund einen Keks.“",
-                "helfen, danken, gefallen and gehören take the Dativ: „Jonas hilft seiner Mutter.“",
+                "To whom something is given, shown or told: „*Er gibt* {m:dem} *Hund* {m:einen} *Keks.*“",
+                "*helfen, danken, gefallen* and *gehören* take the {dat:Dativ}: „*Jonas hilft* {f:seiner} *Mutter.*“",
             ],
-            note: "fragen, anrufen and besuchen can feel like they need a receiver, but they take the Akkusativ: „Ich frage den Lehrer.“"
+            note: "*fragen, anrufen* and *besuchen* can feel like they need a receiver, but they take the {akk:Akkusativ}: „*Ich frage* {m:den} *Lehrer.*“"
         ),
         Step(
             id: 6,
-            question: "None of the above?",
+            question: "**None** of the above?",
+            short: "**None** of these?",
             answers: [(.akkusativ, nil)],
-            lines: ["Then it is the direct object: „Er nimmt den Schlüssel.“"]
+            lines: ["Then it is the **direct object**: „*Er nimmt* {m:den} *Schlüssel.*“"]
         ),
     ]
 
@@ -82,14 +92,14 @@ struct KasusCheckSheet: View {
         NavigationStack {
             List {
                 Section {
-                    Text("Ask these in order. The first question that fits decides the case, so a preposition always wins over everything below it.")
+                    Text(kasusRich: "Ask these **in order**. The first question that fits decides the case, so a preposition always wins over everything below it.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
                 .themedListRow()
 
                 Section {
-                    ForEach(steps) { step in
+                    ForEach(Self.steps) { step in
                         stepRow(step)
                     }
                 } footer: {
@@ -124,18 +134,24 @@ struct KasusCheckSheet: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 18, alignment: .trailing)
             VStack(alignment: .leading, spacing: 6) {
-                Text(step.question)
-                    .font(.subheadline.weight(.semibold))
+                // Plain weight, so the bold key term stands out.
+                Text(kasusRich: step.question)
+                    .font(.subheadline)
                     .fixedSize(horizontal: false, vertical: true)
 
                 ForEach(step.answers, id: \.kasus) { answer in
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text("→")
                             .foregroundStyle(.secondary)
-                        CaseLabel(kasus: answer.kasus, style: .name)
-                            .fontWeight(.semibold)
+                        // Not `CaseLabel`: inside a List a Label takes the row's wide icon slot.
+                        HStack(spacing: 3) {
+                            Image(systemName: answer.kasus.symbol)
+                            Text(answer.kasus.name)
+                        }
+                        .fontWeight(.semibold)
+                        .foregroundStyle(answer.kasus.color)
                         if let example = answer.example {
-                            Text("„\(example)“")
+                            Text(kasusRich: "„\(example)“")
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -143,16 +159,21 @@ struct KasusCheckSheet: View {
                 }
 
                 ForEach(step.lines, id: \.self) { line in
-                    Text(line)
+                    Text(kasusRich: line)
                         .font(.caption)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if let note = step.note {
-                    Label(note, systemImage: "exclamationmark.bubble")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Label {
+                        Text(kasusRich: note)
+                            .foregroundStyle(.secondary)
+                    } icon: {
+                        Image(systemName: "exclamationmark.bubble")
+                            .foregroundStyle(.secondary)
+                    }
+                    .font(.caption)
+                    .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }

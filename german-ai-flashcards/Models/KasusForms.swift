@@ -5,7 +5,7 @@
 //  The forms engine behind the Kasus stories: which article family a word belongs to, which cases
 //  a determiner can stand for with a given gender, the answer options the fill-in step offers, and
 //  the curated word lists the validator and the explanations lean on (n-nouns, plural-only nouns,
-//  Dativ verbs, the liegen/legen pairs, copulas, contractions).
+//  Dativ verbs, the liegen/legen pairs, copulas, contractions, the pronouns that show their case).
 //
 //  Every form is read off `GrammarCase.article(_:)` and `einEnding(_:)` (GrammarPalette.swift),
 //  so the endings table, the drill and the story checks can never disagree. Foundation only.
@@ -15,18 +15,19 @@ import Foundation
 
 // MARK: - Determiners
 
-/// The article words a Kasus target can start with. dieser/jeder/welcher stay notTargets until
-/// Phase 2.
+/// The article words a Kasus target can start with.
 nonisolated enum KasusFamily: String, CaseIterable, Hashable {
     case definite     // der, die, das, den, dem, des
     case ein          // ein, eine, einen … and no plural
     case kein         // kein, keine, keinen …
     case possessive   // mein, dein, sein, ihr, unser, euer (and formal Ihr)
+    case derWord      // dieser, jeder, welcher: the definite article's endings on a stem; jeder has no plural
 }
 
 /// A determiner token taken apart. `stem` is the base word the table hangs endings on ("ein",
-/// "kein", "mein" … "euer"), empty for the definite article; `ending` is what follows it ("en" in
-/// "einen"), or the whole word for the definite article. `word` is the token lowercased.
+/// "kein", "mein" … "euer", "dies", "jed", "welch"), empty for the definite article; `ending` is
+/// what follows it ("en" in "einen"), or the whole word for the definite article. `word` is the
+/// token lowercased.
 nonisolated struct KasusDeterminer: Hashable {
     let family: KasusFamily
     let stem: String
@@ -42,11 +43,15 @@ nonisolated enum KasusForms {
     /// colloquial unsre/unsren/unserm are not parsed, so a story lists them as notTargets.
     static let possessiveStems = ["mein", "dein", "sein", "ihr", "unser", "euer"]
 
+    /// The der-word bases: dieser, jeder, welcher. They always carry an ending, the definite
+    /// article's last letters (dies-er like d-er, dies-em like d-em), so the bare stem never parses.
+    static let derWordStems = ["dies", "jed", "welch"]
+
     /// Every ending an ein-word can carry, including none.
     private static let einWordEndings: Set<String> = ["", "e", "en", "em", "er", "es"]
 
-    /// Reads a token as a determiner, ignoring case ("Der", "SEINEN"). Nil when it belongs to none
-    /// of the families.
+    /// Reads a token as a determiner, ignoring case ("Der", "SEINEN", "Diesem"). Nil when it
+    /// belongs to none of the families.
     static func parseDeterminer(_ token: String) -> KasusDeterminer? {
         let word = token.lowercased()
         if definiteForms.contains(word) {
@@ -67,15 +72,35 @@ nonisolated enum KasusForms {
             guard einWordEndings.contains(ending) else { continue }
             return KasusDeterminer(family: family, stem: stem, ending: ending, word: word)
         }
+        for stem in derWordStems where word.hasPrefix(stem) {
+            let ending = String(word.dropFirst(stem.count))
+            guard !ending.isEmpty, einWordEndings.contains(ending) else { continue }
+            return KasusDeterminer(family: .derWord, stem: stem, ending: ending, word: word)
+        }
         return nil
     }
 
-    /// The table form for one cell, lowercased. Nil for ein in the plural: „eine Kinder“ is not
-    /// German, so those four cells are empty rather than borrowed from kein.
+    /// A der-word's ending in one cell: the definite article's, minus its d („der“ → -er,
+    /// „dem“ → -em, „die“ → -e, „das“ and „des“ → -es).
+    static func derWordEnding(case kasus: GrammarCase, genus: Gender) -> String {
+        switch kasus.article(genus) {
+        case "die":          "e"
+        case "das", "des":   "es"
+        case let article:    String(article.dropFirst())   // der → er, den → en, dem → em
+        }
+    }
+
+    /// The table form for one cell, lowercased. Nil for ein and jeder in the plural: „eine
+    /// Kinder“ and „jede Kinder“ are not German, so those cells are empty rather than borrowed
+    /// from kein or alle.
     static func form(family: KasusFamily, stem: String, case kasus: GrammarCase, genus: Gender) -> String? {
         switch family {
         case .definite:
             return kasus.article(genus)
+        case .derWord:
+            let base = stem.isEmpty ? "dies" : stem.lowercased()
+            if base == "jed" && genus == .plural { return nil }
+            return base + derWordEnding(case: kasus, genus: genus)
         case .ein, .kein, .possessive:
             if family == .ein && genus == .plural { return nil }
             let base = stem.isEmpty ? (family == .kein ? "kein" : "ein") : stem.lowercased()
@@ -168,22 +193,37 @@ nonisolated enum KasusForms {
         }
     }
 
-    /// True when `pick` is the answer's case in the plural: „die“ for „den“ in „nimmt ___
-    /// Schlüssel“. Only meaningful for a noun that reads the same in the plural (the caller
-    /// checks), where it is a number slip rather than a case miss.
+    /// True when `pick` is the answer's case in the other number: „die“ for „den“ in „nimmt ___
+    /// Schlüssel“, or for a plural answer the singular („den“ for „für die Nachbarn“, given the
+    /// lemma's `singularGenus`). Only meaningful for a noun that reads the same in both numbers
+    /// (the caller checks), where it is a number slip rather than a case miss.
     static func isRightCaseWrongNumber(pick: String, answerCase: GrammarCase, genus: Gender,
+                                       singularGenus: Gender? = nil,
                                        family: KasusFamily, stem: String) -> Bool {
-        guard genus != .plural,
-              let plural = form(family: family, stem: stem, case: answerCase, genus: .plural) else { return false }
         let picked = pick.lowercased()
-        return picked == plural && picked != form(family: family, stem: stem, case: answerCase, genus: genus)
+        let answer = form(family: family, stem: stem, case: answerCase, genus: genus)
+        guard genus != .plural else {
+            guard let singularGenus, singularGenus != .plural,
+                  let singular = form(family: family, stem: stem, case: answerCase, genus: singularGenus)
+            else { return false }
+            return picked == singular && picked != answer
+        }
+        guard let plural = form(family: family, stem: stem, case: answerCase, genus: .plural) else { return false }
+        return picked == plural && picked != answer
     }
 
     /// The other singular gender whose form in `kasus` is `pick`, for the gender-slip note.
     static func genderOfSlip(pick: String, kasus: GrammarCase, genus: Gender,
                              family: KasusFamily, stem: String) -> Gender? {
+        gendersOfSlip(pick: pick, kasus: kasus, genus: genus, family: family, stem: stem).first
+    }
+
+    /// Every other singular gender whose form in `kasus` is `pick`: „dem“ in the Dativ is
+    /// masculine and neuter alike, so a note shouldn't call it masculine only.
+    static func gendersOfSlip(pick: String, kasus: GrammarCase, genus: Gender,
+                              family: KasusFamily, stem: String) -> [Gender] {
         let picked = pick.lowercased()
-        return [Gender.der, .die, .das].first { other in
+        return [Gender.der, .die, .das].filter { other in
             other != genus && form(family: family, stem: stem, case: kasus, genus: other) == picked
         }
     }
@@ -278,6 +318,18 @@ nonisolated enum KasusForms {
         let short = lower.hasSuffix("e") || lower.hasSuffix("er") || ["herr", "nachbar"].contains(lower)
         let ending = short ? "n" : "en"
         return kasus == .genitiv && isMixedDeclension(lemma) ? ending + "s" : ending
+    }
+
+    /// Whether an n-noun reads the same here in both numbers: „den Nachbarn“ (one neighbour) is
+    /// also the plural „die Nachbarn“, „des Nachbarn“ also „der Nachbarn“. Outside the Nominativ
+    /// the singular's -(e)n is the plural's, except on Herr (Herrn · Herren) and in a Name-type
+    /// Genitiv (des Namens · der Namen). `noun` is the form in the text, either number.
+    static func nNounReadsAsPlural(noun: String, lemma: String, kasus: GrammarCase) -> Bool {
+        guard isNDeklination(lemma), kasus != .nominativ,
+              lemma.caseInsensitiveCompare("Herr") != .orderedSame,
+              kasus != .genitiv || !isMixedDeclension(lemma) else { return false }
+        let plural = lemma + nDeklinationEnding(lemma: lemma, kasus: .akkusativ)
+        return noun.caseInsensitiveCompare(plural) == .orderedSame
     }
 
     /// Whether `noun` is a masculine or neuter Genitiv singular of `lemma`: -s or -es (des Sofas,
@@ -426,8 +478,9 @@ nonisolated enum KasusForms {
         after ? [.akkusativ] : [.dativ, .genitiv]
     }
 
-    /// Preposition + article contractions → (preposition, article). Phase 1 has no contraction
-    /// targets, so an authored story lists these as notTargets.
+    /// Preposition + article contractions → (preposition, article), the ones prepositions.json
+    /// lists plus hinters/überm/unterm/vors. A contraction target („im Garten“) is spot-only: it
+    /// can be marked in Finden, never blanked. An idiom („am besten“, „zum Glück“) is a notTarget.
     static let contractions: [String: (preposition: String, article: String)] = [
         "am": ("an", "dem"), "ans": ("an", "das"), "aufs": ("auf", "das"), "beim": ("bei", "dem"),
         "durchs": ("durch", "das"), "fürs": ("für", "das"), "hinterm": ("hinter", "dem"),
@@ -436,4 +489,51 @@ nonisolated enum KasusForms {
         "unterm": ("unter", "dem"), "unters": ("unter", "das"), "vom": ("von", "dem"),
         "vorm": ("vor", "dem"), "vors": ("vor", "das"), "zum": ("zu", "dem"), "zur": ("zu", "der"),
     ]
+
+    /// The contraction a token is, ignoring case („Im“ → in + dem). Nil for anything else.
+    static func contraction(_ token: String) -> (preposition: String, article: String)? {
+        contractions[token.lowercased()]
+    }
+
+    // MARK: - Pronouns
+
+    /// The personal pronouns whose form alone shows the case: mich, dich, ihn are Akkusativ; mir,
+    /// dir, ihm Dativ. uns, euch, sie, es and ihr read the same in two cases (or double as an
+    /// article), so they stay plain text. A pronoun target is spot-only, like a contraction.
+    static let caseVisiblePronouns: [String: KasusPronoun] = [
+        "mich": KasusPronoun(word: "mich", kasus: .akkusativ, nominative: "ich", genders: nil),
+        "dich": KasusPronoun(word: "dich", kasus: .akkusativ, nominative: "du", genders: nil),
+        "ihn":  KasusPronoun(word: "ihn", kasus: .akkusativ, nominative: "er", genders: [.der]),
+        "mir":  KasusPronoun(word: "mir", kasus: .dativ, nominative: "ich", genders: nil),
+        "dir":  KasusPronoun(word: "dir", kasus: .dativ, nominative: "du", genders: nil),
+        "ihm":  KasusPronoun(word: "ihm", kasus: .dativ, nominative: "er", genders: [.der, .das]),
+    ]
+
+    /// The case-visible pronoun a token is, ignoring case („Mir“). Nil for anything else.
+    static func pronoun(_ token: String) -> KasusPronoun? {
+        caseVisiblePronouns[token.trimmingCharacters(in: .whitespaces).lowercased()]
+    }
+}
+
+/// A personal pronoun whose form shows its case (`KasusForms.caseVisiblePronouns`).
+nonisolated struct KasusPronoun: Hashable {
+    /// Lowercased: "mir".
+    let word: String
+    let kasus: GrammarCase
+    /// The Nominativ it comes from: ich, du, er (ihm is er or es; the table says er).
+    let nominative: String
+    /// The genders it can stand for. Nil for the ich and du forms, which have none.
+    let genders: Set<Gender>?
+
+    /// The same person in the other case: mich ↔ mir, dich ↔ dir, ihn ↔ ihm.
+    var otherCase: String {
+        switch word {
+        case "mich": "mir"
+        case "mir":  "mich"
+        case "dich": "dir"
+        case "dir":  "dich"
+        case "ihn":  "ihm"
+        default:     "ihn"
+        }
+    }
 }

@@ -23,6 +23,7 @@ struct PyramidCoachSection: View {
     var placement: PlacementResult?
 
     @Environment(ActivityRouter.self) private var router
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.appTheme) private var theme
 
     @Query private var profiles: [LearnerProfile]
@@ -38,7 +39,7 @@ struct PyramidCoachSection: View {
                     areaRow(row)
                 }
                 NavigationLink {
-                    CoachNotesView()
+                    CoachNotesView(modelManager: modelManager)
                 } label: {
                     Label("The coach's full notes", systemImage: "brain.head.profile")
                         .font(.subheadline)
@@ -101,7 +102,10 @@ struct PyramidCoachSection: View {
         enum Route {
             case articleGame
             case prepositionHub
-            case drill(GrammarCategory)
+            case grammarHub
+            /// A focus's exercise or quick lesson, opened on tap (`GrammarRoute`). The preposition
+            /// hub is a push, so it goes through `.prepositionHub` instead.
+            case grammar(GrammarRoute)
             case trickyPairs
             case drillDeck
             case none
@@ -130,11 +134,19 @@ struct PyramidCoachSection: View {
             NavigationLink { PrepositionHubView(modelManager: modelManager) } label: {
                 areaLabel(row)
             }
-        case .drill(let category):
-            Button { router.launch(.grammarMultipleChoice(category: category, showHints: true)) } label: {
-                areaLabel(row, chevron: true)
+        case .grammarHub:
+            NavigationLink { GrammarHubView(modelManager: modelManager, mlxService: mlxService) } label: {
+                areaLabel(row)
             }
-            .buttonStyle(.plain)
+        case .grammar(let route):
+            if case .lesson(let focus) = route {
+                LessonRowButton(focus: focus) { areaLabel(row, chevron: true) }
+            } else {
+                Button { open(route) } label: {
+                    areaLabel(row, chevron: true)
+                }
+                .buttonStyle(.plain)
+            }
         case .trickyPairs:
             NavigationLink { TrickyPairsView() } label: { areaLabel(row) }
         case .drillDeck:
@@ -193,11 +205,37 @@ struct PyramidCoachSection: View {
     }
 
     /// The structure areas above pull these focuses out; everything else is "Strukturen".
-    private static let caseFocuses: [GrammarFocus] = [.akkusativ, .dativ, .praepositionen, .wechselpraepositionen]
+    private static let caseFocuses: [GrammarFocus] = [.akkusativ, .dativ, .genitiv,
+                                                      .praepositionen, .wechselpraepositionen]
 
-    /// Day-of-year rotation for which drill a structure pick opens — mirrors the Today plan.
-    private var dayIndex: Int {
-        Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
+    /// Which row reads a grammar focus. `GrammarRoute`'s DEBUG report prints it.
+    enum Area { case artikel, faelle, strukturen }
+
+    static func area(for focus: GrammarFocus) -> Area {
+        if focus == .artikel { return .artikel }
+        return caseFocuses.contains(focus) ? .faelle : .strukturen
+    }
+
+    /// The shakiest measured focus of a set, if any is shaky.
+    private func worstShaky(_ focuses: [GrammarFocus]) -> GrammarFocus? {
+        focuses
+            .compactMap { focus in grammar[focus.rawValue].map { (focus, $0.struggle) } }
+            .filter { $0.1 >= GrammarSkill.shakyThreshold }
+            .max { $0.1 < $1.1 }?
+            .0
+    }
+
+    /// A focus's practice as a row route: the preposition hub is a push, the rest a tap.
+    private func areaRoute(for focus: GrammarFocus) -> AreaRow.Route {
+        let route = GrammarRoute(focus)
+        return route.presentation == .push ? .prepositionHub : .grammar(route)
+    }
+
+    /// A launch route's tap. The hub and the lesson have their own row views (`areaRow`).
+    private func open(_ route: GrammarRoute) {
+        if case .launch(let activity) = route.resolve(in: modelContext, level: modelManager.germanLevel) {
+            router.launch(activity)
+        }
     }
 
     // MARK: - The areas
@@ -260,16 +298,27 @@ struct PyramidCoachSection: View {
     private var faelleRow: AreaRow? {
         let chip = hasCheck ? placement.map { "Check \(percent($0.prepositionAccuracy))" } : nil
         let trickyPreps = prepositionStats.filter(\.isTricky).count
-        let (verdict, text) = measuredVerdict(
+        let (verdict, measuredText) = measuredVerdict(
             focuses: Self.caseFocuses,
             trickyCount: trickyPreps, trickyNoun: "tricky prepositions"
         )
         guard chip != nil || verdict != .unmeasured else { return nil }
+        var text = measuredText
+
+        // The shakiest case opens its own practice (a story, a Schnellrunde, the preposition
+        // hub); tricky prepositions alone open the hub; otherwise the Grammatik path.
+        let route: AreaRow.Route
+        if let worst = worstShaky(Self.caseFocuses) {
+            text = "Needs work: \(worst.germanLabel)" + (trickyPreps > 0 ? " · \(trickyPreps) tricky prepositions" : "")
+            route = areaRoute(for: worst)
+        } else {
+            route = trickyPreps > 0 ? .prepositionHub : .grammarHub
+        }
         return AreaRow(
             id: "faelle", systemImage: "arrow.triangle.branch", tint: .orange,
             title: "Fälle & Präpositionen · Cases",
             checkChip: chip, verdictText: text, verdict: verdict,
-            route: .prepositionHub
+            route: route
         )
     }
 
@@ -290,9 +339,7 @@ struct PyramidCoachSection: View {
         if let worst {
             verdict = .needsWork
             text = "Needs work: \(worst.0.germanLabel)"
-            if let category = GrammarExerciseService.category(for: worst.0, rotation: dayIndex) {
-                route = .drill(category)
-            }
+            route = areaRoute(for: worst.0)
         } else if !measured.isEmpty {
             verdict = .solid
             text = "Measured structures look solid"
@@ -345,6 +392,25 @@ struct PyramidCoachSection: View {
     }
 
     private func percent(_ value: Double) -> String { "\(Int((value * 100).rounded())) %" }
+}
+
+// MARK: - Lesson row
+
+/// A row that opens a structure's quick lesson. The sheet hangs on the row itself, which is on
+/// screen when it's tapped; the Section's header may already have scrolled away.
+private struct LessonRowButton<RowLabel: View>: View {
+    let focus: GrammarFocus
+    @ViewBuilder var label: RowLabel
+
+    @State private var isPresented = false
+
+    var body: some View {
+        Button { isPresented = true } label: { label }
+            .buttonStyle(.plain)
+            .sheet(isPresented: $isPresented) {
+                GrammarLessonSheet(focus: focus)
+            }
+    }
 }
 
 // MARK: - Core-structure dots (Grammatik-Kern layer row)

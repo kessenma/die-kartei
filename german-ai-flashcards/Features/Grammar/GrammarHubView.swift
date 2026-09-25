@@ -7,6 +7,7 @@
 //
 //    Weiter · Up next              one row: where to pick up (`KasusPath.next`, never stored)
 //    Die vier Fälle · The cases    Nominativ → Akkusativ → Dativ → Genitiv → Alle Fälle
+//    Verlauf · Your rounds         every scored grammar round, with the last one's score
 //    Werkzeuge · Tools             Präpositionen (the 3D scenes), der/die/das, the endings table
 //
 //  The toolbar's question mark opens Der Kasus-Check, the decision order every case explanation
@@ -24,6 +25,9 @@ struct GrammarHubView: View {
     @Query private var profiles: [LearnerProfile]
     /// Story and Schnellrunde history: the hero's pick and the unit rows' dots.
     @Query private var rounds: [KasusRound]
+    /// The newest der/die/das and preposition drill rounds, for Verlauf's "last round" line.
+    @Query(GrammarHubView.newestArticleRound) private var latestArticleRounds: [ArticleRound]
+    @Query(GrammarHubView.newestPrepositionRound) private var latestPrepositionRounds: [PrepositionRound]
     /// The hero row launches its story or Schnellrunde through the router.
     @Environment(ActivityRouter.self) private var router
     @Environment(\.appTheme) private var appTheme
@@ -34,6 +38,7 @@ struct GrammarHubView: View {
         List {
             heroSection.themedListRow()
             unitsSection.themedListRow()
+            historySection.themedListRow()
             toolsSection.themedListRow()
         }
         .themedListScreen()
@@ -149,7 +154,7 @@ struct GrammarHubView: View {
         Section {
             ForEach(KasusUnit.allCases) { unit in
                 NavigationLink {
-                    KasusUnitView(unit: unit)
+                    KasusUnitView(unit: unit, modelManager: modelManager, mlxService: mlxService)
                 } label: {
                     unitRow(unit)
                 }
@@ -209,6 +214,56 @@ struct GrammarHubView: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(done.filter { $0 }.count) of \(done.count) done")
+    }
+
+    // MARK: - Verlauf
+
+    /// One-row `@Query`s: the newest round of each drill.
+    private static var newestArticleRound: FetchDescriptor<ArticleRound> {
+        var descriptor = FetchDescriptor<ArticleRound>(sortBy: [SortDescriptor(\.date, order: .reverse)])
+        descriptor.fetchLimit = 1
+        return descriptor
+    }
+
+    private static var newestPrepositionRound: FetchDescriptor<PrepositionRound> {
+        var descriptor = FetchDescriptor<PrepositionRound>(sortBy: [SortDescriptor(\.date, order: .reverse)])
+        descriptor.fetchLimit = 1
+        return descriptor
+    }
+
+    private var historySection: some View {
+        let latest = GrammarHistoryEntry.all(kasus: rounds, articles: latestArticleRounds,
+                                             prepositions: latestPrepositionRounds).first
+        return Section {
+            NavigationLink {
+                KasusHistoryView()
+            } label: {
+                HStack(spacing: 12) {
+                    toolChip("clock.arrow.circlepath")
+                        .frame(width: 44, height: 44)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Verlauf · Your rounds")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.primary)
+                        Text(latest.map(lastRoundLine) ?? "Every scored round, day by day")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 8)
+                    if let latest {
+                        HistoryScore(firstTry: latest.firstTry, asked: latest.asked)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+        }
+    }
+
+    /// Last: Dativ · Einsetzen · today
+    private func lastRoundLine(_ entry: GrammarHistoryEntry) -> String {
+        "Last: \(entry.shortLabel) · \(KasusHistoryFormat.relativeDay(entry.date))"
     }
 
     // MARK: - Werkzeuge
@@ -314,7 +369,8 @@ struct GrammarHubView: View {
     }
     .environment(ActivityRouter())
     .modelContainer(
-        for: [SavedDeck.self, StudyDay.self, LearnerProfile.self, ChatConversation.self, KasusRound.self],
+        for: [SavedDeck.self, StudyDay.self, LearnerProfile.self, ChatConversation.self, KasusRound.self,
+              ArticleRound.self, PrepositionRound.self],
         inMemory: true
     )
 }

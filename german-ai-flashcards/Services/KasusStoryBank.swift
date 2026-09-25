@@ -75,8 +75,15 @@ struct KasusStoryBank {
         }
     }
 
-    /// `-kasus.debugVerify 1`: the bundled stories' reports, every planted-error fixture and the
-    /// forms round trip, as printable lines. The first line reads like
+    /// The same bank narrowed to some stories, for checks written against a fixed set (the
+    /// service's `KasusPath` expectations assume „Der verlorene Schlüssel“ alone).
+    func only(_ ids: Set<String>) -> KasusStoryBank {
+        KasusStoryBank(version: version, stories: stories.filter { ids.contains($0.id) })
+    }
+
+    /// `-kasus.debugVerify 1`: every bundled story's report (with its golden numbers, spot-only
+    /// counts and label-proven targets), every planted-error fixture and the forms round trip, as
+    /// printable lines. The first line reads like
     /// "ks-dat-a2-schluessel OK · 26 targets · form 20 · preposition 2 · copula 0 · label 4 · 0 errors".
     static func debugVerifyReport() -> String {
         debugVerifyReport(lexicon: AppKasusLexicon())

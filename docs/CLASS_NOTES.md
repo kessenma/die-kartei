@@ -168,7 +168,7 @@ Only one presenting argument per launch (see `WhatsNewService`).
   `ClassEntry.tutorContext` (and a line in `LearnerMemoryService.briefing`), gated by a
   `classFeedsCoach` setting like `storyFeedsCoach`.
 - **Today plan.** "Review this week's class words" (the course deck's due cards) and "practise
-  <grammar covered in class>" through `GrammarExerciseService.category(for:)`.
+  <grammar covered in class>" through `GrammarRoute` (the entry screen's case rows already use it).
 - **Weekly recap** conversation seeded from the course's entries (`FUTURE_FEATURES.md` #7).
 - **Tutor course ↔ Job prep.** A tutor course with a job-search goal feeds interview practice
   (`course.goal` + the class words).
