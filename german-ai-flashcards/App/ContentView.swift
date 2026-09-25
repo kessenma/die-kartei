@@ -410,6 +410,10 @@ struct ContentView: View {
             if UserDefaults.standard.bool(forKey: "sync.debugVerify") {
                 Task { print(await SyncDebugVerify.run()) }
             }
+            // `-sync.debugOpen 1` opens Settings ▸ Account ▸ iCloud Sync (this simulator can't tap).
+            if UserDefaults.standard.bool(forKey: "sync.debugOpen") {
+                settingsRouter.route = .sync
+            }
             // The Wortschatz box on a simulator that can't tap. `-wortschatz.debugLegacyDecks 1`
             // recreates the three old per-level SRS decks and clears the merge flag, so the merge
             // below has input; `-wortschatz.debugMerge 1` re-runs the merge now;

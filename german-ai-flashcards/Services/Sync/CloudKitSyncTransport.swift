@@ -80,8 +80,14 @@ final class CloudKitSyncTransport: SyncTransport {
             enqueue(saves: Array(parked), deletes: [])
             parked = []
         }
-        try await engine.sendChanges()
-        try await engine.fetchChanges()
+        // Off the main actor. The delegate is main-actor isolated, and CKSyncEngine traps
+        // ("cannot await a call into CKSyncEngine from within a delegate callback") when a caller on
+        // the delegate's actor awaits it while one of its callbacks is in flight. A detached task
+        // leaves the main actor free for those callbacks to run.
+        try await Task.detached {
+            try await engine.sendChanges()
+            try await engine.fetchChanges()
+        }.value
     }
 
     /// CKSyncEngine has no "forget my change token" call, so start a fresh engine with no saved

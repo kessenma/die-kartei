@@ -137,11 +137,26 @@ Before the **first** TestFlight build with sync:
 The Mac ("Designed for iPad") and visionOS builds share the container, so they become sync devices
 too.
 
+## Drift and database switches
+
+- **Heartbeats.** Each device writes a `Device` record: model, app version, last sync, pending and
+  stuck counts, and a digest per kind of the server copies it holds. The screen lists them under
+  "Your devices" and flags a different app version.
+- **Drift check.** Two settled devices with different digests trigger one automatic Repair Sync a
+  day; a lasting difference is shown on the screen.
+- **Zone fingerprint.** A `Meta` record holds a random id for the zone. A different id, or a full
+  fetch that finds none, means a different database: Debug vs TestFlight, a recreated zone, or
+  another account. The device then forgets its server copies and sends everything; per-device
+  counters keep that from doubling anything.
+- **Open screens.** A delete from another device waits while its deck is being studied or its chat
+  is open (`SyncInUse`), and a paused session is cleared when the deck's cards change under it.
+- **New device.** The onboarding wizard waits up to 10 s for the first fetch and is skipped if the
+  learner already onboarded on another device.
+
 ## Not yet
 
-- Learner preferences (theme, reminders, chat settings) don't sync yet. The plan is
-  NSUbiquitousKeyValueStore with an allowlist.
-- Heartbeats ("Your devices") and the automatic digest check. Repair Sync is the manual remedy.
-- On a new device, the onboarding wizard doesn't yet wait for the first fetch.
-- Two devices saving the first word of the same story/job/class deck while both offline can
-  still create two decks.
+- Learner preferences (theme, reminders, chat settings) don't sync. The plan is
+  NSUbiquitousKeyValueStore with an allowlist, plus a reload path in `MLXModelManager`, which caches
+  its settings at launch.
+- The same word saved to a story/job/class deck on two devices while both are offline gives two
+  cards (the deck itself is one record).
