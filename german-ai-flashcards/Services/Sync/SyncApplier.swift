@@ -10,6 +10,8 @@ struct SyncIncoming {
     let stamp: Data
     /// The record's change tag, used to skip copies this device already has.
     let tag: String
+    /// A downloaded asset (pictures, handouts). Valid only while the fetch is being handled.
+    var fileURL: URL? = nil
 }
 
 /// Writes server copies into the store.
@@ -129,7 +131,11 @@ final class SyncApplier {
                     outcome.uploads.append(name)
                     continue
                 }
-                if let model = SyncStoreMeta.model(for: state, in: context),
+                if let document = documents[state.kind], let recordName = SyncRecordName(name) {
+                    document.delete(recordName, payload: state.copies.base)
+                    outcome.changedKinds.insert(state.kind)
+                    outcome.deleted += 1
+                } else if let model = SyncStoreMeta.model(for: state, in: context),
                    let handler = SyncRegistry.byKind[state.kind] {
                     dropStates(of: handler.cascadeChildren(of: model))
                     context.delete(model)
@@ -185,7 +191,7 @@ final class SyncApplier {
         state.heldPayload = nil
         state.heldReason = nil
         if let apply = result.apply {
-            document.apply(SyncMerge.flatten(apply, spec: document.spec), name: name)
+            document.apply(SyncMerge.flatten(apply, spec: document.spec), name: name, file: record.fileURL)
             outcome.changedKinds.insert(name.kind)
             outcome.updated += 1
         }

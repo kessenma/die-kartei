@@ -170,12 +170,15 @@ final class SyncCoordinator {
 // MARK: - Transport events
 
 extension SyncCoordinator: SyncTransportDelegate {
-    func outgoing(_ name: String) -> (payload: SyncPayload, stamp: Data?)? {
+    func outgoing(_ name: String) -> SyncOutgoing? {
         guard let state = SyncStoreMeta.states(named: [name], in: context)[name],
               state.needsUpload, !state.pendingDelete, !state.isStuck,
               let pending = state.copies.pending
         else { return nil }
-        return (pending, state.serverStamp)
+        let file = SyncRecordName(name).flatMap { recordName in
+            SyncDocuments.byKind[recordName.kind]?.fileURL(for: recordName, payload: pending)
+        }
+        return SyncOutgoing(payload: pending, stamp: state.serverStamp, fileURL: file)
     }
 
     func transportDidSave(_ name: String, sent: SyncPayload, stamp: Data, tag: String) {

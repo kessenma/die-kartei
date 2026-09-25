@@ -7,11 +7,35 @@ import SwiftData
 @MainActor
 enum SyncRegistry {
     static let handlers: [any SyncKindHandling] = [
+        // Decks and what hangs off them.
         SyncHandler<SavedDeckCodec>(),
         SyncHandler<SavedCardCodec>(),
         SyncHandler<QuizResultCodec>(),
+        // Study log and per-word stats.
         SyncHandler<StudyDayCodec>(),
+        SyncHandler<MatchingPairStatCodec>(),
+        SyncHandler<MatchingRoundCodec>(),
+        SyncHandler<ArticleWordStatCodec>(),
+        SyncHandler<ArticleRoundCodec>(),
+        SyncHandler<PrepositionStatCodec>(),
+        SyncHandler<PrepositionRoundCodec>(),
+        // Coaching memory.
+        SyncHandler<LearnerProfileCodec>(),
+        SyncHandler<ArchivedMemoryItemCodec>(),
+        // Stories and papers.
+        SyncHandler<StudyStoryCodec>(),
+        SyncHandler<StoryReadingSessionCodec>(),
+        SyncHandler<StoryQuizAttemptCodec>(),
+        SyncHandler<StudyPaperCodec>(),
+        // Conversations, job postings, phrases.
+        SyncHandler<ChatConversationCodec>(),
+        SyncHandler<ChatMessageCodec>(),
+        SyncHandler<JobPostingCodec>(),
         SyncHandler<LearnedPhraseCodec>(),
+        // Deutschkurs: course → entry → handout.
+        SyncHandler<ClassCourseCodec>(),
+        SyncHandler<ClassEntryCodec>(),
+        SyncHandler<ClassMaterialCodec>(),
     ]
 
     static let byKind: [String: any SyncKindHandling] =

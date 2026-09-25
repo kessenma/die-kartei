@@ -15,6 +15,14 @@ enum SyncSingletonDecks {
         SyncNameUUID.make("deck", generatorRaw, topic)
     }
 
+    /// The id for a story's, job posting's or course's own deck when it has to be created here.
+    /// If the parent already links a deck that simply hasn't arrived from the other device yet,
+    /// reuse that id so the two become one record when it lands. Otherwise derive it from the
+    /// parent, so two devices creating it offline create the same deck.
+    static func linkedDeckID(existing: UUID?, kind: String, parentID: UUID) -> UUID {
+        existing ?? SyncNameUUID.make("linked-deck", kind, parentID.uuidString)
+    }
+
     /// Canonical card id inside a singleton deck: one card per German word.
     static func cardID(deckID: UUID, germanWord: String) -> UUID {
         SyncNameUUID.make("card", deckID.uuidString, germanWord.lowercased())

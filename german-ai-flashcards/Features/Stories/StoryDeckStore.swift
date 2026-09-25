@@ -38,6 +38,7 @@ enum StoryDeckStore {
         } else {
             let created = SavedDeck(topic: "Story: \(story.title)", wordCount: 0, includeExamples: false, includeGender: true)
             created.generatorRaw = "story"
+            created.id = SyncSingletonDecks.linkedDeckID(existing: story.deckID, kind: "story", parentID: story.id)
             context.insert(created)
             story.deckID = created.id
             target = created

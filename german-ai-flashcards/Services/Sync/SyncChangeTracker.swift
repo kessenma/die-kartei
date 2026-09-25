@@ -83,7 +83,9 @@ final class SyncChangeTracker {
                 guard let key = id.syncKey, let state = SyncStoreMeta.state(localKey: key, in: context) else { continue }
                 if markDeleted(state) { outcome.deletes.append(state.recordName) }
             }
-            outcome.saves += noteDocuments(bootstrapping: false)
+            let docs = noteDocuments(bootstrapping: false)
+            outcome.saves += docs.saves
+            outcome.deletes += docs.deletes
             if let lastToken { meta.historyToken = encodeToken(lastToken) }
             return outcome
         }
@@ -134,7 +136,9 @@ final class SyncChangeTracker {
                 }
             }
 
-            outcome.saves += noteDocuments(bootstrapping: bootstrapping)
+            let docs = noteDocuments(bootstrapping: bootstrapping)
+            outcome.saves += docs.saves
+            outcome.deletes += docs.deletes
             meta.initialScanDone = true
             if let latest { meta.historyToken = encodeToken(latest) }
             return outcome
@@ -190,10 +194,20 @@ final class SyncChangeTracker {
 
     /// Records outside SwiftData (UserDefaults progress, the journey and placement files): compared
     /// with their last synced copy every pass, since history can't see them.
-    private func noteDocuments(bootstrapping: Bool) -> [String] {
+    private func noteDocuments(bootstrapping: Bool) -> Outcome {
         var names: [String] = []
+        var deletedDocuments: [String] = []
         for kind in documents {
-            for (name, known) in kind.localRecords() {
+            let local = kind.localRecords()
+            if kind.tracksDeletions {
+                let present = Set(local.map { $0.name.description })
+                let kindName = kind.spec.kind
+                let d = FetchDescriptor<SyncRecordState>(predicate: #Predicate { $0.kind == kindName })
+                for state in (try? context.fetch(d)) ?? [] where !present.contains(state.recordName) && !state.pendingDelete {
+                    if markDeleted(state) { deletedDocuments.append(state.recordName) }
+                }
+            }
+            for (name, known) in local {
                 let key = name.description
                 let state = SyncStoreMeta.states(named: [key], in: context)[key] ?? {
                     let s = SyncRecordState(recordName: key, kind: name.kind)
@@ -211,7 +225,7 @@ final class SyncChangeTracker {
                 if upload { names.append(key) }
             }
         }
-        return names
+        return Outcome(saves: names, deletes: deletedDocuments)
     }
 
     /// A local delete. Returns true if the server must hear about it. A record the server never

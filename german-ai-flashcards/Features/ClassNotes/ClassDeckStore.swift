@@ -20,6 +20,7 @@ enum ClassDeckStore {
         let created = SavedDeck(topic: "Class: \(course.name)", wordCount: 0, includeExamples: false, includeGender: true)
         created.generatorRaw = generatorRaw
         created.courseID = course.id
+        created.id = SyncSingletonDecks.linkedDeckID(existing: course.deckID, kind: "class", parentID: course.id)
         context.insert(created)
         course.deckID = created.id
         return created

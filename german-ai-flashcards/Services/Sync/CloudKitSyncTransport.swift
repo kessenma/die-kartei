@@ -97,9 +97,12 @@ final class CloudKitSyncTransport: SyncTransport {
 
     /// The CKRecord to send for a queued name, or nil if nothing is pending for it any more.
     private func record(for id: CKRecord.ID) -> CKRecord? {
-        guard let (payload, stamp) = delegate?.outgoing(id.recordName) else { return nil }
-        let record = stamp.flatMap(Self.decodeSystemFields) ?? CKRecord(recordType: Self.recordType, recordID: id)
-        let data = SyncJSON.object(payload).canonicalData
+        guard let out = delegate?.outgoing(id.recordName) else { return nil }
+        let record = out.stamp.flatMap(Self.decodeSystemFields) ?? CKRecord(recordType: Self.recordType, recordID: id)
+        let data = SyncJSON.object(out.payload).canonicalData
+        if let file = out.fileURL, FileManager.default.fileExists(atPath: file.path) {
+            record["file"] = CKAsset(fileURL: file)
+        }
         record["kind"] = String(id.recordName.prefix { $0 != ":" }) as CKRecordValue
         if data.count <= Self.inlinePayloadLimit {
             record["payload"] = data as CKRecordValue
@@ -125,7 +128,8 @@ final class CloudKitSyncTransport: SyncTransport {
     static func incoming(_ record: CKRecord) -> SyncIncoming? {
         guard let payload = payload(of: record) else { return nil }
         return SyncIncoming(name: record.recordID.recordName, payload: payload,
-                            stamp: encodeSystemFields(record), tag: record.recordChangeTag ?? "")
+                            stamp: encodeSystemFields(record), tag: record.recordChangeTag ?? "",
+                            fileURL: (record["file"] as? CKAsset)?.fileURL)
     }
 
     static func encodeSystemFields(_ record: CKRecord) -> Data {

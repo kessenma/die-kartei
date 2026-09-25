@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "unreleased",
+      "highlights": [
+        {
+          "title": "iCloud-Sync · iCloud Sync",
+          "detail": "Your cards, progress, streak, stories and conversations now stay the same on your iPhone and iPad, through your own iCloud.",
+          "symbol": "icloud"
+        }
+      ]
+    },
+    {
       "version": "1.6",
       "date": "2026-09-16",
       "highlights": [

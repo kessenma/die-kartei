@@ -11,6 +11,20 @@ protocol SyncDocumentKind {
     func localRecords() -> [(name: SyncRecordName, known: SyncPayload)]
     /// Write a server copy (flattened) into local storage.
     func apply(_ flat: SyncPayload, name: SyncRecordName)
+    /// Records of this kind can disappear locally (files); a vanished one is deleted on the server.
+    var tracksDeletions: Bool { get }
+    func apply(_ flat: SyncPayload, name: SyncRecordName, file: URL?)
+    /// The record is gone from the server. `payload` is the last copy this device had.
+    func delete(_ name: SyncRecordName, payload: SyncPayload?)
+    /// The asset that travels with a record, if any.
+    func fileURL(for name: SyncRecordName, payload: SyncPayload) -> URL?
+}
+
+extension SyncDocumentKind {
+    var tracksDeletions: Bool { false }
+    func apply(_ flat: SyncPayload, name: SyncRecordName, file: URL?) { apply(flat, name: name) }
+    func delete(_ name: SyncRecordName, payload: SyncPayload?) {}
+    func fileURL(for name: SyncRecordName, payload: SyncPayload) -> URL? { nil }
 }
 
 @MainActor
@@ -19,6 +33,7 @@ enum SyncDocuments {
         ProgressSyncDocument(),
         JourneySyncDocument(),
         PlacementAttemptsSyncDocument(),
+        FileSyncDocument(),
     ]
 
     static let byKind: [String: any SyncDocumentKind] =
@@ -233,5 +248,82 @@ struct PlacementAttemptsSyncDocument: SyncDocumentKind {
         var out = payload
         out["attempts"] = .array(Array(sorted.prefix(PlacementAttemptStore.cap)))
         return out
+    }
+}
+
+// MARK: - Files (pictures and handouts)
+
+/// Card pictures, story illustrations, class handouts and saved job-posting PDFs. The rows that
+/// use them store bare file names resolved against Application Support, so a file only has to
+/// arrive at the same relative path for the row on the other device to find it. Each file is one
+/// record whose payload is its path, size and modification date; the bytes travel as a CKAsset.
+///
+/// A redraw writes a new file (or overwrites `00.png`), which changes the modification date and
+/// sends it again. A deleted file is deleted everywhere. Card-picture drafts (`draft-*`) never
+/// leave the device.
+struct FileSyncDocument: SyncDocumentKind {
+    static let roots = ["CardImages", "StoryImages", "ClassNotes", "JobPostings"]
+
+    let spec = SyncKindSpec(kind: "File")
+    var tracksDeletions: Bool { true }
+
+    private var base: URL { URL.applicationSupportDirectory }
+
+    func localRecords() -> [(name: SyncRecordName, known: SyncPayload)] {
+        let fm = FileManager.default
+        var out: [(SyncRecordName, SyncPayload)] = []
+        for root in Self.roots {
+            let dir = base.appendingPathComponent(root, isDirectory: true)
+            // The enumerator can hand back /private/var paths for a /var root: compare resolved paths.
+            let dirPath = dir.resolvingSymlinksInPath().path + "/"
+            guard let files = fm.enumerator(at: dir, includingPropertiesForKeys: [.isRegularFileKey, .fileSizeKey, .contentModificationDateKey],
+                                            options: [.skipsHiddenFiles]) else { continue }
+            for case let url as URL in files {
+                guard let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey, .contentModificationDateKey]),
+                      values.isRegularFile == true, !url.lastPathComponent.hasPrefix("draft-")
+                else { continue }
+                let filePath = url.resolvingSymlinksInPath().path
+                guard filePath.hasPrefix(dirPath) else { continue }
+                let path = root + "/" + filePath.dropFirst(dirPath.count)
+                var f = SyncFields()
+                f.set("path", path)
+                f.set("size", values.fileSize)
+                // Whole seconds: the date is written back after a download, and sub-second
+                // precision doesn't survive every file system.
+                f.set("modified", values.contentModificationDate.map { $0.timeIntervalSinceReferenceDate.rounded(.down) })
+                out.append((SyncRecordName(kind: spec.kind, naturalKey: path), f.payload))
+            }
+        }
+        return out
+    }
+
+    func apply(_ flat: SyncPayload, name: SyncRecordName) {}
+
+    func apply(_ flat: SyncPayload, name: SyncRecordName, file: URL?) {
+        guard let path = flat.string("path"), let file, let dest = destination(path) else { return }
+        let fm = FileManager.default
+        try? fm.createDirectory(at: dest.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? fm.removeItem(at: dest)
+        guard (try? fm.copyItem(at: file, to: dest)) != nil else { return }
+        // Match the sender's date so the next pass doesn't see a "changed" file and send it back.
+        if let modified = flat.double("modified") {
+            try? fm.setAttributes([.modificationDate: Date(timeIntervalSinceReferenceDate: modified)], ofItemAtPath: dest.path)
+        }
+    }
+
+    func delete(_ name: SyncRecordName, payload: SyncPayload?) {
+        guard let path = payload?.string("path"), let dest = destination(path) else { return }
+        try? FileManager.default.removeItem(at: dest)
+    }
+
+    func fileURL(for name: SyncRecordName, payload: SyncPayload) -> URL? {
+        payload.string("path").flatMap(destination)
+    }
+
+    /// Only paths inside the four synced folders, never `..` escapes.
+    private func destination(_ path: String) -> URL? {
+        guard let root = path.split(separator: "/").first, Self.roots.contains(String(root)),
+              !path.contains("..") else { return nil }
+        return base.appendingPathComponent(path)
     }
 }

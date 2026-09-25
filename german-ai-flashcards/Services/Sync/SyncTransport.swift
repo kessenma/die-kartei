@@ -15,10 +15,19 @@ protocol SyncTransport: AnyObject {
     func resetFetchState()
 }
 
+/// What goes up for one record.
+struct SyncOutgoing {
+    var payload: SyncPayload
+    /// The last server copy's system fields, so CloudKit can tell a stale save.
+    var stamp: Data?
+    /// A picture or handout that travels with the record as an asset.
+    var fileURL: URL?
+}
+
 @MainActor
 protocol SyncTransportDelegate: AnyObject {
-    /// The payload and server stamp to send for a queued record, or nil if nothing is pending.
-    func outgoing(_ name: String) -> (payload: SyncPayload, stamp: Data?)?
+    /// What to send for a queued record, or nil if nothing is pending.
+    func outgoing(_ name: String) -> SyncOutgoing?
     func transportDidSave(_ name: String, sent: SyncPayload, stamp: Data, tag: String)
     /// The save was based on a stale copy; `server` is the current one.
     func transportConflict(_ name: String, server: SyncIncoming)
@@ -57,8 +66,9 @@ final class FakeSyncTransport: SyncTransport {
         saves = []
         for name in queue {
             for _ in 0..<5 {
-                guard let (payload, stamp) = delegate.outgoing(name) else { break }
-                let tag = stamp.flatMap { Int(String(decoding: $0, as: UTF8.self)) }
+                guard let out = delegate.outgoing(name) else { break }
+                let payload = out.payload
+                let tag = out.stamp.flatMap { Int(String(decoding: $0, as: UTF8.self)) }
                 switch server.save(name, payload: payload, basedOn: tag) {
                 case .saved(let newTag):
                     delegate.transportDidSave(name, sent: payload, stamp: Data(String(newTag).utf8), tag: String(newTag))

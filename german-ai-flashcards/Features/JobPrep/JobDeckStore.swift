@@ -44,6 +44,7 @@ enum JobDeckStore {
         } else {
             let created = SavedDeck(topic: "Job: \(posting.title)", wordCount: 0, includeExamples: false, includeGender: true)
             created.generatorRaw = generatorRaw
+            created.id = SyncSingletonDecks.linkedDeckID(existing: posting.deckID, kind: "job", parentID: posting.id)
             context.insert(created)
             posting.deckID = created.id
             target = created

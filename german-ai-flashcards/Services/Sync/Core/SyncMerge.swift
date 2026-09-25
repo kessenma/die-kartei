@@ -247,6 +247,10 @@ nonisolated enum SyncMerge {
             }
             return out.isEmpty && l == .null && r == .null ? .null : .object(out)
         case let .set(idField, lowercasedID, item, sortBy):
+            // Changed on one side only: take that side as it is, order included (lookups are
+            // newest first; re-sorting would scramble them for nothing).
+            if let a, a == l { return r }
+            if let a, a == r { return l }
             let id: (SyncJSON) -> String = { element in
                 if let s = element[idField]?.stringValue { return lowercasedID ? s.lowercased() : s }
                 if let n = element[idField]?.doubleValue { return String(n) }
@@ -276,6 +280,8 @@ nonisolated enum SyncMerge {
             }
             return .array(sorted.map(\.value))
         case let .keyed(item):
+            if let a, a == l { return r }
+            if let a, a == r { return l }
             let merged = mergeKeyed(
                 ancestor: a.map { $0.objectValue ?? [:] },
                 local: l.objectValue ?? [:],

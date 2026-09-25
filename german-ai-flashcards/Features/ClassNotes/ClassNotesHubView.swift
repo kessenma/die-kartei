@@ -335,6 +335,9 @@ enum ClassEntryStore {
             return existing
         }
         let entry = ClassEntry(date: today)
+        // The same id on every device for (course, day): two devices filing today's first handout
+        // offline create one entry, not two.
+        entry.id = SyncNameUUID.make("class-entry", course.id.uuidString, SyncDayKey.key(for: today))
         context.insert(entry)
         entry.course = course
         course.updatedAt = .now

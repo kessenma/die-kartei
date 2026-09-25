@@ -129,6 +129,72 @@ enum SyncDebugVerify {
             check(false, "Wortschatz: couldn't build the box (word list empty?)")
         }
 
+        // 6. Content: a story with lookups from both devices, a chat continued on the other
+        //    device (time adds up), coaching memory from both, a stat seen on both, class notes.
+        let story = StudyStory(topic: "Ein Tag in Berlin", level: .a2, genre: .alltag)
+        story.title = "Sync-Geschichte"
+        story.storyText = "Der Zug fährt ab."
+        story.generationComplete = true
+        a.insert(story)
+        story.recordLookup(german: "Bahnhof", english: "station")
+        a.insert(StoryReadingSession(storyID: story.id, storyTitle: story.title, levelRaw: "A2",
+                                     seconds: 120, wasListening: false, lookups: 1, wordsSaved: 0))
+        let chat = ChatConversation(config: ConversationConfig(model: .hero))
+        chat.durationSeconds = 100
+        a.insert(chat)
+        for (i, text) in ["Hallo!", "Hallo, wie geht's?"].enumerated() {
+            let message = ChatMessage(role: i == 0 ? .user : .assistant, text: text, sortOrder: i)
+            a.insert(message)
+            message.conversation = chat
+        }
+        LearnerMemoryService.noteVocabEncounters([(german: "Hund", english: "dog")], in: a)
+        LearnerMemoryService.noteVocabEncounters([(german: "Katze", english: "cat")], in: b)
+        let statA = ArticleWordStat(key: "tisch", noun: "Tisch", articleRaw: "der", english: "table")
+        statA.timesSeen = 3
+        a.insert(statA)
+        let statB = ArticleWordStat(key: "tisch", noun: "Tisch", articleRaw: "der", english: "table")
+        statB.timesSeen = 2
+        b.insert(statB)
+        let course = ClassCourse(name: "VHS B1")
+        a.insert(course)
+        let entry = ClassEntryStore.todayEntry(in: course, context: a)
+        let material = ClassMaterial(title: "Arbeitsblatt", text: "Die Präpositionen mit Dativ")
+        a.insert(material)
+        material.entry = entry
+        try? a.save()
+        try? b.save()
+        await rounds(phone, pad)
+
+        let padStory = fetchOne(StudyStory.self, b)
+        check(padStory?.title == "Sync-Geschichte" && count(StoryReadingSession.self, b) == 1,
+              "content: the story and its reading session reached the iPad")
+        padStory?.recordLookup(german: "Zug", english: "train")
+        if let padChat = fetchOne(ChatConversation.self, b) { padChat.durationSeconds += 50 }
+        chat.durationSeconds += 30
+        try? a.save()
+        try? b.save()
+        await rounds(phone, pad)
+        let lookupsA = Set(fetchOne(StudyStory.self, a)?.lookups.map(\.german) ?? [])
+        check(lookupsA == ["Bahnhof", "Zug"], "content: lookups from both devices kept (\(lookupsA.sorted()))")
+        let chatA = fetchOne(ChatConversation.self, a), chatB = fetchOne(ChatConversation.self, b)
+        check(chatA?.durationSeconds == 180 && chatB?.durationSeconds == 180,
+              "content: chat time 100 + 50 + 30 = 180 on both (\(chatA?.durationSeconds ?? -1), \(chatB?.durationSeconds ?? -1))")
+        check(chatB?.messages.count == 2, "content: the chat's 2 messages arrived")
+        let vocabA = Set(fetchOne(LearnerProfile.self, a)?.vocab.map { $0.german.lowercased() } ?? [])
+        let vocabB = Set(fetchOne(LearnerProfile.self, b)?.vocab.map { $0.german.lowercased() } ?? [])
+        check(vocabA.isSuperset(of: ["hund", "katze"]) && vocabA == vocabB,
+              "content: coaching memory holds words from both devices (\(vocabA.sorted()))")
+        check(count(LearnerProfile.self, a) == 1 && count(LearnerProfile.self, b) == 1,
+              "content: one learner profile per device")
+        let tischA = fetchOne(ArticleWordStat.self, a), tischB = fetchOne(ArticleWordStat.self, b)
+        check(count(ArticleWordStat.self, a) == 1 && count(ArticleWordStat.self, b) == 1,
+              "content: one row for der Tisch per device")
+        check(tischA?.timesSeen == 5 && tischB?.timesSeen == 5,
+              "content: der Tisch seen 3 + 2 = 5 times (\(tischA?.timesSeen ?? -1), \(tischB?.timesSeen ?? -1))")
+        let padCourse = fetchOne(ClassCourse.self, b)
+        check(padCourse?.name == "VHS B1" && padCourse?.entries.first?.materials.first?.title == "Arbeitsblatt",
+              "content: course → entry → handout arrived in order")
+
         check(phone.pendingCount == 0 && pad.pendingCount == 0,
               "settled: nothing pending (\(phone.pendingCount), \(pad.pendingCount))")
 
@@ -170,6 +236,10 @@ enum SyncDebugVerify {
 
     private static func card(_ word: String, _ context: ModelContext) -> SavedCard? {
         (try? context.fetch(FetchDescriptor<SavedCard>(predicate: #Predicate { $0.germanWord == word })))?.first
+    }
+
+    private static func fetchOne<T: PersistentModel>(_ type: T.Type, _ context: ModelContext) -> T? {
+        (try? context.fetch(FetchDescriptor<T>()))?.first
     }
 
     private static func goetheDecks(_ context: ModelContext) -> Int {
