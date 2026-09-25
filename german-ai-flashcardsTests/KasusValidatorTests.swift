@@ -176,7 +176,8 @@ struct KasusValidatorTests {
         let short = story(unit: "dativ", level: "A2", [dem])
         #expect(codes(short, .authored) == [.unitCaseCount: .error, .wordCount: .warning],
                 "one Dativ target, four words")
-        #expect(codes(short, .generated) == [.unitCaseCount: .error, .wordCount: .error])
+        #expect(codes(short, .generated) == [.unitCaseCount: .error, .wordCount: .error],
+                "under half the A2 range: a generated story is rejected for it")
         #expect(codes(story(unit: "alleFaelle", level: "A2", [dem]), .authored)[.unitCaseCount] == .error)
         #expect(codes(story(unit: "nirgends", level: "A2", [dem]), .authored)[.unitCaseCount] == .error)
         #expect(codes(story(unit: "dativ", level: "Z9", [dem]), .authored)[.wordCount] == .warning)
@@ -188,14 +189,17 @@ struct KasusValidatorTests {
         #expect(Policy.severity(of: .lexConflict, source: .authored) == .warning)
         #expect(Policy.severity(of: .lexUnverified, source: .generated) == .warning)
         #expect(Policy.severity(of: .wordCount, source: .authored) == .warning)
-        #expect(Policy.severity(of: .wordCount, source: .generated) == .error)
+        #expect(Policy.severity(of: .wordCount, source: .generated) == .warning, "only far short rejects")
+        #expect(Policy.farShort(59, range: 120...180) && !Policy.farShort(60, range: 120...180))
         #expect(Policy.severity(of: .untargetedDeterminer, source: .authored) == .error)
         #expect(Policy.severity(of: .untargetedDeterminer, source: .generated) == .warning)
         #expect(Policy.severity(of: .caseMismatch, source: .authored) == .error)
 
         let rejecting: Set<KasusIssueCode> = [.impossibleForm, .caseMismatch, .pluralForm, .nDeklination, .genitiveS,
-                                              .triggerPrepositionCase, .triggerWechselVerb, .lexGender,
-                                              .unitCaseCount, .wordCount]
+                                              .triggerPrepositionCase, .triggerWechselVerb,
+                                              .unitCaseCount, .wordCount,
+                                              .verbAgreement, .unknownWord, .lowercaseNoun, .copulaAkkusativ,
+                                              .objectNominativ, .repeatedSentence]
         for code in KasusIssueCode.allCases {
             #expect(Policy.rejectsGeneratedStory(code) == rejecting.contains(code), "\(code.rawValue)")
         }
@@ -208,6 +212,8 @@ struct KasusValidatorTests {
             "morph.pluralForm", "morph.nDeklination", "morph.genitiveS", "lex.gender", "lex.conflict",
             "lex.unverified", "trigger.missing", "trigger.prepositionCase", "trigger.wechselVerb",
             "reason.caseMismatch", "coverage.untargetedDeterminer", "story.unitCaseCount", "story.wordCount",
+            "trigger.wechselUnconfirmed", "sentence.verbAgreement", "sentence.unknownWord", "sentence.lowercaseNoun",
+            "sentence.copulaAkkusativ", "sentence.objectNominativ", "sentence.repeated",
         ])
     }
 }

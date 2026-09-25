@@ -19,6 +19,8 @@ struct KasusRoundDetailView: View {
     let round: KasusRound
 
     @Environment(\.appTheme) private var appTheme
+    /// For a tutor-written story's title.
+    @Environment(\.modelContext) private var modelContext
     /// The right answers whose why is showing, by position in `round.items`.
     @State private var expanded: Set<Int> = []
 
@@ -87,7 +89,7 @@ struct KasusRoundDetailView: View {
                                     in: RoundedRectangle(cornerRadius: appTheme.innerRadius(10), style: .continuous))
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(round.displayTitle(showsUnit: true))
+                        Text(round.displayTitle(showsUnit: true, in: modelContext))
                             .font(.headline)
                         Text(stepLine)
                             .font(.subheadline)

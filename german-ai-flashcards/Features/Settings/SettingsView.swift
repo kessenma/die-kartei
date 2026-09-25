@@ -138,7 +138,7 @@ struct SettingsView: View {
                 if ScreenshotSeeding.isAvailable {
                     Section("Developer") {
                         NavigationLink {
-                            DeveloperSettingsView()
+                            DeveloperSettingsView(modelManager: modelManager, mlxService: mlxService)
                         } label: {
                             row("Screenshot Data", systemImage: "hammer",
                                 detail: ScreenshotDataSeeder.seededAt == nil ? nil : "Seeded")

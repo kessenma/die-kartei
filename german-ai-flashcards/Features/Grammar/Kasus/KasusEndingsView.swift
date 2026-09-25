@@ -343,10 +343,11 @@ struct KasusEndingsStepView: View {
     // MARK: Words
 
     /// The deciding word to underline for the focused gap: at Lernhilfe and Viel Hilfe, or once
-    /// the Tipp has shown it, until the gap is answered. Never on a bare time phrase.
+    /// the Tipp has shown it, until the gap is answered. Never on a bare time phrase or a
+    /// form-only phrase.
     private func triggerRange(_ round: KasusEndingsRound) -> (paragraph: Int, range: NSRange)? {
         guard let id = play.activeGap, let gap = round.gap(id), let range = gap.target.triggerRange,
-              !gap.isBareTimePhrase, !round.isChecked,
+              !gap.isBareTimePhrase, !gap.isFormOnly, !round.isChecked,
               round.mode == .amEnde || round.pick(for: id) == nil,
               gap.underlinesTrigger || (round.tipps[id] ?? .none) >= .trigger else { return nil }
         return (gap.target.paragraphIndex, range)
@@ -989,8 +990,9 @@ struct KasusEndingsStepView: View {
     private func tippReveals(_ gap: KasusEndingGap, reached: KasusTipp) -> some View {
         HStack(spacing: 8) {
             if reached >= .trigger {
-                // A bare time phrase has no deciding word; the verb next to it would mislead.
-                Text(gap.isBareTimePhrase ? "A time phrase: wann? wie oft?" : "Look at „\(gap.target.spec.trigger)“")
+                // A bare time phrase has no deciding word, and neither has a generated story's
+                // phrase that only its form proves: the verb next to it would mislead.
+                Text(gap.triggerClue)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }

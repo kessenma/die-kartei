@@ -314,7 +314,7 @@ struct ArticleGameSetupView: View {
         let count = questionCount
 
         Task {
-            // Auto-load on a model switch (mirrors AIGrammarCreateView.generate).
+            // Auto-load on a model switch (mirrors GenerationCoordinator.generateWithMLX).
             if !mlxService.isModelLoaded || mlxService.currentModel != model {
                 await mlxService.loadModel(model)
                 guard mlxService.isModelLoaded else {

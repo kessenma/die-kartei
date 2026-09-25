@@ -122,13 +122,15 @@ extension KasusRound {
     }
 
     /// „Der verlorene Schlüssel“, or Schnellrunde (· Dativ). The title is looked up from the id,
-    /// so a retitled story reads right on old rounds.
-    func displayTitle(showsUnit: Bool) -> String {
+    /// so a retitled story reads right on old rounds. A tutor-written story's comes from the store
+    /// when a context is given, while the story is kept; after it's deleted, the unit's name.
+    @MainActor func displayTitle(showsUnit: Bool, in context: ModelContext? = nil) -> String {
         if isQuickRound {
             guard showsUnit, let unit else { return "Schnellrunde" }
             return "Schnellrunde · \(unit.germanTitle)"
         }
         if let title = KasusStoryBank.bundled.story(id: storyID)?.title { return "„\(title)“" }
+        if let context, let title = KasusStoryStore.title(id: storyID, in: context) { return "„\(title)“" }
         return unit?.germanTitle ?? "Kasus"
     }
 
@@ -396,12 +398,15 @@ struct KasusRoundRow: View {
     /// Under a day header. Otherwise the day stands under the score, in place of the percent.
     var groupedByDay = false
 
+    /// For a tutor-written story's title.
+    @Environment(\.modelContext) private var modelContext
+
     var body: some View {
         let unit = round.unit
         HStack(spacing: 12) {
             HistoryIcon(symbol: unit?.symbol ?? "checklist", color: unit?.color ?? .secondary)
             VStack(alignment: .leading, spacing: 3) {
-                Text(round.displayTitle(showsUnit: showsUnit))
+                Text(round.displayTitle(showsUnit: showsUnit, in: modelContext))
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundStyle(.primary)
@@ -679,7 +684,7 @@ struct KasusHistoryDebugView: View {
     NavigationStack {
         KasusHistoryView()
     }
-    .modelContainer(for: [KasusRound.self, ArticleRound.self, PrepositionRound.self], inMemory: true)
+    .modelContainer(for: [KasusRound.self, ArticleRound.self, PrepositionRound.self, GeneratedKasusStory.self], inMemory: true)
 }
 
 /// A small in-memory history for the previews: two story steps, a Schnellrunde, and one round of
@@ -688,7 +693,7 @@ enum KasusHistoryPreview {
     static func container() -> ModelContainer {
         let container = try! ModelContainer(
             for: KasusRound.self, ArticleRound.self, PrepositionRound.self,
-            LearnerProfile.self, StudyDay.self,
+            LearnerProfile.self, StudyDay.self, GeneratedKasusStory.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         let context = container.mainContext

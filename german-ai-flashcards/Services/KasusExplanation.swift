@@ -76,6 +76,7 @@ nonisolated enum KasusExplanation {
 
     /// The Kasus-Check step that decides this target.
     static func ruleLine(for target: KasusLocatedTarget) -> String {
+        if target.spec.reason == .inferred { return inferredLine(for: target) }
         let phrase = "„\(target.surface)“"
         let trigger = "*\(target.spec.trigger)*"
         let kasus = caseName(target.kasus)
@@ -150,10 +151,52 @@ nonisolated enum KasusExplanation {
             return isLabel
                 ? "Here it's what \(trigger) acts on → \(kasus)."
                 : "\(phrase) is the **object**: what \(trigger) acts on → \(kasus)."
-        case .wechselWo, .wechselWohin, .preposition, .prepObject:
+        case .wechselWo, .wechselWohin, .preposition, .prepObject, .inferred:
             // A preposition reason with no preposition found; the validator has already flagged it.
             return "\(phrase) is \(kasus) here."
         }
+    }
+
+    /// A generated story's unplanned phrase (`KasusReason.inferred`): only the article's form and
+    /// the preposition in front prove its case, so that is all the line says. No verb, no role.
+    /// After a two-way preposition it names Wo?/Wohin? only when the validator found a position or
+    /// placement verb that agrees („in der Küche“ could be a place, or a time, or „freut sich
+    /// über“: the article shows the case, not the reason).
+    ///   „{m:den} + a masculine noun can only be {akk:Akkusativ}: the article's form shows the case.“
+    ///   „*mit* **always** takes the {dat:Dativ}: {m:dem} + a masculine noun.“
+    ///   „By its form, {f:die} could be {nom:Nominativ} or {akk:Akkusativ}; *für* **always** takes the {akk:Akkusativ}.“
+    ///   „*an* takes the {akk:Akkusativ} or the {dat:Dativ}; here {m:dem} + a masculine noun can only be {dat:Dativ}.“
+    static func inferredLine(for target: KasusLocatedTarget) -> String {
+        let kasus = caseName(target.kasus)
+        let article = form(target.caseForm, target.genus)
+        let noun = target.genus == .plural ? "a plural noun" : "a \(target.genus.genderName) noun"
+        guard let preposition = target.preposition else {
+            return "\(article) + \(noun) can only be \(kasus): the article's form shows the case."
+        }
+        let word = "*\(preposition.word)*"
+        let place = target.kasus == .dativ ? "{wechsel:Wo?} (a place)" : "{wechsel:Wohin?} (a direction)"
+        let verbHint = target.wechselVerb.map { verb in
+            target.kasus == .dativ ? "*\(verb)* says **where something is**." : "*\(verb)* says **where something goes**."
+        }
+        if target.candidates.count <= 1 {
+            if preposition.isTwoWay {
+                guard let verbHint else {
+                    return "\(word) takes the \(caseName(.akkusativ)) or the \(caseName(.dativ)); here \(article) + \(noun) can only be \(kasus)."
+                }
+                return "\(article) + \(noun) can only be \(kasus), so after \(word) it's \(place). \(verbHint)"
+            }
+            let always = preposition.cases.count == 1 ? "**always** takes" : "takes"
+            return "\(word) \(always) the \(kasus): \(article) + \(noun)."
+        }
+        let cases = GrammarCase.allCases.filter(target.candidates.contains).map(caseName)
+        let byForm = "By its form, \(article) could be \(list(cases))"
+        if preposition.isTwoWay {
+            let both = "\(byForm), and \(word) takes only \(caseName(.akkusativ)) or \(caseName(.dativ)): so \(kasus)"
+            guard let verbHint else { return both + "." }
+            return "\(both), \(place). \(verbHint)"
+        }
+        let always = preposition.cases.count == 1 ? "**always** takes" : "takes"
+        return "\(byForm); \(word) \(always) the \(kasus)."
     }
 
     /// „Masculine {dat:Dativ} in „{m:m}{f:r}{n:m}{pl:n}“ is {m:m}: {m:dem}.“ (the code letters in their

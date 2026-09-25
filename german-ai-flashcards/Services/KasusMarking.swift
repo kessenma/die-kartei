@@ -379,7 +379,9 @@ nonisolated struct KasusNumberedStory: Hashable {
                 for j in i...end where roles[j] == nil { roles[j] = .ungraded(.contraction, target: nil) }
                 continue
             }
-            if KasusForms.parseDeterminer(lower) != nil, !KasusForms.copulaForms.contains(lower) {
+            // „sein“ is the verb unless a noun follows it („sein Hund“).
+            if KasusForms.parseDeterminer(lower) != nil,
+               !KasusForms.copulaForms.contains(lower) || (lower == "sein" && nounAfter(i, tokens, in: text) != nil) {
                 // An article word that isn't a target: a phrase nobody checked, or a word standing
                 // alone („Das ist …“, a relative „die“, „ihr“ as a pronoun).
                 if let end = nounAfter(i, tokens, in: text) {

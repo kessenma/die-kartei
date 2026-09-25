@@ -480,7 +480,7 @@ the theme applies app-wide.
 
 Standard recipe; `GenderPalette` throughout the article game.
 - [x] `Grammar/GrammarHubView.swift` (List; `.themedListScreen/Row/SectionHeader`, `innerRadius` chips, `.tint` fills, 4-theme `#Preview`) · [x] `Grammar/GrammarCategoryDetailView.swift` · [x] `Grammar/GrammarMultipleChoiceView.swift` (non-Klar ground; `innerRadius` cards/buttons; gender badge → `pillShape`)
-- [x] `Grammar/GrammarLessonSheet.swift` (non-Klar ground) · [x] `Grammar/AIGrammarCreateView.swift` (Form `.themedListScreen/Row/SectionHeader`; topic chip → `pillShape` + `.tint`)
+- [x] `Grammar/GrammarLessonSheet.swift` (non-Klar ground) · [x] `Grammar/AIGrammarCreateView.swift` (Form `.themedListScreen/Row/SectionHeader`; topic chip → `pillShape` + `.tint`; since deleted)
 - [x] `Grammar/ArticleGame/ArticleGameSetupView.swift` (`.themedListScreen/Row`, `innerRadius` chip) · [x] `Grammar/ArticleGame/ArticleGameView.swift` (**gender colors already `GenderPalette` via `GermanArticle.color`**; themed ground + tint on progress/Weiter, hero noun via `.themedLabel`, 4-theme `#Preview`) · [x] `Grammar/ArticleGame/ArticleRulesSheet.swift` (`.themedListScreen/Row`)
 - [x] `Matching/MatchingDeckPickerView.swift` (List recipe + `innerRadius` chip) · [x] `Matching/MatchingGameView.swift` (non-Klar ground; **German tiles → `Text.gendered`**; `innerRadius` tiles; 4-theme `#Preview`) · [x] `Matching/TrickyPairsView.swift` (`Text.gendered` on the pair line)
 - [x] `PastTense/PastTenseLevelView.swift` (List recipe; sein/haben badges → `pillShape`, colors kept — auxiliary code, not gender) · [x] `PastTense/SeinHabenGuideView.swift` · [x] `A1/A1VocabView.swift` (**gender fix: `die`=.pink → `GenderPalette` red**; List recipe; badges → `pillShape`)

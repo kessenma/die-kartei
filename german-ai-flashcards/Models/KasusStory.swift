@@ -66,6 +66,11 @@ extension KasusStory {
     /// Nil for an unknown raw value; the validator reports that as story.unitCaseCount.
     var unit: KasusUnit? { KasusUnit(rawValue: unitRaw) }
     var cefr: CEFRLevel? { CEFRLevel(rawValue: level) }
+    /// A generated story has no comprehension question (its options are empty), so Lesen skips
+    /// the card and doesn't wait for an answer.
+    var hasQuestion: Bool { question.options.count >= 2 && question.options.indices.contains(question.answer) }
+    /// A generated story has no English yet: every paragraph's `en` is empty.
+    var hasEnglish: Bool { paragraphs.contains { !$0.en.isEmpty } }
 }
 
 nonisolated enum KasusStorySource: String, Codable, Hashable {
@@ -181,6 +186,11 @@ nonisolated enum KasusReason: String, Codable, CaseIterable, Hashable {
     case attribute        // gen: whose / of what
     case preposition      // whatever the preposition governs
     case prepObject       // fixed by the verb (warten auf + Akk); the labelled case is trusted
+    /// A generated story's phrase the app didn't plan: its case comes from the article's form
+    /// alone, or the form narrowed by a preposition directly in front („inferred“ targets,
+    /// `KasusHarvest`). The trigger is that preposition, or empty. Its explanation names only the
+    /// form and the preposition, never a verb or a role.
+    case inferred
 
     /// Reasons whose trigger is a preposition standing next to the phrase.
     var needsPreposition: Bool {
@@ -191,8 +201,9 @@ nonisolated enum KasusReason: String, Codable, CaseIterable, Hashable {
     }
 
     /// The cases this reason allows, given the preposition that governs the phrase (if any).
-    /// Nil means the reason doesn't decide: `prepObject` trusts the label, and `preposition`
-    /// without a preposition is a trigger problem, not a case one.
+    /// Nil means the reason doesn't decide: `prepObject` trusts the label, `inferred` is whatever
+    /// the form proves, and `preposition` without a preposition is a trigger problem, not a case
+    /// one.
     func expectedCases(after preposition: KasusPrepositionContext?) -> Set<GrammarCase>? {
         switch self {
         case .subject, .predicate:                           return [.nominativ]
@@ -200,7 +211,7 @@ nonisolated enum KasusReason: String, Codable, CaseIterable, Hashable {
         case .recipient, .dativeVerb, .wechselWo, .dativeOther: return [.dativ]
         case .attribute:                                     return [.genitiv]
         case .preposition:                                   return preposition?.cases
-        case .prepObject:                                    return nil
+        case .prepObject, .inferred:                         return nil
         case .time:
             guard let preposition else { return [.akkusativ] }
             if ["an", "in", "vor", "zwischen"].contains(preposition.word) { return [.dativ] }

@@ -32,6 +32,14 @@ protocol KasusLexicon {
     func prepositionCases(_ word: String) -> Set<GrammarCase>?
     /// Whether it is a two-way (Wo/Wohin) preposition.
     func isTwoWay(_ word: String) -> Bool
+    /// The parts of speech a dictionary files the word under, looked up lowercased („noun“,
+    /// „verb“, „adj“, „adv“); empty when it doesn't know the word. Nil when the lexicon has no
+    /// dictionary, and then the generated-story sentence checks that need one are skipped.
+    func partsOfSpeech(_ word: String) -> Set<String>?
+}
+
+extension KasusLexicon {
+    func partsOfSpeech(_ word: String) -> Set<String>? { nil }
 }
 
 nonisolated enum KasusLexiconVerdict: Hashable {
@@ -62,10 +70,30 @@ nonisolated enum KasusIssueCode: String, CaseIterable, Hashable {
     case untargetedDeterminer = "coverage.untargetedDeterminer"
     case unitCaseCount = "story.unitCaseCount"
     case wordCount = "story.wordCount"
+    /// Generated only: an unplanned two-way phrase whose clause verb wants the other case, in a
+    /// clause with another two-way phrase („legt das Buch auf den Tisch neben der Tür“): it most
+    /// likely describes a noun, so it stays plain text instead of rejecting the story.
+    case wechselUnconfirmed = "trigger.wechselUnconfirmed"
+    /// Generated only: a pronoun and a verb form that can't go together („ich ist“, „er lachen“).
+    case verbAgreement = "sentence.verbAgreement"
+    /// Generated only: a word no dictionary knows („einen Schicklebesele“).
+    case unknownWord = "sentence.unknownWord"
+    /// Generated only: an ein-article in front of a lowercase noun („auf einen stand“).
+    case lowercaseNoun = "sentence.lowercaseNoun"
+    /// Generated only: an Akkusativ with no preposition where sein/werden/bleiben/heißen is the
+    /// verb („waren ihren Gast“).
+    case copulaAkkusativ = "sentence.copulaAkkusativ"
+    /// Generated only: a masculine object in the Nominativ form („Ich habe ein Hund“, „Es gibt
+    /// ein Hund“).
+    case objectNominativ = "sentence.objectNominativ"
+    /// Generated only: the same sentence three times or more, a tutor caught in a loop.
+    case repeatedSentence = "sentence.repeated"
 
     /// The German itself is wrong, not just the annotation.
     var isMorphology: Bool { rawValue.hasPrefix("morph.") }
     var isStoryLevel: Bool { rawValue.hasPrefix("story.") }
+    /// A generated story's sentence is broken around (or apart from) its targets.
+    var isSentence: Bool { rawValue.hasPrefix("sentence.") }
 }
 
 nonisolated struct KasusIssue: Hashable {
@@ -156,25 +184,33 @@ enum KasusValidator {
         /// Alle Fälle has no single case, so it needs this many of each of the four instead.
         static let minPerCaseAllCases = 2
 
-        /// Coverage can only be promised for a story a human annotated in full, and word count is
-        /// a guide for an author but a hard limit for the tutor. The gender sources disagreeing,
-        /// or knowing nothing, is never the story's fault.
+        /// Coverage can only be promised for a story a human annotated in full. Word count is a
+        /// guide for an author and for the tutor alike: a tutor's story is rejected for its length
+        /// only when it is under half the level's range (`farShort`), the rule the Stories feature
+        /// retries on. The gender sources disagreeing, or knowing nothing, is never the story's
+        /// fault.
         static func severity(of code: KasusIssueCode, source: KasusStorySource) -> KasusIssue.Severity {
             switch code {
             case .lexConflict, .lexUnverified:  return .warning
-            case .wordCount:                    return source == .authored ? .warning : .error
+            case .wordCount:                    return .warning
             case .untargetedDeterminer:         return source == .authored ? .error : .warning
             default:                            return .error
             }
         }
 
+        /// A generated story this short is rejected, not just warned about.
+        static func farShort(_ wordCount: Int, range: ClosedRange<Int>) -> Bool {
+            wordCount < range.lowerBound / 2
+        }
+
         /// Generated stories: these errors mean the German itself is wrong, so the whole story goes
-        /// rather than a single target. A wrong gender on a verified noun almost always means a
-        /// wrong article in the text („das Tasche“), so it is here too. Other target errors only
-        /// make that target plain text.
+        /// rather than a single target: a wrong form, a preposition or Wo/Wohin verb that wants
+        /// the other case, a broken sentence, too few gradable answers or far too short. Other
+        /// target errors (lex.gender among them: a harvested target's gender comes from the
+        /// lexicon, so it would only mean a mislabelled target) make that target plain text.
         static func rejectsGeneratedStory(_ code: KasusIssueCode) -> Bool {
-            code.isMorphology || code.isStoryLevel
-                || code == .triggerPrepositionCase || code == .triggerWechselVerb || code == .lexGender
+            code.isMorphology || code.isStoryLevel || code.isSentence
+                || code == .triggerPrepositionCase || code == .triggerWechselVerb
         }
     }
 
@@ -200,7 +236,7 @@ enum KasusValidator {
             cursor = (hit.paragraph, hit.range.upperBound)
             let (located, issues) = analyze(spec, index: index, paragraph: paragraphs[hit.paragraph],
                                             paragraphIndex: hit.paragraph, range: hit.range,
-                                            lexicon: lexicon, issue: issue)
+                                            source: source, lexicon: lexicon, issue: issue)
             results.append(.init(index: index, spec: spec, located: located, issues: issues))
         }
 
@@ -247,12 +283,17 @@ enum KasusValidator {
             guard var located = result.located else { return result }
             let hasError = result.issues.contains { $0.severity == .error }
             var gradable = !hasError
+            var blankable = true
             if source == .generated {
                 if located.proof == .label { gradable = false }
                 if case .verified = located.genderVerdict {} else { gradable = false }
+                // An unplanned two-way phrase with no position or placement verb to confirm it:
+                // only the tutor chose Wo or Wohin, so it's marked by its form but never blanked.
+                if located.spec.reason == .inferred, located.preposition?.isTwoWay == true,
+                   located.wechselVerb == nil { blankable = false }
             }
             located.gradable = gradable
-            located.blankable = gradable && located.kind == .article && located.parsed != nil
+            located.blankable = blankable && gradable && located.kind == .article && located.parsed != nil
             return .init(index: result.index, spec: result.spec, located: located, issues: result.issues)
         }
         let located = results.compactMap(\.located)
@@ -279,14 +320,27 @@ enum KasusValidator {
             storyIssue(.unitCaseCount, "unknown unit „\(story.unitRaw)“")
         }
 
-        // Length for the level.
+        // Length for the level. A generated story under half the range is rejected.
         let wordCount = paragraphs.reduce(0) { $0 + $1.tokens.count }
         if let range = story.cefr?.storyWordRange {
             if !range.contains(wordCount) {
-                storyIssue(.wordCount, "\(wordCount) words; \(story.level) stories run \(range.lowerBound)–\(range.upperBound)")
+                let message = "\(wordCount) words; \(story.level) stories run \(range.lowerBound)–\(range.upperBound)"
+                if source == .generated, Policy.farShort(wordCount, range: range) {
+                    storyIssues.append(KasusIssue(severity: .error, code: .wordCount,
+                                                  message: message + " (under half: rejected)", target: nil))
+                } else {
+                    storyIssue(.wordCount, message)
+                }
             }
         } else {
             storyIssue(.wordCount, "unknown level „\(story.level)“")
+        }
+
+        // A tutor's sentences: the cheap checks for German that is broken apart from the forms.
+        if source == .generated {
+            for problem in KasusSentenceCheck.problems(in: paragraphs, lexicon: lexicon) {
+                storyIssue(problem.code, problem.message)
+            }
         }
 
         let allErrors = (storyIssues + results.flatMap(\.issues)).filter { $0.severity == .error }
@@ -308,7 +362,7 @@ enum KasusValidator {
     /// A bare ein-word takes -er/-es adjectives, every other article -e/-en, so a relative „der“
     /// or a pronoun „ihr“ in front of a verb or adverb doesn't read as an article. Nil when no
     /// noun follows.
-    private static func nounAfterDeterminer(at index: Int, in paragraph: KasusScannedParagraph) -> Int? {
+    static func nounAfterDeterminer(at index: Int, in paragraph: KasusScannedParagraph) -> Int? {
         let tokens = paragraph.tokens
         let bare = KasusForms.parseDeterminer(tokens[index].text).map { $0.family != .definite && $0.ending.isEmpty } ?? false
         let adjectiveEndings = bare ? ["er", "es"] : ["e", "en"]
@@ -350,6 +404,7 @@ enum KasusValidator {
         paragraph: KasusScannedParagraph,
         paragraphIndex: Int,
         range: Range<String.Index>,
+        source: KasusStorySource,
         lexicon: some KasusLexicon,
         issue: (KasusIssueCode, String) -> KasusIssue
     ) -> (KasusLocatedTarget, [KasusIssue]) {
@@ -580,11 +635,13 @@ enum KasusValidator {
             issues.append(issue(.genitiveS, "masculine and neuter Genitiv nouns take -(e)s: „\(noun)“"))
         }
 
-        // Trigger present where it should be.
+        // Trigger present where it should be. An inferred target (a generated story's unplanned
+        // phrase) has no verb to find: its trigger is the preposition in front, or nothing.
         var triggerRange: NSRange?
         if trigger.isEmpty {
-            issues.append(issue(.triggerMissing, "no trigger"))
-        } else if spec.reason.needsPreposition || (spec.reason == .time && triggerIsPreposition) {
+            if spec.reason != .inferred { issues.append(issue(.triggerMissing, "no trigger")) }
+        } else if spec.reason.needsPreposition
+                    || ((spec.reason == .time || spec.reason == .inferred) && triggerIsPreposition) {
             if let governing, governing.word == triggerLower || triggerIsContraction {
                 triggerRange = governing.range
             } else {
@@ -613,30 +670,79 @@ enum KasusValidator {
         }
 
         // liegen/stehen/sitzen answer Wo? (Dativ); legen/stellen/setzen answer Wohin? (Akkusativ).
+        // An inferred target looks only at its own part of a coordinated clause: in „Er steht da
+        // und wartet auf den Bus“ the position verb belongs to the other half. And when that part
+        // holds another two-way phrase, a mismatch most likely describes a noun („legt das Buch
+        // auf den Tisch neben der Tür“), so the target goes plain instead of rejecting the story;
+        // alone in its clause („sitzt auf den Stuhl“) it still rejects.
         var wechselVerb: String?
         if let effective, effective.isTwoWay, effective.position == .before,
            spec.reason != .prepObject, spec.reason != .time {
-            let clauseWords = tokens.filter { clause.contains($0.range.lowerBound) && !range.contains($0.range.lowerBound) }
+            let scope = spec.reason == .inferred ? paragraph.coordinatedPart(of: range, in: clause) : clause
+            let clauseWords = tokens.filter { scope.contains($0.range.lowerBound) && !range.contains($0.range.lowerBound) }
             let found = clauseWords.compactMap { token -> (String, KasusForms.WechselVerbKind)? in
                 KasusForms.wechselVerbForms[token.text.lowercased()].map { (token.text, $0.kind) }
             }
             let positions = found.filter { $0.1 == .position }
             let placements = found.filter { $0.1 == .placement }
+            let ownPreposition = effective.range
+            let sharesClause = spec.reason == .inferred && tokens.enumerated().contains { i, token in
+                guard scope.contains(token.range.lowerBound), NSRange(token.range, in: text) != ownPreposition,
+                      !range.contains(token.range.lowerBound) else { return false }
+                let lower = token.text.lowercased()
+                if let contracted = KasusForms.contraction(lower) { return lexicon.isTwoWay(contracted.preposition) }
+                guard lexicon.isTwoWay(lower), i + 1 < tokens.count,
+                      paragraph.isWhitespaceGap(token, tokens[i + 1]) else { return false }
+                return KasusForms.parseDeterminer(tokens[i + 1].text) != nil
+            }
+            func mismatch(_ verb: String, _ message: String) {
+                if sharesClause {
+                    issues.append(issue(.wechselUnconfirmed, message + "; another two-way phrase shares the clause, so it may describe a noun"))
+                } else {
+                    wechselVerb = verb
+                    issues.append(issue(.triggerWechselVerb, message))
+                }
+            }
             if let verb = positions.first, placements.isEmpty {
-                wechselVerb = verb.0
                 if spec.kasus == .akkusativ {
-                    issues.append(issue(.triggerWechselVerb, "„\(verb.0)“ says where something is (Wo?), so „\(effective.word)“ needs the Dativ"))
+                    mismatch(verb.0, "„\(verb.0)“ says where something is (Wo?), so „\(effective.word)“ needs the Dativ")
+                } else {
+                    wechselVerb = verb.0
                 }
             } else if let verb = placements.first, positions.isEmpty {
-                wechselVerb = verb.0
                 if spec.kasus == .dativ {
-                    issues.append(issue(.triggerWechselVerb, "„\(verb.0)“ moves something somewhere (Wohin?), so „\(effective.word)“ needs the Akkusativ"))
+                    mismatch(verb.0, "„\(verb.0)“ moves something somewhere (Wohin?), so „\(effective.word)“ needs the Akkusativ")
+                } else {
+                    wechselVerb = verb.0
                 }
             } else if found.isEmpty, spec.kasus == .dativ,
                       let motion = clauseWords.first(where: { KasusForms.motionVerbForms.contains($0.text.lowercased()) }) {
                 issues.append(KasusIssue(severity: .warning, code: .triggerWechselVerb,
                                          message: "„\(motion.text)“ is a motion verb with a Dativ after „\(effective.word)“: check Wo? against Wohin?",
                                          target: index))
+            }
+        }
+
+        // A tutor's sentence around the target: roles the form alone can't catch.
+        if source == .generated, kind == .article, effective == nil {
+            let scope = paragraph.coordinatedPart(of: range, in: clause)
+            // „ihre Nachbarn waren ihren Gast“: sein/werden/bleiben/heißen take no Akkusativ
+            // object. A time or measure noun („einen Moment still“) and „wert“ are exempt.
+            if spec.reason == .inferred, spec.kasus == .akkusativ,
+               let copula = mainCopula(in: scope, of: paragraph),
+               !KasusForms.timeNouns.contains(lemma),
+               !tokens.contains(where: { scope.contains($0.range.lowerBound) && $0.text.lowercased() == "wert" }) {
+                issues.append(issue(.copulaAkkusativ, "„\(copula)“ is the verb, so „\(spec.phrase)“ can't be an Akkusativ object"))
+            }
+            // „Der Bruder lachen laut.“: a singular subject with an -en form nothing explains.
+            if spec.kasus == .nominativ, spec.genus != .plural, firstIndex != nil,
+               let verb = KasusSentenceCheck.unlicensedInfinitive(after: last, in: paragraph, lexicon: lexicon) {
+                issues.append(issue(.verbAgreement, "„\(spec.phrase) \(verb)“: a singular subject with an -en form and no modal or helper verb"))
+            }
+            // „Ich habe ein Hund“, „Es gibt ein Hund“: a masculine object in the Nominativ form.
+            if spec.kasus == .nominativ, spec.genus == .der, let firstIndex,
+               let verb = objectVerbBefore(firstIndex, in: paragraph) {
+                issues.append(issue(.objectNominativ, "„\(spec.phrase)“ is the object of „\(verb)“, so it needs the Akkusativ"))
             }
         }
 
@@ -675,10 +781,33 @@ enum KasusValidator {
         return (located, issues)
     }
 
+    /// „gibt es“, „es gab“, or a Nominativ pronoun and a form of haben/brauchen/kaufen in either
+    /// order („ich habe“, „habe ich“) right in front of the token at `index`: the verb, as written.
+    /// Only ich, du, er and wir, which are never objects themselves.
+    static func objectVerbBefore(_ index: Int, in paragraph: KasusScannedParagraph) -> String? {
+        let tokens = paragraph.tokens
+        guard index >= 2, paragraph.isWhitespaceGap(tokens[index - 1], tokens[index]),
+              paragraph.isWhitespaceGap(tokens[index - 2], tokens[index - 1]) else { return nil }
+        let a = tokens[index - 2].text.lowercased(), b = tokens[index - 1].text.lowercased()
+        let esGibt: Set<String> = ["gibt", "gab"]
+        if (a == "es" && esGibt.contains(b)) || (esGibt.contains(a) && b == "es") {
+            return esGibt.contains(a) ? tokens[index - 2].text : tokens[index - 1].text
+        }
+        let pronouns: Set<String> = ["ich", "du", "er", "wir"]
+        let verbs: Set<String> = [
+            "habe", "hast", "hat", "haben", "hatte", "hattest", "hatten",
+            "brauche", "brauchst", "braucht", "brauchen", "brauchte", "brauchten",
+            "kaufe", "kaufst", "kauft", "kaufen", "kaufte", "kauften",
+        ]
+        if pronouns.contains(a), verbs.contains(b) { return tokens[index - 1].text }
+        if verbs.contains(a), pronouns.contains(b) { return tokens[index - 2].text }
+        return nil
+    }
+
     /// The copula form in `clause` when sein/werden/bleiben/heißen is its main verb: no Partizip II
     /// or infinitive of another verb closes the clause („ist … gegangen“, „wird … füttern“), and it
     /// isn't „willkommen heißen“.
-    private static func mainCopula(in clause: Range<String.Index>, of paragraph: KasusScannedParagraph) -> String? {
+    static func mainCopula(in clause: Range<String.Index>, of paragraph: KasusScannedParagraph) -> String? {
         let words = paragraph.tokens.filter { clause.contains($0.range.lowerBound) }
         guard !words.contains(where: { $0.text.lowercased() == "willkommen" }) else { return nil }
         let copula = words.enumerated().first { offset, token in
@@ -730,6 +859,16 @@ nonisolated struct KasusScannedParagraph {
             upper = text.index(after: upper)
         }
         return lower..<upper
+    }
+
+    /// The stretch of `clause` between the coordinators (und, oder, aber, sondern, denn) around
+    /// `range`: „wartet auf den Bus“ in „Er steht da und wartet auf den Bus“.
+    func coordinatedPart(of range: Range<String.Index>, in clause: Range<String.Index>) -> Range<String.Index> {
+        let coordinators: Set<String> = ["und", "oder", "aber", "sondern", "denn"]
+        let inClause = tokens.filter { clause.contains($0.range.lowerBound) }
+        let before = inClause.last { $0.range.upperBound <= range.lowerBound && coordinators.contains($0.text.lowercased()) }
+        let after = inClause.first { $0.range.lowerBound >= range.upperBound && coordinators.contains($0.text.lowercased()) }
+        return (before?.range.upperBound ?? clause.lowerBound)..<(after?.range.lowerBound ?? clause.upperBound)
     }
 
     /// Only whitespace between two tokens: no punctuation, no quote.

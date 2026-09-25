@@ -2,15 +2,21 @@ import SwiftUI
 import SwiftData
 
 /// Settings ▸ Developer. Exists only in DEBUG and TestFlight builds (`ScreenshotSeeding.isAvailable`
-/// gates both this screen and the row that pushes it), and holds exactly one tool: the App Store
-/// screenshot seeder.
+/// gates both this screen and the row that pushes it). Holds the App Store screenshot seeder, the
+/// Wortschatz tools, and the Kasus switch for tutor-written stories (with the Kasus Lab in DEBUG).
 ///
 /// The problem it solves: a fresh iPad has no `StudyDay` history, so the streak calendar, the
 /// Lernpyramide and „Dein Weg" all correctly render as empty — there is nothing to photograph.
 /// Filling replaces this device's progress with ten months of plausible study; the real data is
 /// backed up first and Restore puts it back.
 struct DeveloperSettingsView: View {
+    /// For the Kasus Lab, which runs the tutors. Nil hides its row.
+    var modelManager: MLXModelManager? = nil
+    var mlxService: MLXGenerationService? = nil
+
     @Environment(\.modelContext) private var modelContext
+    /// „KI-Geschichten im Kasus-Pfad“: on by default in DEBUG, off in Release.
+    @AppStorage(KasusStoryGenerator.enabledKey) private var kasusAIStories = KasusStoryGenerator.defaultEnabled
 
     @State private var confirmingFill = false
     @State private var confirmingRestore = false
@@ -79,6 +85,27 @@ struct DeveloperSettingsView: View {
                 Text("Wortschatz").themedSectionHeader()
             } footer: {
                 Text("Seed spreads the Goethe box over new, due, known and lapsed words (reversible). The old decks plus a re-run exercise the one-time merge.")
+                    .font(.caption2)
+            }
+            .themedListRow()
+
+            Section {
+                Toggle(isOn: $kasusAIStories) {
+                    Label("KI-Geschichten im Kasus-Pfad", systemImage: "wand.and.sparkles")
+                }
+                #if DEBUG
+                if let modelManager, let mlxService {
+                    NavigationLink {
+                        KasusLabView(modelManager: modelManager, mlxService: mlxService)
+                    } label: {
+                        Label("Kasus Lab", systemImage: "testtube.2")
+                    }
+                }
+                #endif
+            } header: {
+                Text("Kasus · Grammatik").themedSectionHeader()
+            } footer: {
+                Text("Adds „Neue Geschichte · New story (KI)“ to every case unit: a German tutor writes a story around phrases the app picked, and the validator checks it before it's shown. The Lab runs the tutors many times and exports what they wrote.")
                     .font(.caption2)
             }
             .themedListRow()

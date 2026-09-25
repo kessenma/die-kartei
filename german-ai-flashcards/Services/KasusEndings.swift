@@ -116,9 +116,18 @@ struct KasusEndingGap: Identifiable, Hashable {
     var genderTag: String { "(\(genus.columnLabel))" }
     /// Lernhilfe and Viel Hilfe: the trigger is underlined (`target.triggerRange`), except on a
     /// bare time phrase, where the verb next to it isn't what decides.
-    var underlinesTrigger: Bool { hintLevel.showsCaseTable && !isBareTimePhrase }
+    var underlinesTrigger: Bool { hintLevel.showsCaseTable && !isBareTimePhrase && !isFormOnly }
     /// A time phrase with no preposition („jeden Tag“).
     var isBareTimePhrase: Bool { target.spec.reason == .time && target.preposition == nil }
+    /// A generated story's unplanned phrase with no preposition in front: only the article's form
+    /// shows the case, so there is no word to underline or point the Tipp at.
+    var isFormOnly: Bool { target.spec.reason == .inferred && target.preposition == nil }
+    /// The Tipp's first clue: the deciding word, or what to look at when there is none.
+    var triggerClue: String {
+        if isBareTimePhrase { return "A time phrase: wann? wie oft?" }
+        if isFormOnly { return "Find the verb. Ask wer?, wen?, wem? or wessen?" }
+        return "Look at „\(target.spec.trigger)“"
+    }
     /// Ohne Hilfe, on a noun that reads the same in the plural (Schlüssel): a sg/pl tag.
     var showsNumberTag: Bool { hintLevel == .ohne && target.numberAmbiguous }
     var numberTag: String { genus == .plural ? "pl" : "sg" }

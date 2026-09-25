@@ -6,7 +6,8 @@
 //  presented full screen through `ActivityRouter` as `.kasusStory`. The two class worksheets on
 //  one text:
 //
-//    Lesen      the paragraphs, an English toggle for each, one comprehension question (unscored)
+//    Lesen      the paragraphs, an English toggle for each, one comprehension question (unscored);
+//               a tutor-written story has neither yet, so Lesen shows only its text
 //    Markieren  mark every word in one case, the numbered sentences as chips (`KasusMarkView`)
 //    Endungen   fill in the article endings on their stems, with four help levels
 //               (`KasusEndingsView`)
@@ -80,6 +81,8 @@ struct KasusStoryView: View {
     /// The question's options in the order shown, shuffled once so the answer isn't always first.
     @State private var questionOrder: [Int] = []
     @State private var questionPick: Int?
+    /// A story without a question (a tutor-written one) counts Lesen as read once it's left.
+    @State private var leftLesen = false
 
     @State private var markPlay = KasusMarkPlay()
     @State private var endingsPlay = KasusEndingsPlay()
@@ -171,7 +174,7 @@ struct KasusStoryView: View {
 
     private func isPlayed(_ item: KasusStep) -> Bool {
         switch item {
-        case .lesen:     questionPick != nil
+        case .lesen:     playable?.story.hasQuestion == false ? leftLesen : questionPick != nil
         case .finden:    markPlay.isPlayed
         case .einsetzen: endingsPlay.isPlayed
         case .ergebnis:  false
@@ -184,6 +187,7 @@ struct KasusStoryView: View {
         guard let playable else { return }
         markPlay.clock.pause()
         endingsPlay.clock.pause()
+        if target != .lesen { leftLesen = true }
         switch target {
         case .lesen:
             step = .lesen
@@ -275,6 +279,7 @@ struct KasusStoryView: View {
         if screen == .fillChecked { endingsPlay.modeOverride = .amEnde }
         #endif
         step = screen?.step ?? session.startStep
+        if step != .lesen { leftLesen = true }
         if step == .finden { markPlay.start(in: playable, unit: unit, mode: markMode) }
         if step == .einsetzen || step == .ergebnis {
             endingsPlay.start(in: playable, unit: unit, germanLevel: germanLevel)
@@ -333,24 +338,29 @@ struct KasusStoryView: View {
                 ForEach(Array(story.paragraphs.enumerated()), id: \.offset) { index, paragraph in
                     VStack(alignment: .leading, spacing: 8) {
                         KasusText(segments: [KasusTextSegment(text: paragraph.de, kind: .plain)])
-                        if showEnglish.contains(index) {
-                            Text(paragraph.en)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        Button(showEnglish.contains(index) ? "Hide English" : "Show English") {
+                        // A tutor-written story has no English yet: no toggle to an empty line.
+                        if !paragraph.en.isEmpty {
                             if showEnglish.contains(index) {
-                                showEnglish.remove(index)
-                            } else {
-                                showEnglish.insert(index)
+                                Text(paragraph.en)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
+                            Button(showEnglish.contains(index) ? "Hide English" : "Show English") {
+                                if showEnglish.contains(index) {
+                                    showEnglish.remove(index)
+                                } else {
+                                    showEnglish.insert(index)
+                                }
+                            }
+                            .font(.caption.weight(.medium))
+                            .buttonStyle(.borderless)
                         }
-                        .font(.caption.weight(.medium))
-                        .buttonStyle(.borderless)
                     }
                 }
-                questionCard(story.question)
+                if story.hasQuestion {
+                    questionCard(story.question)
+                }
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)

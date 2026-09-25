@@ -1038,7 +1038,8 @@ struct DayDetailSheet: View {
             // "Kasus · Der verlorene Schlüssel · Markieren · Dativ", "Kasus · Schnellrunde · Dativ".
             let title = step == .quick
                 ? ["Kasus", step.germanLabel, r.unit?.germanTitle]
-                : ["Kasus", KasusStoryBank.bundled.story(id: r.storyID)?.title, r.stepLabel]
+                : ["Kasus", KasusStoryBank.bundled.story(id: r.storyID)?.title
+                            ?? KasusStoryStore.title(id: r.storyID, in: context), r.stepLabel]
             out.append(DayExercise(
                 time: r.date,
                 icon: r.unit?.symbol ?? "checklist",

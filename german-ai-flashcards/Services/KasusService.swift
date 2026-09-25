@@ -153,8 +153,28 @@ struct KasusSession: Identifiable {
     /// Set only by the DEBUG launch arguments, so a simulator that can't tap can still show a
     /// filled-in screen. Nil in every real session.
     var prefill: KasusPrefill? = nil
+    /// A tutor-written story travels with its session (`GeneratedKasusStory.story`); a bundled one
+    /// is looked up by id.
+    var generated: KasusStory? = nil
 
-    var story: KasusStory? { KasusStoryBank.bundled.story(id: storyID) }
+    var story: KasusStory? { generated ?? KasusStoryBank.bundled.story(id: storyID) }
+
+    /// A session for a tutor-written story: its rounds file under the story's id.
+    init(generated story: KasusStory, unit: KasusUnit, startStep: KasusStep = .lesen) {
+        storyID = story.id
+        self.unit = unit
+        self.startStep = startStep
+        generated = story
+    }
+
+    init(storyID: String, unit: KasusUnit, mixed: Bool = false, startStep: KasusStep = .lesen,
+         prefill: KasusPrefill? = nil) {
+        self.storyID = storyID
+        self.unit = unit
+        self.mixed = mixed
+        self.startStep = startStep
+        self.prefill = prefill
+    }
 }
 
 /// Answers and a hint level to start a screen with, for screenshots. DEBUG launch arguments only.

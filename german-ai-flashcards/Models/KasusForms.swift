@@ -458,6 +458,15 @@ nonisolated enum KasusForms {
         "heiße", "heißt", "heißen", "hieß", "hießt", "hießen", "geheißen",
     ]
 
+    /// Nouns of time and measure, which take a bare Akkusativ even next to sein („Er war einen
+    /// Moment still“, „Das Haus ist einen Kilometer weit“). The copula check on a tutor's story
+    /// leaves them alone.
+    static let timeNouns: Set<String> = [
+        "Moment", "Augenblick", "Sekunde", "Minute", "Stunde", "Tag", "Woche", "Monat", "Jahr",
+        "Morgen", "Vormittag", "Mittag", "Nachmittag", "Abend", "Weile", "Meter", "Kilometer",
+        "Zentimeter", "Kilo", "Liter", "Euro", "Schritt",
+    ]
+
     // MARK: - Prepositions
 
     /// Prepositions that double as conjunctions or zu-infinitive openers („um dem Hund zu helfen“,

@@ -4,7 +4,7 @@ One path through the four cases, Nominativ → Akkusativ → Dativ → Genitiv �
 unit runs the same loop: **Regel → Geschichte (Lesen → Markieren → Endungen → Ergebnis) →
 Schnellrunde**. The stories are the two worksheets from a German class on one text: mark every word
 in a case, then fill in the article endings. A deterministic validator is the answer key; it gates
-the bundled stories now and will gate the tutor's stories later (Phase 3).
+the bundled stories and the tutor-written ones (Phase 3, behind a developer toggle).
 
 Status legend: ✅ done · ⬜ open
 
@@ -38,6 +38,10 @@ Status legend: ✅ done · ⬜ open
 | Verlauf (every round by day) and a round's answers | `Features/Grammar/Kasus/KasusHistoryView.swift`, `KasusRoundDetailView.swift` |
 | Sample rounds for the simulator (DEBUG) | `Services/KasusDebugSeeder.swift` |
 | Where a grammar focus goes from Today, Coach's Notes, the pyramid and a class entry | `Services/GrammarRoute.swift` |
+| Tutor-written stories: plan model, planner, verb frames and noun pools | `Models/KasusStoryPlan.swift`, `Services/KasusStoryPlanner.swift`, `Resources/kasus_triggers.json` |
+| Tutor-written stories: prompt, generator, check, harvest, sentence checks, store | `Services/KasusStoryGenerator.swift`, `KasusStoryCheck.swift`, `KasusHarvest.swift`, `KasusSentenceCheck.swift`, `KasusStoryStore.swift`, `Models/GeneratedKasusStory.swift` |
+| Kasus Lab numbers and canned fixtures (DEBUG) | `Services/KasusLab.swift`, `Services/KasusGenerationFixtures.swift` |
+| Unit row, generation sheet, Lab screen | `Features/Grammar/Kasus/KasusAIStorySection.swift`, `KasusGenerationSheet.swift`, `KasusLabView.swift` |
 | Swift Testing target (engine, validator, explanations, service, recording) | `german-ai-flashcardsTests/` |
 
 ## The path
@@ -179,23 +183,30 @@ Studenten; -ns only for Name-type nouns), `morph.genitiveS` (-s/-es, -es/-ses af
 `lex.gender`, `lex.conflict`, `lex.unverified`, `trigger.missing`, `trigger.prepositionCase`,
 `trigger.wechselVerb`, `reason.caseMismatch`, `coverage.untargetedDeterminer` (every determiner
 or contraction that opens a noun phrase, adjectives included, starts a target or a notTarget),
-`story.unitCaseCount`, `story.wordCount`.
+`story.unitCaseCount`, `story.wordCount`. Generated stories only: `trigger.wechselUnconfirmed`,
+`sentence.verbAgreement`, `sentence.unknownWord`, `sentence.lowercaseNoun`,
+`sentence.copulaAkkusativ`, `sentence.objectNominativ`, `sentence.repeated` (see
+[Tutor-written stories](#tutor-written-stories-phase-3)).
 
 **Severity.** Every code is an error except these (`KasusValidator.Policy.severity`):
 
 | Code | Authored | Generated |
 |---|---|---|
 | `lex.conflict`, `lex.unverified` | warning | warning |
-| `story.wordCount` | warning | error |
+| `story.wordCount` | warning | warning; error under half the level's range |
 | `coverage.untargetedDeterminer` | error | warning |
 | `trigger.wechselVerb` on a motion verb that isn't liegen/stehen/sitzen/hängen or legen/stellen/setzen | warning | warning |
 
 **Policy:** an authored story needs zero errors (`label` is fine: a human checked the role). A
 generated story is rejected whole by any `morph.*`, `trigger.prepositionCase`,
-`trigger.wechselVerb`, `lex.gender` or `story.*` error, because each means the German itself is
-wrong; any other error, a `label` proof or an unverified gender only turns that target into plain
-text (not marked, not blanked, not scored). The counts live in `KasusValidator.Policy`: 3 targets
-of the unit's case, 2 of each case for Alle Fälle.
+`trigger.wechselVerb`, `sentence.*` or `story.*` error (too few gradable answers of the unit's
+case, or under half the level's length), because each means the German itself is wrong or there
+is too little to play; any other error (`lex.gender` included: a harvested target's gender comes
+from the lexicon, so it could only mean a mislabelled target), a `label` proof or an unverified
+gender only turns that target into plain text (not marked, not blanked, not scored). The counts
+live in `KasusValidator.Policy`: 3 targets of the unit's case, 2 of each case for Alle Fälle. A
+length outside the range is a warning for both sources; the half rule is the one the Stories
+feature retries on.
 
 An issue line reads `error   trigger.prepositionCase  #11 „mit“ takes the Dativ, but …`:
 severity, code, the target's number in reading order (from 1), message. The debug report prints
@@ -203,6 +214,258 @@ them under the story's summary line, which then reads `FAIL`.
 
 **Lexicon order** (`AppKasusLexicon`): plural-only list → dual-gender whitelist → Wiktionary when
 unanimous → the Goethe rows compared per level → a reliable suffix → unverified.
+
+## Tutor-written stories (Phase 3)
+
+The app is always the answer key: it plans the phrases, the tutor writes prose around them, and
+the validator proves every graded answer before a story is shown. A case only the tutor labelled
+is never graded. One run is **Planen → Schreiben → Prüfen**, one retry with a new seed, then either
+a saved story or a bundled one with an honest note. Off in Release: Settings ▸ Developer ▸
+„KI-Geschichten im Kasus-Pfad“ (`kasus.aiStories`, on by default in DEBUG).
+
+### Planner
+
+`KasusStoryPlanner` is pure and seeded (SplitMix64), so a seed always gives the same plan. It
+picks 5–8 phrases, at least 3 of the unit's case (the Nominativ unit plans mostly subjects),
+definite or ein articles only, since those are the two Endungen blanks. Nouns are Goethe nouns at
+or below the level with a unanimous gender (no n-nouns, dual-gender or plural-only nouns), plus
+any learner nouns whose gender verifies. Verbs are at or below the level too (folgen and vertrauen
+are on no Goethe list, so they're gone). Every planned phrase is checked to leave exactly one case.
+The verb frames, noun pools, two-way pairs, Genitiv nouns and topics live in
+`Resources/kasus_triggers.json`. Frames:
+
+- subject: der/ein + masculine, its verb counted only in the third person singular (`lacht`,
+  `lachte`, `hat gelacht`, `kann lachen`, `zu lachen`; never the bare infinitive), and shown
+  conjugated in the prompt („der Bruder (Subjekt: der Bruder lacht)“). People only for singen,
+  lachen, weinen, kochen, rufen, arbeiten, tanzen; pets (no Fisch) for kommen, warten, spielen,
+  schlafen.
+- object, Dativ verb, receiver: den/einen, dem/einem with the verb's noun categories.
+- preposition: never an article it would contract with (zum, zur, vom, beim, im, am, ins, ans);
+  „bei der Oma“ and „von der Tante“ are fine. um takes only „den Tisch / das Haus / den See / die
+  Ecke / den Park“, definite; nach is definite only; zu is ein only, to a person you visit or an
+  outing.
+- two-way: auf/unter/neben with a position/placement pair (Wo → Dat, Wohin → Akk). Each pair
+  names its furniture (sitzen/„sich setzen“ on seats and the floor, stehen/stellen on surfaces,
+  liegen/legen on any furniture).
+- Genitiv: wegen/trotz + a curated noun.
+- `definiteOnly` nouns never take ein: kinship („der Bruder“; „ein Bruder“ invited „Mein Bruder“)
+  and mass nouns („wegen des Regens“, never „eines Regens“).
+- Memory saver on for the tutor: level at most A2, at most 6 phrases. Otherwise at most B1.
+
+### Generator
+
+`KasusStoryGenerator`, with the model call behind `KasusStoryWriter` so canned text can stand in
+(tests, the Lab's fixtures, `-kasus.debugGenerate`).
+
+- **Model:** German tutors only (`StoryStudyService.resolve(modelManager.selectedStoryModel)`),
+  gated by `ModelReadiness` `.germanTutor`; never Apple Intelligence or a general model.
+- **Prompt** (`KasusStoryPrompt`): the Stories feature's `storyPrompt` (level constraints, the
+  TITEL:/GESCHICHTE: format) plus „Verwende JEDEN dieser Ausdrücke genau einmal und GENAU so
+  geschrieben:“ and the phrase list with each verb hint, then „Schreibe genau diesen Artikel (der,
+  den, dem, ein, einen …), nicht mein, dein, sein oder ihr. Am Satzanfang darfst du ihn
+  großschreiben.“ Contract B asks for the article as written, not the dictionary form.
+- **Call:** `MLXGenerationService.generateStreamedText` with the level's `storyMaxTokens` (+250
+  for contract B's label block) at temperature 0.75. The output is plain prose parsed with
+  `StoryStudyService.parseStory`, never JSON (the quote sanitizer would break „…“).
+- **Memory** ([MEMORY.md](MEMORY.md)): one heavy resident. The generator only calls `loadModel`,
+  which refuses while pictures are drawn, another model generates or the budget is over, and the
+  refusal comes back as the `.failed` result's note. The writer also refuses while the batch
+  queue or a chat reply is using the tutor, so two writes never share one model, and it asks
+  again before the retry (a tutor dropped between the tries is reloaded, or the refusal is shown).
+  It never unloads anything.
+- **Abbrechen** cancels the write's task, so a tap during the prompt read-in isn't lost, and the
+  sheet says „Stoppt …“ until the run ends. A write that stopped early or doesn't end on a full
+  sentence is trimmed to its last full sentence before the check.
+
+### Check: locate, harvest, gate
+
+**Check** (`KasusStoryCheck`): parse (markdown and list numbers come off; a numbered list is
+regrouped into paragraphs of four); locate (verbatim, with its verb in the sentence, and a
+verb-frame phrase never right after a preposition); harvest every other article + noun phrase
+(`KasusHarvest`): proven by form and preposition → an `inferred` target, whose explanation uses
+only the form and the preposition; wrong → a target that makes the validator reject (an adjective
+in between no longer hides a wrong article: „das große Tasche“); else ungraded, including a bare
+„ihr“ (pronoun or possessive), a d-word after a comma (maybe a relative pronoun), a verb used as a
+noun („beim Spielen“), a Genitiv plural that hangs on nothing („Der Zimmer ist groß“) and a Dativ
+next to sein („Das ist dem Kind egal“). Nouns are read only through Goethe, planned and learner
+lemmas, never the surface form (Wiktionary gives plural forms the singular's gender, which would
+pass „dem Kinder“). A wrong phrase the validator doesn't confirm is dropped, and the landing check
+reruns until nothing more drops. An ungraded phrase is plain text: neutral in Markieren, never
+blanked, so Markieren never marks a correct, unplanned phrase as wrong.
+
+**Two-way prepositions:** an inferred phrase names Wo?/Wohin? in its explanation, and can be
+blanked in Endungen, only when a position or placement verb in its clause agrees. Without one it
+is marked by its form („*in* takes the Akkusativ or the Dativ; here {f:der} + a feminine noun can
+only be Dativ“) and never blanked, since only the tutor chose Wo or Wohin. A mismatch rejects the
+story when the phrase is alone in its clause („sitzt auf den Stuhl“); with another two-way phrase
+there it most likely describes a noun („auf den Tisch neben der Tür“) and goes plain
+(`trigger.wechselUnconfirmed`). The check looks only at its own half of an und/oder clause, so
+„Er steht da und wartet auf den Bus“ is fine.
+
+**Sentence checks** (`KasusSentenceCheck`, generated only, each rejects): ich + ist/sind/hat …, er
++ bin/sind/hast …, ich/er or a singular Nominativ phrase + an -en form that no modal, werden,
+haben/sein, zu or bare-infinitive verb in its clause explains („Der Bruder lachen laut“); a word
+no dictionary knows (`WiktionaryValidator.partsOfSpeech`), with fallbacks for compounds, prefixes,
+weak-verb forms, present participles and noun suffixes, and names (a capitalised word that also
+stands bare); an ein-article before a lowercase noun („einen stand“); an Akkusativ with no
+preposition where sein/werden/bleiben/heißen is the verb (time and measure nouns and „wert“
+exempt); a masculine object in the Nominativ after „es gibt“ or ich/du/er/wir +
+haben/brauchen/kaufen; the same sentence three times. They are narrow on purpose; what they don't
+see („wartet auf unserem Freund“, „die Sonne schien in den Himmel“, „dass der Raum vorbereitete“)
+is what the Lab's „reads right / wrong“ tap is for.
+
+**Gate:** the validator's generated policy ([Severity and policy](#the-validator)). A story is
+rejected whole on any `morph.*`, `trigger.prepositionCase`, `trigger.wechselVerb` or `sentence.*`
+error (the German itself is wrong), on `story.unitCaseCount` (under 3 gradable answers of the
+unit's case, 2 of each for Alle Fälle) and on a length under half the level's range. Everything
+else only turns a phrase plain. Two rejects go beyond the original spec on purpose: the sentence
+checks (the Mac probe found broken German passing every form check) and the far-too-short story
+(the same rule the Stories feature retries on). A length that's merely outside the range warns.
+
+### Retry and fallback
+
+A failed check retries once with a new seed (`KasusStoryPlan.retrySeed`), so the retry gets a new
+plan. If both fail, the learner gets a bundled story of the same unit with the note „Die
+KI-Geschichte hat die Prüfung nicht bestanden. Hier ist stattdessen eine fertige Geschichte.“
+(„Die KI konnte gerade keine Geschichte schreiben …“ when every write threw), an English line and
+one plain reason per try („a preposition with the wrong case („den Hund“)“, „no answers in the
+Nominativ“). The unit screen offers its first story not yet played through (Markieren and
+Endungen both done), else its first. A loadModel refusal ends as `.failed`: the sheet says „Der
+Tutor ist nicht bereit“ and why, and offers the same bundled story.
+
+### Storage (`GeneratedKasusStory`)
+
+A SwiftData model, additive, every field defaulted, registered in `german_ai_flashcardsApp`'s
+schema. Only a story that passed is saved (`KasusStoryStore.save`); the Lab never saves.
+
+| Field | Holds |
+|---|---|
+| `id` | the story's id, `kg-<unit>-<level>-<8 hex>` („kg-dativ-a2-3f9a1c0b“): what its rounds key on |
+| `date`, `unitRaw`, `level` | when, which unit, the `CEFRLevel` it was written at |
+| `modelID` | the tutor that wrote it (an `MLXModel` raw value) |
+| `title` | for lists that shouldn't decode the story |
+| `planData` | the encoded `KasusStoryPlan` that produced it |
+| `storyData` | the encoded `KasusStory`, source `generated`, in the bundled stories' format |
+| `validatorSummary` | the check's line when it passed („PASS · 6/6 placed · …“) |
+| `attempts`, `generationSeconds` | 1 or 2 (after the retry); the passing write's seconds |
+
+A generated story plays through `KasusSession(generated:unit:)` exactly like a bundled one, is
+validated again at play time under the generated policy, and its rounds file under its id.
+`KasusStoryStore` lists a unit's stories (newest first), deletes one (its rounds stay, since they
+hold their sentences and answers) and gives a merged bank, so Verlauf, the round detail and the
+calendar name a generated story too. What differs: no comprehension question (`hasQuestion`), no
+English (`hasEnglish`), no English title.
+
+### On the unit screen
+
+- **The row** (`KasusAIStorySection`, from `KasusStoryGenerator.availability`): „Neue Geschichte ·
+  New story (KI)“ naming the tutor when one is ready; the usual download state (opening Settings ▸
+  Model, never a tutor the device can't run) or a quiet too-small line otherwise; nothing while
+  the toggle is off. While a tutor is loading, the row says so.
+- **„Deine KI-Geschichten · Your AI stories“:** the unit's tutor-written stories under the row,
+  newest first, with level, Markieren ✓/○, Endungen ✓/○, tutor and date; delete by swipe or context
+  menu after a confirmation. Saved stories stay listed and deletable with the toggle off.
+- **The sheet** (`KasusGenerationSheet`): the unit and level, the three steps with a live token
+  count, „2. Versuch“ and why the first try failed. Abbrechen stops the tutor, and swipe-to-dismiss
+  is off while it writes. Passed: title, level, words and the answers per case, „Lesen · Start
+  reading“ or „Später · Later“ (it's already saved). Fallback and failed as above. The player
+  opens only after the sheet has closed, since a full-screen cover can't come up over a sheet.
+- **The player:** the header reads „KI-Geschichte · A2 · Dativ“; Lesen skips the question card
+  and hides the English toggle on empty paragraphs; the Endungen Tipp uses `gap.triggerClue`
+  („Find the verb. Ask wer?, wen?, wem? or wessen?“ for a form-only phrase), and a form-only phrase
+  is never underlined.
+- **Request:** the level is the unit's default (A1 Nominativ and Akkusativ, A2 Dativ, B1 Genitiv
+  and Alle Fälle), not the learner's; no learner nouns are passed yet.
+
+### The Kasus Lab (DEBUG) and its contracts
+
+Settings ▸ Developer ▸ Kasus Lab (`KasusLabView`, numbers in `KasusLab`): the measurement behind
+the decision to ship, or to fine-tune a tutor for this workload. No thresholds and no pass/fail
+colors: the table is read, not judged.
+
+- **Setup:** tutor (the tutors on disk, plus canned options since the simulator has none), unit,
+  level, N runs, contract.
+- **Contract A** („planned“): the product flow above, the app's planned phrases.
+- **Contract B** („selfLabelled“): no planned phrases; the tutor writes the story and then labels
+  every article + noun phrase itself in a block after it („FÄLLE:“, one „den Ball | Akk“ per
+  line). `KasusSelfLabels` parses it tolerantly and scores each label against the case the form
+  proves: right, wrong, unverifiable (the form leaves several cases), not in the story. A label
+  in the dictionary form („der Schrank“ for „den Schrank“) falls back to matching by noun,
+  counted apart. This measures directly whether a tutor can label cases.
+- **Per model:** gate pass rate (first try / after the retry), planned phrases verbatim / altered /
+  missing, gradable answers per case (mean), the top error and warning codes, contract B's label
+  accuracy and % unverifiable, the „reads right / wrong“ taps, median seconds and tokens (MLX
+  reports tokens in steps of 32), and how many runs had the memory saver on.
+- **Per run:** the summary lines, the two taps, and a detail screen with the text, placements,
+  harvest, issues, contract B's score, the raw output and the prompt.
+- **Export:** a ShareLink per model, JSONL with one line per attempt (raw output, plan, report),
+  named `kasus-lab_<model>.jsonl`, for `training/results/`. If a tutor is fine-tuned for this,
+  the validator is the data filter.
+- The Lab takes no ModelContext and never writes rounds, the profile or a `GeneratedKasusStory`.
+  While it runs the back button is hidden and the run details are locked; leaving the screen any
+  other way stops the batch. A loadModel refusal ends the batch with its reason.
+
+`KasusLab`, `KasusLabView` and the fixtures are DEBUG only. Contract B's prompt branch and
+`KasusSelfLabels` ship on purpose: they are a few pure functions inside the one check, a Release
+plan is never contract B, and splitting a „FÄLLE:“ block off also keeps a stray one out of a
+contract A story.
+
+### Mac probe (2026-09-25)
+
+Before any device run, the planner, prompt and check (the app's own Swift, compiled into a small
+command-line tool over the real `wiktionary_de.db`, `prepositions.json` and Goethe lists) were run
+against the tutors with Python mlx_lm on an M1 Max (32 GB), sampling like the app (system + user
+chat, temperature 0.75, the level's token budget). Mac numbers, a stand-in for the phone. Plans:
+Nom A1, Akk A1, Dat A2 ×2, Gen B1, Alle B1, 2 runs each, each run being attempt 1 plus the retry;
+contract B on 2 plans × 2 runs, one attempt each. Raw data, 81 attempts with plan, prompt, raw
+output and full check plus the per-model summary: `training/results/kasus-lab-mac_2026-09-25.json`.
+
+| As first probed (the check before the review fixes) | Hero E4B v4 | E2B v4 (memory saver) | E4B v3 (unshipped) |
+|---|---|---|---|
+| Gate pass, first try / after retry (12 runs) | 1 / 5 | 2 / 2 | 0 / 1 |
+| Same, without the length rule | 8 / about 11 | 8 / about 10 | 4 / about 7 |
+| Planned phrases verbatim with their trigger | 31% | 36% | 26% |
+| Planned phrases verbatim anywhere | 43% | 47% | 31% |
+| Gradable answers per attempt, Nom / Akk / Dat / Gen | 1.6 / 2.8 / 3.0 / 0.7 | 2.5 / 3.5 / 2.5 / 0.7 | 2.0 / 3.2 / 3.4 / 0.4 |
+| Inferred (harvested) gradable answers per story | 6.0 | 7.2 | 7.4 |
+| Median seconds / tokens per attempt (Mac) | 3.4 s / 158 | 1.9 s / 133 | 3.6 s / 167 |
+| Contract B labels, matched by noun, right | 0 of 1 | 3 of 9 | 3 of 9 |
+
+What it showed:
+
+1. **Length, not bad German, rejected most stories.** At A1 and A2 the tutors stop short of the
+   level's word range on their own (every hero A2 story ran 69–116 words against 120–180); at B1
+   they land in range. Length caused 14 of the hero's 18 failed attempts, so it became a warning
+   unless a story is under half the range.
+2. **About a third of planned phrases survive verbatim.** The tutors swap the article for a
+   possessive („der Bruder“ → „Mein Bruder“) or drop the preposition; Dativ-verb and receiver
+   phrases almost never survive (about 1 in 12–16). Passing stories pass on 6–7 inferred answers,
+   so the plan works mostly as a topic seed. The prompt now forbids possessives, and kinship nouns
+   are definite only.
+3. **Form checks don't prove sentences.** The infinitive hint leaked („Der Bruder lachen laut“),
+   and valid forms were graded inside broken sentences („ihre Nachbarn waren ihren Gast“). Hence
+   the conjugated hint, the third-person subject forms and the sentence checks.
+4. **Some rejections were false** („beim Spielen“ read as a plural; a noun's own two-way phrase
+   tied to a Wohin verb). Both are fixed.
+5. **Contract B: the tutors can't label case in this format yet.** They write labels in the
+   dictionary form, so the exact-match scorer found 64–85% „not in story“; matched by noun,
+   accuracy was 0–33%, mostly Dativ labelled Nom. The hero once wrote a whole contract A story in
+   French, which the check caught.
+
+Caveats: 12 runs per model is small (treat ±2 runs as noise); the E2B was v4 from `training/`,
+not the shipped E2B v1; Python mlx_lm can't quantize Gemma 4's rotating cache, so only the memory
+saver's smaller prefill step was mirrored.
+
+**Rescored with the review fixes.** The same 81 raw outputs through the new check (old plans with
+the new subject forms): contract A attempts passing went from 8 of 69 to 32 of 69. Length stopped
+rejecting (50 attempts before, 2 far-short ones now); the sentence checks rejected 11 attempts,
+every one of them for real broken German (spot-checked: „Ich ist“, „einen stand“, „Der Bruder
+lachen“, „Er kochen“, „waren ihren Gast“, „einen Schicklebesele“, a 16-times loop, the French
+story), with no false alarms on those outputs; „beim Spielen“ and „auf den Tisch neben meiner Tür“
+no longer reject. Stories that now pass can still hold German the checks don't see („wartet auf
+unserem Freund“), and „die hohen Anteil“ still passes: Anteil is on no Goethe list, and the
+harvest reads nouns only through lemmas it knows. The rescore isn't in `training/results/`; the
+file there has the first-probe checks.
 
 ## The exercises
 
@@ -518,7 +781,7 @@ or that the role behind a die/das/seine answer is the right one. Those are the t
 
 ## Tests (`german-ai-flashcardsTests`)
 
-A Swift Testing target in the `german-ai-flashcards` scheme; `test_sim` runs its 98 tests. Debug
+A Swift Testing target in the `german-ai-flashcards` scheme; `test_sim` runs its 160 tests. Debug
 only, since they use `KasusFixtures` and `KasusStoryBank.only`. They read the bundled JSON
 directly instead of `KasusStoryBank.bundled`, whose DEBUG assert would stop the whole run on one
 broken story instead of failing one test.
@@ -532,6 +795,9 @@ broken story instead of failing one test.
 | `KasusMarkingTests` | sentence numbering and punctuation on every story, every target word classified with its case, the words that never count, each unit's case order, the class score, Am Ende and Sofort rounds, pinned notes, the instruction, the Markieren result, feedback-mode keys and defaults |
 | `KasusEndingsTests` | both families' ending rows, gap selection, every gap's stem and buttons on every story, pinned buttons, ending grading with slips, what each hint level shows, Sofort and Am Ende rounds, empty and revealed gaps, Lernhilfe never counting |
 | `KasusRecordingTests` | which answers count toward the coach, the fifteen record-check rounds, `recordRound` against an in-memory store, the Markieren round's stored fields, Lösung zeigen after recording, rounds from before Phase 3a |
+| `KasusGenerationTests` | Phase 3: planner determinism, provable frames and counts, the prompt, locate / harvest / gate on the canned fixtures, contract B, the generator's retry, fallback and cancel, the store, the Lab export |
+| `KasusGenerationScreenTests` | the generation sheet's lines, tutor names, the unit row's availability, the Lab runner |
+| `KasusGenerationReviewTests` | the review fixes: third-person subject verbs, the sentence checks (what they catch and what they spare), two-way phrases, adjectives, copula, „ihr“, „beim Spielen“, the Genitiv plural, planner collocations and levels, the length rule, the retry's prepare, trimming, stopping, labels by noun |
 | `KasusPlayStateTests` | the players' state (`KasusMarkPlay`, `KasusEndingsPlay`): a round recorded once at the first Prüfen or last pick, never after Noch mal or a mode switch; Lösung zeigen flagging the recorded attempt; Nächster Fall recorded on its own; „Alle Fälle“ off after Noch mal, a mode switch and the next case; a DEBUG prefill never handed on; a Tipp locking the help level and mode |
 
 A wording change to an explanation moves the pinned lines in `KasusExplanationTests.swift`; a
@@ -686,15 +952,42 @@ idempotent: the rows' dates are kept in UserDefaults and a second run prints `al
 `-kasus.debugOpen history`; the first launch of a fresh install can lose the sheet to the
 launch presentations, so relaunch if it doesn't show.
 
+**`-kasus.debugGenerate <unit>`** (Phase 3) runs the tutor-story pipeline on canned output, since
+MLX doesn't run in the simulator: the generation sheet (Planen → Schreiben → Prüfen), the gate,
+and either a saved story („Deine KI-Geschichten“) or the fallback note. It prints
+`[kasus.debugGenerate]` lines: the outcome, then each attempt's summary, placements and errors.
+
+- `-kasus.debugGenerateFixture good|altered|wrongArticle|tooFew` picks the canned text (default
+  `good`; `wrongArticle` and `tooFew` end in the fallback note).
+- `-kasus.debugGenerateDelay <seconds>` makes each canned step take that long (default 0.9), so
+  a screenshot can catch the sheet mid-write with its token count.
+- With `-kasus.debugOpen unit:<unit>` it opens that unit screen instead, its „Neue Geschichte“
+  row ready on the canned writer (nothing is ever ready in the simulator otherwise).
+- With `-kasus.debugOpen read|mark|mark-checked|fill|…` a story that passes goes on to the player
+  at that screen, prefilled by `-kasus.debugAnswers` / `-kasus.debugHint` as usual:
+  `-kasus.debugGenerate dativ -kasus.debugOpen mark-checked -kasus.debugAnswers mixed`.
+- Every passing run saves a real `GeneratedKasusStory`; delete them from the unit screen.
+
+**`-kasus.debugLab <runs>`** opens the Kasus Lab in a sheet and starts that many runs (`0` only
+opens it). In the simulator they're canned, good · altered · wrongArticle · tooFew in turn.
+
 ## Removed
 
 `Features/Grammar/GrammarCategoryDetailView.swift`, `GrammarStudyMode`,
 `GrammarExerciseService.toVocabCards(category:)`, `DeckStore.grammarFlipSession` and the hub's
 Coach's Picks, Akk/Dat category and Perfekt rows (the Perfekt decks live in Wortschatz ▸ More).
-`AIGrammarCreateView` is unlinked, not deleted: its answers were never checked; Phase 3 replaces
-it. Phase 2 deleted the five akk/dat categories in `grammar_exercises.json` and
+Phase 2 deleted the five akk/dat categories in `grammar_exercises.json` and
 `GrammarExerciseService.category(for:rotation:)`: Today, Coach's Notes, the pyramid and class
 entries all go through `GrammarRoute` now (the `praep-*` categories stay for the preposition hub).
+
+Phase 3 deleted the old AI exercise path, whose answers were never checked (Phase 1 had already
+unlinked its screen): `Features/Grammar/AIGrammarCreateView.swift`,
+`MLXGenerationService.generateGrammarExercises` with its prompt builder, parse / salvage /
+normalize helpers and `CodableGrammarExercise(Response)`, `GrammarExerciseSeed` /
+`GrammarFocus.exerciseSeed`, `GrammarExerciseService.aiCategory` and `GrammarFocus.compactRule`
+(only `aiCategory` read it). Perfekt, Modalverben, Konjunktiv II and the other non-case
+structures keep the lesson sheet and conversation coaching but have no drill. `GrammarTopicService`
+and `grammar_topics.json` stay as the source of story topics, though nothing reads them yet.
 
 ## Open
 
@@ -721,7 +1014,27 @@ entries all go through `GrammarRoute` now (the `praep-*` categories stay for the
   rule for a phrase without an article. The Nominativ unit's Endungen still runs at Ohne Hilfe
   with the whole row of buttons (the spec kept the old blank rules); a Lernhilfe there would be
   the teacher's call.
-- ⬜ Phase 3: tutor-written stories in the same format, gated by the validator, with a Lab.
+- ✅ Phase 3: tutor-written stories in the bundled format ([Tutor-written
+  stories](#tutor-written-stories-phase-3)): the seeded planner and `kasus_triggers.json`, the
+  generator (tutors only, plain prose, one retry, the bundled fallback with its note), locate /
+  harvest / gate with the sentence checks, `GeneratedKasusStory` and „Deine KI-Geschichten“, the
+  unit row and generation sheet behind the developer toggle (off in Release), the Kasus Lab with
+  contracts A and B and its JSONL export, `-kasus.debugGenerate` / `-kasus.debugLab` on canned
+  output, the Mac probe and the review fixes it led to, and the old unchecked AI exercise path
+  deleted. 62 new tests (160 in all).
+- ⬜ Phase 3 on a device: no real tutor has run through the app yet (the simulator can't run MLX),
+  so the Lab's numbers, the „reads right“ rate, the stop-during-read-in path, the unit screen's
+  own sheet → player hand-off and the sheet's „Der Tutor ist nicht bereit“ state are unseen. Run
+  the Lab on a phone per tutor, export to `training/results/kasus-lab_<model>.jsonl`, and keep the
+  toggle off in Release until those runs have been read.
+- ⬜ Phase 3 gaps: generated stories have no comprehension question or English; the level is the
+  unit's default, not the learner's; no learner nouns are passed; prepositional objects
+  („wartet auf unserem Freund“) and adjective endings aren't checked; nouns off the Goethe lists
+  are never read, so „die hohen Anteil“ passes; Tag, Jahr, Abend and Samstag have no article in the
+  Goethe lists, so „jeden Tag“ and „am Abend“ in a generated story stay ungraded.
+- ⬜ Phase 3 debug side effects: every passing `-kasus.debugGenerate` run saves a real story (the
+  simulator's Dativ unit lists several „Wo ist der Ball?“), and the download row inside the debug
+  unit sheet switches tabs underneath the sheet.
 - ⬜ No bundled story has a teacher review yet (`reviewed` is empty), and the seven new label
   targets need the teacher's check too.
 - ⬜ Homonyms with two plurals (Bank: Bänke/Banken) fail `morph.pluralForm` on the reading the

@@ -136,7 +136,10 @@ struct KasusStoryHeader: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(story.title)
                 .font(.title2.weight(.bold))
-            Text("\(story.titleEnglish) · \(story.level) · \(unit.germanTitle)")
+            // A tutor-written story says so, and has no English title yet.
+            Text([story.source == .generated ? "KI-Geschichte" : nil,
+                  story.titleEnglish.isEmpty ? nil : story.titleEnglish,
+                  story.level, unit.germanTitle].compactMap { $0 }.joined(separator: " · "))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }

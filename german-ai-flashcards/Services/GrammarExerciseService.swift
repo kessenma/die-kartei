@@ -14,20 +14,4 @@ enum GrammarExerciseService {
         cache = file.categories
         return file.categories
     }
-
-    /// Wrap AI-generated exercises in an on-the-fly category so they run in the existing
-    /// multiple-choice player. `grammaticalCase` carries the focus raw value — that's how a
-    /// finished drill finds its way back into the learner profile (see ContentView).
-    static func aiCategory(focus: GrammarFocus, topic: String, exercises: [GrammarExercise]) -> GrammarCategory {
-        GrammarCategory(
-            id: "ai-\(focus.rawValue)-\(UUID().uuidString)",
-            title: "\(focus.germanLabel): \(topic)",
-            subtitle: "AI exercises · \(topic)",
-            grammaticalCase: focus.rawValue,
-            articleType: "ai",
-            ruleNote: focus.compactRule,
-            options: focus.exerciseSeed.fallbackOptions,
-            exercises: exercises
-        )
-    }
 }

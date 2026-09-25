@@ -163,6 +163,9 @@ the first *non-conversation* writer into the learner profile.
 
 `Features/Grammar/GrammarHubView.swift` (one consolidated Grammar screen) + `AIGrammarCreateView.swift`.
 
+> The AI exercise creator below was deleted in the Kasus path's Phase 3 (its answers were never
+> checked); see docs/KASUS.md ▸ Removed. The drill write-back through `grammaticalCase` remains.
+
 - ✅ **Read:** "Coach's Picks" section surfaces shaky structures (worst-first, cap 3) at the top of
   the consolidated grammar hub; Akkusativ/Dativ/Perfekt sections get a "Needs work" flame when the
   profile says so; the AI exercise creator preselects the weakest structure and flags weak ones in
@@ -172,15 +175,15 @@ the first *non-conversation* writer into the learner profile.
   conversation WEAK/STRONG tags, no `sessionCount` bump). Wired in ContentView via
   `GrammarCategory.grammaticalCase`, which carries the `GrammarFocus` raw value for bundled and
   AI categories alike
-- ✅ AI-generated exercises: `MLXGenerationService.generateGrammarExercises` (per-focus prompt
-  seeds for all 10 `GrammarFocus` structures, tolerant JSON parse + normalization) + a bundled
+- ✅ (since deleted) AI-generated exercises: `MLXGenerationService.generateGrammarExercises`
+  (per-focus prompt seeds for all 10 `GrammarFocus` structures, tolerant JSON parse +
+  normalization) + a bundled
   100-topic catalog (`grammar_topics.json`) with type-your-own / scroll / dice-roll selection —
   results run in the existing `GrammarMultipleChoiceView`
 - ✅ `GrammarLessonSheet` extracted to `Features/Grammar/` and shared by Today + the hub
 - ✅ Builds clean on the simulator (2026-07-14)
-- ⬜ Generation quality needs on-device testing (sim can't run MLX): verify each focus produces
-  sensible blanks/options, and that a completed drill moves the Coach's Notes confidence bar
-- ⬜ (v2) Persist generated exercise sets so a good one can be replayed later without regenerating
+- ~~⬜ Generation quality needs on-device testing~~ and ~~(v2) persist generated exercise sets~~:
+  moot, the generator is gone. Tutor-written Kasus stories replace it (docs/KASUS.md).
 
 ## Phase 7 — Streak calendar (FUTURE_FEATURES #6)  ✅
 
@@ -292,8 +295,8 @@ Content is the full Michigan preposition list (36 entries, 28 `core` / 8 `advanc
   The matching round rides the *existing* `MatchingStatsService` rail instead, so preposition pairs
   land in Tricky Pairs like any other word pair.
 - ✅ Read direction: shaky prepositions surface as a Coach's Pick that routes to the hub, and the
-  Grammar hub's Präpositionen section takes the "Needs work" flame. The AI exercise creator can
-  generate preposition exercises (new `GrammarExerciseSeed` for the focus).
+  Grammar hub's Präpositionen section takes the "Needs work" flame. The AI exercise creator could
+  generate preposition exercises (a `GrammarExerciseSeed` for the focus); both are deleted now.
 - ✅ Own stats mirror `ArticleStats`: `PrepositionStat` (misses + *which wrong case keeps being
   picked*) and `PrepositionRound` history; tricky prepositions bias round sampling; both registered
   in the app schema.

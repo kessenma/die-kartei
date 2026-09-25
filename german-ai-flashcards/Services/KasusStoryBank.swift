@@ -56,6 +56,13 @@ struct KasusStoryBank {
         stories.filter { $0.unitRaw == unit.rawValue }
     }
 
+    /// This bank with `extra` added after its own stories (a story whose id is already here is
+    /// skipped): the bundled stories plus the tutor's (`KasusStoryStore.bank(in:)`).
+    func merging(_ extra: [KasusStory]) -> KasusStoryBank {
+        var ids = Set(stories.map(\.id))
+        return KasusStoryBank(version: version, stories: stories + extra.filter { ids.insert($0.id).inserted })
+    }
+
     #if DEBUG
     /// A malformed story should fail loudly in a debug run, not quietly lose a target.
     private static func assertValid(_ bank: KasusStoryBank) {
@@ -144,6 +151,10 @@ struct AppKasusLexicon: KasusLexicon {
 
     func isTwoWay(_ word: String) -> Bool {
         PrepositionService.preposition(word)?.governs == .wechsel
+    }
+
+    func partsOfSpeech(_ word: String) -> Set<String>? {
+        WiktionaryValidator.shared.partsOfSpeech(of: word)
     }
 
     // MARK: Goethe rows

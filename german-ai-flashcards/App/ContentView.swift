@@ -63,6 +63,12 @@ struct ContentView: View {
     /// `-kasus.debugOpen history|round|round-mark`: Verlauf, or the newest Kasus (or Markieren)
     /// round's detail.
     @State private var kasusHistoryDebug: KasusHistoryDebugScreen?
+    /// `-kasus.debugGenerate <unit>`: the generation sheet on canned tutor output, and the story it
+    /// asks to play once it has closed.
+    @State private var kasusGenerateJob: KasusGenerationJob?
+    @State private var kasusGeneratePending: KasusSession?
+    /// `-kasus.debugLab <runs>`: the Kasus Lab, which sits behind Settings ▸ Developer.
+    @State private var kasusLabRuns: Int?
     #endif
     @Environment(\.modelContext) private var modelContext
 
@@ -348,6 +354,37 @@ struct ContentView: View {
             }
             .environment(router)
         }
+        // Presented from here rather than over a unit screen, so the player's cover can come up
+        // the moment the sheet has gone.
+        .sheet(item: $kasusGenerateJob, onDismiss: {
+            guard let session = kasusGeneratePending else { return }
+            kasusGeneratePending = nil
+            router.launch(.kasusStory(session))
+        }) { job in
+            KasusGenerationSheet(
+                job: job,
+                autoPlay: KasusDebugOpen.fromLaunchArguments().flatMap { open -> KasusStoryScreen? in
+                    if case .story(let screen) = open { return screen }
+                    return nil
+                },
+                onPlay: { kasusGeneratePending = $0 },
+                onFinished: { result in
+                    KasusGenerateDebug.report(result).forEach { print($0) }
+                }
+            )
+            .environment(router)
+        }
+        .sheet(isPresented: Binding(get: { kasusLabRuns != nil }, set: { if !$0 { kasusLabRuns = nil } })) {
+            NavigationStack {
+                KasusLabView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService,
+                             autoRunCount: kasusLabRuns)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { kasusLabRuns = nil }
+                        }
+                    }
+            }
+        }
         #endif
         .memoryPressureBanner()
         .memoryReadoutOverlay()
@@ -523,7 +560,29 @@ struct ContentView: View {
             // its way there. The player screens open the bundled story (`-kasus.debugStory <id>`),
             // prefilled by `-kasus.debugAnswers right|mixed`, `-kasus.debugHint lern|viel|genus|ohne`
             // and `-kasus.debugFeedback sofort|amEnde`; prefilled answers are never recorded.
-            if let open = KasusDebugOpen.fromLaunchArguments() {
+            // `-kasus.debugGenerate <unit>` runs the Phase 3 pipeline on canned tutor output
+            // (`-kasus.debugGenerateFixture good|altered|wrongArticle|tooFew`, default good): the
+            // generation sheet, the gate, the fallback note and the saved story. With
+            // `-kasus.debugOpen unit:<unit>` it opens that unit screen instead, its „Neue
+            // Geschichte“ row ready on the canned writer; with `-kasus.debugOpen <player screen>`
+            // a story that passes goes on to the player at that screen, prefilled as usual.
+            // `-kasus.debugLab <runs>` opens the Kasus Lab and starts that many runs (0 just opens
+            // it); in the simulator they are canned, good · altered · wrongArticle · tooFew in turn.
+            if let runs = UserDefaults.standard.string(forKey: "kasus.debugLab").flatMap({ Int($0) }) {
+                kasusLabRuns = max(0, runs)
+                print("[kasus.debugLab] open · \(runs) runs")
+            }
+            if let launch = KasusGenerateDebug.fromLaunchArguments() {
+                if let open = KasusDebugOpen.fromLaunchArguments(), case .unit = open {
+                    kasusDebugSheet = open
+                    print("\(KasusGenerateDebug.logPrefix) open \(open.id) · canned \(launch.fixture.rawValue)")
+                } else {
+                    let (generator, request) = KasusGenerateDebug.generator(for: launch)
+                    kasusGenerateJob = KasusGenerationJob(generator: generator, request: request,
+                                                          tutorName: KasusGenerationCopy.tutorName(generator.writer.modelID))
+                    print("\(KasusGenerateDebug.logPrefix) generate \(launch.unit.rawValue) · canned \(launch.fixture.rawValue)")
+                }
+            } else if let open = KasusDebugOpen.fromLaunchArguments() {
                 switch open {
                 case .hub, .unit:
                     kasusDebugSheet = open

@@ -36,7 +36,7 @@ fine-tunes a flagship feature where their prose quality is visibly the point.
 | Blank-fill + MC player/grading | `GrammarMultipleChoiceView` + `GrammarExercise` normalization |
 | Multi-toggle "pick your mix" UI | `HomeView` tense toggles (`selectedTensesRaw`, at-least-one enforcement) |
 | JSON prompt + tolerant parsing | `MLXGenerationService.extractJSON` / salvage / repair chain |
-| Streaming progress + Stop | `streamingTokenCount` pattern (`AIGrammarCreateView` loading UI) |
+| Streaming progress + Stop | `streamingTokenCount` pattern (`AIGrammarCreateView` loading UI, since deleted) |
 | TTS for listening mode | `SpeechService` + `MLXModelManager.selectedVoiceIdentifier` |
 | Word/phrase gestures on German text | `SelectableGermanText` (already feature-agnostic, pure callbacks) |
 | Gesture tutorial sheet | `ConversationHelpSheet` (needs only a parameterized intro line) |
@@ -156,7 +156,8 @@ like `GenerationCoordinator.generateWithMLX` does. Sequential calls:
    with example JSON and blank rules). Normalize like `normalizeGrammarExercises`: valid
    `correctIndex`, distinct options, exactly one `______` in FITB sentences (or blank the answer
    word if the model wrote it filled in — that helper exists), dedupe, over-generate by 1–2 and
-   keep N.
+   keep N. (Both precedents were deleted with the AI exercise path; the story versions live on as
+   `StoryQuestion.Kind.promptSeed` and `StoryStudyService.normalizeQuestions`.)
 
 3. **Glossary.** Reuse the `deutsch = english` line format from `PaperStudyService.makeDeck` for
    5–8 hard words (skippable at C1).
@@ -356,8 +357,8 @@ All through the existing `LearnerMemoryService` shapes — no new profile schema
 - **Slips:** free-response answers scored 1 (content right, language shaky) log a `LexicalSlip`
   with the correction — same category the conversation corrections feed.
 - **Seeding (the reverse direction):** story generation weaves in 3–5 due/shaky words from
-  `LearnerProfile.vocab` (the `generateGrammarExercises(learnerWords:)` precedent) and can steer
-  one weak `GrammarFocus` into the prose via its `steeringHint` — the story becomes spaced
+  `LearnerProfile.vocab` (the `generateGrammarExercises(learnerWords:)` precedent, since deleted)
+  and can steer one weak `GrammarFocus` into the prose via its `steeringHint` — the story becomes spaced
   re-encounter in disguise.
 - **Today screen:** a `TodayIntent`-style recommendation ("Read a short story at your level" /
   "Listen to a story") once the feature has results to draw on; rotate read vs. listen.

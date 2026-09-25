@@ -1,6 +1,7 @@
 import Foundation
 
-/// One browsable topic for AI grammar exercises — a German theme word with its English gloss.
+/// One browsable topic, a German theme word with its English gloss. Kept for story topics since
+/// the AI exercise screen that first used it was deleted; nothing reads it today.
 struct GrammarTopic: Codable, Identifiable, Hashable {
     let de: String
     let en: String

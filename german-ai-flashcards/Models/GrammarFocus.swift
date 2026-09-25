@@ -106,25 +106,6 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    /// One-line rule reminder shown above drill exercises (mirrors the bundled
-    /// categories' `ruleNote`, which the multiple-choice header displays).
-    var compactRule: String {
-        switch self {
-        case .perfekt:              "Perfekt: haben/sein + Partizip II — „ich habe gegessen“, „ich bin gegangen“"
-        case .praeteritum:          "Präteritum: simple past — „ich war“, „ich hatte“, „ich ging“"
-        case .futur:                "Futur I: werden + Infinitiv — „ich werde arbeiten“"
-        case .konjunktiv2:          "Konjunktiv II: würde / hätte / wäre / könnte — hypotheticals & politeness"
-        case .artikel:              "der (m) · die (f) · das (n) — Endungen helfen: -ung → die, -chen → das"
-        case .akkusativ:            "Akkusativ: den (m) · die (f) · das (n) · die (Pl.)"
-        case .dativ:                "Dativ: dem (m) · der (f) · dem (n) · den (Pl.)"
-        case .genitiv:              "Genitiv: des …s (m/n) · der (f/Pl.)"
-        case .modalverben:          "Modalverb konjugiert, Hauptverb als Infinitiv ans Satzende"
-        case .praepositionen:       "Die Präposition bestimmt den Fall — durch/für/ohne/um → Akk. · aus/bei/mit/nach/von/zu → Dat."
-        case .wechselpraepositionen: "Wohin? (movement) → Akkusativ · Wo? (location) → Dativ"
-        case .adjektivendungen:     "Endings follow case, gender & article — „ein guter Wein“"
-        }
-    }
-
     /// A German example/hint the AI can use to elicit this structure.
     var steeringHint: String {
         switch self {

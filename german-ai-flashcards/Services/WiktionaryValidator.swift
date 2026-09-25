@@ -19,6 +19,7 @@ final class WiktionaryValidator {
     /// load, so results are worth keeping for the process lifetime.
     private var genderCache: [String: String?] = [:]
     private var existsCache: [String: Bool] = [:]
+    private var posCache: [String: Set<String>] = [:]
 
     private init() {
         openDatabase()
@@ -146,6 +147,18 @@ final class WiktionaryValidator {
             .first { $0.pos == "noun" && $0.translation?.isEmpty == false }?
             .translation
         return (article, english.map(Self.cleanTranslation))
+    }
+
+    /// Every part of speech the dictionary files a word under, looked up lowercased („noun“,
+    /// „verb“, „adj“, „adv“). Empty when it doesn't know the word; nil when the database isn't
+    /// there. The Kasus sentence checks on a tutor's story use it.
+    func partsOfSpeech(of word: String) -> Set<String>? {
+        guard isAvailable else { return nil }
+        let lower = word.lowercased()
+        if let cached = posCache[lower] { return cached }
+        let parts = Set(lookupWord(lower).map(\.pos).filter { !$0.isEmpty })
+        posCache[lower] = parts
+        return parts
     }
 
     /// Random quiz-quality nouns for the der/die/das game: single capitalized words with an

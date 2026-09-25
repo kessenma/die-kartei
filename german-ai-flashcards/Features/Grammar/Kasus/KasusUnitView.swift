@@ -6,6 +6,8 @@
 //
 //    Die Regel · The rule        a few lines, the endings table with this case lit, the Kasus-Check
 //    Geschichten · Stories       the bundled stories for this unit (Lesen → Markieren → Endungen)
+//    Deine KI-Geschichten        „Neue Geschichte · New story (KI)“ and the tutor-written stories
+//                                (Phase 3, behind the developer toggle; `KasusAIStorySection`)
 //    Schnellrunde · Quick round  the endings drill, limited to the unit's cases
 //    Deine Runden · Your rounds  the unit's last three rounds, and all of them in Verlauf
 //    Mehr dazu · Also for this   the preposition cards on this case's group (3D stills), or
@@ -20,15 +22,28 @@ import SwiftData
 
 struct KasusUnitView: View {
     let unit: KasusUnit
-    /// For the Nominativ's der · die · das row, which can make its own AI topics. Without them
-    /// that row is left out.
+    /// For the Nominativ's der · die · das row, which can make its own AI topics, and for the
+    /// tutor-written stories. Without them those rows are left out.
     let modelManager: MLXModelManager?
     let mlxService: MLXGenerationService?
 
     @Environment(ActivityRouter.self) private var router
     @Environment(\.appTheme) private var appTheme
+    /// Optional so previews and hosts without one still render; the download state then points
+    /// at Settings ▸ Model in words.
+    @Environment(SettingsRouter.self) private var settingsRouter: SettingsRouter?
 
     @Query private var rounds: [KasusRound]
+
+    /// Settings ▸ Developer: „KI-Geschichten im Kasus-Pfad“.
+    @AppStorage(KasusStoryGenerator.enabledKey) private var aiStoriesEnabled = KasusStoryGenerator.defaultEnabled
+    /// The generation sheet, while it's up.
+    @State private var generation: KasusGenerationJob?
+    /// What the sheet asked to play; launched once the sheet has gone (a full-screen cover can't
+    /// come up over a sheet).
+    @State private var pendingSession: KasusSession?
+    /// `ModelReadiness` reads the disk and publishes nothing; bumping this re-reads it.
+    @State private var readinessToken = UUID()
 
     /// Nil until the learner opens or closes "Die Regel" by hand. Until then it is open until the
     /// unit's first round, so a returning learner lands on the exercises instead of the rule.
@@ -49,6 +64,7 @@ struct KasusUnitView: View {
             headerSection.themedListRow()
             ruleSection.themedListRow()
             storiesSection
+            aiStoriesSection
             quickRoundSection.themedListRow()
             roundsSection.themedListRow()
             moreSection.themedListRow()
@@ -60,6 +76,11 @@ struct KasusUnitView: View {
         .sheet(isPresented: $showKasusCheck) {
             KasusCheckSheet()
         }
+        .sheet(item: $generation, onDismiss: launchPendingSession) { job in
+            KasusGenerationSheet(job: job, onPlay: { pendingSession = $0 })
+        }
+        .onAppear { readinessToken = UUID() }
+        .onChange(of: mlxService?.isLoading) { readinessToken = UUID() }
     }
 
     // MARK: - Header
@@ -202,6 +223,79 @@ struct KasusUnitView: View {
     /// ✓ once the step has been played, ○ before.
     private func stepMark(_ done: Bool) -> Image {
         Image(systemName: done ? "checkmark.circle.fill" : "circle")
+    }
+
+    // MARK: - Deine KI-Geschichten
+
+    #if DEBUG
+    /// `-kasus.debugGenerate <unit>` names this unit: the row shows as ready with the canned
+    /// writer, since nothing is ever ready in a simulator that can't run MLX.
+    private var debugLaunch: KasusGenerateDebug.Launch? {
+        KasusGenerateDebug.fromLaunchArguments().flatMap { $0.unit == unit ? $0 : nil }
+    }
+    #endif
+
+    private var aiAvailability: KasusGenerationAvailability {
+        _ = readinessToken
+        guard aiStoriesEnabled else { return .hidden }
+        #if DEBUG
+        if debugLaunch != nil { return .ready(.gemma4_E4B_german) }
+        #endif
+        guard let modelManager, mlxService != nil else { return .hidden }
+        return KasusStoryGenerator.availability(selectedStoryModel: modelManager.selectedStoryModel, enabled: true)
+    }
+
+    private var aiTutorLabel: String? {
+        #if DEBUG
+        if let debugLaunch { return "Canned · \(debugLaunch.fixture.rawValue)" }
+        #endif
+        return nil
+    }
+
+    /// A German tutor is downloading or loading: the service doesn't say which model it's
+    /// loading, so this reads the pick it loads, as Settings ▸ Model does.
+    private var isTutorLoading: Bool {
+        guard mlxService?.isLoading == true, let modelManager else { return false }
+        return MLXModel.germanTutors.contains(modelManager.selectedMLXModel)
+    }
+
+    private var aiStoriesSection: some View {
+        KasusAIStorySection(
+            unit: unit,
+            availability: aiAvailability,
+            tutorLabel: aiTutorLabel,
+            progress: KasusProgress(rounds: rounds),
+            isDownloading: isTutorLoading,
+            onNewStory: startGeneration,
+            onGetTutor: settingsRouter.map { settings in { settings.route = .model } }
+        )
+    }
+
+    /// Opens the generation sheet with the unit's own level. A story that fails the check falls
+    /// back on the unit's first bundled story not played through yet.
+    private func startGeneration() {
+        #if DEBUG
+        if let debugLaunch {
+            let (generator, request) = KasusGenerateDebug.generator(for: debugLaunch)
+            generation = KasusGenerationJob(generator: generator, request: request,
+                                            tutorName: KasusGenerationCopy.tutorName(generator.writer.modelID))
+            return
+        }
+        #endif
+        guard case .ready(let model) = aiAvailability, let mlxService else { return }
+        var request = KasusGenerationRequest(unit: unit, level: KasusStoryPlanner.defaultLevel(for: unit))
+        let progress = KasusProgress(rounds: rounds)
+        request.fallbackStoryID = stories.first {
+            !progress.isDone(storyID: $0.id, unit: unit, step: .find) || !progress.isDone(storyID: $0.id, unit: unit, step: .fill)
+        }?.id
+        generation = KasusGenerationJob(generator: .live(model: model, service: mlxService), request: request,
+                                        tutorName: KasusGenerationCopy.shortName(model))
+    }
+
+    private func launchPendingSession() {
+        guard let session = pendingSession else { return }
+        pendingSession = nil
+        router.launch(.kasusStory(session))
     }
 
     // MARK: - Schnellrunde
@@ -440,12 +534,12 @@ struct KasusUnitView: View {
         }
     }
     .environment(ActivityRouter())
-    .modelContainer(for: [LearnerProfile.self, StudyDay.self, KasusRound.self], inMemory: true)
+    .modelContainer(for: [LearnerProfile.self, StudyDay.self, KasusRound.self, GeneratedKasusStory.self], inMemory: true)
 }
 
 #Preview("Kasus unit · Markieren played") {
     let container = try! ModelContainer(
-        for: LearnerProfile.self, StudyDay.self, KasusRound.self,
+        for: LearnerProfile.self, StudyDay.self, KasusRound.self, GeneratedKasusStory.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
     container.mainContext.insert(KasusRound(
