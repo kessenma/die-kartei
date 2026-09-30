@@ -81,7 +81,6 @@ struct HomeHubView: View {
             )
         }
         .navigationTitle("Home")
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .themedListScreen()
         .onAppear { evaluateGamification() }
         .onChange(of: studyDays) { evaluateGamification() }
@@ -148,9 +147,9 @@ struct HomeHubView: View {
             }
             .padding(.horizontal, hubInset)
             .padding(.top, 8)
+            .padding(.bottom, hubInset)
         }
         .navigationTitle("Home")
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .themedScreen()
     }
 

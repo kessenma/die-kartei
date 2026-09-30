@@ -58,6 +58,8 @@ enum SavedDeckCodec: SyncCodec {
         f.set("generatorRaw", d.generatorRaw)
         f.set("generationTimeSeconds", d.generationTimeSeconds)
         f.set("courseIDRaw", d.courseIDRaw)
+        f.set("sourceText", d.sourceText)
+        f.set("sourceFile", d.sourceFile)
         return f.payload
     }
 
@@ -85,6 +87,9 @@ enum SavedDeckCodec: SyncCodec {
         if let v = flat.string("generatorRaw") { d.generatorRaw = v }
         if let v = flat.double("generationTimeSeconds") { d.generationTimeSeconds = v }
         d.courseIDRaw = flat.string("courseIDRaw")
+        d.sourceText = flat.string("sourceText")
+        // The document itself syncs separately, under the same name in `ClassMaterialStore`.
+        d.sourceFile = flat.string("sourceFile")
     }
 
     static func cascadeChildren(of model: SavedDeck) -> [any PersistentModel] {

@@ -177,7 +177,6 @@ struct SourcesView: View {
         }
         .themedListScreen()
         .navigationTitle("Sources")
-        .contentMargins(.bottom, 120, for: .scrollContent)
     }
 
     // MARK: - Helpers

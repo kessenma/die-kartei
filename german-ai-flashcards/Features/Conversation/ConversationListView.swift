@@ -131,7 +131,6 @@ struct ConversationListView: View {
         .themedListScreen()
         .navigationTitle(showsCreateActions ? "Conversation Practice" : "Library")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
             if showsCreateActions {
                 ToolbarItem(placement: .topBarTrailing) {

@@ -89,7 +89,6 @@ struct PrepositionHubView: View {
         .themedListScreen()
         .navigationTitle("Präpositionen")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

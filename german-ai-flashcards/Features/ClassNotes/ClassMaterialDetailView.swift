@@ -83,7 +83,6 @@ struct ClassMaterialDetailView: View {
         .tint(accent)
         .navigationTitle(material.title)
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {

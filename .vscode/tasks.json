@@ -1,6 +1,7 @@
 {
   // Deploy pipeline for Die Kartei.
   //   Run:  Cmd+Shift+B            -> TestFlight (default build task)
+  //         Cmd+Shift+R            -> App Store (a user keybinding; see docs/DEPLOY_SETUP.md)
   //         Cmd+Shift+P > "Run Task" -> pick any of the below
   // Setup for a new machine: docs/DEPLOY_SETUP.md
   "version": "2.0.0",

@@ -102,7 +102,6 @@ struct StoryDetailView: View {
         .themedListScreen()
         .navigationTitle(story.title)
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .memoryContext("Story reader · \(layout.label)")
         .toolbar {
             if !images.isEmpty {

@@ -73,9 +73,13 @@ final class PhotoOCRService {
         } else {
             observations = try await request.perform(on: data)
         }
-        return observations
-            .compactMap { $0.topCandidates(1).first?.string }
-            .joined(separator: "\n")
+        // A table comes back a column at a time; `OCRTableLayout` puts a vocabulary sheet's rows
+        // back together from where each line sits on the page.
+        return OCRTableLayout.text(from: observations.compactMap { observation in
+            observation.topCandidates(1).first.map {
+                OCRTableLayout.Line(text: $0.string, box: observation.boundingBox.cgRect)
+            }
+        })
     }
 
     // MARK: - AI cleanup

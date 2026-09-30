@@ -72,7 +72,6 @@ struct ClassNotesHubView: View {
         .themedListScreen()
         .navigationTitle(ClassNotesTile.title)
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Button {

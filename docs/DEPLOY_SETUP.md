@@ -312,6 +312,10 @@ python3 scripts/deploy.py release
 no extra tooling, no `package.json`:
 
 - **Cmd+Shift+B** runs *Deploy: TestFlight* (it's the default build task)
+- **Cmd+Shift+R** runs *Deploy: App Store* on the primary dev Mac. VS Code has no
+  per-workspace keybindings, so on a new machine add this to the user
+  `keybindings.json` (Cmd+Shift+P → "Preferences: Open Keyboard Shortcuts (JSON)"):
+  `{ "key": "shift+cmd+r", "command": "workbench.action.tasks.runTask", "args": "Deploy: App Store (upload only, no submit)" }`
 - **Cmd+Shift+P → "Tasks: Run Task"** lists all of them:
   *TestFlight*, *App Store (upload only)*, *Preflight checks*,
   *Clean build artifacts*, *Open latest log*
@@ -633,9 +637,17 @@ Since 2026-09-16 the deploy script reads past rejections from
 before archiving, so a plain re-run recovers on its own; `VERSION=1.6` still
 overrides. First hit: 1.5 closed while the App Store was live on 1.4, wasting
 two full archive-and-upload runs (2026-09-15 and 2026-09-16). A burned version
-also leaves a stale, buildless version record in App Store Connect — delete it
-by hand (`asc versions delete`, only possible in `PREPARE_FOR_SUBMISSION`) so
-the app's version list doesn't grow phantom entries.
+also leaves a stale, buildless version record in App Store Connect, still in
+`PREPARE_FOR_SUBMISSION`. It **cannot be deleted**: `asc versions delete` fails
+with "Only the first version of any platform can be deleted". And while it sits
+there, App Store Connect won't create another editable version, so a `release`
+deploy can't make its own. Rename the record to the version you're shipping
+instead, then deploy:
+
+```bash
+asc versions list --app 6770390331 --state PREPARE_FOR_SUBMISSION --output table
+asc versions update --version-id <id> --version 1.6
+```
 
 Its What's New bullets are not lost: `whats_new.stamp` folds any entry above the
 live App Store version into the version actually shipping, so 1.5's highlights

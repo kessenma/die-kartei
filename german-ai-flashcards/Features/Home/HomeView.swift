@@ -118,7 +118,6 @@ struct HomeView: View {
             // and asserts its own everywhere else.
             .themedListScreen()
             .scrollDismissesKeyboard(.interactively)
-            .contentMargins(.bottom, 120)
             .overlay {
                 // Stays up through the picture phase — one operation, two phases.
                 if service.isGenerating || service.isDrawingImages {
@@ -462,7 +461,7 @@ struct HomeView: View {
         } header: {
             Text("Oder aus einem Dokument · Or from a document").themedSectionHeader()
         } footer: {
-            Text("A teacher's word list is paired into cards automatically. In a story or a handout, highlight the phrases you want; each becomes one card.")
+            Text("A teacher's word list is paired into cards automatically. In a story or a handout, highlight the phrases you want; each becomes one card. Pick a course and the deck shows on its page; the document is kept, so it can join the course as a handout later.")
         }
         .themedListRow()
     }

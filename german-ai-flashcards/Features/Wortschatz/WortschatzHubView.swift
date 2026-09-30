@@ -101,7 +101,6 @@ struct WortschatzHubView: View {
         .themedListScreen()
         .navigationTitle("Wortschatz")
         .navigationBarTitleDisplayMode(.large)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

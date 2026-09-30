@@ -257,7 +257,6 @@ struct KasusHistoryView: View {
         .navigationTitle(unit.map { "Deine Runden · \($0.germanTitle)" } ?? "Verlauf · Your rounds")
         .navigationBarTitleDisplayMode(.inline)
         .contentMargins(.top, 8, for: .scrollContent)
-        .contentMargins(.bottom, 120, for: .scrollContent)
     }
 
     private var emptyDescription: String {

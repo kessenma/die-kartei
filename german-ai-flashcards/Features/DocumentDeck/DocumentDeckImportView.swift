@@ -21,6 +21,11 @@ struct DocumentDeckDraft: Identifiable, Hashable {
     var text: String
     /// "PDF", "Photo", "Handout", "Paper"; the deck's fallback name and the review footer.
     var sourceLabel: String
+    /// The original as it came in (a PDF's bytes, a photo as a JPEG), and whether the deck keeps
+    /// the document at all: only one brought in from outside, which exists nowhere else in the app.
+    var fileData: Data? = nil
+    var fileExt: String = "pdf"
+    var keepsSource = false
 
     static func == (lhs: DocumentDeckDraft, rhs: DocumentDeckDraft) -> Bool { lhs.id == rhs.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
@@ -253,14 +258,16 @@ struct DocumentDeckImportView: View {
                     }
                     progressText = nil
                     if let text {
-                        draft = DocumentDeckDraft(title: title, text: text, sourceLabel: "PDF")
+                        draft = DocumentDeckDraft(title: title, text: text, sourceLabel: "PDF",
+                                                  fileData: data, keepsSource: true)
                     } else {
                         errorMessage = "No readable text found in that PDF."
                     }
                 }
             } else {
                 // Page markers stay: the parser drops them per line, and the text picker reads past them.
-                draft = DocumentDeckDraft(title: title, text: extracted.text, sourceLabel: "PDF")
+                draft = DocumentDeckDraft(title: title, text: extracted.text, sourceLabel: "PDF",
+                                          fileData: data, keepsSource: true)
             }
         }
     }
@@ -295,7 +302,10 @@ struct DocumentDeckImportView: View {
             draft = DocumentDeckDraft(
                 title: "Photo · \(Date.now.formatted(date: .abbreviated, time: .omitted))",
                 text: text,
-                sourceLabel: "Photo"
+                sourceLabel: "Photo",
+                fileData: jpeg,
+                fileExt: "jpg",
+                keepsSource: true
             )
         }
     }
@@ -339,7 +349,8 @@ struct DocumentTextPasteView: View {
                 onNext(DocumentDeckDraft(
                     title: line.count <= 60 ? line : "",
                     text: trimmed,
-                    sourceLabel: "Pasted text"
+                    sourceLabel: "Pasted text",
+                    keepsSource: true
                 ))
             } label: {
                 Text("Next")

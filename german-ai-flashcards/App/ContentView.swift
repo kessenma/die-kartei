@@ -42,10 +42,11 @@ struct ContentView: View {
 
     @State private var settingsResetToken: Int = 0
     @State private var homeResetToken: Int = 0
-    /// How far the NavBar reaches above the bottom safe area, measured off the bar itself. Added
-    /// to every tab's bottom safe area, so lists, forms, scroll views and pinned bottom bars clear
-    /// the bar without a hand-set margin. Zero while the keyboard is up: the bar is behind it.
-    @State private var navBarClearance: CGFloat = 0
+    /// Where the tabs' safe area ends and where the NavBar begins, in the shell's coordinates.
+    /// Measured rather than set, so a bar that changes height (Dynamic Type, a theme's font) or a
+    /// device without a home indicator needs nothing done by hand. See `navBarClearance`.
+    @State private var tabsSafeBottom: CGFloat = 0
+    @State private var navBarTop: CGFloat = .infinity
     @State private var pendingSelection: CardSelectionPayload?
     @State private var pendingIllustration: PendingIllustration?
     @State private var saveError: String?
@@ -110,6 +111,16 @@ struct ContentView: View {
 
     private var deckStore: DeckStore { DeckStore(modelContext: modelContext) }
 
+    private static let shellSpace = "ContentView.shell"
+
+    /// How far the NavBar reaches above the tabs' safe area: the bottom padding that keeps lists,
+    /// forms, scroll views and pinned bottom bars on every tab clear of the bar without a hand-set
+    /// margin. Zero while the keyboard is up, which already lifts the tabs past the bar.
+    ///
+    /// A difference of two frames rather than the bar's height less its safe-area inset, because
+    /// the bar sits in a column that ignores the safe area and so always reads that inset as zero.
+    private var navBarClearance: CGFloat { max(0, tabsSafeBottom - navBarTop) }
+
     var body: some View {
         ZStack(alignment: .bottom) {
             ZStack {
@@ -155,15 +166,22 @@ struct ContentView: View {
                 // another tab with screens still pushed on Home's stack.
                 if newTab == .home { homeResetToken += 1 }
             }
+            // The NavBar floats over the tabs, so the tabs stop at its top edge: every screen on
+            // every tab, pushed or root, ends above the bar with no margin of its own. Padding,
+            // not a safe-area inset: a NavigationStack stretches its screens to the window edge
+            // and takes the window's inset, so neither `.safeAreaInset` nor `.safeAreaPadding`
+            // out here ever reaches a pushed screen. Covers and sheets sit above the bar anyway.
+            .padding(.bottom, navBarClearance)
             // The app-wide ground sits behind all three tabs at once, so switching tabs never
             // crossfades the background. Each tab's own List still has to opt into showing it
             // through (`.themedListScreen()`); on Klar this is the system grouped color either way.
+            // Applied after the padding, so it still runs under the bar to the screen edge.
             .themedScreen()
-            // The NavBar floats over the tabs rather than taking room from them, so this is what
-            // keeps their content out from under it. Safe area, not padding: backgrounds still run
-            // to the screen edge, and it reaches every pushed screen through the NavigationStacks.
-            // Covers and sheets present above the bar and get their own safe area, untouched.
-            .safeAreaPadding(.bottom, navBarClearance)
+            // The padding's own frame, so the reading never depends on the padding: where the safe
+            // area ends, above the home indicator or the keyboard while one is up.
+            .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named(Self.shellSpace)).maxY } action: {
+                tabsSafeBottom = $0
+            }
 
             VStack {
                 Spacer()
@@ -192,18 +210,16 @@ struct ContentView: View {
                         }
                     }
                 )
-                // The bar runs through the bottom safe area, so only the part above it is new
-                // ground for the tabs to clear. With the keyboard up the inset covers the whole
-                // bar and this comes out zero.
-                .onGeometryChange(for: CGFloat.self) { proxy in
-                    max(0, proxy.size.height - proxy.safeAreaInsets.bottom)
-                } action: { navBarClearance = $0; print("[navbar-verify] clearance \($0)") } // TEMP-NAVBAR-VERIFY
+                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named(Self.shellSpace)).minY } action: {
+                    navBarTop = $0
+                }
             }
             // The bar's column runs through the bottom safe area so the bar can sit on the screen
             // edge rather than floating above the home indicator; the Spacer takes up the slack and
             // NavBar keeps its own clearance from the indicator.
             .ignoresSafeArea(edges: .bottom)
         }
+        .coordinateSpace(.named(Self.shellSpace))
         .overlay {
             if let pendingIllustration {
                 IllustratingDeckView(

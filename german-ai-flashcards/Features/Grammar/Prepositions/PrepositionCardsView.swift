@@ -260,8 +260,8 @@ struct PrepositionCardsView: View {
             .disabled(index >= cards.count - 1)
         }
         .padding(.horizontal, 24)
-        // The safe area already ends above the app's NavBar (ContentView), so this is only
-        // breathing room.
+        // ContentView already ends the tab above the app's NavBar, so this is only breathing
+        // room.
         .padding(.bottom, 16)
     }
 }

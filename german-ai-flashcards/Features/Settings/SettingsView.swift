@@ -160,7 +160,6 @@ struct SettingsView: View {
             }
             .themedListScreen()
             .navigationBarTitleDisplayMode(.inline)
-            .contentMargins(.bottom, 120)
             // Keep last-loaded in sync regardless of which screen is showing.
             .onChange(of: mlxService.currentModel) { _, newModel in
                 if let model = newModel {
@@ -289,7 +288,6 @@ private struct ModelSettingsScreen: View {
             ModelSettingsView(modelManager: modelManager, mlxService: mlxService)
         }
         .themedListScreen()
-        .defaultScrollAnchor(.bottom) // TEMP-NAVBAR-VERIFY
         .navigationBarTitleDisplayMode(.inline)
     }
 }

@@ -2,10 +2,11 @@
 //  ClassMaterialImportView.swift
 //  german-ai-flashcards
 //
-//  Bringing a class handout over. Three doors: a PDF from Files (a scanned one is read page by
-//  page with the on-device recognizer, since teachers photocopy), a photo of a page (camera or
-//  library), or pasted text. Everything passes through a short review step for the title, then
-//  is filed under the entry it was opened from.
+//  Bringing a class handout over. Three doors from outside: a PDF from Files (a scanned one is read
+//  page by page with the on-device recognizer, since teachers photocopy), a photo of a page (camera
+//  or library), or pasted text, each through a short review step for the title. A fourth brings a
+//  text the app already has (`ClassMaterialLibraryPicker`). Either way it is filed under the entry
+//  the sheet was opened from.
 //
 
 import SwiftUI
@@ -39,6 +40,7 @@ struct ClassMaterialImportView: View {
             List {
                 targetSection.themedListRow()
                 sourcesSection.themedListRow()
+                fromAppSection.themedListRow()
                 if let progressText {
                     Section {
                         HStack(spacing: 10) {
@@ -160,6 +162,22 @@ struct ClassMaterialImportView: View {
         } footer: {
             Text("Photos and scans are read with Apple's on-device recognizer; check the text on the next screen before attaching it.")
                 .font(.caption2)
+        }
+        .disabled(isWorking)
+    }
+
+    private var fromAppSection: some View {
+        Section {
+            NavigationLink {
+                ClassMaterialLibraryPicker(course: course, entry: entry) { material in
+                    dismiss()
+                    onImported(material)
+                }
+            } label: {
+                ActivityRow("From the app", "A short story, a paper or scan, or a vocab sheet you made cards from", "tray.full")
+            }
+        } header: {
+            Text("Schon in der App · Already here").themedSectionHeader()
         }
         .disabled(isWorking)
     }

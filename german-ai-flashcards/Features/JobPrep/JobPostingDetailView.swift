@@ -199,7 +199,6 @@ struct JobPostingDetailView: View {
             interviewSection
         }
         .themedListScreen()
-        .contentMargins(.bottom, 120, for: .scrollContent)
     }
 
     /// The PDF and the live page want the whole screen; the words and the deck move into a sheet

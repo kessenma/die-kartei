@@ -52,7 +52,6 @@ struct PastTenseLevelView: View {
             }
         }
         .themedListScreen()
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .searchable(text: $searchText, prompt: "Search verbs or translations")
         .navigationTitle("\(level.rawValue) Past Tense")
         .navigationBarTitleDisplayMode(.large)

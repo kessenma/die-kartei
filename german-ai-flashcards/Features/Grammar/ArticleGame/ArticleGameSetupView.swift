@@ -78,7 +78,6 @@ struct ArticleGameSetupView: View {
         .navigationTitle("Der · Die · Das")
         .navigationBarTitleDisplayMode(.inline)
         .scrollDismissesKeyboard(.interactively)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

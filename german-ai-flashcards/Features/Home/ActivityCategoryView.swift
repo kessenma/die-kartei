@@ -164,7 +164,6 @@ struct ActivityCategoryView: View {
         }
         .navigationTitle(category.title)
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .themedListScreen()
         .sheet(isPresented: $showDocumentDeck) {
             DocumentDeckImportView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService) { deck in

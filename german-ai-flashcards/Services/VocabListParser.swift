@@ -264,7 +264,7 @@ nonisolated enum VocabListParser {
         return (score, strong)
     }
 
-    private static func looksEnglish(_ text: String) -> Bool {
+    static func looksEnglish(_ text: String) -> Bool {
         languageProbability(text, of: .english) > languageProbability(text, of: .german)
     }
 
@@ -299,6 +299,8 @@ nonisolated enum VocabListParser {
         var row = row
         row.german = row.german.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
             .trimmingCharacters(in: .whitespaces)
+            // A scan reads the plural's umlaut mark "-¨e" as `-"e` or `-*e`.
+            .replacingOccurrences(of: #",\s*-?\s*["*”“]\s*([a-zäöüß]{0,3})$"#, with: ", -¨$1", options: .regularExpression)
         row.english = row.english.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
             .trimmingCharacters(in: .whitespaces)
         return row

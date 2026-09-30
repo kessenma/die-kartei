@@ -49,7 +49,6 @@ struct JobPrepHubView: View {
         .themedListScreen()
         .navigationTitle("Job prep")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .navigationDestination(item: $openedPosting) { posting in
             JobPostingDetailView(posting: posting, modelManager: modelManager, mlxService: mlxService)
         }

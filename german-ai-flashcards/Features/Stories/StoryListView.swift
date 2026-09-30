@@ -9,6 +9,8 @@ struct StoryListView: View {
 
     @Query(sort: \StudyStory.createdAt, order: .reverse) private var allStories: [StudyStory]
     @Query private var readingSessions: [StoryReadingSession]
+    /// Handouts brought over from these stories, to say which course each went to.
+    @Query private var handouts: [ClassMaterial]
     @Environment(\.modelContext) private var modelContext
 
     @State private var filter = StoryListFilter()
@@ -69,7 +71,6 @@ struct StoryListView: View {
         .themedListScreen()
         .navigationTitle("Short Stories")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
     }
 
     // MARK: - Sections
@@ -118,12 +119,13 @@ struct StoryListView: View {
             }
             .themedListRow()
         } else {
+            let onCourses = ClassMaterialOrigins.courseNames(handouts)
             Section {
                 ForEach(visibleStories, id: \.id) { story in
                     NavigationLink {
                         StoryDetailView(story: story, modelManager: modelManager, mlxService: mlxService)
                     } label: {
-                        StoryRow(story: story, secondsRead: secondsByStory[story.id] ?? 0)
+                        StoryRow(story: story, secondsRead: secondsByStory[story.id] ?? 0, courses: onCourses[story.id])
                     }
                 }
                 .onDelete(perform: delete)
@@ -162,6 +164,8 @@ private struct StoryRow: View {
     let story: StudyStory
     /// Total time already spent reading or listening to this story, 0 if it's never been opened.
     let secondsRead: Int
+    /// The courses it went to as a handout, if any.
+    var courses: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -214,6 +218,10 @@ private struct StoryRow: View {
                     }
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
+
+                    if let courses {
+                        OnCourseLabel(courses: courses)
+                    }
                 }
             }
         }

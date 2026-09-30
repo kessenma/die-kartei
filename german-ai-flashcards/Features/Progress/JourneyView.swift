@@ -75,7 +75,6 @@ struct JourneyView: View {
         }
         .navigationTitle("Dein Weg")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .themedListScreen()
         .onAppear { pickProbe() }
     }

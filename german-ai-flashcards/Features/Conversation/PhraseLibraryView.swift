@@ -77,8 +77,8 @@ struct PhraseLibraryView: View {
                 .themedListRow()
             }
         }
-        // Clear the floating FAB so the last row is fully reachable. The app's NavBar is already
-        // cleared by the safe area ContentView gives every tab.
+        // Clear the floating FAB so the last row is fully reachable. The app's NavBar needs
+        // nothing here: ContentView ends every tab at the bar's top edge.
         .contentMargins(.bottom, 80, for: .scrollContent)
         // Pick up the loaded model's brand color, mirroring Home's per-model tint. Innermost so it
         // wins over `.themedListScreen()`'s own tint: on Klar this resolves to the loaded model's
@@ -135,7 +135,7 @@ struct PhraseLibraryView: View {
         }
         .accessibilityLabel("Add phrase")
         .padding(.trailing, 20)
-        // The safe area already ends above the app's NavBar, so this is only breathing room.
+        // ContentView already ends the tab above the app's NavBar, so this is only breathing room.
         .padding(.bottom, 16)
     }
 

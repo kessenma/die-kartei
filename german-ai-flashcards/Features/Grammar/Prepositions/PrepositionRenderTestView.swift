@@ -158,7 +158,7 @@ struct PrepositionSceneGalleryView: View {
             .disabled(index >= preps.count - 1)
         }
         .padding(.horizontal, 24)
-        // Same breathing room as the preposition cards pager; the safe area clears the NavBar.
+        // Same breathing room as the preposition cards pager; ContentView clears the NavBar.
         .padding(.bottom, 16)
     }
 }

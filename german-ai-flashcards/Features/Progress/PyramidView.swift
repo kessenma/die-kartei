@@ -134,7 +134,6 @@ struct PyramidView: View {
         }
         .navigationTitle("Lernpyramide")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .themedListScreen()
         .onAppear { celebrateCompletedLayers() }
         .sheet(isPresented: $showPlacement) {

@@ -74,7 +74,6 @@ struct ClassCourseDetailView: View {
         .themedListScreen()
         .navigationTitle(course.name)
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button("Edit") { showEditor = true }

@@ -56,7 +56,6 @@ struct TrickyPairsView: View {
         .themedListScreen()
         .navigationTitle("Tricky Pairs")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {

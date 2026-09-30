@@ -40,7 +40,6 @@ struct ClassMaterialListView: View {
         .themedListScreen()
         .navigationTitle("Class handouts")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
     }
 
     private func delete(at offsets: IndexSet) {

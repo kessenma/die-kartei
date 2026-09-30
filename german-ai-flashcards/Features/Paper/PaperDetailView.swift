@@ -150,7 +150,6 @@ struct PaperDetailView: View {
         .navigationTitle(paper.title)
         .tint(theme.accent)
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .fullScreenCover(item: $activeChat) { chat in
             ConversationView(
                 conversation: chat.conversation,
@@ -395,7 +394,6 @@ private struct SourceTextView: View {
         }
         .navigationTitle("Extracted text")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
     }
 }
 

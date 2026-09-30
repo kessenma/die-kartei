@@ -108,8 +108,6 @@ struct ICloudSyncSettingsView: View {
             #endif
         }
         .themedListScreen()
-        // Clear of the floating tab bar, like the other Settings screens.
-        .contentMargins(.bottom, 120)
         .navigationBarTitleDisplayMode(.inline)
         .task { await sync.refreshAccount() }
         .task(id: sync.coordinator?.lastSession?.finishedAt) {

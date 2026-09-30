@@ -29,7 +29,6 @@ struct MemorySettingsView: View {
         }
         .themedListScreen()
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Button {

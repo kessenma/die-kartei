@@ -33,18 +33,30 @@ Do this whenever you ship a change a learner would notice. The app shows release
 `german-ai-flashcards/Resources/whats_new.json` (Settings ▸ About ▸ What's New, and once at launch
 after an update). Deploy stamps the file; you only ever add bullets.
 
+**Hard cap: 4000 characters per version.** App Store Connect rejects more, and deploy stops.
+Until a version is live on the App Store, every TestFlight build's `unreleased` bullets merge into
+it, so all of them share one 4000-char budget. Keep a version to about 15 bullets (~2500 chars)
+so later builds still fit. `python3 scripts/whats_new.py render <version>` prints the shipped text.
+
 1. Open `german-ai-flashcards/Resources/whats_new.json`. If the first entry is not
    `"version": "unreleased"`, add one at the top: `{ "version": "unreleased", "highlights": [] }`.
-2. Append ONE highlight per change to that entry:
+2. One highlight per feature, not per change:
    `{ "title": "…", "detail": "…", "symbol": "<sf symbol>" }`
-   - Learner-facing, one sentence, no jargon and no file names. Say what they can do now.
+   - First look for a bullet on the same feature in `unreleased` and the newest version. A
+     follow-up, fix or polish is not a new bullet: fold it into the `unreleased` bullet's
+     `detail`, or skip it if the feature's bullet already has a version.
+   - Learner-facing, one sentence of at most ~30 words, no jargon and no file names. Say what
+     they can do now.
    - Titles read like the app's headings: a German identity word with its English, e.g.
      `"Lernpyramide · Learner pyramid"`, then plain English `detail`.
    - `detail` and `symbol` are optional. A symbol must be a real SF Symbol name.
-3. Never write `version` or `date`, and never edit an entry that already has a version.
-   `scripts/deploy.py` renames `unreleased` to the shipping version, merges later bullets into it
-   across TestFlight builds, and sends the same text to TestFlight and the App Store.
-4. Run `python3 scripts/whats_new.py check` before you finish.
+3. Never write `version` or `date`, and never edit an entry that already has a version unless
+   the user asks you to trim one that isn't on the App Store yet. `scripts/deploy.py` renames
+   `unreleased` to the shipping version, merges later bullets into it across TestFlight builds,
+   and sends the same text to TestFlight and the App Store.
+4. Run `python3 scripts/whats_new.py check` before you finish. It fails when a version is over
+   the cap, and warns when `unreleased` plus the newest version would be. Either one means
+   consolidate, not add; tell the user if trimming needs an already-versioned entry.
 
 Simulator: `-whatsNew.debugForce 1` raises the launch sheet (DEBUG only; one presenting launch
 argument per launch).

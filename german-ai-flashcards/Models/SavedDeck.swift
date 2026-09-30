@@ -33,6 +33,12 @@ final class SavedDeck {
     /// Defaulted so the column is an additive migration.
     var courseIDRaw: String? = nil
 
+    /// A document deck's document: the text it was built from and the original (a PDF or a photo,
+    /// named in `ClassMaterialStore`), so the vocab sheet can later join a course as a handout.
+    /// Kept only for documents brought in from outside; nil for older decks and every other kind.
+    var sourceText: String? = nil
+    var sourceFile: String? = nil
+
     var wordTypeFilter: WordTypeFilter {
         WordTypeFilter(rawValue: wordTypeFilterRaw) ?? .all
     }

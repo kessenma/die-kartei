@@ -246,6 +246,7 @@ enum ClassMaterialCodec: SyncCodec {
         f.set("glossaryDeckIDRaw", m.glossaryDeckIDRaw)
         f.set("translation", jsonData: m.translationData)
         f.set("translationModelRaw", m.translationModelRaw)
+        f.set("originIDRaw", m.originIDRaw)
         return f.payload
     }
 
@@ -284,6 +285,7 @@ enum ClassMaterialCodec: SyncCodec {
         m.glossaryDeckIDRaw = flat.string("glossaryDeckIDRaw")
         m.translationData = flat.jsonData("translation")
         m.translationModelRaw = flat.string("translationModelRaw")
+        m.originIDRaw = flat.string("originIDRaw")
     }
 }
 
@@ -340,5 +342,6 @@ enum ClassMaterialCodec: SyncCodec {
 //   translationData      -> "translation" (JSON HandoutTranslation) .lww, group with
 //                           translationModelRaw
 //   translationModelRaw  -> "translationModelRaw" .lww, group with translation
+//   originIDRaw          -> "originIDRaw" .lww (the story, paper or deck it came from)
 //   entry                -> "entry" (ClassEntry id) .lww; parent, linked on insert only (the app
 //                           never moves a handout to another entry)

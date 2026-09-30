@@ -1,78 +1,63 @@
 {
   "releases": [
     {
-      "version": "unreleased",
-      "highlights": [
-        {
-          "title": "Kasus · Case endings",
-          "detail": "A one-screen table of der, den and dem with the rese, nese, mrmn code, the six questions that tell you which case a phrase is in, and a quick drill for the endings.",
-          "symbol": "tablecells"
-        },
-        {
-          "title": "Kasus-Farben · Case colors",
-          "detail": "Each case now has its own color and icon wherever it's taught, rules and explanations put key words in bold and every article in its gender color, and the quick lessons for Akkusativ, Dativ and Genitiv show the endings table with that case lit up.",
-          "symbol": "paintpalette"
-        },
-        {
-          "title": "Die vier Fälle · The four cases",
-          "detail": "Grammar is now one path through Nominativ, Akkusativ, Dativ and Genitiv, each with its rule and a quick round.",
-          "symbol": "square.grid.2x2"
-        },
-        {
-          "title": "Geschichten · Case stories",
-          "detail": "Seven short stories to read and then work through like a class worksheet: Nominativ and Akkusativ at A1, Dativ at A2, and Genitiv and Alle Fälle at B1.",
-          "symbol": "text.book.closed"
-        },
-        {
-          "title": "Verlauf · Your rounds",
-          "detail": "Every grammar round you play is kept, day by day, with your score per case. Open a story or quick round to see each answer again, with why.",
-          "symbol": "clock.arrow.circlepath"
-        },
-        {
-          "title": "Mehr dazu · Also for this case",
-          "detail": "Each case links to the preposition cards that take it, with their 3D scenes, and Nominativ to der · die · das.",
-          "symbol": "cube"
-        },
-        {
-          "title": "Gezielt üben · Practice that fits",
-          "detail": "A weak case on Today or in Coach's Notes opens a story to fill in or a quick round, Artikel opens a der/die/das round, and a class entry tagged with a case, Artikel or prepositions gets its own practice row.",
-          "symbol": "arrow.triangle.branch"
-        },
-        {
-          "title": "Richtig! · Clearer right and wrong",
-          "detail": "Each answer shows clearly whether you got it, with the right article in its gender color and a dot per question, and the quick round puts the sentence up large with the buttons at the bottom.",
-          "symbol": "checkmark.circle"
-        },
-        {
-          "title": "Markieren · Mark the case",
-          "detail": "Like the class worksheet: tap every word in one case (the article, any adjective and the noun) in the story's numbered sentences, then check to see what you got right, what you missed and your score, or show the answers.",
-          "symbol": "highlighter"
-        },
-        {
-          "title": "Endungen · Fill in the endings",
-          "detail": "Fill each d__ and ein__ gap by tapping its ending (-em, -er, or – for none), with a Lernhilfe level that lights up the right cell of the endings table, the choice to check each answer right away or all at the end, and Show answers when you're stuck.",
-          "symbol": "character.cursor.ibeam"
-        },
-        {
-          "title": "iCloud-Sync · iCloud Sync",
-          "detail": "Your cards, progress, streak, stories and conversations now stay the same on your iPhone and iPad, through your own iCloud.",
-          "symbol": "icloud"
-        }
-      ]
-    },
-    {
       "version": "1.6",
       "date": "2026-09-16",
       "highlights": [
         {
-          "title": "Your tutor is loading · Download progress on Home",
-          "detail": "Home shows a live bar for the download, so you can carry on working while your teacher lands.",
-          "symbol": "arrow.down.circle"
+          "title": "Die vier Fälle · The four cases",
+          "detail": "Grammar is now one path through Nominativ, Akkusativ, Dativ and Genitiv, each with its own color, its rule, a quick round and an endings drill.",
+          "symbol": "square.grid.2x2"
         },
         {
-          "title": "Was ist neu · What's New",
-          "detail": "Release notes now live in the app: once after each update, and any time from Settings ▸ About.",
-          "symbol": "sparkles"
+          "title": "Geschichten · Case stories",
+          "detail": "Seven stories from A1 to B1 to work through like a class worksheet: mark every word in one case, or fill in the endings.",
+          "symbol": "text.book.closed"
+        },
+        {
+          "title": "Verlauf · Your rounds",
+          "detail": "Every grammar round is kept with your score per case, and a weak case on Today or in Coach's Notes opens the right practice.",
+          "symbol": "clock.arrow.circlepath"
+        },
+        {
+          "title": "iCloud-Sync · iCloud Sync",
+          "detail": "Your cards, progress, streak, stories and conversations stay the same on your iPhone and iPad, through your own iCloud.",
+          "symbol": "icloud"
+        },
+        {
+          "title": "Deutschkurs · Class notes",
+          "detail": "Log what each class covered, keep your handouts, track homework, and turn the new words into flashcards for that course.",
+          "symbol": "graduationcap.fill"
+        },
+        {
+          "title": "Handouts lesen · Read your handouts",
+          "detail": "Read a handout side by side in German and English, and double-tap any word to translate it and save it to your course deck.",
+          "symbol": "rectangle.split.2x1"
+        },
+        {
+          "title": "Karten aus dem Dokument · Flashcards from a document",
+          "detail": "Turn a teacher's word list, even a photo of one, into a deck in one go, or highlight phrases in any PDF, photo or text to make cards.",
+          "symbol": "doc.plaintext"
+        },
+        {
+          "title": "Tastatur · German keyboard",
+          "detail": "A keyboard for Mail, Messages and anywhere you write: tap Auf Deutsch to translate, Korrigieren to fix your German, and hold a, o, u or s for ä, ö, ü and ß. It runs on your device and never asks for Full Access.",
+          "symbol": "keyboard"
+        },
+        {
+          "title": "Wortschatz · One word box for A1–B1",
+          "detail": "The three Goethe lists share one box, with new words in daily portions and every word's status to browse.",
+          "symbol": "archivebox"
+        },
+        {
+          "title": "Karteikarten · Flashcards",
+          "detail": "Nouns hide their article until you flip, cards show plural and Perfekt forms, missed cards come back soon, and you can share a deck with its progress.",
+          "symbol": "rectangle.on.rectangle"
+        },
+        {
+          "title": "Dein Weg · Your journey",
+          "detail": "A timeline of your progress with badges, a „Weißt du es noch?“ check on older words, and a Lernpyramide that shows what you've proven.",
+          "symbol": "map"
         },
         {
           "title": "Bewerbung · Job prep",
@@ -80,139 +65,14 @@
           "symbol": "briefcase"
         },
         {
-          "title": "Type instead of talk",
-          "detail": "Conversations accept typed turns, with a quick German/English keyboard switch.",
-          "symbol": "keyboard"
-        },
-        {
-          "title": "Dein Weg · Your journey",
-          "detail": "A timeline of your progress, with a „Weißt du es noch?“ check on words you learned a while ago.",
-          "symbol": "map"
-        },
-        {
-          "title": "Placement answers you can revisit",
-          "detail": "The placement check keeps your answers, to review question by question or hand to the coach.",
-          "symbol": "list.clipboard"
-        },
-        {
-          "title": "Abzeichen · Badges",
-          "detail": "Milestones for streaks, words learned, perfect rounds and first stories.",
-          "symbol": "rosette"
-        },
-        {
-          "title": "Earned, not estimated",
-          "detail": "The Lernpyramide now separates what you've proven from what a declared level only suggests.",
-          "symbol": "triangle"
-        },
-        {
-          "title": "Gespräch · Picking a chat back up",
-          "detail": "If a chat is interrupted, reopening it offers to fetch the reply you were waiting for instead of leaving you stuck.",
-          "symbol": "arrow.trianglehead.clockwise"
-        },
-        {
-          "title": "Wortschatz · One word box for A1–B1",
-          "detail": "The three Goethe lists share one box, so a word learned at A1 stays learned at A2. Pick your levels and word types and press Start.",
-          "symbol": "archivebox"
-        },
-        {
-          "title": "Der Karteikasten · Your word box",
-          "detail": "A bar for each compartment shows how your words move from new to known.",
-          "symbol": "chart.bar"
-        },
-        {
-          "title": "Neue Wörter · New words in daily portions",
-          "detail": "Set how many new Goethe words a day, and ask for ten more when you are on a roll.",
-          "symbol": "plus.circle"
-        },
-        {
-          "title": "der · die · das? · Gender first",
-          "detail": "Nouns hide their article until you flip, so every card is a gender check. Turn it off in Settings ▸ Cards.",
-          "symbol": "questionmark.circle"
-        },
-        {
-          "title": "Noch einmal · Missed cards come back",
-          "detail": "A card you mark Didn't know returns a few cards later in the same session.",
-          "symbol": "arrow.uturn.backward"
-        },
-        {
-          "title": "Wörter durchsuchen · Every word's status",
-          "detail": "Browse all Goethe words as new, due, tricky, or known, and tap one for its history.",
-          "symbol": "list.bullet.rectangle"
-        },
-        {
-          "title": "Pluralformen · Plural and Perfekt forms",
-          "detail": "Hundreds of Goethe nouns and verbs now show their plural or Perfekt forms on the card.",
-          "symbol": "text.append"
-        },
-        {
-          "title": "Bilder · Picture layout",
-          "detail": "Story pictures are shown whole instead of cropped, and you can pick how they sit in the text.",
-          "symbol": "photo.on.rectangle.angled"
-        },
-        {
-          "title": "Speicher · Memory",
-          "detail": "See what is using memory now, and a log of any crashes, under Settings ▸ Speicher.",
-          "symbol": "memorychip"
+          "title": "Gespräch · Conversations",
+          "detail": "Type a turn instead of speaking, switch keyboards between German and English, and pick an interrupted chat back up.",
+          "symbol": "bubble.left.and.bubble.right"
         },
         {
           "title": "Stabiler · More stable",
-          "detail": "Runs more reliably on iPads and phones with less memory: pictures, tutors and the drawing model no longer compete.",
+          "detail": "Runs more reliably on devices with less memory, and Settings ▸ Speicher shows what's using it.",
           "symbol": "checkmark.shield"
-        },
-        {
-          "title": "Tastatur · German keyboard",
-          "detail": "A new keyboard for Mail, Messages, and anywhere you write: type in English, tap Auf Deutsch, and it becomes natural German.",
-          "symbol": "keyboard"
-        },
-        {
-          "title": "Korrigieren · Fix your German",
-          "detail": "Select what you wrote and tap Korrigieren: it fixes the grammar and keeps your own words.",
-          "symbol": "checkmark.bubble"
-        },
-        {
-          "title": "Sie oder du",
-          "detail": "Choose whether the keyboard writes formally or informally, so an email to your landlord doesn't read like a text to a friend.",
-          "symbol": "person.2"
-        },
-        {
-          "title": "Umlaute ohne Umweg · Umlauts made easy",
-          "detail": "Hold a, o, u, or s for ä, ö, ü, and ß, with spell-check in German or English.",
-          "symbol": "textformat.abc"
-        },
-        {
-          "title": "Nothing leaves your phone",
-          "detail": "It runs on Apple Intelligence on your device and never asks for Full Access.",
-          "symbol": "lock.shield"
-        },
-        {
-          "title": "Deutschkurs · Class notes",
-          "detail": "Log what each class covered, keep the handouts, track homework, and turn the new words into flashcards for that course.",
-          "symbol": "graduationcap.fill"
-        },
-        {
-          "title": "Karten aus dem Dokument · Flashcards from a document",
-          "detail": "Turn a teacher's word list into a deck in one go, or highlight phrases in any PDF, photo, or text to make cards.",
-          "symbol": "doc.plaintext"
-        },
-        {
-          "title": "Vokabeln im Text · Vocab in the story",
-          "detail": "Read a class story with its vocab list: listed words are underlined, and a tap shows the teacher's English.",
-          "symbol": "text.book.closed"
-        },
-        {
-          "title": "Nebeneinander lesen · Read side by side",
-          "detail": "Read a translated handout in German, in English, or both at once, scrolling together sentence by sentence.",
-          "symbol": "rectangle.split.2x1"
-        },
-        {
-          "title": "Deck teilen · Share a deck",
-          "detail": "Swipe a deck in the Library and send it by AirDrop, Messages, or Files. Your review progress goes with it.",
-          "symbol": "square.and.arrow.up"
-        },
-        {
-          "title": "Mischen · Shuffle",
-          "detail": "A Shuffle switch on the flashcard setup screen deals the cards in a fresh order every time you start.",
-          "symbol": "shuffle"
         }
       ]
     },

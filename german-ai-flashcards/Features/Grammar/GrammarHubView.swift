@@ -44,7 +44,6 @@ struct GrammarHubView: View {
         .themedListScreen()
         .navigationTitle("Grammatik · Grammar")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

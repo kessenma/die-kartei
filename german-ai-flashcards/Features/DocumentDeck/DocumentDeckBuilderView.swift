@@ -454,7 +454,7 @@ struct DocumentDeckBuilderView: View {
                     return
                 }
             }
-            if let deck = svc.save(title: title, rows: final, course: selectedCourse, sourceLabel: draft.sourceLabel) {
+            if let deck = svc.save(title: title, rows: final, course: selectedCourse, sourceLabel: draft.sourceLabel, keeping: draft) {
                 onCreated(deck)
             } else {
                 errorMessage = "No row had both a German and an English side."

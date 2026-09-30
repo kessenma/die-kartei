@@ -72,7 +72,6 @@ struct KasusUnitView: View {
         .themedListScreen()
         .navigationTitle(unit.germanTitle)
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .sheet(isPresented: $showKasusCheck) {
             KasusCheckSheet()
         }

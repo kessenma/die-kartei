@@ -90,7 +90,6 @@ struct MatchingDeckPickerView: View {
         .themedListScreen()
         .navigationTitle("Card Matching")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
     }
 
     // MARK: - Progress

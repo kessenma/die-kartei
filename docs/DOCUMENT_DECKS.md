@@ -29,10 +29,24 @@ chooses.
   German-only wait for the line that carries their English; English-only lines extend the row
   above. `Result.listConfidence` (rows per content line) tells a list from prose, so the builder
   opens a story in text mode. Guessed splits are flagged (`confident == false`).
+- **`Services/OCRTableLayout.swift`** — Vision reads a bordered table a column at a time (all the
+  German, then all the English), which the parser pairs into a few cards holding half a column
+  each. `PhotoOCRService` hands every recognized line with its box to `OCRTableLayout.text`, which
+  rebuilds the rows from position: columns are lines sharing a left edge; on a padded table a
+  line close under another is a wrapped cell's second line, unless the column beside shows one
+  cell above and another below (then it is a row break); each first-column cell gathers the cells
+  it overlaps; columns are joined with a tab. The rows are used only when they parse as a list
+  whose right side reads English and at least as well as Vision's order, so prose keeps Vision's
+  order. Covers photos, the camera and scanned PDFs (text-layer PDFs never reach OCR). A scan's
+  `-"e` / `-*e` plural mark is tidied back to `-¨e`. The sheet's ✓ column is not read by OCR.
 - **`Services/DocumentDeckService.swift`** — the tutor's two jobs (`pair(lines:)` for a list the
   parser misread, `translate(_:)` for rows without English, both batched `deutsch = english`
   prompts) and `save(...)`: `SavedDeck` with `generatorRaw = "document"` (`Kind.document`,
-  browsable, `doc.plaintext` badge) and `courseIDRaw` when a course was chosen. The model is loaded
+  browsable, `doc.plaintext` badge) and `courseIDRaw` when a course was chosen. A document brought
+  in from outside (file, photo, paste: `DocumentDeckDraft.keepsSource`) is kept with the deck as
+  `sourceText` + `sourceFile` (in `ClassMaterialStore`, so it syncs like a handout's original), which
+  is what lets it join a course later as a handout; decks made before this kept only their cards.
+  Deleting the deck in the Library deletes its file. The model is loaded
   only when there is something for it to do; a complete sheet becomes a deck with no model in memory.
 - **`Features/DocumentDeck/DocumentDeckImportView.swift`** — sources (PDF incl. scans via
   `ScannedPDFReader`, photo library, camera, paste) plus "Your documents" (class handouts, papers),
@@ -56,6 +70,13 @@ Vokabelliste (2 pages, 32 rows, wrapped cells, ✓ marks) every row pairs correc
 guesses (all right), the title is picked up, `listConfidence` 0.84; the story and the question
 sheet score 0.09 / 0.05 and open in text mode. The same text is the `-classNotes.debugOpen builder`
 fixture (`ClassNotesDebugSeeder.vocabSheetText`).
+
+The scan path is checked the same way: render each page 1400 pt wide (as `ScannedPDFReader`
+does), run `RecognizeTextRequest` with the app's settings, and feed the lines to
+`OCRTableLayout.text` + the parser. On the three class sheets (Dornröschen 48 rows, Hänsel und
+Gretel 32, Schneewittchen 42) every row pairs, none flagged; before, Vision's order gave 6 / 3 / 22
+rows of whole columns run together. A borderless list drawn to an image-only PDF pairs 10 of 10.
+The two stories, the Lesejournal and a letter come back byte-for-byte in Vision's order.
 
 ## A story read with its vocab list
 
@@ -82,7 +103,5 @@ Debug: `-classNotes.debugOpen story` opens the seeded story with the sheet's dec
 
 ## Later
 
-- Two-column photos: OCR reads a table column by column at times; the tutor pairing covers it, a
-  layout-aware read (Vision's bounding boxes) would do it without a model.
 - Example sentences from the source text for each card (the sentence the phrase was highlighted in).
 - A question sheet (`Lesejournal`) as a quiz: the comprehension questions are already extractable.

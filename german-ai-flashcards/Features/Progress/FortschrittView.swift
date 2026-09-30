@@ -69,7 +69,6 @@ struct FortschrittView: View {
         }
         .navigationTitle("Fortschritt")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .themedListScreen()
         .onAppear { evaluateAchievements() }
     }

@@ -182,6 +182,15 @@ def check(doc: dict) -> List[str]:
             problems.append(f"{where}: versions must be strictly descending (comes after {previous})")
         previous = version
 
+    if not problems:  # rendering assumes well-formed highlights
+        for r in doc["releases"]:
+            size = len(render_highlights(r["highlights"]))
+            if size > MAX_CHARS:
+                problems.append(
+                    f"{r['version']!r} renders to {size} chars; App Store Connect caps it at {MAX_CHARS}. "
+                    "Consolidate bullets instead of adding more"
+                )
+
     return problems
 
 
@@ -192,10 +201,18 @@ def warnings(doc: dict) -> List[str]:
     if unreleased is not None:
         n = len(unreleased.get("highlights") or [])
         out.append(f"'unreleased' has {n} highlight{'' if n == 1 else 's'}; deploy will stamp it")
-    for r in versioned(doc):
-        text = render(doc, r["version"])
-        if len(text) > MAX_CHARS:
-            out.append(f"{r['version']} renders to {len(text)} chars; App Store Connect caps it at {MAX_CHARS}")
+        # Until the newest version is live, deploy merges `unreleased` into it, and the two share
+        # one cap. Only a warning: once that version ships, `unreleased` starts a fresh entry.
+        newest = next(iter(versioned(doc)), None)
+        if newest is not None:
+            merged = {"highlights": list(newest.get("highlights", []))}
+            merge_into(merged, unreleased)
+            size = len(render_highlights(merged["highlights"]))
+            if size > MAX_CHARS:
+                out.append(
+                    f"'unreleased' + {newest['version']} render to {size} chars; if {newest['version']} "
+                    f"isn't on the App Store yet, deploy merges them and stops above {MAX_CHARS}"
+                )
     return out
 
 
@@ -207,8 +224,12 @@ def render(doc: dict, version: str) -> str:
     r = find(doc, version)
     if r is None:
         return ""
+    return render_highlights(r.get("highlights", []))
+
+
+def render_highlights(highlights: List[dict]) -> str:
     lines = []
-    for h in r.get("highlights", []):
+    for h in highlights:
         title = " ".join(str(h.get("title", "")).split())
         detail = " ".join(str(h.get("detail") or "").split())
         lines.append(f"• {title} — {detail}" if detail else f"• {title}")

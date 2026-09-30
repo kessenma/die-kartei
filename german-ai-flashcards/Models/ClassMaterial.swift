@@ -35,6 +35,10 @@ final class ClassMaterial {
     var translationData: Data? = nil
     /// The tutor that wrote the translation.
     var translationModelRaw: String? = nil
+    /// What this handout was brought over from inside the app: a story's, a paper's or a
+    /// document deck's id. Nil for one imported from outside. Lets the picker mark what a course
+    /// already has, and the Library say which course a story or paper went to.
+    var originIDRaw: String? = nil
 
     var entry: ClassEntry? = nil
 
@@ -48,12 +52,16 @@ final class ClassMaterial {
 
     enum SourceKind: String, CaseIterable {
         case pdf, photo, paste
+        /// Brought over from the app: an AI-written story, or a web page studied as a paper.
+        case story, link
 
         var label: String {
             switch self {
             case .pdf:   "PDF file"
             case .photo: "Photo"
             case .paste: "Pasted text"
+            case .story: "Story"
+            case .link:  "Web page"
             }
         }
 
@@ -62,6 +70,17 @@ final class ClassMaterial {
             case .pdf:   "doc.richtext"
             case .photo: "camera"
             case .paste: "doc.on.clipboard"
+            case .story: "book.pages"
+            case .link:  "link"
+            }
+        }
+
+        /// The kind a kept original implies: a PDF or a photo, else text.
+        static func forFile(_ fileName: String?) -> SourceKind {
+            switch fileName.map({ ($0 as NSString).pathExtension.lowercased() }) {
+            case "pdf": .pdf
+            case "jpg", "jpeg", "png": .photo
+            default: .paste
             }
         }
     }
@@ -69,6 +88,7 @@ final class ClassMaterial {
     // MARK: Derived
 
     var sourceKind: SourceKind { SourceKind(rawValue: sourceKindRaw) ?? .paste }
+    var originID: UUID? { originIDRaw.flatMap { UUID(uuidString: $0) } }
     var model: MLXModel? { modelRaw.flatMap { MLXModel(rawValue: $0) } }
 
     var glossaryDeckID: UUID? {

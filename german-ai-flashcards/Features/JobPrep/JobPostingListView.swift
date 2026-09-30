@@ -46,7 +46,6 @@ struct JobPostingListView: View {
         .themedListScreen()
         .navigationTitle("Job postings")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {

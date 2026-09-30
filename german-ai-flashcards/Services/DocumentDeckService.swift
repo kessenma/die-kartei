@@ -132,9 +132,11 @@ final class DocumentDeckService {
 
     // MARK: - Saving
 
-    /// The deck, from the rows that have both sides. Nil when none do.
+    /// The deck, from the rows that have both sides. Nil when none do. A document brought in from
+    /// outside is kept with the deck (`keeping`), so it can join a course as a handout later.
     @discardableResult
-    func save(title: String, rows: [VocabListRow], course: ClassCourse?, sourceLabel: String?) -> SavedDeck? {
+    func save(title: String, rows: [VocabListRow], course: ClassCourse?, sourceLabel: String?,
+              keeping source: DocumentDeckDraft? = nil) -> SavedDeck? {
         var seen = Set<String>()
         let vocab: [VocabCard] = rows.compactMap { row in
             guard row.isComplete else { return nil }
@@ -162,6 +164,10 @@ final class DocumentDeckService {
         )
         deck.generatorRaw = "document"
         deck.courseID = course?.id
+        if let source, source.keepsSource {
+            deck.sourceText = source.text
+            deck.sourceFile = source.fileData.flatMap { ClassMaterialStore.save($0, ext: source.fileExt) }
+        }
         modelContext.insert(deck)
         course?.updatedAt = .now
         try? modelContext.save()

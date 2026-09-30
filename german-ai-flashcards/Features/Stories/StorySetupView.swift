@@ -71,7 +71,6 @@ struct StorySetupView: View {
         .navigationTitle("New Story")
         .navigationBarTitleDisplayMode(.inline)
         .scrollDismissesKeyboard(.interactively)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .overlay {
             if service?.isRunning == true {
                 generatingOverlay

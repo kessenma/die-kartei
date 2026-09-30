@@ -59,7 +59,6 @@ struct BatchQueueView: View {
         .themedListScreen()
         .navigationTitle("Batch Queue")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
             if queuedJobs.count > 1 {
                 EditButton()

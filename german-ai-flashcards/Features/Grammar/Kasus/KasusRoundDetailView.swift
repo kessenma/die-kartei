@@ -69,7 +69,6 @@ struct KasusRoundDetailView: View {
         .themedListScreen()
         .navigationTitle("Runde · Round")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
     }
 
     private var isFinden: Bool { round.step == .find }

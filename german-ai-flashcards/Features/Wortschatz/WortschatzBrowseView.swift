@@ -104,7 +104,6 @@ struct WortschatzBrowseView: View {
         .searchable(text: $searchText, prompt: "Search words or translations")
         .navigationTitle("All Words")
         .navigationBarTitleDisplayMode(.large)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .onAppear {
             if wordTypes.isEmpty {
                 wordTypes = initialScope.wordTypes

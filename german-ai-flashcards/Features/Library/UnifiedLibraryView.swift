@@ -27,6 +27,14 @@ struct UnifiedLibraryView: View {
     @Environment(ActivityRouter.self) private var router
     @Environment(\.modelContext) private var modelContext
     @State private var deckForStats: SavedDeck?
+    /// The deck whose course is being chosen (the leading swipe's Course action).
+    @State private var deckForCourse: SavedDeck?
+
+    // Where each deck belongs and comes from, for the rows.
+    @Query(sort: \ClassCourse.sortOrder) private var courses: [ClassCourse]
+    @Query private var stories: [StudyStory]
+    @Query private var papers: [StudyPaper]
+    @Query private var handouts: [ClassMaterial]
 
     private var deckStore: DeckStore { DeckStore(modelContext: modelContext) }
     private var browsableDecks: [SavedDeck] { decks.filter(\.isBrowsableContent) }
@@ -58,6 +66,22 @@ struct UnifiedLibraryView: View {
             .sheet(item: $deckForStats) { deck in
                 DeckStatsSheet(deck: deck, sortedResults: deck.quizResults.sorted { $0.date > $1.date })
             }
+            .confirmationDialog(
+                "Which course is it for?",
+                isPresented: Binding(get: { deckForCourse != nil }, set: { if !$0 { deckForCourse = nil } }),
+                titleVisibility: .visible,
+                presenting: deckForCourse
+            ) { deck in
+                ForEach(courses.filter { !$0.isArchived && $0.id != deck.courseID }) { course in
+                    Button(course.name) { setCourse(course, for: deck) }
+                }
+                if let current = courses.first(where: { $0.id == deck.courseID }) {
+                    Button("Take it off \(current.name)", role: .destructive) { setCourse(nil, for: deck) }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: { deck in
+                Text("\(deck.topic) shows on the course's page under Deutschkurs. A deck is on one course at a time.")
+            }
         }
     }
 
@@ -73,6 +97,7 @@ struct UnifiedLibraryView: View {
                     description: Text("Generate vocabulary and it will be saved here automatically.")
                 )
             } else {
+                let links = DeckLinks(courses: courses, stories: stories, papers: papers, handouts: handouts)
                 DeckIconLegend()
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
@@ -81,7 +106,7 @@ struct UnifiedLibraryView: View {
                         Button {
                             router.launch(.cardDeck(deckStore.session(for: deck, style: modelManager.flashcardStyle)))
                         } label: {
-                            SavedDeckRow(deck: deck)
+                            SavedDeckRow(deck: deck, course: links.course(of: deck), source: links.source(of: deck))
                         }
                         .buttonStyle(.plain)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -125,13 +150,28 @@ struct UnifiedLibraryView: View {
                             }
                             .tint(.blue)
                         }
+                        // A course's own word deck stays on its course.
+                        if !courses.isEmpty, !links.isCourseOwnDeck(deck) {
+                            Button {
+                                deckForCourse = deck
+                            } label: {
+                                Label("Course", systemImage: "graduationcap")
+                            }
+                            .tint(ClassNotesTile.tint)
+                        }
                     }
                 }
                 .onDelete(perform: deleteDecks)
             }
         }
         .themedListScreen()
-        .contentMargins(.bottom, 120, for: .scrollContent)
+    }
+
+    private func setCourse(_ course: ClassCourse?, for deck: SavedDeck) {
+        deck.courseID = course?.id
+        course?.updatedAt = .now
+        try? modelContext.save()
+        deckForCourse = nil
     }
 
     private func deleteDecks(at offsets: IndexSet) {
@@ -143,6 +183,8 @@ struct UnifiedLibraryView: View {
                 DeckIllustrationService.shared.stop()
             }
             CardImageStore.deleteImages(for: deck.id)
+            // A handout made from the document has its own copy of the file.
+            ClassMaterialStore.delete(deck.sourceFile)
             modelContext.delete(deck)
         }
         try? modelContext.save()
@@ -184,7 +226,6 @@ struct UnifiedLibraryView: View {
             .themedListRow()
         }
         .themedListScreen()
-        .contentMargins(.bottom, 120, for: .scrollContent)
     }
 
 }
@@ -204,8 +245,59 @@ private struct DeckIconLegend: View {
     }
 }
 
+/// What the Library says about where a deck belongs and where it came from: its course, and the
+/// story, paper, scan or handout behind it. Built once per list render from four queries.
+private struct DeckLinks {
+    private let courseNames: [UUID: String]
+    private let courseOwnDecks: Set<UUID>
+    private let sources: [UUID: DeckSource]
+
+    init(courses: [ClassCourse], stories: [StudyStory], papers: [StudyPaper], handouts: [ClassMaterial]) {
+        courseNames = Dictionary(courses.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
+        courseOwnDecks = Set(courses.compactMap(\.deckID))
+        var sources: [UUID: DeckSource] = [:]
+        // A handout read with the deck says the least about where it came from, so it goes in
+        // first and a story or paper that made the deck overwrites it.
+        for handout in handouts {
+            if let id = handout.glossaryDeckID {
+                sources[id] = DeckSource(text: "Vocab for \u{201C}\(handout.title)\u{201D}", symbol: "doc.text")
+            }
+        }
+        for paper in papers {
+            if let id = paper.deckID {
+                sources[id] = DeckSource(text: "From \u{201C}\(paper.title)\u{201D}", symbol: paper.sourceSymbol)
+            }
+        }
+        for story in stories {
+            if let id = story.deckID {
+                sources[id] = DeckSource(text: "From the story \u{201C}\(story.title)\u{201D}", symbol: "book.pages")
+            }
+        }
+        self.sources = sources
+    }
+
+    func course(of deck: SavedDeck) -> String? {
+        deck.courseID.flatMap { courseNames[$0] }
+    }
+
+    func source(of deck: SavedDeck) -> DeckSource? {
+        sources[deck.id]
+    }
+
+    func isCourseOwnDeck(_ deck: SavedDeck) -> Bool {
+        courseOwnDecks.contains(deck.id)
+    }
+}
+
+private struct DeckSource {
+    let text: String
+    let symbol: String
+}
+
 private struct SavedDeckRow: View {
     let deck: SavedDeck
+    var course: String? = nil
+    var source: DeckSource? = nil
 
     private var latestResult: QuizResult? {
         deck.quizResults.max(by: { $0.date < $1.date })
@@ -218,6 +310,13 @@ private struct SavedDeckRow: View {
                     .font(.headline)
                 Spacer()
                 GeneratorBadge(deck: deck)
+            }
+            if course != nil || source != nil {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 10) { links }
+                    VStack(alignment: .leading, spacing: 2) { links }
+                }
+                .font(.caption)
             }
             HStack(spacing: 10) {
                 Label("\(deck.cards.count) cards", systemImage: "rectangle.stack")
@@ -268,6 +367,20 @@ private struct SavedDeckRow: View {
             .foregroundStyle(.tertiary)
         }
         .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private var links: some View {
+        if let course {
+            Label(course, systemImage: "graduationcap.fill")
+                .foregroundStyle(ClassNotesTile.tint)
+                .lineLimit(1)
+        }
+        if let source {
+            Label(source.text, systemImage: source.symbol)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
     }
 
     private func generationTimeLabel(_ deck: SavedDeck) -> String {

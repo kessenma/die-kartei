@@ -13,6 +13,8 @@ struct PhotoScanListView: View {
     var mlxService: MLXGenerationService
 
     @Query(sort: \StudyPaper.createdAt, order: .reverse) private var allPapers: [StudyPaper]
+    /// Handouts brought over from these, to say which course each went to.
+    @Query private var handouts: [ClassMaterial]
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appTheme) private var appTheme
 
@@ -85,7 +87,6 @@ struct PhotoScanListView: View {
         .themedListScreen()
         .navigationTitle("Scan German Text")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .onChange(of: photoPickerItem) { _, item in
             guard let item else { return }
             importError = nil
@@ -206,6 +207,9 @@ struct PhotoScanListView: View {
                     }
                 }
                 .font(.caption2).foregroundStyle(.tertiary)
+                if let courses = ClassMaterialOrigins.courseNames(handouts)[paper.id] {
+                    OnCourseLabel(courses: courses)
+                }
             }
         }
         .padding(.vertical, 2)

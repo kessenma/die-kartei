@@ -128,7 +128,6 @@ struct PlacementReviewView: View {
         }
         .navigationTitle("Your answers")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
             if !attempts.isEmpty, allItems.isEmpty == false {
                 ToolbarItem(placement: .principal) {

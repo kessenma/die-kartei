@@ -101,7 +101,14 @@ from `PhotoScanListView` to `Features/Shared/`; `PDFTextExtractor.pageImages(fro
 - **`ClassMaterialImportView`**: PDF (`fileImporter`; a `looksScanned` file goes through
   `ScannedPDFReader` with a page-by-page progress row), photo from the library or the camera
   (`PhotoOCRService`; the JPEG is the original), paste. All three → `ClassMaterialReviewView`
-  (title + text preview, "Attach to this class") → saved under the entry.
+  (title + text preview, "Attach to this class") → saved under the entry. A fourth door, *From the
+  app* (`ClassMaterialLibraryPicker`), copies in a text the app already has: a `StudyStory`
+  (`.story`, its lookups come along), a paper or link (`.pdf` / `.link`), a photo scan (`.photo`), or
+  the kept document of a document deck (`SavedDeck.sourceText`/`sourceFile`; the file is copied, not
+  shared). The deck that goes with it (story/paper `deckID`, or the document deck) becomes the
+  handout's `glossaryDeckID` and joins the course if no course has it. `ClassMaterial.originIDRaw`
+  records the source: the picker marks what the course already has, and Short Stories, Papers and
+  Photo Scans show the course a text went to (`ClassMaterialOrigins`, `OnCourseLabel`).
 - **`ClassMaterialDetailView`**: header (source pill, word count, entry, "Open the original" via
   Quick Look), the text surface (`JobPostingTextSurface` + `WordInspectorSheet`, built by
   `ClassWordInspector`), Unbekannte Wörter (speak, swipe to remove, Add all to the deck),
@@ -110,11 +117,21 @@ from `PhotoScanListView` to `Features/Shared/`; `PDFTextExtractor.pageImages(fro
   (`docs/DOCUMENT_DECKS.md`). *Translate the whole text* / *Read in English or side by side* →
   `HandoutTranslationReaderView`. Phrase selection goes through the inspector.
 - **`HandoutTranslationReaderView`**: the handout in Deutsch / Beide / English (segmented,
-  `handout.translation.mode`). Beide is side by side when `horizontalSizeClass == .regular`
-  (iPad), English above German otherwise. Both panes bind one `topID` through
-  `scrollPosition(id:anchor: .top)` over a `scrollTargetLayout`, so scrolling either moves the
-  other to the same sentence; a tap on a sentence sets it; the ⋯ menu's *Highlight the top
-  sentence* (`handout.translation.highlightTop`) tints that sentence in both panes. Without a
+  `handout.translation.mode`). Beide defaults to *Scroll together* (⋯ menu,
+  `handout.translation.scrollTogether`): ONE scroll view of sentence pairs, German beside English
+  when `horizontalSizeClass == .regular` (iPad), German over its English otherwise, so the two
+  cannot drift. Turned off, each language gets its own pane (side by side / English above German)
+  and the panes follow each other by sentence: both read `topID` through
+  `scrollPosition(id:anchor: .top)` over a `scrollTargetLayout`, but only the `leader` (the pane
+  last touched, from `onScrollPhaseChange`) writes it, so the follower's report after jumping
+  never pulls the leader back; when the leader comes to rest the follower `scrollTo`s the
+  sentence again (a far jump into unlaid lazy rows stops short). Every sentence must be able to
+  reach the top, so the last row gets `minHeight` = the scroll view's visible height (measured
+  with `onScrollGeometryChange`) instead of a tail spacer, which would overshoot into blank. The
+  German is `SelectableGermanText` per sentence with the handout page's inspector
+  (`ClassWordInspector`), vocab-list glossary and saved/looked-up marks: double-tap a word,
+  select a phrase. A single tap on a sentence (separate panes only) brings both to it; the ⋯
+  menu's *Highlight the top sentence* (`handout.translation.highlightTop`) tints it. Without a
   translation the screen offers a tutor picker (downloaded models) and *Translate N sentences*
   with progress and Stop; a stopped run resumes with *Continue translating*.
   `HandoutTranslationService` sends each paragraph as numbered sentences (batches of 8) and
@@ -133,7 +150,10 @@ A course can hold any number of decks; `SavedDeck.courseIDRaw` links them (addit
   off), `saveWords(of: entry)` (complete words only, marks `addedToDeck`), `saveAllLookups(for:)`.
 - **Decks from documents** — a vocab sheet or a handout turned into a deck (`docs/DOCUMENT_DECKS.md`),
   from the course page's *Add a flashcard deck* or a handout's *Make a deck from this handout*.
-- **Linked Library decks** — `CourseDeckLinkView`; swipe on the course page to unlink.
+- **Linked Library decks** — `CourseDeckLinkView`, or the Course swipe on a Library deck row (not
+  offered for a course's own word deck); swipe on the course page to unlink. Library deck rows show
+  their course and their source (story, paper, or the handout they are the vocab list for;
+  `DeckLinks` in `UnifiedLibraryView`).
 The course page lists them all; the hub lists every course-linked deck with its course.
 
 ## Debug launch arguments (DEBUG)
