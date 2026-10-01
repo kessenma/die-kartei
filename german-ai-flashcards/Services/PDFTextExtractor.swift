@@ -34,7 +34,7 @@ enum PDFTextExtractor {
         return Result(text: out, pageCount: doc.pageCount)
     }
 
-    #if canImport(UIKit)
+    #if canImport(UIKit) || os(macOS)
     /// The first `limit` pages rendered as images, `width` points wide, for OCR of a PDF that has
     /// no text layer (see `ScannedPDFReader`). Takes the file's bytes rather than its URL so the
     /// caller reads a security-scoped file once.

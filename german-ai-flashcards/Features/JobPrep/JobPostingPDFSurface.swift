@@ -275,4 +275,17 @@ final class JobReadingPDFView: PDFView {
     }
 }
 
+#else
+/// macOS: the saved-PDF surface isn't built yet, and `JobPosting.availableSurfaces` never offers it.
+struct JobPostingPDFSurface: View {
+    let url: URL
+    let decorations: JobReadingDecorations
+    let callbacks: JobReadingCallbacks
+    let accent: Color
+
+    var body: some View {
+        ContentUnavailableView("On iPhone and iPad", systemImage: "doc.richtext",
+                               description: Text("The saved copy opens on iPhone and iPad for now."))
+    }
+}
 #endif

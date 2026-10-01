@@ -25,6 +25,9 @@ German for identity words and headings, plain English for explanation.
 - `docs/ICLOUD_SYNC.md` — iCloud Sync on CKSyncEngine: why not SwiftData mirroring, the invariants
   (per-device counters, canonical ids, `cloudKitDatabase: .none`), merge rules, Development vs
   Production, the one-time schema deploy. Adding a field to a synced model means adding it to its codec.
+- `docs/MACOS.md` — the Mac app: the same target compiled for macOS, `App/MacCompat.swift` stand-ins,
+  Mac twins of the UIKit-wrapped views, what's hidden or different on the Mac. Wrap every
+  `import UIKit` in `#if canImport(UIKit)`, and keep the iOS build green.
 - `docs/FUTURE_FEATURES.md` — ideas not yet built.
 
 ## What's New maintenance

@@ -197,7 +197,7 @@ struct JobPostingClipperView: View {
     }
 
     @ViewBuilder private var webContent: some View {
-        #if canImport(UIKit)
+        #if canImport(UIKit) || os(macOS)
         WebViewContainer(webView: model.web.webView)
         #else
         Text("In-app browser is only available on iOS.")

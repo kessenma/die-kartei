@@ -15,6 +15,12 @@ struct SettingsHeader: View {
     @State private var shown = false
 
     var body: some View {
+        #if os(macOS)
+        // The Mac names the screen in the window's title bar (set where the pane is shown), next to
+        // a pane list that already shows its icon. Even an empty row would draw an empty box in a
+        // grouped Mac form, so the header draws nothing at all.
+        EmptyView()
+        #else
         HStack(spacing: 10) {
             Image(systemName: shown ? icon : "circle.dotted")
                 .foregroundStyle(.tint)
@@ -29,5 +35,6 @@ struct SettingsHeader: View {
         .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 8, trailing: 20))
         .listRowBackground(Color.clear)
         .onAppear { withAnimation(.snappy(duration: 0.3)) { shown = true } }
+        #endif
     }
 }

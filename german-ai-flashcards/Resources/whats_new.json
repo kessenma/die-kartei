@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "unreleased",
+      "highlights": [
+        {
+          "title": "Die Kartei für Mac · Die Kartei on Mac",
+          "detail": "Study on your Mac with the same decks, tutors and progress, kept in step with your iPhone and iPad through iCloud, in a window with a sidebar, menus and its own Settings.",
+          "symbol": "macbook"
+        }
+      ]
+    },
+    {
       "version": "1.6",
       "date": "2026-09-16",
       "highlights": [

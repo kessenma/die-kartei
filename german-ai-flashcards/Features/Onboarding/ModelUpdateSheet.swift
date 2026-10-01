@@ -121,7 +121,7 @@ struct ModelUpdateSheet: View {
             Image(systemName: "internaldrive")
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 2) {
-                Text("The old copy is still on this iPhone")
+                Text("The old copy is still on this \(ThisDevice.name)")
                     .font(.subheadline)
                     .fontWeight(.medium)
                 Text("\(sizeText) of it. The update is about the same size, and the old copy comes "

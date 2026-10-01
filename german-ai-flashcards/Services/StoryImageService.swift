@@ -2,7 +2,9 @@ import Foundation
 import CoreML
 import os
 import StableDiffusion
+#if canImport(UIKit)
 import UIKit
+#endif
 
 // MARK: - Tuning
 
@@ -10,7 +12,13 @@ nonisolated enum ImageGenConstants {
     /// Pair with `ImageGenModel.subfolder`: "original/compiled" wants GPU, the
     /// split_einsum_v2 variant wants .cpuAndNeuralEngine. GPU is the deliberate choice —
     /// it's the resource the continued-processing background task is actually granted.
+    /// The Mac is the exception: fp16 diffusion on its GPU renders solid black (a Metal
+    /// regression, not the model), and the Neural Engine draws the same weights correctly.
+    #if os(macOS)
+    static let computeUnits: MLComputeUnits = .cpuAndNeuralEngine
+    #else
     static let computeUnits: MLComputeUnits = .cpuAndGPU
+    #endif
     static let guidanceScale: Float = 7.5
     static let scheduler: StableDiffusionScheduler = .dpmSolverMultistepScheduler
     /// The palettized repo ships no SafetyChecker model, so safety stays disabled and the

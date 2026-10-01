@@ -50,7 +50,9 @@ enum ComposerLanguage: String, CaseIterable, Codable, Identifiable {
         }
     }
     #else
-    var isInstalled: Bool { false }
+    /// The Mac has no per-field keyboard language (input sources are system-wide), so there is no
+    /// missing keyboard to warn about.
+    var isInstalled: Bool { true }
     #endif
 }
 

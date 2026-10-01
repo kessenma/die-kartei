@@ -2,6 +2,7 @@
   // Deploy pipeline for Die Kartei.
   //   Run:  Cmd+Shift+B            -> TestFlight (default build task)
   //         Cmd+Shift+R            -> App Store (a user keybinding; see docs/DEPLOY_SETUP.md)
+  //         Cmd+Shift+M            -> TestFlight, macOS build (a user keybinding, same doc)
   //         Cmd+Shift+P > "Run Task" -> pick any of the below
   // Setup for a new machine: docs/DEPLOY_SETUP.md
   "version": "2.0.0",
@@ -36,6 +37,34 @@
       }
     },
     {
+      "label": "Deploy: Mac TestFlight",
+      "detail": "Archive for macOS, export a .pkg, upload, wait for processing, distribute to internal-die-Kartei",
+      "type": "shell",
+      "command": "python3 scripts/deploy.py --mac",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$swiftc"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      }
+    },
+    {
+      "label": "Deploy: Mac App Store (upload only, no submit)",
+      "detail": "Uploads the macOS build and attaches it to the Mac App Store version. Does NOT submit for review.",
+      "type": "shell",
+      "command": "python3 scripts/deploy.py release --mac",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$swiftc"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "clear": true
+      }
+    },
+    {
       "label": "Deploy: Preflight checks",
       "detail": "Auth, asc doctor, toolchain, signing identity, local vs live version. Read-only.",
       "type": "shell",
@@ -46,6 +75,7 @@
         "&& echo '── host macOS (trailing letter = beta host; restamped at archive) ──' && sw_vers -buildVersion",
         "&& (grep -q stamp-release-os.sh german-ai-flashcards.xcodeproj/project.pbxproj && echo 'stamp phase: wired' || echo 'stamp phase: MISSING (ITMS-90111 on a beta host)')",
         "&& echo '── signing ──' && security find-identity -v -p codesigning | grep 'Apple Distribution'",
+        "&& (security find-identity -v | grep -E 'Mac Installer Distribution|3rd Party Mac Developer Installer' || echo 'Mac installer identity: none local (automatic signing uses a cloud-managed one)')",
         "&& echo '── local version ──' && asc xcode version view --project german-ai-flashcards.xcodeproj --target 'Die Kartei' --configuration Release --output json",
         "&& echo '── recent builds ──' && asc builds list --app 6770390331 --sort -uploadedDate --limit 3 --processing-state all --output table"
       ],
@@ -56,7 +86,7 @@
     },
     {
       "label": "Deploy: Clean build artifacts",
-      "detail": "Removes .asc/artifacts (the .xcarchive and .ipa — hundreds of MB per build)",
+      "detail": "Removes .asc/artifacts (the .xcarchive, .ipa and .pkg — hundreds of MB per build)",
       "type": "shell",
       "command": "rm -rf .asc/artifacts && echo 'Removed .asc/artifacts'",
       "options": { "cwd": "${workspaceFolder}" },

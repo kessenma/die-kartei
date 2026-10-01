@@ -1,6 +1,8 @@
 import Foundation
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#endif
 import WebKit
 
 /// The job-posting clipper's draft: which suggested sections are in, which highlights were added,
@@ -337,6 +339,10 @@ final class JobPostingClipperModel: Identifiable {
     }
 
     private func printedPDF() -> Data? {
+        #if os(macOS)
+        // No print-formatter fallback on the Mac; `createPDF` is the only path there.
+        return nil
+        #else
         let renderer = UIPrintPageRenderer()
         renderer.addPrintFormatter(web.webView.viewPrintFormatter(), startingAtPageAt: 0)
         let page = CGRect(x: 0, y: 0, width: 595.2, height: 841.8)   // A4 in points
@@ -351,6 +357,7 @@ final class JobPostingClipperModel: Identifiable {
         }
         UIGraphicsEndPDFContext()
         return data.count > 1_024 ? data as Data : nil
+        #endif
     }
 
     func tearDown() {

@@ -151,7 +151,7 @@ struct ModelUpgradeNudge: View {
             tint: .purple,
             title: "Add pictures to your cards",
             message: "An optional \(ImageGenModel.current.downloadSizeLabel) download draws a picture "
-                   + "for each card, on your phone. Nothing is sent anywhere.",
+                   + "for each card, on your \(ThisDevice.name). Nothing is sent anywhere.",
             isDismissible: true,
             action: "Get the picture model"
         )

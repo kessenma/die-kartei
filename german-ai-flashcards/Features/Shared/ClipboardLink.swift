@@ -8,7 +8,7 @@ import UIKit
 /// while a link field is empty. (The Paper screens carry an older inline copy of this check.)
 enum ClipboardLink {
     @MainActor static func suggestion() -> String? {
-        #if canImport(UIKit)
+        #if canImport(UIKit) || os(macOS)
         let board = UIPasteboard.general
         if board.hasURLs, let url = board.url {
             return url.absoluteString

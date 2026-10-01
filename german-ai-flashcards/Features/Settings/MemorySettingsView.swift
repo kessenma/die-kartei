@@ -83,12 +83,21 @@ struct MemorySettingsView: View {
         }
     }
 
+    /// The first sentence under Right now: who sets the budget on this device.
+    private var budgetExplainer: String {
+        ThisDevice.isMac
+            ? "Die Kartei keeps itself to half of this Mac's memory, so the rest of your Mac stays responsive."
+            : "\(ThisDevice.system) gives an app only part of the device's memory, and closes it when it goes over."
+    }
+
     // MARK: - Right now
 
     private var nowSection: some View {
         Section {
             valueRow("Used by the app", mb: reading.footprintMB, symbol: "memorychip")
-            valueRow("Free before iOS closes it", mb: reading.availableMB, symbol: "arrow.down.to.line")
+            // macOS reports no per-app limit; there the reading is what's left of the app's own budget.
+            valueRow(ThisDevice.isMac ? "Free in the app's budget" : "Free before \(ThisDevice.system) closes it",
+                     mb: reading.availableMB, symbol: "arrow.down.to.line")
             valueRow("Budget on this device", mb: reading.totalMB, symbol: "gauge.with.dots.needle.33percent")
 
             ForEach(breakdown, id: \.name) { row in
@@ -114,8 +123,10 @@ struct MemorySettingsView: View {
         } header: {
             Text("Jetzt · Right now").themedSectionHeader()
         } footer: {
-            Text("iOS gives an app only part of the device's memory, and closes it when it goes over. The tutor is nearly all of what this app holds; the rows above show what else is sharing the space. MLX active \(reading.mlxActiveMB) MB, peak \(reading.mlxPeakMB) MB.")
+            Text("\(budgetExplainer) The tutor is nearly all of what this app holds; the rows above show what else is sharing the space. MLX active \(reading.mlxActiveMB) MB, peak \(reading.mlxPeakMB) MB.")
                 .font(.caption2)
+                .lineLimit(nil)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .themedListRow()
     }

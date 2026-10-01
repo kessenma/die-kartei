@@ -99,6 +99,11 @@ struct ContentView: View {
     /// Deep links into the Settings tab, so the Home tutor card and the upgrade nudges can point
     /// somewhere real instead of naming a screen and leaving the reader to find it.
     @State private var settingsRouter = SettingsRouter()
+    #if os(macOS)
+    /// Sidebar (the Mac default) or the iPhone's tab bar: View ▸ Navigation, or Settings ▸ Appearance.
+    @AppStorage(MacNavigationStyle.defaultsKey) private var navigationStyle: MacNavigationStyle = .sidebar
+    @Environment(\.openSettings) private var openSettings
+    #endif
 
     /// A retired model build still sitting in the hub cache, if this device has one. Item-driven so
     /// the sheet can never present before its payload is set, and nil for everyone who never had the
@@ -122,104 +127,7 @@ struct ContentView: View {
     private var navBarClearance: CGFloat { max(0, tabsSafeBottom - navBarTop) }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            ZStack {
-                HomeHubView(
-                    coordinator: coordinator,
-                    onGenerationComplete: {
-                        guard !coordinator.generatedCards.isEmpty else { return }
-                        pendingSelection = CardSelectionPayload(
-                            cards: coordinator.generatedCards,
-                            validationResults: coordinator.validationResults,
-                            draftImageID: coordinator.draftImageID,
-                            draftImages: coordinator.draftImages
-                        )
-                    },
-                    resetToken: homeResetToken
-                )
-                .opacity(selectedTab == .home ? 1 : 0)
-                .allowsHitTesting(selectedTab == .home)
-
-                if visitedTabs.contains(.library) {
-                    UnifiedLibraryView(
-                        modelManager: coordinator.modelManager,
-                        mlxService: coordinator.mlxService
-                    )
-                    .opacity(selectedTab == .library ? 1 : 0)
-                    .allowsHitTesting(selectedTab == .library)
-                }
-
-                if visitedTabs.contains(.settings) {
-                    SettingsView(
-                        modelManager: coordinator.modelManager,
-                        mlxService: coordinator.mlxService,
-                        resetToken: settingsResetToken,
-                        route: $settingsRouter.route
-                    )
-                    .opacity(selectedTab == .settings ? 1 : 0)
-                    .allowsHitTesting(selectedTab == .settings)
-                }
-            }
-            .onChange(of: selectedTab) { _, newTab in
-                visitedTabs.insert(newTab)
-                // Pressing Home always lands on the hub root, even when arriving from
-                // another tab with screens still pushed on Home's stack.
-                if newTab == .home { homeResetToken += 1 }
-            }
-            // The NavBar floats over the tabs, so the tabs stop at its top edge: every screen on
-            // every tab, pushed or root, ends above the bar with no margin of its own. Padding,
-            // not a safe-area inset: a NavigationStack stretches its screens to the window edge
-            // and takes the window's inset, so neither `.safeAreaInset` nor `.safeAreaPadding`
-            // out here ever reaches a pushed screen. Covers and sheets sit above the bar anyway.
-            .padding(.bottom, navBarClearance)
-            // The app-wide ground sits behind all three tabs at once, so switching tabs never
-            // crossfades the background. Each tab's own List still has to opt into showing it
-            // through (`.themedListScreen()`); on Klar this is the system grouped color either way.
-            // Applied after the padding, so it still runs under the bar to the screen edge.
-            .themedScreen()
-            // The padding's own frame, so the reading never depends on the padding: where the safe
-            // area ends, above the home indicator or the keyboard while one is up.
-            .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named(Self.shellSpace)).maxY } action: {
-                tabsSafeBottom = $0
-            }
-
-            VStack {
-                Spacer()
-
-                if let saveError {
-                    Text("Save failed: \(saveError)")
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .padding(.horizontal)
-                        .padding(.bottom, 4)
-                }
-
-                NavBar(
-                    selectedTab: $selectedTab,
-                    isGenerating: coordinator.isGenerating || BatchQueueService.shared.isRunning,
-                    isDownloading: coordinator.mlxService.isLoading,
-                    downloadProgress: coordinator.mlxService.downloadProgress,
-                    modelTheme: coordinator.mlxService.loadedModel?.theme,
-                    onReselect: { tab in
-                        // Re-tapping the active tab pops any pushed sub-screen back to
-                        // that tab's root view.
-                        switch tab {
-                        case .home: homeResetToken += 1
-                        case .settings: settingsResetToken += 1
-                        case .library: break
-                        }
-                    }
-                )
-                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named(Self.shellSpace)).minY } action: {
-                    navBarTop = $0
-                }
-            }
-            // The bar's column runs through the bottom safe area so the bar can sit on the screen
-            // edge rather than floating above the home indicator; the Spacer takes up the slack and
-            // NavBar keeps its own clearance from the indicator.
-            .ignoresSafeArea(edges: .bottom)
-        }
-        .coordinateSpace(.named(Self.shellSpace))
+        shell
         .overlay {
             if let pendingIllustration {
                 IllustratingDeckView(
@@ -697,6 +605,127 @@ struct ContentView: View {
         }
     }
 
+    // MARK: - Shells
+
+    /// The window's layout: on the Mac, the sidebar or (by choice) the iPhone's tab bar; on iPhone
+    /// and iPad, always the tab bar. Every sheet, cover and overlay above hangs off whichever shows.
+    @ViewBuilder
+    private var shell: some View {
+        #if os(macOS)
+        if navigationStyle == .sidebar {
+            MacSidebarShell(coordinator: coordinator, onGenerationComplete: handleGenerationComplete)
+        } else {
+            tabShell
+        }
+        #else
+        tabShell
+        #endif
+    }
+
+    private var tabShell: some View {
+        ZStack(alignment: .bottom) {
+            ZStack {
+                HomeHubView(
+                    coordinator: coordinator,
+                    onGenerationComplete: handleGenerationComplete,
+                    resetToken: homeResetToken
+                )
+                .opacity(selectedTab == .home ? 1 : 0)
+                .allowsHitTesting(selectedTab == .home)
+
+                if visitedTabs.contains(.library) {
+                    UnifiedLibraryView(
+                        modelManager: coordinator.modelManager,
+                        mlxService: coordinator.mlxService
+                    )
+                    .opacity(selectedTab == .library ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .library)
+                }
+
+                if visitedTabs.contains(.settings) {
+                    SettingsView(
+                        modelManager: coordinator.modelManager,
+                        mlxService: coordinator.mlxService,
+                        resetToken: settingsResetToken,
+                        route: $settingsRouter.route
+                    )
+                    .opacity(selectedTab == .settings ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .settings)
+                }
+            }
+            .onChange(of: selectedTab) { _, newTab in
+                visitedTabs.insert(newTab)
+                // Pressing Home always lands on the hub root, even when arriving from
+                // another tab with screens still pushed on Home's stack.
+                if newTab == .home { homeResetToken += 1 }
+            }
+            // The NavBar floats over the tabs, so the tabs stop at its top edge: every screen on
+            // every tab, pushed or root, ends above the bar with no margin of its own. Padding,
+            // not a safe-area inset: a NavigationStack stretches its screens to the window edge
+            // and takes the window's inset, so neither `.safeAreaInset` nor `.safeAreaPadding`
+            // out here ever reaches a pushed screen. Covers and sheets sit above the bar anyway.
+            .padding(.bottom, navBarClearance)
+            // The app-wide ground sits behind all three tabs at once, so switching tabs never
+            // crossfades the background. Each tab's own List still has to opt into showing it
+            // through (`.themedListScreen()`); on Klar this is the system grouped color either way.
+            // Applied after the padding, so it still runs under the bar to the screen edge.
+            .themedScreen()
+            // The padding's own frame, so the reading never depends on the padding: where the safe
+            // area ends, above the home indicator or the keyboard while one is up.
+            .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named(Self.shellSpace)).maxY } action: {
+                tabsSafeBottom = $0
+            }
+
+            VStack {
+                Spacer()
+
+                if let saveError {
+                    Text("Save failed: \(saveError)")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding(.horizontal)
+                        .padding(.bottom, 4)
+                }
+
+                NavBar(
+                    selectedTab: $selectedTab,
+                    isGenerating: coordinator.isGenerating || BatchQueueService.shared.isRunning,
+                    isDownloading: coordinator.mlxService.isLoading,
+                    downloadProgress: coordinator.mlxService.downloadProgress,
+                    modelTheme: coordinator.mlxService.loadedModel?.theme,
+                    onReselect: { tab in
+                        // Re-tapping the active tab pops any pushed sub-screen back to
+                        // that tab's root view.
+                        switch tab {
+                        case .home: homeResetToken += 1
+                        case .settings: settingsResetToken += 1
+                        case .library: break
+                        }
+                    }
+                )
+                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named(Self.shellSpace)).minY } action: {
+                    navBarTop = $0
+                }
+            }
+            // The bar's column runs through the bottom safe area so the bar can sit on the screen
+            // edge rather than floating above the home indicator; the Spacer takes up the slack and
+            // NavBar keeps its own clearance from the indicator.
+            .ignoresSafeArea(edges: .bottom)
+        }
+        .coordinateSpace(.named(Self.shellSpace))
+    }
+
+    /// A generation finished: hand its cards to the selection sheet.
+    private func handleGenerationComplete() {
+        guard !coordinator.generatedCards.isEmpty else { return }
+        pendingSelection = CardSelectionPayload(
+            cards: coordinator.generatedCards,
+            validationResults: coordinator.validationResults,
+            draftImageID: coordinator.draftImageID,
+            draftImages: coordinator.draftImages
+        )
+    }
+
     /// Routes first launch to the onboarding flow, once, ever.
     ///
     /// This used to fork on the legacy flags to keep a half-finished old flow — hero intro seen,
@@ -770,6 +799,15 @@ struct ContentView: View {
     /// body pass — too late. Nothing here touches `settingsResetToken`: bumping it would give the
     /// stack a fresh identity and throw the push away.
     private func showSettingsRoute() {
+        #if os(macOS)
+        // With the sidebar, Settings is its own window: open it on the pane that was asked for.
+        if navigationStyle == .sidebar, let route = settingsRouter.route {
+            MacSettingsSelection.shared.pane = SettingsPane(route: route)
+            settingsRouter.route = nil
+            openSettings()
+            return
+        }
+        #endif
         guard settingsRouter.route != nil else { return }
         visitedTabs.insert(.settings)
         selectedTab = .settings

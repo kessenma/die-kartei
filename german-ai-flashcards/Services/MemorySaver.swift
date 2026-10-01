@@ -2,7 +2,9 @@ import Foundation
 import os
 import MLX
 import MLXLMCommon
+#if canImport(UIKit)
 import UIKit
+#endif
 
 // MARK: - Memory Saver
 
@@ -205,7 +207,7 @@ final class MemoryPressureMonitor {
                 level: .elevated,
                 title: governed ? "Managing memory" : "Memory is running low",
                 message: governed
-                    ? "This iPhone is near its limit, so answers may come out shorter than usual."
+                    ? "This \(ThisDevice.name) is near its limit, so answers may come out shorter than usual."
                     : "Closing other apps can help. Answers will stop early if memory runs out.",
                 isGoverned: governed
             ))
@@ -233,13 +235,13 @@ final class MemoryPressureMonitor {
         MemoryDiagnostics.record(
             .interruptedLoad,
             title: "\(model.rawValue) never finished loading last time",
-            detail: "The app stopped while the weights were being read into memory — on a device this model is big for, that is iOS reclaiming the app."
+            detail: "The app stopped while the weights were being read into memory — on a device this model is big for, that is \(ThisDevice.system) reclaiming the app."
         )
         show(Notice(
             level: .elevated,
             title: "\(model.rawValue) didn't finish loading",
             message: "The app closed while loading it last time, which usually means memory ran "
-                + "out. A model sized for this iPhone loads without the risk.",
+                + "out. A model sized for this \(ThisDevice.name) loads without the risk.",
             isGoverned: false
         ))
     }
@@ -249,7 +251,7 @@ final class MemoryPressureMonitor {
         logger.warning("System memory warning — available=\(MemoryBudget.availableMB, privacy: .public) MB")
         // Recorded before anything is freed, so the row shows what was being held at the moment
         // iOS complained.
-        MemoryDiagnostics.record(.memoryWarning, title: "iOS memory warning")
+        MemoryDiagnostics.record(.memoryWarning, title: "\(ThisDevice.system) memory warning")
         MemorySaver.releaseCaches()
         // No-op mid-generation — a run in flight holds its own reference, so dropping ours frees
         // nothing and only costs a reload. It's the idle case this is for: an app holding weights
@@ -263,7 +265,7 @@ final class MemoryPressureMonitor {
         highestThisRun = .critical
         show(Notice(
             level: .critical,
-            title: "iPhone is low on memory",
+            title: "\(ThisDevice.name) is low on memory",
             message: "The app freed what it could. Generation will stop early if it stays this low.",
             isGoverned: MemorySaver.mode != .off
         ))
@@ -287,7 +289,7 @@ final class MemoryPressureMonitor {
             await LocalNotificationService.post(
                 id: "memory-pressure",
                 title: "Paused to save memory",
-                body: "This iPhone ran low on memory, so the run stopped early. Open the app to pick up where it left off."
+                body: "This \(ThisDevice.name) ran low on memory, so the run stopped early. Open the app to pick up where it left off."
             )
         }
     }

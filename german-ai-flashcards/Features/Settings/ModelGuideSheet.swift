@@ -34,14 +34,14 @@ struct ModelGuideSheet: View {
                     Text("The German tutors")
                         .themedSectionHeader()
                 } footer: {
-                    Text("If your phone runs one of these, use it. All four were fine-tuned on the same German material for this app, on the parts learners actually get wrong: verbs with prepositions, separable and reflexive verbs, da-/wo-compounds, relative pronouns, Konjunktiv II. On the app's own 203-item test the E4B tutor scores 90%, the E2B 83%, the Granite 3B 81%, and the Granite 2B 75%. They differ in download size and memory, not in what they were taught, so pick the largest one your phone runs comfortably. They're also trained to correct you without inventing mistakes you didn't make, which is what makes conversation practice worth trusting.")
+                    Text("If your \(ThisDevice.name) runs one of these, use it. All four were fine-tuned on the same German material for this app, on the parts learners actually get wrong: verbs with prepositions, separable and reflexive verbs, da-/wo-compounds, relative pronouns, Konjunktiv II. On the app's own 203-item test the E4B tutor scores 90%, the E2B 83%, the Granite 3B 81%, and the Granite 2B 75%. They differ in download size and memory, not in what they were taught, so pick the largest one your \(ThisDevice.name) runs comfortably. They're also trained to correct you without inventing mistakes you didn't make, which is what makes conversation practice worth trusting.")
                 }
                 .themedListRow()
 
                 Section {
                     GuideRow(model: .appleIntelligence, badge: "No download", badgeColor: .secondary)
                 } header: {
-                    Text("Built in to iOS")
+                    Text("Built in to \(ThisDevice.system)")
                         .themedSectionHeader()
                 } footer: {
                     Text("Apple's on-device model, on phones that support it. Nothing to download and it starts instantly, but it's weaker at German than the tutors: 60% on the same test, 0 of 15 on da-/wo-compounds, and it flags about one already-correct sentence in six as wrong. Good for quick vocabulary work while a tutor downloads; for correction practice, use a tutor.")

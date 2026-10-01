@@ -63,6 +63,21 @@ struct PrepositionCardsView: View {
                     VStack(spacing: 0) {
                         sceneCanvas(height: layout.scene)
 
+                        #if os(macOS)
+                        // The Mac has no page-style TabView (it would draw a row of empty tabs):
+                        // one card at a time, moved by the pager below or the arrow keys.
+                        if cards.indices.contains(index) {
+                            PrepositionCard(
+                                preposition: cards[index],
+                                height: layout.card,
+                                isFlipped: $isFlipped
+                            )
+                            .padding(.vertical, Self.cardPagePadding / 2)
+                            .id(cards[index].word)
+                            .transition(.opacity)
+                            .onChange(of: index) { isFlipped = false }
+                        }
+                        #else
                         TabView(selection: $index) {
                             ForEach(Array(cards.enumerated()), id: \.element.word) { position, prep in
                                 PrepositionCard(
@@ -77,8 +92,21 @@ struct PrepositionCardsView: View {
                         .tabViewStyle(.page(indexDisplayMode: .never))
                         .id(deckIdentity)
                         .onChange(of: index) { isFlipped = false }
+                        #endif
                     }
                 }
+                #if os(macOS)
+                .focusable()
+                .focusEffectDisabled()
+                .onKeyPress(.leftArrow) {
+                    withAnimation { index = max(0, index - 1) }
+                    return .handled
+                }
+                .onKeyPress(.rightArrow) {
+                    withAnimation { index = min(cards.count - 1, index + 1) }
+                    return .handled
+                }
+                #endif
 
                 pager
             }

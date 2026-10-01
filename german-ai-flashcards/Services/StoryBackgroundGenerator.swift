@@ -1,4 +1,6 @@
+#if canImport(BackgroundTasks)
 import BackgroundTasks
+#endif
 import Foundation
 import os
 

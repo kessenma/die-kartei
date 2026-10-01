@@ -23,7 +23,7 @@ struct JobContextInfoSheet: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } header: {
-                    Text("\(model.rawValue) on this phone")
+                    Text("\(model.rawValue) on this \(ThisDevice.name)")
                 }
 
                 Section {

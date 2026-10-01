@@ -36,10 +36,10 @@ enum JobContextBudget {
         "\(used.formatted()) / \(cap.formatted())"
     }
 
-    /// Why this tutor gets the cap it does on this phone, for the info sheet.
+    /// Why this tutor gets the cap it does on this device, for the info sheet.
     static func reason(for model: MLXModel) -> String {
         if MemorySaver.isActive(for: model) {
-            return "Memory Saver is on for \(model.rawValue) on this phone. It keeps the tutor's memory of the conversation to about a thousand words, so the posting is trimmed to leave room for the interview itself."
+            return "Memory Saver is on for \(model.rawValue) on this \(ThisDevice.name). It keeps the tutor's memory of the conversation to about a thousand words, so the posting is trimmed to leave room for the interview itself."
         }
         switch model {
         case .appleIntelligence:

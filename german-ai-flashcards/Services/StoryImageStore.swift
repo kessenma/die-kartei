@@ -1,4 +1,6 @@
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// Where generated story illustrations live on disk:
 /// `Application Support/StoryImages/<storyUUID>/00.png`, `01.png`, …

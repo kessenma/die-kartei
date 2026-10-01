@@ -228,7 +228,9 @@ struct BatchQueueView: View {
                 if coordinator.isGenerating {
                     Text("A flashcard generation is already running. The queue can start once it finishes.")
                 } else {
-                    Text("Rough estimate: about \(timeLabel(totalEstimateSeconds)). You can leave the app while it runs; iOS keeps a progress bar going. Plug the phone in for a long queue.")
+                    Text("Rough estimate: about \(timeLabel(totalEstimateSeconds)). " + (ThisDevice.isMac
+                         ? "Keep the app open while it runs; your Mac stays awake until the queue is done."
+                         : "You can leave the app while it runs; iOS keeps a progress bar going. Plug the phone in for a long queue."))
                 }
             }
         }

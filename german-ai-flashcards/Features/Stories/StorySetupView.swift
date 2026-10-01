@@ -1,7 +1,11 @@
 import SwiftUI
 import SwiftData
+#if canImport(BackgroundTasks)
 import BackgroundTasks
+#endif
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// Configure and generate a new short story. Gated to the in-house German tutors (any of them —
 /// see ``StoryStudyService/eligibleModels``): the screen leads with which tutor is writing and

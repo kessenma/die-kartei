@@ -1,4 +1,6 @@
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// The handful of device and build facts every diagnostic surface wants: the feedback form's
 /// pre-filled bug report, the memory log's header, and the app-update check in

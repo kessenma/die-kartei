@@ -32,7 +32,7 @@ struct ReminderSettingsView: View {
                                 Text("Notifications are turned off for this app")
                                     .font(.subheadline)
                                     .fontWeight(.semibold)
-                                Text("Reminders can't be delivered until you allow notifications in iOS Settings.")
+                                Text("Reminders can't be delivered until you allow notifications in \(ThisDevice.isMac ? "System Settings ▸ Notifications" : "iOS Settings").")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)

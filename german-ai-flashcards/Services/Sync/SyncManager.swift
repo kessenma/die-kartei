@@ -2,7 +2,9 @@ import CloudKit
 import CoreData
 import Foundation
 import SwiftData
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// App-level owner of iCloud Sync: the on/off setting, the iCloud account, and the coordinator +
 /// CloudKit transport for the app's store. The iCloud Sync screen reads everything from here.
@@ -134,10 +136,19 @@ final class SyncManager {
 
     /// Foreground: push anything saved while away, then fetch (pushes can be dropped or late).
     func appBecameActive() async {
+        #if os(macOS)
+        // The Mac turns active on every app switch; a full send-and-fetch each time is wasted work.
+        if let last = lastActivationSync, Date().timeIntervalSince(last) < 60 { return }
+        lastActivationSync = Date()
+        #endif
         await refreshAccount()
         storageFull = false
         await coordinator?.syncNow()
     }
+
+    #if os(macOS)
+    private var lastActivationSync: Date?
+    #endif
 
     /// Background: make sure the latest edits are queued before the app is suspended.
     func appWillResignActive() {

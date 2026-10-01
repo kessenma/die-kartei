@@ -151,7 +151,7 @@ struct ImageGenerationSection: View {
                 .disabled(!ImageGenPreview.isAvailable)
             Text(ImageGenPreview.isAvailable
                  ? "The generating screen shows the real picture appearing instead of a stand-in animation. Costs a few seconds a picture."
-                 : "Needs more memory than this iPhone has to spare while drawing. The generating screen shows an animation instead.")
+                 : "Needs more memory than this \(ThisDevice.name) has to spare while drawing. The generating screen shows an animation instead.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

@@ -4,6 +4,16 @@ import SwiftUI
 /// device is signed into. This screen says whether it's working, lets the learner sync or repair
 /// now, and turns it off or deletes the iCloud copy.
 struct ICloudSyncSettingsView: View {
+    #if os(macOS)
+    private static let settingsPath = "System Settings ▸ your name ▸ iCloud"
+    private static let manageStorage = "Manage"
+    private static let openSettingsTitle = "Open System Settings"
+    #else
+    private static let settingsPath = "Settings ▸ your name ▸ iCloud"
+    private static let manageStorage = "Manage Account Storage"
+    private static let openSettingsTitle = "Open Settings"
+    #endif
+
     private var sync: SyncManager { SyncManager.shared }
     @Environment(\.openURL) private var openURL
     @State private var confirmingDelete = false
@@ -28,7 +38,7 @@ struct ICloudSyncSettingsView: View {
                     .font(.caption)
                 #endif
             } footer: {
-                Text("Your cards, progress, streak and study history follow you to every iPhone and iPad signed in to the same Apple Account. It's stored in your own iCloud, not on a server of ours.")
+                Text("Your cards, progress, streak and study history follow you to every iPhone, iPad and Mac signed in to the same Apple Account. It's stored in your own iCloud, not on a server of ours.")
             }
             .themedListRow()
 
@@ -86,9 +96,9 @@ struct ICloudSyncSettingsView: View {
             .themedListRow()
 
             Section {
-                Text("• Sign in to the same Apple Account on each device.\n• In Settings ▸ your name ▸ iCloud, make sure Die Kartei is allowed.\n• Open the app on the other device so it can send its changes.")
+                Text("• Sign in to the same Apple Account on each device.\n• In \(Self.settingsPath), make sure Die Kartei is allowed.\n• Open the app on the other device so it can send its changes.")
                     .font(.footnote)
-                Button("Open Settings") {
+                Button(Self.openSettingsTitle) {
                     if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                 }
             } header: {
@@ -218,7 +228,7 @@ struct ICloudSyncSettingsView: View {
         } header: {
             Text(storage.isEmpty ? "What syncs" : "In your iCloud").themedSectionHeader()
         } footer: {
-            Text("This lives in Die Kartei's private iCloud database, not in iCloud Drive, so it doesn't show up in the Files app. To see its size or remove it: Settings ▸ your name ▸ iCloud ▸ Manage Account Storage ▸ Die Kartei. Downloaded models, voices, settings and the crash log stay on each device.")
+            Text("This lives in Die Kartei's private iCloud database, not in iCloud Drive, so it doesn't show up in the Files app. To see its size or remove it: \(Self.settingsPath) ▸ \(Self.manageStorage) ▸ Die Kartei. Downloaded models, voices, settings and the crash log stay on each device.")
         }
         .themedListRow()
     }

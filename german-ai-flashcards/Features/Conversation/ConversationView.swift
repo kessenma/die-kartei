@@ -666,7 +666,7 @@ private struct AssistantMessageView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 VStack(alignment: .leading, spacing: 8) {
-                    #if canImport(UIKit)
+                    #if canImport(UIKit) || os(macOS)
                     SelectableGermanText(
                         text: message.text,
                         textStyle: .title3,
@@ -721,7 +721,7 @@ private struct AssistantMessageView: View {
                         }
                     }
                     ActionIcon(system: "doc.on.doc", tint: theme.accent) {
-                        #if canImport(UIKit)
+                        #if canImport(UIKit) || os(macOS)
                         UIPasteboard.general.string = message.text
                         #endif
                     }
@@ -772,7 +772,7 @@ private struct UserMessageView: View {
             HStack {
                 Spacer(minLength: 40)
                 Group {
-                    #if canImport(UIKit)
+                    #if canImport(UIKit) || os(macOS)
                     // No "Save phrase" here — your own words aren't "heard in the wild" phrases.
                     SelectableGermanText(
                         text: message.text,
@@ -909,7 +909,7 @@ private struct CorrectionCard: View {
     /// The corrected German — tap a word to inspect it, or select a span to translate / save it.
     @ViewBuilder
     private var correctedGermanView: some View {
-        #if canImport(UIKit)
+        #if canImport(UIKit) || os(macOS)
         SelectableGermanText(
             text: corrected,
             textStyle: .callout,
@@ -1551,7 +1551,7 @@ private struct HintCard: View {
                     if index > 0 { Divider() }
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            #if canImport(UIKit)
+                            #if canImport(UIKit) || os(macOS)
                             SelectableGermanText(
                                 text: h.german,
                                 textStyle: .callout,

@@ -122,6 +122,7 @@ private struct JobPostingPDFScreen: View {
     }
 }
 
+#if canImport(UIKit)
 private struct PDFKitView: UIViewRepresentable {
     let url: URL
 
@@ -141,3 +142,24 @@ private struct PDFKitView: UIViewRepresentable {
         }
     }
 }
+#else
+private struct PDFKitView: NSViewRepresentable {
+    let url: URL
+
+    func makeNSView(context: Context) -> PDFView {
+        let view = PDFView()
+        view.autoScales = true
+        view.displayMode = .singlePageContinuous
+        view.displayDirection = .vertical
+        view.backgroundColor = .windowBackgroundColor
+        view.document = PDFDocument(url: url)
+        return view
+    }
+
+    func updateNSView(_ nsView: PDFView, context: Context) {
+        if nsView.document?.documentURL != url {
+            nsView.document = PDFDocument(url: url)
+        }
+    }
+}
+#endif

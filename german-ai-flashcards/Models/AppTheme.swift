@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#endif
 
 // MARK: - AppTheme
 
@@ -42,7 +44,7 @@ nonisolated enum AppTheme: String, CaseIterable, Identifiable {
     /// One-liner shown under the label on the picker tile.
     var subtitle: String {
         switch self {
-        case .klar:      "The clean iOS look"
+        case .klar:      "The clean \(ThisDevice.system) look"
         case .sanft:     "Warm and cozy"
         case .kritzel:   "Hand-drawn on ruled paper"
         case .grundform: "Geometric, primary colors"

@@ -132,7 +132,7 @@ struct WebClipperView: View {
     }
 
     private func checkClipboard() {
-        #if canImport(UIKit)
+        #if canImport(UIKit) || os(macOS)
         let board = UIPasteboard.general
         if board.hasURLs, let url = board.url {
             pasteSuggestion = url.absoluteString
@@ -146,7 +146,7 @@ struct WebClipperView: View {
     }
 
     @ViewBuilder private var webContent: some View {
-        #if canImport(UIKit)
+        #if canImport(UIKit) || os(macOS)
         WebViewContainer(webView: model.webView)
         #else
         Text("In-app browser is only available on iOS.")
@@ -180,6 +180,12 @@ struct WebViewContainer: UIViewRepresentable {
     let webView: WKWebView
     func makeUIView(context: Context) -> WKWebView { webView }
     func updateUIView(_ uiView: WKWebView, context: Context) {}
+}
+#else
+struct WebViewContainer: NSViewRepresentable {
+    let webView: WKWebView
+    func makeNSView(context: Context) -> WKWebView { webView }
+    func updateNSView(_ nsView: WKWebView, context: Context) {}
 }
 #endif
 

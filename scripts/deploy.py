@@ -3,11 +3,13 @@
 a dated, auto-pruned log.
 
 Usage:
-  python3 scripts/deploy.py            # -> TestFlight
-  python3 scripts/deploy.py release    # -> App Store (uploaded, NOT submitted)
+  python3 scripts/deploy.py                  # -> TestFlight
+  python3 scripts/deploy.py release          # -> App Store (uploaded, NOT submitted)
+  python3 scripts/deploy.py --mac            # -> TestFlight, macOS build
+  python3 scripts/deploy.py release --mac    # -> Mac App Store (uploaded, NOT submitted)
 
 Logs are written to:
-  build-logs/<deploy-beta|deploy-release>/YYYY-MM-DD/<type>-HH-MM-SS.log
+  build-logs/<deploy-beta|deploy-release>[-mac]/YYYY-MM-DD/<type>-HH-MM-SS.log
 Only the 10 most recent logs per type are retained (older ones, and any empty
 date folders, are pruned before each run).
 
@@ -54,6 +56,14 @@ with the stamped file. The rendered entry is the TestFlight "What to Test" text;
 `release` refuses to ship a version with no entry, refreshes its date to today,
 and after the upload writes the same text into App Store Connect's What's New
 (en-US). Commit the stamped file afterwards.
+
+macOS (--mac): the same target archived for macOS and exported as a signed .pkg
+(ExportOptions-macOS.plist), uploaded with `asc builds upload --pkg`, because asc's
+local-build mode only produces IPAs. Same version, guards and What's New as iOS; the
+Mac is the same app record (universal purchase). One build number never names two
+binaries: every deploy takes the next number above BOTH platforms' builds. `release
+--mac` creates the macOS App Store version if it's missing and attaches the build, but
+leaves the Mac product page (description, screenshots) to App Store Connect for now.
 
 Product page: everything the App Store shows lives under AppStore/ — the description,
 keywords and URLs as one file per field in AppStore/metadata/<locale>/
@@ -135,6 +145,7 @@ DEFAULT_GROUP = "internal-die-Kartei"  # also: external-die-Kartei
 # export; the resulting IPA is authenticated by "Apple Distribution: Kyle
 # Essenmacher (RHPLRY9X9P)" with an App Store profile (no devices).
 EXPORT_OPTIONS = ROOT / "ExportOptions.plist"
+EXPORT_OPTIONS_MAC = ROOT / "ExportOptions-macOS.plist"
 
 # Xcode's automatic signing normally needs a signed-in Apple ID account. The
 # GUI can't be launched on macOS 27 beta, so authenticate with the same App
@@ -143,10 +154,13 @@ ASC_KEY_PATH = Path(os.environ.get("ASC_KEY_PATH", Path.home() / ".asc" / "AuthK
 ASC_KEY_ID = "24JDJGBV9T"
 ASC_ISSUER_ID = "5e67a835-18f8-47a8-aa06-e1a43e9c5c44"
 
-mode = sys.argv[1] if len(sys.argv) > 1 else "beta"
+MAC = "--mac" in sys.argv[1:]
+_positional = [a for a in sys.argv[1:] if a != "--mac"]
+mode = _positional[0] if _positional else "beta"
 if mode not in ("beta", "release"):
-    sys.exit(f"Unknown mode {mode!r} — expected 'beta' or 'release'.")
-log_dir_name = "deploy-release" if mode == "release" else "deploy-beta"
+    sys.exit(f"Unknown mode {mode!r} — expected 'beta' or 'release' (optionally with --mac).")
+PLATFORM = "MAC_OS" if MAC else "IOS"
+log_dir_name = ("deploy-release" if mode == "release" else "deploy-beta") + ("-mac" if MAC else "")
 
 _logf = None      # run log handle, set in main()
 _log_path = None  # run log path, set in main()
@@ -202,7 +216,11 @@ def asc(*args, parse=True, check=True):
 
 def asc_stream(*args):
     """Run a long `asc` command, teeing merged output live. Returns exit code."""
-    cmd = ["asc", *args]
+    return stream(["asc", *args])
+
+
+def stream(cmd):
+    """Run a long command, teeing merged output live. Returns exit code."""
     emit(f"$ {' '.join(cmd)}\n")
     proc = subprocess.Popen(
         cmd,
@@ -327,11 +345,40 @@ def report_binary_stamps(version, build):
         log("⚠️", f"Couldn't read Info.plist from {ipa.name} ({e}); skipping stamp check.")
         return
 
+    _report_stamps(infos, app_name)
+
+
+def report_archive_stamps(archive):
+    """The macOS twin of report_binary_stamps: the same checks, read from the .xcarchive."""
+    apps = sorted((archive / "Products" / "Applications").glob("*.app"))
+    if not apps:
+        log("⚠️", f"No app inside {archive.name}; skipping stamp check.")
+        return
+    app = apps[0]
+    infos = {}
+    for plist in sorted(app.rglob("Info.plist")):
+        try:
+            infos[str(plist.relative_to(app.parent))] = plistlib.loads(plist.read_bytes())
+        except Exception:  # noqa: BLE001 - diagnostics only
+            continue
+    app_name = f"{app.name}/Contents/Info.plist"
+    if app_name not in infos:
+        log("⚠️", f"No Info.plist in {app.name}; skipping stamp check.")
+        return
+    # Only the app and its nested bundles that Xcode stamps (resource bundles carry the key too).
+    infos = {n: i for n, i in infos.items() if "BuildMachineOSBuild" in i or n == app_name}
+    _report_stamps(infos, app_name)
+
+
+def _report_stamps(infos, app_name):
+    """Log each bundle's toolchain stamps and flag a beta one, or a nested version mismatch."""
     app_info = infos[app_name]
 
     for name, info in infos.items():
-        # "Die Kartei.app" for the app, "Die Kartei Keyboard.appex" for an extension.
-        bundle = name.rsplit("/", 2)[-2]
+        # "Die Kartei.app" for the app, "Die Kartei Keyboard.appex" for an extension. A Mac
+        # bundle's plist sits one level deeper, in Contents/.
+        parts = name.split("/")
+        bundle = parts[-3] if len(parts) >= 3 and parts[-2] == "Contents" else parts[-2]
         stamps = {k: str(info.get(k, "?")) for k in ("DTXcodeBuild", "DTSDKBuild", "BuildMachineOSBuild")}
         summary = ", ".join(f"{k}={v}" for k, v in stamps.items())
         # The seed-suffix rule holds for Xcode and macOS builds, but NOT for SDK builds:
@@ -369,11 +416,21 @@ def ensure_signing():
             "No 'Apple Distribution' identity in the keychain — archiving will fail.\n"
             "   Import the distribution .p12; see docs/DEPLOY_SETUP.md section 4."
         )
-    if not EXPORT_OPTIONS.exists():
-        die(f"Missing {EXPORT_OPTIONS.name} — required to stop Xcode rewriting the build number.")
+    options = EXPORT_OPTIONS_MAC if MAC else EXPORT_OPTIONS
+    if not options.exists():
+        die(f"Missing {options.name} — required to stop Xcode rewriting the build number.")
+    if MAC:
+        # The .pkg is signed with an installer identity. Automatic signing can use a cloud-managed
+        # one, so a missing local certificate is a warning, not a stop.
+        installer = subprocess.run(
+            ["security", "find-identity", "-v"], capture_output=True, text=True,
+        ).stdout
+        if not re.search(r"(Mac Installer Distribution|3rd Party Mac Developer Installer)", installer):
+            log("⚠️", "No 'Mac Installer Distribution' identity in the keychain; relying on "
+                      "cloud-managed signing for the .pkg (docs/DEPLOY_SETUP.md).")
     if not ASC_KEY_PATH.exists():
         die(f"App Store Connect API key not found at {ASC_KEY_PATH}; see docs/DEPLOY_SETUP.md.")
-    log("🔏", f"Signing: automatic (team {TEAM_ID}), export options {EXPORT_OPTIONS.name}")
+    log("🔏", f"Signing: automatic (team {TEAM_ID}), export options {options.name}")
 
 
 def signing_args():
@@ -478,7 +535,7 @@ def burned_versions():
         burned = {}
         for item in (payload or {}).get("data", []):
             attrs = item.get("attributes", {})
-            if attrs.get("platform") not in (None, "IOS"):
+            if attrs.get("platform") not in (None, PLATFORM):
                 continue
             version = attrs.get("cfBundleShortVersionString")
             state = attrs.get("state") or {}
@@ -682,13 +739,23 @@ def choose_marketing_version(live, burned=frozenset()):
 
 
 def set_next_build():
-    """Set CFBundleVersion from ASC, counting in-flight uploads as well as processed builds."""
-    version, _ = local_version()
+    """Set CFBundleVersion from ASC, counting in-flight uploads as well as processed builds.
+
+    The next number above the builds of BOTH platforms: the Mac and iPhone apps are one app
+    record, and a number that names two different binaries is a trap when reading ASC later.
+    """
+    numbers = []
+    for platform in ("IOS", "MAC_OS"):
+        out = asc(
+            "builds", "next-build-number",
+            "--app", APP_ID,
+            "--platform", platform,
+            "--output", "json",
+        )
+        numbers.append(int((out or {}).get("nextBuildNumber") or 1))
     asc(
         "xcode", "version", "edit",
-        "--next-build-number",
-        "--app", APP_ID,
-        "--platform", "IOS",
+        "--build-number", str(max(numbers)),
         "--project", PROJECT,
         "--target", TARGET,
         "--configuration", CONFIGURATION,
@@ -992,8 +1059,9 @@ def deploy_release():
         return code
 
     # Readiness check on the version we just populated. Non-fatal: the build is
-    # already uploaded, and submission is a deliberate manual step in ASC.
-    payload = asc("versions", "list", "--app", APP_ID, "--output", "json", check=False)
+    # already uploaded, and submission is a deliberate manual step in ASC. Filtered to iOS:
+    # the Mac app's version can carry the same version string.
+    payload = asc("versions", "list", "--app", APP_ID, "--platform", "IOS", "--output", "json", check=False)
     version_id = next(
         (
             item["id"]
@@ -1016,10 +1084,172 @@ def deploy_release():
     return 0
 
 
+# --- macOS ------------------------------------------------------------------
+
+def xcodebuild_auth():
+    """The API-key flags that let automatic signing create profiles without a signed-in Xcode."""
+    return [
+        "-allowProvisioningUpdates",
+        "-authenticationKeyPath", str(ASC_KEY_PATH),
+        "-authenticationKeyID", ASC_KEY_ID,
+        "-authenticationKeyIssuerID", ASC_ISSUER_ID,
+    ]
+
+
+def build_mac_pkg(version, build):
+    """Archive the app for macOS and export a signed App Store .pkg. Returns its path, or None.
+
+    Plain xcodebuild rather than `asc publish`: asc's local-build mode only produces IPAs.
+    """
+    ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    archive = ARTIFACTS / f"DieKartei-mac-{version}-{build}.xcarchive"
+    export_dir = ARTIFACTS / f"DieKartei-mac-{version}-{build}"
+    code = stream([
+        "xcodebuild", "clean", "archive",
+        "-project", PROJECT,
+        "-scheme", SCHEME,
+        "-configuration", CONFIGURATION,
+        "-destination", "generic/platform=macOS",
+        "-archivePath", str(archive),
+        # Apple Silicon only (MLX needs it). The app target already says so, but the Swift
+        # packages would otherwise also be compiled for Intel: minutes of work nobody ships.
+        "ARCHS=arm64",
+        *xcodebuild_auth(),
+    ])
+    if code != 0:
+        log("❌", "macOS archive failed.")
+        return None, archive
+    code = stream([
+        "xcodebuild", "-exportArchive",
+        "-archivePath", str(archive),
+        "-exportOptionsPlist", str(EXPORT_OPTIONS_MAC),
+        "-exportPath", str(export_dir),
+        *xcodebuild_auth(),
+    ])
+    pkgs = sorted(export_dir.glob("*.pkg"))
+    if code != 0 or not pkgs:
+        log("❌", "macOS export failed; no .pkg was written.")
+        return None, archive
+    return pkgs[0], archive
+
+
+def upload_mac_pkg(pkg, version, build, notes=None):
+    """Upload the .pkg and wait for App Store Connect to finish processing it."""
+    args = [
+        "builds", "upload",
+        "--app", APP_ID,
+        "--pkg", str(pkg),
+        "--version", version,
+        "--build-number", str(build),
+        "--wait", "--poll-interval", "15s",
+        "--output", "json", "--pretty",
+    ]
+    if notes:
+        args += ["--test-notes", notes, "--locale", "en-US"]
+    return asc_stream(*args)
+
+
+def deploy_beta_mac():
+    ensure_asc()
+    ensure_release_xcode()
+    ensure_release_host_stamp()
+    ensure_signing()
+    live, burned = ensure_version_ahead()
+    choose_marketing_version(live, burned)
+    version, build = set_next_build()
+    stamp_whats_new(version, live)
+    notes = testflight_changelog(version)
+    _stop_if_whats_new_only()
+    group = os.environ.get("TESTFLIGHT_GROUP", DEFAULT_GROUP)
+
+    log("🚀", f"Building {version} ({build}) for macOS and publishing to TestFlight group '{group}'...")
+    pkg, archive = build_mac_pkg(version, build)
+    report_archive_stamps(archive)
+    if pkg is None:
+        return 1
+    code = upload_mac_pkg(pkg, version, build, notes)
+    if code != 0:
+        diagnose_upload_failure(version, build)
+        return code
+
+    args = [
+        "publish", "testflight",
+        "--app", APP_ID,
+        "--platform", "MAC_OS",
+        "--version", version,
+        "--build-number", str(build),
+        "--group", group,
+        "--wait", "--poll-interval", "15s",
+        "--output", "json", "--pretty",
+    ]
+    if os.environ.get("NOTIFY_TESTERS") == "true":
+        args.append("--notify")
+    return asc_stream(*args)
+
+
+def mac_version_id(version):
+    """The macOS App Store version for `version`, created if it doesn't exist yet. None on failure."""
+    def find():
+        payload = asc("versions", "list", "--app", APP_ID, "--platform", "MAC_OS",
+                      "--version", version, "--output", "json", check=False)
+        return next((item["id"] for item in (payload or {}).get("data", [])), None)
+
+    version_id = find()
+    if version_id is None:
+        log("🆕", f"Creating the macOS App Store version {version}...")
+        asc("versions", "create", "--app", APP_ID, "--platform", "MAC_OS",
+            "--version", version, "--output", "json", check=False)
+        version_id = find()
+    return version_id
+
+
+def deploy_release_mac():
+    ensure_asc()
+    ensure_release_xcode()
+    ensure_release_host_stamp()
+    ensure_signing()
+    live, burned = ensure_version_ahead()
+    choose_marketing_version(live, burned)
+    version, build = set_next_build()
+    stamp_whats_new(version, live)
+    _stop_if_whats_new_only()
+
+    log("🚀", f"Building {version} ({build}) for macOS and uploading to the Mac App Store (no submission)...")
+    pkg, archive = build_mac_pkg(version, build)
+    report_archive_stamps(archive)
+    if pkg is None:
+        return 1
+    code = upload_mac_pkg(pkg, version, build)
+    if code != 0:
+        diagnose_upload_failure(version, build)
+        return code
+
+    version_id = mac_version_id(version)
+    processed = asc("builds", "wait", "--app", APP_ID, "--platform", "MAC_OS",
+                    "--build-number", str(build), "--output", "json", check=False)
+    data = (processed or {}).get("data", processed) or {}
+    build_id = data.get("id") if isinstance(data, dict) else None
+    if not (version_id and build_id):
+        log("⚠️", f"Couldn't resolve the macOS version ({version_id}) or build ({build_id}); "
+                  "attach the build in App Store Connect.")
+        return 0
+    asc("versions", "attach-build", "--version-id", version_id, "--build-id", build_id,
+        "--output", "json", check=False)
+    log("📎", f"Attached build {build} to the macOS App Store version {version}")
+    push_app_store_whats_new(version, version_id)
+    log("ℹ️", "The Mac product page (description, keywords, screenshots) is set in App Store Connect for now.")
+    log("🔍", f"Validating macOS version {version} ({version_id})...")
+    asc_stream("validate", "--app", APP_ID, "--version-id", version_id, "--output", "table")
+    log("ℹ️", "Build uploaded but NOT submitted for review — submit from App Store Connect.")
+    return 0
+
+
 def main():
     global _logf, _log_path
 
     destination = "App Store" if mode == "release" else "TestFlight"
+    if MAC:
+        destination = "Mac App Store" if mode == "release" else "TestFlight (macOS)"
     print(f"🚀 Deploying Die Kartei to {destination}...", flush=True)
 
     prune_old_logs()
@@ -1028,7 +1258,10 @@ def main():
 
     with open(_log_path, "w") as logf:
         _logf = logf
-        code = deploy_release() if mode == "release" else deploy_beta()
+        if MAC:
+            code = deploy_release_mac() if mode == "release" else deploy_beta_mac()
+        else:
+            code = deploy_release() if mode == "release" else deploy_beta()
 
     print("")
     if code == 0:

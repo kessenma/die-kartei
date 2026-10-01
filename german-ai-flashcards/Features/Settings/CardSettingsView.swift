@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit   // VoiceGuideSheet (below) uses UIApplication.openSettingsURLString
+#endif
 
 /// Learning ▸ Flashcards settings: flashcard study style plus the game-mechanic toggles (haptics,
 /// card matching, der/die/das coaching). Voice, reminders, and sources each moved to their own
@@ -191,7 +193,7 @@ struct VoiceGuideSheet: View {
         NavigationStack {
             List {
                 Section {
-                    Text("The voices in this app come from iOS. The built-in “basic” voices sound robotic, but iOS offers free Enhanced and Premium German voices that sound much more natural.")
+                    Text("The voices in this app come from \(ThisDevice.system). The built-in “basic” voices sound robotic, but \(ThisDevice.system) offers free Enhanced and Premium German voices that sound much more natural.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }

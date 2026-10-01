@@ -658,8 +658,8 @@ class MLXGenerationService {
             .modelEvicted,
             title: "Dropped \(model.rawValue) to stay alive",
             detail: reason == .pressure
-                ? "iOS warned that memory was low. The screen using the tutor reloads it on return."
-                : "The app went to the background holding a tutor this device has little room for; a suspended app that size is the first one iOS closes."
+                ? "\(ThisDevice.system) warned that memory was low. The screen using the tutor reloads it on return."
+                : "The app went to the background holding a tutor this device has little room for; a suspended app that size is the first one \(ThisDevice.system) closes."
         )
     }
 

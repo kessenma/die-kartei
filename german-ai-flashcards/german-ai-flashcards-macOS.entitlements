@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!-- The macOS build's entitlements, picked by CODE_SIGN_ENTITLEMENTS[sdk=macosx*]. Same iCloud
+     container as iOS (one app, universal purchase), with the Mac spelling of the push key and none
+     of the iOS-only keys (continued-processing GPU, increased memory limit), which a macOS
+     provisioning profile would reject. The sandbox, network, audio-input and file-access keys come
+     from the ENABLE_* build settings. -->
+<dict>
+	<key>com.apple.developer.aps-environment</key>
+	<string>development</string>
+	<key>com.apple.developer.icloud-container-identifiers</key>
+	<array>
+		<string>iCloud.kyle-essenmacher.german-ai-flashcards</string>
+	</array>
+	<key>com.apple.developer.icloud-services</key>
+	<array>
+		<string>CloudKit</string>
+	</array>
+	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+	<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
+</dict>
+</plist>

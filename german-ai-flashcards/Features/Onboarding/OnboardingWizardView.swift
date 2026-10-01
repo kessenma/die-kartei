@@ -149,14 +149,15 @@ struct OnboardingWizardView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Your German teacher lives on this iPhone")
+                    Text("Your German teacher lives on this \(ThisDevice.name)")
                         .font(.title2)
                         .fontWeight(.bold)
                         .fixedSize(horizontal: false, vertical: true)
 
                     Text("Most tutor apps send what you write to a company's servers for processing and storage. This one doesn't. "
-                         + "Everything happens on your phone. "
-                         + "It works with no signal, and there is nothing to pay.")
+                         + "Everything happens on your \(ThisDevice.name). "
+                         + (ThisDevice.isMac ? "It works offline" : "It works with no signal")
+                         + ", and there is nothing to pay.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

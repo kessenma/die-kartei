@@ -304,7 +304,33 @@ python3 scripts/deploy.py
 
 # App Store — uploads and attaches the build, does NOT submit for review
 python3 scripts/deploy.py release
+
+# The same two for the Mac app (same target, archived for macOS, uploaded as a .pkg)
+python3 scripts/deploy.py --mac
+python3 scripts/deploy.py release --mac
 ```
+
+### The Mac app
+
+`--mac` archives the same target for macOS (`generic/platform=macOS`), exports a signed
+`.pkg` with [`ExportOptions-macOS.plist`](../ExportOptions-macOS.plist), and uploads it
+with `asc builds upload --pkg`: asc's local-build mode only produces IPAs. Everything
+else is shared with iOS: the version guards, the build number (always the next one
+above **both** platforms' builds, so a number never names two binaries), What's New
+stamping and the TestFlight group.
+
+- **One-time, in App Store Connect:** the Mac app is the same app record (universal
+  purchase). Before the first upload, add the macOS platform to the app (App ▸ the
+  platform list ▸ Add macOS), and give the Mac version its screenshots and description.
+  `release --mac` creates the macOS App Store version when it's missing and attaches the
+  build, but it doesn't push the product page yet.
+- **Signing:** automatic, like iOS. The `.pkg` needs an installer identity ("Mac
+  Installer Distribution"); with the API key, Xcode's automatic signing can use a
+  cloud-managed one, so a missing local certificate is only a warning in Preflight.
+- **Entitlements** come from `german-ai-flashcards-macOS.entitlements`
+  (`CODE_SIGN_ENTITLEMENTS[sdk=macosx*]`) plus the sandbox build settings. Check an
+  archive with `codesign -d --entitlements - "Die Kartei.app"`. See
+  [`docs/MACOS.md`](MACOS.md) for the rest of the Mac build.
 
 ### From VS Code
 
@@ -316,9 +342,13 @@ no extra tooling, no `package.json`:
   per-workspace keybindings, so on a new machine add this to the user
   `keybindings.json` (Cmd+Shift+P → "Preferences: Open Keyboard Shortcuts (JSON)"):
   `{ "key": "shift+cmd+r", "command": "workbench.action.tasks.runTask", "args": "Deploy: App Store (upload only, no submit)" }`
+- **Cmd+Shift+M** runs *Deploy: Mac TestFlight*, a user keybinding like Cmd+Shift+R
+  (it replaces VS Code's own Cmd+Shift+M, the Problems panel):
+  `{ "key": "shift+cmd+m", "command": "workbench.action.tasks.runTask", "args": "Deploy: Mac TestFlight" }`
 - **Cmd+Shift+P → "Tasks: Run Task"** lists all of them:
-  *TestFlight*, *App Store (upload only)*, *Preflight checks*,
-  *Clean build artifacts*, *Open latest log*
+  *TestFlight*, *App Store (upload only)*, *Mac TestFlight*,
+  *Mac App Store (upload only)*, *Preflight checks*, *Clean build artifacts*,
+  *Open latest log*
 
 Build errors are parsed with the `$swiftc` problem matcher, so failures land in
 the Problems panel and are clickable.
