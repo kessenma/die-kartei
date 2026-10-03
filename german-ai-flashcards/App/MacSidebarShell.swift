@@ -45,6 +45,8 @@ struct MacSidebarShell: View {
                     // faint band under the title bar.
                     .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
             }
+            // MAC-PICTURES: decks another device asked this Mac to illustrate.
+            .safeAreaInset(edge: .top, spacing: 0) { MacPictureInboxBanner() }
             // On the content's side of the toolbar: an item over the sidebar would hold the
             // sidebar at least as wide as the item plus the traffic lights, and compact never
             // gets narrow.

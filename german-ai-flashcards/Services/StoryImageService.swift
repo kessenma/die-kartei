@@ -158,6 +158,20 @@ final class StoryImageService {
     func loadPipeline() async -> Bool {
         if isPipelineLoaded { return true }
         let model = ImageGenModel.current
+        #if os(macOS)
+        // MAC-PICTURES: the MLX models draw through MacDiffusionService (docs/MAC_PICTURES.md).
+        if model.engine == .mlx {
+            do {
+                try await MacDiffusionService.shared.load(model)
+                loadError = nil
+                isPipelineLoaded = true
+                return true
+            } catch {
+                loadError = "Couldn’t load the image model: \(error.localizedDescription)"
+                return false
+            }
+        }
+        #endif
         guard let resources = model.resourcesURL,
               FileManager.default.fileExists(atPath: resources.path)
         else {
@@ -195,6 +209,9 @@ final class StoryImageService {
     }
 
     func unloadPipeline() {
+        #if os(macOS)
+        MacDiffusionService.shared.unload()   // MAC-PICTURES
+        #endif
         let wasLoaded = isPipelineLoaded
         box?.pipeline.unloadResources()
         box = nil
@@ -213,6 +230,14 @@ final class StoryImageService {
     /// frees the pipeline. Only acts mid-run — an idle service holds nothing to give back.
     func stopForMemoryPressure() {
         guard isBusy else { return }
+        #if os(macOS)
+        // MAC-PICTURES: a big model trips the Mac's `.warning` routinely. Give back the cache and
+        // keep drawing; only `.critical` stops the run.
+        if MacDiffusionService.shared.loadedModel != nil, !MacMemoryPressure.lastEventWasCritical {
+            MacDiffusionService.shared.shed()
+            return
+        }
+        #endif
         logger.warning("Memory warning while drawing — stopping the run to free the pipeline")
         DeckIllustrationService.shared.stop()
         requestStop()
@@ -245,6 +270,26 @@ final class StoryImageService {
         onStepProgress: @escaping @MainActor @Sendable (Double) -> Void,
         onPreview: (@MainActor @Sendable (CGImage) -> Void)? = nil
     ) async throws -> Bool {
+        #if os(macOS)
+        // MAC-PICTURES: no negative prompt or step count for the MLX models (distilled, fixed
+        // steps); the purpose and quality tier pick the size instead. Same cancel flag, so
+        // `requestStop` reaches them unchanged.
+        if MacDiffusionService.shared.loadedModel != nil {
+            cancelFlag.set(false)
+            let cancel = cancelFlag
+            isGenerating = true
+            defer { isGenerating = false }
+            return try await MacDiffusionService.shared.generate(
+                prompt: prompt,
+                purpose: MacPictureSizing.purpose(destination: destination, stepCountOverride: stepCount),
+                seed: seed ?? UInt32.random(in: 0..<UInt32.max),
+                saveTo: destination,
+                isCancelled: { cancel.isSet },
+                onProgress: onStepProgress,
+                onPreview: ImageGenPreview.isActive ? onPreview : nil
+            )
+        }
+        #endif
         guard let box else { return false }
         cancelFlag.set(false)
         let cancel = cancelFlag

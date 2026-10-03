@@ -31,6 +31,8 @@ struct StoryIllustrationView: View {
     }
 
     @State private var image: UIImage?
+    /// Bumped when this picture's file arrives through iCloud after its record (MAC-PICTURES).
+    @State private var landings = 0
     @Environment(\.appTheme) private var appTheme
 
     var body: some View {
@@ -47,7 +49,7 @@ struct StoryIllustrationView: View {
             // Keyed on the decode size too: the reader's header picture keeps its identity across
             // a layout switch but changes fit, and a 200 pt banner decode stretched to full width
             // is visibly soft.
-            .task(id: "\(record.fileName)|\(decodePixelSize)") {
+            .task(id: "\(record.fileName)|\(decodePixelSize)|\(landings)") {
                 let pixels = decodePixelSize
                 let decoded = await Task.detached(priority: .userInitiated) {
                     StoryImageStore.loadImage(fileName: record.fileName, storyID: storyID,
@@ -57,6 +59,11 @@ struct StoryIllustrationView: View {
                 // that has already moved on (every picture is rebuilt on a layout switch).
                 guard !Task.isCancelled else { return }
                 image = decoded
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .syncedFileLanded)) { note in
+                guard let path = note.userInfo?["path"] as? String,
+                      path.hasSuffix("/\(record.fileName)") else { return }
+                landings += 1
             }
             .onDisappear {
                 // A story list or a long story can hold a lot of these at once, and a decoded

@@ -40,6 +40,9 @@ struct SyncPeer: Identifiable, Equatable {
     let stuck: Int
     let digests: [String: SyncDigest]
     let isThisDevice: Bool
+    /// MAC-PICTURES: the MLX picture models a Mac has downloaded (`ImageGenModel` raw values), so
+    /// a phone knows whether "Draw on my Mac" can work. Empty for phones and older builds.
+    var macPictureModels: [String] = []
 }
 
 extension SyncCoordinator {
@@ -87,6 +90,7 @@ extension SyncCoordinator {
         f.set("hasPending", hasPending)
         f.set("stuck", stuckCount)
         f.set("digests", json: .object(digestJSON))
+        f.set("macPictureModels", MacPictureHandoff.advertisedModels)   // MAC-PICTURES; nil on iOS
 
         let name = heartbeatName
         let previous = SyncStoreMeta.states(named: [name.description], in: context)[name.description]?.copies.base
@@ -122,7 +126,8 @@ extension SyncCoordinator {
                     hasPending: flat.bool("hasPending") ?? false,
                     stuck: flat.int("stuck") ?? 0,
                     digests: digests,
-                    isThisDevice: flat.string("replica") == identity.replica
+                    isThisDevice: flat.string("replica") == identity.replica,
+                    macPictureModels: flat.strings("macPictureModels") ?? []
                 )
             }
             .sorted { ($0.isThisDevice ? 0 : 1, $0.model) < ($1.isThisDevice ? 0 : 1, $1.model) }

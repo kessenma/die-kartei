@@ -121,8 +121,10 @@ writing "iPhone" or "your phone" into a string. It's nonisolated, so services of
   - Downloads land in the sandbox container's Caches (`HubCacheLocation` has the Mac branch).
   - The memory budget falls back to half the physical RAM, because macOS has no
     `os_proc_available_memory`. That's conservative, and tuning it is a follow-up.
-  - Story and card pictures run on the Neural Engine: fp16 diffusion on the Mac GPU renders solid
-    black.
+  - Story and card pictures from the Core ML models run on the Neural Engine: fp16 Core ML
+    diffusion on the Mac GPU renders solid black. The Mac-only MLX picture models (Z-Image Turbo,
+    FLUX.2 klein) run on the GPU without that problem, with their own drawing budget, and draw
+    decks and stories other devices send. See [MAC_PICTURES.md](MAC_PICTURES.md).
 - **Background generation** runs inline: the `BGTaskScheduler` stand-in refuses every submit, and
   `StoryBackgroundGenerator` already falls back to running the job in the app. Long jobs hold off
   idle sleep instead of the iOS idle timer.

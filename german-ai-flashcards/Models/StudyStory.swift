@@ -196,6 +196,9 @@ final class StudyStory {
     var modelRaw: String?
     /// Linked deck of words saved while reading (`SavedDeck.id`), created on first save.
     var deckIDRaw: String?
+    /// MAC-PICTURES: "Redraw on my Mac", the same pair as `SavedDeck`'s (`MacPictureOrder`).
+    var macPictureRequestData: Data? = nil
+    var macPictureResultData: Data? = nil
     /// True once story + questions + glossary finished generating.
     var generationComplete: Bool
     /// Best quiz score in percent, for the list row.

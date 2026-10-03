@@ -15,6 +15,7 @@
 		8AB660422FB717B00052F4F4 /* Transformers in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660412FB717B00052F4F4 /* Transformers */; };
 		8AB660452FB7199D0052F4F4 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660442FB7199D0052F4F4 /* MLXHuggingFace */; };
 		8AB660532FB720000052F4F4 /* StableDiffusion in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660522FB720000052F4F4 /* StableDiffusion */; };
+		8AD1F0012FE0000000000001 /* KarteiDiffusion in Frameworks */ = {isa = PBXBuildFile; platformFilters = (macos, ); productRef = 8AD1F0012FE0000000000003 /* KarteiDiffusion */; };
 		8ABE00012FC000000000000C /* Die Kartei Keyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8ABE00012FC0000000000003 /* Die Kartei Keyboard.appex */; platformFilters = (ios, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -86,6 +87,7 @@
 				8AB6603C2FB717370052F4F4 /* MLXLMCommon in Frameworks */,
 				8AB660372FB716E90052F4F4 /* MLXRandom in Frameworks */,
 				8AB660532FB720000052F4F4 /* StableDiffusion in Frameworks */,
+				8AD1F0012FE0000000000001 /* KarteiDiffusion in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -165,6 +167,7 @@
 				8AB660412FB717B00052F4F4 /* Transformers */,
 				8AB660442FB7199D0052F4F4 /* MLXHuggingFace */,
 				8AB660522FB720000052F4F4 /* StableDiffusion */,
+				8AD1F0012FE0000000000003 /* KarteiDiffusion */,
 			);
 			productName = "german-ai-flashcards";
 			productReference = 8AB65FE82FB65EFD0052F4F4 /* Die Kartei.app */;
@@ -253,6 +256,7 @@
 				8AB6603D2FB717690052F4F4 /* XCRemoteSwiftPackageReference "swift-huggingface" */,
 				8AB660402FB717B00052F4F4 /* XCRemoteSwiftPackageReference "swift-transformers" */,
 				8AB660512FB720000052F4F4 /* XCRemoteSwiftPackageReference "ml-stable-diffusion" */,
+				8AD1F0012FE0000000000002 /* XCLocalSwiftPackageReference "KarteiDiffusion" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8AB65FE92FB65EFD0052F4F4 /* Products */;
@@ -757,6 +761,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		8AD1F0012FE0000000000002 /* XCLocalSwiftPackageReference "KarteiDiffusion" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = KarteiDiffusion;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		8AB660332FB716E90052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -844,6 +855,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8AB660512FB720000052F4F4 /* XCRemoteSwiftPackageReference "ml-stable-diffusion" */;
 			productName = StableDiffusion;
+		};
+		8AD1F0012FE0000000000003 /* KarteiDiffusion */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8AD1F0012FE0000000000002 /* XCLocalSwiftPackageReference "KarteiDiffusion" */;
+			productName = KarteiDiffusion;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
