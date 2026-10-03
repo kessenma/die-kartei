@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// Where pictures for flashcards and stories are drawn: by the downloaded CoreML model on this
 /// phone, or by a cloud model on the learner's own OpenRouter account. On-device stays the
@@ -11,17 +12,22 @@ nonisolated enum PictureSource: String, CaseIterable, Identifiable, Sendable {
 
     static var current: PictureSource {
         get {
-            UserDefaults.standard.string(forKey: defaultsKey)
+            if let override = runOverride.withLock({ $0 }) { return override }
+            return UserDefaults.standard.string(forKey: defaultsKey)
                 .flatMap(PictureSource.init(rawValue:)) ?? .onDevice
         }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: defaultsKey) }
     }
 
+    /// MAC-PICTURES: pinned to `.onDevice` by the Mac's picture inbox around an order's run, so an
+    /// order from the phone is drawn by this Mac's model, never on the learner's OpenRouter account.
+    static let runOverride = Mutex<PictureSource?>(nil)
+
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .onDevice: "On this phone"
+        case .onDevice: "On this \(ThisDevice.name)"   // MAC-PICTURES
         case .cloud:    "Cloud"
         }
     }
