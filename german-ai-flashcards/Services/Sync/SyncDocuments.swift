@@ -352,6 +352,9 @@ struct FileSyncDocument: SyncDocumentKind {
         if let modified = flat.double("modified") {
             try? fm.setAttributes([.modificationDate: Date(timeIntervalSinceReferenceDate: modified)], ofItemAtPath: dest.path)
         }
+        // MAC-PICTURES: a card's picture can land after the card that names it; on screen, the
+        // card reloads when its file arrives.
+        NotificationCenter.default.post(name: .syncedFileLanded, object: nil, userInfo: ["path": path])
         return true
     }
 
@@ -383,4 +386,10 @@ struct FileSyncDocument: SyncDocumentKind {
               !path.contains("..") else { return nil }
         return base.appendingPathComponent(path)
     }
+}
+
+extension Notification.Name {
+    /// A file another device made just arrived through iCloud. `userInfo["path"]` is its path
+    /// under Application Support, e.g. "CardImages/<deck>/<file>.png" (MAC-PICTURES).
+    static let syncedFileLanded = Notification.Name("kartei.syncedFileLanded")
 }

@@ -283,6 +283,14 @@ the same `StoryImageStore`, numbered so it's obvious which landed where.
 Navigation stays a `NavigationLink` push like Paper/PhotoScan — no new `Activity` case (only
 immersive card-deck-style sessions use the `ActivityRouter` cover).
 
+## Redrawing on the Mac
+
+A story's pictures can be redrawn by the learner's Mac with a big model, from the prompts saved in
+`StoryImageRecord.prompt` (no tutor needed). The reader's toolbar has **Redraw Pictures on My Mac**,
+and the Mac writes each picture under a new file name. That's why the Umfluss cache and
+`StoryIllustrationView` key on file names and reload when a synced file lands. See
+[MAC_PICTURES.md](MAC_PICTURES.md).
+
 ## Listening mode (Hören)
 
 Same story, same questions — presentation-layer only, so it costs no extra generation:

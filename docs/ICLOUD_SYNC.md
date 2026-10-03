@@ -101,7 +101,9 @@ CloudKitSyncTransport = CKSyncEngine (zone "Kartei", one record type "KarteiItem
 | Content (decks, stories, chats, papers, class notes, job posts, phrases) | field-wise three-way; lookups and saved words as sets; `bestScore` max; `durationSeconds`/`readingSeconds` counters |
 | Progress (UserDefaults) | level last-writer-wins; badges earliest date; flags OR; celebrations union |
 | Journey | one snapshot per ISO week; milestones deduped by (kind, title) |
-| File | path + size + modified date; the bytes go as a CKAsset |
+| File | path + size + modified date; the bytes go as a CKAsset. Applying one posts `.syncedFileLanded`, so a card or story picture that lands after its record reloads on screen |
+| Picture orders (`macPictureRequest` / `macPictureResult` on decks and stories) | plain LWW JSON, each written by one side only; pending = the result doesn't name the request's id. See [MAC_PICTURES.md](MAC_PICTURES.md) |
+| Device heartbeat | `macPictureModels`: the MLX picture models a Mac has downloaded (absent on phones) |
 
 Field rules live in `Core/SyncMerge.swift` (`SyncFieldRule`). Every codec file ends with a
 `// Field coverage:` block listing each stored property and where it goes. **Adding a stored

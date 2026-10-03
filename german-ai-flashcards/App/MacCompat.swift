@@ -201,11 +201,16 @@ nonisolated final class UIGraphicsImageRenderer {
 /// which the memory saver and the story reader already listen for. Started once at launch.
 @MainActor enum MacMemoryPressure {
     private static var source: DispatchSourceMemoryPressure?
+    /// Whether the latest event was `.critical` rather than `.warning`. A big picture model trips
+    /// `.warning` routinely, so the drawing run only stops on critical (MAC-PICTURES).
+    private(set) static var lastEventWasCritical = false
 
     static func start() {
         guard source == nil else { return }
         let source = DispatchSource.makeMemoryPressureSource(eventMask: [.warning, .critical], queue: .main)
-        source.setEventHandler {
+        source.setEventHandler { [weak source] in
+            let critical = source?.data.contains(.critical) ?? false
+            MainActor.assumeIsolated { lastEventWasCritical = critical }
             NotificationCenter.default.post(name: UIApplication.didReceiveMemoryWarningNotification, object: nil)
         }
         source.resume()

@@ -60,6 +60,9 @@ enum SavedDeckCodec: SyncCodec {
         f.set("courseIDRaw", d.courseIDRaw)
         f.set("sourceText", d.sourceText)
         f.set("sourceFile", d.sourceFile)
+        // MAC-PICTURES: one side writes each (MacPictureOrder), so plain LWW can't lose an order.
+        f.set("macPictureRequest", jsonData: d.macPictureRequestData)
+        f.set("macPictureResult", jsonData: d.macPictureResultData)
         return f.payload
     }
 
@@ -90,6 +93,8 @@ enum SavedDeckCodec: SyncCodec {
         d.sourceText = flat.string("sourceText")
         // The document itself syncs separately, under the same name in `ClassMaterialStore`.
         d.sourceFile = flat.string("sourceFile")
+        d.macPictureRequestData = flat.jsonData("macPictureRequest")
+        d.macPictureResultData = flat.jsonData("macPictureResult")
     }
 
     static func cascadeChildren(of model: SavedDeck) -> [any PersistentModel] {
@@ -288,3 +293,18 @@ enum QuizResultCodec: SyncCodec {
         q.subDeckLabel = flat.string("subDeckLabel")
     }
 }
+
+// Field coverage (SavedDeck only; the card and quiz codecs above predate these blocks):
+//
+// SavedDeck (kind "SavedDeck", id-based)
+//   id                      -> "id" (record name; .lww, never changes)
+//   topic, wordCount, includeExamples, includeGender, wordTypeFilterRaw, includeConjugations,
+//   selectedTenses, createdAt, generatorRaw, generationTimeSeconds, courseIDRaw, sourceText,
+//   sourceFile              -> same names, .lww
+//   macPictureRequestData   -> "macPictureRequest" (jsonData, MacPictureOrder.Request) .lww; only
+//                              the requesting device writes it
+//   macPictureResultData    -> "macPictureResult" (jsonData, MacPictureOrder.Result) .lww; only
+//                              the Mac (or a cancel) writes it. Pending = result doesn't name the
+//                              request's id (docs/MAC_PICTURES.md)
+//   cards, quizResults      -> children, their own kinds
+//   pausedProgressData, pausedAt -> never synced (per-device session state)

@@ -49,8 +49,13 @@ nonisolated enum ImageGenQuality: String, CaseIterable, Identifiable {
     }
 
     /// Times are rough, per picture, on a recent iPhone — the honest range across devices is wide.
+    /// The Mac's MLX models draw a fixed number of steps, so for them the tier picks a size.
     var caption: String {
-        switch self {
+        let model = ImageGenModel.current
+        if model.engine == .mlx {   // MAC-PICTURES
+            return macCaption(model)
+        }
+        return switch self {
         case .fast:
             "15 steps — roughly half a minute a picture. Softer detail, good enough for flashcards."
         case .balanced:
@@ -58,5 +63,19 @@ nonisolated enum ImageGenQuality: String, CaseIterable, Identifiable {
         case .best:
             "40 steps — two minutes or more a picture. Cleaner detail and composition."
         }
+    }
+
+    /// "Cards at 512 px, story pictures at 768 px. About a minute a story picture on this Mac."
+    private func macCaption(_ model: ImageGenModel) -> String {
+        let card = MacPictureSizing.preferredSize(purpose: .card, tier: self)
+        let story = MacPictureSizing.preferredSize(purpose: .story, tier: self)
+        let seconds = MacPictureTiming.seconds(model, size: story)
+        let wait = seconds < 50 ? "\(max(5, (seconds + 2) / 5 * 5)) seconds"
+            : seconds < 90 ? "about a minute"
+            : "about \(Int((Double(seconds) / 60).rounded())) minutes"
+        let sizes = card == story
+            ? "Cards and story pictures at \(card) px."
+            : "Cards at \(card) px, story pictures at \(story) px."
+        return "\(sizes) \(wait.prefix(1).uppercased() + wait.dropFirst()) a story picture on this Mac."
     }
 }

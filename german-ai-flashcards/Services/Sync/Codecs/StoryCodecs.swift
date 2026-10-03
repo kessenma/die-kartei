@@ -53,6 +53,8 @@ enum StudyStoryCodec: SyncCodec {
         f.set("questions", jsonData: s.questionsData)
         f.set("speakers", jsonData: s.speakersData)
         f.set("images", jsonData: s.imagesData)
+        f.set("macPictureRequest", jsonData: s.macPictureRequestData)   // MAC-PICTURES
+        f.set("macPictureResult", jsonData: s.macPictureResultData)
         f.set("lookups", jsonData: s.lookupsData)
         f.set("modelRaw", s.modelRaw)
         f.set("deckIDRaw", s.deckIDRaw)
@@ -93,6 +95,8 @@ enum StudyStoryCodec: SyncCodec {
         s.questionsData = flat.jsonData("questions")
         s.speakersData = flat.jsonData("speakers")
         s.imagesData = flat.jsonData("images")
+        s.macPictureRequestData = flat.jsonData("macPictureRequest")
+        s.macPictureResultData = flat.jsonData("macPictureResult")
         s.lookupsData = flat.jsonData("lookups")
         s.modelRaw = flat.string("modelRaw")
         s.deckIDRaw = flat.string("deckIDRaw")
@@ -309,6 +313,10 @@ enum StudyPaperCodec: SyncCodec {
 //   questionsData           -> "questions" (jsonData, [StoryQuestion]) .lww
 //   speakersData            -> "speakers" (jsonData, [StorySpeaker]) .lww
 //   imagesData              -> "images" (jsonData, [StoryImageRecord]) .lww; PNGs sync separately
+//   macPictureRequestData   -> "macPictureRequest" (jsonData, MacPictureOrder.Request) .lww;
+//                              only the requesting device writes it (MAC-PICTURES)
+//   macPictureResultData    -> "macPictureResult" (jsonData, MacPictureOrder.Result) .lww; only
+//                              the Mac (or a cancel) writes it
 //                              under Application Support/StoryImages/<story id>/<fileName>
 //   lookupsData             -> "lookups" (jsonData, [GlossaryEntry]) .set(idField: "german", lowercasedID: true)
 //   modelRaw                -> "modelRaw" .lww

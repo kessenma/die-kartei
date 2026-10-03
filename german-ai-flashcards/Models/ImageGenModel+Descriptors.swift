@@ -18,6 +18,16 @@ extension ImageGenModel {
             + "(SD 1.4-class), converted to Core ML for this app. Its U-Net is about a third the "
             + "size of Stable Diffusion's, so it downloads smaller and draws in fewer steps, still "
             + "fully on-device with nothing leaving your \(ThisDevice.name)."
+        case .zImageTurbo:
+            "Tongyi Lab's Z-Image Turbo: a 6-billion-parameter picture model that reads your prompt "
+            + "with a small language model, so it follows scenes, styles and details far more "
+            + "closely than Stable Diffusion. It needs a Mac's memory and runs on its graphics chip, "
+            + "with nothing leaving your \(ThisDevice.name)."
+        case .flux2Klein:
+            "Black Forest Labs' FLUX.2 klein 4B: a compact model from the makers of FLUX that draws "
+            + "a picture in four steps, about three times faster than Z-Image Turbo, with a little "
+            + "less detail. It runs on your Mac's graphics chip, with nothing leaving your "
+            + "\(ThisDevice.name)."
         }
     }
 
@@ -25,6 +35,8 @@ extension ImageGenModel {
         switch self {
         case .sd21Base: "~1.3 B (U-Net 865 M)"
         case .bkSdmTiny: "~0.5 B (U-Net 330 M)"
+        case .zImageTurbo: "6 B (+ Qwen3 4B prompt reader)"
+        case .flux2Klein: "4 B (+ Qwen3 4B prompt reader)"
         }
     }
 
@@ -32,13 +44,16 @@ extension ImageGenModel {
         switch self {
         case .sd21Base: "6-bit palettized"
         case .bkSdmTiny: "16-bit (fp16)"
+        case .zImageTurbo, .flux2Klein: "4-bit (MLX)"
         }
     }
 
-    /// Fixed by the compiled Core ML model — the reason the quality setting tunes steps, not size.
+    /// Fixed by the compiled Core ML model — the reason the quality setting tunes steps there.
+    /// The MLX models draw at the size the quality setting picks instead.
     var outputResolution: String {
         switch self {
         case .sd21Base, .bkSdmTiny: "512 × 512"
+        case .zImageTurbo, .flux2Klein: "512 to 1024 px"
         }
     }
 
@@ -52,6 +67,10 @@ extension ImageGenModel {
             URL(string: "https://machinelearning.apple.com/research/stable-diffusion-coreml")!
         case .bkSdmTiny:
             URL(string: "https://github.com/Nota-NetsPresso/BK-SDM")!
+        case .zImageTurbo:
+            URL(string: "https://huggingface.co/Tongyi-MAI/Z-Image-Turbo")!
+        case .flux2Klein:
+            URL(string: "https://huggingface.co/black-forest-labs/FLUX.2-klein-4B")!
         }
     }
 
@@ -61,19 +80,22 @@ extension ImageGenModel {
         switch self {
         case .sd21Base: "photo.on.rectangle.angled"
         case .bkSdmTiny: "wand.and.stars"
+        case .zImageTurbo: "paintbrush.pointed.fill"
+        case .flux2Klein: "bolt.fill"
         }
     }
 
-    /// Brand-logo asset — the twin of `MLXModel.logoName`. Both image models ship a gradient tile
-    /// logo, so `usesSFSymbolLogo` is always false; `sfSymbolLogo` is only a defensive fallback.
+    /// Brand-logo asset — the twin of `MLXModel.logoName`. The Core ML models ship a gradient tile
+    /// logo; the Mac models have none bundled and draw `sfSymbolLogo` instead.
     var logoName: String {
         switch self {
         case .sd21Base: "logo-sd21"
         case .bkSdmTiny: "logo-bksdm"
+        case .zImageTurbo, .flux2Klein: ""
         }
     }
 
-    var usesSFSymbolLogo: Bool { false }
+    var usesSFSymbolLogo: Bool { engine == .mlx }
 
     /// The model's logo as an `Image` — mirrors `MLXModel.logoImage`, so call sites keep their
     /// `.resizable()/.frame()/.clipShape()` modifiers.
@@ -100,6 +122,24 @@ extension ImageGenModel {
                     Color(hex: 0x2E9BD6), Color(hex: 0x2C6FC4),
                 ],
                 accent: Color(hex: 0x2FB8A8)
+            )
+        case .zImageTurbo:
+            // Warm amber → coral: the "best pictures" model.
+            ModelTheme(
+                palette: [
+                    Color(hex: 0xFFC46B), Color(hex: 0xFF9A4D),
+                    Color(hex: 0xF2685A), Color(hex: 0xD9466A),
+                ],
+                accent: Color(hex: 0xF2685A)
+            )
+        case .flux2Klein:
+            // Cool slate → electric blue: the fast one.
+            ModelTheme(
+                palette: [
+                    Color(hex: 0x9FB4D9), Color(hex: 0x6B8BD6),
+                    Color(hex: 0x3F66E0), Color(hex: 0x2A44B8),
+                ],
+                accent: Color(hex: 0x3F66E0)
             )
         }
     }

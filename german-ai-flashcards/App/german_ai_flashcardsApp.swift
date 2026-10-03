@@ -130,7 +130,8 @@ struct german_ai_flashcardsApp: App {
 
         let mm = MLXModelManager()
         _modelManager = State(initialValue: mm)
-        _coordinator = State(initialValue: GenerationCoordinator(modelManager: mm))
+        let generation = GenerationCoordinator(modelManager: mm)
+        _coordinator = State(initialValue: generation)
 
         // iCloud Sync starts here rather than in a view, so a silent push that wakes the app in
         // the background finds the engine running. When another device's study lands, the
@@ -144,6 +145,12 @@ struct german_ai_flashcardsApp: App {
         }
         SyncManager.shared.modelManager = mm
         SyncManager.shared.configure(container: container)
+        // MAC-PICTURES: the Mac draws decks other devices ask for; a phone hears when they land.
+        #if os(macOS)
+        MacPictureInbox.shared.start(container: container, mlxService: generation.mlxService)
+        #else
+        MacPictureHandoffWatcher.shared.start(container: container)
+        #endif
     }
 
     var body: some Scene {
@@ -167,6 +174,9 @@ struct german_ai_flashcardsApp: App {
                             await BackgroundDownloadResumer.stop()
                             coordinator.mlxService.resumeInterruptedDownloadIfNeeded()
                         }
+                        #if os(macOS)
+                        MacPictureInbox.shared.refresh()   // MAC-PICTURES
+                        #endif
                     }
                     // Leaving the foreground with multi-GB weights resident is the single fastest
                     // way to get the app terminated: iOS ranks suspended apps for jetsam largely

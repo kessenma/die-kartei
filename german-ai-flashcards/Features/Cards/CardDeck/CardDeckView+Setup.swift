@@ -63,6 +63,8 @@ extension CardDeckView {
 
                 illustrateDeckRow
 
+                if let savedDeck { MacPictureHandoffRow(deck: savedDeck) }   // MAC-PICTURES
+
                 if isAnkiMode {
                     let dueCount = savedCards.filter { card in
                         guard let next = card.nextReviewDate else { return true }

@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// The look the learner wants for flashcard pictures, and how busy those pictures may get.
 ///
@@ -25,11 +26,16 @@ nonisolated enum CardImageStyle: String, CaseIterable, Identifiable {
     /// picture drawn before this setting existed already has.
     static var current: CardImageStyle {
         get {
-            UserDefaults.standard.string(forKey: defaultsKey)
+            if let override = runOverride.withLock({ $0 }) { return override }
+            return UserDefaults.standard.string(forKey: defaultsKey)
                 .flatMap(CardImageStyle.init(rawValue:)) ?? .flatIcon
         }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: defaultsKey) }
     }
+
+    /// MAC-PICTURES: the style an order from another device asked for, set by the Mac's picture
+    /// inbox around that order's run (learner prefs don't sync, so the order carries its own).
+    static let runOverride = Mutex<CardImageStyle?>(nil)
 
     var id: String { rawValue }
 
@@ -119,11 +125,15 @@ nonisolated enum CardImageDetail: String, CaseIterable, Identifiable {
 
     static var current: CardImageDetail {
         get {
-            UserDefaults.standard.string(forKey: defaultsKey)
+            if let override = runOverride.withLock({ $0 }) { return override }
+            return UserDefaults.standard.string(forKey: defaultsKey)
                 .flatMap(CardImageDetail.init(rawValue:)) ?? .justTheWord
         }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: defaultsKey) }
     }
+
+    /// MAC-PICTURES: see `CardImageStyle.runOverride`.
+    static let runOverride = Mutex<CardImageDetail?>(nil)
 
     var id: String { rawValue }
 

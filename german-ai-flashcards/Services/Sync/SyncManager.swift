@@ -39,6 +39,13 @@ final class SyncManager {
     @ObservationIgnored private var accountObserver: NSObjectProtocol?
     /// Runs after server changes land (reminders re-plan when another device studied today).
     @ObservationIgnored var onRemoteChanges: ((Set<String>) -> Void)?
+    /// More listeners for the same moment (MAC-PICTURES: the Mac's picture inbox, the phone's
+    /// "your Mac drew them" notice). Added once at launch; never removed.
+    @ObservationIgnored private var remoteChangeObservers: [(Set<String>) -> Void] = []
+
+    func observeRemoteChanges(_ handler: @escaping (Set<String>) -> Void) {
+        remoteChangeObservers.append(handler)
+    }
     /// The model manager caches the level and a few records in memory; synced values are written
     /// through it so the UI sees them.
     @ObservationIgnored weak var modelManager: MLXModelManager?
@@ -119,7 +126,10 @@ final class SyncManager {
         transport.onZoneDeleted = { [weak self] reason in self?.zoneDeleted(reason) }
         transport.onQuotaExceeded = { [weak self] in self?.storageFull = true }
         transport.onActivity = { [weak self] busy in self?.engineBusy = busy }
-        coordinator.didApplyRemoteChanges = { [weak self] kinds in self?.onRemoteChanges?(kinds) }
+        coordinator.didApplyRemoteChanges = { [weak self] kinds in
+            self?.onRemoteChanges?(kinds)
+            self?.remoteChangeObservers.forEach { $0(kinds) }
+        }
         self.transport = transport
         self.coordinator = coordinator
         transport.start()

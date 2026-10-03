@@ -39,6 +39,26 @@ final class SavedDeck {
     var sourceText: String? = nil
     var sourceFile: String? = nil
 
+    /// MAC-PICTURES: "Draw on my Mac". The phone's request and the Mac's answer, as JSON
+    /// (`MacPictureOrder`). Each is written by one side only; defaulted, so an additive migration.
+    var macPictureRequestData: Data? = nil
+    var macPictureResultData: Data? = nil
+
+    var macPictureRequest: MacPictureOrder.Request? {
+        get { MacPictureOrder.decode(MacPictureOrder.Request.self, from: macPictureRequestData) }
+        set { macPictureRequestData = MacPictureOrder.encode(newValue) }
+    }
+
+    var macPictureResult: MacPictureOrder.Result? {
+        get { MacPictureOrder.decode(MacPictureOrder.Result.self, from: macPictureResultData) }
+        set { macPictureResultData = MacPictureOrder.encode(newValue) }
+    }
+
+    /// A request from another device that the Mac hasn't answered yet.
+    var hasPendingMacPictures: Bool {
+        MacPictureOrder.isPending(macPictureRequest, macPictureResult)
+    }
+
     var wordTypeFilter: WordTypeFilter {
         WordTypeFilter(rawValue: wordTypeFilterRaw) ?? .all
     }

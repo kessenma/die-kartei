@@ -55,6 +55,9 @@ struct FlashCardView: View {
     /// Loaded from disk by the card itself, so a picture that finishes generating mid-session
     /// appears as soon as SwiftData hands down the new file name.
     @State private var cardImage: UIImage?
+    /// Bumped when this card's picture file arrives through iCloud after the card itself
+    /// (MAC-PICTURES), so the image task runs again for a name that didn't change.
+    @State private var imageLandings = 0
     @State private var showingFullScreenImage = false
     /// Set on the first flip, so turning the card back over shows the article the learner just
     /// checked instead of asking again. The player recreates the view per card, so it resets.
@@ -308,7 +311,7 @@ struct FlashCardView: View {
             }
         }
         .frame(height: cardHeight)
-        .task(id: imageFileName) {
+        .task(id: "\(imageFileName ?? "")#\(imageLandings)") {
             guard let imageFileName, let imageDeckID else {
                 cardImage = nil
                 return
@@ -322,6 +325,11 @@ struct FlashCardView: View {
             }.value
             guard !Task.isCancelled else { return }
             cardImage = decoded
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .syncedFileLanded)) { note in
+            guard let imageFileName, let path = note.userInfo?["path"] as? String,
+                  path.hasSuffix("/\(imageFileName)") else { return }
+            imageLandings += 1
         }
         .onDisappear { cardImage = nil }
         .shadow(

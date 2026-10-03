@@ -110,6 +110,9 @@ struct StoryDetailView: View {
                 }
             }
             ToolbarItem(placement: .primaryAction) {
+                MacStoryRedrawButton(story: story)   // MAC-PICTURES
+            }
+            ToolbarItem(placement: .primaryAction) {
                 Button {
                     showHelp = true
                 } label: {
@@ -176,7 +179,8 @@ struct StoryDetailView: View {
         // Only „Umfluss" needs the decoded bitmaps in hand; the stacked layouts let each
         // `StoryIllustrationView` read its own file. Keyed on the layout too, so switching into
         // Umfluss loads them then rather than on every story.
-        .task(id: "\(layout.rawValue)|\(images.count)") {
+        // File names too, so pictures redrawn on the Mac (new names, same count) load (MAC-PICTURES).
+        .task(id: "\(layout.rawValue)|\(images.map(\.fileName).joined(separator: ","))") {
             guard layout == .umfluss else {
                 // Switching away leaves a full set of decoded bitmaps behind nothing — and the
                 // switch itself is the moment both layouts' pictures are briefly resident, which

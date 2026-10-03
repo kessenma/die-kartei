@@ -72,6 +72,34 @@ struct SourcesView: View {
             }
             .themedListRow()
 
+            #if os(macOS)
+            // MARK: - Mac picture models (MAC-PICTURES)
+            Section {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "paintbrush.pointed.fill")
+                        .font(.system(size: 26))
+                        .foregroundStyle(.tint)
+                        .frame(width: 40, height: 40)
+
+                    Text(
+                        "On the Mac, pictures can be drawn with Z-Image Turbo by Tongyi Lab or FLUX.2 klein 4B by Black Forest Labs, both released under the Apache 2.0 license. They run through a picture engine adapted from turbo-mlx by Stefano Rinaldo, released under the MIT license."
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 4)
+
+                Link(destination: URL(string: "https://github.com/rinste/turbo-mlx")!) {
+                    Label("turbo-mlx on GitHub", systemImage: "arrow.up.right.square")
+                        .font(.footnote)
+                }
+            } header: {
+                Text("Picture Models on the Mac")
+                    .themedSectionHeader()
+            }
+            .themedListRow()
+            #endif
+
             // MARK: - Wiktionary / Kaikki
             Section {
                 HStack(spacing: 12) {

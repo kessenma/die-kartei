@@ -33,6 +33,9 @@ German for identity words and headings, plain English for explanation.
 - `docs/MACOS.md` — the Mac app: the same target compiled for macOS, `App/MacCompat.swift` stand-ins,
   Mac twins of the UIKit-wrapped views, what's hidden or different on the Mac. Wrap every
   `import UIKit` in `#if canImport(UIKit)`, and keep the iOS build green.
+- `docs/MAC_PICTURES.md` — Mac-only picture models (Z-Image Turbo, FLUX.2 klein via the vendored
+  `KarteiDiffusion` package; keep mlx-swift on the tutors' 0.31 pin) and "Draw on my Mac" (a phone
+  orders pictures through iCloud sync, the Mac draws them). Has the merge map for cloud pictures.
 - `docs/FUTURE_FEATURES.md` — ideas not yet built.
 
 ## What's New maintenance
