@@ -35,7 +35,7 @@ struct QueueFlashcardJobSheet: View {
 
     init(modelManager: MLXModelManager) {
         self.modelManager = modelManager
-        _withImages = State(initialValue: modelManager.flashcardIllustrationsEnabled && ImageGenModel.current.isDownloaded)
+        _withImages = State(initialValue: modelManager.flashcardIllustrationsEnabled && PictureEngine.isReady)
     }
 
     private var trimmedTopic: String { topic.trimmingCharacters(in: .whitespaces) }
@@ -74,7 +74,7 @@ struct QueueFlashcardJobSheet: View {
                     if wordTypeFilter.includesNouns {
                         Toggle("Gender (der/die/das)", isOn: $includeGender)
                     }
-                    if ImageGenModel.current.isDownloaded {
+                    if PictureEngine.isReady {
                         Toggle(isOn: $withImages) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("AI pictures")
@@ -125,7 +125,7 @@ struct QueueFlashcardJobSheet: View {
             wordTypeFilter: wordTypeFilter,
             includeConjugations: hasVerbs && includeConjugations,
             selectedTenses: hasVerbs ? Array(tenses) : [],
-            withImages: withImages && ImageGenModel.current.isDownloaded,
+            withImages: withImages && PictureEngine.isReady,
             generatorRaw: modelManager.selectedMLXModel.rawValue,
             sortOrder: BatchQueueService.shared.nextSortOrder(in: modelContext)
         )
@@ -156,7 +156,7 @@ struct QueueStoryJobSheet: View {
         _level = State(initialValue: modelManager.germanLevel)
         _genre = State(initialValue: modelManager.storyGenre)
         _questionCount = State(initialValue: modelManager.storyQuestionCount)
-        _withImages = State(initialValue: modelManager.storyIllustrationsEnabled && ImageGenModel.current.isDownloaded)
+        _withImages = State(initialValue: modelManager.storyIllustrationsEnabled && PictureEngine.isReady)
         _imageCount = State(initialValue: modelManager.storyImageCount)
     }
 
@@ -231,7 +231,7 @@ struct QueueStoryJobSheet: View {
                     }
                     .themedListRow()
 
-                    if ImageGenModel.current.isDownloaded {
+                    if PictureEngine.isReady {
                         Section {
                             Toggle("Illustrate this story", isOn: $withImages)
                             if withImages {
@@ -286,7 +286,7 @@ struct QueueStoryJobSheet: View {
             genre: genre,
             questionCount: questionCount,
             questionKinds: modelManager.storyQuestionKinds,
-            withImages: withImages && ImageGenModel.current.isDownloaded,
+            withImages: withImages && PictureEngine.isReady,
             imageCount: imageCount,
             sortOrder: BatchQueueService.shared.nextSortOrder(in: modelContext)
         )
@@ -326,9 +326,9 @@ struct QueueDeckPicturesSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                if !ImageGenModel.current.isDownloaded {
+                if !PictureEngine.isReady {
                     Section {
-                        Label("Pictures need the \(ImageGenModel.current.displayName). Download it in Settings ▸ Cards first.", systemImage: "arrow.down.circle")
+                        Label(PictureEngine.notReadyMessage, systemImage: PictureSource.current == .cloud ? "person.crop.circle.badge.exclamationmark" : "arrow.down.circle")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }

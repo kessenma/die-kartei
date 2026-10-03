@@ -310,14 +310,16 @@ struct StorySetupView: View {
 
     private var illustrationSection: some View {
         Section {
-            if ImageGenModel.current.isDownloaded {
+            if PictureEngine.isReady {
                 Toggle(isOn: Binding(
                     get: { modelManager.storyIllustrationsEnabled },
                     set: { modelManager.storyIllustrationsEnabled = $0 }
                 )) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Illustrate this story")
-                        Text("Pictures drawn on-device by Stable Diffusion.")
+                        Text(PictureSource.current == .cloud
+                             ? "Pictures drawn in the cloud by \(CloudImageModel.current.displayName), on your OpenRouter account."
+                             : "Pictures drawn on-device by Stable Diffusion.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -338,19 +340,25 @@ struct StorySetupView: View {
                     }
                     .padding(.vertical, 4)
                 }
+            } else if PictureSource.current == .cloud {
+                Label(PictureEngine.notReadyMessage, systemImage: "person.crop.circle.badge.exclamationmark")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             } else {
                 imageModelDownloadRow
             }
         } header: {
             Text("Illustrations").themedSectionHeader()
         } footer: {
-            if !ImageGenModel.current.isDownloaded {
-                Text("Optional: AI-drawn pictures for your stories, generated fully on-device.")
+            if !PictureEngine.isReady {
+                Text(PictureSource.current == .cloud
+                     ? "Optional: AI-drawn pictures for your stories, drawn in the cloud on your OpenRouter account."
+                     : "Optional: AI-drawn pictures for your stories, generated fully on-device.")
             } else if modelManager.storyIllustrationsEnabled {
                 if modelManager.storyImageCount > 1 {
-                    Text("The first picture heads the story; the rest appear between paragraphs. Anyone who turns up in more than one picture gets a fixed look first, so they stay the same character throughout. Each takes a minute or two after the story is written, and the story itself is never blocked by them.")
+                    Text("The first picture heads the story; the rest appear between paragraphs. Anyone who turns up in more than one picture gets a fixed look first, so they stay the same character throughout. Each takes \(PictureEngine.perPictureWait) after the story is written, and the story itself is never blocked by them.")
                 } else {
-                    Text("The picture heads the story. It takes a minute or two after the story is written, and the story itself is never blocked by it.")
+                    Text("The picture heads the story. It takes \(PictureEngine.perPictureWait) after the story is written, and the story itself is never blocked by it.")
                 }
             }
         }
@@ -484,7 +492,7 @@ struct StorySetupView: View {
             genre: modelManager.storyGenre,
             questionCount: modelManager.storyQuestionCount,
             questionKinds: modelManager.storyQuestionKinds,
-            withImages: modelManager.storyIllustrationsEnabled && ImageGenModel.current.isDownloaded,
+            withImages: modelManager.storyIllustrationsEnabled && PictureEngine.isReady,
             imageCount: modelManager.storyImageCount,
             sortOrder: BatchQueueService.shared.nextSortOrder(in: modelContext)
         )
@@ -525,7 +533,7 @@ struct StorySetupView: View {
 
         let questionCount = modelManager.storyQuestionCount
         let kinds = modelManager.storyQuestionKinds
-        let imageCount = (modelManager.storyIllustrationsEnabled && ImageGenModel.current.isDownloaded)
+        let imageCount = (modelManager.storyIllustrationsEnabled && PictureEngine.isReady)
             ? modelManager.storyImageCount : 0
         let translateAfter = modelManager.storyTranslationEnabled
 
@@ -556,7 +564,12 @@ struct StorySetupView: View {
             case .done:
                 success = true
                 finishedStory = story
-                await StoryNotificationService.notifyReady(title: story.title)
+                // The story is fine; its pictures may have stopped short for a reason the learner
+                // can fix (no credit, a revoked key). The story's banner has the fix; the
+                // notification says so for a learner who has left the app.
+                let report = PictureRunReports.shared.report(for: story.id)
+                let pictureProblem = report?.fix != nil ? report?.stopReason : nil
+                await StoryNotificationService.notifyReady(title: story.title, pictureProblem: pictureProblem)
                 // The story (and its pictures) are on screen by now — the translation is written
                 // behind the reader, and the story screen picks it up as soon as it lands.
                 if translateAfter, !service.wasStopped {

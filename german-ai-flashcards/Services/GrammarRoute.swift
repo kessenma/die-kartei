@@ -40,7 +40,7 @@ enum GrammarRoute: Hashable {
         switch focus {
         case .artikel:
             self = .articleGame
-        case .praepositionen, .wechselpraepositionen:
+        case .praepositionen, .wechselpraepositionen, .verbenPraepositionen:
             self = .prepositionHub
         default:
             self = .lesson(focus)
@@ -164,7 +164,8 @@ enum GrammarRoute: Hashable {
                         .joined(separator: " · ")]
         // Listed by hand, not read from the route, so a mapping that slips shows up here.
         let mustPractise: Set<GrammarFocus> = [.akkusativ, .dativ, .genitiv, .artikel,
-                                               .praepositionen, .wechselpraepositionen]
+                                               .praepositionen, .wechselpraepositionen,
+                                               .verbenPraepositionen]
         var fallbacks: [GrammarFocus] = []
 
         for focus in GrammarFocus.allCases {

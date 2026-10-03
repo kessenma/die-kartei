@@ -38,6 +38,16 @@ struct ConversationView: View {
     @State private var showVoiceSettings = false
     /// A span the user selected from a correction and wants to save to their phrase library.
     @State private var phraseDraft: PhraseDraft?
+    /// The "continuing with another tutor" notice, closed for this visit.
+    @State private var handoffDismissed = false
+    /// Read from disk on appear and after each load, not per body pass: the chat redraws on every
+    /// streamed token, and `isDownloaded` walks the hub cache.
+    @State private var needsDownload = false
+    @State private var offeredOriginal: MLXModel?
+    /// Why the original isn't running here, for the notice.
+    @State private var handoffReason = "isn't on this device"
+    /// Optional: previews and hosts without one still render, and the notice drops its button.
+    @Environment(SettingsRouter.self) private var settingsRouter: SettingsRouter?
 
     /// The typed turn in progress, its keyboard language, and a handle on the field.
     @State private var draft = ""
@@ -57,6 +67,7 @@ struct ConversationView: View {
         }
         .onAppear {
             SyncInUse.begin(conversation.id)
+            refreshDiskState()
             if engine == nil {
                 let e = ConversationEngine(
                     conversation: conversation, config: config,
@@ -71,6 +82,8 @@ struct ConversationView: View {
             engine?.tearDown()
             SyncInUse.end(conversation.id)
         }
+        // A download finishing (or failing) is the only thing that changes what's on disk here.
+        .onChange(of: mlxService.isLoading) { refreshDiskState() }
         .memoryContext("Chat")
         .sheet(isPresented: $showSummary) {
             if let summary {
@@ -83,6 +96,41 @@ struct ConversationView: View {
                 )
             }
         }
+    }
+
+    // MARK: - Another device's tutor
+
+    /// The model this chat was started with, when this device continues it on a different one
+    /// (`ChatConversation.makeConfig` → `ModelHandoff`). Raw rather than `MLXModel` so a chat
+    /// started on a model the app has since dropped still names it.
+    private var handedOffFrom: String? {
+        conversation.modelRaw == config.model.rawValue ? nil : conversation.modelRaw
+    }
+
+    /// Re-reads what's on disk: whether this chat's model still has to be downloaded (Apple
+    /// Intelligence never does), and the original tutor when it would run here and only needs
+    /// downloading.
+    private func refreshDiskState() {
+        needsDownload = !config.model.isAppleIntelligence && !config.model.isDownloaded
+        if handedOffFrom != nil, let original = conversation.model, original.isGermanTutor,
+           !original.isDownloaded, DeviceCapability.mayRun(original) {
+            offeredOriginal = original
+        } else {
+            offeredOriginal = nil
+        }
+        if let original = conversation.model, !original.isAppleIntelligence, original.isDownloaded,
+           !DeviceCapability.mayRun(original) {
+            handoffReason = "is too big for this device"
+        } else {
+            handoffReason = "isn't on this device"
+        }
+    }
+
+    /// Model & Downloads lives under Settings, behind this full-screen chat: leave first, then go.
+    private func openModelSettings() {
+        guard let settingsRouter else { return }
+        dismiss()
+        DispatchQueue.main.async { settingsRouter.route = .model }
     }
 
     // MARK: - Layout
@@ -197,14 +245,20 @@ struct ConversationView: View {
         } message: {
             Text("You'll get a short coaching report on how you did.")
         }
-        .alert("Load \(config.model.rawValue)?", isPresented: Binding(
+        .alert(needsDownload ? "Download \(config.model.rawValue)?" : "Load \(config.model.rawValue)?", isPresented: Binding(
             get: { engine.showModelLoadPrompt },
             set: { if !$0 { engine.cancelModelLoad() } }
         )) {
-            Button("Load model") { engine.confirmModelLoad() }
+            Button(needsDownload ? "Download (~\(config.model.approximateSizeLabel))" : "Load model") { engine.confirmModelLoad() }
             Button("Not now", role: .cancel) { engine.cancelModelLoad() }
         } message: {
-            Text("This conversation runs on \(config.model.rawValue). It needs to be loaded into memory before you can speak, translate, or get hints.")
+            if needsDownload {
+                // A chat synced from another device can land here with no tutor on this one. The
+                // old copy said "loaded into memory" and then started a multi-GB download.
+                Text("This conversation runs on \(config.model.rawValue), which isn't on this device yet. It's a one-time download of about \(config.model.approximateSizeLabel), then it runs offline.")
+            } else {
+                Text("This conversation runs on \(config.model.rawValue). It needs to be loaded into memory before you can speak, translate, or get hints.")
+            }
         }
     }
 
@@ -373,6 +427,16 @@ struct ConversationView: View {
         VStack(spacing: 8) {
             if engine.phase == .loadingModel {
                 ModelLoadingBanner(service: mlxService, model: config.model)
+            } else if let from = handedOffFrom, !handoffDismissed {
+                HandoffBanner(
+                    from: from,
+                    reason: handoffReason,
+                    to: config.model,
+                    original: settingsRouter == nil ? nil : offeredOriginal,
+                    onGetOriginal: openModelSettings,
+                    onDismiss: { withAnimation { handoffDismissed = true } }
+                )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
             if !engine.hints.isEmpty || engine.hintLoading {
@@ -1448,6 +1512,57 @@ private struct StrandedTurnBanner: View {
                     .buttonStyle(.borderless)
                     .tint(.secondary)
             }
+        }
+        .padding(10)
+        .background(Color.secondary.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(10)))
+    }
+}
+
+/// A chat that synced from a device with a tutor this one hasn't got, continuing on one it has.
+/// Says so once, above the composer, and offers the original when it would fit here.
+private struct HandoffBanner: View {
+    /// The original model's raw name.
+    let from: String
+    /// "isn't on this device", "is too big for this device".
+    let reason: String
+    let to: MLXModel
+    /// The original tutor, when it fits here and can be fetched. Nil: nothing to offer.
+    let original: MLXModel?
+    let onGetOriginal: () -> Void
+    let onDismiss: () -> Void
+
+    @Environment(\.appTheme) private var appTheme
+
+    private static func short(_ name: String) -> String {
+        name.replacingOccurrences(of: " German Tutor", with: "")
+    }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "arrow.triangle.swap")
+                .font(.caption)
+                .foregroundStyle(to.theme.accent)
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Started with \(Self.short(from)), which \(reason). \(Self.short(to.rawValue)) carries on from here.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let original {
+                    Button("Get \(Self.short(original.rawValue)) (~\(original.approximateSizeLabel))", action: onGetOriginal)
+                        .font(.caption.weight(.semibold))
+                        .buttonStyle(.borderless)
+                }
+            }
+            Spacer(minLength: 0)
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .padding(4)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss")
         }
         .padding(10)
         .background(Color.secondary.opacity(0.1))

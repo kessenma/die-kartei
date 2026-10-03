@@ -305,14 +305,14 @@ struct HomeView: View {
                 // that there was "nothing useful to promise otherwise" — but the result was that
                 // anyone making flashcards never learned the feature existed at all. So the space
                 // now carries the offer instead of nothing, and it is dismissible for good.
-                if ImageGenModel.current.isDownloaded {
+                if PictureEngine.isReady {
                     Toggle(isOn: Binding(
                         get: { service.modelManager.flashcardIllustrationsEnabled },
                         set: { service.modelManager.flashcardIllustrationsEnabled = $0 }
                     )) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("AI pictures")
-                            Text("Drawn on-device as part of this run — the deck opens with its pictures already in place.")
+                            Text("Drawn \(PictureEngine.drawnWherePhrase) as part of this run. The deck opens with its pictures already in place.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -477,7 +477,7 @@ struct HomeView: View {
             wordTypeFilter: wordTypeFilter,
             includeConjugations: hasVerbs && includeConjugations,
             selectedTenses: hasVerbs ? Array(selectedTenses) : [],
-            withImages: service.modelManager.flashcardIllustrationsEnabled && ImageGenModel.current.isDownloaded,
+            withImages: service.modelManager.flashcardIllustrationsEnabled && PictureEngine.isReady,
             generatorRaw: service.modelManager.selectedMLXModel.rawValue,
             sortOrder: BatchQueueService.shared.nextSortOrder(in: modelContext)
         )
@@ -591,7 +591,7 @@ struct HomeView: View {
     /// timing (`.keptCards`) draws in `ContentView` once the learner has picked.
     private func drawPicturesIfTimedForEveryCard() async {
         guard service.modelManager.flashcardIllustrationsEnabled,
-              ImageGenModel.current.isDownloaded,
+              PictureEngine.isReady,
               CardImageTiming.current == .everyCard,
               !service.generatedCards.isEmpty
         else { return }

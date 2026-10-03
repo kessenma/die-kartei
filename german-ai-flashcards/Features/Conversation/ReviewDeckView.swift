@@ -247,7 +247,9 @@ struct ReviewDeckView: View {
         loading = true
         defer { loading = false }
 
-        let model = conversation.model ?? modelManager?.selectedChatModel ?? .hero
+        // The chat may have synced from a device with a tutor this one hasn't got.
+        let model = ModelHandoff.current(original: conversation.model,
+                                         pick: modelManager?.selectedChatModel ?? .hero).model
         if !mlxService.isModelLoaded || mlxService.currentModel != model {
             await mlxService.loadModel(model)
         }

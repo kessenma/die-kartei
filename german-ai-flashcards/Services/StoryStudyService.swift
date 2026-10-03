@@ -119,6 +119,15 @@ final class StoryStudyService {
     private(set) var imageThumbs: [CGImage?] = []
     /// True while the on-demand English translation is generating.
     private(set) var isTranslating = false
+    /// Why the last run's pictures stopped short on their own (a cloud key that stopped working,
+    /// an empty OpenRouter account, a source that couldn't start). The story is finished either
+    /// way; this is what the setup screen tells the learner afterwards.
+    private(set) var illustrationError: String?
+    /// Illustration bookkeeping for `publishSlotProgress` and the run's `PictureRunReport`.
+    private var slotsFinished = 0
+    private var slotsSkipped = 0
+    private var slotFractions: [Int: Double] = [:]
+    private var illustrationStopError: OpenRouterError?
 
     /// True once the learner asked this run to stop — a stop during illustration still ends in
     /// `.done`, so callers use this to skip optional follow-up work like the translation pass.
@@ -188,7 +197,7 @@ final class StoryStudyService {
         progress = 0
         statusText = "Loading \(model.rawValue)…"
         story.modelRaw = model.rawValue
-        imageTarget = ImageGenModel.current.isDownloaded ? imageCount : 0
+        imageTarget = PictureEngine.isReady ? imageCount : 0
         imageSlot = 0
         imageStep = 0
         imageStage = .planning
@@ -239,7 +248,7 @@ final class StoryStudyService {
 
         // 4. Illustrations (optional, non-fatal). Runs last because the LLM must first write
         // the scene prompts, then gets unloaded to make room for the diffusion pipeline.
-        if imageCount > 0, ImageGenModel.current.isDownloaded, !stopRequested {
+        if imageCount > 0, PictureEngine.isReady, !stopRequested {
             phase = .illustrating
             await illustrate(story: story, count: imageCount)
         }
@@ -260,6 +269,9 @@ final class StoryStudyService {
     /// Generate up to `count` images for the finished story. Every failure path is silent:
     /// whatever images finished are kept, and the story stays complete.
     private func illustrate(story: StudyStory, count: Int) async {
+        illustrationError = nil
+        illustrationStopError = nil
+        slotsSkipped = 0
         progress = 0.9
         statusText = "Illustrationen werden geplant…"
         imageStage = .planning
@@ -293,65 +305,184 @@ final class StoryStudyService {
         }
         guard !stopRequested else { return }
 
-        // Point of no return for cheap LLM access: free the language model before the
-        // diffusion pipeline loads — the two don't fit together on 6 GB devices. Grading and
-        // translation reload the LLM lazily later.
-        mlxService.unloadModel()
-
-        statusText = "Zeichenmodell wird geladen…"
+        // On-device this is the point of no return for cheap LLM access: the session frees the
+        // language model before the diffusion pipeline loads — the two don't fit together on
+        // 6 GB devices, and grading and translation reload it lazily later. A cloud session
+        // leaves the tutor loaded.
+        statusText = PictureSource.current == .cloud ? "Illustrationen werden angefragt…" : "Zeichenmodell wird geladen…"
         progress = 0.92
         imageStage = .loadingPipeline
-        guard await imageService.loadPipeline() else { return }
-        defer { imageService.unloadPipeline() }
+        guard let session = await imageService.beginSession(unloading: mlxService) else {
+            illustrationError = imageService.loadError ?? "Pictures couldn't start."
+            if PictureSource.current == .cloud, !OpenRouterAccount.hasKey {
+                illustrationStopError = .notConnected
+                illustrationError = OpenRouterError.notConnected.reportReason
+            }
+            PictureRunReports.shared.record(
+                PictureRunReport(drawn: 0, total: anchors.count, skipped: 0,
+                                 stopReason: illustrationError, fix: illustrationStopError?.reportFix),
+                for: story.id
+            )
+            return
+        }
+        defer { session.end() }
 
         // One seed for the whole story. Identical character wording is what actually holds the
-        // cast together; a shared seed on top of it nudges palette and rendering to match too.
-        // Derived from the story's UUID rather than `random` so a rerun of the same story is
-        // reproducible. Drop back to `nil` here if the pictures come out too samey.
+        // cast together on-device; a shared seed on top of it nudges palette and rendering to
+        // match too. Derived from the story's UUID rather than `random` so a rerun of the same
+        // story is reproducible. Drop back to `nil` here if the pictures come out too samey.
         let idBytes = story.id.uuid
         let seed = UInt32(idBytes.0) << 24 | UInt32(idBytes.1) << 16
             | UInt32(idBytes.2) << 8 | UInt32(idBytes.3)
 
+        let jobs = anchors.enumerated().map { slot, anchor in
+            StorySlotJob(
+                slot: slot, anchor: anchor,
+                scene: scenes[slot] ?? StoryIllustrationPrompts.fallbackScene(topic: story.topic, slot: slot),
+                cast: cast, genre: story.genre, storyID: story.id, seed: seed
+            )
+        }
+        imageStage = .rendering
+        slotsFinished = 0
+        slotFractions = [:]
         var records = story.images
-        for (slot, anchor) in anchors.enumerated() {
-            guard !stopRequested else { break }
-            statusText = "Illustration \(slot + 1)/\(anchors.count)…"
-            imageStage = .rendering
-            imageSlot = slot
-            imageStep = 0
-            imagePreview = nil
-            let scene = scenes[slot] ?? StoryIllustrationPrompts.fallbackScene(topic: story.topic, slot: slot)
-            let prompt = StoryIllustrationPrompts.positivePrompt(scene: scene, genre: story.genre, cast: cast)
-            let base = 0.92 + 0.08 * (Double(slot) / Double(anchors.count))
-            let span = 0.08 / Double(anchors.count)
-            do {
-                guard let fileName = try await imageService.generateImage(
-                    prompt: prompt, storyID: story.id, index: slot, seed: seed,
-                    onStepProgress: { [weak self] fraction in
-                        self?.progress = base + span * fraction
-                        self?.imageStep = fraction
-                    },
-                    onPreview: { [weak self] image in
-                        guard let self else { return }
-                        // Filed by the slot it was drawn for, not the current one: a preview
-                        // hopping to the main actor can land after the next picture has started,
-                        // and the last one to arrive for a slot is that picture's finished state.
-                        if slot < self.imageThumbs.count { self.imageThumbs[slot] = image }
-                        guard slot == self.imageSlot else { return }
-                        self.imagePreview = image
-                        self.imagePreviewID += 1
-                    }
-                ) else { continue }
-                imageStep = 1
-                // Save after every image so partial results survive kill/expiration.
-                records.append(StoryImageRecord(
-                    fileName: fileName, prompt: prompt, paragraphAnchorIndex: anchor
-                ))
-                story.setImages(records)
-                try? modelContext.save()
-            } catch {
-                continue   // per-image failure — try the next one
+        let recordsBefore = records.count
+        // However the run ends, the story keeps a note of what didn't come out, for its reader.
+        defer {
+            PictureRunReports.shared.record(
+                PictureRunReport(
+                    drawn: records.count - recordsBefore, total: anchors.count, skipped: slotsSkipped,
+                    stopReason: illustrationError, fix: illustrationStopError?.reportFix
+                ),
+                for: story.id
+            )
+        }
+        func save(_ record: StoryImageRecord) {
+            records.append(record)
+            // File names are the slot ("00.png", "01.png"…), so this keeps story order however
+            // the pictures landed.
+            records.sort { $0.fileName < $1.fileName }
+            story.setImages(records)
+            try? modelContext.save()   // after every image, so partial results survive a kill
+        }
+
+        // The first picture goes alone: in the cloud it's the reference every later picture is
+        // asked to match, which is what keeps a cast looking the same across the story.
+        let first = await drawStorySlot(jobs[0], reference: nil, session: session)
+        slotsFinished += 1
+        var reference: URL?
+        if let first {
+            save(first)
+            if session.isCloud { reference = StoryImageStore.url(fileName: first.fileName, storyID: story.id) }
+        }
+        let rest = Array(jobs.dropFirst())
+        guard !rest.isEmpty else { return }
+
+        if session.parallelism == 1 {
+            for job in rest {
+                guard !stopRequested else { break }
+                imagePreview = nil
+                if let record = await drawStorySlot(job, reference: reference, session: session) { save(record) }
+                slotsFinished += 1
             }
+        } else {
+            await withTaskGroup(of: StoryImageRecord?.self) { group in
+                for job in rest {
+                    group.addTask { @MainActor [weak self] in
+                        await self?.drawStorySlot(job, reference: reference, session: session)
+                    }
+                }
+                for await record in group {
+                    slotsFinished += 1
+                    if let record { save(record) }
+                    publishSlotProgress()
+                }
+            }
+        }
+    }
+
+    /// One story picture as plain values, so a drawing lane holds nothing tied to SwiftData.
+    private struct StorySlotJob {
+        let slot: Int
+        let anchor: Int?
+        let scene: String
+        let cast: [StoryCastMember]
+        let genre: StoryGenre
+        let storyID: UUID
+        let seed: UInt32
+    }
+
+    /// Several pictures can be in flight in the cloud, so the overlay's "picture k of N" counts
+    /// finished ones and its percentage averages the ones still drawing.
+    private func publishSlotProgress() {
+        guard imageTarget > 0 else { return }
+        let inFlight = slotFractions.values.reduce(0, +)
+        imageSlot = min(slotsFinished, imageTarget - 1)
+        imageStep = slotFractions.isEmpty ? 0 : inFlight / Double(slotFractions.count)
+        progress = 0.92 + 0.08 * min((Double(slotsFinished) + inFlight) / Double(imageTarget), 1)
+        statusText = "Illustration \(min(slotsFinished + 1, imageTarget))/\(imageTarget)…"
+    }
+
+    /// Draw one story picture. Nil when it failed or the run is stopping. A cloud failure every
+    /// remaining picture would hit too (no key, no credit) stops the rest and is kept in
+    /// `illustrationError`; the story itself is already complete and stays that way.
+    private func drawStorySlot(
+        _ job: StorySlotJob, reference: URL?, session: PictureSession
+    ) async -> StoryImageRecord? {
+        guard !stopRequested else { return nil }
+        let slot = job.slot
+        let sdPrompt = StoryIllustrationPrompts.positivePrompt(scene: job.scene, genre: job.genre, cast: job.cast)
+        let request = PictureRequest(
+            sdPrompt: sdPrompt,
+            cloudPrompt: StoryIllustrationPrompts.cloudPrompt(
+                scene: job.scene, genre: job.genre, cast: job.cast, hasReference: reference != nil
+            ),
+            references: reference.map { [$0] } ?? [],
+            seed: job.seed,
+            maxPixel: CloudPictureWriter.storyMaxPixel
+        )
+        let fileName = String(format: "%02d.png", slot)
+        slotFractions[slot] = 0
+        publishSlotProgress()
+        defer {
+            slotFractions[slot] = nil
+            publishSlotProgress()
+        }
+        do {
+            let written = try await session.draw(
+                request, saveTo: StoryImageStore.url(fileName: fileName, storyID: job.storyID),
+                onProgress: { [weak self] fraction in
+                    guard let self else { return }
+                    self.slotFractions[slot] = fraction
+                    self.publishSlotProgress()
+                },
+                onPreview: { [weak self] image in
+                    guard let self else { return }
+                    // Filed by the slot it was drawn for, not the current one: a preview hopping
+                    // to the main actor can land after the next picture has started, and the last
+                    // one to arrive for a slot is that picture's finished state.
+                    if slot < self.imageThumbs.count { self.imageThumbs[slot] = image }
+                    self.imagePreview = image
+                    self.imagePreviewID += 1
+                }
+            )
+            guard written else { return nil }
+            // The prompt on record is the one that was actually sent.
+            return StoryImageRecord(
+                fileName: fileName, prompt: session.isCloud ? request.cloudPrompt : sdPrompt,
+                paragraphAnchorIndex: job.anchor
+            )
+        } catch let error as OpenRouterError where error.stopsRun {
+            if illustrationStopError == nil {
+                illustrationStopError = error
+                illustrationError = error.reportReason
+            }
+            stopRequested = true
+            imageService.requestStop()
+            return nil
+        } catch {
+            slotsSkipped += 1
+            return nil   // per-image failure — the others still get drawn
         }
     }
 

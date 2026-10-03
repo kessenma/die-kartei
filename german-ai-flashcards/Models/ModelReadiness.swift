@@ -69,7 +69,7 @@ struct ModelReadiness {
             // `germanTutors` is ordered best-first, so `first` is the best one present.
             tutor: MLXModel.germanTutors.first(where: \.isDownloaded),
             fittingTutor: MLXModel.leadTutor(ramGB: DeviceCapability.ramGB),
-            hasImageModel: ImageGenModel.current.isDownloaded
+            hasImageModel: PictureEngine.isReady
         )
     }
 

@@ -76,7 +76,13 @@ final class StoryBackgroundGenerator {
     /// entitlement or Info.plist identifier isn't configured, `BGTaskScheduler` raises an NSException
     /// (which Swift `do/catch` can't catch) instead of returning an error — that was crashing the app.
     /// Any failure here just means we fall back to inline generation.
-    func submit(_ kind: TaskKind = .story, title: String, subtitle: String, job: @escaping Job) -> Bool {
+    /// `requiresGPU` is true for anything that runs a model on this device. A cloud picture run
+    /// passes false: it only waits on the network, and a GPU request it doesn't need is just one
+    /// more reason for the system to turn it down.
+    func submit(
+        _ kind: TaskKind = .story, title: String, subtitle: String,
+        requiresGPU: Bool = true, job: @escaping Job
+    ) -> Bool {
         registerIfNeeded()
         guard didRegister else { return false }
 
@@ -96,7 +102,9 @@ final class StoryBackgroundGenerator {
                 identifier: kind.rawValue, title: title, subtitle: subtitle
             )
             request.strategy = .fail            // run promptly, or let the caller fall back to inline
-            request.requiredResources = .gpu    // MLX needs the GPU; gated on the entitlement
+            if requiresGPU {
+                request.requiredResources = .gpu    // MLX needs the GPU; gated on the entitlement
+            }
             do {
                 try BGTaskScheduler.shared.submit(request)
                 accepted = true

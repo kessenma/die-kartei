@@ -60,11 +60,11 @@ struct CardSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                // Mirrors the toggle in the deck-creation options; hidden until the image model
-                // is downloaded (Settings ▸ Model).
-                if ImageGenModel.current.isDownloaded {
+                // Mirrors the toggle in the deck-creation options; hidden until pictures can be
+                // drawn: the image model downloaded, or OpenRouter connected (Settings ▸ Model).
+                if PictureEngine.isReady {
                     Toggle("AI pictures on new decks", isOn: $modelManager.flashcardIllustrationsEnabled)
-                    Text("Draws a picture for each new card on-device and shows it on the German side. Existing decks can be illustrated from their start screen.")
+                    Text("Draws a picture for each new card \(PictureEngine.drawnWherePhrase) and shows it on the German side. Existing decks can be illustrated from their start screen.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
 

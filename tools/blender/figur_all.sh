@@ -51,6 +51,11 @@ run --usdz --preset "$PRESET" --height "$HEIGHT" --out "$DEST/figur.usdz"
 echo "  aufbau clip → Resources/figur-aufbau.usdz"
 run --aufbau --preset "$PRESET" --height "$HEIGHT"
 
+# The verb-scene gestures: a storyboard + Quick Look USDZ per clip, and the catalog. Scratch
+# only — a clip reaches the app inside a scene's export, never as its own file.
+echo "  gesture clips → renders/figur/gesten/ + gesten-katalog.png"
+run --geste all --fast --size 384 --preset "$PRESET" --height "$HEIGHT"
+
 echo
 for asset in figur figur-aufbau; do
   "$BLENDER" --background --python "$RIG" -- --verify "$DEST/$asset.usdz" 2>/dev/null \

@@ -109,6 +109,7 @@ enum PrepositionService {
     }
 
     /// Prepositions currently worth re-drilling, most-missed (then most recently missed) first.
+    /// Includes verb pairs (`verb:` keys); the hub and `trickyPrepositions` filter by kind.
     static func trickyStats(in context: ModelContext) -> [PrepositionStat] {
         let all = (try? context.fetch(FetchDescriptor<PrepositionStat>())) ?? []
         return all
@@ -196,11 +197,16 @@ enum PrepositionService {
     /// Persist a completed Kasus round and return the feedback for the summary. Also counts the
     /// round toward the streak (as grammar practice), nudges the profile's Präpositionen skill,
     /// and — with `feedCoach` on — hands repeatedly-missed prepositions to the coach.
+    ///
+    /// `focus` and `keyPrefix` come from the session: a verb-pair round moves
+    /// `verbenPraepositionen` and keeps its stats under `verb:` keys (VerbPrepositionService).
     @MainActor
     static func recordRound(
         _ result: PrepositionRoundResult,
         topic: String,
         feedCoach: Bool,
+        focus: GrammarFocus = .praepositionen,
+        keyPrefix: String = "",
         in context: ModelContext
     ) -> PrepositionRoundFeedback {
         guard result.questionCount > 0 else { return .empty }
@@ -232,7 +238,7 @@ enum PrepositionService {
         var misses: [PrepositionRoundFeedback.RepeatMiss] = []
         var troubleStats: [PrepositionStat] = []
         for outcome in result.outcomes {
-            let stat = fetchOrCreateStat(for: outcome, in: context)
+            let stat = fetchOrCreateStat(for: outcome, keyPrefix: keyPrefix, in: context)
             stat.timesSeen += 1
             stat.lastSeenAt = now
 
@@ -276,7 +282,7 @@ enum PrepositionService {
         let earned = result.unscaffolded
         if !earned.isEmpty {
             LearnerMemoryService.applyDrillResult(
-                focus: .praepositionen,
+                focus: focus,
                 correct: earned.filter(\.firstTry).count,
                 total: earned.count,
                 in: context
@@ -299,9 +305,10 @@ enum PrepositionService {
 
     private static func fetchOrCreateStat(
         for outcome: PrepositionAnswerOutcome,
+        keyPrefix: String,
         in context: ModelContext
     ) -> PrepositionStat {
-        let statKey = key(for: outcome.word)
+        let statKey = keyPrefix + key(for: outcome.word)
         let descriptor = FetchDescriptor<PrepositionStat>(predicate: #Predicate { $0.key == statKey })
         if let existing = (try? context.fetch(descriptor))?.first {
             return existing

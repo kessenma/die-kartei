@@ -949,7 +949,10 @@ def build_reference(kind, spec, mat):
         s = spec.get("height", 1.4) / h if h > 0 else 1.0
         prop.scale = (s,) * 3
         bpy.ops.object.transform_apply(scale=True)
-        prop.rotation_euler = (0, 0, math.radians(spec.get("yaw", 0)))
+        # `roll`/`pitch` tip a prop over before it is turned (a dog lying on its side, a bowl
+        # knocked over); the base is found again after, so it still stands on `at`.
+        prop.rotation_euler = (math.radians(spec.get("roll", 0)), math.radians(spec.get("pitch", 0)),
+                               math.radians(spec.get("yaw", 0)))
         bpy.ops.object.transform_apply(rotation=True)
         corners = [prop.matrix_world @ Vector(c) for c in prop.bound_box]
         center = sum(corners, Vector()) / 8
@@ -962,7 +965,7 @@ def build_reference(kind, spec, mat):
         # are indistinguishable in the palette.
         prop.data.materials.clear()
         prop.data.materials.append(mat)
-        prop.name = f"reference.{spec['file']}"
+        prop.name = spec.get("name", f"reference.{spec['file']}")
         return [prop]
 
     if kind == "figur":
@@ -973,13 +976,46 @@ def build_reference(kind, spec, mat):
         # the clip rotates and the prim the choreography translates differ by construction.
         # (Changed from flat parts 2026-08-12 to unlock the walk; the standalone figur.usdz
         # for FigurSceneView stays flat — its contract is figur.py's.)
+        #
+        # Two more keys for the verb scenes (2026-10-02):
+        #   - `name` gives a second figure its own group and part names (`freund`,
+        #     `freund_leg_l`…). Without it both would answer to `figur` and the runtime, which
+        #     matches prims by substring, could not tell them apart.
+        #   - `clip` bakes a gesture from figur.CLIPS onto the parts (frame 0 is its key pose,
+        #     so stills show it); `mirror` plays it for a figure facing screen-left. `pose` may
+        #     also name a static gesture from figur.GESTEN.
+        name = spec.get("name", "figur")
+        if bpy.data.objects.get(name):
+            raise ValueError(f"figur: a figure named {name!r} is already in the scene; "
+                             "give the second one its own `name`")
+        #   - `ink` recolors the whole figure and `accent` its torso, from figur.INKS (or a
+        #     hex int): how der Freund is told apart from die Figur.
+        #   - `hold` puts a HELD_PROPS prop in a hand ({"prop": "hammer", "on": "arm_r"}); it is
+        #     keyed with the arm, as `<name>_hand`. `period` stretches the clip to the scene's
+        #     loop length.
         figur._LOD = _LOD                     # dense for stills, light for the shipped USDZ
         parts, p = figur.build_figure(spec.get("preset", "standard"),
-                                      spec.get("height", FIGUR_HEIGHT), mat=mat)
-        figur.apply_pose(parts, p, spec.get("pose", "steh"))
+                                      spec.get("height", FIGUR_HEIGHT),
+                                      mat=_inked(mat, spec["ink"]) if "ink" in spec else mat)
+        for part in parts:
+            figur.name_part(part, f"{name}_{figur.part_role(part)}")
+            if "accent" in spec and figur.part_role(part) == "torso":
+                part.data.materials[0] = _inked(mat, spec["accent"])
+        held = []
+        if hold := spec.get("hold"):
+            prop = HELD_PROPS[hold["prop"]](mat)
+            prop.name = prop.data.name = f"{name}_hand"
+            held = [(prop, hold.get("on", "arm_r"))]
+        if clip := spec.get("clip"):
+            figur.keyframe_clip(parts, p, clip, mirror=spec.get("mirror", False), held=held,
+                                period=spec.get("period"))
+        else:
+            figur.apply_pose(parts, p, spec.get("pose", "steh"), mirror=spec.get("mirror", False),
+                             held=held)
+        parts = parts + [obj for obj, _ in held]
         bpy.ops.object.empty_add(type="PLAIN_AXES", location=(0, 0, 0))
         group = bpy.context.active_object
-        group.name = "figur"
+        group.name = name
         for part in parts:
             part.parent = group
         group.rotation_euler = (0, 0, math.radians(spec.get("yaw", 0.0)))
@@ -1025,7 +1061,325 @@ def build_reference(kind, spec, mat):
         bpy.ops.object.mode_set(mode="OBJECT")
         return [obj]
 
+    if kind in VERB_PROPS:
+        return VERB_PROPS[kind](spec, mat)
+
     raise ValueError(f"unknown reference kind: {kind}")
+
+
+# MARK: - Verb-scene props (Verben mit Präpositionen)
+#
+# The first props of the verb + preposition set (docs/PREPOSITION_3D.md, "scene backlog"): each
+# serves several scenes, so they come before any one scene. Same rules as every other prop:
+# primitives in the one charcoal, and each comes out as ONE joined object, because in a verb
+# scene the prop is often the preposition's object (Angst vor *der Spinne*, antworten auf *den
+# Brief*) and so the tinted subject. The runtime tints and moves exactly one prim. Every builder
+# serves both roles: a reference kind here, and a `subject_build` through SUBJECT_BUILDERS.
+#
+# `at` is the base point (ground contact) except for the floating ones, blase and wolke, where
+# it is the centre. Props with a face build it toward -Y and default to FACE_CAMERA, so a
+# letter or a sign is read face-on rather than edge-on.
+
+FACE_CAMERA = 21.0   # setup_camera's dim azimuth: a face turned by this looks straight at the lens
+
+
+def _inked(mat, ink):
+    """The reference material in another figur.INKS ink (or a hex int), same look. A material
+    of its own, so the USD export carries the color and the app shows it unchanged."""
+    value = figur.INKS[ink] if isinstance(ink, str) else ink
+    name = f"ink_{ink}" if isinstance(ink, str) else f"ink_{value:06x}"
+    if existing := bpy.data.materials.get(name):
+        return existing
+    inked = mat.copy()
+    inked.name = name
+    nodes = inked.node_tree.nodes
+    node = nodes.get("Principled BSDF") or nodes.get("Emission")
+    node.inputs[0].default_value = rgba(value)
+    return inked
+
+
+def _ball(at, r, mat, name, squash=(1.0, 1.0, 1.0), coarse=False):
+    """`coarse` for the small ones (a knee, a thought dot): at that size 16×8 is already
+    round, and a full-LOD sphere per knee made the spider 5k vertices."""
+    segments, rings = (16, 8) if coarse else SPHERE_LOD[_LOD]
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=r, segments=segments, ring_count=rings,
+                                         location=at)
+    obj = bpy.context.active_object
+    obj.scale = Vector(squash)
+    bpy.ops.object.shade_smooth()
+    obj.data.materials.append(mat)
+    obj.name = name
+    return obj
+
+
+def _rod(p0, p1, r, mat, name):
+    """A cylinder from p0 to p1 — a spider's leg, a sign's pole, a raindrop."""
+    p0, p1 = Vector(p0), Vector(p1)
+    axis = p1 - p0
+    bpy.ops.mesh.primitive_cylinder_add(radius=r, depth=axis.length,
+                                        vertices=16 if _LOD == "low" else 32,
+                                        location=(p0 + p1) / 2,
+                                        rotation=axis.to_track_quat("Z", "Y").to_euler())
+    obj = bpy.context.active_object
+    bpy.ops.object.shade_smooth()
+    obj.data.materials.append(mat)
+    obj.name = name
+    return obj
+
+
+def _prism(name, outline, y0, y1, mat):
+    """A convex polygon in the x–z plane, extruded from y0 to y1 — a letter's flap, an arrow's
+    head, a speech bubble's tail. Built from vertices, like the hill, and for the same reason."""
+    n = len(outline)
+    verts = [(x, y0, z) for x, z in outline] + [(x, y1, z) for x, z in outline]
+    faces = ([tuple(range(n)), tuple(range(2 * n - 1, n - 1, -1))]
+             + [(i, (i + 1) % n, n + (i + 1) % n, n + i) for i in range(n)])
+    mesh = bpy.data.meshes.new(name)
+    mesh.from_pydata(verts, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.data.materials.append(mat)
+    bpy.ops.object.select_all(action="DESELECT")
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.mesh.normals_make_consistent(inside=False)
+    bpy.ops.object.mode_set(mode="OBJECT")
+    return obj
+
+
+def _merge(parts, name, origin, yaw=0.0):
+    """Join parts into one object with its origin at `origin`, turned by `yaw` about the
+    vertical through it. One object is one prim, so the runtime's fly-in moves it as a unit."""
+    bpy.ops.object.select_all(action="DESELECT")
+    for obj in parts:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = parts[0]
+    if len(parts) > 1:
+        bpy.ops.object.join()
+    obj = bpy.context.view_layer.objects.active
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    pivot = Vector(origin)
+    if yaw:
+        obj.data.transform(Matrix.Translation(pivot) @ Matrix.Rotation(math.radians(yaw), 4, "Z")
+                           @ Matrix.Translation(-pivot))
+    bpy.context.scene.cursor.location = pivot
+    bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
+    bpy.context.scene.cursor.location = (0, 0, 0)
+    obj.name = name
+    obj.data.name = name
+    return obj
+
+
+def bubble_slot(spec, height):
+    """Where to stand a prop of `height` inside a blase so it reads as the bubble's content: on
+    the bubble's centre, pushed out of its face toward the camera. Returns a base point, the
+    convention `subject_mesh` and the builders place by."""
+    yaw = math.radians(spec.get("yaw", FACE_CAMERA))
+    out = Vector((math.sin(yaw), -math.cos(yaw), 0)) * (spec.get("depth", 0.22) / 2 + 0.12)
+    centre = Vector(spec["at"]) + out
+    return (centre.x, centre.y, centre.z - height / 2)
+
+
+def _blase(spec, mat):
+    """Die Blase: a thought cloud (`style: denk`) or a speech bubble (`style: sprech`), the
+    convention that lets a mental or spoken verb show its object. Thin in depth and turned to
+    face the camera; the object itself stands in front of it (see `bubble_slot`). `tail_to`
+    aims the trailing dots or the tail at the thinker's or speaker's head."""
+    c = Vector(spec["at"])
+    w, h = spec.get("size", (1.6, 1.05))
+    t = spec.get("depth", 0.22)
+    yaw = spec.get("yaw", FACE_CAMERA)
+    a, b = w / 2, h / 2
+    # Built facing -Y and turned at the end, so the tail target is taken into that frame first.
+    if tail := spec.get("tail_to"):
+        v = Matrix.Rotation(math.radians(-yaw), 3, "Z") @ (Vector(tail) - c)
+        aim = Vector((v.x, v.z))
+    else:
+        aim = Vector((-0.7, -1.0))
+    reach = aim.length
+    aim.normalize()
+    edge = c + Vector((aim.x * a, 0, aim.y * b))
+    gap = max(reach - (edge - c).length, 0.35)
+
+    parts = []
+    if spec.get("style", "denk") == "denk":
+        parts.append(_ball(c, 1.0, mat, "blase", squash=(a * 0.8, t / 2, b * 0.74)))
+        n = 8
+        for i in range(n):
+            ang = 2 * math.pi * i / n + 0.2
+            r = min(a, b) * (0.5 if i % 2 else 0.42)
+            at = c + Vector(((a - r * 0.8) * math.cos(ang), 0, (b - r * 0.8) * math.sin(ang)))
+            parts.append(_ball(at, r, mat, "blase", squash=(1, t / (2 * r), 1)))
+        for f, r in ((0.22, 0.13), (0.52, 0.095), (0.8, 0.065)):
+            at = edge + Vector((aim.x, 0, aim.y)) * gap * f
+            parts.append(_ball(at, r, mat, "blase", squash=(1, 0.6, 1), coarse=True))
+    else:
+        bpy.ops.mesh.primitive_cylinder_add(radius=1.0, depth=t,
+                                            vertices=32 if _LOD == "low" else 64,
+                                            location=c, rotation=(math.radians(90), 0, 0))
+        disc = bpy.context.active_object
+        disc.scale = (a, b, 1)
+        disc.data.materials.append(mat)
+        bpy.ops.object.shade_auto_smooth(angle=math.radians(40))
+        parts.append(disc)
+        theta = math.atan2(aim.y, aim.x)
+        base = [c + Vector((a * 0.9 * math.cos(theta + d), 0, b * 0.9 * math.sin(theta + d)))
+                for d in (-0.32, 0.32)]
+        tip = edge + Vector((aim.x, 0, aim.y)) * min(gap * 0.7, 0.5)
+        parts.append(_prism("blase", [(base[0].x, base[0].z), (tip.x, tip.z), (base[1].x, base[1].z)],
+                            c.y - t * 0.42, c.y + t * 0.42, mat))
+    return [_merge(parts, "reference.blase", c, yaw)]
+
+
+def _wolke(spec, mat):
+    """Die Wolke: a puffy cloud, optionally raining. leiden unter's weather, and the same puffs
+    the thought bubble is made of, so the two read as one family."""
+    c = Vector(spec["at"])
+    s = spec.get("scale", 1.0)
+    puffs = [((0, 0, 0.05), 0.55), ((-0.62, 0.05, -0.08), 0.42), ((0.6, -0.04, -0.06), 0.45),
+             ((-0.22, 0.12, 0.32), 0.4), ((0.28, -0.06, 0.28), 0.43),
+             ((-1.02, 0, -0.18), 0.28), ((1.0, 0.02, -0.16), 0.3)]
+    parts = [_ball(c + Vector(o) * s, r * s, mat, "wolke", squash=(1, 0.85, 0.82))
+             for o, r in puffs]
+    if spec.get("rain"):
+        # Two staggered rows of short slanted strokes: rain, said with the rig's own dashes.
+        for row, z in enumerate((-0.64, -1.04)):
+            for col in range(4):
+                x = -0.78 + col * 0.52 + (0.26 if row else 0)
+                top = c + Vector((x, 0, z)) * s
+                parts.append(_rod(top, top + Vector((-0.07, 0, -0.26)) * s, 0.035 * s, mat, "wolke"))
+    return [_merge(parts, "reference.wolke", c)]
+
+
+def _brief(spec, mat):
+    """Der Brief: an envelope standing on its edge, flap in relief on the face. schreiben an,
+    antworten auf, sich beschweren über."""
+    base = Vector(spec["at"])
+    x, y, z = base
+    w, h, d = spec.get("size", (0.9, 0.6, 0.06))
+    body = add_box((w, d, h), (x, y, z + h / 2), mat, "brief")
+    top, apex, half = z + h * 0.97, z + h * 0.36, w * 0.47
+    flap = _prism("brief", [(x - half, top), (x + half, top), (x, apex)],
+                  y - d / 2 - 0.05, y - d / 2 + 0.005, mat)
+    return [_merge([body, flap], "reference.brief", base, spec.get("yaw", FACE_CAMERA))]
+
+
+def _buch(spec, mat):
+    """Das Buch, closed and standing (`style: zu`) or lying open (`style: offen`). The page
+    block is inset from the covers on the open edges, which is all it takes to read as a book
+    in one charcoal. handeln von, erzählen von, sich vorbereiten auf."""
+    base = Vector(spec["at"])
+    x, y, z = base
+    W, H = spec.get("size", (0.62, 0.85))
+    t = 0.035
+    if spec.get("style", "zu") == "zu":
+        D = spec.get("thick", 0.26)
+        inset = 0.045
+        parts = [
+            add_box((W, t, H), (x, y - D / 2 + t / 2, z + H / 2), mat, "buch"),
+            add_box((W, t, H), (x, y + D / 2 - t / 2, z + H / 2), mat, "buch"),
+            add_box((t, D, H), (x - W / 2 + t / 2, y, z + H / 2), mat, "buch"),
+            add_box((W - t - inset, D - 2 * t, H - 2 * inset),
+                    (x + (t - inset) / 2, y, z + H / 2), mat, "buch"),
+        ]
+        # Turned past face-on so the page edge shows too: square to the lens, a closed book is
+        # just a rectangle.
+        return [_merge(parts, "reference.buch", base, spec.get("yaw", -20.0))]
+
+    # Open: the spine runs away from the camera and each half tilts up from it, a shallow V.
+    # `lean` props the far end up toward the lens like a book on a stand; lying flat, at this
+    # camera's 17° elevation it reads as a slab seen edge-on.
+    tilt = spec.get("tilt", 14)
+    page_t = spec.get("pages", 0.1)
+    halves = []
+    for side in (-1, 1):
+        half = _merge([
+            add_box((W, H, t), (x + side * W / 2, y, z + t / 2), mat, "buch"),
+            add_box((W - 0.05, H - 0.07, page_t),
+                    (x + side * (W / 2 - 0.02), y, z + t + page_t / 2), mat, "buch"),
+        ], "buch", base)
+        # About the spine (local y through the origin): negative lifts the +x half's outer edge.
+        half.data.transform(Matrix.Rotation(math.radians(-side * tilt), 4, "Y"))
+        halves.append(half)
+    book = _merge(halves, "reference.buch", base)
+    # Pivot on the near edge, so the book stands on it rather than sinking into the ground.
+    near = Vector((0, -H / 2, 0))
+    book.data.transform(Matrix.Translation(near) @ Matrix.Rotation(math.radians(spec.get("lean", 55)), 4, "X")
+                        @ Matrix.Translation(-near))
+    return [_merge([book], "reference.buch", base, spec.get("yaw", FACE_CAMERA))]
+
+
+def _spinne(spec, mat):
+    """Die Spinne: body and head-chest, eight two-segment legs with the knees up. Built from
+    primitives: thin legs are exactly what the generator mangles (the tree, the bird's paddle
+    wing). Its front is -Y, so the default faces the camera. Angst haben vor, sich fürchten
+    vor, sich ekeln vor."""
+    base = Vector(spec["at"])
+    x, y, z = base
+    s = spec.get("scale", 1.0)
+    body_z = z + 0.36 * s
+    parts = [
+        _ball((x, y + 0.24 * s, body_z + 0.06 * s), 0.3 * s, mat, "spinne", squash=(0.95, 1.15, 0.85)),
+        _ball((x, y - 0.16 * s, body_z), 0.19 * s, mat, "spinne", squash=(1, 1, 0.85)),
+    ]
+    hub = Vector((x, y - 0.14 * s, body_z))
+    r = 0.05 * s
+    for side in (-1, 1):
+        for ang in (-58, -22, 14, 46):   # degrees off the side axis; negative leans to the front
+            d = Vector((side * math.cos(math.radians(ang)), math.sin(math.radians(ang)), 0))
+            hip = hub + d * 0.12 * s
+            knee = hub + d * 0.5 * s + Vector((0, 0, 0.3 * s))
+            foot = Vector((hub.x, hub.y, z)) + d * 0.95 * s
+            parts += [_rod(hip, knee, r, mat, "spinne"), _ball(knee, r * 1.05, mat, "spinne", coarse=True),
+                      _rod(knee, foot, r * 0.9, mat, "spinne")]
+    return [_merge(parts, "reference.spinne", base, spec.get("yaw", 0.0))]
+
+
+def _schild(spec, mat):
+    """Der Pfosten mit Schild: a bus stop (`variant: haltestelle`, the round H sign and a
+    timetable) or a signpost (`variant: wegweiser`, arrow boards). warten auf, fragen nach dem
+    Weg, sich sehnen nach."""
+    base = Vector(spec["at"])
+    x, y, z = base
+    h = spec.get("height", 2.1)
+    parts = [_rod((x, y, z), (x, y, z + h), 0.055, mat, "schild"),
+             add_box((0.36, 0.36, 0.06), (x, y, z + 0.03), mat, "schild")]
+    if spec.get("variant", "haltestelle") == "haltestelle":
+        r, cz = 0.36, z + h
+        bpy.ops.mesh.primitive_cylinder_add(radius=r, depth=0.07, vertices=32 if _LOD == "low" else 64,
+                                            location=(x, y, cz), rotation=(math.radians(90), 0, 0))
+        disc = bpy.context.active_object
+        disc.data.materials.append(mat)
+        parts.append(disc)
+        # The H in relief: the one letter the set allows itself, because the round H sign is
+        # what a German bus stop *is*.
+        face = y - 0.035 - 0.025
+        parts += [add_box((0.07, 0.05, 0.4), (x - 0.12, face, cz), mat, "schild"),
+                  add_box((0.07, 0.05, 0.4), (x + 0.12, face, cz), mat, "schild"),
+                  add_box((0.2, 0.05, 0.07), (x, face, cz), mat, "schild"),
+                  add_box((0.4, 0.05, 0.5), (x, y - 0.08, z + 1.15), mat, "schild")]
+        yaw = spec.get("yaw", FACE_CAMERA)
+    else:
+        for frac, direction in spec.get("arrows", [(0.92, 0), (0.74, 180)]):
+            bz = z + h * frac
+            end = x + 0.06 + 0.85
+            board = add_box((0.85, 0.06, 0.2), (x + 0.06 + 0.425, y, bz), mat, "schild")
+            tip = _prism("schild", [(end - 0.01, bz + 0.17), (end + 0.24, bz), (end - 0.01, bz - 0.17)],
+                         y - 0.03, y + 0.03, mat)
+            parts.append(_merge([board, tip], "schild", (x, y, z), direction))
+        yaw = spec.get("yaw", 0.0)
+    return [_merge(parts, "reference.schild", base, yaw)]
+
+
+VERB_PROPS = {"blase": _blase, "wolke": _wolke, "brief": _brief, "buch": _buch,
+              "spinne": _spinne, "schild": _schild}
+
+# Props a figure holds: builder(mat) → ONE object at the origin, authored around figur.grip
+# (+Z runs on from the arm, +Y is the figure's forward). Filled by verben.py.
+HELD_PROPS = {}
 
 
 # MARK: - Built subjects
@@ -1052,7 +1406,7 @@ def _join_as_subject(parts, origin):
     return subject
 
 
-def add_subject_uhr(at, mat, ref_mat):
+def add_subject_uhr(at, mat, ref_mat, spec=None):
     """Die Standuhr — seit's subject. A street clock: pole and face joined into one teal
     mesh, the hand parented *under* it as `uhr_zeiger`. A child of the subject rides the
     idle bob and is exempt from the runtime's fly-in piece walk; it keeps the reference
@@ -1091,7 +1445,7 @@ def add_subject_uhr(at, mat, ref_mat):
     return subject
 
 
-def add_subject_bild(at, mat, ref_mat=None):
+def add_subject_bild(at, mat, ref_mat=None, spec=None):
     """Das Bild — an's subject. The picture frame joined into one tintable mesh; four loose
     frame sides would leave three behind when the runtime travels the subject to the wall.
     Thin in x, because it hangs on an `an`-style wall (whose face is a y–z plane).
@@ -1107,7 +1461,40 @@ def add_subject_bild(at, mat, ref_mat=None):
     return _join_as_subject(parts, (x, y, z))
 
 
-SUBJECT_BUILDERS = {"uhr": add_subject_uhr, "bild": add_subject_bild}
+def add_subject_freund(at, mat, ref_mat=None, spec=None):
+    """Der Freund: a second Figur as the tintable subject, for the verbs whose object is a
+    person (sprechen mit dem Freund, schreiben an den Freund). The Figur itself is never
+    tinted, so this one is joined into a single mesh named `subject`. That is also why it
+    cannot play a clip: it holds whatever static pose `subject_spec` gives it (a POSES or a
+    GESTEN name), at `yaw`."""
+    spec = spec or {}
+    figur._LOD = _LOD
+    parts, p = figur.build_figure(spec.get("preset", "standard"),
+                                  spec.get("height", FIGUR_HEIGHT), mat=mat)
+    figur.apply_pose(parts, p, spec.get("pose", "steh"), mirror=spec.get("mirror", False))
+    figur.place(parts, at, spec.get("yaw", 0.0))
+    return _join_as_subject(parts, at)
+
+
+def _prop_subject(kind):
+    """A verb-scene prop in the subject role: the same build, joined as `subject`."""
+    def builder(at, mat, ref_mat=None, spec=None):
+        parts = VERB_PROPS[kind]({**(spec or {}), "at": at}, mat)
+        return _join_as_subject(parts, at)
+    return builder
+
+
+def add_subject_ref(at, mat, ref_mat=None, spec=None):
+    """Any reference kind as the tinted subject (`subject_spec: {"kind": "table", …}`): a table
+    being worked on, a race track. Built like the reference and joined into one mesh."""
+    spec = dict(spec or {})
+    kind = spec.pop("kind")
+    parts = build_reference(kind, {**spec, "at": at}, mat)
+    return _join_as_subject(parts, at)
+
+
+SUBJECT_BUILDERS = {"uhr": add_subject_uhr, "bild": add_subject_bild, "freund": add_subject_freund,
+                    "ref": add_subject_ref, **{kind: _prop_subject(kind) for kind in VERB_PROPS}}
 
 
 # Canned specs for `--refprobe`: each new kind rendered with a resting ball, so a reference
@@ -1127,6 +1514,94 @@ REF_PROBES = {
     "figur": ({"at": FIGUR_MARK, "height": FIGUR_HEIGHT, "pose": "zeig", "yaw": 24},
               (0.9, 0, -0.2)),
 }
+
+
+# Staging probes for the verb-scene props and the second figure: each prop placed the way a
+# scene would use it, with die Figur in a gesture beside it, so a prop is judged in context and
+# at scene scale rather than alone. `--propsheet DIR` renders them onto one labelled sheet.
+# These are probes, not the scenes: no word in RELATIONS, nothing exported, nothing shipped.
+
+_PROFIL, _PROFIL_LINKS = figur.STAGING_YAW["profil"], figur.STAGING_YAW["profil_links"]
+_DENK = {"style": "denk", "at": (0.75, 0.15, 1.45), "size": (1.75, 1.15), "tail_to": (-1.3, 0.2, 0.95)}
+_SPRECH = {"style": "sprech", "at": (-0.1, 0.25, 1.45), "size": (1.5, 0.95), "tail_to": (-1.55, 0, 0.9)}
+
+PROP_PROBES = {
+    "Blase · denken an": {
+        "governs": "akkusativ",
+        "ref": [("figur", {"at": (-1.6, 0.2, -0.75), "pose": "gruebeln", "yaw": _PROFIL}),
+                ("blase", _DENK)],
+        "subject_mesh": {"file": "hund", "height": 0.6, "yaw": 20},
+        "dat": {"subject": bubble_slot(_DENK, 0.6)},
+    },
+    "Blase · sprechen über": {
+        "governs": "akkusativ",
+        "ref": [("figur", {"at": (-1.8, 0, -0.75), "pose": "reden", "yaw": _PROFIL}),
+                ("figur", {"name": "freund", "at": (1.8, 0, -0.75), "pose": "reden_b",
+                           "yaw": _PROFIL_LINKS, "mirror": True}),
+                ("blase", _SPRECH)],
+        "subject_mesh": {"file": "gift", "height": 0.5, "yaw": 0},
+        "dat": {"subject": bubble_slot(_SPRECH, 0.5)},
+    },
+    "Wolke · leiden unter": {
+        "governs": "dativ",
+        "ref": ("figur", {"at": (0, 0, -0.75), "pose": "kummer", "yaw": _PROFIL}),
+        "subject_build": "wolke",
+        "subject_spec": {"rain": True, "scale": 0.8},
+        "dat": {"subject": (0.1, 0.1, 2.05)},
+    },
+    "Brief · antworten auf": {
+        "governs": "akkusativ",
+        "ref": ("figur", {"at": (-1.6, 0, -0.75), "pose": "werfen", "yaw": _PROFIL}),
+        "subject_build": "brief",
+        "dat": {"subject": (0.6, 0, 0.35)},
+    },
+    "Buch · zu / offen": {
+        "governs": "dativ",
+        "ref": [("figur", {"at": (-2.3, 0.6, -0.75), "pose": "lesen", "yaw": _PROFIL}),
+                ("buch", {"style": "offen", "at": (-0.75, -0.2, -0.75), "size": (0.75, 1.0)})],
+        "subject_build": "buch",
+        "subject_spec": {"size": (0.7, 0.95)},
+        "dat": {"subject": (1.15, 0, -0.75)},
+    },
+    "Spinne · Angst haben vor": {
+        "governs": "dativ",
+        "ref": ("figur", {"at": (-1.55, 0.2, -0.75), "pose": "schreck", "yaw": _PROFIL}),
+        "subject_build": "spinne",
+        "subject_spec": {"scale": 1.15, "yaw": -90},
+        "dat": {"subject": (1.0, 0, -0.75)},
+    },
+    "Schild · warten auf": {
+        "ref": [("figur", {"at": (-0.4, 0, -0.75), "pose": "warten", "yaw": _PROFIL}),
+                ("schild", {"variant": "haltestelle", "at": (-1.5, 0.35, -0.75)}),
+                ("schild", {"variant": "wegweiser", "at": (1.5, 0.3, -0.75)})],
+        "dat": {"subject": None},
+    },
+    "Freund · sprechen mit": {
+        "governs": "dativ",
+        "ref": ("figur", {"at": (-1.2, 0, -0.75), "pose": "reden", "yaw": _PROFIL}),
+        "subject_build": "freund",
+        "subject_spec": {"pose": "reden", "yaw": _PROFIL_LINKS, "mirror": True},
+        "dat": {"subject": (1.2, 0, -0.75)},
+    },
+    "Zwei Figuren · helfen bei": {
+        "ref": [("figur", {"at": (-0.8, 0, -0.75), "pose": "heben", "yaw": _PROFIL}),
+                ("figur", {"name": "freund", "at": (0.8, 0, -0.75), "pose": "heben",
+                           "yaw": _PROFIL_LINKS, "mirror": True}),
+                ("slab", {"size": (0.75, 0.55, 0.45), "at": (0, 0, 0.3)})],
+        "dat": {"subject": None},
+    },
+}
+
+
+def propsheet(out_dir, size):
+    cells = []
+    for i, (label, relation) in enumerate(PROP_PROBES.items()):
+        build_relation(relation, "dat", "dim", size)
+        figur.add_label(label)
+        path = os.path.join(os.path.abspath(out_dir), f"probe-{i:02d}.png")
+        render_to(path)
+        cells.append(path)
+    figur.contact_sheet(cells, 3, os.path.join(out_dir, "verb-props.png"))
 
 
 def _figure(at, scale, mat, prefix="reference"):
@@ -1309,10 +1784,13 @@ def setup_render(look, size):
 
 
 def build(prep, state, look, size, ghost=False):
+    build_relation(RELATIONS[prep], state, look, size, ghost)
+
+
+def build_relation(relation, state, look, size, ghost=False):
     clear_scene()
     setup_render(look, size)
 
-    relation = RELATIONS[prep]
     ref_mat = make_material("reference", PALETTE["reference"], look)
     subject_mat = make_material("subject", subject_color(relation, state), look)
 
@@ -1326,10 +1804,13 @@ def build(prep, state, look, size, ghost=False):
     # would answer the question being asked. A fixed-case relation has one pose, so both
     # resolved states fall back to it.
     pose = relation["dat"] if state == "neutral" else (relation.get(state) or relation["dat"])
-    if mesh_spec := relation.get("subject_mesh"):
+    if pose["subject"] is None:
+        pass   # a staging probe with nothing to tint (see PROP_PROBES); no shipped relation
+    elif mesh_spec := relation.get("subject_mesh"):
         add_subject_mesh(mesh_spec, pose["subject"], subject_mat)
     elif builder := relation.get("subject_build"):
-        SUBJECT_BUILDERS[builder](pose["subject"], subject_mat, ref_mat)
+        SUBJECT_BUILDERS[builder](pose["subject"], subject_mat, ref_mat,
+                                  relation.get("subject_spec"))
     else:
         add_sphere(pose["subject"], subject_mat)
     if pose.get("arrow") and state != "neutral":
@@ -1373,7 +1854,8 @@ def add_subject_mesh(mesh_spec, at, mat):
     s = mesh_spec.get("height", 1.3) / h if h > 0 else 1.0
     subj.scale = (s,) * 3
     bpy.ops.object.transform_apply(scale=True)
-    subj.rotation_euler = (0, 0, math.radians(mesh_spec.get("yaw", 0)))
+    subj.rotation_euler = (math.radians(mesh_spec.get("roll", 0)), math.radians(mesh_spec.get("pitch", 0)),
+                           math.radians(mesh_spec.get("yaw", 0)))
     bpy.ops.object.transform_apply(rotation=True)
     corners = [subj.matrix_world @ Vector(c) for c in subj.bound_box]
     center = sum(corners, Vector()) / 8
@@ -1490,7 +1972,9 @@ def bake_ambient(specs):
     scene = bpy.context.scene
     scene.render.fps = 24
     longest = max(int(spec.get("period", 4.0) * 24) for spec in specs)
-    scene.frame_start, scene.frame_end = 1, longest + 1
+    # A figure clip baked at build time (figur.keyframe_clip) may already need a longer range.
+    # Author the two to the same period: the shorter one holds its last frame until the seam.
+    scene.frame_start, scene.frame_end = 1, max(longest + 1, scene.get("clip_end", 1))
 
     for spec in specs:
         obj = bpy.data.objects.get(spec["prim"])
@@ -1574,6 +2058,30 @@ def verify(path):
 
     A render proves the picture; only this proves the file.
     """
+    stem = os.path.splitext(os.path.basename(path))[0]
+    word = {ascii_name(w): w for w in RELATIONS}.get(stem.removeprefix("prep3d-"))
+    relation = RELATIONS.get(word) or {}
+    twin = os.path.join(os.path.dirname(os.path.abspath(__file__)), "renders", "prep",
+                        stem + ".usda")
+    return check_export(path, relation, twin)
+
+
+def animated_whitelist(relation):
+    """Prims a scene's baked clips may move: its `ambient` prims, plus all six parts (and a held
+    prop) of any figure playing a gesture clip."""
+    allowed = {spec["prim"] for spec in relation.get("ambient", [])}
+    refs = relation.get("ref", [])
+    for kind, spec in (refs if isinstance(refs, list) else [refs]):
+        if kind == "figur" and spec.get("clip"):
+            name = spec.get("name", "figur")
+            allowed |= {f"{name}_{role}" for role in figur.PART_NAMES}
+            if spec.get("hold"):
+                allowed.add(f"{name}_hand")
+    return allowed
+
+
+def check_export(path, relation, twin, extra_allowed=()):
+    """The body of `verify`, for any relation-shaped scene and twin path (verben.py uses it)."""
     clear_scene()
     bpy.ops.wm.usd_import(filepath=os.path.abspath(path), merge_parent_xform=False)
     print(f"VERIFY {path} ({os.path.getsize(path)} bytes)")
@@ -1594,12 +2102,7 @@ def verify(path):
     if not subject_found:
         problems.append("no prim named *subject*")
 
-    stem = os.path.splitext(os.path.basename(path))[0]
-    word = {ascii_name(w): w for w in RELATIONS}.get(stem.removeprefix("prep3d-"))
-    allowed = {spec["prim"] for spec in (RELATIONS.get(word) or {}).get("ambient", [])}
-
-    twin = os.path.join(os.path.dirname(os.path.abspath(__file__)), "renders", "prep",
-                        stem + ".usda")
+    allowed = animated_whitelist(relation) | set(extra_allowed)
     if os.path.exists(twin):
         ops, span = figur.usda_animation(twin)
         sampled = {p: sorted(v) for p, v in ops.items() if p and p != "root"}
@@ -1631,6 +2134,8 @@ def main():
     ap.add_argument("--usdz", action="store_true", help="export the scene for RealityKit")
     ap.add_argument("--ghost", action="store_true", help="add a faint start pose to an akk still")
     ap.add_argument("--manifest", action="store_true", help="write the per-relation pose manifest")
+    ap.add_argument("--propsheet", metavar="DIR",
+                    help="render the verb-scene prop probes (PROP_PROBES) onto DIR/verb-props.png")
     ap.add_argument("--refprobe", choices=sorted(REF_PROBES),
                     help="render a canned probe of one reference kind, with a resting ball")
     ap.add_argument("--verify", metavar="USDZ",
@@ -1641,6 +2146,9 @@ def main():
     if args.verify:
         if not verify(args.verify):
             sys.exit(1)
+    elif args.propsheet:
+        os.makedirs(args.propsheet, exist_ok=True)
+        propsheet(args.propsheet, args.size)
     elif args.refprobe:
         clear_scene()
         setup_render(args.look, args.size)
@@ -1659,15 +2167,17 @@ def main():
         global _LOD
         _LOD = "low"
         build(args.prep, args.state, args.look, args.size)
-        # A scene with an `ambient` spec exports animated and leaves a .usda twin behind
-        # for --verify; everything else stays a static pose.
+        # A scene with an `ambient` spec or a figure `clip` exports animated and leaves a
+        # .usda twin behind for --verify; everything else stays a static pose.
         ambient = RELATIONS[args.prep].get("ambient")
+        animated = bool(ambient) or bool(bpy.context.scene.get("clip_end"))
         twin = None
         if ambient:
             bake_ambient(ambient)
+        if animated:
             twin = os.path.join(os.path.dirname(os.path.abspath(__file__)), "renders",
                                 "prep", "prep3d-" + ascii_name(args.prep) + ".usda")
-        export_usdz(args.out, animated=bool(ambient), twin=twin)
+        export_usdz(args.out, animated=animated, twin=twin)
     else:
         build(args.prep, args.state, args.look, args.size, ghost=args.ghost)
         render_to(args.out)

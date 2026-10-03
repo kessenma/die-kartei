@@ -11,6 +11,11 @@
 //  Deliberately no single-case rounds: a round of nothing but Dativ prepositions has the same
 //  answer every time. Every Kasus launcher mixes at least two groups.
 //
+//  Two tracks (2026-10-03, docs/VERB_PREPOSITIONS.md): „Ort & Zeit“, where the preposition
+//  decides the case, and „Verb + Präposition“, where the verb pair does (warten auf + Akk, moving
+//  or not). They share the options and the round machinery but keep their own progress: verb
+//  rounds carry a "Verben" topic and `verb:` stat keys, filtered apart here.
+//
 
 import SwiftUI
 import SwiftData
@@ -38,6 +43,21 @@ struct PrepositionHubView: View {
     /// round a pure meaning recall with no color to lean on.
     @AppStorage("prepositions.matchColorCoded") private var matchColorCoded = true
 
+    /// Which track the hub shows. Remembered, so a learner drilling verb pairs for a test comes
+    /// back to them.
+    @AppStorage("prepositions.track") private var track: Track = .ort
+
+    enum Track: String, CaseIterable, Identifiable {
+        case ort, verb
+        var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .ort:  "Ort & Zeit"
+            case .verb: "Verb + Präposition"
+            }
+        }
+    }
+
     @State private var showRules = false
     @State private var showsTutorLab = false
     @State private var isOptionsExpanded = false
@@ -45,11 +65,19 @@ struct PrepositionHubView: View {
 
     private let questionCountOptions = [5, 10, 15, 20]
 
-    private var trickyCount: Int { stats.filter(\.isTricky).count }
+    /// The rounds and stats of the track on screen. Verb pairs live in the same tables under a
+    /// "Verben" topic and `verb:` keys (VerbPrepositionService).
+    private var trackRounds: [PrepositionRound] {
+        rounds.filter { VerbPrepositionService.isVerbTopic($0.topic) == (track == .verb) }
+    }
+
+    private var trickyCount: Int {
+        stats.filter { $0.isTricky && VerbPrepositionService.isVerbStat($0.key) == (track == .verb) }.count
+    }
 
     /// First-try accuracy across the most recent rounds, as a whole percent.
     private var recentAccuracy: Int? {
-        let recent = rounds.prefix(10)
+        let recent = trackRounds.prefix(10)
         let questions = recent.reduce(0) { $0 + $1.questionCount }
         guard questions > 0 else { return nil }
         let hits = recent.reduce(0) { $0 + $1.firstTryCount }
@@ -66,13 +94,20 @@ struct PrepositionHubView: View {
 
     var body: some View {
         List {
-            if !rounds.isEmpty {
+            trackPicker.themedListRow()
+            if !trackRounds.isEmpty {
                 progressSection.themedListRow()
             }
             optionsSection.themedListRow()
-            drillSection.themedListRow()
-            blankSection.themedListRow()
-            studySection.themedListRow()
+            switch track {
+            case .ort:
+                drillSection.themedListRow()
+                blankSection.themedListRow()
+                studySection.themedListRow()
+            case .verb:
+                verbLearnSection.themedListRow()
+                verbPracticeSection.themedListRow()
+            }
 
             if let errorMessage {
                 Section {
@@ -103,12 +138,30 @@ struct PrepositionHubView: View {
         }
     }
 
+    // MARK: - Track
+
+    private var trackPicker: some View {
+        Section {
+            Picker("Track", selection: $track) {
+                ForEach(Track.allCases) { Text($0.label).tag($0) }
+            }
+            .pickerStyle(.segmented)
+        } footer: {
+            switch track {
+            case .ort:
+                Text("The preposition decides the case. Two-way ones switch: Wohin? Akkusativ, Wo? Dativ.")
+            case .verb:
+                Text("The verb decides the case, moving or not: warten auf + Akkusativ, Angst haben vor + Dativ.")
+            }
+        }
+    }
+
     // MARK: - Progress
 
     private var progressSection: some View {
         Section {
             HStack(spacing: 0) {
-                progressStat("\(rounds.count)", rounds.count == 1 ? "round" : "rounds")
+                progressStat("\(trackRounds.count)", trackRounds.count == 1 ? "round" : "rounds")
                 if let accuracy = recentAccuracy {
                     Divider().padding(.vertical, 6)
                     progressStat("\(accuracy)%", "first-try, last 10")
@@ -117,7 +170,7 @@ struct PrepositionHubView: View {
                 progressStat("\(trickyCount)", trickyCount == 1 ? "tricky one" : "tricky ones")
             }
 
-            if trickyCount >= PrepositionService.minQuestions {
+            if track == .ort, trickyCount >= PrepositionService.minQuestions {
                 Button {
                     // All four buttons: a tricky pool can hold anything, and narrowing them
                     // would hand over half the answer.
@@ -369,6 +422,97 @@ struct PrepositionHubView: View {
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
+    }
+
+    // MARK: - Verb + Präposition
+
+    private var verbCount: Int { VerbPrepositionService.all().count }
+
+    private var verbLearnSection: some View {
+        Section {
+            NavigationLink {
+                VerbPrepositionCardsView()
+            } label: {
+                sourceRow(
+                    "Verb-Karten",
+                    "\(verbCount) pairs, each with its scene. Flip for the preposition and case",
+                    "rectangle.stack",
+                    isLauncher: false
+                )
+            }
+
+            Button {
+                guard let session = VerbPrepositionService.matchingSession(limit: 8, colorCoded: matchColorCoded) else {
+                    errorMessage = "Not enough verb pairs for a matching round."
+                    return
+                }
+                errorMessage = nil
+                router.launch(.matching(session))
+            } label: {
+                sourceRow(
+                    "Paare finden",
+                    matchColorCoded ? "Match each pair to its meaning, colored by case" : "Match each pair to its meaning",
+                    "square.grid.2x2.fill"
+                )
+            }
+            .buttonStyle(.plain)
+        } header: {
+            Text("Lernen")
+        } footer: {
+            Text("Start with the cards. Each pair is one piece to learn: the verb, its preposition and its case.")
+        }
+    }
+
+    private var verbPracticeSection: some View {
+        Section {
+            Button {
+                guard let session = VerbPrepositionService.caseSession(
+                    count: questionCount, trickyFirst: trickyFirst, in: modelContext
+                ) else {
+                    errorMessage = "Not enough verb pairs for a round."
+                    return
+                }
+                errorMessage = nil
+                router.launch(.prepositionCase(session))
+            } label: {
+                sourceRow(
+                    "Akkusativ oder Dativ?",
+                    "The pair and its scene, one tap for the case",
+                    "arrow.left.arrow.right"
+                )
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                router.launch(.grammarMultipleChoice(
+                    category: VerbPrepositionService.lueckentextCategory(), showHints: showHints
+                ))
+            } label: {
+                sourceRow(
+                    "Lückentext",
+                    "Fill in the preposition and the article: „wartet ___ Bus“",
+                    "text.insert"
+                )
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                router.launch(.grammarMultipleChoice(
+                    category: VerbPrepositionService.falleCategory(), showHints: showHints
+                ))
+            } label: {
+                sourceRow(
+                    "Die Falle",
+                    "Same preposition, place or verb pair? „auf dem Tisch“ vs „auf den Bus“",
+                    "exclamationmark.triangle"
+                )
+            }
+            .buttonStyle(.plain)
+        } header: {
+            Text("Üben")
+        } footer: {
+            Text("Die Falle mixes both tracks on purpose: a two-way preposition follows Wo/Wohin as a place, but inside a verb pair the verb decides.")
+        }
     }
 
     // MARK: - Animation gallery (tuning surface)

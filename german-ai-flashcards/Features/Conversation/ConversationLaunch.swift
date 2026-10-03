@@ -6,9 +6,13 @@ import SwiftData
 extension ChatConversation {
     /// The per-chat choices come from the chat; the learner-wide aids (translations, hints, eager
     /// assist, gender colors) come from the current settings, as they always have.
+    ///
+    /// The model is this device's answer (`ModelHandoff`), not necessarily the one the chat was
+    /// started with: a chat synced from another device continues on a tutor that is here. The
+    /// chat's own `modelRaw` is left alone, and `ConversationView` compares the two to say so.
     @MainActor
     func makeConfig(modelManager: MLXModelManager, decks: [SavedDeck]) -> ConversationConfig {
-        let model = self.model ?? modelManager.selectedChatModel
+        let model = ModelHandoff.current(original: self.model, pick: modelManager.selectedChatModel).model
         var c = ConversationConfig(model: model)
         c.learnerName = ConversationConfig.learnerName(from: modelManager.learnerName)
         c.mode = mode

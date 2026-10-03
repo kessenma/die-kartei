@@ -513,6 +513,43 @@ struct ContentView: View {
             if UserDefaults.standard.bool(forKey: "sync.debugVerify") {
                 Task { print(await SyncDebugVerify.run()) }
             }
+            // `-pictures.debugSource cloud|onDevice` picks where pictures are drawn without the
+            // Settings picker and its one-time consent sheet, so the simulator can run the cloud
+            // path straight away (docs/CLOUD_PICTURES.md).
+            if let raw = UserDefaults.standard.string(forKey: "pictures.debugSource"),
+               let source = PictureSource(rawValue: raw) {
+                PictureSource.current = source
+                if source == .cloud {
+                    UserDefaults.standard.set(true, forKey: CloudPicturesConsentSheet.acceptedDefaultsKey)
+                }
+            }
+            // `-pictures.debugReport addCredit|raiseKeyLimit|confirmAge|reconnect|skipped` files a
+            // sample picture-run report on every deck and story, so the "Pictures stopped" banners
+            // can be seen without running an account dry.
+            if let raw = UserDefaults.standard.string(forKey: "pictures.debugReport") {
+                let fix = PictureRunReport.Fix(rawValue: raw)
+                let error: OpenRouterError? = switch fix {
+                case .addCredit:     .outOfCredit(keyLimit: false)
+                case .raiseKeyLimit: .outOfCredit(keyLimit: true)
+                case .confirmAge:    .needsAgeConfirmation
+                case .reconnect:     .unauthorized
+                case nil:            nil
+                }
+                let report = PictureRunReport(
+                    drawn: 5, total: 20, skipped: fix == nil ? 3 : 0,
+                    stopReason: error?.reportReason, fix: fix
+                )
+                for deck in (try? modelContext.fetch(FetchDescriptor<SavedDeck>())) ?? [] {
+                    PictureRunReports.shared.record(report, for: deck.id)
+                }
+                for story in (try? modelContext.fetch(FetchDescriptor<StudyStory>())) ?? [] {
+                    PictureRunReports.shared.record(report, for: story.id)
+                }
+            }
+            // `-openrouter.debugOpen 1` opens Settings ▸ Model, where the cloud picture rows live.
+            if UserDefaults.standard.bool(forKey: "openrouter.debugOpen") {
+                openModelSettings()
+            }
             // `-sync.debugOpen 1` opens Settings ▸ Account ▸ iCloud Sync (this simulator can't tap).
             if UserDefaults.standard.bool(forKey: "sync.debugOpen") {
                 settingsRouter.route = .sync
@@ -886,6 +923,8 @@ struct ContentView: View {
                         result,
                         topic: session.topic,
                         feedCoach: coordinator.modelManager.prepositionsFeedCoach,
+                        focus: GrammarFocus(rawValue: session.focusRaw) ?? .praepositionen,
+                        keyPrefix: session.statKeyPrefix,
                         in: modelContext
                     )
                 },
@@ -980,8 +1019,10 @@ struct ContentView: View {
         // run came up short. A run they stopped themselves is left alone.
         if let deck,
            coordinator.modelManager.flashcardIllustrationsEnabled,
-           ImageGenModel.current.isDownloaded,
+           PictureEngine.isReady,
            !coordinator.draftImagesStopped,
+           // The draft run already hit something only the learner can fix; the deck says so.
+           PictureRunReports.shared.report(for: deck.id)?.stopReason == nil,
            deck.cards.contains(where: { $0.imageFileName == nil }) {
             let job = PendingIllustration(deckUUID: deck.id, session: session, topic: deck.topic)
             pendingIllustration = job
@@ -1038,7 +1079,11 @@ struct ContentView: View {
     /// rest away. A card whose file didn't make the move is simply left without one — the deck's
     /// own "Illustrate this deck" button will offer to draw it again.
     private func adoptDraftImages(into deck: SavedDeck) {
-        guard let draftID = coordinator.draftImageID, !coordinator.draftImages.isEmpty else { return }
+        guard let draftID = coordinator.draftImageID, !coordinator.draftImages.isEmpty else {
+            // No pictures to move, but a run that stopped before drawing any still has its say.
+            carryDraftPictureReport(onto: deck)
+            return
+        }
         for card in deck.cards {
             guard let draftFileName = coordinator.draftImages[card.germanWord.lowercased()] else { continue }
             card.imageFileName = CardImageStore.adopt(
@@ -1046,7 +1091,23 @@ struct ContentView: View {
             )
         }
         try? modelContext.save()
-        coordinator.discardDraftImages()   // deletes whatever wasn't adopted
+        carryDraftPictureReport(onto: deck)   // counts what was adopted, so before the discard
+        coordinator.discardDraftImages()      // deletes whatever wasn't adopted
+    }
+
+    /// File what the draft picture run left undone under the deck it became, counted against the
+    /// cards that were kept. Taken once, so a later deck never inherits it.
+    private func carryDraftPictureReport(onto deck: SavedDeck) {
+        guard let draft = coordinator.takeDraftPictureReport() else { return }
+        let total = deck.cards.count
+        let drawn = deck.cards.filter { $0.imageFileName != nil }.count
+        PictureRunReports.shared.record(
+            PictureRunReport(
+                drawn: drawn, total: total, skipped: min(draft.skipped, total - drawn),
+                stopReason: draft.stopReason, fix: draft.fix
+            ),
+            for: deck.id
+        )
     }
 }
 

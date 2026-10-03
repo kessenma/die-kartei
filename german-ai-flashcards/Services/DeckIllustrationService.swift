@@ -7,7 +7,8 @@ import UIKit
 ///
 /// A singleton, like `StoryImageService`, because two screens observe the same run: the deck being
 /// studied (pictures appear as they land) and the deck's setup panel (progress + Stop). Only one
-/// deck illustrates at a time — the diffusion pipeline is a single shared resource.
+/// deck illustrates at a time — the diffusion pipeline is a single shared resource, and a cloud
+/// run already draws several at once (`PictureSession.cloudParallelism`).
 ///
 /// **Skip-existing semantics.** By default every pass illustrates only the cards where
 /// `imageFileName == nil`, so stopping halfway and re-running finishes the remainder instead of
@@ -33,21 +34,32 @@ final class DeckIllustrationService {
     /// create-time flow checks this so a stopped run isn't immediately started again for the
     /// cards it didn't get to.
     private(set) var wasStopped = false
+    /// What the last run left undone: pictures skipped, and why it stopped if it stopped on its
+    /// own (a cloud key that stopped working, an empty OpenRouter account, a source that couldn't
+    /// start). A deck run also files it in `PictureRunReports` under the deck; a draft run has no
+    /// deck yet, so the create flow carries it over when the deck is saved.
+    private(set) var lastReport: PictureRunReport?
+    private var stopError: OpenRouterError?
+    private var stopMessage: String?
+    private var skippedCount = 0
 
-    /// Fraction of the way through the whole run, blending finished pictures with the diffusion
-    /// steps of the one in flight, so the background task's progress bar moves smoothly.
+    /// Fraction of the way through the whole run, blending finished pictures with the progress
+    /// of the ones in flight, so the background task's progress bar moves smoothly.
     var progress: Double {
         guard totalCount > 0 else { return 0 }
-        return min(1, (Double(completedCount) + stepFraction) / Double(totalCount))
+        let inFlight = laneFractions.values.reduce(0, +)
+        return min(1, (Double(completedCount) + inFlight) / Double(totalCount))
     }
 
-    private var stepFraction: Double = 0
+    /// Progress of each picture being drawn right now: one lane on-device, several in the cloud
+    /// (`PictureSession.parallelism`).
+    private var laneFractions: [UUID: Double] = [:]
     private var stopRequested = false
 
     private init() {}
 
-    /// Ask the run to stop. The current picture is abandoned at its next diffusion step; every
-    /// picture already saved stays saved.
+    /// Ask the run to stop. The pictures in flight are abandoned (at the next diffusion step, or
+    /// by cancelling the cloud request); every picture already saved stays saved.
     func stop() {
         stopRequested = true
         wasStopped = true
@@ -78,73 +90,44 @@ final class DeckIllustrationService {
             .sorted { $0.sortOrder < $1.sortOrder }
         guard !pending.isEmpty else { return 0 }
 
-        isRunning = true
-        stopRequested = false
-        wasStopped = false
-        illustratingDeckUUID = deckUUID
-        completedCount = 0
-        stepFraction = 0
-        totalCount = pending.count
-        defer {
-            isRunning = false
-            illustratingDeckUUID = nil
-            completedCount = 0
-            totalCount = 0
-            stepFraction = 0
+        beginRun(id: deckUUID, total: pending.count)
+        defer { endRun() }
+
+        // On-device, the session unloads the ~5 GB language model first: it and the diffusion
+        // pipeline don't fit together on 6 GB devices, and the learner may well have just
+        // generated this deck. A cloud session leaves it loaded.
+        guard let session = await StoryImageService.shared.beginSession(unloading: mlxService) else {
+            noteSessionFailure()
+            fileReport(drawn: 0, total: pending.count, for: deckUUID)
+            return 0
         }
+        defer { session.end() }
 
-        // The ~5 GB language model and the diffusion pipeline don't fit together on 6 GB devices,
-        // and the learner may well have just generated this deck. Freeing it first is the same
-        // trade the story illustrator makes; the LLM reloads lazily next time it's needed.
-        mlxService.unloadModel()
-
-        let imageService = StoryImageService.shared
-        guard await imageService.loadPipeline() else { return 0 }
-        defer { imageService.unloadPipeline() }
-
-        var drawn = 0
-        for card in pending {
-            // Re-checked every iteration: the learner can delete the deck from the Library while
-            // this runs, and SwiftData deletes land on this same actor between awaits.
-            guard !stopRequested, !deck.isDeleted, !card.isDeleted else { break }
-            stepFraction = 0
-            defer { completedCount += 1; stepFraction = 0 }
-
-            // Read per card, so changing the style mid-run applies from the next picture on —
-            // the same contract `ImageGenQuality` has.
-            let style = CardImageStyle.current
-            let detail = CardImageDetail.current
-            let prompt = CardIllustrationPrompts.positivePrompt(
-                englishTranslation: card.englishTranslation, wordType: card.wordType,
-                style: style, detail: detail
-            )
-            let previousFileName = card.imageFileName
+        let jobs = pending.enumerated().map { index, card in
             let fileName = CardImageStore.newFileName(for: card.id)
-            do {
-                let written = try await imageService.generateImage(
-                    prompt: prompt,
-                    negativePrompt: CardIllustrationPrompts.negativePrompt(style: style, detail: detail),
-                    saveTo: CardImageStore.url(fileName: fileName, deckID: deckUUID),
-                    onStepProgress: { [weak self] fraction in self?.stepFraction = fraction }
-                )
-                // false = stopped, or the model files were deleted out from under us. Neither
-                // gets better on the next card.
-                guard written else { break }
-                // The generation awaited; the deck may be gone now. Don't write to a tombstone.
-                guard !deck.isDeleted, !card.isDeleted else { break }
-
-                card.imageFileName = fileName
-                // Only now is the replacement safe to drop: a card is never left pointing at a
-                // file that isn't there.
-                if let previousFileName, previousFileName != fileName {
-                    CardImageStore.delete(fileName: previousFileName, deckID: deckUUID)
-                }
-                try? modelContext.save()   // per picture, so partial results survive a kill
-                drawn += 1
-            } catch {
-                continue   // per-picture failure — try the next card
-            }
+            return CardJob(
+                index: index, english: card.englishTranslation, wordType: card.wordType,
+                fileName: fileName, destination: CardImageStore.url(fileName: fileName, deckID: deckUUID)
+            )
         }
+        var drawn = 0
+        await draw(jobs, session: session, isGone: { job in
+            // The learner can delete the deck from the Library while this runs, and SwiftData
+            // deletes land on this same actor between awaits.
+            deck.isDeleted || pending[job.index].isDeleted
+        }, onDrawn: { job in
+            let card = pending[job.index]
+            let previousFileName = card.imageFileName
+            card.imageFileName = job.fileName
+            // Only now is the replacement safe to drop: a card is never left pointing at a
+            // file that isn't there.
+            if let previousFileName, previousFileName != job.fileName {
+                CardImageStore.delete(fileName: previousFileName, deckID: deckUUID)
+            }
+            try? modelContext.save()   // per picture, so partial results survive a kill
+            drawn += 1
+        })
+        fileReport(drawn: drawn, total: pending.count, for: deckUUID)
         return drawn
     }
 
@@ -158,7 +141,7 @@ final class DeckIllustrationService {
     /// a run share one. The caller adopts the names it keeps into the deck it saves
     /// (`CardImageStore.adopt`) and discards the rest.
     ///
-    /// Same single-pipeline rule as `illustrate`: one run at a time, LLM unloaded first.
+    /// Same rules as `illustrate`: one run at a time, and on-device the LLM is unloaded first.
     func illustrateDraft(
         cards: [VocabCard],
         draftID: UUID,
@@ -166,55 +149,150 @@ final class DeckIllustrationService {
     ) async -> [String: String] {
         guard !isRunning, !cards.isEmpty else { return [:] }
 
+        beginRun(id: draftID, total: cards.count)
+        defer { endRun() }
+
+        guard let session = await StoryImageService.shared.beginSession(unloading: mlxService) else {
+            noteSessionFailure()
+            fileReport(drawn: 0, total: cards.count, for: nil)
+            return [:]
+        }
+        defer { session.end() }
+
+        let jobs = cards.enumerated().map { index, card in
+            let fileName = CardImageStore.draftFileName(index: index)
+            return CardJob(
+                index: index, english: card.englishTranslation, wordType: card.wordType,
+                fileName: fileName, destination: CardImageStore.url(fileName: fileName, deckID: draftID)
+            )
+        }
+        var drawn: [String: String] = [:]
+        await draw(jobs, session: session, isGone: { _ in false }, onDrawn: { job in
+            drawn[cards[job.index].germanWord.lowercased()] = job.fileName
+        })
+        fileReport(drawn: drawn.count, total: cards.count, for: nil)
+        return drawn
+    }
+
+    // MARK: - Shared loop
+
+    /// One card's picture, as plain values: what a drawing lane needs and nothing tied to SwiftData.
+    private struct CardJob {
+        let index: Int
+        let english: String
+        let wordType: String?
+        let fileName: String
+        let destination: URL
+    }
+
+    private enum Outcome {
+        case drawn
+        /// This card failed (a refused prompt, a provider hiccup); the next one is worth trying.
+        case skipped
+        /// Nothing more will work this run: the learner stopped, the on-device model vanished, or
+        /// a cloud failure that every remaining card would hit too (error set).
+        case stop(OpenRouterError?)
+    }
+
+    private func beginRun(id: UUID, total: Int) {
         isRunning = true
         stopRequested = false
         wasStopped = false
-        illustratingDeckUUID = draftID
+        lastReport = nil
+        stopError = nil
+        stopMessage = nil
+        skippedCount = 0
+        illustratingDeckUUID = id
         completedCount = 0
-        stepFraction = 0
-        totalCount = cards.count
-        defer {
-            isRunning = false
-            illustratingDeckUUID = nil
-            completedCount = 0
-            totalCount = 0
-            stepFraction = 0
+        laneFractions = [:]
+        totalCount = total
+    }
+
+    /// The source couldn't start: no key, or the on-device model is missing or won't load.
+    private func noteSessionFailure() {
+        stopMessage = StoryImageService.shared.loadError ?? "Pictures couldn't start."
+        if PictureSource.current == .cloud, !OpenRouterAccount.hasKey {
+            stopError = .notConnected
+            stopMessage = OpenRouterError.notConnected.reportReason
         }
+    }
 
-        mlxService.unloadModel()
+    /// Sum the run up in `lastReport`, and file it under the deck when there is one. A run that
+    /// went fine clears whatever an earlier run left on that deck.
+    private func fileReport(drawn: Int, total: Int, for deckUUID: UUID?) {
+        let report = PictureRunReport(
+            drawn: drawn, total: total, skipped: skippedCount,
+            stopReason: stopMessage, fix: stopError?.reportFix
+        )
+        lastReport = report
+        if let deckUUID { PictureRunReports.shared.record(report, for: deckUUID) }
+    }
 
-        let imageService = StoryImageService.shared
-        guard await imageService.loadPipeline() else { return [:] }
-        defer { imageService.unloadPipeline() }
+    private func endRun() {
+        isRunning = false
+        illustratingDeckUUID = nil
+        completedCount = 0
+        totalCount = 0
+        laneFractions = [:]
+    }
 
-        var drawn: [String: String] = [:]
-        for (index, card) in cards.enumerated() {
-            guard !stopRequested else { break }
-            stepFraction = 0
-            defer { completedCount += 1; stepFraction = 0 }
-
-            let style = CardImageStyle.current
-            let detail = CardImageDetail.current
-            let fileName = CardImageStore.draftFileName(index: index)
-            do {
-                let written = try await imageService.generateImage(
-                    prompt: CardIllustrationPrompts.positivePrompt(
-                        englishTranslation: card.englishTranslation, wordType: card.wordType,
-                        style: style, detail: detail
-                    ),
-                    negativePrompt: CardIllustrationPrompts.negativePrompt(style: style, detail: detail),
-                    saveTo: CardImageStore.url(fileName: fileName, deckID: draftID),
-                    onStepProgress: { [weak self] fraction in self?.stepFraction = fraction }
-                )
-                // false = stopped, or the model files were deleted out from under us. Neither
-                // gets better on the next card.
-                guard written else { break }
-                drawn[card.germanWord.lowercased()] = fileName
-            } catch {
-                continue   // per-picture failure — try the next card
+    /// Draw `jobs` in order, `session.parallelism` at a time. The style and detail are read as
+    /// each picture starts, so changing them mid-run applies from the next picture on — the same
+    /// contract `ImageGenQuality` has. `onDrawn` runs on the main actor as each one lands.
+    private func draw(
+        _ jobs: [CardJob],
+        session: PictureSession,
+        isGone: (CardJob) -> Bool,
+        onDrawn: (CardJob) -> Void
+    ) async {
+        await withTaskGroup(of: (CardJob, Outcome).self) { group in
+            var next = 0
+            var inFlight = 0
+            while true {
+                while inFlight < session.parallelism, next < jobs.count, !stopRequested {
+                    let job = jobs[next]
+                    next += 1
+                    if isGone(job) { stopRequested = true; break }
+                    let request = CardIllustrationPrompts.request(englishTranslation: job.english, wordType: job.wordType)
+                    let lane = UUID()
+                    laneFractions[lane] = 0
+                    inFlight += 1
+                    group.addTask { @MainActor [weak self] in
+                        defer { self?.laneFractions[lane] = nil }
+                        do {
+                            let written = try await session.draw(
+                                request, saveTo: job.destination,
+                                onProgress: { fraction in self?.laneFractions[lane] = fraction }
+                            )
+                            return (job, written ? .drawn : .stop(nil))
+                        } catch let error as OpenRouterError where error.stopsRun {
+                            return (job, .stop(error))
+                        } catch {
+                            return (job, .skipped)
+                        }
+                    }
+                }
+                guard inFlight > 0, let (job, outcome) = await group.next() else { break }
+                inFlight -= 1
+                completedCount += 1
+                switch outcome {
+                case .drawn:
+                    // The picture awaited; the deck may be gone now. Don't write to a tombstone.
+                    if isGone(job) { stopRequested = true } else { onDrawn(job) }
+                case .skipped:
+                    skippedCount += 1
+                case .stop(let error):
+                    if let error, stopError == nil {
+                        stopError = error
+                        stopMessage = error.reportReason
+                    }
+                    if !stopRequested {
+                        stopRequested = true
+                        StoryImageService.shared.requestStop()
+                    }
+                }
             }
         }
-        return drawn
     }
 
     // MARK: - Background launch
@@ -255,7 +333,11 @@ final class DeckIllustrationService {
             )
             progressPump.cancel()
 
-            if drawn > 0 {
+            if let report = service.lastReport, let reason = report.stopReason, report.fix != nil {
+                // Credit, key or the Muse confirmation: something only the learner can fix, and
+                // they may well be in another app by now.
+                await DeckNotificationService.notifyStopped(topic: topic, drawn: report.drawn, total: report.total, reason: reason)
+            } else if drawn > 0 {
                 await DeckNotificationService.notifyReady(topic: topic, count: drawn)
             }
             task?.progress.completedUnitCount = 100
@@ -266,7 +348,11 @@ final class DeckIllustrationService {
         if !StoryBackgroundGenerator.shared.submit(
             .deckIllustration,
             title: redrawAll ? "Redrawing your cards" : "Illustrating your cards",
-            subtitle: topic, job: job
+            subtitle: topic,
+            // Cloud pictures are web requests: asking for the GPU would only give the system a
+            // reason to refuse the background task.
+            requiresGPU: PictureSource.current == .onDevice,
+            job: job
         ) {
             Task { @MainActor in await job(nil) }
         }

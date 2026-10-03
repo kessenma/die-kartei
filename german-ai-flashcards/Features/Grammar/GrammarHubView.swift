@@ -275,6 +275,7 @@ struct GrammarHubView: View {
                 toolRow(
                     "Präpositionen", "Which case each one takes",
                     shaky: isShaky(.praepositionen) || isShaky(.wechselpraepositionen)
+                        || isShaky(.verbenPraepositionen)
                 ) {
                     prepositionStill
                 }

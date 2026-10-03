@@ -262,6 +262,149 @@ than the mapping living in a Swift or Python lookup table.
 - ⬜ Measure: app size delta, `RealityView` first-frame latency on the oldest supported device,
   memory while a drill round is running.
 
+## Verben mit Präpositionen — scene backlog 🚧 (props + gestures built, scenes not started)
+
+Source: Kyle's class sheet „Verben mit Präpositionen" (2026-10-01), 42 pairs. **None of them are
+in the app yet.** `prepositions.json` holds the 36 bare prepositions. The only verb pairs
+anywhere are *warten auf* (Kasus stories, `KasusCheckSheet`) and *sich freuen auf* (one fill-in,
+`praep-kontr-009`). The data and an exercise come first. This list records which pairs would need
+Blender work once they exist.
+
+**Why the existing 36 scenes can't stand in.** They show the preposition's *place* meaning. In a
+verb pair the verb fixes the case and the place meaning mostly drops away. The auf scene (ball
+drops *onto* the table, so Akk) would give *warten auf* the right case for the wrong reason. The
+an scene would give *zweifeln an* the wrong case: it's Dat, and nothing is resting anywhere. Every
+pair that gets a picture needs a new one. Grouping verbs that can share a stage brings 42 pairs
+down to 25 scenes.
+
+Fit:
+- **echo**: the place meaning survives and agrees with the case (Angst *vor* = in front of it,
+  Dat). These are the cheapest and most memorable, and they can often reuse an existing motion kind.
+- **trap**: a two-way preposition with a fixed case and no movement (warten auf + Akk, über + Akk
+  for "about"). The scene has to *show stillness* while the tint says Akkusativ. This is where the
+  Wo/Wohin rule breaks, so these teach the most.
+- **abstract**: a mental or social verb. It needs a new visual convention (thought bubble, speech
+  arc) or stays text-only.
+
+Seeds are starting points for the brainstorm, not decisions.
+
+| # | Scene | Verbs (case) | Fit | Seed |
+|---|---|---|---|---|
+| 1 | Angst | Angst haben vor, sich fürchten vor (Dat) | echo | Figur backs away from something looming in front of it, never past it. Reuse vor's dat pose. |
+| 2 | Ekel | sich ekeln vor (Dat) | echo | Same staging as 1, head turned away instead of backing off. Could be a clip on scene 1. |
+| 3 | Leiden | leiden unter (Dat) | echo | Figur slumped under a raincloud or heavy block that stays over it. |
+| 4 | Arbeit | arbeiten an (Dat) | echo | Figur hammering at a half-built stack. At it, nothing lands on it. |
+| 5 | Hilfe | helfen bei (Dat) | echo | Figur and Mann lifting one box together. |
+| 6 | Ernährung | sich ernähren von (Dat) | echo | Figur takes apples off a tree, one by one. |
+| 7 | Zugehörigkeit | gehören zu, zählen zu (Dat) | echo | A stray block slides into its row (shuttle). |
+| 8 | Abhängen | abhängen von (Dat) | echo | A weight hanging off a hook; ab-hängen is literally "hang off". |
+| 9 | Brief | schreiben an (Akk) | echo | Letter arcs from Figur to the Mann (shuttle + arc). |
+| 10 | Fürsorge | sich kümmern um, sich sorgen um (Akk) | echo | Figur circles the Hund, tending it (reuse um's orbit). sorgen = slower orbit, head down. |
+| 11 | Aufpassen | aufpassen auf (Akk) | trap | Figur stands still watching the Hund play. Nothing lands on anything, still Akk. |
+| 12 | Warten | warten auf (Akk) | trap | Figur at a stop tapping its foot, clock hand turning, nothing arrives. |
+| 13 | Freude | sich freuen auf, sich freuen über (Akk) | trap | Two beats: wrapped gift ahead, Figur bouncing (auf = still to come), then gift opened, Figur cheering (über = already here). Reuses the Geschenk lid rig. |
+| 14 | Hoffen | hoffen auf (Akk) | trap | Figur looking up, hands together. Maybe shares 13's "ahead" beat. |
+| 15 | Vorbereiten | sich vorbereiten auf (Akk) | trap | Figur stretching at a start line. |
+| 16 | Antworten | antworten auf (Akk) | abstract | A ball (the question) tossed to Figur, tossed back. |
+| 17 | Über = about | sprechen über, reden über, nachdenken über, sich ärgern über, sich beschweren über, sich streiten über, sich wundern über (Akk) | trap | One stage: a topic object on a plinth, Figur around it, one clip per verb (talk, chin-scratch, stomp, finger-wag, two Figurs tugging, head tilt). Teaches that über meaning "about" is always Akk. Best payoff: 7 verbs, 1 asset. |
+| 18 | An = in mind | denken an, sich erinnern an, sich gewöhnen an (Akk) | abstract | Thought bubble holding the object. erinnern = a faded copy; gewöhnen = Figur flinches less each loop. |
+| 19 | Zweifeln | zweifeln an (Dat) | abstract | Figur inspecting a wobbly block, shaking its head. Show next to 18, because an + Akk vs an + Dat is the trap. |
+| 20 | Bitten | bitten um (Akk) | abstract | Figur holds out a hand to the Mann holding the ball. |
+| 21 | Mit + people | sprechen mit, schimpfen mit (Dat) | abstract | Two Figurs face to face. schimpfen = arms waving at the Hund. |
+| 22 | Angeben | angeben mit (Dat) | abstract | Figur holding a trophy up, turning to show it off. |
+| 23 | Von = about | erzählen von, träumen von, handeln von (Dat) | abstract | Story or dream bubble holding the object. träumen = Figur lying asleep. handeln von = a book with the object on its cover. |
+| 24 | Nach = toward | fragen nach, sich sehnen nach, verlangen nach (Dat) | echo | Figur reaching or gazing toward something far off. fragen = Figur pointing, question mark. |
+| 25 | Interesse | sich interessieren für (Akk) | abstract | Figur leaning in over an object with a magnifier. |
+
+**Sheet corrections** (the data should use these): *sprechen mit* is marked "(acc)" on the Dativ
+page, but mit is always Dativ. *interessieren für* is reflexive: *sich interessieren für*. In the
+example, „ich zweifel an" should be „ich zweifle an". *denken an* and *nachdenken über* are both
+glossed "to think about". The cards need different glosses: "to think of / have in mind" vs "to
+mull over".
+
+### Built first: shared props and die Figur's gestures (2026-10-02)
+
+Shared pieces that many scenes use, built before any one scene. Nothing here ships yet: no word in
+`RELATIONS` uses them, and the judging renders live in the gitignored `tools/blender/renders/`.
+
+**Props** (`prep_render.py`, `VERB_PROPS`). Each is a reference kind *and* a `subject_build`,
+because in a verb scene the prop is often the preposition's object and so the tinted subject.
+Each comes out as one joined mesh.
+
+| Kind | Options | Serves |
+|---|---|---|
+| `blase` | `style: denk` (thought cloud + dots) or `sprech` (bubble + tail), `tail_to` the head; content stands at `bubble_slot(spec, height)` | 16, 17, 18, 21, 23 |
+| `wolke` | `rain`, `scale` | 3 (and the same puffs as the thought cloud) |
+| `brief` | upright envelope, flap in relief | 9, 16, 17 (beschweren) |
+| `buch` | `style: zu` (closed, turned to show the page edge) or `offen` (propped on its near edge by `lean`) | 15, 23, 25 |
+| `spinne` | `scale`; front is -Y | 1, 2 |
+| `schild` | `variant: haltestelle` (round H sign) or `wegweiser` (`arrows`) | 12, 24 |
+| `freund` (subject only) | a whole Figur joined into one tintable mesh, static `pose` | 5, 9, 21: verbs whose object is a person |
+
+**Die Figur** (`figur.py`, "Gesten"). The rig now has a joint-space layer solved by forward
+kinematics, so a leaning torso carries the arms and head (the six parts stay flat and unparented;
+every older contract holds). 23 looping clips in `CLIPS`, one or more per scene. Each one's
+`verbs` field names its verbs: schreck, ekel, kummer, hammer, heben, pflegen, wache, warten,
+vorfreude, jubel, dehnen, werfen, reden, gruebeln, stampfen, schimpfen, staunen, bitten,
+sehnen, stolz, schlafen, lesen, neugier.
+
+- In a scene: `("figur", {"clip": "schreck", …})` bakes the clip at build time. Stills show
+  frame 0, the key pose, which is also what the question side holds (clips play on the reveal
+  only). `pose` also accepts any `GESTEN` name as a static pose.
+- A second figure: `("figur", {"name": "freund", …})`. It needs its own name, because the
+  runtime matches prims by substring. Two clips in one scene should share a period, since the
+  export runs to the longer one.
+- `ink` recolors a figure and `accent` its torso, from `figur.INKS` (charcoal, warmgrau, kreide)
+  or a hex. No app code is involved: the runtime re-tints only the subject, so a figure keeps the
+  color it was exported with. The inks differ from charcoal in warmth and value only, because
+  every hue already means something in the app (gender, plural gold, the case colors, the
+  question side's grey). Der Freund wears charcoal with a `kreide` torso (Kyle's pick from four
+  candidates, 2026-10-02).
+- `--verify` whitelists all six parts of any figure with a `clip`.
+
+**Staging rules the renders taught** (they hold for the scenes):
+- The head is a sphere, so turning it is invisible. Only nods and tilts read. "Looking" is a
+  torso twist or a body turn.
+- A reach only reads in profile. At this camera that is yaw **-69** (facing screen-right) or
+  **111** (facing left); yaw -90 already points the arm into the lens. Sideways gestures (jubel,
+  dehnen, stolz, staunen) and lying down (schlafen) read from the front, yaw **-159**.
+  `figur.STAGING_YAW` holds the three.
+- One-armed gestures use arm_r, the near arm when facing right. A figure facing left plays its
+  clip with `mirror: True`.
+
+**Judge them:**
+- `figur.py -- --geste all --fast` writes a storyboard per clip, the catalog
+  `renders/figur/gesten-katalog.png`, and a looping USDZ per clip. Open the USDZ in Quick Look,
+  which plays baked clips.
+- `prep_render.py -- --propsheet tools/blender/renders/prep` writes `verb-props.png`, every
+  prop staged with the Figur.
+
+### The prototype: `verben.py` + its data (2026-10-02)
+
+Built apart from the shipped preposition set first (Kyle: prototype, then plan how it joins the
+existing experience). It joined the app on 2026-10-03 (docs/VERB_PREPOSITIONS.md):
+- the data moved to `Resources/verb_prepositions.json`, which the rig now reads;
+- `verben.py --ship` writes the scenes, stills and `verb3d-manifest.json` into `Resources/`.
+
+- **`Resources/verb_prepositions.json`** (was `tools/blender/verben.json`) holds the 42 verbs, with the sheet's corrections, a
+  scene-matched example sentence each, the prepositional `object` phrase the scene tints, and
+  notes (separable verbs, contrast pairs such as sprechen über / erzählen von).
+- **`tools/blender/verben.py`** holds 39 scenes. Angst/fürchten, gehören/zählen and
+  sprechen/reden über each share one. It reuses prep_render's rig and adds the props bus,
+  pokal, kiste, äpfel, leiter, käfer, rahmen, ball and rudel, plus the held props hammer and
+  lupe.
+- **Outputs**, all into the gitignored `tools/blender/renders/verben/`:
+  - `--sheet` writes `verben-szenen.png`.
+  - `--usdz` writes `verb3d-<id>.usdz` and checks each one.
+  - `--preview` writes `verben-vorschau.mp4`.
+
+**All motion is baked into the USDZ, unlike the shipped set.** The shipped set moves the subject
+at runtime from manifest `motion` kinds. Here a moving thing sits under a still holder prim, and
+its clip moves the child. For the subject, the holder keeps the name `subject` (the runtime
+positions that) and the tinted mesh inside is `<scene>_bewegt`. So Quick Look shows each scene
+exactly as intended. Integration needs two things from the runtime: tint the mesh *under* the
+`subject` prim (it already searches descendants), and play clips on the reveal (it already does).
+
 ## Open questions
 
 1. **How often should the full assembly play?** Ten full assemblies in a ten-question round will

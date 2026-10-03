@@ -24,6 +24,20 @@ extension CardDeckView {
                     }
                 }
 
+                // Up top rather than beside the Illustrate button: a run that stopped on an empty
+                // OpenRouter account should be the first thing seen, and a revoked key hides the
+                // button's whole row.
+                if let deckUUID,
+                   DeckIllustrationService.shared.illustratingDeckUUID != deckUUID,
+                   let report = PictureRunReports.shared.report(for: deckUUID) {
+                    PictureRunReportBanner(
+                        report: report,
+                        retryHint: "Illustrate this deck",
+                        onDismiss: { PictureRunReports.shared.clear(deckUUID) }
+                    )
+                    .padding(.horizontal)
+                }
+
                 if !localValidationResults.isEmpty {
                     validationSummary
                 }
@@ -105,7 +119,7 @@ extension CardDeckView {
     @ViewBuilder
     var illustrateDeckRow: some View {
         let service = DeckIllustrationService.shared
-        if ImageGenModel.current.isDownloaded,
+        if PictureEngine.isReady,
            let deckUUID,
            savedDeck?.isBrowsableContent == true,
            !savedCards.isEmpty {
@@ -138,7 +152,7 @@ extension CardDeckView {
                         .buttonStyle(.bordered)
                         .disabled(service.isRunning)
 
-                        Text("Draws a picture for each of the \(missingCount) cards without one, on-device. You can start studying right away.")
+                        Text("Draws a picture for each of the \(missingCount) cards without one, \(PictureEngine.drawnWherePhrase)\(PictureEngine.costPhrase(pictures: missingCount)). You can start studying right away.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)

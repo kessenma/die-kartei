@@ -104,10 +104,10 @@ struct CardImageStyleSheet: View {
 
     private let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
 
-    /// One picture at a time: the pipeline is a single shared resource, and a deck run owns it
-    /// while it lasts.
+    /// One picture at a time: the on-device pipeline is a single shared resource, and a deck run
+    /// owns the picture source while it lasts.
     private var canDrawSample: Bool {
-        ImageGenModel.current.isDownloaded
+        PictureEngine.isReady
             && !DeckIllustrationService.shared.isRunning
             && !StoryImageService.shared.isDownloading
     }
@@ -259,11 +259,18 @@ struct CardImageStyleSheet: View {
     }
 
     private var sampleFootnote: String {
-        if !ImageGenModel.current.isDownloaded {
-            return "Download the image model in Settings ▸ Model to draw samples."
+        let isCloud = PictureSource.current == .cloud
+        if !PictureEngine.isReady {
+            return isCloud
+                ? "Connect your OpenRouter account in Settings ▸ Model to draw samples."
+                : "Download the image model in Settings ▸ Model to draw samples."
         }
         if DeckIllustrationService.shared.isRunning {
             return "A deck is being illustrated right now. Samples wait their turn."
+        }
+        if isCloud {
+            let model = CloudImageModel.current
+            return "Drawn by \(model.displayName) on your OpenRouter account (\(model.approxCostLabel) a picture). Your style applies to every picture drawn from now on."
         }
         return "Drawn at Fast quality, so it's quicker than a real card picture. Your style applies to every picture drawn from now on."
     }
@@ -275,30 +282,27 @@ struct CardImageStyleSheet: View {
         sampleError = nil
         defer { isDrawing = false; sampleProgress = 0 }
 
-        // Same trade the deck run makes: the language model and the diffusion pipeline don't fit
-        // together on smaller devices. It reloads lazily next time it's needed.
-        mlxService?.unloadModel()
-
+        // Same trade the deck run makes: on-device, the session unloads the language model first,
+        // since it and the diffusion pipeline don't fit together on smaller devices. It reloads
+        // lazily next time it's needed. A cloud session leaves it be.
         let imageService = StoryImageService.shared
-        guard await imageService.loadPipeline() else {
+        guard let session = await imageService.beginSession(unloading: mlxService) else {
             sampleError = imageService.loadError ?? "Couldn't load the image model."
             return
         }
-        defer { imageService.unloadPipeline() }
+        defer { session.end() }
 
         let destination = FileManager.default.temporaryDirectory
             .appendingPathComponent("card-style-sample.png")
+        var request = CardIllustrationPrompts.request(
+            englishTranslation: sample.english, wordType: sample.wordType, style: style, detail: detail
+        )
+        request.stepCount = ImageGenQuality.fast.stepCount
+        request.seed = sample.seed
         do {
-            let written = try await imageService.generateImage(
-                prompt: CardIllustrationPrompts.positivePrompt(
-                    englishTranslation: sample.english, wordType: sample.wordType,
-                    style: style, detail: detail
-                ),
-                negativePrompt: CardIllustrationPrompts.negativePrompt(style: style, detail: detail),
-                saveTo: destination,
-                stepCount: ImageGenQuality.fast.stepCount,
-                seed: sample.seed,
-                onStepProgress: { fraction in sampleProgress = fraction }
+            let written = try await session.draw(
+                request, saveTo: destination,
+                onProgress: { fraction in sampleProgress = fraction }
             )
             guard written, let image = UIImage(contentsOfFile: destination.path) else {
                 sampleError = "The sample didn't come out. Try again."
@@ -306,7 +310,7 @@ struct CardImageStyleSheet: View {
             }
             sampleImage = image
         } catch {
-            sampleError = error.localizedDescription
+            sampleError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }
 }

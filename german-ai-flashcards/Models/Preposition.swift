@@ -184,6 +184,9 @@ nonisolated struct PrepositionQuestion: Identifiable, Equatable {
     var note: String?
     /// Shown on reveal. Two-way prepositions carry both sentences so the contrast lands.
     var examples: [PrepositionExample] = []
+    /// The `PrepositionScene` key for the canvas above the question. The word itself for a
+    /// preposition; `verb3d-<scene>` for a verb pair (see `VerbPrepositionService`).
+    var sceneKey: String
 
     init(_ preposition: Preposition) {
         self.word = preposition.word
@@ -193,6 +196,17 @@ nonisolated struct PrepositionQuestion: Identifiable, Equatable {
         // One sentence per relevant case, the on-screen scene's sentence first — not the
         // raw list, which also carries the extra examples.
         self.examples = preposition.revealExamples()
+        self.sceneKey = preposition.word
+    }
+
+    init(word: String, governs: PrepositionCase, meaning: String, note: String?,
+         examples: [PrepositionExample], sceneKey: String) {
+        self.word = word
+        self.governs = governs
+        self.meaning = meaning
+        self.note = note
+        self.examples = examples
+        self.sceneKey = sceneKey
     }
 }
 
@@ -209,6 +223,12 @@ nonisolated struct PrepositionCaseSession: Identifiable {
     /// a ten-question round that happens to contain no Genitiv must not give that away by dropping
     /// the button.
     var answerCases: [PrepositionCase] = PrepositionCase.allCases
+    /// The `GrammarFocus` raw value the round's skill result moves. A raw string because this
+    /// type is nonisolated and `GrammarFocus` is not. Verb-pair rounds move their own focus.
+    var focusRaw: String = "praepositionen"
+    /// Prefix for the per-item stat keys, so a verb pair ("verb:warten auf") never shares a
+    /// row with a preposition.
+    var statKeyPrefix: String = ""
 
     var questionCount: Int { questions.count }
 }

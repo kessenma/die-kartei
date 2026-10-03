@@ -31,6 +31,13 @@ struct PaperDetailView: View {
         return allDecks.first { $0.id == id }
     }
 
+    /// The model for follow-up work on this paper: the one that wrote it when it's on this device,
+    /// else one that is (`ModelHandoff`). The paper may have synced from a device with a tutor
+    /// this one hasn't got. Reads the hub cache, so actions call it, not the view body.
+    private var followUpModel: MLXModel {
+        ModelHandoff.current(original: paper.model, pick: modelManager.selectedPaperModel).model
+    }
+
     /// Brand theme of the model that generated this paper (or the current study model).
     private var theme: ModelTheme { (paper.model ?? modelManager.selectedPaperModel).theme }
 
@@ -245,7 +252,7 @@ struct PaperDetailView: View {
     // MARK: - Actions
 
     private func startChat() {
-        var config = ConversationConfig(model: paper.model ?? modelManager.selectedPaperModel)
+        var config = ConversationConfig(model: followUpModel)
         config.learnerName = ConversationConfig.learnerName(from: modelManager.learnerName)
         config.mode = .paper
         config.paperTitle = paper.title
@@ -275,7 +282,7 @@ struct PaperDetailView: View {
         regenService = svc
         regenerating = true
         Task {
-            await svc.generate(for: paper, model: paper.model ?? modelManager.selectedPaperModel, questionCount: 6)
+            await svc.generate(for: paper, model: followUpModel, questionCount: 6)
             regenerating = false
         }
     }
@@ -307,7 +314,7 @@ struct PaperDetailView: View {
         let svc = PaperStudyService(mlxService: mlxService, modelContext: modelContext)
         deckGenService = svc
         deckGenerating = true
-        let model = paper.model ?? modelManager.selectedPaperModel
+        let model = followUpModel
         let chainChat = pendingBothChat
         Task {
             await svc.generateDeck(for: paper, model: model, deckCount: deckCount, selectedWords: selectedWords)

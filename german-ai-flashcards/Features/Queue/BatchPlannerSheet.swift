@@ -64,7 +64,7 @@ struct BatchPlannerSheet: View {
         self.coordinator = coordinator
         let mm = coordinator.modelManager
         _level = State(initialValue: mm.germanLevel)
-        let imagesReady = ImageGenModel.current.isDownloaded
+        let imagesReady = PictureEngine.isReady
         _imagesPerStory = State(initialValue: (imagesReady && mm.storyIllustrationsEnabled) ? mm.storyImageCount : 0)
         _deckImages = State(initialValue: imagesReady && mm.flashcardIllustrationsEnabled)
     }
@@ -130,7 +130,7 @@ struct BatchPlannerSheet: View {
     /// Whether a queued story could actually run here — a German Tutor this device can hold, and
     /// already downloaded, since the queue can't fetch one on its own.
     private var storyModelReady: Bool { StoryStudyService.unattendedModel != nil }
-    private var imagesReady: Bool { ImageGenModel.current.isDownloaded }
+    private var imagesReady: Bool { PictureEngine.isReady }
     private var effectiveStoryCount: Int { storyModelReady ? storyCount : 0 }
 
     // MARK: - Body
@@ -349,7 +349,11 @@ struct BatchPlannerSheet: View {
             } header: {
                 Text("\(plan.count) job\(plan.count == 1 ? "" : "s")").themedSectionHeader()
             } footer: {
-                Text("Rough estimate: about \(timeLabel(planEstimateSeconds)).")
+                if let cost = planPictureCost {
+                    Text("Rough estimate: about \(timeLabel(planEstimateSeconds)). Pictures about \(cost.formatted(.currency(code: "USD").precision(.fractionLength(2)))) on your OpenRouter account.")
+                } else {
+                    Text("Rough estimate: about \(timeLabel(planEstimateSeconds)).")
+                }
             }
 
             Section {
@@ -615,16 +619,39 @@ struct BatchPlannerSheet: View {
         }
     }
 
+    /// Seconds per picture for the current source. On-device it's the diffusion run; in the cloud
+    /// it's the model's typical wait divided by how many a deck run draws at once.
+    private var secondsPerPicture: (story: Double, card: Double) {
+        switch PictureSource.current {
+        case .onDevice:
+            return (100, 100)
+        case .cloud:
+            let wait = CloudImageModel.current.typicalSeconds
+            return (wait, wait / Double(PictureSession.cloudParallelism))
+        }
+    }
+
     private var planEstimateSeconds: Double {
-        plan.reduce(0) { total, planned in
+        let perPicture = secondsPerPicture
+        return plan.reduce(0) { total, planned in
             if planned.isStory {
-                return total + 240 + Double(planned.imageCount) * 100
+                return total + 240 + Double(planned.imageCount) * perPicture.story
             } else {
                 var seconds = 20 + 5 * Double(cardsPerDeck)
-                if planned.deckImages { seconds += 100 * Double(cardsPerDeck) }
+                if planned.deckImages { seconds += perPicture.card * Double(cardsPerDeck) }
                 return total + seconds
             }
         }
+    }
+
+    /// What the plan's pictures cost on the learner's OpenRouter account, or nil on-device.
+    private var planPictureCost: Double? {
+        guard PictureSource.current == .cloud else { return nil }
+        let pictures = plan.reduce(0) { total, planned in
+            total + (planned.isStory ? planned.imageCount : (planned.deckImages ? cardsPerDeck : 0))
+        }
+        guard pictures > 0 else { return nil }
+        return Double(pictures) * CloudImageModel.current.approxCostUSD
     }
 
     private func timeLabel(_ seconds: Double) -> String {

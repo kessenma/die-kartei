@@ -87,3 +87,50 @@ enum CardIllustrationPrompts {
         return word
     }
 }
+
+// MARK: - Cloud models
+
+extension CardIllustrationPrompts {
+    /// Said to every cloud model. They follow instructions rather than reading a keyword list, so
+    /// what the negative prompt does on-device is one plain sentence here.
+    static let noTextClause = "No text, letters, numbers, labels or captions anywhere in the picture."
+
+    /// The instruction a cloud model gets for one card: the same subject and the same two knobs as
+    /// the on-device prompt, written as sentences instead of CLIP keywords.
+    static func cloudPrompt(
+        englishTranslation: String,
+        wordType: String?,
+        style: CardImageStyle = .current,
+        detail: CardImageDetail = .current
+    ) -> String {
+        let subject = subject(englishTranslation: englishTranslation, wordType: wordType, detail: detail)
+        let framing = switch detail {
+        case .justTheWord: "Show one single subject, centered on a plain empty background, with nothing else in the frame."
+        case .littleScene: "Show one clear main subject with a simple, uncluttered hint of its setting."
+        }
+        return [
+            "A picture for a German vocabulary flashcard: \(subject).",
+            "Style: \(style.promptFragment).",
+            framing,
+            "Square.",
+            noTextClause,
+        ].joined(separator: " ")
+    }
+}
+
+extension CardIllustrationPrompts {
+    /// One card's picture, described for whichever source draws it.
+    static func request(
+        englishTranslation: String,
+        wordType: String?,
+        style: CardImageStyle = .current,
+        detail: CardImageDetail = .current
+    ) -> PictureRequest {
+        PictureRequest(
+            sdPrompt: positivePrompt(englishTranslation: englishTranslation, wordType: wordType, style: style, detail: detail),
+            sdNegative: negativePrompt(style: style, detail: detail),
+            cloudPrompt: cloudPrompt(englishTranslation: englishTranslation, wordType: wordType, style: style, detail: detail),
+            maxPixel: CloudPictureWriter.cardMaxPixel
+        )
+    }
+}

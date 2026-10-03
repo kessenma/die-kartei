@@ -18,6 +18,9 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
     case praepositionen
     case wechselpraepositionen
     case adjektivendungen
+    /// Verben mit Präpositionen: pairs whose case the verb fixes (warten auf + Akk). Its own
+    /// focus, because a learner can be solid on mit + Dativ and lost on warten auf.
+    case verbenPraepositionen
 
     var id: String { rawValue }
 
@@ -36,7 +39,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         switch self {
         case .artikel, .akkusativ, .modalverben, .perfekt, .praepositionen: .a1
         case .dativ, .praeteritum, .futur, .wechselpraepositionen:          .a2
-        case .genitiv, .konjunktiv2, .adjektivendungen:                     .b1
+        case .genitiv, .konjunktiv2, .adjektivendungen, .verbenPraepositionen: .b1
         }
     }
 
@@ -55,6 +58,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .praepositionen:       "Präpositionen"
         case .wechselpraepositionen: "Wechselpräpositionen"
         case .adjektivendungen:     "Adjektivendungen"
+        case .verbenPraepositionen: "Verben mit Präpositionen"
         }
     }
 
@@ -73,6 +77,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .praepositionen:       "Prepositions & the case they take"
         case .wechselpraepositionen: "Two-way prepositions"
         case .adjektivendungen:     "Adjective endings"
+        case .verbenPraepositionen: "Verb + preposition pairs"
         }
     }
 
@@ -103,6 +108,8 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
             "Prepositions like in, an, auf, über that take the Akkusativ for movement/direction and the Dativ for a fixed location. “Ich gehe in die Stadt” vs. “Ich bin in der Stadt”."
         case .adjektivendungen:
             "Adjectives placed before a noun take endings that change with case, gender, and the article in front — “ein guter Wein”, “mit dem guten Wein”."
+        case .verbenPraepositionen:
+            "Many verbs come with their own preposition, and the pair fixes the case: “warten auf” always takes the Akkusativ, “Angst haben vor” always the Dativ. The Wo/Wohin rule doesn't apply: “Ich warte auf den Bus” is Akkusativ though nothing moves. Learn the verb, the preposition and the case as one piece."
         }
     }
 
@@ -121,6 +128,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .praepositionen:        "stelle Fragen, die Präpositionen erzwingen, z. B. „Mit wem fährst du?“, „Für wen ist das?“, „Seit wann lernst du Deutsch?“"
         case .wechselpraepositionen: "frage nach Ort und Richtung, z. B. „Wohin gehst du?“ und „Wo bist du?“"
         case .adjektivendungen:      "rege Beschreibungen mit Adjektiven an, z. B. „Was für ein Auto möchtest du?“"
+        case .verbenPraepositionen:  "stelle Fragen mit festen Präpositionen, z. B. „Worauf freust du dich?“, „Woran denkst du?“, „Wovor hast du Angst?“"
         }
     }
 }

@@ -71,6 +71,10 @@ final class StoryImageService {
     private var box: PipelineBox?
     private var downloadTask: Task<Void, Never>?
     private let cancelFlag = CancelFlag()
+    /// Cancel handles for cloud pictures in flight (`PictureSession`), so a stop reaches a
+    /// request that's still waiting on OpenRouter. Deliberately not part of `isBusy`: a web
+    /// request holds no memory a tutor would need.
+    @ObservationIgnored var cloudRequests: [UUID: () -> Void] = [:]
 
     private init() {
         MemoryDiagnostics.register(
@@ -196,9 +200,11 @@ final class StoryImageService {
         }
     }
 
-    /// Ask an in-flight `generateImage` call to stop at the next diffusion step.
+    /// Ask an in-flight `generateImage` call to stop at the next diffusion step, and cancel any
+    /// cloud picture still waiting on OpenRouter.
     func requestStop() {
         cancelFlag.set(true)
+        for cancel in cloudRequests.values { cancel() }
     }
 
     /// The memory-warning path: stop the current picture so the run winds down and its `defer`

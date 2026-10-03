@@ -1,8 +1,23 @@
 {
   "releases": [
     {
+      "version": "unreleased",
+      "highlights": [
+        {
+          "title": "Cloud-Bilder · Cloud pictures",
+          "detail": "Draw card and story pictures in seconds with Muse Image or Nano Banana on your own OpenRouter account, at a cent or a few each. On-device drawing stays the default.",
+          "symbol": "cloud"
+        },
+        {
+          "title": "Verben mit Präpositionen · Verbs with prepositions",
+          "detail": "42 pairs like warten auf and Angst haben vor, each with its own 3D scene. Flip the cards, drill the case, fill the gaps, and spot the trap in Die Falle.",
+          "symbol": "link"
+        }
+      ]
+    },
+    {
       "version": "1.6",
-      "date": "2026-09-16",
+      "date": "2026-09-30",
       "highlights": [
         {
           "title": "Die vier Fälle · The four cases",

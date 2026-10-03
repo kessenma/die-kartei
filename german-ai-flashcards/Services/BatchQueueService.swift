@@ -272,7 +272,7 @@ final class BatchQueueService {
         complete(job, in: modelContext)
 
         // Pictures are split into a follow-up job at the back of the queue (see header note).
-        if job.withImages, ImageGenModel.current.isDownloaded {
+        if job.withImages, PictureEngine.isReady {
             let pictures = BatchJob.deckPictures(
                 deckID: deck.id, topic: deck.topic, sortOrder: nextSortOrder(in: modelContext)
             )
@@ -302,7 +302,7 @@ final class BatchQueueService {
         storyService = service
         defer { storyService = nil }
 
-        let imageCount = (job.withImages && ImageGenModel.current.isDownloaded) ? job.storyImageCount : 0
+        let imageCount = (job.withImages && PictureEngine.isReady) ? job.storyImageCount : 0
         await service.generate(
             for: story,
             questionCount: job.storyQuestionCount,
@@ -333,8 +333,8 @@ final class BatchQueueService {
         modelContext: ModelContext,
         mlxService: MLXGenerationService
     ) async {
-        guard ImageGenModel.current.isDownloaded else {
-            fail(job, "The picture model isn't downloaded. You can get it in Settings.", in: modelContext)
+        guard PictureEngine.isReady else {
+            fail(job, PictureEngine.notReadyMessage, in: modelContext)
             return
         }
         guard let deckID = job.targetDeckID else {
@@ -379,9 +379,19 @@ final class BatchQueueService {
             try? modelContext.save()
             return
         }
-        if drawn > 0 {
+        // The run's report says why it came up short; the queue says the same, not a shrug.
+        let report = PictureRunReports.shared.report(for: deckID)
+        if let report, let reason = report.stopReason {
+            if drawn > 0 { job.resultDeckID = deckID }
+            fail(job, drawn > 0
+                 ? "Drew \(drawn) of \(report.total) pictures, then stopped. \(reason)"
+                 : reason,
+                 in: modelContext)
+        } else if drawn > 0 {
             job.resultDeckID = deckID
             complete(job, in: modelContext)
+        } else if let report, report.skipped > 0 {
+            fail(job, "None of the pictures came out: the model declined them or the picture service failed.", in: modelContext)
         } else {
             fail(job, "Couldn't draw pictures for this deck.", in: modelContext)
         }

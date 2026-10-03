@@ -213,3 +213,36 @@ enum StoryIllustrationPrompts {
         return nil
     }
 }
+
+// MARK: - Cloud models
+
+extension StoryIllustrationPrompts {
+    /// The instruction a cloud model gets for one story picture.
+    ///
+    /// No token budget to protect, so instead of splicing a cast look into the first mention the
+    /// way `positivePrompt` must for CLIP, every character this scene mentions is spelled out on
+    /// its own line. With `hasReference` the model is also told to match the earlier picture it
+    /// was handed, which is what actually keeps a cast looking the same across a story.
+    static func cloudPrompt(
+        scene: String,
+        genre: StoryGenre,
+        cast: [StoryCastMember] = [],
+        hasReference: Bool = false
+    ) -> String {
+        let present = cast.filter { firstWordRange(of: $0.tag, in: scene) != nil }
+        var parts = [
+            "An illustration for a short German story for language learners.",
+            "Scene: \(scene.trimmingCharacters(in: .whitespacesAndNewlines).trimmingCharacters(in: CharacterSet(charactersIn: ".")))."
+        ]
+        if !present.isEmpty {
+            parts.append("Characters: " + present.map { "\($0.tag) = \($0.look)" }.joined(separator: "; ") + ".")
+        }
+        parts.append("Style: \(genre.sdStyleSuffix).")
+        if hasReference {
+            parts.append("Keep the characters and the art style consistent with the reference picture.")
+        }
+        parts.append("Square.")
+        parts.append(CardIllustrationPrompts.noTextClause)
+        return parts.joined(separator: " ")
+    }
+}

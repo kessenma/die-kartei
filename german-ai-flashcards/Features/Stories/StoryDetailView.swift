@@ -236,6 +236,12 @@ struct StoryDetailView: View {
                         .scaledToFit()
                         .frame(height: 18)
                 }
+                if let report = PictureRunReports.shared.report(for: story.id) {
+                    PictureRunReportBanner(
+                        report: report,
+                        onDismiss: { PictureRunReports.shared.clear(story.id) }
+                    )
+                }
                 if let record = story.headerImage {
                     StoryIllustrationView(
                         record: record,

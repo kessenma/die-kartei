@@ -29,7 +29,7 @@ enum PrepositionScene {
     /// A fixed-case relation's choreography, authored in the rig (`prep_render.py` `motion`
     /// keys) and published through the manifest with its vectors already remapped to Y-up.
     /// All vectors are deltas from the subject's resting position.
-    struct MotionSpec: Decodable {
+    nonisolated struct MotionSpec: Decodable {
         let kind: String
         let from: [Float]?
         let to: [Float]?
@@ -46,10 +46,14 @@ enum PrepositionScene {
         let movers: String?
     }
 
-    struct Pose: Decodable {
+    nonisolated struct Pose: Decodable {
         let asset: String
         let akkOffset: [Float]
         let motion: MotionSpec?
+        /// The scene's motion is baked into the USDZ itself (the verb-pair scenes, from
+        /// tools/blender/verben.py): it animates through its clips, with nothing for the runtime
+        /// to choreograph. The clips still only play on the reveal.
+        var baked: Bool? = nil
 
         /// Where the subject sits in the Akkusativ (moving) pose, relative to its resting pose.
         var offset: SIMD3<Float> {
@@ -62,19 +66,28 @@ enum PrepositionScene {
         /// carry authored choreography (`motion`) — durch passes through, um orbits, aus pops
         /// out of the box. A relation with neither would render as a ball parked next to a
         /// prop, which the arrow-bearing still says better, so it falls back.
-        var animates: Bool { offset != .zero || motion != nil }
+        var animates: Bool { offset != .zero || motion != nil || baked == true }
     }
 
-    private struct Manifest: Decodable {
+    /// Nonisolated with its parts, because the static loader that decodes it runs off the main
+    /// actor.
+    private nonisolated struct Manifest: Decodable {
         let relations: [String: Pose]
     }
 
+    /// The preposition scenes, plus the verb-pair scenes from their own manifest under
+    /// `verb3d-<scene>` keys. Two files because two rigs write them; one lookup because every
+    /// caller treats a scene as a scene.
     private static let manifest: Manifest = {
-        guard let url = Bundle.main.url(forResource: "prep3d-manifest", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let decoded = try? JSONDecoder().decode(Manifest.self, from: data)
-        else { return Manifest(relations: [:]) }
-        return decoded
+        func load(_ name: String) -> [String: Pose] {
+            guard let url = Bundle.main.url(forResource: name, withExtension: "json"),
+                  let data = try? Data(contentsOf: url),
+                  let decoded = try? JSONDecoder().decode(Manifest.self, from: data)
+            else { return [:] }
+            return decoded.relations
+        }
+        return Manifest(relations: load("prep3d-manifest")
+            .merging(load("verb3d-manifest")) { prep, _ in prep })
     }()
 
     static func pose(for word: String) -> Pose? { manifest.relations[word] }

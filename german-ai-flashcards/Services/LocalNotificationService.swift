@@ -71,12 +71,16 @@ enum LocalNotificationService {
 /// learner who backgrounds the app during the (slow, on-device) generation still hears when their
 /// story is ready, or that it didn't finish.
 enum StoryNotificationService {
-    static func notifyReady(title: String) async {
+    /// `pictureProblem` is set when the story's cloud pictures stopped on something only the
+    /// learner can fix (credit, key, the Muse confirmation): the story is fine, its pictures aren't.
+    static func notifyReady(title: String, pictureProblem: String? = nil) async {
         let name = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        var body = name.isEmpty ? "Your German story finished generating." : "„\(name)“ is ready to read."
+        if let pictureProblem { body += " Its pictures stopped: " + pictureProblem + " Open the story to fix it." }
         await LocalNotificationService.post(
             id: "story-ready",
             title: "Your story is ready",
-            body: name.isEmpty ? "Your German story finished generating." : "„\(name)“ is ready to read."
+            body: body
         )
     }
 
@@ -110,8 +114,20 @@ enum BatchNotificationService {
 }
 
 /// Notification for a finished deck-illustration run, so a learner who backgrounded the app while
-/// their flashcards were being drawn hears when the pictures are in.
+/// their flashcards were being drawn hears when the pictures are in, or that they stopped.
 enum DeckNotificationService {
+    /// A cloud run stopped on something only the learner can fix: no credit, a revoked key, the
+    /// Muse confirmation. The deck's start screen has the details and the fix.
+    static func notifyStopped(topic: String, drawn: Int, total: Int, reason: String) async {
+        let name = topic.trimmingCharacters(in: .whitespacesAndNewlines)
+        let progress = drawn > 0 ? "\(drawn) of \(total) pictures were drawn" + (name.isEmpty ? ". " : " for „\(name)“. ") : ""
+        await LocalNotificationService.post(
+            id: "deck-illustrations-stopped",
+            title: "Pictures stopped",
+            body: progress + reason + " Open the deck to fix it."
+        )
+    }
+
     static func notifyReady(topic: String, count: Int) async {
         let name = topic.trimmingCharacters(in: .whitespacesAndNewlines)
         let pictures = count == 1 ? "1 picture" : "\(count) pictures"

@@ -223,10 +223,10 @@ struct PrepositionCaseGameView: View {
     /// purpose, and stamps those answers `scaffolded` so they can't count as mastery.
     @ViewBuilder
     private func scene(for question: PrepositionQuestion) -> some View {
-        if pictureMode.showsSceneOnQuestion, PrepositionScene.exists(for: question.word) {
+        if pictureMode.showsSceneOnQuestion, PrepositionScene.exists(for: question.sceneKey) {
             let resolved = !isAnswering || pictureMode.revealsCaseOnQuestion
             PrepositionSceneView(
-                word: question.word,
+                word: question.sceneKey,
                 mode: resolved ? .resolved(question.governs) : .neutral,
                 loops: question.governs == .wechsel
             )

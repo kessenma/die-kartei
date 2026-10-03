@@ -69,6 +69,9 @@ class GenerationCoordinator {
     /// Set when the learner stopped the draft run, so the flow doesn't turn around and offer to
     /// draw the very cards they just declined.
     private(set) var draftImagesStopped = false
+    /// What the draft picture run left undone. Carried onto the deck when it's saved
+    /// (`ContentView.adoptDraftImages`), since a draft has no deck to file it under yet.
+    private(set) var draftPictureReport: PictureRunReport?
 
     /// Draw a picture for every generated card, keeping the generation overlay up while it runs.
     func drawDraftImages() async {
@@ -84,10 +87,18 @@ class GenerationCoordinator {
         draftImages = await DeckIllustrationService.shared.illustrateDraft(
             cards: generatedCards, draftID: draftID, mlxService: mlxService
         )
+        draftPictureReport = DeckIllustrationService.shared.lastReport
+        // A run that stopped on an empty account or a dead key counts as stopped too: the
+        // create flow must not launch a second run straight into the same wall.
         draftImagesStopped = DeckIllustrationService.shared.wasStopped
+            || draftPictureReport?.stopReason != nil
         if draftImages.isEmpty {
             // Nothing landed — don't leave an empty directory behind for the flow to reason about.
+            // The report stays: a run that stopped before its first picture still owes the deck
+            // an explanation.
+            let report = draftPictureReport
             discardDraftImages()
+            draftPictureReport = report
         }
     }
 
@@ -100,6 +111,13 @@ class GenerationCoordinator {
         draftImageID = nil
         draftImages = [:]
         draftImagesStopped = false
+        draftPictureReport = nil
+    }
+
+    /// Hand the draft run's report to the deck being saved, once.
+    func takeDraftPictureReport() -> PictureRunReport? {
+        defer { draftPictureReport = nil }
+        return draftPictureReport
     }
 
     // MARK: - Backends

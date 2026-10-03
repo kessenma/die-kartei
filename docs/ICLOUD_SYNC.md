@@ -161,6 +161,32 @@ too.
 - **New device.** The onboarding wizard waits up to 10 s for the first fetch and is skipped if the
   learner already onboarded on another device.
 
+## Models are per device
+
+Content syncs; downloads don't. A chat or paper made with the E4B tutor on the Mac arrives on an
+iPhone that may hold only E2B, or no tutor at all. Reading never needs a model: transcripts,
+reports, saved words, stories and pictures are plain synced data. Only new AI work does.
+
+- **`ModelHandoff` (`Models/ModelHandoff.swift`) picks who continues:** the original if it is on
+  disk and fits → the learner's own pick if ready → the best downloaded tutor → Apple Intelligence.
+  A tutor chat never drops to an Apple Intelligence pick while a tutor is on disk. When nothing is
+  ready it names a download that fits (original, else pick, else the best tutor that fits).
+  Chats (`ChatConversation.makeConfig`), papers (`PaperDetailView.followUpModel`) and the report's
+  card builder (`ReviewDeckView`) use it; stories, handouts and job posts already had
+  `StoryStudyService.followUpModel`, which follows the same idea.
+- **Never write the resolved model back.** `modelRaw` syncs, so saving the iPhone's E2B into the
+  chat would switch the Mac's copy to a model the Mac may lack, and the two would bounce it back
+  and forth. `modelRaw` means "made with"; each device resolves at open time. `ConversationView`
+  compares the chat's `modelRaw` with the config's model to show the "Started with … carries on
+  from here" notice, plus a "Get <original>" button when the original would fit here.
+- Switching tutors mid-chat is safe because a chat holds no model state: the history is plain
+  role/content turns cut to a trailing window (`ChatTurnNormalizer`).
+- The load prompt says "Download … (~size)" whenever the model isn't on disk yet. It used to say
+  "loaded into memory" and then start a multi-GB download.
+- Simulator: `-screenshots.debugFill 1 -onboarding.debugTier apple` seeds chats made with E4B
+  (not on the sim) and makes Apple Intelligence count as ready, so opening one shows the notice.
+  `-screenshots.debugRestore 1` removes the seeded data afterwards.
+
 ## Not yet
 
 - Learner preferences (theme, reminders, chat settings) don't sync. The plan is

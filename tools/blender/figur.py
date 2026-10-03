@@ -33,7 +33,7 @@ import os
 import sys
 
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Euler, Matrix, Vector
 
 # MARK: - Palette
 #
@@ -42,6 +42,13 @@ from mathutils import Matrix, Vector
 # der/die/das coding the app teaches everywhere else.
 
 REFERENCE = 0x33383D
+
+# Inks a figure may wear in a scene, for telling two people apart (die Figur and der Freund).
+# The app already means something by nearly every hue: der blue, die red, das green, plural gold,
+# the case colors (graphite, orange, teal, brown, violet, slate) and the question side's light
+# grey. So a second ink can differ in warmth and value, never in hue. Scene USDZs keep the color
+# they were exported with (only the subject is re-tinted at runtime), so an ink needs no app code.
+INKS = {"charcoal": REFERENCE, "warmgrau": 0x625A52, "kreide": 0xE4DDCF}
 
 # The Grundform light ground (AppTheme.screenBackground), used only as the contact-sheet
 # backdrop so alpha renders can be judged against the theme they will sit on.
@@ -126,6 +133,20 @@ LOD = {
 _LOD = "high"
 
 PART_NAMES = ("leg_l", "leg_r", "torso", "arm_l", "arm_r", "head")
+
+
+def part_role(obj):
+    """Which of the six parts an object is, whatever figure it belongs to.
+
+    A scene with two figures names the second one's parts `freund_leg_l` and so on, and
+    Blender suffixes a clashing name (`figur_leg_l.001`) before anything can rename it. Poses
+    and clips are keyed by role, so they work on either figure through all of that.
+    """
+    base = obj.name.split(".")[0]
+    for role in PART_NAMES:
+        if base == role or base.endswith("_" + role):
+            return role
+    return None
 
 
 # MARK: - Object helpers
@@ -331,16 +352,21 @@ POSES = {
 }
 
 
-def apply_pose(objects, p, pose):
+def apply_pose(objects, p, pose, mirror=False, held=None):
     """Rotate parts about their joints into a named stance.
 
     Location changes derive from the pose rather than living in the table: sitz drops every
     part by most of the leg length, because the legs no longer hold the body up. Applied
     before `place`, while the figure still stands at the origin.
+
+    A name from GESTEN (below) is solved through the joint-space rig instead, so a scene can
+    hold any frame-0 gesture as a static pose.
     """
+    if pose in GESTEN:
+        return pose_gesture(objects, p, resolve(pose), mirror=mirror, held=held)
     rotations = POSES[pose]
     for obj in objects:
-        if spec := rotations.get(obj.name):
+        if spec := rotations.get("figur_" + (part_role(obj) or "")):
             obj.rotation_mode = "XYZ"
             obj.rotation_euler = [math.radians(a) for a in spec]
     if pose == "sitz":
@@ -984,6 +1010,570 @@ def scene_gehen(args, out_dir):
     verify_animation(twin)
 
 
+# MARK: - Gesten (joint-space poses and clips for the verb scenes)
+#
+# The verb + preposition scenes are mostly feelings (Angst vor, sich freuen auf, leiden unter),
+# and die Figur has no face, so its body has to say all of it. POSES above rotates parts in
+# place, which holds while the torso stands upright. Once it leans, the arms and head have to
+# travel with it, and six flat parts have no hierarchy to do that for them. So a Geste is
+# authored in *joint space* and solved to part transforms by forward kinematics (`solve`): the
+# torso carries the arms and head, the root carries everything. The parts stay flat and
+# unparented, so the contracts above (names, joint origins, the runtime's piece walk) hold.
+#
+# Joint table. Angles are degrees, offsets from rest. The figure faces +Y; its right is +X.
+#   root   (x, y, z)  whole-body shift, in fractions of the figure's height
+#   turn   (x, y, z)  whole-body rotation about the feet (lying down, turning to show off)
+#   torso  (x, y, z)  about the hip line, carrying arms + head: +x leans BACK, -x forward;
+#                     +y leans to its right; +z twists its front toward its left (-X)
+#   head   (x, y, z)  about the neck: +x looks up, -x down; +y tilts to its right
+#   arm_*  (x, y, z)  about the shoulder: +x raises it forward, then y raises it sideways
+#                     (arm_r -y, arm_l +y), then z swings it across (inward: arm_r +z, arm_l -z)
+#   leg_*  (x, y, z)  about the hip: +x swings it forward, then y splays it (leg_r -y, leg_l +y)
+#
+# Two things the table can't show:
+#   - The head is a sphere, so *turning* it is invisible. Only nods and tilts read. Looking
+#     somewhere is a torso twist or a whole-body turn.
+#   - A lean swings the arms with the torso. An arm that should point ahead of a stooped figure
+#     needs the lean added to its own x.
+
+GESTEN = {
+    # Angst haben vor / sich fürchten vor: flinched back from something in front, hands up.
+    "schreck": {"root": (0, -0.04, 0), "torso": (14, 0, 0), "head": (6, 0, 0),
+                "arm_l": (112, 0, -24), "arm_r": (112, 0, 24),
+                "leg_l": (10, 0, 0), "leg_r": (-8, 0, 0)},
+    "schreck_weit": {"base": "schreck", "root": (0, -0.08, 0), "torso": (20, 0, 0),
+                     "arm_l": (128, 0, -24), "arm_r": (128, 0, 24)},
+    # sich ekeln vor: turned away, one arm out to fend it off.
+    "ekel": {"turn": (0, 0, 22), "torso": (10, 0, 28), "head": (-4, -14, 0),
+             "arm_r": (85, 0, -50), "arm_l": (-12, 8, 0), "leg_l": (6, 0, 0), "leg_r": (-6, 0, 0)},
+    "ekel_weg": {"base": "ekel", "turn": (0, 0, 30), "torso": (14, 0, 34), "head": (-6, -20, 0),
+                 "arm_r": (92, 0, -62)},
+    # sich freuen über: arms up, chin up.
+    "jubel": {"torso": (6, 0, 0), "head": (14, 0, 0), "arm_l": (10, 150, 0), "arm_r": (10, -150, 0)},
+    "jubel_hocke": {"root": (0, 0, -0.02), "torso": (-10, 0, 0), "head": (-4, 0, 0),
+                    "arm_l": (20, 118, 0), "arm_r": (20, -118, 0)},
+    "jubel_sprung": {"root": (0, 0, 0.09), "torso": (8, 0, 0), "head": (16, 0, 0),
+                     "arm_l": (10, 165, 0), "arm_r": (10, -165, 0),
+                     "leg_l": (-8, 5, 0), "leg_r": (-8, -5, 0)},
+    # sich freuen auf / hoffen auf: anticipation. Hands together at the chest, bouncing.
+    "vorfreude": {"torso": (-4, 0, 0), "head": (8, 0, 0), "arm_l": (70, 0, -38), "arm_r": (70, 0, 38)},
+    "vorfreude_hoch": {"base": "vorfreude", "root": (0, 0, 0.03), "head": (12, 0, 0)},
+    # leiden unter / sich sorgen um: slumped, head hung.
+    "kummer": {"root": (0, 0, -0.012), "torso": (-16, 0, 0), "head": (-32, 0, 0),
+               "arm_l": (20, -4, 0), "arm_r": (20, 4, 0)},
+    "kummer_tief": {"base": "kummer", "root": (0, 0, -0.018), "torso": (-21, 0, 0),
+                    "head": (-38, 0, 0), "arm_l": (25, -4, 0), "arm_r": (25, 4, 0)},
+    # arbeiten an: the hammer raised, the other hand steadying the work.
+    # Cocked back behind the head: straight up, the near arm lands on top of the head in profile.
+    "hammer": {"torso": (-8, 0, 0), "head": (-20, 0, 0), "arm_r": (222, 0, 6),
+               "arm_l": (58, 0, -16), "leg_l": (10, 0, 0), "leg_r": (-8, 0, 0)},
+    "hammer_schlag": {"base": "hammer", "torso": (-24, 0, 0), "head": (-28, 0, 0),
+                      "arm_r": (112, 0, 8)},
+    # helfen bei: both hands forward under a load.
+    "heben": {"torso": (5, 0, 0), "head": (-6, 0, 0), "arm_l": (80, 0, -12), "arm_r": (80, 0, 12)},
+    "heben_hoch": {"base": "heben", "root": (0, 0, 0.015), "torso": (8, 0, 0),
+                   "arm_l": (95, 0, -12), "arm_r": (95, 0, 12)},
+    # sich kümmern um: stooped over something small, one hand patting it.
+    "pflegen": {"torso": (-30, 0, 0), "head": (-18, 0, 0), "arm_r": (78, 0, 8),
+                "arm_l": (40, 0, -6), "leg_l": (8, 0, 0), "leg_r": (-10, 0, 0)},
+    "pflegen_klaps": {"base": "pflegen", "arm_r": (64, 0, 8)},
+    # aufpassen auf: hands behind the back, watching something move about.
+    "wache": {"torso": (-4, 0, 0), "head": (-8, 0, 0), "arm_l": (-32, 0, 22), "arm_r": (-32, 0, -22)},
+    "wache_links": {"base": "wache", "turn": (0, 0, 14), "torso": (-4, 0, 12)},
+    "wache_rechts": {"base": "wache", "turn": (0, 0, -14), "torso": (-4, 0, -12)},
+    # warten auf: peering down the road, a hand shading the eyes, up on its toes; between looks,
+    # weight back on its heels and a foot tapping. The first pass keyed a plain stance and a
+    # glance at the wrist, and without an elbow the glance read as pointing.
+    "ausschau": {"root": (0, 0.01, 0.02), "torso": (-12, 0, 0), "head": (10, 0, 0),
+                 "arm_r": (152, 0, 40), "arm_l": (-8, 6, 0), "leg_r": (-6, 0, 0)},
+    "warten": {"torso": (3, 3, 0), "head": (-4, 4, 0), "arm_l": (-14, 10, 0), "arm_r": (-14, -10, 0),
+               "leg_r": (0, -5, 0)},
+    "warten_tipp": {"base": "warten", "leg_r": (20, -5, 0)},
+    # sich vorbereiten auf: side stretches before the start.
+    "dehnen_l": {"torso": (0, -18, 0), "head": (0, -10, 0), "arm_r": (0, -160, 0), "arm_l": (0, 14, 0)},
+    "dehnen_r": {"torso": (0, 18, 0), "head": (0, 10, 0), "arm_l": (0, 160, 0), "arm_r": (0, -14, 0)},
+    "dehnen_mitte": {"root": (0, 0, 0.01), "head": (8, 0, 0), "arm_l": (0, 165, 0), "arm_r": (0, -165, 0)},
+    # antworten auf: winding up to throw it back, and the throw. Overhand and in profile: the
+    # throwing arm cocked up behind the head, the other one aimed at the target. (A twisting
+    # wind-up turned the chest to the camera and read as "ta-da".)
+    "werfen_aus": {"torso": (14, 0, -6), "head": (8, 0, 0), "arm_r": (-152, -8, 0),
+                   "arm_l": (82, 0, -6), "leg_l": (18, 0, 0), "leg_r": (-14, 0, 0)},
+    "werfen": {"torso": (-16, 0, 6), "head": (-2, 0, 0), "arm_r": (96, 0, 8),
+               "arm_l": (-24, 8, 0), "leg_l": (18, 0, 0), "leg_r": (-16, 0, 0)},
+    # sprechen über / reden über / sprechen mit / erzählen von: conversational hands.
+    "reden": {"torso": (-4, 0, 0), "head": (4, 6, 0), "arm_r": (78, -34, 0), "arm_l": (30, 10, 0)},
+    "reden_b": {"torso": (-9, 0, -4), "head": (-10, -2, 0), "arm_r": (52, -16, 10), "arm_l": (46, 16, 0)},
+    "reden_c": {"base": "reden", "torso": (-2, 0, 0), "head": (6, -6, 0), "arm_r": (98, -40, 0),
+                "arm_l": (58, 0, -16)},
+    # nachdenken über / denken an / sich erinnern an: hand to chin, head tilted. No elbow, so
+    # the straight arm is aimed to end just in front of the chin rather than bent to it.
+    "gruebeln": {"torso": (-4, 0, 0), "head": (-6, 14, 0), "arm_r": (128, 0, 66), "arm_l": (45, 0, -55)},
+    "gruebeln_b": {"base": "gruebeln", "torso": (-6, 0, 0), "head": (-6, -8, 0)},
+    # sich ärgern über / sich beschweren über: stamping, fists down.
+    "stampfen_r": {"torso": (-8, 0, 0), "head": (-12, 0, 0), "arm_l": (-14, 22, 0),
+                   "arm_r": (-14, -22, 0), "leg_r": (30, 0, 0)},
+    "stampfen_l": {"base": "stampfen_r", "leg_r": (0, 0, 0), "leg_l": (30, 0, 0)},
+    "stampfen": {"root": (0, 0, -0.008), "torso": (-12, 0, 0), "head": (-16, 0, 0),
+                 "arm_l": (-10, 26, 0), "arm_r": (-10, -26, 0)},
+    # schimpfen mit / sich streiten über: the wagging finger.
+    "schimpfen": {"torso": (-10, 0, 0), "head": (-8, 0, 0), "arm_r": (128, 0, 14), "arm_l": (8, 32, 0)},
+    # The wag pumps up and down rather than side to side: sideways would point into the lens in
+    # profile, which is how this clip is staged.
+    "schimpfen_l": {"base": "schimpfen", "torso": (-13, 0, 0), "arm_r": (152, 0, 14)},
+    "schimpfen_r": {"base": "schimpfen", "torso": (-8, 0, 0), "arm_r": (102, 0, 14)},
+    # sich wundern über / zweifeln an: the shrug.
+    "staunen": {"root": (0, 0, 0.008), "torso": (4, 0, 0), "head": (0, 16, 0),
+                "arm_l": (30, 42, 0), "arm_r": (30, -42, 0)},
+    "staunen_hoch": {"base": "staunen", "root": (0, 0, 0.02), "head": (2, 22, 0),
+                     "arm_l": (34, 55, 0), "arm_r": (34, -55, 0)},
+    # bitten um / fragen nach: a hand held out.
+    "bitten": {"torso": (-10, 0, 0), "head": (-8, 0, 0), "arm_r": (88, 0, 6), "arm_l": (14, 0, 0)},
+    "bitten_vor": {"base": "bitten", "root": (0, 0.02, 0), "torso": (-15, 0, 0), "arm_r": (100, 0, 6)},
+    # sich sehnen nach / verlangen nach: both arms after something far off, up on its toes.
+    "sehnen": {"root": (0, 0, 0.015), "torso": (-8, 0, 0), "head": (14, 0, 0),
+               "arm_l": (118, 0, -8), "arm_r": (118, 0, 8)},
+    "sehnen_weit": {"base": "sehnen", "root": (0, 0.02, 0.03), "torso": (-13, 0, 0),
+                    "arm_l": (128, 0, -8), "arm_r": (128, 0, 8)},
+    # angeben mit: the trophy held high, chest out, turning to show it off.
+    "stolz": {"torso": (8, 0, 0), "head": (16, 0, 0), "arm_r": (14, -168, 0), "arm_l": (12, 34, 0)},
+    "stolz_l": {"base": "stolz", "turn": (0, 0, 26)},
+    "stolz_r": {"base": "stolz", "turn": (0, 0, -26)},
+    # träumen von: lying on its back, head toward -X so it reads along the frame. The root
+    # shift centres the body over the feet's old spot, and the lift rests the head on the
+    # ground (its radius is 0.13 of the height).
+    "schlafen": {"turn": (90, 0, -90), "root": (0.5, 0, 0.13), "arm_l": (0, 6, 0), "arm_r": (0, -6, 0)},
+    "schlafen_atem": {"base": "schlafen", "torso": (-3, 0, 0)},
+    # erzählen von / handeln von: a book held open at the chest, head bent to it.
+    "lesen": {"torso": (-4, 0, 0), "head": (-26, 0, 0), "arm_l": (62, 0, -30), "arm_r": (62, 0, 30)},
+    "lesen_blatt": {"base": "lesen", "arm_r": (70, 0, 58)},
+    # sich interessieren für: leaning in close, one hand forward (a magnifier), one behind.
+    "neugier": {"root": (0, 0.02, 0), "torso": (-24, 0, 0), "head": (-10, 0, 0),
+                "arm_r": (100, 0, 12), "arm_l": (-6, 10, 0), "leg_l": (10, 0, 0), "leg_r": (-12, 0, 0)},
+    "neugier_nah": {"base": "neugier", "root": (0, 0.04, 0), "torso": (-32, 0, 0),
+                    "head": (-14, 0, 0), "arm_r": (108, 0, 12)},
+
+    # Added for the verb scenes themselves (2026-10-02).
+    # Seated, as POSES["sitz"] but in joint space so a clip can work from it: the hips drop most
+    # of a leg length and the legs stick straight out. A scene raises the figure onto its stool.
+    "sitzen": {"root": (0, 0, -0.312), "leg_l": (82, 0, 0), "leg_r": (82, 0, 0)},
+    # schreiben an / antworten auf: bent over a desk, the near hand writing.
+    "schreiben": {"base": "sitzen", "torso": (-14, 0, 0), "head": (-26, 0, 0),
+                  "arm_r": (80, 0, 16), "arm_l": (66, 0, -24)},
+    "schreiben_zug": {"base": "schreiben", "arm_r": (74, 0, 30)},
+    "schreiben_auf": {"base": "schreiben", "torso": (-8, 0, 0), "head": (-8, 0, 0)},
+    # sich ernähren von: reaching up into the tree, then the apple to the mouth.
+    "pfluecken": {"root": (0, 0, 0.02), "torso": (2, 0, 0), "head": (16, 0, 0),
+                  "arm_r": (140, 0, 8), "arm_l": (10, 0, 0)},
+    "beissen": {"torso": (-4, 0, 0), "head": (-6, 0, 0), "arm_r": (128, 0, 66), "arm_l": (0, 0, 0)},
+    # hoffen auf: hands together at the chest, looking up.
+    "hoffen": {"torso": (4, 0, 0), "head": (22, 0, 0), "arm_l": (72, 0, -38), "arm_r": (72, 0, 38)},
+    "hoffen_hoch": {"base": "hoffen", "root": (0, 0, 0.012), "head": (26, 6, 0)},
+    # sich gewöhnen an: a flinch that relaxes. Half the schreck, then loose arms.
+    "schreck_halb": {"base": "schreck", "root": (0, -0.02, 0), "torso": (7, 0, 0), "head": (3, 0, 0),
+                     "arm_l": (72, 0, -24), "arm_r": (72, 0, 24), "leg_l": (5, 0, 0), "leg_r": (-4, 0, 0)},
+    "locker": {"head": (2, 0, 0), "arm_l": (6, 4, 0), "arm_r": (6, -4, 0)},
+    # zweifeln an: hand at the chin like gruebeln, but leaning back from the thing, not into it.
+    "zweifeln": {"root": (0, -0.02, 0), "torso": (8, 0, 0), "head": (-4, 12, 0),
+                 "arm_r": (128, 0, 66), "arm_l": (40, 0, -50)},
+    "zweifeln_b": {"base": "zweifeln", "torso": (10, 0, 0), "head": (-4, -10, 0)},
+    # angeben mit: chest out, chin up, the near arm presenting the thing.
+    "angeben": {"torso": (9, 0, 0), "head": (16, 0, 0), "arm_r": (78, -28, 0), "arm_l": (12, 34, 0)},
+    "angeben_dreh": {"base": "angeben", "turn": (0, 0, 20), "head": (20, 0, 0)},
+    # Pointing behind itself, for a figure facing the camera that shows the way (fragen nach).
+    "weisen": {"head": (0, -8, 0), "arm_l": (0, 100, 0)},
+}
+
+# A clip is a list of beats: (frame, pose[, ease]). A pose is a GESTEN name, "steh", or a dict
+# that may extend a name through "base". The ease shapes the segment *arriving* at that beat.
+#
+# Staging, because a figure with no face only reads from the right side:
+#   - `view` says how the clip reads. Forward gestures (a reach, a stoop) read only in profile;
+#     sideways ones (arms up in a V, a shrug, a side stretch) only from the front. Profile is
+#     the default; see STAGING_YAW for the yaws.
+#   - One-armed gestures use arm_r. Facing screen-right, that is the arm nearer the camera.
+#     A figure facing screen-left plays the clip with `mirror`, which swaps sides, so the
+#     active arm is still the near one.
+#
+# Frame 0 is the key pose and every clip ends where it began, for two reasons the app imposes:
+# clips only play on the reveal (`playsClips`), so frame 0 is what the question side holds and
+# what a still shows; and the runtime plays every clip on `.repeat()`, so a clip that ended
+# anywhere else would snap at the seam.
+CLIPS = {
+    "schreck": {"verbs": "Angst haben vor · sich fürchten vor", "beats": [
+        (0, "schreck"), (4, {"base": "schreck", "torso": (15, 2.5, 0)}),
+        (8, {"base": "schreck", "torso": (15, -2.5, 0)}), (12, {"base": "schreck", "torso": (15, 2.5, 0)}),
+        (16, "schreck"), (26, "schreck_weit", "out"), (40, "schreck_weit"), (56, "schreck")]},
+    "ekel": {"verbs": "sich ekeln vor", "beats": [
+        (0, "ekel"), (14, "ekel_weg", "out"), (34, "ekel_weg"), (52, "ekel")]},
+    "kummer": {"verbs": "leiden unter · sich sorgen um", "beats": [
+        (0, "kummer"), (36, "kummer_tief"), (72, "kummer")]},
+    "hammer": {"verbs": "arbeiten an", "beats": [
+        (0, "hammer"), (6, "hammer_schlag", "in"),
+        (9, {"base": "hammer_schlag", "arm_r": (124, 0, 8)}, "out"), (12, "hammer_schlag"), (24, "hammer")]},
+    "heben": {"verbs": "helfen bei", "beats": [(0, "heben"), (24, "heben_hoch"), (48, "heben")]},
+    "pflegen": {"verbs": "sich kümmern um", "beats": [
+        (0, "pflegen"), (7, "pflegen_klaps"), (14, "pflegen"), (21, "pflegen_klaps"),
+        (28, "pflegen"), (56, "pflegen")]},
+    "wache": {"verbs": "aufpassen auf", "beats": [
+        (0, "wache"), (30, "wache_links"), (54, "wache_links"), (84, "wache_rechts"),
+        (108, "wache_rechts"), (132, "wache")]},
+    "warten": {"verbs": "warten auf", "beats": [
+        (0, "ausschau"), (24, "ausschau"), (36, "warten"), (41, "warten_tipp", "out"),
+        (46, "warten", "in"), (51, "warten_tipp", "out"), (56, "warten", "in"),
+        (61, "warten_tipp", "out"), (66, "warten", "in"), (80, "ausschau")]},
+    "vorfreude": {"verbs": "sich freuen auf · hoffen auf", "beats": [
+        (0, "vorfreude"), (5, "vorfreude_hoch", "out"), (10, "vorfreude", "in"),
+        (15, "vorfreude_hoch", "out"), (20, "vorfreude", "in"), (40, "vorfreude")]},
+    "jubel": {"view": "front", "verbs": "sich freuen über", "beats": [
+        (0, "jubel"), (5, "jubel_hocke"), (11, "jubel_sprung", "out"), (17, "jubel", "in"),
+        (22, "jubel_hocke"), (28, "jubel_sprung", "out"), (34, "jubel", "in"), (52, "jubel")]},
+    "dehnen": {"view": "front", "verbs": "sich vorbereiten auf", "beats": [
+        (0, "dehnen_l"), (22, "dehnen_l"), (40, "dehnen_mitte"), (58, "dehnen_r"),
+        (80, "dehnen_r"), (98, "dehnen_mitte"), (116, "dehnen_l")]},
+    "werfen": {"verbs": "antworten auf", "beats": [
+        (0, "werfen_aus"), (8, "werfen_aus"), (13, "werfen", "out"), (28, "werfen"), (44, "werfen_aus")]},
+    "reden": {"verbs": "sprechen über · reden über · sprechen mit · erzählen von", "beats": [
+        (0, "reden"), (14, "reden_b"), (28, "reden"), (40, "reden_c"), (56, "reden")]},
+    "gruebeln": {"verbs": "nachdenken über · denken an · sich erinnern an", "beats": [
+        (0, "gruebeln"), (40, "gruebeln_b"), (80, "gruebeln")]},
+    "stampfen": {"verbs": "sich ärgern über · sich beschweren über", "beats": [
+        (0, "stampfen_r"), (5, "stampfen", "in"), (12, "stampfen"), (18, "stampfen_l"),
+        (23, "stampfen", "in"), (30, "stampfen"), (36, "stampfen_r")]},
+    "schimpfen": {"verbs": "schimpfen mit · sich streiten über", "beats": [
+        (0, "schimpfen"), (4, "schimpfen_l"), (8, "schimpfen_r"), (12, "schimpfen_l"),
+        (16, "schimpfen_r"), (20, "schimpfen"), (40, "schimpfen")]},
+    "staunen": {"view": "front", "verbs": "sich wundern über · zweifeln an", "beats": [
+        (0, "staunen"), (10, "staunen_hoch", "out"), (24, "staunen_hoch"), (36, "staunen"), (56, "staunen")]},
+    "bitten": {"verbs": "bitten um · fragen nach", "beats": [
+        (0, "bitten"), (16, "bitten_vor"), (30, "bitten_vor"), (48, "bitten")]},
+    "sehnen": {"verbs": "sich sehnen nach · verlangen nach", "beats": [
+        (0, "sehnen"), (36, "sehnen_weit"), (72, "sehnen")]},
+    "stolz": {"view": "front", "verbs": "angeben mit", "beats": [
+        (0, "stolz"), (30, "stolz_l"), (48, "stolz_l"), (84, "stolz_r"), (102, "stolz_r"), (132, "stolz")]},
+    "schlafen": {"view": "front", "verbs": "träumen von", "beats": [
+        (0, "schlafen"), (40, "schlafen_atem"), (80, "schlafen")]},
+    "lesen": {"verbs": "erzählen von · handeln von · sich vorbereiten auf", "beats": [
+        (0, "lesen"), (30, "lesen"), (40, "lesen_blatt"), (50, "lesen"), (80, "lesen")]},
+    "neugier": {"verbs": "sich interessieren für", "beats": [
+        (0, "neugier"), (36, "neugier_nah"), (72, "neugier")]},
+    "schreiben": {"verbs": "schreiben an · antworten auf", "beats": [
+        (0, "schreiben"), (6, "schreiben_zug"), (12, "schreiben"), (18, "schreiben_zug"),
+        (24, "schreiben"), (30, "schreiben_zug"), (36, "schreiben"), (50, "schreiben_auf"),
+        (62, "schreiben_auf"), (72, "schreiben")]},
+    "essen": {"verbs": "sich ernähren von", "beats": [
+        (0, "pfluecken"), (18, "pfluecken"), (34, "beissen"), (44, {"base": "beissen", "head": (-10, 0, 0)}),
+        (54, "beissen"), (72, "pfluecken")]},
+    "hoffen": {"verbs": "hoffen auf", "beats": [(0, "hoffen"), (30, "hoffen_hoch"), (60, "hoffen")]},
+    "gewoehnen": {"verbs": "sich gewöhnen an", "beats": [
+        (0, "schreck_halb"), (20, "locker"), (50, "locker"), (64, "schreck_halb")]},
+    "zweifeln": {"verbs": "zweifeln an", "beats": [
+        (0, "zweifeln"), (20, "zweifeln_b"), (40, "zweifeln"), (60, "zweifeln_b"), (80, "zweifeln")]},
+    "angeben": {"verbs": "angeben mit", "beats": [
+        (0, "angeben"), (24, "angeben_dreh"), (48, "angeben"),
+        (72, {"base": "angeben", "root": (0, 0, 0.01), "head": (20, 0, 0)}), (96, "angeben")]},
+}
+
+JOINT_KEYS = ("root", "turn", "torso", "head", "arm_l", "arm_r", "leg_l", "leg_r")
+
+EASES = {
+    "smooth": lambda t: t * t * t * (t * (6 * t - 15) + 10),   # smootherstep: settles at both ends
+    "out": lambda t: 1 - (1 - t) ** 3,                          # fast start, soft landing (a flinch)
+    "in": lambda t: t ** 3,                                     # slow start, hard arrival (a strike)
+    "linear": lambda t: t,
+}
+
+
+def resolve(spec):
+    """A Geste as a joint dict: by name, "steh" for rest, or a dict extending a name via "base"."""
+    if isinstance(spec, str):
+        return {} if spec == "steh" else resolve(GESTEN[spec])
+    out = resolve(spec["base"]) if "base" in spec else {}
+    out.update({k: v for k, v in spec.items() if k != "base"})
+    return out
+
+
+SIDES = {"arm_l": "arm_r", "arm_r": "arm_l", "leg_l": "leg_r", "leg_r": "leg_l"}
+
+
+def mirrored(joints):
+    """The same gesture across the figure's own centre plane (x → -x).
+
+    Conjugating an XYZ rotation by that reflection keeps its x angle and negates y and z, and a
+    translation loses its x; the left and right limbs trade places.
+    """
+    out = {}
+    for key, (x, y, z) in joints.items():
+        if key == "root":
+            out[key] = (-x, y, z)
+        else:
+            out[SIDES.get(key, key)] = (x, -y, -z)
+    return out
+
+
+def figure_height(p):
+    return p["leg_len"] + p["torso_h"] + p["neck"] + 2 * p["head_r"]
+
+
+def rest_of(objects):
+    """Joint positions by role. Origins sit at joints, so at rest a part's location *is* one."""
+    return {part_role(o): o.location.copy() for o in objects}
+
+
+def _rotation(degrees):
+    return Euler([math.radians(a) for a in degrees], "XYZ").to_matrix().to_4x4()
+
+
+def solve(rest, height, joints):
+    """Forward kinematics: a joint dict → a figure-local matrix per part role.
+
+    The torso pivots at the hip line and carries the shoulders and the neck with it; the legs
+    hang from the root. Figure-local means relative to the feet at the origin, which is also
+    what a part's transform is relative to inside a prep scene's `figur` group.
+    """
+    zero = (0.0, 0.0, 0.0)
+    root = (Matrix.Translation(Vector(joints.get("root", zero)) * height)
+            @ _rotation(joints.get("turn", zero)))
+    hip = rest["torso"]
+    torso = root @ Matrix.Translation(hip) @ _rotation(joints.get("torso", zero))
+    out = {"torso": torso}
+    for role in ("head", "arm_l", "arm_r"):
+        out[role] = (torso @ Matrix.Translation(rest[role] - hip)
+                     @ _rotation(joints.get(role, zero)))
+    for role in ("leg_l", "leg_r"):
+        out[role] = root @ Matrix.Translation(rest[role]) @ _rotation(joints.get(role, zero))
+    return out
+
+
+def _put(obj, matrix):
+    obj.rotation_mode = "XYZ"
+    obj.location = matrix.to_translation()
+    # Compatible with the previous value, so per-frame keys never flip through ±180°.
+    obj.rotation_euler = matrix.to_euler("XYZ", obj.rotation_euler)
+
+
+def grip(p, role):
+    """Where a held prop sits, in the frame of the arm it hangs from: at the cone's tip, +Z
+    continuing the arm and +Y the figure's forward. A held prop is authored around that grip,
+    so a hammer's handle simply runs on along +Z and its head sits at the far end."""
+    side = 1 if role.endswith("_r") else -1
+    tilt = math.radians(p["arm_tilt"])
+    z = Vector((side * math.sin(tilt), 0, -math.cos(tilt)))
+    x = Vector((0, 1, 0)).cross(z).normalized()
+    y = z.cross(x)
+    frame = Matrix((x, y, z)).transposed().to_4x4()
+    frame.translation = z * p["arm_len"]
+    return frame
+
+
+def _held_matrices(solved, p, held, mirror):
+    """(object, matrix) for each held prop. A mirrored figure holds it in the other hand."""
+    out = []
+    for obj, role in held or []:
+        role = SIDES.get(role, role) if mirror else role
+        out.append((obj, solved[role] @ grip(p, role) if role.startswith("arm") else solved[role]))
+    return out
+
+
+def pose_gesture(objects, p, joints, rest=None, mirror=False, held=None):
+    solved = solve(rest or rest_of(objects), figure_height(p), mirrored(joints) if mirror else joints)
+    for obj in objects:
+        _put(obj, solved[part_role(obj)])
+    for obj, matrix in _held_matrices(solved, p, held, mirror):
+        _put(obj, matrix)
+    return objects
+
+
+def rest_joints(p):
+    """The joint positions build_figure would produce, without building it: for placing things
+    against a figure's hand before the scene exists (a ball held out, a letter in reach)."""
+    return {
+        "torso": Vector((0, 0, p["leg_len"])),
+        "head": Vector((0, 0, p["leg_len"] + p["torso_h"] + p["neck"])),
+        "leg_l": Vector((-p["leg_gap"] / 2, 0, p["leg_len"])),
+        "leg_r": Vector((p["leg_gap"] / 2, 0, p["leg_len"])),
+        **{f"arm_{s}": Vector((sign * (p["torso_w"] / 2 + p["arm_r"] * 0.35), 0,
+                               p["leg_len"] + p["torso_h"] - p["arm_r"]))
+           for s, sign in (("l", -1), ("r", 1))},
+    }
+
+
+def hand_position(at, yaw, pose, role="arm_r", mirror=False, preset="standard", height=1.8):
+    """World position of a hand for a figure standing at `at`, turned by `yaw`, in a GESTEN
+    pose. Analytic, so a scene can place a held ball before anything is built."""
+    p = scaled(preset, height)
+    joints = resolve(pose)
+    solved = solve(rest_joints(p), height, mirrored(joints) if mirror else joints)
+    role = SIDES.get(role, role) if mirror else role
+    hand = (solved[role] @ grip(p, role)).translation
+    return Matrix.Translation(Vector(at)) @ Matrix.Rotation(math.radians(yaw), 4, "Z") @ hand
+
+
+def clip_length(name):
+    return CLIPS[name]["beats"][-1][0]
+
+
+def sample_clip(name, frame):
+    """The joint dict at a clip frame: beats interpolated in joint space, eased per segment."""
+    beats = CLIPS[name]["beats"]
+    for (f0, s0, *_), (f1, s1, *ease) in zip(beats, beats[1:]):
+        if f0 <= frame <= f1:
+            t = EASES[ease[0] if ease else "smooth"]((frame - f0) / (f1 - f0))
+            a, b = resolve(s0), resolve(s1)
+            return {key: tuple(Vector(a.get(key, (0, 0, 0))).lerp(Vector(b.get(key, (0, 0, 0))), t))
+                    for key in JOINT_KEYS}
+    return resolve(beats[-1][1])
+
+
+def keyframe_clip(objects, p, name, mirror=False, held=None, period=None):
+    """Bake a clip as per-frame keys on every part, and leave the figure on its key pose.
+
+    Every frame, not just the beats: the arms and head ride the torso through FK, and letting
+    Blender interpolate their *solved* transforms between beats would let a hand drift off its
+    shoulder mid-move. USD writes a TimeSample per frame anyway, so dense keys cost the file
+    nothing. Clip frame f lands on scene frame f + 1, because Blender counts from 1.
+
+    `held` is [(object, role)]: a prop that rides a hand (see `grip`). `period` stretches the
+    clip to that many frames, so every clip and motion in one scene loops on the same beat.
+
+    Returns the last scene frame, so a caller can size the scene range.
+    """
+    beats = CLIPS[name]["beats"]
+    if resolve(beats[0][1]) != resolve(beats[-1][1]):
+        print(f"  ⚠ clip {name} ends on a different pose than it starts; .repeat() will snap")
+    rest = rest_of(objects)
+    height = figure_height(p)
+    length = clip_length(name)
+    last = period or length
+    for frame in range(last + 1):
+        joints = sample_clip(name, frame * length / last)
+        solved = solve(rest, height, mirrored(joints) if mirror else joints)
+        placed = [(obj, solved[part_role(obj)]) for obj in objects]
+        for obj, matrix in placed + _held_matrices(solved, p, held, mirror):
+            _put(obj, matrix)
+            obj.keyframe_insert("location", frame=frame + 1)
+            obj.keyframe_insert("rotation_euler", frame=frame + 1)
+    for obj in objects + [obj for obj, _ in held or []]:
+        for curve in fcurves_of(obj.animation_data.action):
+            for point in curve.keyframe_points:
+                point.interpolation = "LINEAR"
+    scene = bpy.context.scene
+    scene.render.fps = 24
+    scene.frame_start = 1
+    scene.frame_end = max(scene.frame_end if scene.get("clip_end") else 1, last + 1)
+    scene["clip_end"] = scene.frame_end
+    scene.frame_set(1)
+    return last + 1
+
+
+def add_label(text, size=0.05):
+    """A caption in the bottom-left of the frame, for judging sheets only (never exported).
+
+    Pinned to the camera rather than placed in the world, so it lands in the same spot
+    whatever the framing. Emission, so the scene lights can't grey it out.
+    """
+    # A camera built with bpy.data.objects.new has no evaluated matrix until the view layer
+    # updates; without this the label is placed against identity and lands off-frame.
+    bpy.context.view_layer.update()
+    cam = bpy.context.scene.camera
+    half = cam.data.ortho_scale / 2
+    m = cam.matrix_world
+    right, up, back = (m.col[i].to_3d().normalized() for i in range(3))
+    bpy.ops.object.text_add()
+    label = bpy.context.active_object
+    label.data.body = text
+    label.data.size = cam.data.ortho_scale * size
+    # Lines run downward from the anchor, so a multi-line label starts higher.
+    lift = (text.count("\n")) * label.data.size * 1.2
+    label.location = (cam.location - back * 1.0 - right * half * 0.92 - up * (half * 0.92 - lift))
+    label.rotation_euler = cam.rotation_euler
+    mat = bpy.data.materials.new("label")
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    nodes.clear()
+    emit = nodes.new("ShaderNodeEmission")
+    emit.inputs["Color"].default_value = rgba(REFERENCE)
+    out = nodes.new("ShaderNodeOutputMaterial")
+    mat.node_tree.links.new(emit.outputs[0], out.inputs["Surface"])
+    label.data.materials.append(mat)
+    return label
+
+
+# Yaws that stage the figure squarely for the dim camera (azimuth 21°, so screen-right is
+# (0.934, 0.358)). The figure's front is +Y; these turn it onto screen-right, screen-left and
+# the camera. Reaches only read in profile: at -120 (three-quarter) and even -100 a forward arm
+# points mostly into the lens and lands across the torso, which is what the first two passes
+# showed. prep_render.py's scenes use the same numbers.
+STAGING_YAW = {"profil": -69.0, "profil_links": 111.0, "front": -159.0}
+
+
+def storyboard_frames(name, limit=7):
+    """The beat frames, thinned evenly to `limit` (a tremble has more beats than it has looks)."""
+    frames = sorted({beat[0] for beat in CLIPS[name]["beats"]})[:-1]   # the last repeats frame 0
+    if len(frames) <= limit:
+        return frames
+    step = (len(frames) - 1) / (limit - 1)
+    return sorted({frames[round(i * step)] for i in range(limit)})
+
+
+def scene_gesten(args, out_dir):
+    """Per clip: a labelled storyboard of its beats, and a looping USDZ (+ .usda twin) to open
+    in Quick Look, which plays baked clips. Then one catalog of every key pose.
+
+    Same two-build structure as `scene_aufbau`. Nothing here ships: the clips reach the app
+    inside a scene's export (prep_render.py's `figur` kind takes a `clip`), not as files.
+    """
+    global _LOD
+    names = list(CLIPS) if args.geste == "all" else args.geste.split(",")
+    gesten_dir = os.path.join(out_dir, "gesten")
+    os.makedirs(gesten_dir, exist_ok=True)
+    catalog = []
+    for name in names:
+        _LOD = "high"
+        clear_scene()
+        # Wider and taller than the rest-pose framing: arms go overhead and the jubel clip leaves
+        # the ground, and none of it may clip at the frame edge.
+        stage(args.size, *VIEWS["dim"], 3.3, 1.0)
+        if args.fast:
+            bpy.context.scene.eevee.taa_render_samples = 48
+        objects, p = build_figure(args.preset, args.height)
+        keyframe_clip(objects, p, name)
+        # The figure faces +Y, away from this camera, so unturned its gestures happen behind its
+        # own torso. A parent empty carries the yaw (see STAGING_YAW), the same arrangement
+        # as a prep scene's `figur` group, so the baked part keys are untouched.
+        bpy.ops.object.empty_add(type="PLAIN_AXES", location=(0, 0, 0))
+        group = bpy.context.active_object
+        for obj in objects:
+            obj.parent = group
+        group.rotation_euler = (0, 0, math.radians(STAGING_YAW[CLIPS[name].get("view", "profil")]))
+        label = add_label(name)
+        cells = []
+        for frame in storyboard_frames(name):
+            bpy.context.scene.frame_set(frame + 1)
+            label.data.body = name if frame == 0 else f"{name} · {frame}"
+            path = os.path.join(gesten_dir, f"{name}-f{frame:03d}.png")
+            render_to(path)
+            cells.append(path)
+        catalog.append(cells[0])
+        contact_sheet(cells, len(cells), os.path.join(gesten_dir, f"geste-{name}.png"))
+
+        _LOD = "low"
+        clear_scene()
+        setup_render(args.size)
+        objects, p = build_figure(args.preset, args.height)
+        keyframe_clip(objects, p, name)
+        out = os.path.join(gesten_dir, f"geste-{name}.usdz")
+        twin = os.path.splitext(out)[0] + ".usda"
+        bpy.ops.wm.usd_export(filepath=twin, export_materials=True, export_animation=True,
+                              convert_orientation=True)
+        export_usdz(out, animated=True)
+        print(f"GESTE {name} {clip_length(name) + 1} frames ({(clip_length(name) + 1) / 24:.1f}s) "
+              f"— {CLIPS[name]['verbs']}")
+        verify_animation(twin)
+    if len(names) > 1:
+        contact_sheet(catalog, 6, os.path.join(out_dir, "gesten-katalog.png"))
+        print("LAYOUT katalog=" + ",".join(names))
+
+
 def scene_scale(args, out_dir):
     """The figure standing with the cast it will join: the dog at its shipped 1.4 and the
     table at its shipped 2.5×1.5×1.25. Scale is a relationship, not a number — the question
@@ -1028,7 +1618,11 @@ def main():
     ap.add_argument("--scale-check", action="store_true", help="beside hund.usdz and the table")
     ap.add_argument("--aufbau", action="store_true", help="bake the self-assembly clip")
     ap.add_argument("--gehen", action="store_true", help="bake the looping walk-cycle clip")
-    ap.add_argument("--pose", default="steh", choices=sorted(POSES),
+    ap.add_argument("--geste", metavar="NAME[,NAME]|all",
+                    help="storyboard + Quick Look USDZ per gesture clip (see CLIPS), into "
+                         "renders/figur/gesten/; `all` also writes gesten-katalog.png")
+    ap.add_argument("--fast", action="store_true", help="48 render samples instead of 256")
+    ap.add_argument("--pose", default="steh", choices=sorted(POSES) + sorted(GESTEN),
                     help="stance for the default render/export path (probe with --pose sitz)")
     ap.add_argument("--color", default=None, metavar="RRGGBB",
                     help="override the charcoal REFERENCE ink, e.g. ECE7DA for the dark-theme "
@@ -1059,6 +1653,9 @@ def main():
         return
     if args.gehen:
         scene_gehen(args, args.out_dir)
+        return
+    if args.geste:
+        scene_gesten(args, args.out_dir)
         return
 
     global _LOD

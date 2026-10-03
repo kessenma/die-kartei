@@ -206,7 +206,8 @@ struct PyramidCoachSection: View {
 
     /// The structure areas above pull these focuses out; everything else is "Strukturen".
     private static let caseFocuses: [GrammarFocus] = [.akkusativ, .dativ, .genitiv,
-                                                      .praepositionen, .wechselpraepositionen]
+                                                      .praepositionen, .wechselpraepositionen,
+                                                      .verbenPraepositionen]
 
     /// Which row reads a grammar focus. `GrammarRoute`'s DEBUG report prints it.
     enum Area { case artikel, faelle, strukturen }

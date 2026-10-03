@@ -146,6 +146,17 @@ struct ModelUpgradeNudge: View {
 
     private func picturesContent(_ readiness: ModelReadiness) -> Content? {
         guard !readiness.hasImageModel else { return nil }
+        if PictureSource.current == .cloud {
+            return Content(
+                symbol: "photo.on.rectangle.angled",
+                tint: .purple,
+                title: "Add pictures to your cards",
+                message: "Connect your OpenRouter account to draw a picture for each card in the "
+                       + "cloud, at a cent or a few a picture.",
+                isDismissible: true,
+                action: "Connect OpenRouter"
+            )
+        }
         return Content(
             symbol: "photo.on.rectangle.angled",
             tint: .purple,

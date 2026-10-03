@@ -46,7 +46,7 @@ enum GrammarExplanation {
         case .genitiv:                              "Genitiv"
         // Which case is right is exactly what these two exercises ask, so naming one would
         // either give the answer away or state it wrongly. The rule note carries them.
-        case .praepositionen, .wechselpraepositionen: nil
+        case .praepositionen, .wechselpraepositionen, .verbenPraepositionen: nil
         default:                                    nil
         }
     }

@@ -13,18 +13,23 @@ German for identity words and headings, plain English for explanation.
 - `docs/GAMIFICATION.md` — XP, pyramid, placement quiz, streaks; debug launch arguments live here.
 - `docs/LEARNER_MEMORY.md` — the persistent learner profile and coaching memory.
 - `docs/SHORT_STORIES.md` — story mode and on-device illustrations.
+- `docs/CLOUD_PICTURES.md` — cloud pictures on the learner's own OpenRouter account (Muse Image,
+  Nano Banana): sign-in, the picture-source seam, error policy, invariants, the probe, debug args.
 - `docs/JOB_PREP.md` — job-posting capture and interview prep.
 - `docs/CLASS_NOTES.md` — Deutschkurs: courses, class entries, handouts, homework, the per-course deck.
 - `docs/DOCUMENT_DECKS.md` — flashcards from a document: the vocab-sheet pairer, phrase picking, decks on a course.
 - `docs/WORTSCHATZ.md` — the Goethe word box: merged index, one SRS deck, sessions, status, debug args.
 - `docs/KASUS.md` — the Grammatik case path: units, story format and targets, validator, exercises and right/wrong feedback, rich-text markup, Verlauf, GrammarRoute, coach rules, adding a story, tutor-written stories (planner, gate, fallback, Kasus Lab, Mac probe), tests, debug args.
 - `docs/PREPOSITION_3D.md` — the 3D preposition scenes and die Figur.
+- `docs/VERB_PREPOSITIONS.md` — Verben mit Präpositionen: 42 verb pairs in the preposition hub's
+  second track (cards, drills, Die Falle), their data, the baked 3D scenes, and what is still open.
 - `docs/theme-upgrade.md` — the AppTheme system and its invariants.
 - `docs/MEMORY.md` — the memory budget, the one-heavy-resident invariant, Settings ▸ Speicher
   (crash/memory log), and how to measure on a device.
 - `docs/ICLOUD_SYNC.md` — iCloud Sync on CKSyncEngine: why not SwiftData mirroring, the invariants
   (per-device counters, canonical ids, `cloudKitDatabase: .none`), merge rules, Development vs
-  Production, the one-time schema deploy. Adding a field to a synced model means adding it to its codec.
+  Production, the one-time schema deploy, and models being per device (`ModelHandoff`). Adding a field to a
+  synced model means adding it to its codec.
 - `docs/FUTURE_FEATURES.md` — ideas not yet built.
 
 ## What's New maintenance

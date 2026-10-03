@@ -1,0 +1,1311 @@
+{
+  "about": "Verben mit Präpositionen, the prototype set (2026-10-02). Kyle's class sheet, corrected. Each verb names the scene that depicts its first example; tools/blender/verben.py renders the scenes from this file. `object` is the prepositional phrase exactly as it appears in the sentence, the part a scene tints. `fit` is the scene backlog's grouping in docs/PREPOSITION_3D.md: echo (the place meaning survives and agrees with the case), trap (a two-way preposition with a fixed case and no movement), abstract. Each example carries the Lückentext `gap` (the text the blank removes) and three `wrong` options. `falle` pairs one preposition's two lives, place versus verb, with article-only gaps so the choice is purely the case.",
+  "verbs": [
+    {
+      "verb": "antworten auf",
+      "preposition": "auf",
+      "case": "akkusativ",
+      "english": "to answer",
+      "fit": "trap",
+      "scene": "antworten",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann antwortet auf den Brief.",
+          "english": "The man is answering the letter.",
+          "object": "auf den Brief",
+          "gap": "auf den",
+          "wrong": [
+            "auf dem",
+            "an den",
+            "für den"
+          ],
+          "noun": "Brief",
+          "gender": "m"
+        }
+      ],
+      "note": "The person answered is a plain Dativ: „Er antwortet dem Freund.“"
+    },
+    {
+      "verb": "aufpassen auf",
+      "preposition": "auf",
+      "case": "akkusativ",
+      "english": "to look after, to keep an eye on",
+      "fit": "trap",
+      "scene": "aufpassen",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann passt auf den Hund auf.",
+          "english": "The man is keeping an eye on the dog.",
+          "object": "auf den Hund",
+          "gap": "auf den",
+          "wrong": [
+            "auf dem",
+            "für den",
+            "an den"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ],
+      "note": "Separable: „passt … auf“."
+    },
+    {
+      "verb": "sich ärgern über",
+      "preposition": "über",
+      "case": "akkusativ",
+      "english": "to be annoyed about",
+      "fit": "trap",
+      "scene": "aergern",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann ärgert sich über den Hund.",
+          "english": "The man is annoyed with the dog.",
+          "object": "über den Hund",
+          "gap": "über den",
+          "wrong": [
+            "über dem",
+            "auf dem",
+            "an den"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "sich beschweren über",
+      "preposition": "über",
+      "case": "akkusativ",
+      "english": "to complain about",
+      "fit": "trap",
+      "scene": "beschweren",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann beschwert sich über den Hund.",
+          "english": "The man is complaining about the dog.",
+          "object": "über den Hund",
+          "gap": "über den",
+          "wrong": [
+            "über dem",
+            "an den",
+            "auf den"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ],
+      "note": "The person you complain to takes bei: „beim Freund“."
+    },
+    {
+      "verb": "bitten um",
+      "preposition": "um",
+      "case": "akkusativ",
+      "english": "to ask for",
+      "fit": "abstract",
+      "scene": "bitten",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann bittet den Freund um den Ball.",
+          "english": "The man asks his friend for the ball.",
+          "object": "um den Ball",
+          "gap": "um den",
+          "wrong": [
+            "um dem",
+            "für den",
+            "nach dem"
+          ],
+          "noun": "Ball",
+          "gender": "m"
+        }
+      ],
+      "note": "The person asked is a plain Akkusativ object too: „den Freund“."
+    },
+    {
+      "verb": "denken an",
+      "preposition": "an",
+      "case": "akkusativ",
+      "english": "to think of",
+      "fit": "abstract",
+      "scene": "denken",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann denkt an den Hund.",
+          "english": "The man is thinking of the dog.",
+          "object": "an den Hund",
+          "gap": "an den",
+          "wrong": [
+            "an dem",
+            "über den",
+            "auf den"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ],
+      "note": "Having something in mind. Mulling it over is nachdenken über."
+    },
+    {
+      "verb": "sich erinnern an",
+      "preposition": "an",
+      "case": "akkusativ",
+      "english": "to remember",
+      "fit": "abstract",
+      "scene": "erinnern",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann erinnert sich an den Hund.",
+          "english": "The man remembers the dog.",
+          "object": "an den Hund",
+          "gap": "an den",
+          "wrong": [
+            "an dem",
+            "über den",
+            "von dem"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "sich freuen auf",
+      "preposition": "auf",
+      "case": "akkusativ",
+      "english": "to look forward to",
+      "fit": "trap",
+      "scene": "freuen_auf",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann freut sich auf den Pokal.",
+          "english": "The man is looking forward to the trophy.",
+          "object": "auf den Pokal",
+          "gap": "auf den",
+          "wrong": [
+            "auf dem",
+            "an den",
+            "für den"
+          ],
+          "noun": "Pokal",
+          "gender": "m"
+        }
+      ],
+      "note": "auf: something still to come. über: something already here."
+    },
+    {
+      "verb": "sich freuen über",
+      "preposition": "über",
+      "case": "akkusativ",
+      "english": "to be happy about",
+      "fit": "trap",
+      "scene": "freuen_ueber",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann freut sich über den Pokal.",
+          "english": "The man is happy about the trophy.",
+          "object": "über den Pokal",
+          "gap": "über den",
+          "wrong": [
+            "über dem",
+            "an den",
+            "für den"
+          ],
+          "noun": "Pokal",
+          "gender": "m"
+        }
+      ],
+      "note": "über: something already here. auf: something still to come."
+    },
+    {
+      "verb": "sich gewöhnen an",
+      "preposition": "an",
+      "case": "akkusativ",
+      "english": "to get used to",
+      "fit": "abstract",
+      "scene": "gewoehnen",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann gewöhnt sich an den Hund.",
+          "english": "The man is getting used to the dog.",
+          "object": "an den Hund",
+          "gap": "an den",
+          "wrong": [
+            "an dem",
+            "auf den",
+            "zu dem"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "hoffen auf",
+      "preposition": "auf",
+      "case": "akkusativ",
+      "english": "to hope for",
+      "fit": "trap",
+      "scene": "hoffen",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann hofft auf einen Regenschauer.",
+          "english": "The man is hoping for a shower of rain.",
+          "object": "auf einen Regenschauer",
+          "gap": "auf einen",
+          "wrong": [
+            "auf einem",
+            "für einen",
+            "an einen"
+          ],
+          "noun": "Regenschauer",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "sich interessieren für",
+      "preposition": "für",
+      "case": "akkusativ",
+      "english": "to be interested in",
+      "fit": "abstract",
+      "scene": "interesse",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann interessiert sich für den Käfer.",
+          "english": "The man is interested in the beetle.",
+          "object": "für den Käfer",
+          "gap": "für den",
+          "wrong": [
+            "für dem",
+            "an den",
+            "über den"
+          ],
+          "noun": "Käfer",
+          "gender": "m"
+        }
+      ],
+      "note": "Reflexive. The sheet leaves out the sich.",
+      "sheet": "interessieren für (acc)"
+    },
+    {
+      "verb": "sich kümmern um",
+      "preposition": "um",
+      "case": "akkusativ",
+      "english": "to take care of",
+      "fit": "echo",
+      "scene": "kuemmern",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann kümmert sich um den Hund.",
+          "english": "The man takes care of the dog.",
+          "object": "um den Hund",
+          "gap": "um den",
+          "wrong": [
+            "um dem",
+            "für den",
+            "über den"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "nachdenken über",
+      "preposition": "über",
+      "case": "akkusativ",
+      "english": "to think about, to ponder",
+      "fit": "trap",
+      "scene": "nachdenken",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann denkt über den Weg nach.",
+          "english": "The man is thinking about which way to go.",
+          "object": "über den Weg",
+          "gap": "über den",
+          "wrong": [
+            "über dem",
+            "an den",
+            "von dem"
+          ],
+          "noun": "Weg",
+          "gender": "m"
+        }
+      ],
+      "note": "Separable: „denkt … nach“. Compare fragen nach dem Weg (Dativ)."
+    },
+    {
+      "verb": "reden über",
+      "preposition": "über",
+      "case": "akkusativ",
+      "english": "to talk about",
+      "fit": "trap",
+      "scene": "sprechen_ueber",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Die beiden reden über den Hund.",
+          "english": "The two of them are talking about the dog.",
+          "object": "über den Hund",
+          "gap": "über den",
+          "wrong": [
+            "über dem",
+            "an den",
+            "um den"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "sich sorgen um",
+      "preposition": "um",
+      "case": "akkusativ",
+      "english": "to worry about",
+      "fit": "echo",
+      "scene": "sorgen",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann sorgt sich um den Hund.",
+          "english": "The man is worried about the dog.",
+          "object": "um den Hund",
+          "gap": "um den",
+          "wrong": [
+            "um dem",
+            "über dem",
+            "an den"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "sprechen über",
+      "preposition": "über",
+      "case": "akkusativ",
+      "english": "to talk about",
+      "fit": "trap",
+      "scene": "sprechen_ueber",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann spricht über den Hund.",
+          "english": "The man is talking about the dog.",
+          "object": "über den Hund",
+          "gap": "über den",
+          "wrong": [
+            "über dem",
+            "an den",
+            "um den"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ],
+      "note": "Compare erzählen von: the same picture, in the Dativ."
+    },
+    {
+      "verb": "schreiben an",
+      "preposition": "an",
+      "case": "akkusativ",
+      "english": "to write to",
+      "fit": "echo",
+      "scene": "schreiben",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann schreibt einen Brief an den Freund.",
+          "english": "The man writes a letter to his friend.",
+          "object": "an den Freund",
+          "gap": "an den",
+          "wrong": [
+            "an dem",
+            "zu dem",
+            "nach dem"
+          ],
+          "noun": "Freund",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "sich streiten über",
+      "preposition": "über",
+      "case": "akkusativ",
+      "english": "to argue about",
+      "fit": "trap",
+      "scene": "streiten",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Die beiden streiten sich über den Hund.",
+          "english": "The two of them are arguing about the dog.",
+          "object": "über den Hund",
+          "gap": "über den",
+          "wrong": [
+            "über dem",
+            "an den",
+            "auf den"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ],
+      "note": "Fighting over who gets something is usually streiten um."
+    },
+    {
+      "verb": "sich vorbereiten auf",
+      "preposition": "auf",
+      "case": "akkusativ",
+      "english": "to prepare for",
+      "fit": "trap",
+      "scene": "vorbereiten",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann bereitet sich auf den Wettlauf vor.",
+          "english": "The man is getting ready for the race.",
+          "object": "auf den Wettlauf",
+          "gap": "auf den",
+          "wrong": [
+            "auf dem",
+            "an den",
+            "zu dem"
+          ],
+          "noun": "Wettlauf",
+          "gender": "m"
+        }
+      ],
+      "note": "Reflexive and separable: „bereitet sich … vor“. The sheet leaves out the sich.",
+      "sheet": "vorbereiten auf (acc)"
+    },
+    {
+      "verb": "warten auf",
+      "preposition": "auf",
+      "case": "akkusativ",
+      "english": "to wait for",
+      "fit": "trap",
+      "scene": "warten",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann wartet auf den Bus.",
+          "english": "The man is waiting for the bus.",
+          "object": "auf den Bus",
+          "gap": "auf den",
+          "wrong": [
+            "auf dem",
+            "für den",
+            "an den"
+          ],
+          "noun": "Bus",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "sich wundern über",
+      "preposition": "über",
+      "case": "akkusativ",
+      "english": "to be surprised about",
+      "fit": "trap",
+      "scene": "wundern",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann wundert sich über den Hund.",
+          "english": "The man is surprised at the dog.",
+          "object": "über den Hund",
+          "gap": "über den",
+          "wrong": [
+            "über dem",
+            "auf den",
+            "an den"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "abhängen von",
+      "preposition": "von",
+      "case": "dativ",
+      "english": "to depend on",
+      "fit": "abstract",
+      "scene": "abhaengen",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Das Spiel hängt vom Wetter ab.",
+          "english": "The game depends on the weather.",
+          "object": "vom Wetter",
+          "gap": "vom",
+          "wrong": [
+            "von das",
+            "am",
+            "zum"
+          ],
+          "noun": "Wetter",
+          "gender": "n"
+        }
+      ],
+      "note": "Separable: „hängt … ab“. vom = von dem."
+    },
+    {
+      "verb": "angeben mit",
+      "preposition": "mit",
+      "case": "dativ",
+      "english": "to show off",
+      "fit": "abstract",
+      "scene": "angeben",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann gibt mit dem Pokal an.",
+          "english": "The man is showing off his trophy.",
+          "object": "mit dem Pokal",
+          "gap": "mit dem",
+          "wrong": [
+            "mit den",
+            "von dem",
+            "über den"
+          ],
+          "noun": "Pokal",
+          "gender": "m"
+        }
+      ],
+      "note": "Separable: „gibt … an“."
+    },
+    {
+      "verb": "Angst haben vor",
+      "preposition": "vor",
+      "case": "dativ",
+      "english": "to be afraid of",
+      "fit": "echo",
+      "scene": "angst",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann hat Angst vor der Spinne.",
+          "english": "The man is afraid of the spider.",
+          "object": "vor der Spinne",
+          "gap": "vor der",
+          "wrong": [
+            "vor die",
+            "von der",
+            "über die"
+          ],
+          "noun": "Spinne",
+          "gender": "f"
+        }
+      ]
+    },
+    {
+      "verb": "arbeiten an",
+      "preposition": "an",
+      "case": "dativ",
+      "english": "to work on",
+      "fit": "echo",
+      "scene": "arbeiten",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann arbeitet an einem Tisch.",
+          "english": "The man is working on a table.",
+          "object": "an einem Tisch",
+          "gap": "an einem",
+          "wrong": [
+            "an einen",
+            "auf einem",
+            "über einen"
+          ],
+          "noun": "Tisch",
+          "gender": "m"
+        }
+      ],
+      "note": "an + Dativ here, unlike denken an (Akkusativ)."
+    },
+    {
+      "verb": "sich ekeln vor",
+      "preposition": "vor",
+      "case": "dativ",
+      "english": "to be disgusted by",
+      "fit": "echo",
+      "scene": "ekel",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann ekelt sich vor der Spinne.",
+          "english": "The man is disgusted by the spider.",
+          "object": "vor der Spinne",
+          "gap": "vor der",
+          "wrong": [
+            "vor die",
+            "von der",
+            "über die"
+          ],
+          "noun": "Spinne",
+          "gender": "f"
+        }
+      ]
+    },
+    {
+      "verb": "sich ernähren von",
+      "preposition": "von",
+      "case": "dativ",
+      "english": "to live on",
+      "fit": "echo",
+      "scene": "ernaehren",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann ernährt sich von Äpfeln.",
+          "english": "The man lives on apples.",
+          "object": "von Äpfeln",
+          "gap": "von Äpfeln",
+          "wrong": [
+            "von Äpfel",
+            "mit Äpfeln",
+            "aus Äpfel"
+          ],
+          "noun": "Äpfel",
+          "gender": "pl"
+        }
+      ],
+      "note": "The Dativ plural adds -n: Äpfel → Äpfeln."
+    },
+    {
+      "verb": "erzählen von",
+      "preposition": "von",
+      "case": "dativ",
+      "english": "to tell about",
+      "fit": "abstract",
+      "scene": "erzaehlen",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann erzählt dem Freund vom Hund.",
+          "english": "The man tells his friend about the dog.",
+          "object": "vom Hund",
+          "gap": "vom",
+          "wrong": [
+            "von den",
+            "zum",
+            "am"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ],
+      "note": "vom = von dem. Compare sprechen über: the same picture, in the Akkusativ."
+    },
+    {
+      "verb": "fragen nach",
+      "preposition": "nach",
+      "case": "dativ",
+      "english": "to ask about, to ask for",
+      "fit": "echo",
+      "scene": "fragen",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann fragt den Freund nach dem Weg.",
+          "english": "The man asks his friend the way.",
+          "object": "nach dem Weg",
+          "gap": "nach dem",
+          "wrong": [
+            "nach den",
+            "um den",
+            "über den"
+          ],
+          "noun": "Weg",
+          "gender": "m"
+        }
+      ],
+      "note": "Compare nachdenken über den Weg (Akkusativ)."
+    },
+    {
+      "verb": "sich fürchten vor",
+      "preposition": "vor",
+      "case": "dativ",
+      "english": "to be afraid of",
+      "fit": "echo",
+      "scene": "angst",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann fürchtet sich vor der Spinne.",
+          "english": "The man is frightened of the spider.",
+          "object": "vor der Spinne",
+          "gap": "vor der",
+          "wrong": [
+            "vor die",
+            "von der",
+            "über die"
+          ],
+          "noun": "Spinne",
+          "gender": "f"
+        }
+      ]
+    },
+    {
+      "verb": "gehören zu",
+      "preposition": "zu",
+      "case": "dativ",
+      "english": "to be part of, to belong to",
+      "fit": "echo",
+      "scene": "rudel",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der kleine Hund gehört zum Rudel.",
+          "english": "The little dog belongs to the pack.",
+          "object": "zum Rudel",
+          "gap": "zum",
+          "wrong": [
+            "zu das",
+            "beim",
+            "ins"
+          ],
+          "noun": "Rudel",
+          "gender": "n"
+        }
+      ],
+      "note": "zum = zu dem. Without zu, gehören means to belong to someone: „Der Hund gehört mir.“"
+    },
+    {
+      "verb": "handeln von",
+      "preposition": "von",
+      "case": "dativ",
+      "english": "to be about",
+      "fit": "abstract",
+      "scene": "handeln",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Das Buch handelt von einem Hund.",
+          "english": "The book is about a dog.",
+          "object": "von einem Hund",
+          "gap": "von einem",
+          "wrong": [
+            "von einen",
+            "über einen",
+            "mit einem"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "helfen bei",
+      "preposition": "bei",
+      "case": "dativ",
+      "english": "to help with",
+      "fit": "echo",
+      "scene": "helfen",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Freund hilft dem Mann beim Umzug.",
+          "english": "The friend is helping the man with the move.",
+          "object": "beim Umzug",
+          "gap": "beim",
+          "wrong": [
+            "bei den",
+            "zum",
+            "für den"
+          ],
+          "noun": "Umzug",
+          "gender": "m"
+        }
+      ],
+      "note": "beim = bei dem. The person helped is Dativ too: „dem Mann“."
+    },
+    {
+      "verb": "leiden unter",
+      "preposition": "unter",
+      "case": "dativ",
+      "english": "to suffer from",
+      "fit": "echo",
+      "scene": "leiden",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann leidet unter dem Regen.",
+          "english": "The man is suffering in the rain.",
+          "object": "unter dem Regen",
+          "gap": "unter dem",
+          "wrong": [
+            "unter den",
+            "an den",
+            "von dem"
+          ],
+          "noun": "Regen",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "sich sehnen nach",
+      "preposition": "nach",
+      "case": "dativ",
+      "english": "to long for",
+      "fit": "echo",
+      "scene": "sehnen",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann sehnt sich nach dem Freund.",
+          "english": "The man is longing for his friend.",
+          "object": "nach dem Freund",
+          "gap": "nach dem",
+          "wrong": [
+            "nach den",
+            "zu dem",
+            "um den"
+          ],
+          "noun": "Freund",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "schimpfen mit",
+      "preposition": "mit",
+      "case": "dativ",
+      "english": "to scold, to tell off",
+      "fit": "abstract",
+      "scene": "schimpfen",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann schimpft mit dem Hund.",
+          "english": "The man is telling the dog off.",
+          "object": "mit dem Hund",
+          "gap": "mit dem",
+          "wrong": [
+            "mit den",
+            "an dem",
+            "zu dem"
+          ],
+          "noun": "Hund",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "sprechen mit",
+      "preposition": "mit",
+      "case": "dativ",
+      "english": "to talk to",
+      "fit": "abstract",
+      "scene": "sprechen_mit",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann spricht mit dem Freund.",
+          "english": "The man is talking to his friend.",
+          "object": "mit dem Freund",
+          "gap": "mit dem",
+          "wrong": [
+            "mit den",
+            "an den",
+            "bei dem"
+          ],
+          "noun": "Freund",
+          "gender": "m"
+        }
+      ],
+      "note": "The sheet marks it (acc), but mit always takes the Dativ.",
+      "sheet": "sprechen mit (acc)"
+    },
+    {
+      "verb": "träumen von",
+      "preposition": "von",
+      "case": "dativ",
+      "english": "to dream of",
+      "fit": "abstract",
+      "scene": "traeumen",
+      "level": "A2",
+      "examples": [
+        {
+          "german": "Der Mann träumt von einem Pokal.",
+          "english": "The man dreams of a trophy.",
+          "object": "von einem Pokal",
+          "gap": "von einem",
+          "wrong": [
+            "von einen",
+            "an einen",
+            "nach einem"
+          ],
+          "noun": "Pokal",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "verlangen nach",
+      "preposition": "nach",
+      "case": "dativ",
+      "english": "to crave, to ask for",
+      "fit": "echo",
+      "scene": "verlangen",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Hund verlangt nach dem Ball.",
+          "english": "The dog wants its ball.",
+          "object": "nach dem Ball",
+          "gap": "nach dem",
+          "wrong": [
+            "nach den",
+            "um den",
+            "für den"
+          ],
+          "noun": "Ball",
+          "gender": "m"
+        }
+      ]
+    },
+    {
+      "verb": "zählen zu",
+      "preposition": "zu",
+      "case": "dativ",
+      "english": "to be one of, to count as",
+      "fit": "echo",
+      "scene": "rudel",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der kleine Hund zählt zu den großen Hunden.",
+          "english": "The little dog counts as one of the big dogs.",
+          "object": "zu den großen Hunden",
+          "gap": "zu den großen",
+          "wrong": [
+            "zu die großen",
+            "an den großen",
+            "mit den großen"
+          ],
+          "noun": "Hunde",
+          "gender": "pl"
+        }
+      ],
+      "note": "Dativ plural: den … Hunden."
+    },
+    {
+      "verb": "zweifeln an",
+      "preposition": "an",
+      "case": "dativ",
+      "english": "to doubt",
+      "fit": "abstract",
+      "scene": "zweifeln",
+      "level": "B1",
+      "examples": [
+        {
+          "german": "Der Mann zweifelt an der Leiter.",
+          "english": "The man doesn't trust the ladder.",
+          "object": "an der Leiter",
+          "gap": "an der",
+          "wrong": [
+            "an die",
+            "über die",
+            "von der"
+          ],
+          "noun": "Leiter",
+          "gender": "f"
+        }
+      ],
+      "note": "The sheet's example should read „ich zweifle an der Wahrheit“. an + Dativ, unlike denken an."
+    }
+  ],
+  "falle": [
+    {
+      "id": "falle-01",
+      "kind": "ort",
+      "preposition": "auf",
+      "sentence": "Das Buch liegt auf ______ Tisch.",
+      "answer": "dem",
+      "options": [
+        "den",
+        "dem"
+      ],
+      "noun": "Tisch",
+      "gender": "m",
+      "english": "The book is lying on the table.",
+      "why": "liegt answers Wo?, a place, so the two-way auf takes the Dativ"
+    },
+    {
+      "id": "falle-02",
+      "kind": "ort",
+      "preposition": "auf",
+      "sentence": "Ich lege das Buch auf ______ Tisch.",
+      "answer": "den",
+      "options": [
+        "den",
+        "dem"
+      ],
+      "noun": "Tisch",
+      "gender": "m",
+      "english": "I put the book on the table.",
+      "why": "lege answers Wohin?, a direction, so the two-way auf takes the Akkusativ"
+    },
+    {
+      "id": "falle-03",
+      "kind": "verb",
+      "preposition": "auf",
+      "sentence": "Ich warte auf ______ Bus.",
+      "answer": "den",
+      "options": [
+        "den",
+        "dem"
+      ],
+      "noun": "Bus",
+      "gender": "m",
+      "english": "I'm waiting for the bus.",
+      "why": "warten auf always takes the Akkusativ, even though nothing moves"
+    },
+    {
+      "id": "falle-04",
+      "kind": "verb",
+      "preposition": "auf",
+      "sentence": "Er passt auf ______ Kind auf.",
+      "answer": "das",
+      "options": [
+        "das",
+        "dem"
+      ],
+      "noun": "Kind",
+      "gender": "n",
+      "english": "He's looking after the child.",
+      "why": "aufpassen auf always takes the Akkusativ"
+    },
+    {
+      "id": "falle-05",
+      "kind": "ort",
+      "preposition": "an",
+      "sentence": "Das Bild hängt an ______ Wand.",
+      "answer": "der",
+      "options": [
+        "die",
+        "der"
+      ],
+      "noun": "Wand",
+      "gender": "f",
+      "english": "The picture is hanging on the wall.",
+      "why": "hängt answers Wo?, a place, so the two-way an takes the Dativ"
+    },
+    {
+      "id": "falle-06",
+      "kind": "ort",
+      "preposition": "an",
+      "sentence": "Er hängt das Bild an ______ Wand.",
+      "answer": "die",
+      "options": [
+        "die",
+        "der"
+      ],
+      "noun": "Wand",
+      "gender": "f",
+      "english": "He hangs the picture on the wall.",
+      "why": "hängt das Bild answers Wohin?, a direction, so an takes the Akkusativ"
+    },
+    {
+      "id": "falle-07",
+      "kind": "verb",
+      "preposition": "an",
+      "sentence": "Ich denke an ______ Urlaub.",
+      "answer": "den",
+      "options": [
+        "den",
+        "dem"
+      ],
+      "noun": "Urlaub",
+      "gender": "m",
+      "english": "I'm thinking of the holiday.",
+      "why": "denken an always takes the Akkusativ"
+    },
+    {
+      "id": "falle-08",
+      "kind": "verb",
+      "preposition": "an",
+      "sentence": "Er arbeitet an ______ Projekt.",
+      "answer": "dem",
+      "options": [
+        "das",
+        "dem"
+      ],
+      "noun": "Projekt",
+      "gender": "n",
+      "english": "He's working on the project.",
+      "why": "arbeiten an always takes the Dativ, unlike denken an"
+    },
+    {
+      "id": "falle-09",
+      "kind": "verb",
+      "preposition": "an",
+      "sentence": "Ich zweifle an ______ Antwort.",
+      "answer": "der",
+      "options": [
+        "die",
+        "der"
+      ],
+      "noun": "Antwort",
+      "gender": "f",
+      "english": "I doubt the answer.",
+      "why": "zweifeln an always takes the Dativ"
+    },
+    {
+      "id": "falle-10",
+      "kind": "ort",
+      "preposition": "über",
+      "sentence": "Die Lampe hängt über ______ Tisch.",
+      "answer": "dem",
+      "options": [
+        "den",
+        "dem"
+      ],
+      "noun": "Tisch",
+      "gender": "m",
+      "english": "The lamp hangs above the table.",
+      "why": "hängt answers Wo?, a place, so the two-way über takes the Dativ"
+    },
+    {
+      "id": "falle-11",
+      "kind": "verb",
+      "preposition": "über",
+      "sentence": "Wir sprechen über ______ Film.",
+      "answer": "den",
+      "options": [
+        "den",
+        "dem"
+      ],
+      "noun": "Film",
+      "gender": "m",
+      "english": "We're talking about the film.",
+      "why": "über meaning about always takes the Akkusativ"
+    },
+    {
+      "id": "falle-12",
+      "kind": "verb",
+      "preposition": "über",
+      "sentence": "Sie freut sich über ______ Geschenk.",
+      "answer": "das",
+      "options": [
+        "das",
+        "dem"
+      ],
+      "noun": "Geschenk",
+      "gender": "n",
+      "english": "She's happy about the present.",
+      "why": "sich freuen über always takes the Akkusativ"
+    },
+    {
+      "id": "falle-13",
+      "kind": "ort",
+      "preposition": "vor",
+      "sentence": "Der Hund läuft vor ______ Tür.",
+      "answer": "die",
+      "options": [
+        "die",
+        "der"
+      ],
+      "noun": "Tür",
+      "gender": "f",
+      "english": "The dog runs out in front of the door.",
+      "why": "läuft answers Wohin?, a direction, so the two-way vor takes the Akkusativ"
+    },
+    {
+      "id": "falle-14",
+      "kind": "ort",
+      "preposition": "vor",
+      "sentence": "Der Hund wartet vor ______ Tür.",
+      "answer": "der",
+      "options": [
+        "die",
+        "der"
+      ],
+      "noun": "Tür",
+      "gender": "f",
+      "english": "The dog is waiting in front of the door.",
+      "why": "this is a place (Wo?), not warten auf, so vor takes the Dativ"
+    },
+    {
+      "id": "falle-15",
+      "kind": "verb",
+      "preposition": "vor",
+      "sentence": "Er hat Angst vor ______ Hund.",
+      "answer": "dem",
+      "options": [
+        "den",
+        "dem"
+      ],
+      "noun": "Hund",
+      "gender": "m",
+      "english": "He's afraid of the dog.",
+      "why": "Angst haben vor always takes the Dativ"
+    },
+    {
+      "id": "falle-16",
+      "kind": "ort",
+      "preposition": "unter",
+      "sentence": "Die Katze schläft unter ______ Tisch.",
+      "answer": "dem",
+      "options": [
+        "den",
+        "dem"
+      ],
+      "noun": "Tisch",
+      "gender": "m",
+      "english": "The cat is sleeping under the table.",
+      "why": "schläft answers Wo?, a place, so the two-way unter takes the Dativ"
+    },
+    {
+      "id": "falle-17",
+      "kind": "verb",
+      "preposition": "unter",
+      "sentence": "Sie leidet unter ______ Hitze.",
+      "answer": "der",
+      "options": [
+        "die",
+        "der"
+      ],
+      "noun": "Hitze",
+      "gender": "f",
+      "english": "She's suffering from the heat.",
+      "why": "leiden unter always takes the Dativ"
+    },
+    {
+      "id": "falle-18",
+      "kind": "verb",
+      "preposition": "über",
+      "sentence": "Wir ärgern uns über ______ Lärm.",
+      "answer": "den",
+      "options": [
+        "den",
+        "dem"
+      ],
+      "noun": "Lärm",
+      "gender": "m",
+      "english": "We're annoyed about the noise.",
+      "why": "sich ärgern über always takes the Akkusativ"
+    }
+  ]
+}
