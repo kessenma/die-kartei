@@ -7,8 +7,12 @@
 
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
+#if canImport(UIKit)
 import UIKit
+#endif
 
+#if os(iOS)
 final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(
         _ application: UIApplication,
@@ -43,10 +47,40 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         }
     }
 }
+#else
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // One window: no window tabs, and no View ▸ Show Tab Bar / Show All Tabs for them.
+        NSWindow.allowsAutomaticWindowTabbing = false
+        MacReadingTextSize.installEqualsKeyAlias()
+    }
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        BackgroundModelDownloadSession.shared.activate()
+        MetricKitSubscriber.shared.start()
+        // The Mac has no memory warnings; its memory-pressure events stand in for them.
+        MacMemoryPressure.start()
+    }
+
+    /// One window, one app: closing it quits, the way a phone app's swipe-away does.
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+
+    /// Quitting is a normal exit on the Mac (and the scene never reaches `.background` first), so
+    /// this is where the session ends cleanly and the last edits are queued for iCloud.
+    func applicationWillTerminate(_ notification: Notification) {
+        SyncManager.shared.appWillResignActive()
+        MemoryDiagnostics.endSessionCleanly()
+    }
+}
+#endif
 
 @main
 struct german_ai_flashcardsApp: App {
+    #if os(iOS)
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    #else
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    #endif
 
     let container: ModelContainer
     @State private var modelManager: MLXModelManager
@@ -62,6 +96,10 @@ struct german_ai_flashcardsApp: App {
     /// any tab is open, and the file is gone from the inbox by the time this is set.
     @State private var pendingDeckImport: DeckImportRequest?
     @State private var deckImportError: String?
+    #if os(macOS)
+    /// The Mac window's sidebar selection and menu-driven flags, shared with the menu bar.
+    @State private var navigator = MacNavigator()
+    #endif
 
     init() {
         // The Klassisch/Geschichte scene-style toggle was removed 2026-08-12 (the sets merged
@@ -113,6 +151,9 @@ struct german_ai_flashcardsApp: App {
             ContentView(coordinator: coordinator)
                 .environment(coordinator.mlxService)
                 .environment(\.appTheme, appTheme)
+                #if os(macOS)
+                .environment(navigator)
+                #endif
                 .onChange(of: scenePhase) { _, phase in
                     // The session marker's app state is what decides whether an unclean exit is
                     // reported as "closed while in use" or "closed in the background".
@@ -137,8 +178,12 @@ struct german_ai_flashcardsApp: App {
                         coordinator.mlxService.releaseMemory(reason: .background)
                     }
                     // iCloud Sync: queue the latest edits before suspension; on return, send and
-                    // fetch (CloudKit pushes can be late or dropped).
+                    // fetch (CloudKit pushes can be late or dropped). A Mac app is rarely
+                    // `.background`; switching to another app makes it `.inactive`.
                     if phase == .background { SyncManager.shared.appWillResignActive() }
+                    #if os(macOS)
+                    if phase == .inactive { SyncManager.shared.appWillResignActive() }
+                    #endif
                     if phase == .active { Task { await SyncManager.shared.appBecameActive() } }
                     // Keep practice reminders anchored to the real last-practice date: re-derive the
                     // ladder whenever the app enters or leaves the foreground. Leaving captures any
@@ -152,13 +197,17 @@ struct german_ai_flashcardsApp: App {
                         }
                     }
                 }
-                .onOpenURL { url in
-                    do {
-                        pendingDeckImport = DeckImportRequest(envelope: try DeckImporter.read(from: url))
-                    } catch {
-                        deckImportError = error.localizedDescription
+                .onOpenURL { url in importDeck(from: url) }
+                #if os(macOS)
+                // File ▸ Import Deck… (⌘O): the same path as a .kartei opened from Finder.
+                .fileImporter(isPresented: $navigator.showsDeckImporter,
+                              allowedContentTypes: [.karteiDeck]) { result in
+                    switch result {
+                    case .success(let url): importDeck(from: url)
+                    case .failure(let error): deckImportError = error.localizedDescription
                     }
                 }
+                #endif
                 .sheet(item: $pendingDeckImport) { request in
                     DeckImportSheet(request: request)
                 }
@@ -174,7 +223,58 @@ struct german_ai_flashcardsApp: App {
                 } message: { message in
                     Text(message)
                 }
+                #if os(macOS)
+                // Phone-shaped screens and their sheets need a window at least this tall.
+                .frame(minWidth: 760, minHeight: 820)
+                // Settings-style forms as on iOS; the Mac default is a two-column layout.
+                .formStyle(.grouped)
+                // View ▸ Bigger / Smaller Text (⌘+ / ⌘−) for the German you read.
+                .modifier(MacReadingTextSizeModifier())
+                #endif
         }
         .modelContainer(container)
+        #if os(macOS)
+        .defaultSize(width: 1100, height: 900)
+        .windowResizability(.contentMinSize)
+        .windowToolbarStyle(.unified)
+        .commands { MacCommands(navigator: navigator) }
+        #endif
+
+        #if os(macOS)
+        // The iPhone's full-screen covers (an activity, a chat, the onboarding wizard) each open
+        // in a window of their own, so their toolbars show (App/MacCoverWindow.swift).
+        WindowGroup(id: MacCoverRegistry.sceneID, for: UUID.self) { $id in
+            MacCoverWindowRoot(id: id)
+                .modifier(MacReadingTextSizeModifier())
+                .environment(coordinator.mlxService)
+                .environment(\.appTheme, appTheme)
+                .environment(navigator)
+                .modelContainer(container)
+        }
+        .defaultSize(width: 1000, height: 840)
+        .windowResizability(.contentMinSize)
+        .windowToolbarStyle(.unified)
+        .restorationBehavior(.disabled)
+        .commandsRemoved()
+
+        // ⌘, — the panes of the iPhone's Settings list, as a Mac settings window.
+        Settings {
+            MacSettingsView(modelManager: modelManager, mlxService: coordinator.mlxService)
+                .environment(coordinator.mlxService)
+                .environment(\.appTheme, appTheme)
+                .environment(\.modelTheme, coordinator.mlxService.loadedModel?.theme)
+                .formStyle(.grouped)
+                .modelContainer(container)
+        }
+        #endif
+    }
+
+    /// A `.kartei` deck handed to the app, decoded and waiting for the learner to confirm.
+    private func importDeck(from url: URL) {
+        do {
+            pendingDeckImport = DeckImportRequest(envelope: try DeckImporter.read(from: url))
+        } catch {
+            deckImportError = error.localizedDescription
+        }
     }
 }

@@ -19,6 +19,9 @@ struct HomeHubView: View {
     /// Bumped by ContentView on every Home tab press; the `.id` below recreates the stack,
     /// popping any pushed screens so the Home button always lands on this hub.
     var resetToken: Int = 0
+    /// False on the Mac's sidebar, which lists the activity categories itself: Home is then For
+    /// You only, with no mode picker.
+    var showsModePicker: Bool = true
 
     /// Off = "For You" (one picked next exercise), on = the six-tile activity hub.
     @AppStorage("home.showAllActivities") private var showAllActivities = false
@@ -42,7 +45,7 @@ struct HomeHubView: View {
 
     var body: some View {
         NavigationStack {
-            if showAllActivities {
+            if showAllActivities && showsModePicker {
                 activityHub
             } else {
                 forYouList
@@ -55,10 +58,12 @@ struct HomeHubView: View {
 
     private var forYouList: some View {
         List {
-            Section {
-                modePicker
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
+            if showsModePicker {
+                Section {
+                    modePicker
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets())
+                }
             }
 
             // Sits above everything, in both Home modes, until a tutor is on disk. Renders nothing

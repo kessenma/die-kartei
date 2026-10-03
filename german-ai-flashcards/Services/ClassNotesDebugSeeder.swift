@@ -3,7 +3,9 @@ import Foundation
 import SwiftData
 import SwiftUI
 import NaturalLanguage
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// Two courses with entries and handouts, made without typing. The Deutschkurs screens sit two
 /// taps into Home and need a course that has content to show anything, and this simulator can't

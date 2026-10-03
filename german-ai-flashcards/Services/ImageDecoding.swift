@@ -1,5 +1,7 @@
 import ImageIO
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// Decode a picture file no larger than needed. A generated picture is 512×512 and costs 1 MB
 /// decoded *however small it's drawn*; a list of 48 pt thumbnails paying that per row is the kind

@@ -125,9 +125,11 @@ extension MLXModel {
         }
     }
 
-    /// Short device compatibility hint shown in the model picker.
+    /// Short device compatibility hint shown in the model picker. iPhones are named by model;
+    /// iPads and Macs vary too much for that, so they get the memory the tutor needs.
     var deviceNote: String {
-        switch self {
+        guard ThisDevice.kind == .iPhone else { return memoryNote }
+        return switch self {
         case .appleIntelligence:
             "Requires Apple Intelligence (iPhone 15 Pro or newer)"
         case .granite2B_german:
@@ -138,6 +140,24 @@ extension MLXModel {
             "iPhone 13 Pro / iPhone 14 or newer (6 GB RAM) \u{2014} the lightest Gemma tutor"
         case .gemma4_E4B_german:
             "iPhone 15 Pro or newer (8 GB RAM)"
+        }
+    }
+
+    /// ``deviceNote`` on an iPad or a Mac.
+    private var memoryNote: String {
+        switch self {
+        case .appleIntelligence:
+            ThisDevice.isMac
+                ? "Requires Apple Intelligence (a Mac with Apple silicon)"
+                : "Requires Apple Intelligence (an iPad with M1, A17 Pro or newer)"
+        case .granite2B_german:
+            "\(minimumRAMGB) GB of memory or more \u{2014} the smallest tutor"
+        case .granite41_3B_german:
+            "\(minimumRAMGB) GB of memory or more \u{2014} the stronger small-device tutor"
+        case .gemma4_E2B_german:
+            "\(minimumRAMGB) GB of memory or more \u{2014} the lightest Gemma tutor"
+        case .gemma4_E4B_german:
+            "\(minimumRAMGB) GB of memory or more"
         }
     }
 
@@ -231,9 +251,9 @@ extension MLXModel {
     var tutorTagline: String {
         switch self {
         case .gemma4_E2B_german:
-            "The same German training as the E4B tutor, sized to fit a 6 GB iPhone."
+            "The same German training as the E4B tutor, sized to fit a 6 GB \(ThisDevice.kind == .iPhone ? "iPhone" : "device")."
         case .granite41_3B_german:
-            "The stronger of the two small-device tutors, for phones the Gemma tutors don't fit."
+            "The stronger of the two small-device tutors, for \(ThisDevice.kind == .iPhone ? "phones" : "devices") the Gemma tutors don't fit."
         case .granite2B_german:
             "The smallest tutor. Never flags correct German, but lets more mistakes through."
         default:

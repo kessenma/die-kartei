@@ -12,7 +12,7 @@ struct StorySettingsView: View {
         } header: {
             Text("Story model").themedSectionHeader()
         } footer: {
-            Text("Any of the German Tutor models can write and grade stories — pick by what this iPhone has room for. Stories you already have keep the tutor that wrote them.")
+            Text("Any of the German Tutor models can write and grade stories — pick by what this \(ThisDevice.name) has room for. Stories you already have keep the tutor that wrote them.")
                 .font(.caption2)
         }
         .themedListRow()

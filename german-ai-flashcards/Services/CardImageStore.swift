@@ -1,4 +1,6 @@
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// Where generated flashcard pictures live on disk:
 /// `Application Support/CardImages/<deckUUID>/<cardUUID>.png`

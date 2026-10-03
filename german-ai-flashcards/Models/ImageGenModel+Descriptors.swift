@@ -12,12 +12,12 @@ extension ImageGenModel {
             "Stability AI's Stable Diffusion 2.1, converted to Core ML by Apple and compressed to "
             + "6-bit palettized weights so it runs on an iPhone. It draws every picture in the app "
             + "— story illustrations and flashcard pictures — fully on-device, with no account, no "
-            + "network, and nothing leaving the phone."
+            + "network, and nothing leaving your \(ThisDevice.name)."
         case .bkSdmTiny:
             "Nota AI's BK-SDM-Tiny — a block-removed, knowledge-distilled Stable Diffusion "
             + "(SD 1.4-class), converted to Core ML for this app. Its U-Net is about a third the "
             + "size of Stable Diffusion's, so it downloads smaller and draws in fewer steps, still "
-            + "fully on-device with nothing leaving the phone."
+            + "fully on-device with nothing leaving your \(ThisDevice.name)."
         }
     }
 

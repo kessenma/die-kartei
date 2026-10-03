@@ -25,7 +25,9 @@ import Foundation
 import MLX
 import os
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#endif
 
 extension MemoryReading {
     /// What the process holds right now. The MLX figures are zero until a model has loaded in
@@ -33,9 +35,16 @@ extension MemoryReading {
     /// device just to be told nothing is allocated — and abort where there is no Metal.
     static func now() -> MemoryReading {
         let mlx = MemorySaver.mlxRuntimeReady
+        let footprint = MemoryBudget.footprintMB
+        #if os(macOS)
+        // macOS reports no per-app limit, so "free" is what's left of the app's own budget.
+        let available = max(0, MemoryBudget.totalMB - max(0, footprint))
+        #else
+        let available = MemoryBudget.availableMB
+        #endif
         return MemoryReading(
-            footprintMB: MemoryBudget.footprintMB,
-            availableMB: MemoryBudget.availableMB,
+            footprintMB: footprint,
+            availableMB: available,
             totalMB: MemoryBudget.totalMB,
             mlxActiveMB: mlx ? Memory.activeMemory / 1_048_576 : 0,
             mlxCacheMB: mlx ? Memory.cacheMemory / 1_048_576 : 0,

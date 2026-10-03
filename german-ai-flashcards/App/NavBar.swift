@@ -70,7 +70,7 @@ struct DownloadBadge: View {
     }
 }
 
-private struct GeneratingBadge: View {
+struct GeneratingBadge: View {
     @State private var pulsing = false
 
     var body: some View {

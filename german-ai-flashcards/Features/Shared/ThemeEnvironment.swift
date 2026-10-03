@@ -86,11 +86,39 @@ private struct ThemedScreen: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            #if os(macOS)
+            .modifier(MacReadableColumn())
+            #endif
             .background(ThemedBackground().ignoresSafeArea())
             .fontDesign(theme.bodyDesign)     // nil is a no-op; only Sanft rounds its body
             .tint(theme.accent(model: model))
     }
 }
+
+#if os(macOS)
+/// On a wide Mac window, a phone-shaped screen reads as a centred column instead of rows stretched
+/// edge to edge. Safe-area padding rather than a narrower frame, so the themed ground still runs
+/// under the whole window (`contentMargins` would keep the scroll bar at the edge too, but a Mac
+/// `List` ignores it). Every themed screen gets it here.
+private struct MacReadableColumn: ViewModifier {
+    @Environment(\.macReadableWidth) private var readableWidth
+    @State private var width: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .safeAreaPadding(.horizontal, max(0, (width - readableWidth) / 2))
+            // The padding narrows the toolbar's scroll-edge effect to the column too, which draws a
+            // short band under the title bar; the window's own title bar is enough of an edge.
+            .scrollEdgeEffectHidden(true, for: .top)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+    }
+}
+
+extension EnvironmentValues {
+    /// The widest a themed screen's content grows on the Mac; the Settings window turns it off.
+    @Entry var macReadableWidth: CGFloat = 760
+}
+#endif
 
 // MARK: - Card
 
@@ -156,7 +184,13 @@ private struct ThemedListBackground: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            #if os(macOS)
+            // The readable column's margins show the themed ground; a list's own background
+            // would stop at the column and draw a second, slightly different panel.
+            .scrollContentBackground(.hidden)
+            #else
             .scrollContentBackground(theme == .klar ? .visible : .hidden)
+            #endif
             .themedScreen()
     }
 }

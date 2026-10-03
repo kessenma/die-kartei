@@ -229,4 +229,26 @@ struct JobPostingWebSurface: View {
     }
 }
 
+#else
+/// macOS: the live-page surface isn't built yet, and `JobPosting.availableSurfaces` never offers
+/// it. These keep `JobPostingDetailView` compiling unchanged.
+@Observable
+final class JobReadingWebModel {
+    var onWordTap: ((String) -> Void)?
+    var onTranslateSelection: ((String) -> Void)?
+    var onSavePhrase: ((String) -> Void)?
+    func tearDown() {}
+}
+
+struct JobPostingWebSurface: View {
+    var model: JobReadingWebModel
+    let url: String
+    let decorations: JobReadingDecorations
+    let accent: Color
+
+    var body: some View {
+        ContentUnavailableView("On iPhone and iPad", systemImage: "safari",
+                               description: Text("The live page opens on iPhone and iPad for now."))
+    }
+}
 #endif

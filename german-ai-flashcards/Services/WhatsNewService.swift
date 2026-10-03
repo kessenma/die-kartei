@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// One bullet on the What's New screen.
 struct WhatsNewHighlight: Decodable, Identifiable {

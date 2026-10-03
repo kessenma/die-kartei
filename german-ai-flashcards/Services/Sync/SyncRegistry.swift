@@ -67,25 +67,33 @@ struct SyncIdentity {
 
     static func replicaID() -> String {
         let service = "kyle-essenmacher.german-ai-flashcards.sync", account = "replica"
-        let query: [String: Any] = [
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
             kSecReturnData as String: true,
         ]
+        #if os(macOS)
+        // The Mac's legacy file keychain ignores `ThisDeviceOnly`, so a Migration Assistant copy
+        // of this Mac would carry the same replica. The data-protection keychain honours it.
+        query[kSecUseDataProtectionKeychain as String] = true
+        #endif
         var out: CFTypeRef?
         if SecItemCopyMatching(query as CFDictionary, &out) == errSecSuccess,
            let data = out as? Data, let id = String(data: data, encoding: .utf8) {
             return id
         }
         let id = UUID().uuidString
-        let add: [String: Any] = [
+        var add: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
             kSecValueData as String: Data(id.utf8),
         ]
+        #if os(macOS)
+        add[kSecUseDataProtectionKeychain as String] = true
+        #endif
         SecItemAdd(add as CFDictionary, nil)
         return id
     }

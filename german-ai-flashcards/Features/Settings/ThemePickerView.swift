@@ -7,6 +7,9 @@ import SwiftUI
 struct ThemePickerView: View {
     @AppStorage(AppTheme.defaultsKey) private var appTheme: AppTheme = .klar
     @State private var graphicsMode: LightweightGraphics.Mode = LightweightGraphics.mode
+    #if os(macOS)
+    @AppStorage(MacNavigationStyle.defaultsKey) private var navigationStyle: MacNavigationStyle = .sidebar
+    #endif
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -32,6 +35,10 @@ struct ThemePickerView: View {
                     .padding(.horizontal, 4)
 
                 graphicsSection
+
+                #if os(macOS)
+                navigationSection
+                #endif
             }
             .padding()
         }
@@ -68,6 +75,34 @@ struct ThemePickerView: View {
         }
         .padding(.top, 4)
     }
+
+    #if os(macOS)
+    /// How the Mac window gets around: the sidebar, or the iPhone's bottom tab bar. View ▸ Show
+    /// Tab Bar switches it too.
+    private var navigationSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Label("Navigation", systemImage: "sidebar.left")
+                    .font(.subheadline)
+                Spacer(minLength: 12)
+                Picker("Navigation", selection: $navigationStyle) {
+                    Text("Sidebar").tag(MacNavigationStyle.sidebar)
+                    Text("Tab bar").tag(MacNavigationStyle.tabBar)
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .fixedSize()
+            }
+            .padding(.horizontal, 4)
+
+            Text("The sidebar lists every place in the app and can shrink to icons. The tab bar is the iPhone's layout.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 4)
+        }
+        .padding(.top, 4)
+    }
+    #endif
 }
 
 /// One theme tile: the sample word in the theme's title face over the theme's ground, a swatch

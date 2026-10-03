@@ -1,7 +1,9 @@
 #if DEBUG
 import Foundation
 import SwiftData
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// One illustrated story, made without the model.
 ///

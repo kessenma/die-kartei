@@ -133,10 +133,15 @@ final class JobPosting {
     /// The reading surfaces this posting can offer: the text always, the PDF when a copy was
     /// saved, the live page when there is a link to load.
     var availableSurfaces: [JobReadingSurfaceKind] {
+        #if os(macOS)
+        // The saved-PDF and live-page surfaces are iOS-only so far (docs/MACOS.md).
+        return [.text]
+        #else
         var kinds: [JobReadingSurfaceKind] = [.text]
         if hasSnapshot { kinds.append(.pdf) }
         if pageURL != nil { kinds.append(.web) }
         return kinds
+        #endif
     }
 
     /// Strip the `[Seite N]` page markers `PDFTextExtractor` inserts, and collapse runs of blank

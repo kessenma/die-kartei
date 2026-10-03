@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit   // UIApplication.openSettingsURLString
+#endif
 
 /// App ▸ Tastatur. How to turn on the German writing keyboard, which lives in iOS Settings rather
 /// than in this app: an extension can be installed by the app but only *enabled* by the user.

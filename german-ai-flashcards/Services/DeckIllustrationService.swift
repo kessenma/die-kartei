@@ -1,7 +1,11 @@
 import Foundation
 import SwiftData
+#if canImport(BackgroundTasks)
 import BackgroundTasks
+#endif
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// Draws a picture for every card in a deck that doesn't have one yet.
 ///

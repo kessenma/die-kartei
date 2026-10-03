@@ -22,10 +22,7 @@ enum LocalNotificationService {
     /// is the banner you get when the app is backgrounded during a slow task.
     static func post(id: String, title: String, body: String) async {
         let settings = await UNUserNotificationCenter.current().notificationSettings()
-        guard settings.authorizationStatus == .authorized
-            || settings.authorizationStatus == .provisional
-            || settings.authorizationStatus == .ephemeral
-        else { return }
+        guard settings.authorizationStatus.allowsDelivery else { return }
 
         let content = UNMutableNotificationContent()
         content.title = title
@@ -42,10 +39,7 @@ enum LocalNotificationService {
     static func schedule(id: String, title: String, body: String, at date: Date) async {
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()
-        guard settings.authorizationStatus == .authorized
-            || settings.authorizationStatus == .provisional
-            || settings.authorizationStatus == .ephemeral
-        else { return }
+        guard settings.authorizationStatus.allowsDelivery else { return }
 
         let interval = date.timeIntervalSinceNow
         guard interval > 0 else { return }
@@ -138,5 +132,16 @@ enum DeckNotificationService {
                 ? "\(pictures) finished drawing."
                 : "\(pictures) finished drawing for „\(name)“."
         )
+    }
+}
+
+private extension UNAuthorizationStatus {
+    /// Whether notifications scheduled now will be delivered. `.ephemeral` (App Clips) is iOS-only.
+    var allowsDelivery: Bool {
+        #if os(iOS)
+        self == .authorized || self == .provisional || self == .ephemeral
+        #else
+        self == .authorized || self == .provisional
+        #endif
     }
 }

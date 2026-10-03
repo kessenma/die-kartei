@@ -1,5 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit   // UIImage — a step only draws its screenshot when the asset exists
+#endif
 
 /// A numbered instruction with an optional screenshot beneath it, shared by the Settings how-to
 /// guides (downloading a German voice, setting up the keyboard).

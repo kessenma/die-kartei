@@ -96,6 +96,8 @@ struct UnifiedLibraryView: View {
                     systemImage: "tray",
                     description: Text("Generate vocabulary and it will be saved here automatically.")
                 )
+                // A Mac list row doesn't stretch its content; without this the message sits left.
+                .frame(maxWidth: .infinity)
             } else {
                 let links = DeckLinks(courses: courses, stories: stories, papers: papers, handouts: handouts)
                 DeckIconLegend()

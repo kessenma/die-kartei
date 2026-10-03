@@ -16,8 +16,12 @@
 
 import Foundation
 import SwiftData
+#if canImport(BackgroundTasks)
 import BackgroundTasks
+#endif
+#if canImport(UIKit)
 import UIKit
+#endif
 
 @Observable
 @MainActor

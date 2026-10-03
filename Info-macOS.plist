@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!-- The macOS build's partial Info.plist (INFOPLIST_FILE[sdk=macosx*]): Info.plist minus its
+     iOS-only keys. UIBackgroundModes and BGTaskSchedulerPermittedIdentifiers mean nothing on a Mac,
+     and LSSupportsOpeningDocumentsInPlace = NO is a build error there. Keep the document and type
+     declarations in step with Info.plist. -->
+<dict>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Die Kartei Deck</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>kyle-essenmacher.german-ai-flashcards.deck</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.json</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Die Kartei Deck</string>
+			<key>UTTypeIdentifier</key>
+			<string>kyle-essenmacher.german-ai-flashcards.deck</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>kartei</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/vnd.die-kartei.deck+json</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+</dict>
+</plist>

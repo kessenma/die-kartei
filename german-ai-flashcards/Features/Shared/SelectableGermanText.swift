@@ -1,6 +1,7 @@
 import SwiftUI
 #if canImport(UIKit)
 import UIKit
+#endif
 
 /// German text that supports two gestures, used for conversation messages and the correction card:
 ///  • **Double-tap a word** → inspect it (1:1 translation + save to the flashcard library).
@@ -11,8 +12,9 @@ import UIKit
 /// while a reply is spoken) and a subtle background on words already saved to the library.
 ///
 /// Backed by a non-editable `UITextView` so we get the system selection handles for free; the
-/// per-word tap and the two custom menu actions are layered on via a coordinator.
-struct SelectableGermanText: UIViewRepresentable {
+/// per-word tap and the two custom menu actions are layered on via a coordinator. The macOS build
+/// uses an `NSTextView` with the same styling (`SelectableGermanText+macOS.swift`).
+struct SelectableGermanText {
     let text: String
     var textStyle: UIFont.TextStyle = .callout
     var weight: UIFont.Weight = .regular
@@ -56,7 +58,10 @@ struct SelectableGermanText: UIViewRepresentable {
     /// tap fires this after the double-tap recognizer fails — used by the read-along player to
     /// "start reading from this sentence".
     var onSingleTap: (() -> Void)? = nil
+}
 
+#if canImport(UIKit)
+extension SelectableGermanText: UIViewRepresentable {
     // Deliberately `UITextView` and not `WrappingTextView`: only a text view that actually has to
     // wrap around pictures is built from the subclass. Every other caller — chat, job prep, the
     // listen-mode transcript, the `kompakt`/`ganz` story layouts — gets the same plain `UITextView`
@@ -106,11 +111,14 @@ struct SelectableGermanText: UIViewRepresentable {
         tv.attributedText = styled
         (tv as? WrappingTextView)?.wrappedImages = wrappedImages
     }
+}
+#endif
 
+extension SelectableGermanText {
     /// The gloss text after a word, in a smaller secondary face and tagged so a tap or a selection
     /// never treats it as part of the German. Phrases are glossed as a whole; a word inside a
     /// glossed phrase is left alone. `.first` glosses each entry once, where it first appears.
-    private static func insertInlineGlosses(into result: NSMutableAttributedString,
+    static func insertInlineGlosses(into result: NSMutableAttributedString,
                                             glossary: GlossaryHighlight,
                                             mode: InlineGlossMode,
                                             font: UIFont) {
@@ -182,7 +190,7 @@ struct SelectableGermanText: UIViewRepresentable {
     /// on words the glossary below explains, a red dashed underline on words this learner looked up,
     /// and a read-along tint + solid underline on the spoken word. Mirrors `TappableText`'s
     /// decorations.
-    private static func attributed(_ text: String,
+    static func attributed(_ text: String,
                                    font: UIFont,
                                    savedWords: Set<String>,
                                    glossary: GlossaryHighlight,
@@ -246,6 +254,33 @@ struct SelectableGermanText: UIViewRepresentable {
         return result
     }
 
+    /// The word (letters/hyphen/apostrophe run) surrounding a UTF-16 offset, or nil.
+    static func word(in text: String, atUTF16Offset offset: Int) -> String? {
+        let ns = text as NSString
+        guard ns.length > 0 else { return nil }
+
+        func isWordChar(_ c: unichar) -> Bool {
+            guard let scalar = Unicode.Scalar(c) else { return false }
+            let ch = Character(scalar)
+            return ch.isLetter || ch == "-" || ch == "'" || ch == "\u{2019}"
+        }
+
+        var i = min(max(offset, 0), ns.length)
+        // A tap landing just past a word (or on a space) steps back onto the word's last letter.
+        if i >= ns.length || !isWordChar(ns.character(at: i)) {
+            if i > 0 && isWordChar(ns.character(at: i - 1)) { i -= 1 } else { return nil }
+        }
+        var start = i
+        while start > 0 && isWordChar(ns.character(at: start - 1)) { start -= 1 }
+        var end = i
+        while end < ns.length && isWordChar(ns.character(at: end)) { end += 1 }
+        let word = ns.substring(with: NSRange(location: start, length: end - start))
+        return word.isEmpty ? nil : word
+    }
+}
+
+#if canImport(UIKit)
+extension SelectableGermanText {
     /// Size to fit the text: hug its natural width when short, wrap within the proposed width when
     /// long, and let the height follow (no scrolling).
     func sizeThatFits(_ proposal: ProposedViewSize, uiView tv: UITextView, context: Context) -> CGSize? {
@@ -279,7 +314,7 @@ struct SelectableGermanText: UIViewRepresentable {
                attributed.attribute(.inlineGloss, at: offset, effectiveRange: nil) != nil {
                 return
             }
-            if let word = Self.word(in: tv.text ?? "", atUTF16Offset: offset) {
+            if let word = SelectableGermanText.word(in: tv.text ?? "", atUTF16Offset: offset) {
                 tv.selectedTextRange = nil
                 parent.onTapWord(word)
             }
@@ -321,32 +356,9 @@ struct SelectableGermanText: UIViewRepresentable {
                                shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
             true
         }
-
-        /// The word (letters/hyphen/apostrophe run) surrounding a UTF-16 offset, or nil.
-        static func word(in text: String, atUTF16Offset offset: Int) -> String? {
-            let ns = text as NSString
-            guard ns.length > 0 else { return nil }
-
-            func isWordChar(_ c: unichar) -> Bool {
-                guard let scalar = Unicode.Scalar(c) else { return false }
-                let ch = Character(scalar)
-                return ch.isLetter || ch == "-" || ch == "'" || ch == "\u{2019}"
-            }
-
-            var i = min(max(offset, 0), ns.length)
-            // A tap landing just past a word (or on a space) steps back onto the word's last letter.
-            if i >= ns.length || !isWordChar(ns.character(at: i)) {
-                if i > 0 && isWordChar(ns.character(at: i - 1)) { i -= 1 } else { return nil }
-            }
-            var start = i
-            while start > 0 && isWordChar(ns.character(at: start - 1)) { start -= 1 }
-            var end = i
-            while end < ns.length && isWordChar(ns.character(at: end)) { end += 1 }
-            let word = ns.substring(with: NSRange(location: start, length: end - start))
-            return word.isEmpty ? nil : word
-        }
     }
 }
+#endif
 
 /// Whether, and how often, a text prints the glossary's English inline after a German word.
 enum InlineGlossMode: String, CaseIterable, Identifiable {
@@ -370,4 +382,3 @@ extension NSAttributedString.Key {
     /// Marks an inline gloss: English the reader printed after a word, skipped by taps and selections.
     static let inlineGloss = NSAttributedString.Key("dk.inlineGloss")
 }
-#endif

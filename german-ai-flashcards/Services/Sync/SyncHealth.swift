@@ -1,7 +1,9 @@
 import CryptoKit
 import Foundation
 import SwiftData
+#if canImport(UIKit)
 import UIKit
+#endif
 
 // How a device notices it drifted from the others, or that it's talking to a different database,
 // and puts itself right. Every remedy here comes down to a re-sync, which is always safe: merges

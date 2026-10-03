@@ -420,7 +420,7 @@ private struct ReadAloudVoiceSheet: View {
                         .tint(.primary)
                     }
                 } footer: {
-                    Text("Add natural German voices in iOS Settings ▸ Accessibility ▸ Spoken Content ▸ Voices. Basic voices sound robotic.")
+                    Text("Add natural German voices in \(ThisDevice.isMac ? "System Settings ▸ Accessibility ▸ Spoken Content ▸ System Voice ▸ Manage Voices" : "iOS Settings ▸ Accessibility ▸ Spoken Content ▸ Voices"). Basic voices sound robotic.")
                 }
                 .themedListRow()
             }

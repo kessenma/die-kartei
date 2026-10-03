@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// Text for a PDF that has no text layer: a scanned handout, the common case for anything a
 /// teacher photocopies. `PDFTextExtractor` reports such a file as `looksScanned`; this renders its

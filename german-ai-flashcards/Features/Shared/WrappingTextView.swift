@@ -1,6 +1,7 @@
 import SwiftUI
 #if canImport(UIKit)
 import UIKit
+#endif
 
 /// One picture the text flows around, magazine style: it sits in the corner of a paragraph and the
 /// lines close around it. Used by the story reader's „Umfluss" layout.
@@ -27,8 +28,10 @@ struct WrappedImageSpec: Identifiable {
     }
 }
 
+#if canImport(UIKit)
 /// A non-scrolling `UITextView` that can cut pictures out of its own text container, so the text
-/// wraps around them instead of being interrupted by them.
+/// wraps around them instead of being interrupted by them. The macOS twin, an `NSTextView`, is in
+/// `WrappingTextView+macOS.swift`.
 ///
 /// The pictures are plain subviews positioned to match `NSTextContainer.exclusionPaths`, which is
 /// the only mechanism that makes text flow *around* something — an `NSTextAttachment` would sit in

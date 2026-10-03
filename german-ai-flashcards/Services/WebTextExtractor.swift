@@ -140,7 +140,7 @@ enum WebTextExtractor {
     }
 
     private static func htmlToText(_ data: Data, fallbackTitle: String) -> (String, String) {
-        #if canImport(UIKit)
+        #if canImport(UIKit) || os(macOS)
         if let attr = try? NSAttributedString(
             data: data,
             options: [

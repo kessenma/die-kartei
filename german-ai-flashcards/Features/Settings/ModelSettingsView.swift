@@ -89,8 +89,8 @@ struct ModelSettingsView: View {
         if downloadedOtherTutorCount > 0 { parts.append("\(downloadedOtherTutorCount) downloaded") }
         if oversizedTutorCount > 0 {
             parts.append(oversizedTutorCount == 1
-                         ? "1 needs more memory than this phone"
-                         : "\(oversizedTutorCount) need more memory than this phone")
+                         ? "1 needs more memory than this \(ThisDevice.name)"
+                         : "\(oversizedTutorCount) need more memory than this \(ThisDevice.name)")
         }
         return parts.isEmpty ? nil : parts.joined(separator: " \u{00B7} ")
     }
@@ -134,11 +134,17 @@ struct ModelSettingsView: View {
                 Text("This device").themedSectionHeader()
             } footer: {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("iOS gives each app a slice of RAM, not all of it. Memory Saver keeps a "
-                         + "model that needs more than this device's slice from using it all up: "
-                         + "shorter answers, a smaller conversation memory, and a clean stop when "
-                         + "memory runs out. On Automatic it turns itself on only for models that "
-                         + "need more room than there is.")
+                    Text(ThisDevice.isMac
+                         ? "Die Kartei keeps itself to half of this Mac's memory, so the rest of "
+                           + "your Mac stays responsive. Memory Saver keeps a model that needs more "
+                           + "than that from using it all up: shorter answers, a smaller conversation "
+                           + "memory, and a clean stop when memory runs out. On Automatic it turns "
+                           + "itself on only for models that need more room than there is."
+                         : "\(ThisDevice.system) gives each app a slice of RAM, not all of it. Memory "
+                           + "Saver keeps a model that needs more than this device's slice from "
+                           + "using it all up: shorter answers, a smaller conversation memory, and a "
+                           + "clean stop when memory runs out. On Automatic it turns itself on only "
+                           + "for models that need more room than there is.")
                     memorySaverStatus
                 }
                 .font(.caption2)
@@ -177,7 +183,7 @@ struct ModelSettingsView: View {
                         if showsOtherSizes {
                             if oversizedTutorCount > 0 {
                                 Text("A tutor marked \u{201C}May struggle\u{201D} needs more memory "
-                                     + "than this phone gives an app. You can still try one; the "
+                                     + "than this \(ThisDevice.name) gives an app. You can still try one; the "
                                      + "memory check spells out the trade before anything downloads.")
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
@@ -206,10 +212,10 @@ struct ModelSettingsView: View {
             Section {
                 modelRow(.appleIntelligence)
             } header: {
-                Text("Built in to iOS").themedSectionHeader()
+                Text("Built in to \(ThisDevice.system)").themedSectionHeader()
             } footer: {
                 Text("Apple's on-device model. Nothing to download, it starts instantly, and it "
-                     + "runs privately on your phone. It's weaker at German than the tutors: 60% "
+                     + "runs privately on your \(ThisDevice.name). It's weaker at German than the tutors: 60% "
                      + "on the app's grammar test against 75\u{2013}90%, and 0 of 15 on "
                      + "da-/wo-compounds. It flags about one correct sentence in six as wrong and "
                      + "misses a third of real mistakes. Good for quick vocabulary work; for "
@@ -369,7 +375,7 @@ struct ModelSettingsView: View {
                              : "\(orphans.count) models are no longer part of this app")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                        Text("Still on your phone, using \(formattedBytes(orphans.reduce(0) { $0 + $1.bytes })). "
+                        Text("Still on your \(ThisDevice.name), using \(formattedBytes(orphans.reduce(0) { $0 + $1.bytes })). "
                              + "Nothing here can load them. Free the space under Storage below.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -447,10 +453,10 @@ struct ModelSettingsView: View {
                  + "pronouns, Konjunktiv II. On the app's own grammar test the E4B tutor scores "
                  + "90%, the E2B 83%, the Granite 3B 81%, and the Granite 2B 75%. They differ in "
                  + "download size and memory, not in what they were taught. Pick a smaller one if "
-                 + "the big one makes this phone struggle."
+                 + "the big one makes this \(ThisDevice.name) struggle."
         }
         return "All four tutors were fine-tuned on the same German material for this app. "
-             + "\(leadTutor.rawValue) is the strongest one that fits this phone's memory, at "
+             + "\(leadTutor.rawValue) is the strongest one that fits this \(ThisDevice.name)'s memory, at "
              + "\(leadTutor.suiteScorePercent)% on the app's grammar test. The others are smaller "
              + "downloads that let more mistakes past."
     }
@@ -1305,7 +1311,7 @@ struct MemoryCheckSheet: View {
                             Image(systemName: "memorychip")
                                 .font(.title)
                                 .foregroundStyle(.orange)
-                            Text("\(model.rawValue) needs more memory than this iPhone gives an app.")
+                            Text("\(model.rawValue) needs more memory than this \(ThisDevice.name) gives an app.")
                                 .font(.headline)
                                 .fixedSize(horizontal: false, vertical: true)
                         }

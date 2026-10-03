@@ -417,7 +417,7 @@ private struct URLImportView: View {
 
     /// Offer a one-tap paste when a URL is on the clipboard (like Maps' "paste copied link").
     private func checkClipboard() {
-        #if canImport(UIKit)
+        #if canImport(UIKit) || os(macOS)
         guard urlText.isEmpty else { return }
         let board = UIPasteboard.general
         // `hasURLs` / `hasStrings` don't expose content (no "pasted from…" banner); reading does.
