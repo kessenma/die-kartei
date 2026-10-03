@@ -5,7 +5,7 @@ The Mac build adds two much better models, and lets a phone send a deck or story
 drawn there. Everything runs on the learner's own devices; requests and pictures travel through
 the existing iCloud sync. There is no server.
 
-Branch `mac-pictures` (worktree `../german-ai-flashcards-macpics`), off `macos`. Every edit to a
+Built on branch `mac-pictures` off `macos`; both merged into main on 2026-10-03. Every edit to a
 file that existed before carries the grep tag `MAC-PICTURES`.
 
 ## What the learner gets
@@ -247,9 +247,12 @@ Changed files (each marked `MAC-PICTURES`):
 | `Features/Stories/StoryDetailView.swift` | Toolbar button; Umfluss cache keyed on file names |
 | `Features/Settings/SourcesView.swift` | Mac-only credit: turbo-mlx (MIT), Z-Image Turbo and FLUX.2 klein (Apache 2.0) |
 
-## Merge map: cloud pictures (uncommitted on main)
+## Merge map: cloud pictures (merged 2026-10-03)
 
-Main's working tree holds the cloud-pictures work (OpenRouter Muse / Nano Banana,
+Kept for the record. The merge went as planned: textual conflicts only in `CLAUDE.md`,
+`whats_new.json` and the app's Release build settings, all from the `macos` merge.
+
+Main's working tree held the cloud-pictures work (OpenRouter Muse / Nano Banana,
 `docs/CLOUD_PICTURES.md`). This branch was made from `macos` without it, so the order is: commit
 the cloud work on main → merge `macos` → merge `mac-pictures`. These files are changed on both
 sides. Main's numbers are from `git diff HEAD` on 2026-10-03.
@@ -265,10 +268,10 @@ sides. Main's numbers are from `git diff HEAD` on 2026-10-03.
 | `docs/ICLOUD_SYNC.md` | Order fields + heartbeat note | A section (+26) | Probably separate hunks | Keep both |
 
 After the merge:
-- On a Mac, `PictureSource.onDevice` means the MLX models. Its label ("On this phone") should
-  read `ThisDevice.name`.
-- Inbox runs should pin the source to on-device: an order asks for the Mac's model, not
-  OpenRouter.
+- Done: on a Mac, `PictureSource.onDevice` means the MLX models, and its label reads
+  `ThisDevice.name` ("On this Mac").
+- Done: inbox runs pin `PictureSource.runOverride` to `.onDevice`, so an order is drawn by the
+  Mac's model, never on OpenRouter.
 - Cloud shrinks pictures to `PictureRequest.maxPixel` (512 cards, 768 stories) before saving,
   because every file syncs. MLX pictures at Best are 768 / 1024; decide whether to shrink them the
   same way.
