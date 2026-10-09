@@ -38,6 +38,7 @@ struct GrammarDrillSession: Identifiable {
 enum DrillVariant: Hashable {
     case endings(EndingsConfig)
     case concept(ConceptConfig)
+    case gap(GapConfig)
 
     /// The configuration a kind plays with when nothing else is asked: the topic's cases, the
     /// kind's round size, the remembered Rollen mode.
@@ -50,7 +51,11 @@ enum DrillVariant: Hashable {
         case .build:
             return .endings(EndingsConfig(style: .ending, cases: topic.casesInPlay, emphasis: topic.emphasis,
                                           count: kind.meta.roundSize))
-        case .quick, .blitz, .pair, .dativVerbs, .fehler, .reflexCase, .reflexPerson, .bridge:
+        case .reflexCase:
+            return .gap(GapConfig(focus: .case, count: kind.meta.roundSize))
+        case .reflexPerson:
+            return .gap(GapConfig(focus: .person, count: kind.meta.roundSize))
+        case .quick, .blitz, .pair, .dativVerbs, .fehler, .bridge:
             return .endings(EndingsConfig(style: .article, cases: topic.casesInPlay, emphasis: topic.emphasis,
                                           count: max(1, kind.meta.roundSize)))
         }
@@ -80,6 +85,12 @@ struct EndingsConfig: Hashable {
     var deferredFeedback = false
     /// Seconds on the clock (Blitzrunde). Nil: untimed.
     var timeLimit: Int? = nil
+}
+
+/// The gap-choice drills on the bundled items (`GapChoiceBank`).
+struct GapConfig: Hashable {
+    var focus: GapChoiceFocus
+    var count: Int = 10
 }
 
 /// The Verstehen exercises on the concept bank.

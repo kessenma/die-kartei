@@ -1,9 +1,30 @@
 import SwiftUI
 
+/// What the question-mark menu may pin: the article table for the case path, the reflexive
+/// pronoun table for the reflexive topic.
+enum KasusReferenceContent: Hashable {
+    case articles([GrammarCase])
+    case reflexivePronouns
+
+    var title: String {
+        switch self {
+        case .articles:          "Artikeltabelle · Article table"
+        case .reflexivePronouns: "Reflexivpronomen · Reflexive pronouns"
+        }
+    }
+
+    var pinLabel: String {
+        switch self {
+        case .articles:          "Artikeltabelle · Reference"
+        case .reflexivePronouns: "Pronomen · Reference"
+        }
+    }
+}
+
 /// Reference visibility belongs to this activity: survives questions, resets on leaving.
 /// This neutral table never highlights the current answer or changes the hint level.
 private struct KasusReferenceModifier: ViewModifier {
-    var cases: [GrammarCase]
+    var reference: KasusReferenceContent
     /// The activity's own pin state, when it wants to know (the drill shell marks answers given
     /// with the table pinned as scaffolded). Nil keeps the state here.
     var external: Binding<Bool>?
@@ -23,7 +44,7 @@ private struct KasusReferenceModifier: ViewModifier {
                 if pinned.wrappedValue {
                     VStack(spacing: 6) {
                         HStack {
-                            Label("Artikeltabelle · Reference", systemImage: "pin.fill")
+                            Label(reference.pinLabel, systemImage: "pin.fill")
                                 .font(.caption.weight(.semibold))
                             Spacer()
                             Button {
@@ -37,7 +58,12 @@ private struct KasusReferenceModifier: ViewModifier {
                         // A bounded scroll area preserves room for the question and controls
                         // on a small phone and lets larger accessibility text remain readable.
                         ScrollView {
-                            CaseEndingsTable(cases: cases, compact: true, articlesOnly: true)
+                            switch reference {
+                            case .articles(let cases):
+                                CaseEndingsTable(cases: cases, compact: true, articlesOnly: true)
+                            case .reflexivePronouns:
+                                ReflexivPronounTable(compact: true)
+                            }
                         }
                         .frame(maxHeight: 150)
                     }
@@ -80,11 +106,20 @@ private struct KasusReferenceModifier: ViewModifier {
                     NavigationStack {
                         ScrollView {
                             VStack(alignment: .leading, spacing: 18) {
-                                Text("Choose the row by case, then the column by gender or plural.")
-                                    .font(.subheadline)
-                                CaseEndingsTable(cases: cases)
-                                Text("The top form is the definite article (der/die/das). The lower form shows ein and possessives such as mein; the plural uses mein. There is no plural ein.")
-                                    .font(.caption).foregroundStyle(.secondary)
+                                switch reference {
+                                case .articles(let cases):
+                                    Text("Choose the row by case, then the column by gender or plural.")
+                                        .font(.subheadline)
+                                    CaseEndingsTable(cases: cases)
+                                    Text("The top form is the definite article (der/die/das). The lower form shows ein and possessives such as mein; the plural uses mein. There is no plural ein.")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                case .reflexivePronouns:
+                                    Text("Choose the row by the subject, then the column by case.")
+                                        .font(.subheadline)
+                                    ReflexivPronounTable()
+                                    Text("Only ich and du change between the cases. With nothing after the verb the person is the Akkusativ object; a second object after the verb puts the person in the Dativ.")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
                                 Toggle("Sichtbar lassen · Keep visible in this activity", isOn: pinned)
                                 Text("Close this reference to return to the same question. A pinned table stays until you hide it or leave this activity.")
                                     .font(.caption).foregroundStyle(.secondary)
@@ -94,7 +129,7 @@ private struct KasusReferenceModifier: ViewModifier {
                             .frame(maxWidth: .infinity)
                         }
                         .background(ThemedBackground().ignoresSafeArea())
-                        .navigationTitle("Artikeltabelle · Article table")
+                        .navigationTitle(reference.title)
                         .navigationBarTitleDisplayMode(.inline)
                         .toolbar {
                             ToolbarItem(placement: .confirmationAction) {
@@ -109,6 +144,10 @@ private struct KasusReferenceModifier: ViewModifier {
 
 extension View {
     func kasusReference(cases: [GrammarCase] = GrammarCase.allCases, pinned: Binding<Bool>? = nil) -> some View {
-        modifier(KasusReferenceModifier(cases: cases, external: pinned))
+        modifier(KasusReferenceModifier(reference: .articles(cases), external: pinned))
+    }
+
+    func kasusReference(content: KasusReferenceContent, pinned: Binding<Bool>? = nil) -> some View {
+        modifier(KasusReferenceModifier(reference: content, external: pinned))
     }
 }

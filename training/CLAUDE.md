@@ -136,3 +136,9 @@ Typical costs: bulk generation ~$5 (A100 80 GB, ~3 h), a training run ~$2.20 (A4
 Several Claude sessions work this repo simultaneously. **Re-read a file immediately before editing
 it** — another session may have rewritten it minutes ago. Check `git status` before any bulk move;
 staged deletes you did not make mean someone else is mid-refactor.
+
+## Grammar keys the tutors know
+
+`ConversationPrompts` lists every `GrammarFocus` key in the coaching prompt (WEAK / STRONG). The
+tutors were fine-tuned on the 13 keys that existed then; `reflexivverben` (2026-10) is in the
+list but no tutor names it until a retrain includes it. `parseGrammarKeys` tolerates the gap.

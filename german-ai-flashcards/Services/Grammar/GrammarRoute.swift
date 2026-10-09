@@ -11,6 +11,7 @@
 //                                    unit's Schnellrunde while the unit has no story yet
 //    artikel                         a der/die/das round at the learner's level
 //    praepositionen · wechsel…       the preposition hub
+//    reflexivverben                  the reflexive topic's first drill (Akkusativ oder Dativ?)
 //    everything else                 the quick lesson (`GrammarLessonSheet`)
 //
 //  A route is cheap and pure, so a row can decide while it renders whether it is a button or a
@@ -29,12 +30,18 @@ enum GrammarRoute: Hashable {
     case articleGame
     /// `PrepositionHubView`, pushed.
     case prepositionHub
+    /// A topic that isn't a case (Reflexive Verben): its lesson's practice drill.
+    case topic(GrammarTopic)
     /// `GrammarLessonSheet`, the 30-second explanation. Structures with no exercise of their own.
     case lesson(GrammarFocus)
 
     init(_ focus: GrammarFocus) {
         if let unit = KasusUnit.allCases.first(where: { $0.focus == focus }) {
             self = .kasus(unit)
+            return
+        }
+        if let topic = GrammarTopic.allCases.first(where: { $0.unit == nil && $0.focus == focus }) {
+            self = .topic(topic)
             return
         }
         switch focus {
@@ -56,9 +63,9 @@ enum GrammarRoute: Hashable {
 
     var presentation: Presentation {
         switch self {
-        case .kasus, .articleGame: .launch
-        case .prepositionHub:      .push
-        case .lesson:              .sheet
+        case .kasus, .articleGame, .topic: .launch
+        case .prepositionHub:              .push
+        case .lesson:                      .sheet
         }
     }
 
@@ -89,6 +96,8 @@ enum GrammarRoute: Hashable {
             return .launch(activity)
         case .prepositionHub:
             return .prepositionHub
+        case .topic(let topic):
+            return .launch(.grammarDrill(GrammarDrillSession(kind: topic.lessonPractice ?? .reflexCase, topic: topic)))
         case .lesson(let focus):
             return .lesson(focus)
         }
@@ -165,7 +174,7 @@ enum GrammarRoute: Hashable {
         // Listed by hand, not read from the route, so a mapping that slips shows up here.
         let mustPractise: Set<GrammarFocus> = [.akkusativ, .dativ, .genitiv, .artikel,
                                                .praepositionen, .wechselpraepositionen,
-                                               .verbenPraepositionen]
+                                               .verbenPraepositionen, .reflexivverben]
         var fallbacks: [GrammarFocus] = []
 
         for focus in GrammarFocus.allCases {
@@ -196,6 +205,8 @@ enum GrammarRoute: Hashable {
                 classEntry = "„Der · Die · Das üben“ row, \(verb)"
             case .prepositionHub:
                 classEntry = "„Präpositionen“ row, \(verb)"
+            case .topic(let topic):
+                classEntry = "„\(topic.germanTitle) üben“ row, \(verb)"
             case .lesson:
                 classEntry = "pill, quick lesson"
             }
@@ -217,7 +228,8 @@ enum GrammarRoute: Hashable {
                 return "\(session.startStep.germanLabel) · „\(title)“ (\(session.storyID), \(session.unit.germanTitle))"
             case .grammarDrill(let session):
                 let cases = session.topic.casesInPlay.map(\.short).joined(separator: " + ")
-                return "\(session.title) · \(cases) (no \(session.topic.germanTitle) story yet)"
+                let note = session.topic.unit == nil ? "" : " (no \(session.topic.germanTitle) story yet)"
+                return "\(session.title) · \(cases)\(note)"
             case .articleGame(let session):
                 return "der/die/das round · \(session.topic) · \(session.questionCount) nouns"
             default:

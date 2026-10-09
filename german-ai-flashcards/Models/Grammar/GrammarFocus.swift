@@ -21,6 +21,10 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
     /// Verben mit Präpositionen: pairs whose case the verb fixes (warten auf + Akk). Its own
     /// focus, because a learner can be solid on mit + Dativ and lost on warten auf.
     case verbenPraepositionen
+    /// Reflexivverben: mich or mir, sich or dich. Its own focus, because the skill is the verb's
+    /// valency plus person agreement, not a case; the pyramid files it under Strukturen. Credit
+    /// comes from the reflexive button rounds (`KasusService.skillMoves`), pooled over both cases.
+    case reflexivverben
 
     var id: String { rawValue }
 
@@ -38,7 +42,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
     var introducedAt: CEFRLevel {
         switch self {
         case .artikel, .akkusativ, .modalverben, .perfekt, .praepositionen: .a1
-        case .dativ, .praeteritum, .futur, .wechselpraepositionen:          .a2
+        case .dativ, .praeteritum, .futur, .wechselpraepositionen, .reflexivverben: .a2
         case .genitiv, .konjunktiv2, .adjektivendungen, .verbenPraepositionen: .b1
         }
     }
@@ -59,6 +63,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .wechselpraepositionen: "Wechselpräpositionen"
         case .adjektivendungen:     "Adjektivendungen"
         case .verbenPraepositionen: "Verben mit Präpositionen"
+        case .reflexivverben:       "Reflexive Verben"
         }
     }
 
@@ -78,6 +83,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .wechselpraepositionen: "Two-way prepositions"
         case .adjektivendungen:     "Adjective endings"
         case .verbenPraepositionen: "Verb + preposition pairs"
+        case .reflexivverben:       "Reflexive verbs (mich or mir)"
         }
     }
 
@@ -110,6 +116,8 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
             "Adjectives placed before a noun take endings that change with case, gender, and the article in front — “ein guter Wein”, “mit dem guten Wein”."
         case .verbenPraepositionen:
             "Many verbs come with their own preposition, and the pair fixes the case: “warten auf” always takes the Akkusativ, “Angst haben vor” always the Dativ. The Wo/Wohin rule doesn't apply: “Ich warte auf den Bus” is Akkusativ though nothing moves. Learn the verb, the preposition and the case as one piece."
+        case .reflexivverben:
+            "Verbs that point back at the subject: “ich wasche mich”, “ich beeile mich”. The pronoun follows the person, and only ich and du show a case: on its own the person is the Akkusativ object (“ich wasche mich”); once a second object follows, the person becomes the receiver in the Dativ (“ich wasche mir die Hände”). Some verbs are always one or the other: “sich beeilen” Akkusativ, “sich etwas merken” Dativ."
         }
     }
 
@@ -129,6 +137,7 @@ enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
         case .wechselpraepositionen: "frage nach Ort und Richtung, z. B. „Wohin gehst du?“ und „Wo bist du?“"
         case .adjektivendungen:      "rege Beschreibungen mit Adjektiven an, z. B. „Was für ein Auto möchtest du?“"
         case .verbenPraepositionen:  "stelle Fragen mit festen Präpositionen, z. B. „Worauf freust du dich?“, „Woran denkst du?“, „Wovor hast du Angst?“"
+        case .reflexivverben:        "stelle Fragen mit reflexiven Verben, z. B. „Wie fühlst du dich heute?“, „Wann wäschst du dir die Hände?“, „Worauf freust du dich?“"
         }
     }
 }

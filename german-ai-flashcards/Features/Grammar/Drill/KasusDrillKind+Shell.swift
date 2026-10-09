@@ -23,7 +23,9 @@ extension KasusDrillKind {
             shell(session, hapticMode, onComplete, onDismiss, make: WerModule.init(session:))
         case .probe:
             shell(session, hapticMode, onComplete, onDismiss, make: ProbeModule.init(session:))
-        case .fehler, .reflexCase, .reflexPerson, .bridge:
+        case .reflexCase, .reflexPerson:
+            shell(session, hapticMode, onComplete, onDismiss, make: GapChoiceModule.init(session:))
+        case .fehler, .bridge:
             shell(session, hapticMode, onComplete, onDismiss, make: UnbuiltModule.init(session:))
         }
     }
@@ -54,7 +56,9 @@ extension KasusDrillKind {
             return play(WerModule(session: session), session, wrongEvery: wrongEvery, seed: seed)
         case .probe:
             return play(ProbeModule(session: session), session, wrongEvery: wrongEvery, seed: seed)
-        case .fehler, .reflexCase, .reflexPerson, .bridge:
+        case .reflexCase, .reflexPerson:
+            return play(GapChoiceModule(session: session), session, wrongEvery: wrongEvery, seed: seed)
+        case .fehler, .bridge:
             return nil
         }
     }

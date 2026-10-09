@@ -1110,7 +1110,8 @@ its way there, and prints `[kasus.debugOpen] open <screen>`:
 | `fill` | Endungen, all but the last three gaps answered if `-kasus.debugAnswers` is given (Sofort: the last wrong one's verdict in the tray) |
 | `fill-checked` | Endungen in Am Ende (whatever is stored) after Prüfen, the last gap left empty |
 | `result` | Ergebnis |
-| `lesson:<unit>` | the unit's Lektion, in a sheet; its Üben launches Rollen |
+| `lesson:<topic>` | a Lektion in a sheet, by a unit's raw value or a topic's key (`lesson:dativ`, `lesson:reflexiv`); its Üben launches the topic's practice drill (Rollen, or Akkusativ oder Dativ?) |
+| `topic:<key>` | a topic that isn't a case, in a sheet: `topic:reflexiv` (Reflexive Verben: rule, pronoun table, lesson row, drills, rounds) |
 | `merkhilfen` | the Merkhilfen list, in a sheet |
 | `werkstatt` | the Endungs-Werkstatt, in a sheet; `-kasus.debugWerkstatt dieser:dat:m` opens on that word, a fourth field `:flip` starts Durchblättern |
 | `table` | the endings table, in a sheet; `-kasus.debugCell dat:m` builds that cell in 3D |
@@ -1119,6 +1120,7 @@ its way there, and prints `[kasus.debugOpen] open <screen>`:
 | (with `lesson:<unit>`) `-kasus.debugLessonPage <n>` | the lesson opens on card n (from 0) |
 | (with `roles:` · `wer:` · `probe:`) `-kasus.debugItem <id>` | that item comes first in the round |
 | `roles:<unit>` · `wer:<unit>` · `probe:<unit>` | a Verstehen round, prefilled from `-kasus.debugAnswers right\|mixed` (the first four steps) and `-kasus.debugQuickState right\|wrong\|done` (the next step, or the summary); Rollen plays in the stored mode (`-kasus.debugRolesMode schritt\|direkt` picks one for that launch), a walk included |
+| `reflexcase:reflexiv` · `reflexperson:reflexiv` | a reflexive drill on the bundled gap-choice items (`docs/GRAMMAR_EXERCISES.md`), prefilled the same way; `-kasus.debugItem <id>` puts that item first |
 | `history` | Verlauf, in a sheet |
 | `round` | the newest Kasus round that kept its answers, in a sheet |
 | `round-mark` | the newest Markieren round that kept its answers (one with a miss or a wrong mark first), in a sheet |

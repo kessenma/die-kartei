@@ -142,6 +142,17 @@ struct ClassEntryDetailView: View {
                                 "which case each one takes", systemImage: "arrow.triangle.branch")
                 }
             }
+            // A topic that isn't a case (Reflexive Verben): its lesson's drill, the same route
+            // Today and the coach take.
+            ForEach(topicRoutes(foci)) { topic in
+                Button {
+                    practise(topic)
+                } label: {
+                    practiceRow("\(topic.germanTitle) üben · Practise reflexive verbs",
+                                topic.lessonPractice.map { "\($0.meta.germanTitle) · \($0.meta.blurb)" } ?? topic.englishRole,
+                                systemImage: topic.symbol)
+                }
+            }
         } header: {
             Text("Behandelt · Covered").themedSectionHeader()
         } footer: {
@@ -305,6 +316,21 @@ struct ClassEntryDetailView: View {
 
     private func practise(_ unit: KasusUnit) {
         if case .launch(let activity) = GrammarRoute.kasus(unit).resolve(in: modelContext, level: modelManager.germanLevel) {
+            router.launch(activity)
+        }
+    }
+
+    /// The topics behind the tagged focuses that aren't a case, in the hub's order.
+    private func topicRoutes(_ foci: [GrammarFocus]) -> [GrammarTopic] {
+        let topics = Set(foci.compactMap { focus -> GrammarTopic? in
+            if case .topic(let topic) = GrammarRoute(focus) { return topic }
+            return nil
+        })
+        return GrammarTopic.allCases.filter(topics.contains)
+    }
+
+    private func practise(_ topic: GrammarTopic) {
+        if case .launch(let activity) = GrammarRoute.topic(topic).resolve(in: modelContext, level: modelManager.germanLevel) {
             router.launch(activity)
         }
     }

@@ -5,8 +5,9 @@
 //  What a finished round moves. Every answer counts for the streak; the coach's case skill only
 //  hears about unscaffolded first picks, at least three per case, never slips, never Markieren (or
 //  the old Finden), never Lernhilfe or Viel Hilfe, never an answer Lösung zeigen showed, and
-//  Nominativ has no skill at all. The same fifteen rounds `-kasus.debugVerifyRecord 1` runs, here
-//  against an in-memory store instead of the live one. Also: Lösung zeigen after recording flags
+//  Nominativ has no skill at all. A topic that isn't a case (Reflexive Verben) pools its counting
+//  answers into one skill once six count, never the two-chip sentences. The same nineteen rounds
+//  `-kasus.debugVerifyRecord 1` runs, here against an in-memory store instead of the live one. Also: Lösung zeigen after recording flags
 //  the same row, and older rounds (no new fields) still read.
 //
 
@@ -36,6 +37,10 @@ struct KasusRecordingTests {
                          durationSeconds: 30, paintedCount: painted)
     }
 
+    private func topicRound(_ step: KasusRoundStep, _ topic: GrammarTopic, _ items: [KasusItemResult]) -> KasusRoundResult {
+        KasusRoundResult(storyID: step.roundID(topicKey: topic.key), topic: topic, step: step, items: items, durationSeconds: 30)
+    }
+
     /// A fresh store with just the rows `recordRound` touches. The container is returned too, so it
     /// outlives the context.
     private func store() throws -> (container: ModelContainer, context: ModelContext) {
@@ -52,7 +57,8 @@ struct KasusRecordingTests {
         try context.fetch(FetchDescriptor<LearnerProfile>()).first?.grammar ?? [:]
     }
 
-    /// The debug record check's rounds: #1–#13 move nothing, #14 moves Dativ, #15 Akkusativ.
+    /// The debug record check's rounds: #1–#13 move nothing, #14 moves Dativ, #15 Akkusativ,
+    /// #16–#17 (reflexive, under six pooled; inline chips) nothing, #18–#19 Reflexivverben.
     private var scenarios: [(name: String, result: KasusRoundResult, moves: Set<GrammarFocus>)] {
         [
             ("Viel Hilfe · 5 Akk m, all wrong (scaffolded)",
@@ -92,6 +98,18 @@ struct KasusRecordingTests {
             ("Genus-Hilfe · 3 Akk m wrong + 3 Akk f → moves Akkusativ (m only, exactly 3)",
              round(.fill, .akkusativ, .genus, Array(repeating: item(.akkusativ, .der, false), count: 3)
                    + Array(repeating: item(.akkusativ, .die, true), count: 3)), [.akkusativ]),
+            ("Akkusativ oder Dativ? · 3 Akk + 2 Dat, all wrong (under 6 pooled)",
+             topicRound(.reflexCase, .reflexiv, Array(repeating: item(.akkusativ, .der, false), count: 3)
+                        + Array(repeating: item(.dativ, .der, false), count: 2)), []),
+            ("Akkusativ oder Dativ? · 6 inline chips wrong (practice only, scaffolded)",
+             topicRound(.reflexCase, .reflexiv, (0..<6).map { _ in
+                 var row = item(.dativ, .der, false); row.scaffolded = true; return row
+             }), []),
+            ("Akkusativ oder Dativ? · 4 Akk + 3 Dat wrong → moves Reflexivverben (pooled 7)",
+             topicRound(.reflexCase, .reflexiv, Array(repeating: item(.akkusativ, .der, false), count: 4)
+                        + Array(repeating: item(.dativ, .der, false), count: 3)), [.reflexivverben]),
+            ("Die richtige Person · 6 Dat right (one case) → moves Reflexivverben",
+             topicRound(.reflexPerson, .reflexiv, Array(repeating: item(.dativ, .der, true), count: 6)), [.reflexivverben]),
         ]
     }
 
@@ -176,13 +194,13 @@ struct KasusRecordingTests {
             #expect(try grammarExercises(context) - exercisesBefore == scenario.result.answeredCount, "\(scenario.name)")
             #expect(try context.fetchCount(FetchDescriptor<KasusRound>()) == roundsBefore + 1, "\(scenario.name)")
             let skillsAfter = try skills(context)
-            for focus in [GrammarFocus.akkusativ, .dativ, .genitiv] {
+            for focus in [GrammarFocus.akkusativ, .dativ, .genitiv, .reflexivverben] {
                 let moved = skillsAfter[focus.rawValue]?.struggle != skillsBefore[focus.rawValue]?.struggle
                 #expect(moved == scenario.moves.contains(focus), "\(scenario.name): \(focus.rawValue)")
             }
         }
         let skills = try skills(context)
-        #expect(Set(skills.keys) == [GrammarFocus.dativ.rawValue, GrammarFocus.akkusativ.rawValue])
+        #expect(Set(skills.keys) == [GrammarFocus.dativ.rawValue, GrammarFocus.akkusativ.rawValue, GrammarFocus.reflexivverben.rawValue])
         #expect(skills[GrammarCase.nominativ.rawValue] == nil, "Nominativ writes nothing")
         #expect((skills[GrammarFocus.dativ.rawValue]?.struggle ?? 0) > 0, "four wrong Dativ answers raise its struggle")
     }

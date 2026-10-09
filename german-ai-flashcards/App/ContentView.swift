@@ -271,13 +271,15 @@ struct ContentView: View {
                     case .unit(let unit):
                         KasusUnitView(unit: unit, modelManager: coordinator.modelManager,
                                       mlxService: coordinator.mlxService)
-                    case .lesson(let unit):
-                        KasusLessonView(unit: unit, onRead: { seconds in
-                            KasusService.recordLessonRead(unit: unit, seconds: seconds, in: modelContext)
+                    case .lesson(let topic):
+                        KasusLessonView(topic: topic, onRead: { seconds in
+                            KasusService.recordLessonRead(topicKey: topic.key, seconds: seconds, in: modelContext)
                         }, onPractice: {
                             kasusDebugSheet = nil
-                            router.launch(.grammarDrill(GrammarDrillSession(kind: .roles, topic: .kasus(unit))))
+                            router.launch(.grammarDrill(GrammarDrillSession(kind: topic.lessonPractice ?? .roles, topic: topic)))
                         })
+                    case .topic(let topic):
+                        ReflexivTopicView(topic: topic)
                     case .mnemonics:
                         KasusMnemonicsView()
                     case .werkstatt:
@@ -546,7 +548,11 @@ struct ContentView: View {
                 // golden numbers and which exercises each unit offers.
                 let concepts = KasusConceptBank.debugVerifyReport(lexicon: lexicon)
                     .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-                for line in report + concepts + KasusService.debugServiceReport() {
+                // Then the gap-choice items (`gap_choice_items.json`): per topic and focus, with
+                // their golden numbers, the pack's composition and the planted errors.
+                let gaps = GapChoiceBank.debugVerifyReport(lexicon: lexicon)
+                    .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+                for line in report + concepts + gaps + KasusService.debugServiceReport() {
                     print("[kasus.debugVerify] \(line)")
                 }
             }
@@ -594,7 +600,7 @@ struct ContentView: View {
                 }
             } else if let open = KasusDebugOpen.fromLaunchArguments() {
                 switch open {
-                case .hub, .unit, .lesson, .mnemonics, .werkstatt, .table:
+                case .hub, .unit, .lesson, .topic, .mnemonics, .werkstatt, .table:
                     kasusDebugSheet = open
                 case .drill(let kind, let topic):
                     router.launch(.grammarDrill(KasusDebugOpen.drillSession(kind, in: topic)))

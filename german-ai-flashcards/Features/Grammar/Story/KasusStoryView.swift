@@ -739,8 +739,11 @@ enum KasusDebugOpen: Identifiable, Hashable {
     case hub
     case unit(KasusUnit)
     case story(KasusStoryScreen)
-    /// Verstehen: `lesson:<unit>` (the lesson sheet) and `merkhilfen` (the memory aids).
-    case lesson(KasusUnit)
+    /// Verstehen: `lesson:<topic>` (the lesson sheet, by a unit's raw value or a topic's key:
+    /// `lesson:dativ`, `lesson:reflexiv`) and `merkhilfen` (the memory aids).
+    case lesson(GrammarTopic)
+    /// A topic that isn't a case, in a sheet: `topic:reflexiv`.
+    case topic(GrammarTopic)
     case mnemonics
     /// Any drill on the shell, `<kind>:<topic>` by the registry's raw values: `quick:dativ`,
     /// `build:dativ`, `roles:dativ` · `wer:akkusativ` · `probe:genitiv`, prefilled from
@@ -756,7 +759,8 @@ enum KasusDebugOpen: Identifiable, Hashable {
         case .hub:                "hub"
         case .unit(let unit):     "unit:\(unit.rawValue)"
         case .story(let screen):  screen.rawValue
-        case .lesson(let unit):   "lesson:\(unit.rawValue)"
+        case .lesson(let topic):  "lesson:\(topic.key)"
+        case .topic(let topic):   "topic:\(topic.key)"
         case .mnemonics:          "merkhilfen"
         case .werkstatt:          "werkstatt"
         case .table:              "table"
@@ -776,8 +780,11 @@ enum KasusDebugOpen: Identifiable, Hashable {
             guard let unit = unitNamed(after: "unit:") else { return nil }
             self = .unit(unit)
         } else if value.lowercased().hasPrefix("lesson:") {
-            guard let unit = unitNamed(after: "lesson:") else { return nil }
-            self = .lesson(unit)
+            guard let topic = GrammarTopic(key: String(value.dropFirst("lesson:".count))) else { return nil }
+            self = .lesson(topic)
+        } else if value.lowercased().hasPrefix("topic:") {
+            guard let topic = GrammarTopic(key: String(value.dropFirst("topic:".count))), topic.unit == nil else { return nil }
+            self = .topic(topic)
         } else if value.lowercased() == "merkhilfen" {
             self = .mnemonics
         } else if value.lowercased() == "werkstatt" {

@@ -848,6 +848,12 @@ enum KasusService {
     /// only for a case with at least `minItemsPerCase` of them. In table order.
     static func skillMoves(for result: KasusRoundResult) -> [KasusSkillMove] {
         let counting = result.items.filter { countsTowardSkill($0, step: result.step, hint: result.hintLevel) }
+        // A topic that isn't a case pools every counting answer into its one focus, with the
+        // kind's own floor (six for a drill whose buttons are few enough to guess).
+        if result.topic.unit == nil {
+            guard let focus = result.topic.focus, counting.count >= result.step.meta.minItemsPerFocus else { return [] }
+            return [KasusSkillMove(focus: focus, correct: counting.filter(\.firstTry).count, total: counting.count)]
+        }
         return GrammarCase.allCases.compactMap { kasus in
             guard let focus = kasus.focus else { return nil }
             let rows = counting.filter { $0.kasus == kasus }
@@ -1226,7 +1232,8 @@ enum KasusService {
 
     /// `-kasus.debugVerifyRecord 1`: runs `recordRound` on synthetic rounds in the live store and
     /// checks each one against the rules: every round adds its answered items to today's
-    /// `grammarExercises` and one `KasusRound`, and only the last two may move a case skill. The
+    /// `grammarExercises` and one `KasusRound`, and only the last four may move a skill (two case
+    /// rounds, two reflexive rounds pooled into `reflexivverben`). The
     /// Markieren round is also read back: its asked case, wrong marks and class score.
     /// Afterwards the coach's skills, the rounds and the day's count are put back, unless the
     /// argument is `keep`. Returns printable lines; the caller adds the prefix.
@@ -1234,7 +1241,7 @@ enum KasusService {
         let profile = LearnerMemoryService.profile(in: context)
         let savedGrammar = profile.grammar
         let dayStart = Calendar.current.startOfDay(for: Date())
-        let watched: [GrammarFocus] = [.akkusativ, .dativ, .genitiv]
+        let watched: [GrammarFocus] = [.akkusativ, .dativ, .genitiv, .reflexivverben]
 
         func grammarExercises() -> Int {
             let day = (try? context.fetch(FetchDescriptor<StudyDay>(
@@ -1254,6 +1261,9 @@ enum KasusService {
             KasusRoundResult(storyID: debugVerifyStoryID, unit: unit, step: step, hintLevel: hint,
                              items: items, durationSeconds: 0, paintedCount: painted)
         }
+        func topicRound(_ step: KasusRoundStep, _ topic: GrammarTopic, _ items: [KasusItemResult]) -> KasusRoundResult {
+            KasusRoundResult(storyID: debugVerifyStoryID, topic: topic, step: step, items: items, durationSeconds: 0)
+        }
         // Markieren counts words: 10 Dativ words, 8 marked, 2 other words marked → „6 / 10“.
         let marking = KasusRoundResult(storyID: debugVerifyStoryID, unit: .dativ, step: .find, items: [],
                                        durationSeconds: 0, feedbackMode: .amEnde, markCase: .dativ,
@@ -1262,6 +1272,7 @@ enum KasusService {
         // change always shows: all wrong raises struggle, all right lowers it.
         let datRight = (struggle(.dativ) ?? 0) >= 0.8
         let akkRight = (struggle(.akkusativ) ?? 0) >= 0.8
+        let reflexRight = (struggle(.reflexivverben) ?? 0) >= 0.8
 
         let scenarios: [(name: String, result: KasusRoundResult, moves: Set<GrammarFocus>)] = [
             ("Viel Hilfe · 5 Akk m, all wrong (scaffolded)",
@@ -1302,6 +1313,18 @@ enum KasusService {
             ("Genus-Hilfe · 3 Akk m \(akkRight ? "right" : "wrong") + 3 Akk f → moves Akkusativ (m only, exactly 3)",
              round(.fill, .akkusativ, .genus, Array(repeating: item(.akkusativ, .der, akkRight), count: 3)
                    + Array(repeating: item(.akkusativ, .die, !akkRight), count: 3)), [.akkusativ]),
+            ("Akkusativ oder Dativ? · 3 Akk + 2 Dat, all wrong (under 6 pooled)",
+             topicRound(.reflexCase, .reflexiv, Array(repeating: item(.akkusativ, .der, false), count: 3)
+                        + Array(repeating: item(.dativ, .der, false), count: 2)), []),
+            ("Akkusativ oder Dativ? · 4 inline chips wrong (practice only, scaffolded)",
+             topicRound(.reflexCase, .reflexiv, (0..<4).map { _ in
+                 var row = item(.dativ, .der, false); row.scaffolded = true; return row
+             }), []),
+            ("Akkusativ oder Dativ? · 4 Akk + 3 Dat \(reflexRight ? "right" : "wrong") → moves Reflexivverben (pooled 7)",
+             topicRound(.reflexCase, .reflexiv, Array(repeating: item(.akkusativ, .der, reflexRight), count: 4)
+                        + Array(repeating: item(.dativ, .der, reflexRight), count: 3)), [.reflexivverben]),
+            ("Die richtige Person · 6 Dat \(reflexRight ? "right" : "wrong") (one case) → moves Reflexivverben",
+             topicRound(.reflexPerson, .reflexiv, Array(repeating: item(.dativ, .der, reflexRight), count: 6)), [.reflexivverben]),
         ]
 
         var lines: [String] = []

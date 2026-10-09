@@ -119,6 +119,17 @@ struct KasusDrillShellTests {
                 }
             }
         }
+        // The reflexive drills compose from the bundled gap-choice items, both cases in a case round.
+        for kind in [KasusDrillKind.reflexCase, .reflexPerson] {
+            let result = kind.debugRound(topic: .reflexiv, wrongEvery: 3, seed: 42)
+            #expect(result?.storyID == kind.step.roundID(topicKey: "reflexiv") && result?.topic == .reflexiv)
+            #expect(result?.items.count == 8, "\(kind): \(result?.items.count ?? 0) items")
+            if kind == .reflexCase {
+                #expect(result?.items.contains { $0.kasus == .akkusativ } == true && result?.items.contains { $0.kasus == .dativ } == true)
+            }
+            #expect(result?.items.contains { !$0.firstTry } == true)
+            for unit in KasusUnit.allCases { #expect(kind.debugRound(topic: .kasus(unit), wrongEvery: 3, seed: 1) == nil) }
+        }
     }
 
     @Test("The same seed composes the same endings round twice")

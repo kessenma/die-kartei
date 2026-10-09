@@ -68,9 +68,30 @@ struct GrammarTopicTests {
         let few = KasusRound(storyID: "quick-dativ", unitRaw: "dativ", stepRaw: "quick", askedCount: 2, firstTryCount: 2,
                              durationSeconds: 10, items: [item(.dativ, counts: true), item(.dativ, counts: true)])
         #expect(few.coachMoves.isEmpty)
-        // A topic without a focus yet never moves, however many answers count.
+        // A topic that isn't a case pools both cases into its one focus, from six counting answers.
         let topic = KasusRound(storyID: "reflexcase-reflexiv", unitRaw: "reflexiv", stepRaw: "reflexcase", askedCount: 8,
-                               firstTryCount: 8, durationSeconds: 10, items: Array(repeating: item(.dativ, counts: true), count: 8))
-        #expect(topic.coachMoves.isEmpty)
+                               firstTryCount: 8, durationSeconds: 10,
+                               items: Array(repeating: item(.dativ, counts: true), count: 4) + Array(repeating: item(.akkusativ, counts: true), count: 4))
+        #expect(topic.coachMoves == [.reflexivverben])
+        let fewTopic = KasusRound(storyID: "reflexcase-reflexiv", unitRaw: "reflexiv", stepRaw: "reflexcase", askedCount: 5,
+                                  firstTryCount: 5, durationSeconds: 10, items: Array(repeating: item(.dativ, counts: true), count: 5))
+        #expect(fewTopic.coachMoves.isEmpty)
+    }
+
+    @Test("The reflexive topic has a lesson in the units' shape, and its focus files under Strukturen")
+    @MainActor
+    func reflexivTopic() {
+        let cards = GrammarTopic.reflexiv.lessonCards
+        #expect((4...6).contains(cards.count) && Set(cards.map(\.title)).count == cards.count)
+        #expect(cards.first?.showsColorKey == true && cards.last?.mnemonic != nil)
+        for card in cards {
+            #expect(card.example?.en.isEmpty == false, Comment(rawValue: "„\(card.title)“ has no English twin"))
+        }
+        #expect(GrammarTopic.reflexiv.ruleLines.count == 3)
+        #expect(GrammarFocus.reflexivverben.introducedAt == .a2)
+        #expect(GrammarRoute(.reflexivverben) == .topic(.reflexiv) && GrammarRoute.topic(.reflexiv).presentation == .launch)
+        #expect(PyramidCoachSection.area(for: .reflexivverben) == .strukturen)
+        // The badge threshold stays allCases.count / 2, now 7 of 14.
+        #expect(GrammarFocus.allCases.count == 14)
     }
 }

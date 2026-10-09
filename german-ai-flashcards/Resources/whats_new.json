@@ -12,6 +12,11 @@
           "title": "Endungs-Werkstatt · Ending workshop",
           "detail": "See der become dem in 3D, the ending in its case color, then build words yourself.",
           "symbol": "cube.fill"
+        },
+        {
+          "title": "Reflexive Verben · Reflexive verbs",
+          "detail": "A new Grammatik topic: the lesson, the pronoun table and two drills on mich or mir, sich or dich.",
+          "symbol": "arrow.uturn.backward.circle.fill"
         }
       ]
     },

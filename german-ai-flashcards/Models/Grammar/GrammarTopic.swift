@@ -106,12 +106,12 @@ nonisolated enum GrammarTopic: Hashable, Identifiable {
         }
     }
 
-    /// The coach's skill the topic reads and moves. The reflexive topic gets its own focus with
-    /// its first drills.
+    /// The coach's skill the topic reads and moves. A topic that isn't a case pools every
+    /// counting answer into its one focus (`KasusService.skillMoves`).
     var focus: GrammarFocus? {
         switch self {
         case .kasus(let unit): unit.focus
-        case .reflexiv:        nil
+        case .reflexiv:        .reflexivverben
         }
     }
 
@@ -119,7 +119,7 @@ nonisolated enum GrammarTopic: Hashable, Identifiable {
     var ruleLines: [String] {
         switch self {
         case .kasus(let unit): unit.ruleLines
-        case .reflexiv:        []
+        case .reflexiv:        ReflexivLesson.ruleLines
         }
     }
 
@@ -128,7 +128,7 @@ nonisolated enum GrammarTopic: Hashable, Identifiable {
     var lessonCards: [KasusLessonCard] {
         switch self {
         case .kasus(let unit): KasusLesson.cards(for: unit)
-        case .reflexiv:        []
+        case .reflexiv:        ReflexivLesson.cards
         }
     }
 
@@ -137,7 +137,7 @@ nonisolated enum GrammarTopic: Hashable, Identifiable {
     var mnemonics: [KasusMnemonic] {
         switch self {
         case .kasus(let unit): KasusMnemonics.forUnit(unit)
-        case .reflexiv:        []
+        case .reflexiv:        [ReflexivLesson.mnemonic]
         }
     }
 
@@ -155,20 +155,29 @@ nonisolated enum GrammarTopic: Hashable, Identifiable {
     }
 
     /// The exercise kinds the topic offers, in screen order: the Verstehen drills its items can
-    /// fill, then the practice rounds. Reads the bundled banks.
+    /// fill, then the practice rounds. Reads the banks it is handed.
     @MainActor
-    func exercises(concepts: KasusConceptBank) -> [KasusDrillKind] {
+    func exercises(concepts: KasusConceptBank, gaps: GapChoiceBank) -> [KasusDrillKind] {
         switch self {
         case .kasus(let unit):
             concepts.offered(for: unit).map(\.kind) + [.quick, .build]
         case .reflexiv:
-            []
+            gaps.offered(topic: key).compactMap(\.kind)
         }
     }
 
     /// The exercises on the bundled banks.
     @MainActor
-    func exercises() -> [KasusDrillKind] { exercises(concepts: .bundled) }
+    func exercises() -> [KasusDrillKind] { exercises(concepts: .bundled, gaps: .bundled) }
+
+    /// What the question-mark menu may pin over a drill of this topic: the article table for a
+    /// case, the pronoun table for the reflexive topic.
+    var reference: KasusReferenceContent {
+        switch self {
+        case .kasus:    .articles(GrammarCase.allCases)
+        case .reflexiv: .reflexivePronouns
+        }
+    }
 
     /// Something to show: a lesson or an exercise. A topic whose content isn't bundled yet stays
     /// off the hub.

@@ -20,6 +20,10 @@ German for identity words and headings, plain English for explanation.
 - `docs/DOCUMENT_DECKS.md` — flashcards from a document: the vocab-sheet pairer, phrase picking, decks on a course.
 - `docs/WORTSCHATZ.md` — the Goethe word box: merged index, one SRS deck, sessions, status, debug args.
 - `docs/KASUS.md` — the Grammatik case path: units, story format and targets, validator, exercises and right/wrong feedback, rich-text markup, the 3D ending blocks (Endungs-Werkstatt, Bau das Wort), Verlauf, GrammarRoute, coach rules, adding a story, tutor-written stories (planner, gate, fallback, Kasus Lab, Mac probe), tests, debug args.
+- `docs/GRAMMAR_EXERCISES.md` — the exercise framework every grammar drill shares: the registry
+  (`KasusRoundStep` + meta + `KasusDrillKind`), one shell + modules, `GrammarTopic` (the case path and
+  Reflexive Verben), bundled content packs with their gate and golden numbers, adding a kind / a
+  topic / a pack, the debug launch arguments.
 - `docs/PREPOSITION_3D.md` — the 3D preposition scenes and die Figur.
 - `docs/VERB_PREPOSITIONS.md` — Verben mit Präpositionen: 42 verb pairs in the preposition hub's
   second track (cards, drills, Die Falle), their data, the baked 3D scenes, and what is still open.

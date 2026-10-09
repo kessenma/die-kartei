@@ -87,7 +87,9 @@ final class LearnerProfile {
     var sessionCount: Int
     var lastSessionAt: Date?
 
-    /// Encoded `[String: GrammarSkill]` keyed by `GrammarFocus.rawValue` — fixed keys, cannot grow.
+    /// Encoded `[String: GrammarSkill]` keyed by `GrammarFocus.rawValue`: the keys are the enum's
+    /// cases, so the set grows only with a new focus in code (`reflexivverben`, 2026-10), never at
+    /// runtime.
     var grammarData: Data?
     /// Encoded `[VocabTouch]` — LRU-capped at `vocabCap`.
     var vocabData: Data?

@@ -46,6 +46,7 @@ struct GrammarHubView: View {
             heroSection.themedListRow()
             explainersSection.themedListRow()
             unitsSection.themedListRow()
+            topicsSection.themedListRow()
             historySection.themedListRow()
             toolsSection.themedListRow()
         }
@@ -272,6 +273,78 @@ struct GrammarHubView: View {
                 Circle()
                     .strokeBorder(unit.color, lineWidth: 1.2)
                     .background(Circle().fill(filled ? unit.color : .clear))
+                    .frame(width: 7, height: 7)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(done.filter { $0 }.count) of \(done.count) done")
+    }
+
+    // MARK: - Themen
+
+    /// The topics that aren't a case, once their lesson or items are bundled.
+    private var topics: [GrammarTopic] {
+        GrammarTopic.allCases.filter { $0.unit == nil && $0.isAvailable }
+    }
+
+    @ViewBuilder
+    private var topicsSection: some View {
+        let topics = self.topics
+        if !topics.isEmpty {
+            Section {
+                ForEach(topics) { topic in
+                    NavigationLink {
+                        ReflexivTopicView(topic: topic)
+                    } label: {
+                        topicRow(topic)
+                    }
+                }
+            } header: {
+                Text("Themen · Topics")
+                    .themedSectionHeader()
+            } footer: {
+                Text("Structures that run across the cases.")
+            }
+        }
+    }
+
+    private func topicRow(_ topic: GrammarTopic) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: topic.symbol)
+                .font(.title3)
+                .foregroundStyle(topic.color)
+                .frame(width: 34, height: 34)
+                .background(topic.color.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(topic.germanTitle) · \(topic.englishRole)")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+                Text("mich / mir · dich / dir · sich")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 8)
+            topicDots(topic)
+            if isShaky(topic.focus) { flame }
+            Text(topic.levelLabel)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityLabel("Level \(topic.levelLabel)")
+        }
+        .padding(.vertical, 4)
+    }
+
+    /// One dot for the lesson, one per drill the topic offers. Keyed on (storyID, topic, step).
+    private func topicDots(_ topic: GrammarTopic) -> some View {
+        let progress = KasusProgress(rounds: rounds)
+        let done = [progress.lessonRead(topicKey: topic.key)]
+            + topic.exercises().map { progress.drillDone($0.step, topicKey: topic.key) }
+        return HStack(spacing: 3) {
+            ForEach(Array(done.enumerated()), id: \.offset) { _, filled in
+                Circle()
+                    .strokeBorder(topic.color, lineWidth: 1.2)
+                    .background(Circle().fill(filled ? topic.color : .clear))
                     .frame(width: 7, height: 7)
             }
         }

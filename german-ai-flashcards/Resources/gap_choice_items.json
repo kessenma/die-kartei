@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "rx-h-case-waschen-1sg-haende", "topic": "reflexiv", "focus": "case", "level": "A2",
+      "presentation": "buttons",
+      "sentence": "Ich wasche {1} die Hände.", "english": "I wash my hands.",
+      "gaps": [{ "answer": "mir", "options": ["mich", "mir", "dich", "dir"], "kasus": "dativ" }],
+      "subject": { "person": 1, "number": "sg", "text": "Ich" },
+      "verb": { "lemma": "waschen", "form": "wasche", "takes": "both" },
+      "secondObject": { "text": "die Hände", "lemma": "Hand", "genus": "die", "number": "pl" }
+    },
+    {
+      "id": "rx-h-case-waschen-1sg", "topic": "reflexiv", "focus": "case", "level": "A2",
+      "presentation": "buttons",
+      "sentence": "Ich wasche {1}.", "english": "I wash myself.",
+      "gaps": [{ "answer": "mich", "options": ["mich", "mir", "dich", "dir"], "kasus": "akkusativ" }],
+      "subject": { "person": 1, "number": "sg", "text": "Ich" },
+      "verb": { "lemma": "waschen", "form": "wasche", "takes": "both" }
+    },
+    {
+      "id": "rx-h-case-putzen-2sg-zaehne", "topic": "reflexiv", "focus": "case", "level": "A2",
+      "presentation": "buttons",
+      "sentence": "Du putzt {1} die Zähne.", "english": "You brush your teeth.",
+      "gaps": [{ "answer": "dir", "options": ["mich", "mir", "dich", "dir"], "kasus": "dativ" }],
+      "subject": { "person": 2, "number": "sg", "text": "Du" },
+      "verb": { "lemma": "putzen", "form": "putzt", "takes": "both" },
+      "secondObject": { "text": "die Zähne", "lemma": "Zahn", "genus": "der", "number": "pl" }
+    },
+    {
+      "id": "rx-h-case-beeilen-2sg", "topic": "reflexiv", "focus": "case", "level": "A2",
+      "presentation": "buttons",
+      "sentence": "Du beeilst {1}.", "english": "You hurry.",
+      "gaps": [{ "answer": "dich", "options": ["mich", "mir", "dich", "dir"], "kasus": "akkusativ" }],
+      "subject": { "person": 2, "number": "sg", "text": "Du" },
+      "verb": { "lemma": "beeilen", "form": "beeilst", "takes": "akk" }
+    },
+    {
+      "id": "rx-h-case-kaufen-1sg-buch", "topic": "reflexiv", "focus": "case", "level": "A2",
+      "presentation": "buttons",
+      "sentence": "Ich kaufe {1} ein Buch.", "english": "I buy myself a book.",
+      "gaps": [{ "answer": "mir", "options": ["mich", "mir", "dich", "dir"], "kasus": "dativ" }],
+      "subject": { "person": 1, "number": "sg", "text": "Ich" },
+      "verb": { "lemma": "kaufen", "form": "kaufe", "takes": "dat" },
+      "secondObject": { "text": "ein Buch", "lemma": "Buch", "genus": "das", "number": "sg" }
+    },
+    {
+      "id": "rx-h-case-merken-2sg-nummer", "topic": "reflexiv", "focus": "case", "level": "A2",
+      "presentation": "buttons",
+      "sentence": "Du merkst {1} die Nummer.", "english": "You remember the number.",
+      "gaps": [{ "answer": "dir", "options": ["mich", "mir", "dich", "dir"], "kasus": "dativ" }],
+      "subject": { "person": 2, "number": "sg", "text": "Du" },
+      "verb": { "lemma": "merken", "form": "merkst", "takes": "dat" },
+      "secondObject": { "text": "die Nummer", "lemma": "Nummer", "genus": "die", "number": "sg" }
+    },
+    {
+      "id": "rx-h-case-anziehen-1sg-jacke", "topic": "reflexiv", "focus": "case", "level": "A2",
+      "presentation": "inline",
+      "sentence": "Ich ziehe {1} die Jacke an.", "english": "I put on my jacket.",
+      "gaps": [{ "answer": "mir", "options": ["mich", "mir"], "kasus": "dativ" }],
+      "subject": { "person": 1, "number": "sg", "text": "Ich" },
+      "verb": { "lemma": "anziehen", "form": "ziehe", "takes": "both", "prefix": "an" },
+      "secondObject": { "text": "die Jacke", "lemma": "Jacke", "genus": "die", "number": "sg" }
+    },
+    {
+      "id": "rx-h-case-erholen-2sg", "topic": "reflexiv", "focus": "case", "level": "A2",
+      "presentation": "inline",
+      "sentence": "Du erholst {1} am Wochenende.", "english": "You rest at the weekend.",
+      "gaps": [{ "answer": "dich", "options": ["dich", "dir"], "kasus": "akkusativ" }],
+      "subject": { "person": 2, "number": "sg", "text": "Du" },
+      "verb": { "lemma": "erholen", "form": "erholst", "takes": "akk" },
+      "tail": "am Wochenende"
+    },
+    {
+      "id": "rx-h-person-rasieren-3sg", "topic": "reflexiv", "focus": "person", "level": "A2",
+      "presentation": "buttons",
+      "sentence": "Er rasiert {1} heute.", "english": "He shaves today.",
+      "gaps": [{ "answer": "sich", "options": ["mich", "dich", "sich", "uns"], "kasus": "akkusativ" }],
+      "subject": { "person": 3, "number": "sg", "text": "Er" },
+      "verb": { "lemma": "rasieren", "form": "rasiert", "takes": "both" }
+    },
+    {
+      "id": "rx-h-person-treffen-1pl", "topic": "reflexiv", "focus": "person", "level": "A2",
+      "presentation": "buttons",
+      "sentence": "Wir treffen {1} im Park.", "english": "We meet in the park.",
+      "gaps": [{ "answer": "uns", "options": ["mich", "dich", "sich", "uns"], "kasus": "akkusativ" }],
+      "subject": { "person": 1, "number": "pl", "text": "Wir" },
+      "verb": { "lemma": "treffen", "form": "treffen", "takes": "akk" },
+      "tail": "im Park"
+    },
+    {
+      "id": "rx-h-person-freuen-2pl", "topic": "reflexiv", "focus": "person", "level": "A2",
+      "presentation": "buttons",
+      "sentence": "Ihr freut {1} auf die Ferien.", "english": "You are looking forward to the holidays.",
+      "gaps": [{ "answer": "euch", "options": ["sich", "euch", "uns", "dich"], "kasus": "akkusativ" }],
+      "subject": { "person": 2, "number": "pl", "text": "Ihr" },
+      "verb": { "lemma": "freuen", "form": "freut", "takes": "akk" },
+      "tail": "auf die Ferien"
+    },
+    {
+      "id": "rx-h-person-fuehlen-1sg", "topic": "reflexiv", "focus": "person", "level": "A2",
+      "presentation": "buttons",
+      "sentence": "Ich fühle {1} gut.", "english": "I feel good.",
+      "gaps": [{ "answer": "mich", "options": ["mich", "dich", "sich", "uns"], "kasus": "akkusativ" }],
+      "subject": { "person": 1, "number": "sg", "text": "Ich" },
+      "verb": { "lemma": "fühlen", "form": "fühle", "takes": "akk" }
+    },
+    {
+      "id": "rx-h-person-merken-3sg-namen", "topic": "reflexiv", "focus": "person", "level": "A2",
+      "presentation": "buttons",
+      "sentence": "Sie merkt {1} den Namen.", "english": "She remembers the name.",
+      "gaps": [{ "answer": "sich", "options": ["mir", "dir", "sich", "uns"], "kasus": "dativ" }],
+      "subject": { "person": 3, "number": "sg", "text": "Sie" },
+      "verb": { "lemma": "merken", "form": "merkt", "takes": "dat" },
+      "secondObject": { "text": "den Namen", "lemma": "Name", "genus": "der", "number": "sg" }
+    },
+    {
+      "id": "rx-h-person-kaufen-1pl-auto", "topic": "reflexiv", "focus": "person", "level": "A2",
+      "presentation": "buttons",
+      "sentence": "Wir kaufen {1} ein Auto.", "english": "We buy ourselves a car.",
+      "gaps": [{ "answer": "uns", "options": ["mir", "dir", "sich", "uns"], "kasus": "dativ" }],
+      "subject": { "person": 1, "number": "pl", "text": "Wir" },
+      "verb": { "lemma": "kaufen", "form": "kaufen", "takes": "dat" },
+      "secondObject": { "text": "ein Auto", "lemma": "Auto", "genus": "das", "number": "sg" }
+    },
+    {
+      "id": "rx-h-person-vorstellen-2sg", "topic": "reflexiv", "focus": "person", "level": "A2",
+      "presentation": "inline",
+      "sentence": "Du stellst {1} vor.", "english": "You introduce yourself.",
+      "gaps": [{ "answer": "dich", "options": ["sich", "dich"], "kasus": "akkusativ" }],
+      "subject": { "person": 2, "number": "sg", "text": "Du" },
+      "verb": { "lemma": "vorstellen", "form": "stellst", "takes": "both", "prefix": "vor" }
+    },
+    {
+      "id": "rx-h-person-vorstellen-3sg-stadt", "topic": "reflexiv", "focus": "person", "level": "A2",
+      "presentation": "inline",
+      "sentence": "Er stellt {1} die Stadt vor.", "english": "He imagines the city.",
+      "gaps": [{ "answer": "sich", "options": ["sich", "dir"], "kasus": "dativ" }],
+      "subject": { "person": 3, "number": "sg", "text": "Er" },
+      "verb": { "lemma": "vorstellen", "form": "stellt", "takes": "both", "prefix": "vor" },
+      "secondObject": { "text": "die Stadt", "lemma": "Stadt", "genus": "die", "number": "sg" }
+    }
+  ]
+}

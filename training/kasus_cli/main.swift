@@ -100,6 +100,8 @@ func selftest() {
     count("verb pairs", VerbPrepositionService.all().count)
     count("trigger topics", KasusTriggerBank.bundled.topics.count)
     count("bundled stories", KasusStoryBank.bundled.stories.count)
+    // Loading the gap-choice bank runs its gate and composition check (an assert on a failure).
+    count("gap-choice items", GapChoiceBank.bundled.items.count)
 
     let lexicon = AppKasusLexicon()
     let a = KasusStoryPlanner.plan(unit: .dativ, level: .a2, seed: 1003, governed: false, lexicon: lexicon)
@@ -300,8 +302,9 @@ case "concept-prompts": conceptPrompts(Array(arguments.dropFirst()))
 case "concept-check":   conceptCheck(Array(arguments.dropFirst()))
 case "audit-concepts":  auditConcepts(Array(arguments.dropFirst()))
 case "concept-export":  conceptExport(Array(arguments.dropFirst()))
+case "audit-gaps":      auditGaps(Array(arguments.dropFirst()))
 default:
     fail("usage: kasus-cli selftest | prompts <unit:level:seed[-to]>... [--governed] [--contract A|B] | check [file]"
          + " | concept-prompts <kind:unit:from-to>... | concept-check [file] [--template] | audit-concepts [file]"
-         + " | concept-export [file] --prefix <p>")
+         + " | concept-export [file] --prefix <p> | audit-gaps [file] [--golden]")
 }

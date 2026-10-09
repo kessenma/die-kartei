@@ -30,6 +30,13 @@ Models/Grammar/Kasus/KasusUnit.swift
 Models/Grammar/GrammarPalette.swift
 Models/Grammar/GrammarFocus.swift
 
+# Gap-choice items: the format, the reflexive tables, the gate, the bank and its golden numbers
+Models/Grammar/Kasus/GapChoiceItem.swift
+Models/Grammar/Kasus/ReflexivForms.swift
+Services/Grammar/Check/GapChoiceCheck.swift
+Services/Grammar/Content/GapChoiceBank.swift
+Services/Grammar/Content/GapChoiceFixtures.swift
+
 # The lexicon and its data: Wiktionary, Goethe lists, prepositions
 Services/Grammar/Content/KasusStoryBank.swift
 Services/WiktionaryValidator.swift

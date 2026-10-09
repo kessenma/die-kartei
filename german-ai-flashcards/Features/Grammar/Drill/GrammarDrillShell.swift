@@ -89,7 +89,7 @@ struct GrammarDrillShell<Module: KasusDrillModule>: View {
                 }
             }
             .background(ThemedBackground().ignoresSafeArea())
-            .kasusReference(pinned: module.meta.allowsReference ? $referencePinned : nil)
+            .kasusReference(content: session.topic.reference, pinned: module.meta.allowsReference ? $referencePinned : nil)
             .navigationTitle(session.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
