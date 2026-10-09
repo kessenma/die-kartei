@@ -44,11 +44,11 @@ kasus_cli/build/kasus-cli concept-prompts all:all:1-10 > results/kasus-concept-p
 
 | piece | file | does |
 |---|---|---|
-| plan | `Models/KasusConceptPlan.swift`, `Services/KasusConceptPlanner.swift` | seeded: the phrases (article, noun, case, role), one shared verb with its allowed forms (er/sie/es present and past only), which phrase opens a Wer sentence, which phrase a Probe asks |
-| prompt | `Services/KasusConceptPrompt.swift` | „Schreibe genau einen deutschen Satz …“, the phrases with plain role words (wer handelt / wen oder was / wem), the verb forms, „Beginne den Satz mit …“, may add a place, time or prepositional phrase but no person, no subordinate clause, no „und“; answer `SATZ: …` |
-| gate | `Services/KasusConceptCheck.swift` | below |
+| plan | `Models/Grammar/Kasus/KasusConceptPlan.swift`, `Services/Grammar/Tutor/KasusConceptPlanner.swift` | seeded: the phrases (article, noun, case, role), one shared verb with its allowed forms (er/sie/es present and past only), which phrase opens a Wer sentence, which phrase a Probe asks |
+| prompt | `Services/Grammar/Tutor/KasusConceptPrompt.swift` | „Schreibe genau einen deutschen Satz …“, the phrases with plain role words (wer handelt / wen oder was / wem), the verb forms, „Beginne den Satz mit …“, may add a place, time or prepositional phrase but no person, no subordinate clause, no „und“; answer `SATZ: …` |
+| gate | `Services/Grammar/Check/KasusConceptCheck.swift` | below |
 | CLI | `kasus_cli/concepts.swift` | `concept-prompts`, `concept-check [--template]`, `audit-concepts` |
-| tests | `german-ai-flashcardsTests/KasusConceptGenerationTests.swift` | planner determinism and coverage, every template passes, the prompt is clean, one fixture per reject code |
+| tests | `german-ai-flashcardsTests/Grammar/KasusConceptGenerationTests.swift` | planner determinism and coverage, every template passes, the prompt is clean, one fixture per reject code |
 
 **The gate**, in order. Anything but `formatMissing` rejects.
 

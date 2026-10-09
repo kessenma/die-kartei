@@ -36,7 +36,7 @@ from mathutils import Matrix, Vector
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import figur
 
-# MARK: - Palette (exact hex from Models/Preposition.swift)
+# MARK: - Palette (exact hex from Models/Grammar/Prepositions/Preposition.swift)
 
 PALETTE = {
     "akkusativ": 0xE2701A,

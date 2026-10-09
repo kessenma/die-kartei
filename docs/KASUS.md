@@ -12,43 +12,43 @@ Status legend: ✅ done · ⬜ open
 
 | Piece | File |
 |---|---|
-| Units (cases in play, Markieren's case order, level labels, rule lines, start unit) | `Models/KasusUnit.swift` |
-| Story format (stored fields, reasons, located targets) | `Models/KasusStory.swift` |
-| Forms engine (determiner families, table lookups, options, slips, noun endings, word lists) | `Models/KasusForms.swift` |
-| Validator (locate, prove, issue codes, policy) | `Services/KasusValidator.swift` |
-| Explanations, built from the proof only | `Services/KasusExplanation.swift` |
-| Loader, `AppKasusLexicon`, the DEBUG assert | `Services/KasusStoryBank.swift` |
-| Planted-error fixtures, golden numbers, table round trip (DEBUG) | `Services/KasusFixtures.swift` |
-| Sessions, blanks, grading, `recordRound`, progress, `KasusPath` (the hero) | `Services/KasusService.swift` |
-| Numbered sentences, word roles, the Markieren round and score, feedback modes (Foundation only) | `Services/KasusMarking.swift` |
-| Endungen: gaps, ending buttons, grading an ending, the Endungen round | `Services/KasusEndings.swift` |
-| The round record | `Models/KasusRound.swift` |
+| Units (cases in play, Markieren's case order, level labels, rule lines, start unit) | `Models/Grammar/Kasus/KasusUnit.swift` |
+| Story format (stored fields, reasons, located targets) | `Models/Grammar/Kasus/KasusStory.swift` |
+| Forms engine (determiner families, table lookups, options, slips, noun endings, word lists) | `Models/Grammar/Kasus/KasusForms.swift` |
+| Validator (locate, prove, issue codes, policy) | `Services/Grammar/Check/KasusValidator.swift` |
+| Explanations, built from the proof only | `Services/Grammar/Kasus/KasusExplanation.swift` |
+| Loader, `AppKasusLexicon`, the DEBUG assert | `Services/Grammar/Content/KasusStoryBank.swift` |
+| Planted-error fixtures, golden numbers, table round trip (DEBUG) | `Services/Grammar/Content/KasusFixtures.swift` |
+| Sessions, blanks, grading, `recordRound`, progress, `KasusPath` (the hero) | `Services/Grammar/Kasus/KasusService.swift` |
+| Numbered sentences, word roles, the Markieren round and score, feedback modes (Foundation only) | `Services/Grammar/Kasus/KasusMarking.swift` |
+| Endungen: gaps, ending buttons, grading an ending, the Endungen round | `Services/Grammar/Kasus/KasusEndings.swift` |
+| The round record | `Models/Grammar/Kasus/KasusRound.swift` |
 | Bundled stories | `Resources/kasus_stories.json` |
-| Hub | `Features/Grammar/GrammarHubView.swift` |
-| Unit screen, story player, story text, Kasus-Check card | `Features/Grammar/Kasus/` |
-| The story player: step bar, Lesen, Ergebnis, the exercises' state, DEBUG screens | `Features/Grammar/Kasus/KasusStoryView.swift` |
-| Markieren's screen and state (`KasusMarkPlay`) | `Features/Grammar/Kasus/KasusMarkView.swift` |
-| Endungen's screen and state (`KasusEndingsPlay`, `KasusGapState`) | `Features/Grammar/Kasus/KasusEndingsView.swift` |
-| Numbered sentences as word chips (`KasusSentenceList`, `KasusWordFlow`, `KasusChip`) | `Features/Grammar/Kasus/KasusSentences.swift` |
-| Tray with a pinned footer, step clock, header, options pill | `Features/Grammar/Kasus/KasusPlayerParts.swift` |
-| Right/wrong signal: verdict header, answer buttons, progress strip, capped tray scroll | `Features/Grammar/Kasus/KasusFeedback.swift` |
-| The `{m:den}` / `{dat:Dativ}` / `**bold**` markup and `Text(kasusRich:)` | `Features/Grammar/Kasus/KasusRichText.swift` |
-| Endings table (and its compact tray version with a highlighted cell) + Schnellrunde (`CaseEndingsDrillView`) | `Features/Grammar/CaseEndingsView.swift` |
-| Verstehen: kinds, exercises, roles, the Probe noun, items, facts (Foundation only) | `Models/KasusConcept.swift` |
-| Verstehen: the lessons' cards and the Merkhilfen, as literals | `Models/KasusLesson.swift` |
-| Verstehen: the item bank, its audit, the DEBUG assert | `Services/KasusConceptBank.swift` |
-| Verstehen: playable items, the round, picks, the walk, explanations, `KasusService` entry points, progress marks | `Services/KasusConcepts.swift` |
-| Verstehen: golden numbers per unit and kind, the verify block (DEBUG) | `Services/KasusConceptFixtures.swift` |
+| Hub | `Features/Grammar/Hub/GrammarHubView.swift` |
+| Unit screen, story player, story text, Kasus-Check card | `Features/Grammar/Topics/` (unit screen), `Features/Grammar/Story/` (player, story text, Kasus-Check card) |
+| The story player: step bar, Lesen, Ergebnis, the exercises' state, DEBUG screens | `Features/Grammar/Story/KasusStoryView.swift` |
+| Markieren's screen and state (`KasusMarkPlay`) | `Features/Grammar/Story/KasusMarkView.swift` |
+| Endungen's screen and state (`KasusEndingsPlay`, `KasusGapState`) | `Features/Grammar/Story/KasusEndingsView.swift` |
+| Numbered sentences as word chips (`KasusSentenceList`, `KasusWordFlow`, `KasusChip`) | `Features/Grammar/Shared/KasusSentences.swift` |
+| Tray with a pinned footer, step clock, header, options pill | `Features/Grammar/Story/KasusPlayerParts.swift` |
+| Right/wrong signal: verdict header, answer buttons, progress strip, capped tray scroll | `Features/Grammar/Shared/KasusFeedback.swift` |
+| The `{m:den}` / `{dat:Dativ}` / `**bold**` markup and `Text(kasusRich:)` | `Features/Grammar/Shared/KasusRichText.swift` |
+| Endings table (and its compact tray version with a highlighted cell) + Schnellrunde (`CaseEndingsDrillView`) | `Features/Grammar/Reference/CaseEndingsView.swift` |
+| Verstehen: kinds, exercises, roles, the Probe noun, items, facts (Foundation only) | `Models/Grammar/Kasus/KasusConcept.swift` |
+| Verstehen: the lessons' cards and the Merkhilfen, as literals | `Models/Grammar/Kasus/KasusLesson.swift` |
+| Verstehen: the item bank, its audit, the DEBUG assert | `Services/Grammar/Content/KasusConceptBank.swift` |
+| Verstehen: playable items, the round, picks, the walk, explanations, `KasusService` entry points, progress marks | `Services/Grammar/Kasus/KasusConcepts.swift` |
+| Verstehen: golden numbers per unit and kind, the verify block (DEBUG) | `Services/Grammar/Content/KasusConceptFixtures.swift` |
 | The bundled Verstehen items | `Resources/kasus_concepts.json` |
-| Verstehen screens: the lesson sheet, the Merkhilfen list, the activity and its panels, the unit section | `Features/Grammar/Kasus/KasusLessonView.swift`, `KasusMnemonicsView.swift`, `KasusConceptView.swift`, `KasusConceptPanels.swift`, `KasusVerstehenSection.swift` |
+| Verstehen screens: the lesson sheet, the Merkhilfen list, the activity and its panels, the unit section | `Features/Grammar/Topics/KasusLessonView.swift`, `KasusMnemonicsView.swift`, `KasusConceptView.swift`, `KasusConceptPanels.swift`, `KasusVerstehenSection.swift` |
 | Day detail in the calendar | `Features/Home/StreakCalendarView.swift` |
-| Verlauf (every round by day) and a round's answers | `Features/Grammar/Kasus/KasusHistoryView.swift`, `KasusRoundDetailView.swift` |
-| Sample rounds for the simulator (DEBUG) | `Services/KasusDebugSeeder.swift` |
-| Where a grammar focus goes from Today, Coach's Notes, the pyramid and a class entry | `Services/GrammarRoute.swift` |
-| Tutor-written stories: plan model, planner, verb frames and noun pools | `Models/KasusStoryPlan.swift`, `Services/KasusStoryPlanner.swift`, `Resources/kasus_triggers.json` |
-| Tutor-written stories: prompt, generator, check, harvest, sentence checks, store | `Services/KasusStoryPrompt.swift` (prompt, request/result; no MLX, so `training/kasus_cli` compiles it), `KasusStoryGenerator.swift`, `KasusStoryCheck.swift`, `KasusHarvest.swift`, `KasusSentenceCheck.swift`, `KasusStoryStore.swift`, `Models/GeneratedKasusStory.swift` |
-| Kasus Lab numbers and canned fixtures (DEBUG) | `Services/KasusLab.swift`, `Services/KasusGenerationFixtures.swift` |
-| Unit row, generation sheet, Lab screen | `Features/Grammar/Kasus/KasusAIStorySection.swift`, `KasusGenerationSheet.swift`, `KasusLabView.swift` |
+| Verlauf (every round by day) and a round's answers | `Features/Grammar/History/KasusHistoryView.swift`, `KasusRoundDetailView.swift` |
+| Sample rounds for the simulator (DEBUG) | `Services/Grammar/Content/KasusDebugSeeder.swift` |
+| Where a grammar focus goes from Today, Coach's Notes, the pyramid and a class entry | `Services/Grammar/GrammarRoute.swift` |
+| Tutor-written stories: plan model, planner, verb frames and noun pools | `Models/Grammar/Kasus/KasusStoryPlan.swift`, `Services/Grammar/Tutor/KasusStoryPlanner.swift`, `Resources/kasus_triggers.json` |
+| Tutor-written stories: prompt, generator, check, harvest, sentence checks, store | `Services/Grammar/Tutor/KasusStoryPrompt.swift` (prompt, request/result; no MLX, so `training/kasus_cli` compiles it), `KasusStoryGenerator.swift`, `KasusStoryCheck.swift`, `KasusHarvest.swift`, `KasusSentenceCheck.swift`, `KasusStoryStore.swift`, `Models/Grammar/Kasus/GeneratedKasusStory.swift` |
+| Kasus Lab numbers and canned fixtures (DEBUG) | `Services/Grammar/Tutor/KasusLab.swift`, `Services/Grammar/Content/KasusGenerationFixtures.swift` |
+| Unit row, generation sheet, Lab screen | `Features/Grammar/Story/Tutor/KasusAIStorySection.swift`, `KasusGenerationSheet.swift`, `KasusLabView.swift` |
 | Swift Testing target (engine, validator, explanations, service, recording) | `german-ai-flashcardsTests/` |
 
 ## The path
@@ -251,7 +251,7 @@ out `genus` and `lemma`. A story that targets one of those pronouns targets all 
   form-proven. `hasNounGender` is false, so gender displays (the sort grid, the round detail's
   gender color) leave them out.
 
-The table on `KasusLocatedTarget` (`Models/KasusStory.swift`) lists what a view can rely on per
+The table on `KasusLocatedTarget` (`Models/Grammar/Kasus/KasusStory.swift`) lists what a view can rely on per
 kind: every field stays non-optional; for a contraction or pronoun `determinerRange` covers the
 whole token and `parsed` is nil; for a pronoun `nounRange` equals `range`.
 
@@ -845,7 +845,7 @@ cream on dark.
 | What is shown, and how it moves | `EndingBlocks/EndingBlocksState.swift`: `EndingBlocksState` (`.open` grey slot, `.built` with an optional `rejected` ending), `EndingBlocksTransition` (rise, snap, swap, bounceThenSnap, recolor, hold), `EndingBlocksPose.at(_:time:)`, `EndingBlocksFraming` |
 | The canvas | `EndingBlocks/EndingBlocksScene.swift`: letters extruded at runtime (`MeshResource(extruding:)`, Futura Bold, cached per string), so nothing ships and any stem works |
 | The 2D twin | `EndingBlocks/EndingBlocksFlat.swift`, shown for Stills Only (`LightweightGraphics`) and Reduce Motion; builds no RealityKit |
-| The workshop | `EndingBlocks/EndungsWerkstattView.swift`, the hub's „Weitere Übungen“ |
+| The workshop | `Features/Grammar/Reference/EndungsWerkstattView.swift`, the hub's „Weitere Übungen“ |
 
 Where it shows, one live canvas per screen each time:
 

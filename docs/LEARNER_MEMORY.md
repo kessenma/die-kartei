@@ -161,7 +161,7 @@ the first *non-conversation* writer into the learner profile.
 
 ## Phase 6 — Grammar hub: drills read *and write* the profile  ✅
 
-`Features/Grammar/GrammarHubView.swift` (one consolidated Grammar screen) + `AIGrammarCreateView.swift`.
+`Features/Grammar/Hub/GrammarHubView.swift` (one consolidated Grammar screen) + `AIGrammarCreateView.swift`.
 
 > The AI exercise creator below was deleted in the Kasus path's Phase 3 (its answers were never
 > checked); see docs/KASUS.md ▸ Removed. The drill write-back through `grammaticalCase` remains.
@@ -215,8 +215,8 @@ at the top of the Home hub's "For You" screen (right by the streak flame) as a s
 
 ## Phase 8 — Der/die/das article game reads *and* writes the profile  ✅
 
-`Features/Grammar/ArticleGame/` (setup / game / rules sheet) + `Models/ArticleGame.swift`,
-`ArticleRules.swift`, `ArticleStats.swift` + `Services/ArticleGameService.swift`. The second
+`Features/Grammar/ArticleGame/` (setup / game / rules sheet) + `Models/Grammar/Article/ArticleGame.swift`,
+`ArticleRules.swift`, `ArticleStats.swift` + `Services/Grammar/Article/ArticleGameService.swift`. The second
 non-conversation writer (2026-07-21), and the first to move a *grammar* skill from a game.
 
 - ✅ New `GrammarFocus.artikel` key: every finished round nudges the profile's Artikel skill via
@@ -278,8 +278,8 @@ those questions were logged as if they were flashcards. (2026-07-21)
 
 ## Phase 10 — Preposition exercises read *and* write the profile  ✅
 
-`Features/Grammar/Prepositions/` (hub / Kasus drill / cards / rules sheet) + `Models/Preposition.swift`,
-`PrepositionStats.swift` + `Services/PrepositionService.swift` + `Resources/prepositions.json`.
+`Features/Grammar/Prepositions/` (hub / Kasus drill / cards / rules sheet) + `Models/Grammar/Prepositions/Preposition.swift`,
+`PrepositionStats.swift` + `Services/Grammar/Prepositions/PrepositionService.swift` + `Resources/prepositions.json`.
 The third non-conversation writer (2026-07-28), and the second to move a *grammar* skill from a game.
 Content is the full Michigan preposition list (36 entries, 28 `core` / 8 `advanced`).
 

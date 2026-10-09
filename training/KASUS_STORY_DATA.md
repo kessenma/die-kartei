@@ -68,9 +68,9 @@ or SwiftData):
 
 | new file | moved out of |
 |---|---|
-| `Services/KasusStoryPrompt.swift` | `KasusStoryGenerator.swift`: the prompt, request/attempt/result, `completeSentences` |
+| `Services/Grammar/Tutor/KasusStoryPrompt.swift` | `KasusStoryGenerator.swift`: the prompt, request/attempt/result, `completeSentences` |
 | `Services/StoryStudyService+Prompt.swift` | `StoryStudyService.swift`: `storyPrompt`, `parseStory`, `wordCount` |
-| `Services/PrepositionService+Content.swift` | `PrepositionService.swift`: the bundled lookups |
+| `Services/Grammar/Prepositions/PrepositionService+Content.swift` | `PrepositionService.swift`: the bundled lookups |
 | — | `GoetheVocabService.words(in:)` moved next to `WortschatzScope` |
 
 `kasus_cli/Stubs.swift` stands in for the few app types the sources name but the check never runs.

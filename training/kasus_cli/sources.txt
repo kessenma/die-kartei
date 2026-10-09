@@ -4,52 +4,52 @@
 # heavy file out the way StoryStudyService+Prompt.swift and PrepositionService+Content.swift are.
 
 # Planner, prompt, check (stories, then the one-sentence Verstehen items)
-Models/KasusStoryPlan.swift
-Services/KasusConceptPlanner.swift
-Services/KasusConceptPrompt.swift
-Services/KasusConceptCheck.swift
-Services/KasusStoryPlanner.swift
-Services/KasusStoryPrompt.swift
+Models/Grammar/Kasus/KasusStoryPlan.swift
+Services/Grammar/Tutor/KasusConceptPlanner.swift
+Services/Grammar/Tutor/KasusConceptPrompt.swift
+Services/Grammar/Check/KasusConceptCheck.swift
+Services/Grammar/Tutor/KasusStoryPlanner.swift
+Services/Grammar/Tutor/KasusStoryPrompt.swift
 Services/StoryStudyService+Prompt.swift
-Services/KasusStoryCheck.swift
-Services/KasusHarvest.swift
-Services/KasusSentenceCheck.swift
-Services/KasusValidator.swift
-Services/KasusExplanation.swift
-Services/KasusVerbPairs.swift
+Services/Grammar/Check/KasusStoryCheck.swift
+Services/Grammar/Check/KasusHarvest.swift
+Services/Grammar/Check/KasusSentenceCheck.swift
+Services/Grammar/Check/KasusValidator.swift
+Services/Grammar/Kasus/KasusExplanation.swift
+Services/Grammar/Kasus/KasusVerbPairs.swift
 
 # Story format, forms, units
-Models/KasusStory.swift
-Models/KasusConcept.swift
-Models/KasusConceptPlan.swift
-Models/KasusForms.swift
-Models/KasusRoundStep.swift
-Models/KasusRoundItem.swift
-Models/EndingsQuestion.swift
-Models/KasusUnit.swift
-Models/GrammarPalette.swift
-Models/GrammarFocus.swift
+Models/Grammar/Kasus/KasusStory.swift
+Models/Grammar/Kasus/KasusConcept.swift
+Models/Grammar/Kasus/KasusConceptPlan.swift
+Models/Grammar/Kasus/KasusForms.swift
+Models/Grammar/Kasus/KasusRoundStep.swift
+Models/Grammar/Kasus/KasusRoundItem.swift
+Models/Grammar/Kasus/EndingsQuestion.swift
+Models/Grammar/Kasus/KasusUnit.swift
+Models/Grammar/GrammarPalette.swift
+Models/Grammar/GrammarFocus.swift
 
 # The lexicon and its data: Wiktionary, Goethe lists, prepositions
-Services/KasusStoryBank.swift
+Services/Grammar/Content/KasusStoryBank.swift
 Services/WiktionaryValidator.swift
 Services/GermanGenderInference.swift
 Services/A1VocabService.swift
-Services/PrepositionService+Content.swift
-Models/Preposition.swift
-Models/VerbPreposition.swift
+Services/Grammar/Prepositions/PrepositionService+Content.swift
+Models/Grammar/Prepositions/Preposition.swift
+Models/Grammar/Prepositions/VerbPreposition.swift
 
 # Pulled in by the above (CEFRLevel, StoryGenre, the think-block stripper, VocabCard)
 Models/ConversationConfig.swift
 Models/StudyStory.swift
 Services/ConversationPrompts.swift
 Models/ChatConversation.swift
-Models/ArticleGame.swift
+Models/Grammar/Article/ArticleGame.swift
 Models/ValidationResult.swift
 Models/VocabCard.swift
 
 # DEBUG: the Lab's record and summary, the validator fixtures, the Verstehen items' audit
-Services/KasusLab.swift
-Services/KasusFixtures.swift
-Services/KasusConceptBank.swift
-Services/KasusConceptFixtures.swift
+Services/Grammar/Tutor/KasusLab.swift
+Services/Grammar/Content/KasusFixtures.swift
+Services/Grammar/Content/KasusConceptBank.swift
+Services/Grammar/Content/KasusConceptFixtures.swift
