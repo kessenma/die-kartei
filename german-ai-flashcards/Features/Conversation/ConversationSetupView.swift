@@ -73,11 +73,10 @@ struct ConversationSetupView: View {
 
     private enum Field: Hashable { case url, pastedText, jobTitle, company, location, learnerName }
 
-    /// Real, non-internal decks the user generated (mirrors SavedDecksView filtering).
+    /// Real, non-internal decks the user generated: the Library's own rule, so a new built-in box
+    /// (the Wortschatz, Perfekt and verb-pair stores) can't leak in by missing a literal here.
     private var decks: [SavedDeck] {
-        allDecks.filter {
-            !["goethe", "goethe-srs", "past-tense", "past-tense-srs", "grammar"].contains($0.generatorRaw)
-        }
+        allDecks.filter(\.isBrowsableContent)
     }
 
     private var canStart: Bool {

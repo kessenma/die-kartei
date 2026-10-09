@@ -26,6 +26,13 @@ set -euo pipefail
 
 note() { echo "note: stamp-release-os: $*"; }
 
+# Apple seed (beta) builds carry a 4-digit build number from 5000 up, usually
+# with a letter suffix: 26A5421a, 27A5194q. A trailing letter alone proves
+# nothing: release Xcode 27.0 is 27A266a, 16.0 was 16A242d. Releases and RCs
+# have shorter numbers (25G83, 26A335); security updates use 1xxx-4xxx or
+# 6+ digits, so neither trips this.
+is_seed() { [[ "$1" =~ ^[0-9]+[A-Z][5-9][0-9]{3}[a-z]?$ ]]; }
+
 # 1. Only archives matter. `xcodebuild archive` runs the "install" action;
 #    everything else (build, test, GUI runs) is "build".
 if [[ "${ACTION:-build}" != "install" ]]; then
@@ -33,34 +40,33 @@ if [[ "${ACTION:-build}" != "install" ]]; then
   exit 0
 fi
 
-# 2. Nothing to do on a release macOS. Apple seed builds end in a lowercase
-#    letter (26A5421a); releases and RCs don't (25G83, 26A335).
+# 2. Nothing to do on a release macOS.
 host_build="$(sw_vers -buildVersion)"
-if [[ ! "$host_build" =~ [a-z]$ ]]; then
+if ! is_seed "$host_build"; then
   note "host macOS ${host_build} is a release build; nothing to do"
   exit 0
 fi
 
 # 3. A beta Xcode can't produce a submittable archive anyway (DTXcodeBuild is
 #    checked too), so don't pretend otherwise. Xcode build numbers follow the
-#    same seed convention (27A5194q vs 17F113).
+#    same seed convention (27A5194q vs 27A266a).
 xcode_build="${XCODE_PRODUCT_BUILD_VERSION:-}"
 if [[ -z "$xcode_build" ]]; then
   xcode_build="$(xcodebuild -version 2>/dev/null | awk '/Build version/ {print $3}')"
 fi
-if [[ "$xcode_build" =~ [a-z]$ ]]; then
+if is_seed "$xcode_build"; then
   echo "error: archiving with a beta Xcode (${xcode_build}). App Store Connect will reject this archive regardless of BuildMachineOSBuild. Archive with the release Xcode instead (scripts/deploy.py does)." >&2
   exit 1
 fi
 
 # 4. Pick the stamp. Prefer the macOS build that shipped with this (release)
 #    Xcode's own macOS SDK, so it tracks Xcode updates by itself. Fall back to a
-#    pinned public release if that's missing or itself carries a seed suffix.
+#    pinned public release if that's missing or itself a seed build.
 release_build="${RELEASE_MACOS_BUILD:-}"
 if [[ -z "$release_build" ]]; then
   release_build="$(xcrun --sdk macosx --show-sdk-build-version 2>/dev/null || true)"
 fi
-if [[ -z "$release_build" || "$release_build" =~ [a-z]$ ]]; then
+if [[ -z "$release_build" ]] || is_seed "$release_build"; then
   fallback="25G83"  # macOS 26.6.2, the latest public release as of 2026-09-07
   note "macOS SDK build '${release_build:-none}' unusable as a stamp; using pinned ${fallback}"
   release_build="$fallback"

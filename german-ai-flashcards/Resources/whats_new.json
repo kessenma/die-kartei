@@ -4,24 +4,14 @@
       "version": "unreleased",
       "highlights": [
         {
-          "title": "Cloud-Bilder · Cloud pictures",
-          "detail": "Draw card and story pictures in seconds with Muse Image or Nano Banana on your own OpenRouter account, at a cent or a few each. On-device drawing stays the default.",
-          "symbol": "cloud"
+          "title": "Fälle verstehen · Understand cases",
+          "detail": "Eight case explainers and a pinnable article table.",
+          "symbol": "text.magnifyingglass"
         },
         {
-          "title": "Verben mit Präpositionen · Verbs with prepositions",
-          "detail": "42 pairs like warten auf and Angst haben vor, each with its own 3D scene. Flip the cards, drill the case, fill the gaps, and spot the trap in Die Falle.",
-          "symbol": "link"
-        },
-        {
-          "title": "Die Kartei für Mac · Die Kartei on Mac",
-          "detail": "Study on your Mac with the same decks, tutors and progress, kept in step with your iPhone and iPad through iCloud, in a window with a sidebar, menus and its own Settings.",
-          "symbol": "macbook"
-        },
-        {
-          "title": "Bilder vom Mac · Pictures from your Mac",
-          "detail": "On a Mac, draw much sharper pictures with Z-Image Turbo or FLUX.2 klein, and send a deck or story from your iPhone to be illustrated there.",
-          "symbol": "macbook.and.iphone"
+          "title": "Endungs-Werkstatt · Ending workshop",
+          "detail": "See der become dem in 3D, the ending in its case color, then build words yourself.",
+          "symbol": "cube.fill"
         }
       ]
     },
@@ -98,6 +88,46 @@
           "title": "Stabiler · More stable",
           "detail": "Runs more reliably on devices with less memory, and Settings ▸ Speicher shows what's using it.",
           "symbol": "checkmark.shield"
+        },
+        {
+          "title": "Cloud-Bilder · Cloud pictures",
+          "detail": "Draw card and story pictures in seconds with Muse Image or Nano Banana on your own OpenRouter account, at a cent or a few each. On-device drawing stays the default.",
+          "symbol": "cloud"
+        },
+        {
+          "title": "Verben mit Präpositionen · Verbs with prepositions",
+          "detail": "42 pairs like warten auf and Angst haben vor, each with its own 3D scene. Flip the cards, drill the case, fill the gaps, and spot the trap in Die Falle.",
+          "symbol": "link"
+        },
+        {
+          "title": "Die Kartei für Mac · Die Kartei on Mac",
+          "detail": "Study on your Mac with the same decks, tutors and progress, kept in step with your iPhone and iPad through iCloud, in a window with a sidebar, menus and its own Settings.",
+          "symbol": "macbook"
+        },
+        {
+          "title": "Bilder vom Mac · Pictures from your Mac",
+          "detail": "On a Mac, draw much sharper pictures with Z-Image Turbo or FLUX.2 klein, and send a deck or story from your iPhone to be illustrated there.",
+          "symbol": "macbook.and.iphone"
+        },
+        {
+          "title": "Verben wiederholen · Verb review",
+          "detail": "Review the 42 verb pairs with spaced repetition, each with its scene. A pair comes back just before you'd forget it, and due ones show up on Today.",
+          "symbol": "arrow.triangle.2.circlepath"
+        },
+        {
+          "title": "Schreibhilfe · Writing helper on the Mac",
+          "detail": "Select text in any Mac app, then Services ▸ Auf Deutsch or Deutsch korrigieren, and the German replaces it. Longer text opens in a small floating window.",
+          "symbol": "text.badge.checkmark"
+        },
+        {
+          "title": "Stapel mischen · Mix decks",
+          "detail": "Pick several decks in the Library and study them as one session. Each deck keeps its own progress, and your last mix is remembered.",
+          "symbol": "square.stack.3d.up.fill"
+        },
+        {
+          "title": "Verstehen · Understand the cases",
+          "detail": "Each case now opens with a short lesson in English and German, with die Figur acting out the sentences, memory aids, and three drills with over 700 practice sentences: name a phrase's job, read who does what by the ending, and swap in der Mann.",
+          "symbol": "lightbulb"
         }
       ]
     },

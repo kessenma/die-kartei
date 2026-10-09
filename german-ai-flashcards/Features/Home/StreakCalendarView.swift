@@ -1022,21 +1022,32 @@ struct DayDetailSheet: View {
         for r in kasusRounds {
             let step = r.step ?? .fill
             let noun = switch step {
-            case .find:  r.isMarkingRound ? "words" : "phrases"
-            case .fill:  r.isLegacyStoryRound ? "articles" : "endings"
-            case .quick: "sentences"
+            case .find:   r.isMarkingRound ? "words" : "phrases"
+            case .fill:   r.isLegacyStoryRound ? "articles" : "endings"
+            case .quick:  "sentences"
+            case .build:  "words"
+            case .roles:  "roles"
+            case .wer:    "sentences"
+            case .probe:  "swaps"
+            case .lesson: "cards"
             }
-            var parts = ["\(r.askedCount) \(noun)"]
-            if let score = r.markScore {
+            var parts: [String] = []
+            if step == .lesson {
+                // A read lesson: nothing asked, so „gelesen“ instead of 0/0.
+                parts.append("gelesen")
+            } else if let score = r.markScore {
+                parts.append("\(r.askedCount) \(noun)")
                 parts.append(score.scoreLabel)
             } else {
+                parts.append("\(r.askedCount) \(noun)")
                 parts.append("\(r.firstTryCount)/\(r.askedCount) first try")
             }
             if let hint = r.hintLevel { parts.append(hint.germanLabel) }
             if r.revealedAnswers { parts.append("Lösung angezeigt") }
             if r.durationSeconds > 0 { parts.append("\(r.durationSeconds)s") }
-            // "Kasus · Der verlorene Schlüssel · Markieren · Dativ", "Kasus · Schnellrunde · Dativ".
-            let title = step == .quick
+            // "Kasus · Der verlorene Schlüssel · Markieren · Dativ", "Kasus · Schnellrunde · Dativ",
+            // "Kasus · Rollen · Dativ" (Verstehen), "Kasus · Lektion · Dativ".
+            let title = step == .quick || step == .build || step.isConcept
                 ? ["Kasus", step.germanLabel, r.unit?.germanTitle]
                 : ["Kasus", KasusStoryBank.bundled.story(id: r.storyID)?.title
                             ?? KasusStoryStore.title(id: r.storyID, in: context), r.stepLabel]

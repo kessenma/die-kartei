@@ -451,6 +451,11 @@ enum KasusService {
         "quick-\(unit.rawValue)"
     }
 
+    /// The storyID a Bau das Wort round is filed under: "build-dativ".
+    static func buildRoundID(for unit: KasusUnit) -> String {
+        "build-\(unit.rawValue)"
+    }
+
     // MARK: Preparing a story
 
     /// Validates the story once for a session. A few milliseconds; the Goethe map is built on
@@ -722,9 +727,12 @@ enum KasusService {
 
     /// A Schnellrunde, for `recordRound`. The drill never shows the case, but it names the noun
     /// with its article, so `countsTowardSkill` leaves its f/n/pl Akkusativ answers out.
-    static func quickResult(unit: KasusUnit, items: [KasusItemResult], durationSeconds: Int) -> KasusRoundResult {
-        KasusRoundResult(storyID: quickRoundID(for: unit), unit: unit, step: .quick, items: items,
-                         durationSeconds: durationSeconds)
+    /// Bau das Wort (`step: .build`) is graded the same way and filed under `buildRoundID`.
+    static func quickResult(unit: KasusUnit, items: [KasusItemResult], durationSeconds: Int,
+                            step: KasusRoundStep = .quick) -> KasusRoundResult {
+        let id = step == .build ? buildRoundID(for: unit) : quickRoundID(for: unit)
+        return KasusRoundResult(storyID: id, unit: unit, step: step, items: items,
+                                durationSeconds: durationSeconds)
     }
 
     /// Whether Ergebnis offers "eine Stufe schwerer".
@@ -774,7 +782,15 @@ enum KasusService {
         switch step {
         case .find:
             return false
-        case .quick:
+        // Verstehen: Rollen and Wer macht was? are recognition (the role, the reading), and a
+        // lesson is nothing answered; none ever moves the coach.
+        case .roles, .wer, .lesson:
+            return false
+        // Die Probe is production: the masculine test noun shows nothing until the learner picks
+        // its form, so even an f/n/pl Akkusativ phrase is the learner's own answer here.
+        case .probe:
+            return true
+        case .quick, .build:
             // The drill names the noun with its article („Noun: die Katze“).
             return !genderGivesItAway
         case .fill:
@@ -1144,6 +1160,19 @@ enum KasusService {
         shaky.grammar = [GrammarFocus.dativ.rawValue: GrammarSkill(struggle: 0.6, lastSeen: Date(), samples: [])]
         check("hero, Dativ shaky, all done", describe(KasusPath.next(profile: shaky, level: .b1, rounds: everything, bank: bank)),
               "dativ · „\(story.title)“ · Endungen")
+        // Verstehen (1b): the lesson, then Rollen, then the story, on the bundled items.
+        let concepts = KasusConceptBank.bundledUnchecked
+        check("hero A1, nothing played, with Verstehen",
+              describe(KasusPath.next(profile: nil, level: .a1, rounds: none, bank: bank, concepts: concepts)),
+              "dativ · Lektion · Verstehen")
+        let lessonRead = played([(lessonRoundID(.dativ), .dativ, .lesson)])
+        check("hero A1, lesson read, with Verstehen",
+              describe(KasusPath.next(profile: nil, level: .a1, rounds: lessonRead, bank: bank, concepts: concepts)),
+              "dativ · Rollen · Who does what?")
+        let rolesPlayed = lessonRead + played([(conceptRoundID(.dativ, .roles), .dativ, .roles)])
+        check("hero A1, Rollen played, with Verstehen",
+              describe(KasusPath.next(profile: nil, level: .a1, rounds: rolesPlayed, bank: bank, concepts: concepts)),
+              "dativ · „\(story.title)“ · Lesen")
 
         lines.append(failures == 0 ? "Service ALL OK" : "Service \(failures) FAILED")
         return lines
@@ -1370,11 +1399,17 @@ struct KasusHero: Hashable {
         case story(storyID: String, step: KasusStep)
         /// The unit's Schnellrunde.
         case quickRound
+        /// Read the unit's lesson (Verstehen).
+        case lesson
+        /// Play a Verstehen exercise.
+        case concept(KasusConceptExercise)
     }
 
     enum Reason: Hashable {
         /// Rule 1: the coach counts this case as shaky.
         case shaky(GrammarFocus)
+        /// Rule 1b: the unit's lesson or Rollen before its first story (Verstehen).
+        case understand
         /// Rule 2: a story not played yet.
         case newStory
         /// Rule 3: the first unfinished step from the start unit on.
@@ -1399,8 +1434,8 @@ struct KasusHero: Hashable {
         return nil
     }
 
-    /// „Der verlorene Schlüssel“ · Endungen, Wiederholen · „Der verlorene Schlüssel“, or
-    /// Schnellrunde · Nom + Akk + Dat.
+    /// „Der verlorene Schlüssel“ · Endungen, Wiederholen · „Der verlorene Schlüssel“,
+    /// Schnellrunde · Nom + Akk + Dat, Lektion · Verstehen, or Rollen · Who does what?.
     var subtitle: String {
         switch action {
         case .story(_, let step):
@@ -1408,7 +1443,17 @@ struct KasusHero: Hashable {
             return reason == .review ? "Wiederholen · \(title)" : "\(title) · \(step.germanLabel)"
         case .quickRound:
             return "Schnellrunde · \(unit.casesInPlay.map(\.short).joined(separator: " + "))"
+        case .lesson:
+            return "Lektion · Verstehen"
+        case .concept(let exercise):
+            return "\(exercise.germanTitle) · \(exercise.englishTitle)"
         }
+    }
+
+    /// What to launch for a Verstehen exercise action.
+    var conceptSession: KasusConceptSession? {
+        guard case .concept(let exercise) = action else { return nil }
+        return KasusConceptSession(unit: unit, exercise: exercise)
     }
 
     /// What to launch for a story action.
@@ -1426,13 +1471,15 @@ enum KasusPath {
     /// Where to pick up, first rule that fits:
     ///   1. a shaky akk/dat/gen case whose unit has a story → that unit's least-recently-played
     ///      story (Lesen if it was never played, else Einsetzen, the step that moves the skill);
+    ///   1b. with `concepts`: before a unit's first story, its lesson while unread, then Rollen
+    ///      while unplayed (Verstehen: the idea before the worksheet);
     ///   2. an unplayed story, the start unit's first;
     ///   3. the first unfinished step from the start unit on (Markieren, Endungen, Schnellrunde);
     ///   4. the story played longest ago, "Wiederholen".
     /// The start unit comes from the learner's level (A1 → Nominativ, A2 → Akkusativ,
     /// B1+ → Dativ); nothing is ever written back.
     static func next(profile: LearnerProfile?, level: CEFRLevel, rounds: [KasusRound],
-                     bank: KasusStoryBank) -> KasusHero {
+                     bank: KasusStoryBank, concepts: KasusConceptBank? = nil) -> KasusHero {
         let progress = KasusProgress(rounds: rounds)
         let start = KasusUnit.start(for: level)
         let path = Array(KasusUnit.allCases.drop { $0 != start })
@@ -1453,10 +1500,19 @@ enum KasusPath {
             return hero(story, unit, step, .shaky(focus))
         }
 
-        // 2. An unplayed story, from the start unit on, then any earlier one.
+        // 2. An unplayed story, from the start unit on, then any earlier one. With the Verstehen
+        //    items in hand (1b), a unit's lesson and Rollen come before its first story.
         let unitOrder = path + KasusUnit.allCases.filter { !path.contains($0) }
         for unit in unitOrder {
             if let story = bank.stories(for: unit).first(where: { progress.lastPlayed($0) == nil }) {
+                if let concepts {
+                    if !progress.lessonRead(unit) {
+                        return KasusHero(unit: unit, action: .lesson, reason: .understand, storyTitle: nil)
+                    }
+                    if concepts.offers(.roles, for: unit), !progress.conceptDone(unit, .roles) {
+                        return KasusHero(unit: unit, action: .concept(.roles), reason: .understand, storyTitle: nil)
+                    }
+                }
                 return hero(story, unit, .lesen, .newStory)
             }
         }

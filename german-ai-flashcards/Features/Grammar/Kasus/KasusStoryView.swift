@@ -74,7 +74,6 @@ struct KasusStoryView: View {
     @State private var playable: KasusPlayableStory?
     @State private var didSetUp = false
     @State private var step: KasusStep = .lesen
-    @State private var showKasusCheck = false
 
     // Lesen
     @State private var showEnglish: Set<Int> = []
@@ -108,6 +107,7 @@ struct KasusStoryView: View {
                 if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
             }
             .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { stepHeight = $0 }
+            .kasusReference()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -119,20 +119,10 @@ struct KasusStoryView: View {
                 ToolbarItem(placement: .principal) {
                     if playable != nil { stepBar }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showKasusCheck = true
-                    } label: {
-                        Image(systemName: "questionmark.circle")
-                    }
-                    .accessibilityLabel("Der Kasus-Check")
-                }
+
             }
         }
         .onAppear(perform: setUp)
-        .sheet(isPresented: $showKasusCheck) {
-            KasusCheckSheet()
-        }
         .tint(appTheme.accent(model: nil))
     }
 
@@ -750,6 +740,18 @@ enum KasusDebugOpen: Identifiable, Hashable {
     case unit(KasusUnit)
     case quick(KasusUnit)
     case story(KasusStoryScreen)
+    /// Verstehen: `lesson:<unit>` (the lesson sheet), `merkhilfen` (the memory aids), and
+    /// `roles:<unit>` · `wer:<unit>` · `probe:<unit>` (an exercise, prefilled from
+    /// `-kasus.debugAnswers` and `-kasus.debugQuickState`).
+    case lesson(KasusUnit)
+    case mnemonics
+    case concept(KasusUnit, KasusConceptExercise)
+    /// The 3D ending blocks: `werkstatt` (Endungs-Werkstatt, preset by `-kasus.debugWerkstatt
+    /// dieser:dat:m`), `table` (the endings table, a cell built with `-kasus.debugCell dat:m`),
+    /// and `build:<unit>` (Bau das Wort, prefilled like `quick:<unit>`).
+    case werkstatt
+    case table
+    case build(KasusUnit)
 
     var id: String {
         switch self {
@@ -757,6 +759,12 @@ enum KasusDebugOpen: Identifiable, Hashable {
         case .unit(let unit):     "unit:\(unit.rawValue)"
         case .quick(let unit):    "quick:\(unit.rawValue)"
         case .story(let screen):  screen.rawValue
+        case .lesson(let unit):   "lesson:\(unit.rawValue)"
+        case .mnemonics:          "merkhilfen"
+        case .werkstatt:          "werkstatt"
+        case .table:              "table"
+        case .build(let unit):    "build:\(unit.rawValue)"
+        case .concept(let unit, let exercise): "\(exercise.rawValue):\(unit.rawValue)"
         }
     }
 
@@ -774,6 +782,21 @@ enum KasusDebugOpen: Identifiable, Hashable {
         } else if value.lowercased().hasPrefix("quick:") {
             guard let unit = unitNamed(after: "quick:") else { return nil }
             self = .quick(unit)
+        } else if value.lowercased().hasPrefix("lesson:") {
+            guard let unit = unitNamed(after: "lesson:") else { return nil }
+            self = .lesson(unit)
+        } else if value.lowercased() == "merkhilfen" {
+            self = .mnemonics
+        } else if value.lowercased() == "werkstatt" {
+            self = .werkstatt
+        } else if value.lowercased() == "table" {
+            self = .table
+        } else if value.lowercased().hasPrefix("build:") {
+            guard let unit = unitNamed(after: "build:") else { return nil }
+            self = .build(unit)
+        } else if let exercise = KasusConceptExercise.allCases.first(where: { value.lowercased().hasPrefix($0.rawValue + ":") }) {
+            guard let unit = unitNamed(after: exercise.rawValue + ":") else { return nil }
+            self = .concept(unit, exercise)
         } else if let screen = KasusStoryScreen(rawValue: value.lowercased()) {
             self = .story(screen)
         } else {
@@ -799,8 +822,14 @@ enum KasusDebugOpen: Identifiable, Hashable {
 
     /// The Schnellrunde `quick:<unit>` launches, with a prefill so the drill reads its state from
     /// the launch arguments.
-    static func quickSession(for unit: KasusUnit) -> CaseEndingsSession {
-        CaseEndingsSession(unit: unit, prefill: KasusPrefill.fromLaunchArguments() ?? KasusPrefill())
+    static func quickSession(for unit: KasusUnit, style: CaseEndingsSession.Style = .schnellrunde) -> CaseEndingsSession {
+        CaseEndingsSession(unit: unit, style: style, prefill: KasusPrefill.fromLaunchArguments() ?? KasusPrefill())
+    }
+
+    /// The Verstehen exercise `roles:<unit>` · `wer:<unit>` · `probe:<unit>` launches, with a
+    /// prefill so the screen reads its state from the launch arguments.
+    static func conceptSession(for unit: KasusUnit, exercise: KasusConceptExercise) -> KasusConceptSession {
+        KasusConceptSession(unit: unit, exercise: exercise, prefill: KasusPrefill.fromLaunchArguments() ?? KasusPrefill())
     }
 }
 #endif

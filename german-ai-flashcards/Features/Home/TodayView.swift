@@ -144,6 +144,8 @@ struct TodaySection: View {
         case .wortschatz:
             Button { launchWortschatz() } label: { rowLabel(rec, hero: hero, chevron: true) }
                 .buttonStyle(.plain)
+        case .verbReview:
+            NavigationLink { VerbPrepositionReviewView() } label: { rowLabel(rec, hero: hero) }
         }
     }
 
@@ -169,7 +171,8 @@ struct TodaySection: View {
                 hasStartedLearning: hasStartedLearning,
                 dayIndex: dayIndex,
                 resume: resumeInfo,
-                wortschatz: wortschatzInfo
+                wortschatz: wortschatzInfo,
+                verbDue: verbDueCount
             )
         )
     }
@@ -204,13 +207,20 @@ struct TodaySection: View {
         router.launch(.cardDeck(session))
     }
 
+    /// Due pairs in the verb review box, which has its own plan step.
+    private var verbDueCount: Int {
+        decks.first { $0.kind == .verbPrepositionSRS }
+            .map { VerbPrepositionService.counts($0.cards).due } ?? 0
+    }
+
     /// SRS cards that have been scheduled and are now due (never-reviewed cards are "new", not due),
-    /// soonest-due first, across every deck except the Goethe box, which has its own plan step and
-    /// would otherwise fill the whole review with its words.
+    /// soonest-due first, across every deck except the Goethe box and the verb-pair box, which have
+    /// their own plan steps (the Goethe words would fill the whole review, and a verb pair shown
+    /// on a generic card would carry its own answer).
     private var dueCards: [SavedCard] {
         let now = Date()
         return decks
-            .filter { $0.kind != .goetheSRS }
+            .filter { $0.kind != .goetheSRS && $0.kind != .verbPrepositionSRS }
             .flatMap(\.cards)
             .filter { card in
                 guard let next = card.nextReviewDate else { return false }

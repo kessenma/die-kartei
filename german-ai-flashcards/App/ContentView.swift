@@ -267,10 +267,24 @@ struct ContentView: View {
         .sheet(item: $kasusDebugSheet) { open in
             NavigationStack {
                 Group {
-                    if case .unit(let unit) = open {
+                    switch open {
+                    case .unit(let unit):
                         KasusUnitView(unit: unit, modelManager: coordinator.modelManager,
                                       mlxService: coordinator.mlxService)
-                    } else {
+                    case .lesson(let unit):
+                        KasusLessonView(unit: unit, onRead: { seconds in
+                            KasusService.recordLessonRead(unit: unit, seconds: seconds, in: modelContext)
+                        }, onPractice: {
+                            kasusDebugSheet = nil
+                            router.launch(.kasusConcept(KasusConceptSession(unit: unit, exercise: .roles)))
+                        })
+                    case .mnemonics:
+                        KasusMnemonicsView()
+                    case .werkstatt:
+                        EndungsWerkstattView()
+                    case .table:
+                        CaseEndingsView()
+                    default:
                         GrammarHubView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
                     }
                 }
@@ -525,9 +539,14 @@ struct ContentView: View {
             // per-proof tally, errors), every planted-error fixture and the forms round trip, then
             // the service's blanks, options, grading and `KasusPath.next` checks.
             if UserDefaults.standard.bool(forKey: "kasus.debugVerify") {
-                let report = KasusStoryBank.debugVerifyReport(lexicon: AppKasusLexicon())
+                let lexicon = AppKasusLexicon()
+                let report = KasusStoryBank.debugVerifyReport(lexicon: lexicon)
                     .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-                for line in report + KasusService.debugServiceReport() {
+                // Then the Verstehen items (`kasus_concepts.json`): per unit and kind, with their
+                // golden numbers and which exercises each unit offers.
+                let concepts = KasusConceptBank.debugVerifyReport(lexicon: lexicon)
+                    .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+                for line in report + concepts + KasusService.debugServiceReport() {
                     print("[kasus.debugVerify] \(line)")
                 }
             }
@@ -575,10 +594,14 @@ struct ContentView: View {
                 }
             } else if let open = KasusDebugOpen.fromLaunchArguments() {
                 switch open {
-                case .hub, .unit:
+                case .hub, .unit, .lesson, .mnemonics, .werkstatt, .table:
                     kasusDebugSheet = open
                 case .quick(let unit):
                     router.launch(.caseEndings(KasusDebugOpen.quickSession(for: unit)))
+                case .build(let unit):
+                    router.launch(.caseEndings(KasusDebugOpen.quickSession(for: unit, style: .bauDasWort)))
+                case .concept(let unit, let exercise):
+                    router.launch(.kasusConcept(KasusDebugOpen.conceptSession(for: unit, exercise: exercise)))
                 case .story(let screen):
                     if let session = KasusDebugOpen.session(for: screen) {
                         router.launch(.kasusStory(session))
@@ -876,7 +899,8 @@ struct ContentView: View {
                 autoResume: session.autoResume,
                 autoStart: session.autoStart,
                 badgeLogoName: session.badgeLogoName,
-                modelManager: coordinator.modelManager
+                modelManager: coordinator.modelManager,
+                isDeckMix: session.isDeckMix
             )
             .environment(coordinator.mlxService)
 
@@ -1013,6 +1037,20 @@ struct ContentView: View {
                 onAnswersShown: { roundID in
                     // Lösung zeigen after that round was recorded: flags the same KasusRound.
                     KasusService.markAnswersShown(roundID: roundID, in: modelContext)
+                },
+                onDismiss: {
+                    router.dismiss()
+                }
+            )
+
+        case .kasusConcept(let session):
+            KasusConceptView(
+                session: session,
+                hapticMode: coordinator.modelManager.hapticFeedbackMode,
+                onComplete: { result in
+                    // Rollen and Wer macht was? count for the streak only; Die Probe may move a
+                    // case skill. recordRound tells them apart by the step.
+                    KasusService.recordRound(result, in: modelContext)
                 },
                 onDismiss: {
                     router.dismiss()

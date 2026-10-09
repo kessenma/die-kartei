@@ -12,6 +12,8 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
     // Setup only: iOS gives an app no way to enable its own keyboard, so this screen explains where
     // the switch lives and reports whether it's been flipped. The Mac has no keyboard extension.
     case keyboard
+    // Its Mac stand-in: the Services menu items and the Schreibhilfe panel. Mac only.
+    case writingHelper
     case gamification
     // First in Learning, because the three screens under it all inherit their level from here.
     case level, flashcards, conversation, stories
@@ -34,7 +36,7 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
     var group: Group {
         switch self {
         case .sync: .account
-        case .appearance, .reminders, .voice, .keyboard, .gamification: .app
+        case .appearance, .reminders, .voice, .keyboard, .writingHelper, .gamification: .app
         case .level, .flashcards, .conversation, .stories: .learning
         case .model, .memory: .model
         case .whatsNew, .sources, .feedback: .about
@@ -49,6 +51,7 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
         case .reminders: "Reminders"
         case .voice: "Voice"
         case .keyboard: "Tastatur · Keyboard"
+        case .writingHelper: "Schreibhilfe · Writing helper"
         case .gamification: "Gamification"
         case .level: "Your Level"
         case .flashcards: "Flashcards"
@@ -70,6 +73,7 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
         case .reminders: "bell.badge"
         case .voice: "waveform"
         case .keyboard: "keyboard"
+        case .writingHelper: "text.badge.checkmark"
         case .gamification: "gamecontroller"
         case .level: "figure.stairs"
         case .flashcards: "rectangle.stack"
@@ -88,6 +92,7 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
     var isAvailable: Bool {
         switch self {
         case .keyboard: !ThisDevice.isMac
+        case .writingHelper: ThisDevice.isMac
         case .developer: ScreenshotSeeding.isAvailable
         default: true
         }
@@ -144,7 +149,7 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
             return WhatsNew.current.map { $0.isUnreleased ? "In progress" : "v\($0.version)" }
         case .developer:
             return ScreenshotDataSeeder.seededAt == nil ? nil : "Seeded"
-        case .voice, .flashcards, .conversation, .stories, .model, .sources, .feedback:
+        case .voice, .writingHelper, .flashcards, .conversation, .stories, .model, .sources, .feedback:
             return nil
         }
     }
@@ -161,6 +166,12 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
         case .keyboard:
             #if os(iOS)
             KeyboardSettingsView()
+            #else
+            EmptyView()
+            #endif
+        case .writingHelper:
+            #if os(macOS)
+            MacWritingHelperSettingsView()
             #else
             EmptyView()
             #endif

@@ -41,6 +41,12 @@ struct FullscreenCardView: View {
         savedCards.indices.contains(currentIndex) ? savedCards[currentIndex].imageFileName : nil
     }
 
+    /// The folder this card's picture is filed under: its own deck's, since a deck mix or the
+    /// Daily Review holds cards from many decks.
+    private var currentImageDeckID: UUID? {
+        savedCards.indices.contains(currentIndex) ? savedCards[currentIndex].deck?.id ?? deckUUID : deckUUID
+    }
+
     var body: some View {
         GeometryReader { geo in
             ZStack {
@@ -171,7 +177,7 @@ struct FullscreenCardView: View {
                 isRegular: cards[currentIndex].isRegular,
                 exampleSentence: cards[currentIndex].exampleSentence,
                 imageFileName: currentImageFileName,
-                imageDeckID: deckUUID,
+                imageDeckID: currentImageDeckID,
                 hidesArticleUntilFlipped: hidesArticleUntilFlipped,
                 forms: cards[currentIndex].forms
             )
@@ -215,7 +221,7 @@ struct FullscreenCardView: View {
                 isRegular: cards[currentIndex].isRegular,
                 exampleSentence: cards[currentIndex].exampleSentence,
                 imageFileName: currentImageFileName,
-                imageDeckID: deckUUID,
+                imageDeckID: currentImageDeckID,
                 hidesArticleUntilFlipped: hidesArticleUntilFlipped,
                 forms: cards[currentIndex].forms
             )

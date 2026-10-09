@@ -35,6 +35,9 @@ struct StudySession: Identifiable {
     /// When true the player skips its setup screen and begins at once — for launchers that are
     /// themselves the setup screen (the Wortschatz hub). A paused session still wins.
     var autoStart: Bool = false
+    /// Several saved decks studied as one (Library ▸ Decks ▸ Mix). `deckID` stays nil, so the
+    /// session can't pause; the player credits each deck its share of the result instead.
+    var isDeckMix: Bool = false
 
     /// The model that generated this deck, when known — used for the deck's brand tint.
     var generatorModel: MLXModel? { MLXModel(rawValue: generatorRaw) }

@@ -100,6 +100,73 @@ struct SourcesView: View {
             .themedListRow()
             #endif
 
+            // MARK: - How the cases are taught (KASUS Verstehen)
+            Section {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "lightbulb.fill")
+                        .font(.system(size: 26))
+                        .foregroundStyle(.tint)
+                        .frame(width: 40, height: 40)
+
+                    Text(
+                        "The Grammatik lessons teach the four cases the way research on English-speaking learners suggests: the role a phrase plays before its ending, English's own cases in its pronouns as the bridge, the Kasus-Check as the way to decide, and drills where only the ending says who does what (structured input, after VanPatten's Processing Instruction). Die Probe and „Gleich oder anders?“ are the German classroom's Ersatzprobe and Umstellprobe."
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 4)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Academic Citations")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .textCase(.uppercase)
+                    Text("Nick Henry, Hillah Culman, Bill VanPatten: More on the effects of explicit information in instructed SLA: A partial replication and a response to Fernández (2008). Studies in Second Language Acquisition 31(4), 2009.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text("Hillah Culman, Nick Henry, Bill VanPatten: The role of explicit information in instructed SLA: An on-line study with processing instruction and German accusative case inflections. Die Unterrichtspraxis / Teaching German 42(1), 2009.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text("Bill VanPatten: Input Processing and Grammar Instruction in Second Language Acquisition. Ablex, 1996.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 2)
+
+                Link(destination: URL(string: "https://grammis.ids-mannheim.de/sgt/2218")!) {
+                    Label("IDS grammis: case forms, sentence relationships and the replacement test", systemImage: "arrow.up.right.square")
+                        .font(.footnote)
+                }
+                Link(destination: URL(string: "https://grammis.ids-mannheim.de/progr@mm/6858")!) {
+                    Label("IDS grammis: two-way prepositions, location and destination", systemImage: "arrow.up.right.square")
+                        .font(.footnote)
+                }
+                Link(destination: URL(string: "https://www.friedrich-verlag.de/friedrich-plus/sekundarstufe/deutsch/grammatik/kasus-verstehen-und-gebrauchen-16008")!) {
+                    Label("Friedrich Verlag: Kasus verstehen und gebrauchen (the Satzproben)", systemImage: "arrow.up.right.square")
+                        .font(.footnote)
+                }
+                Link(destination: URL(string: "https://germanwithantrim.com/blog/german-question-words-for-people-wer-wen-wem-wessen")!) {
+                    Label("Herr Antrim: wer, wen, wem, wessen", systemImage: "arrow.up.right.square")
+                        .font(.footnote)
+                }
+                Link(destination: URL(string: "https://www.clozemaster.com/blog/german-cases/")!) {
+                    Label("Clozemaster: German cases, a complete guide", systemImage: "arrow.up.right.square")
+                        .font(.footnote)
+                }
+                Link(destination: URL(string: "https://www.lingoda.com/blog/en/dative-case-german/")!) {
+                    Label("Lingoda: the Dativ and the “to” test", systemImage: "arrow.up.right.square")
+                        .font(.footnote)
+                }
+                Link(destination: URL(string: "https://angelikasgerman.co.uk/how-to-memorise-those-pesky-prepositions/")!) {
+                    Label("Angelika's German: the preposition songs", systemImage: "arrow.up.right.square")
+                        .font(.footnote)
+                }
+            } header: {
+                Text("Wie die Fälle erklärt werden · How the cases are taught")
+                    .themedSectionHeader()
+            }
+            .themedListRow()
+
             // MARK: - Wiktionary / Kaikki
             Section {
                 HStack(spacing: 12) {

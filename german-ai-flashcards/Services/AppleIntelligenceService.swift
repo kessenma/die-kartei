@@ -5,8 +5,10 @@ import FoundationModels
 /// behind the same small surface `MLXGenerationService` exposes, so the rest of the app can treat
 /// the built-in model as just another `MLXModel` choice (`.appleIntelligence`).
 ///
-/// This is the ONLY file in the project that imports `FoundationModels`. Everything else stays
-/// MLX-typed and routes here via `MLXGenerationService` when the selected model is the built-in one.
+/// The tutor's only door to `FoundationModels`: everything else stays MLX-typed and routes here via
+/// `MLXGenerationService` when the selected model is the built-in one. The one other importer is
+/// `GermanWriter.swift`, the writing helpers' rewrite core, which the keyboard extension shares and
+/// so can't depend on this class.
 ///
 /// The on-device model is whatever the current OS ships: it is upgraded with each major iOS release
 /// (iOS 26 → 2nd-gen, iOS 27 → "AFM 3"), so simply targeting `SystemLanguageModel.default` means the

@@ -48,7 +48,7 @@ nonisolated enum VocabListParser {
     private static let markCharacters = CharacterSet(charactersIn: "✓✔☑✅★")
     private static let explicitSeparators = ["\t", " – ", " — ", " = ", "=", " - "]
     /// The English column often opens with one of these.
-    private static let englishOpeners = ["to ", "the ", "a ", "an ", "old expression", "here:", "lit.", "literally", "in the ", "on the ", "at the ", "someone", "something", "sth", "sb"]
+    private static let englishOpeners = ["to ", "the ", "a ", "an ", "old expression", "here:", "colloquial", "coll.", "lit.", "literally", "in the ", "on the ", "at the ", "someone", "something", "sth", "sb"]
     private static let germanArticles: Set<String> = ["der", "die", "das", "ein", "eine", "einen", "einem", "einer", "sich", "den", "dem"]
     /// ", -e" / ", ¨-er" / ", -" at the end of a noun entry: how sheets note the plural.
     static let pluralEndingPattern = #",\s*¨?-\s*¨?[a-zäöüß]{0,3}$"#

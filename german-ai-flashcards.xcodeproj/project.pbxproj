@@ -15,8 +15,8 @@
 		8AB660422FB717B00052F4F4 /* Transformers in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660412FB717B00052F4F4 /* Transformers */; };
 		8AB660452FB7199D0052F4F4 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660442FB7199D0052F4F4 /* MLXHuggingFace */; };
 		8AB660532FB720000052F4F4 /* StableDiffusion in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660522FB720000052F4F4 /* StableDiffusion */; };
+		8ABE00012FC000000000000C /* Die Kartei Keyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8ABE00012FC0000000000003 /* Die Kartei Keyboard.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8AD1F0012FE0000000000001 /* KarteiDiffusion in Frameworks */ = {isa = PBXBuildFile; platformFilters = (macos, ); productRef = 8AD1F0012FE0000000000003 /* KarteiDiffusion */; };
-		8ABE00012FC000000000000C /* Die Kartei Keyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8ABE00012FC0000000000003 /* Die Kartei Keyboard.appex */; platformFilters = (ios, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,9 +56,22 @@
 		8AC100012FD0000000000003 /* german-ai-flashcardsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "german-ai-flashcardsTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		8AE5C0012FF0000000000001 /* Exceptions for "german-ai-flashcards" folder in "Die Kartei Keyboard" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Services/GermanWriter.swift,
+			);
+			target = 8ABE00012FC0000000000002 /* Die Kartei Keyboard */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8AB65FEA2FB65EFD0052F4F4 /* german-ai-flashcards */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8AE5C0012FF0000000000001 /* Exceptions for "german-ai-flashcards" folder in "Die Kartei Keyboard" target */,
+			);
 			path = "german-ai-flashcards";
 			sourceTree = "<group>";
 		};
@@ -362,9 +375,7 @@
 /* Begin PBXTargetDependency section */
 		8ABE00012FC000000000000D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			platformFilters = (
-				ios,
-			);
+			platformFilter = ios;
 			target = 8ABE00012FC0000000000002 /* Die Kartei Keyboard */;
 			targetProxy = 8ABE00012FC000000000000E /* PBXContainerItemProxy */;
 		};
@@ -499,9 +510,9 @@
 		8AB65FF42FB65EFF0052F4F4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"ARCHS[sdk=macosx*]" = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				"ARCHS[sdk=macosx*]" = arm64;
 				CODE_SIGN_ENTITLEMENTS = "german-ai-flashcards/german-ai-flashcards.entitlements";
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "german-ai-flashcards/german-ai-flashcards-macOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
@@ -557,13 +568,13 @@
 		8AB65FF52FB65EFF0052F4F4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"ARCHS[sdk=macosx*]" = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				"ARCHS[sdk=macosx*]" = arm64;
 				CODE_SIGN_ENTITLEMENTS = "german-ai-flashcards/german-ai-flashcards.entitlements";
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "german-ai-flashcards/german-ai-flashcards-macOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 8;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
 				ENABLE_APP_SANDBOX = YES;
@@ -647,7 +658,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 8;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
 				ENABLE_PREVIEWS = YES;

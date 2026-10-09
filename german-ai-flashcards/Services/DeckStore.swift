@@ -44,6 +44,66 @@ struct DeckStore {
         )
     }
 
+    // MARK: Deck mix
+
+    /// One session over several saved decks, deck after deck in the order given (the player's
+    /// shuffle mixes them). Each deck is checked and corrected exactly as `session(for:)` does,
+    /// so `cards`, `validationResults` and `savedCards` stay index-aligned.
+    func mixSession(for decks: [SavedDeck], style: FlashcardStyle) -> StudySession {
+        var cards: [VocabCard] = []
+        var results: [ValidationResult] = []
+        var savedCards: [SavedCard] = []
+        for deck in decks {
+            let single = session(for: deck, style: style)
+            cards += single.cards
+            results += single.validationResults
+            savedCards += single.savedCards
+        }
+        // One shared generator keeps its brand tint; a mix of models gets the app accent.
+        let generators = Set(decks.map(\.generatorRaw))
+        return StudySession(
+            cards: cards,
+            topic: Self.mixTitle(decks.map(\.topic)),
+            deckID: nil,
+            validationResults: results,
+            savedCards: savedCards,
+            flashcardStyle: style,
+            generatorRaw: generators.count == 1 ? generators.first ?? "" : "",
+            subDeckLabel: "Mix · \(decks.count) decks",
+            isDeckMix: true
+        )
+    }
+
+    /// "Essen and Reisen" while the names are short; past that, "3 decks mixed" — the setup
+    /// screen sets the title over the deck icon, where a long line runs across it.
+    static func mixTitle(_ topics: [String]) -> String {
+        let names = topics.formatted(.list(type: .and))
+        return names.count <= 36 ? names : "\(topics.count) decks mixed"
+    }
+
+    /// A deck mix's result, split by deck: each deck that had cards in the session gets a
+    /// `QuizResult` for its own share, so its stats, its Library row and its Leitner session
+    /// count move as if it had been studied alone. The streak and study time are logged once,
+    /// by the session-wide `saveQuizResult(deckID: nil, …)`, not here.
+    func saveDeckMixResults(_ shares: [DeckMixShare], durationSeconds: Int, mode: FlashcardStyle) {
+        let total = shares.reduce(0) { $0 + $1.total }
+        guard total > 0 else { return }
+        for share in shares where share.total > 0 {
+            let result = QuizResult(
+                totalCards: share.total,
+                correctCount: share.correct,
+                incorrectCardIndices: share.missedIndices,
+                durationSeconds: durationSeconds * share.total / total,
+                studyMode: mode,
+                ankiRatings: nil,
+                subDeckLabel: "Mix · \(share.total) of \(total) cards"
+            )
+            result.deck = share.deck
+            modelContext.insert(result)
+        }
+        try? modelContext.save()
+    }
+
     // MARK: Wortschatz (the Goethe box)
 
     /// The one deck every Goethe word's progress lives on. See `WortschatzMergeService`.
@@ -179,6 +239,8 @@ struct DeckStore {
             cards = PastTenseVerbService.toVocabCards(words.compactMap { lookup[$0] })
         case .grammar:
             return nil // grammar flip sessions carry no reconstructable card payload
+        case .verbPrepositionSRS:
+            return nil // reviewed in VerbPrepositionReviewView, which never pauses into a deck
         }
 
         guard progress.cardIndex < cards.count else { return nil }
@@ -481,4 +543,13 @@ struct DeckStore {
         try? modelContext.save()
         return deck
     }
+}
+
+/// One deck's part of a deck-mix session: its cards' tally, with missed cards given as positions
+/// in the deck itself (its cards by `sortOrder`), the way a single-deck `QuizResult` stores them.
+struct DeckMixShare {
+    let deck: SavedDeck
+    let correct: Int
+    let total: Int
+    let missedIndices: [Int]
 }

@@ -12,6 +12,12 @@ import SwiftUI
 
 // MARK: - Scope
 
+extension GoetheVocabService {
+    static func words(in scope: WortschatzScope) -> [GoetheWord] {
+        orderedWords.filter { scope.contains($0) }
+    }
+}
+
 /// Which levels and word classes feed reviews and new words. Progress outside the scope is kept,
 /// not lost — a deselected level's cards simply wait until it is switched back on.
 struct WortschatzScope: Equatable {

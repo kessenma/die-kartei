@@ -77,8 +77,9 @@ CloudKitSyncTransport = CKSyncEngine (zone "Kartei", one record type "KarteiItem
 4. **`needsUpload` is the source of truth.** The history token is saved in the same save as the
    flags it produced; the flag clears only on a successful send; everything owed is re-queued at
    launch and after an account change.
-5. **Canonical ids.** The Wortschatz deck, the goethe / past-tense / grammar decks and their cards
-   get UUIDv5 ids from (generatorRaw, topic) and (deck, German word), at creation in `DeckStore`
+5. **Canonical ids.** The Wortschatz deck, the goethe / past-tense / grammar decks, the verb-pair
+   review box (`verb-prep-srs`, created in `VerbPrepositionService`) and their cards get UUIDv5
+   ids from (generatorRaw, topic) and (deck, German word), at creation in `DeckStore`
    and once for older rows (`SyncCanonicalizer`). Wortschatz syncs only reviewed cards; the bundle
    rebuilds the rest and owns their word content. LearnerProfile has a fixed record name.
 6. **Older builds never clobber newer ones.** A local change is composed on the last copy

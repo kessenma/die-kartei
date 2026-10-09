@@ -90,6 +90,12 @@ struct CaseEndingsTable: View {
     var highlight: GrammarCase?
     var highlightCell: KasusTableCell? = nil
     var compact = false
+    /// The pinned reference shows whole definite articles, without extra ending rows.
+    var articlesOnly = false
+    /// The reference table's 3D pick: the ringed cell, nothing dimmed.
+    var selectedCell: KasusTableCell? = nil
+    /// Set, every full cell is a button (the reference table builds the tapped form in 3D).
+    var onSelectCell: ((KasusTableCell) -> Void)? = nil
 
     @Environment(\.appTheme) private var appTheme
 
@@ -140,8 +146,24 @@ struct CaseEndingsTable: View {
                     .frame(width: compact ? 50 : 62, alignment: .leading)
                     .opacity(highlightCell == nil || highlightCell?.kasus == kasus ? 1 : 0.45)
                     ForEach(Gender.allCases) { gender in
-                        if compact {
+                        if articlesOnly {
+                            Text(kasus.article(gender))
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(gender.color)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 3)
+                                .accessibilityLabel("\(kasus.name), \(gender.genderName): \(kasus.article(gender))")
+                        } else if compact {
                             compactCell(kasus, gender)
+                        } else if let onSelectCell {
+                            // Borderless: a List row holding many buttons hands each its own tap.
+                            Button {
+                                onSelectCell(KasusTableCell(kasus: kasus, genus: gender))
+                            } label: {
+                                selectable(cell(kasus, gender), kasus: kasus, gender: gender)
+                            }
+                            .buttonStyle(.borderless)
+                            .tint(.primary)
                         } else {
                             cell(kasus, gender)
                         }
@@ -175,6 +197,22 @@ struct CaseEndingsTable: View {
         .frame(maxWidth: .infinity)
         .minimumScaleFactor(0.8)
         .lineLimit(1)
+    }
+
+    /// The tapped cell, ringed and washed in its case color like Endungen's highlighted one.
+    private func selectable(_ content: some View, kasus: GrammarCase, gender: Gender) -> some View {
+        let isSelected = selectedCell == KasusTableCell(kasus: kasus, genus: gender)
+        let shape = RoundedRectangle(cornerRadius: appTheme.innerRadius(6), style: .continuous)
+        return content
+            .padding(.vertical, 3)
+            .background(isSelected ? kasus.color.opacity(0.16) : .clear, in: shape)
+            .overlay {
+                if isSelected { shape.strokeBorder(kasus.color, lineWidth: 2) }
+            }
+            .contentShape(shape)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
+            .accessibilityHint("Builds this form in 3D")
     }
 
     /// d·**em** over ein·**em**; the plural, which has no ein, shows (k)ein·**e**. No ending
@@ -211,14 +249,22 @@ struct CaseEndingsTable: View {
 
 struct CaseEndingsView: View {
     @State private var showKasusCheck = false
+    /// The cell built in 3D above the table, nil until one is tapped.
+    @State private var selectedCell: KasusTableCell?
+    @State private var stem: KasusStemChoice = .definite
+
+    /// The stems the 3D panel offers: the table's two rows, plus kein and dieser.
+    private static let panelStems = ["der", "ein", "kein", "mein", "dieser"].compactMap(KasusStemChoice.named)
 
     var body: some View {
         List {
             Section {
-                CaseEndingsTable()
-                    .padding(.vertical, 6)
+                CaseEndingsTable(selectedCell: selectedCell) { cell in
+                    withAnimation(.snappy) { selectedCell = cell }
+                }
+                .padding(.vertical, 6)
             } footer: {
-                Text(kasusRich: "The last letter of each article spells the code on the left. The noun itself changes in two places: **+ n** in the {dat:Dativ} plural, **+ s** on masculine and neuter in the {gen:Genitiv}.")
+                Text(kasusRich: "The last letter of each article spells the code on the left. The noun itself changes in two places: **+ n** in the {dat:Dativ} plural, **+ s** on masculine and neuter in the {gen:Genitiv}. Tap a cell to build it in 3D.")
             }
             .themedListRow()
 
@@ -232,11 +278,66 @@ struct CaseEndingsView: View {
                 .themedListRow()
         }
         .themedListScreen()
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if let selectedCell {
+                blocksPanel(selectedCell)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
         .navigationTitle("Kasus · Case Endings")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showKasusCheck) {
             KasusCheckSheet()
         }
+        .onAppear(perform: applyDebugCell)
+    }
+
+    /// The tapped cell as blocks, pinned above the list so scrolling never recycles the canvas.
+    /// ein has no plural, so its plural cell shows kein's.
+    private func blocksPanel(_ cell: KasusTableCell) -> some View {
+        let choice = cell.genus == .plural && !stem.hasPlural ? KasusStemChoice.named("kein")! : stem
+        return VStack(spacing: 6) {
+            HStack {
+                Text(kasusRich: "{\(cell.kasus.short.lowercased()):\(cell.kasus.name)} · \(cell.genus.genderName)")
+                    .font(.subheadline.weight(.medium))
+                Spacer()
+                Button {
+                    withAnimation(.snappy) { selectedCell = nil }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Close the 3D word")
+            }
+            if let parts = choice.parts(cell.kasus, cell.genus) {
+                EndingBlocksScene(state: .built(parts, kasus: cell.kasus, genus: cell.genus),
+                                  framing: choice.allParts)
+                    .frame(height: 130)
+            }
+            Picker("Word", selection: $stem) {
+                ForEach(Self.panelStems) { option in
+                    Text(option.label).tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.bar)
+    }
+
+    /// `-kasus.debugCell dat:m` opens the table with that cell built.
+    private func applyDebugCell() {
+        #if DEBUG
+        guard selectedCell == nil, let raw = UserDefaults.standard.string(forKey: "kasus.debugCell") else { return }
+        let fields = raw.lowercased().split(separator: ":").map(String.init)
+        guard fields.count == 2,
+              let kasus = GrammarCase.allCases.first(where: { $0.short.lowercased() == fields[0] }),
+              let genus = Gender(columnLabel: fields[1]) else { return }
+        selectedCell = KasusTableCell(kasus: kasus, genus: genus)
+        #endif
     }
 
     /// Which row of the table: the Kasus-Check's six questions in short, then one sentence run
@@ -495,6 +596,30 @@ struct EndingsQuestion: Identifiable {
 
     var nounForm: String { noun.form(kasus, isPlural: isPlural) }
 
+    /// The answer as two blocks, d + em, mein + en.
+    var answerParts: KasusFormParts {
+        let (family, stem) = determiner.kasusFamily
+        return KasusForms.parts(family: family, stem: stem, case: kasus, genus: gender)
+            ?? KasusFormParts(stem: "", ending: answer)
+    }
+
+    /// The stem every option shares: d, ein, mein, kein.
+    var stem: String { answerParts.stem }
+
+    /// An option's ending: „dem“ → em, „mein“ → "".
+    func ending(of form: String) -> String {
+        form.hasPrefix(stem) ? String(form.dropFirst(stem.count)) : form
+    }
+
+    func form(ending: String) -> String { stem + ending }
+
+    /// Bau das Wort's buttons: the options as endings, „-em“ and „–“ for none.
+    var endingLabels: [String] { options.map { KasusEndingGap.label(ending(of: $0)) } }
+
+    func form(endingLabel label: String) -> String {
+        form(ending: label == "–" ? "" : String(label.drop { $0 == "-" }))
+    }
+
     /// Right case, wrong gender („dem“ in „Ich helfe ___ Frau“), by the rule Einsetzen grades
     /// with, so the coach leaves it out here too. The Nominativ left unchanged („der“ for „dem
     /// Hund“) is a case miss.
@@ -638,16 +763,26 @@ struct CaseEndingsSession: Identifiable {
     /// The unit's own case, which gets the biggest share. Nil spreads the round evenly.
     let emphasis: GrammarCase?
     let title: String
+    let style: Style
     /// Set only by the DEBUG `-kasus.debugOpen quick:<unit>` argument, so a simulator that can't
     /// tap can still show an answered question. Nil in every real session.
     var prefill: KasusPrefill? = nil
 
+    /// The Schnellrunde picks whole articles; Bau das Wort picks the ending and snaps it onto
+    /// the stem, in 3D. Same sentences, same grading.
+    enum Style: Hashable {
+        case schnellrunde, bauDasWort
+
+        var step: KasusRoundStep { self == .bauDasWort ? .build : .quick }
+    }
+
     /// The unit's cases in play, weighted toward its own case (Alle Fälle spreads evenly).
-    init(unit: KasusUnit, prefill: KasusPrefill? = nil) {
+    init(unit: KasusUnit, style: Style = .schnellrunde, prefill: KasusPrefill? = nil) {
         self.unit = unit
         cases = unit.casesInPlay
         emphasis = unit.focusCase
-        title = "Schnellrunde · \(unit.germanTitle)"
+        self.style = style
+        title = "\(style.step.germanLabel) · \(unit.germanTitle)"
         self.prefill = prefill
     }
 }
@@ -716,6 +851,7 @@ struct CaseEndingsDrillView: View {
             // The article game's ground: the grouped grey on Klar, so the white answer buttons
             // stand off it, and each identity theme's own paper elsewhere.
             .background(ThemedBackground().ignoresSafeArea())
+            .kasusReference()
             .navigationTitle(session.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -750,6 +886,14 @@ struct CaseEndingsDrillView: View {
                 .padding(.top, 8)
                 .frame(maxWidth: contentWidth)
 
+            // The word in 3D: an open slot on the stem until the pick, then the answer snapping
+            // in (a wrong ending bounces off first). One canvas for the whole round, so it sits
+            // outside everything that changes identity per question.
+            EndingBlocksScene(state: blocks(q))
+                .frame(height: stageHeight)
+                .frame(maxWidth: contentWidth)
+                .opacity(picked == nil && !isBuilding ? 0.55 : 1)
+
             // The sentence, centered in whatever the answer panel leaves; it scrolls rather than
             // clip when a long explanation meets a small phone.
             GeometryReader { geo in
@@ -775,6 +919,21 @@ struct CaseEndingsDrillView: View {
         .animation(.snappy(duration: 0.3), value: picked)
     }
 
+    private var isBuilding: Bool { session.style == .bauDasWort }
+
+    /// The stage takes a slice of the play area: a hero in Bau das Wort, a strip in the
+    /// Schnellrunde.
+    private var stageHeight: CGFloat {
+        guard playHeight > 0 else { return isBuilding ? 150 : 96 }
+        return isBuilding ? min(210, max(110, playHeight * 0.24)) : min(140, max(80, playHeight * 0.15))
+    }
+
+    private func blocks(_ q: EndingsQuestion) -> EndingBlocksState {
+        guard let picked else { return .open(stem: q.stem, genus: q.gender) }
+        let rejected = picked == q.answer ? nil : q.ending(of: picked)
+        return .built(q.answerParts, kasus: q.kasus, genus: q.gender, rejected: rejected)
+    }
+
     private func prompt(_ q: EndingsQuestion) -> some View {
         VStack(spacing: 22) {
             nounHeader(q)
@@ -796,11 +955,20 @@ struct CaseEndingsDrillView: View {
                 feedbackCard(q, picked: picked)
                     .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .bottom)))
             }
-            KasusOptionGrid(options: q.options, answer: q.answer, kasus: q.kasus, picked: picked,
-                            columns: 3, rowHeight: 58) { option in
-                choose(option, for: q)
+            if isBuilding {
+                KasusOptionGrid(options: q.endingLabels, answer: KasusEndingGap.label(q.answerParts.ending),
+                                kasus: q.kasus, picked: picked.map { KasusEndingGap.label(q.ending(of: $0)) },
+                                columns: 3, rowHeight: 58) { label in
+                    choose(q.form(endingLabel: label), for: q)
+                }
+                .id(q.id)
+            } else {
+                KasusOptionGrid(options: q.options, answer: q.answer, kasus: q.kasus, picked: picked,
+                                columns: 3, rowHeight: 58) { option in
+                    choose(option, for: q)
+                }
+                .id(q.id)
             }
-            .id(q.id)
             Group {
                 if picked != nil {
                     Button(action: next) {
@@ -810,7 +978,7 @@ struct CaseEndingsDrillView: View {
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                 } else {
-                    Text("Tap the article that fits.")
+                    Text(isBuilding ? "Tap the ending that fits." : "Tap the article that fits.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -868,6 +1036,10 @@ struct CaseEndingsDrillView: View {
                 wrong.foregroundColor = .secondary
                 blank = wrong + AttributedString(" ") + blank
             }
+        } else if isBuilding {
+            var gap = AttributedString("___")
+            gap.foregroundColor = .secondary
+            blank = AttributedString(q.stem) + gap
         } else {
             blank = AttributedString("_____")
             blank.foregroundColor = .secondary
@@ -989,7 +1161,8 @@ struct CaseEndingsDrillView: View {
         onComplete(KasusService.quickResult(
             unit: session.unit,
             items: results,
-            durationSeconds: Int(Date().timeIntervalSince(startedAt))
+            durationSeconds: Int(Date().timeIntervalSince(startedAt)),
+            step: session.style.step
         ))
     }
 

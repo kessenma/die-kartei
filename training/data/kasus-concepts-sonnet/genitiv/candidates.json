@@ -1,0 +1,4174 @@
+{
+  "items" : [
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-201",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Vogel des Opas schläft im Wohnzimmer.",
+          "en" : "The grandpa's bird is sleeping in the living room."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "bird",
+          "genus" : "m",
+          "lemma" : "Vogel",
+          "phrase" : "Der Vogel",
+          "reason" : "subject",
+          "trigger" : "schläft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The grandpa's",
+          "genus" : "m",
+          "lemma" : "Opa",
+          "phrase" : "des Opas",
+          "reason" : "attribute",
+          "trigger" : "Vogel"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Wohnzimmer",
+          "phrase" : "im Wohnzimmer",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-203",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Die Schwester des Arztes spielt im Garten.",
+          "en" : "The doctor's sister is playing in the garden."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "sister",
+          "genus" : "f",
+          "lemma" : "Schwester",
+          "phrase" : "Die Schwester",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The doctor's",
+          "genus" : "m",
+          "lemma" : "Arzt",
+          "phrase" : "des Arztes",
+          "reason" : "attribute",
+          "trigger" : "Schwester"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Garten",
+          "phrase" : "im Garten",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1,
+        2
+      ],
+      "id" : "kc-sg-gen-roles-204",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Die Chefin liest den Brief des Mannes im Büro.",
+          "en" : "The boss reads the man's letter in the office."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The boss",
+          "genus" : "f",
+          "lemma" : "Chefin",
+          "phrase" : "Die Chefin",
+          "reason" : "subject",
+          "trigger" : "liest"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "letter",
+          "genus" : "m",
+          "lemma" : "Brief",
+          "phrase" : "den Brief",
+          "reason" : "object",
+          "trigger" : "liest"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the man's",
+          "genus" : "m",
+          "lemma" : "Mann",
+          "phrase" : "des Mannes",
+          "reason" : "attribute",
+          "trigger" : "Brief"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Büro",
+          "phrase" : "im Büro",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-205",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Das Pferd des Schülers spielt auf der Wiese.",
+          "en" : "The student's horse is playing in the meadow."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "horse",
+          "genus" : "n",
+          "lemma" : "Pferd",
+          "phrase" : "Das Pferd",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The student's",
+          "genus" : "m",
+          "lemma" : "Schüler",
+          "phrase" : "des Schülers",
+          "reason" : "attribute",
+          "trigger" : "Pferd"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "f",
+          "lemma" : "Wiese",
+          "phrase" : "der Wiese",
+          "reason" : "inferred",
+          "trigger" : "auf"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1,
+        2
+      ],
+      "id" : "kc-sg-gen-roles-206",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Sohn trägt den Rucksack des Lehrers zum Auto.",
+          "en" : "The son carries the teacher's backpack to the car."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The son",
+          "genus" : "m",
+          "lemma" : "Sohn",
+          "phrase" : "Der Sohn",
+          "reason" : "subject",
+          "trigger" : "trägt"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "backpack",
+          "genus" : "m",
+          "lemma" : "Rucksack",
+          "phrase" : "den Rucksack",
+          "reason" : "object",
+          "trigger" : "trägt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the teacher's",
+          "genus" : "m",
+          "lemma" : "Lehrer",
+          "phrase" : "des Lehrers",
+          "reason" : "attribute",
+          "trigger" : "Rucksack"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Auto",
+          "phrase" : "zum Auto",
+          "reason" : "inferred",
+          "trigger" : "zu"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-207",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Die Tochter der Verkäuferin wartet an der Haltestelle.",
+          "en" : "The saleswoman's daughter is waiting at the bus stop."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "daughter",
+          "genus" : "f",
+          "lemma" : "Tochter",
+          "phrase" : "Die Tochter",
+          "reason" : "subject",
+          "trigger" : "wartet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The saleswoman's",
+          "genus" : "f",
+          "lemma" : "Verkäuferin",
+          "phrase" : "der Verkäuferin",
+          "reason" : "attribute",
+          "trigger" : "Tochter"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "f",
+          "lemma" : "Haltestelle",
+          "phrase" : "der Haltestelle",
+          "reason" : "inferred",
+          "trigger" : "an"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-208",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Die Katze des Mannes spielt auf dem Balkon.",
+          "en" : "The man's cat is playing on the balcony."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "cat",
+          "genus" : "f",
+          "lemma" : "Katze",
+          "phrase" : "Die Katze",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The man's",
+          "genus" : "m",
+          "lemma" : "Mann",
+          "phrase" : "des Mannes",
+          "reason" : "attribute",
+          "trigger" : "Katze"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Balkon",
+          "phrase" : "dem Balkon",
+          "reason" : "inferred",
+          "trigger" : "auf"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-roles-210",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Hund des Mannes spielt draußen.",
+          "en" : "The man's dog is playing outside."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "dog",
+          "genus" : "m",
+          "lemma" : "Hund",
+          "phrase" : "Der Hund",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The man's",
+          "genus" : "m",
+          "lemma" : "Mann",
+          "phrase" : "des Mannes",
+          "reason" : "attribute",
+          "trigger" : "Hund"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1,
+        2
+      ],
+      "id" : "kc-sg-gen-roles-211",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Schüler nimmt die Jacke des Freundes nach der Schule.",
+          "en" : "The student takes the friend's jacket after school."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The student",
+          "genus" : "m",
+          "lemma" : "Schüler",
+          "phrase" : "Der Schüler",
+          "reason" : "subject",
+          "trigger" : "nimmt"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "jacket",
+          "genus" : "f",
+          "lemma" : "Jacke",
+          "phrase" : "die Jacke",
+          "reason" : "object",
+          "trigger" : "nimmt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the friend's",
+          "genus" : "m",
+          "lemma" : "Freund",
+          "phrase" : "des Freundes",
+          "reason" : "attribute",
+          "trigger" : "Jacke"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "f",
+          "lemma" : "Schule",
+          "phrase" : "der Schule",
+          "reason" : "inferred",
+          "trigger" : "nach"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-212",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Die Freundin des Sohnes wartet vor dem Haus.",
+          "en" : "The son's girlfriend is waiting in front of the house."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "girlfriend",
+          "genus" : "f",
+          "lemma" : "Freundin",
+          "phrase" : "Die Freundin",
+          "reason" : "subject",
+          "trigger" : "wartet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The son's",
+          "genus" : "m",
+          "lemma" : "Sohn",
+          "phrase" : "des Sohnes",
+          "reason" : "attribute",
+          "trigger" : "Freundin"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Haus",
+          "phrase" : "dem Haus",
+          "reason" : "inferred",
+          "trigger" : "vor"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-213",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Die Tochter der Freundin wartet im Auto.",
+          "en" : "The friend's daughter is waiting in the car."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "daughter",
+          "genus" : "f",
+          "lemma" : "Tochter",
+          "phrase" : "Die Tochter",
+          "reason" : "subject",
+          "trigger" : "wartet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The friend's",
+          "genus" : "f",
+          "lemma" : "Freundin",
+          "phrase" : "der Freundin",
+          "reason" : "attribute",
+          "trigger" : "Tochter"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Auto",
+          "phrase" : "im Auto",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-roles-215",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Die Freundin der Nachbarin schläft noch.",
+          "en" : "The neighbor's friend is still sleeping."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "friend",
+          "genus" : "f",
+          "lemma" : "Freundin",
+          "phrase" : "Die Freundin",
+          "reason" : "subject",
+          "trigger" : "schläft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The neighbor's",
+          "genus" : "f",
+          "lemma" : "Nachbarin",
+          "phrase" : "der Nachbarin",
+          "reason" : "attribute",
+          "trigger" : "Freundin"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-216",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Die Tochter der Chefin spielt im Hof.",
+          "en" : "The boss's daughter is playing in the yard."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "daughter",
+          "genus" : "f",
+          "lemma" : "Tochter",
+          "phrase" : "Die Tochter",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The boss's",
+          "genus" : "f",
+          "lemma" : "Chefin",
+          "phrase" : "der Chefin",
+          "reason" : "attribute",
+          "trigger" : "Tochter"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Hof",
+          "phrase" : "im Hof",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-218",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Sohn der Tante spielt im Park.",
+          "en" : "The aunt's son is playing in the park."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "son",
+          "genus" : "m",
+          "lemma" : "Sohn",
+          "phrase" : "Der Sohn",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The aunt's",
+          "genus" : "f",
+          "lemma" : "Tante",
+          "phrase" : "der Tante",
+          "reason" : "attribute",
+          "trigger" : "Sohn"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Park",
+          "phrase" : "im Park",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-219",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Freund der Kollegin spielt nach der Arbeit.",
+          "en" : "The colleague's friend is playing after work."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "friend",
+          "genus" : "m",
+          "lemma" : "Freund",
+          "phrase" : "Der Freund",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The colleague's",
+          "genus" : "f",
+          "lemma" : "Kollegin",
+          "phrase" : "der Kollegin",
+          "reason" : "attribute",
+          "trigger" : "Freund"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "f",
+          "lemma" : "Arbeit",
+          "phrase" : "der Arbeit",
+          "reason" : "inferred",
+          "trigger" : "nach"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-220",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Die Katze der Schülerin spielt auf dem Teppich.",
+          "en" : "The student's cat is playing on the carpet."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "cat",
+          "genus" : "f",
+          "lemma" : "Katze",
+          "phrase" : "Die Katze",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The student's",
+          "genus" : "f",
+          "lemma" : "Schülerin",
+          "phrase" : "der Schülerin",
+          "reason" : "attribute",
+          "trigger" : "Katze"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Teppich",
+          "phrase" : "dem Teppich",
+          "reason" : "inferred",
+          "trigger" : "auf"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-221",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Bruder der Verkäuferin schläft im Zug.",
+          "en" : "The saleswoman's brother is sleeping on the train."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "brother",
+          "genus" : "m",
+          "lemma" : "Bruder",
+          "phrase" : "Der Bruder",
+          "reason" : "subject",
+          "trigger" : "schläft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The saleswoman's",
+          "genus" : "f",
+          "lemma" : "Verkäuferin",
+          "phrase" : "der Verkäuferin",
+          "reason" : "attribute",
+          "trigger" : "Bruder"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Zug",
+          "phrase" : "im Zug",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-223",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Das Pferd der Tochter spielt im Schnee.",
+          "en" : "The daughter's horse is playing in the snow."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "horse",
+          "genus" : "n",
+          "lemma" : "Pferd",
+          "phrase" : "Das Pferd",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The daughter's",
+          "genus" : "f",
+          "lemma" : "Tochter",
+          "phrase" : "der Tochter",
+          "reason" : "attribute",
+          "trigger" : "Pferd"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Schnee",
+          "phrase" : "im Schnee",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1,
+        2
+      ],
+      "id" : "kc-sg-gen-roles-225",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Arzt nimmt den Rucksack des Opas vom Stuhl.",
+          "en" : "The doctor takes the grandpa's backpack from the chair."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The doctor",
+          "genus" : "m",
+          "lemma" : "Arzt",
+          "phrase" : "Der Arzt",
+          "reason" : "subject",
+          "trigger" : "nimmt"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "backpack",
+          "genus" : "m",
+          "lemma" : "Rucksack",
+          "phrase" : "den Rucksack",
+          "reason" : "object",
+          "trigger" : "nimmt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the grandpa's",
+          "genus" : "m",
+          "lemma" : "Opa",
+          "phrase" : "des Opas",
+          "reason" : "attribute",
+          "trigger" : "Rucksack"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Stuhl",
+          "phrase" : "vom Stuhl",
+          "reason" : "inferred",
+          "trigger" : "von"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-roles-226",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Die Tochter des Chefs schläft tief.",
+          "en" : "The boss's daughter is sleeping soundly."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "daughter",
+          "genus" : "f",
+          "lemma" : "Tochter",
+          "phrase" : "Die Tochter",
+          "reason" : "subject",
+          "trigger" : "schläft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The boss's",
+          "genus" : "m",
+          "lemma" : "Chef",
+          "phrase" : "des Chefs",
+          "reason" : "attribute",
+          "trigger" : "Tochter"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1,
+        2
+      ],
+      "id" : "kc-sg-gen-roles-228",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Kellner holt die Tasche der Verkäuferin von der Garderobe.",
+          "en" : "The waiter gets the saleswoman's bag from the coat check."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The waiter",
+          "genus" : "m",
+          "lemma" : "Kellner",
+          "phrase" : "Der Kellner",
+          "reason" : "subject",
+          "trigger" : "holt"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "bag",
+          "genus" : "f",
+          "lemma" : "Tasche",
+          "phrase" : "die Tasche",
+          "reason" : "object",
+          "trigger" : "holt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the saleswoman's",
+          "genus" : "f",
+          "lemma" : "Verkäuferin",
+          "phrase" : "der Verkäuferin",
+          "reason" : "attribute",
+          "trigger" : "Tasche"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "f",
+          "lemma" : "Garderobe",
+          "phrase" : "der Garderobe",
+          "reason" : "inferred",
+          "trigger" : "von"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-229",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Bruder der Chefin schläft im Hotel.",
+          "en" : "The boss's brother is sleeping in the hotel."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "brother",
+          "genus" : "m",
+          "lemma" : "Bruder",
+          "phrase" : "Der Bruder",
+          "reason" : "subject",
+          "trigger" : "schläft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The boss's",
+          "genus" : "f",
+          "lemma" : "Chefin",
+          "phrase" : "der Chefin",
+          "reason" : "attribute",
+          "trigger" : "Bruder"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Hotel",
+          "phrase" : "im Hotel",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-roles-231",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Das Pferd der Verkäuferin wartet geduldig.",
+          "en" : "The saleswoman's horse is waiting patiently."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "horse",
+          "genus" : "n",
+          "lemma" : "Pferd",
+          "phrase" : "Das Pferd",
+          "reason" : "subject",
+          "trigger" : "wartet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The saleswoman's",
+          "genus" : "f",
+          "lemma" : "Verkäuferin",
+          "phrase" : "der Verkäuferin",
+          "reason" : "attribute",
+          "trigger" : "Pferd"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1,
+        2
+      ],
+      "id" : "kc-sg-gen-roles-233",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Die Tochter trägt den Koffer der Verkäuferin zum Bahnhof.",
+          "en" : "The daughter carries the saleswoman's suitcase to the station."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The daughter",
+          "genus" : "f",
+          "lemma" : "Tochter",
+          "phrase" : "Die Tochter",
+          "reason" : "subject",
+          "trigger" : "trägt"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "suitcase",
+          "genus" : "m",
+          "lemma" : "Koffer",
+          "phrase" : "den Koffer",
+          "reason" : "object",
+          "trigger" : "trägt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the saleswoman's",
+          "genus" : "f",
+          "lemma" : "Verkäuferin",
+          "phrase" : "der Verkäuferin",
+          "reason" : "attribute",
+          "trigger" : "Koffer"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Bahnhof",
+          "phrase" : "zum Bahnhof",
+          "reason" : "inferred",
+          "trigger" : "zu"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-234",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Freund des Bruders wartet am Bahnhof.",
+          "en" : "The brother's friend is waiting at the station."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "friend",
+          "genus" : "m",
+          "lemma" : "Freund",
+          "phrase" : "Der Freund",
+          "reason" : "subject",
+          "trigger" : "wartet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The brother's",
+          "genus" : "m",
+          "lemma" : "Bruder",
+          "phrase" : "des Bruders",
+          "reason" : "attribute",
+          "trigger" : "Freund"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Bahnhof",
+          "phrase" : "am Bahnhof",
+          "reason" : "inferred",
+          "trigger" : "an"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-roles-235",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Die Tochter der Kellnerin schläft schon.",
+          "en" : "The waitress's daughter is already sleeping."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "daughter",
+          "genus" : "f",
+          "lemma" : "Tochter",
+          "phrase" : "Die Tochter",
+          "reason" : "subject",
+          "trigger" : "schläft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The waitress's",
+          "genus" : "f",
+          "lemma" : "Kellnerin",
+          "phrase" : "der Kellnerin",
+          "reason" : "attribute",
+          "trigger" : "Tochter"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1,
+        2
+      ],
+      "id" : "kc-sg-gen-roles-236",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Die Tochter holt den Koffer des Lehrers aus dem Auto.",
+          "en" : "The daughter gets the teacher's suitcase from the car."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The daughter",
+          "genus" : "f",
+          "lemma" : "Tochter",
+          "phrase" : "Die Tochter",
+          "reason" : "subject",
+          "trigger" : "holt"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "suitcase",
+          "genus" : "m",
+          "lemma" : "Koffer",
+          "phrase" : "den Koffer",
+          "reason" : "object",
+          "trigger" : "holt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the teacher's",
+          "genus" : "m",
+          "lemma" : "Lehrer",
+          "phrase" : "des Lehrers",
+          "reason" : "attribute",
+          "trigger" : "Koffer"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Auto",
+          "phrase" : "dem Auto",
+          "reason" : "inferred",
+          "trigger" : "aus"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1,
+        2
+      ],
+      "id" : "kc-sg-gen-roles-237",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Chef liest das Buch des Opas im Zug.",
+          "en" : "The boss reads the grandpa's book on the train."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The boss",
+          "genus" : "m",
+          "lemma" : "Chef",
+          "phrase" : "Der Chef",
+          "reason" : "subject",
+          "trigger" : "liest"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "book",
+          "genus" : "n",
+          "lemma" : "Buch",
+          "phrase" : "das Buch",
+          "reason" : "object",
+          "trigger" : "liest"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the grandpa's",
+          "genus" : "m",
+          "lemma" : "Opa",
+          "phrase" : "des Opas",
+          "reason" : "attribute",
+          "trigger" : "Buch"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Zug",
+          "phrase" : "im Zug",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1
+      ],
+      "id" : "kc-sg-gen-roles-239",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Sohn des Onkels schläft im Zelt.",
+          "en" : "The uncle's son is sleeping in the tent."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "son",
+          "genus" : "m",
+          "lemma" : "Sohn",
+          "phrase" : "Der Sohn",
+          "reason" : "subject",
+          "trigger" : "schläft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The uncle's",
+          "genus" : "m",
+          "lemma" : "Onkel",
+          "phrase" : "des Onkels",
+          "reason" : "attribute",
+          "trigger" : "Sohn"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Zelt",
+          "phrase" : "im Zelt",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "ask" : [
+        0,
+        1,
+        2
+      ],
+      "id" : "kc-sg-gen-roles-240",
+      "kind" : "roles",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Verkäufer findet den Schlüssel des Fahrers im Laden.",
+          "en" : "The salesman finds the driver's key in the shop."
+        }
+      ],
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The salesman",
+          "genus" : "m",
+          "lemma" : "Verkäufer",
+          "phrase" : "Der Verkäufer",
+          "reason" : "subject",
+          "trigger" : "findet"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "key",
+          "genus" : "m",
+          "lemma" : "Schlüssel",
+          "phrase" : "den Schlüssel",
+          "reason" : "object",
+          "trigger" : "findet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the driver's",
+          "genus" : "m",
+          "lemma" : "Fahrer",
+          "phrase" : "des Fahrers",
+          "reason" : "attribute",
+          "trigger" : "Schlüssel"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Laden",
+          "phrase" : "im Laden",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 1,
+      "id" : "kc-sg-gen-wer-201",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        1
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Die Nachbarin ruft der Freund der Kollegin.",
+          "en" : "The colleague's friend calls the neighbor."
+        }
+      ],
+      "question" : {
+        "de" : "Wer ruft?",
+        "en" : "Who is calling?"
+      },
+      "targets" : [
+        {
+          "case" : "akkusativ",
+          "en" : "the neighbor",
+          "genus" : "f",
+          "lemma" : "Nachbarin",
+          "phrase" : "Die Nachbarin",
+          "reason" : "object",
+          "trigger" : "ruft"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "friend",
+          "genus" : "m",
+          "lemma" : "Freund",
+          "phrase" : "der Freund",
+          "reason" : "subject",
+          "trigger" : "ruft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The colleague's",
+          "genus" : "f",
+          "lemma" : "Kollegin",
+          "phrase" : "der Kollegin",
+          "reason" : "attribute",
+          "trigger" : "Freund"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 2,
+      "id" : "kc-sg-gen-wer-202",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Das Kind der Kellnerin besucht der Kellner.",
+          "en" : "The waiter visits the waitress's child."
+        }
+      ],
+      "question" : {
+        "de" : "Wer besucht?",
+        "en" : "Who is visiting?"
+      },
+      "targets" : [
+        {
+          "case" : "akkusativ",
+          "en" : "child",
+          "genus" : "n",
+          "lemma" : "Kind",
+          "phrase" : "Das Kind",
+          "reason" : "object",
+          "trigger" : "besucht"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the waitress's",
+          "genus" : "f",
+          "lemma" : "Kellnerin",
+          "phrase" : "der Kellnerin",
+          "reason" : "attribute",
+          "trigger" : "Kind"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "The waiter",
+          "genus" : "m",
+          "lemma" : "Kellner",
+          "phrase" : "der Kellner",
+          "reason" : "subject",
+          "trigger" : "besucht"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-203",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        1
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Die Verkäuferin kennt den Opa des Schülers.",
+          "en" : "The saleswoman knows the student's grandpa."
+        }
+      ],
+      "question" : {
+        "de" : "Wer kennt?",
+        "en" : "Who knows?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The saleswoman",
+          "genus" : "f",
+          "lemma" : "Verkäuferin",
+          "phrase" : "Die Verkäuferin",
+          "reason" : "subject",
+          "trigger" : "kennt"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "grandpa",
+          "genus" : "m",
+          "lemma" : "Opa",
+          "phrase" : "den Opa",
+          "reason" : "object",
+          "trigger" : "kennt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the student's",
+          "genus" : "m",
+          "lemma" : "Schüler",
+          "phrase" : "des Schülers",
+          "reason" : "attribute",
+          "trigger" : "Opa"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-204",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Der Lehrer der Schülerin gratuliert der Mutter herzlich.",
+          "en" : "The female student's teacher warmly congratulates the mother."
+        }
+      ],
+      "question" : {
+        "de" : "Wer gratuliert?",
+        "en" : "Who is congratulating?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "teacher",
+          "genus" : "m",
+          "lemma" : "Lehrer",
+          "phrase" : "Der Lehrer",
+          "reason" : "subject",
+          "trigger" : "gratuliert"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The female student's",
+          "genus" : "f",
+          "lemma" : "Schülerin",
+          "phrase" : "der Schülerin",
+          "reason" : "attribute",
+          "trigger" : "Lehrer"
+        },
+        {
+          "case" : "dativ",
+          "en" : "the mother",
+          "genus" : "f",
+          "lemma" : "Mutter",
+          "phrase" : "der Mutter",
+          "reason" : "dativeVerb",
+          "trigger" : "gratuliert"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 2,
+      "id" : "kc-sg-gen-wer-205",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Dem Kind des Fahrers hilft die Nachbarin.",
+          "en" : "The neighbor helps the driver's child."
+        }
+      ],
+      "question" : {
+        "de" : "Wer hilft?",
+        "en" : "Who is helping?"
+      },
+      "targets" : [
+        {
+          "case" : "dativ",
+          "en" : "child",
+          "genus" : "n",
+          "lemma" : "Kind",
+          "phrase" : "Dem Kind",
+          "reason" : "dativeVerb",
+          "trigger" : "hilft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the driver's",
+          "genus" : "m",
+          "lemma" : "Fahrer",
+          "phrase" : "des Fahrers",
+          "reason" : "attribute",
+          "trigger" : "Kind"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "The neighbor",
+          "genus" : "f",
+          "lemma" : "Nachbarin",
+          "phrase" : "die Nachbarin",
+          "reason" : "subject",
+          "trigger" : "hilft"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 2,
+      "id" : "kc-sg-gen-wer-206",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Dem Vater des Mädchens hilft das Kind im Garten.",
+          "en" : "The child helps the girl's father in the garden."
+        }
+      ],
+      "question" : {
+        "de" : "Wer hilft?",
+        "en" : "Who is helping?"
+      },
+      "targets" : [
+        {
+          "case" : "dativ",
+          "en" : "father",
+          "genus" : "m",
+          "lemma" : "Vater",
+          "phrase" : "Dem Vater",
+          "reason" : "dativeVerb",
+          "trigger" : "hilft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the girl's",
+          "genus" : "n",
+          "lemma" : "Mädchen",
+          "phrase" : "des Mädchens",
+          "reason" : "attribute",
+          "trigger" : "Vater"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "The child",
+          "genus" : "n",
+          "lemma" : "Kind",
+          "phrase" : "das Kind",
+          "reason" : "subject",
+          "trigger" : "hilft"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Garten",
+          "phrase" : "im Garten",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 1,
+      "id" : "kc-sg-gen-wer-207",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        1
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Dem Verkäufer antwortet die Tochter des Arztes.",
+          "en" : "The doctor's daughter answers the salesman."
+        }
+      ],
+      "question" : {
+        "de" : "Wer antwortet?",
+        "en" : "Who is answering?"
+      },
+      "targets" : [
+        {
+          "case" : "dativ",
+          "en" : "the salesman",
+          "genus" : "m",
+          "lemma" : "Verkäufer",
+          "phrase" : "Dem Verkäufer",
+          "reason" : "dativeVerb",
+          "trigger" : "antwortet"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "daughter",
+          "genus" : "f",
+          "lemma" : "Tochter",
+          "phrase" : "die Tochter",
+          "reason" : "subject",
+          "trigger" : "antwortet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The doctor's",
+          "genus" : "m",
+          "lemma" : "Arzt",
+          "phrase" : "des Arztes",
+          "reason" : "attribute",
+          "trigger" : "Tochter"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-208",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Die Mutter des Mädchens kennt den Chef.",
+          "en" : "The girl's mother knows the boss."
+        }
+      ],
+      "question" : {
+        "de" : "Wer kennt?",
+        "en" : "Who knows?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "mother",
+          "genus" : "f",
+          "lemma" : "Mutter",
+          "phrase" : "Die Mutter",
+          "reason" : "subject",
+          "trigger" : "kennt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The girl's",
+          "genus" : "n",
+          "lemma" : "Mädchen",
+          "phrase" : "des Mädchens",
+          "reason" : "attribute",
+          "trigger" : "Mutter"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "the boss",
+          "genus" : "m",
+          "lemma" : "Chef",
+          "phrase" : "den Chef",
+          "reason" : "object",
+          "trigger" : "kennt"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 2,
+      "id" : "kc-sg-gen-wer-209",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Der Tante der Tochter antwortet der Onkel.",
+          "en" : "The uncle answers the daughter's aunt."
+        }
+      ],
+      "question" : {
+        "de" : "Wer antwortet?",
+        "en" : "Who is answering?"
+      },
+      "targets" : [
+        {
+          "case" : "dativ",
+          "en" : "aunt",
+          "genus" : "f",
+          "lemma" : "Tante",
+          "phrase" : "Der Tante",
+          "reason" : "dativeVerb",
+          "trigger" : "antwortet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the daughter's",
+          "genus" : "f",
+          "lemma" : "Tochter",
+          "phrase" : "der Tochter",
+          "reason" : "attribute",
+          "trigger" : "Tante"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "The uncle",
+          "genus" : "m",
+          "lemma" : "Onkel",
+          "phrase" : "der Onkel",
+          "reason" : "subject",
+          "trigger" : "antwortet"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-210",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        1
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Der Sohn sieht die Tante des Freundes.",
+          "en" : "The son sees the friend's aunt."
+        }
+      ],
+      "question" : {
+        "de" : "Wer sieht?",
+        "en" : "Who sees?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The son",
+          "genus" : "m",
+          "lemma" : "Sohn",
+          "phrase" : "Der Sohn",
+          "reason" : "subject",
+          "trigger" : "sieht"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "aunt",
+          "genus" : "f",
+          "lemma" : "Tante",
+          "phrase" : "die Tante",
+          "reason" : "object",
+          "trigger" : "sieht"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the friend's",
+          "genus" : "m",
+          "lemma" : "Freund",
+          "phrase" : "des Freundes",
+          "reason" : "attribute",
+          "trigger" : "Tante"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-211",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Der Onkel des Freundes hilft der Schülerin gern.",
+          "en" : "The friend's uncle gladly helps the female student."
+        }
+      ],
+      "question" : {
+        "de" : "Wer hilft?",
+        "en" : "Who is helping?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "uncle",
+          "genus" : "m",
+          "lemma" : "Onkel",
+          "phrase" : "Der Onkel",
+          "reason" : "subject",
+          "trigger" : "hilft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The friend's",
+          "genus" : "m",
+          "lemma" : "Freund",
+          "phrase" : "des Freundes",
+          "reason" : "attribute",
+          "trigger" : "Onkel"
+        },
+        {
+          "case" : "dativ",
+          "en" : "the female student",
+          "genus" : "f",
+          "lemma" : "Schülerin",
+          "phrase" : "der Schülerin",
+          "reason" : "dativeVerb",
+          "trigger" : "hilft"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-212",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Das Pferd des Verkäufers jagt den Vogel auf der Wiese.",
+          "en" : "The salesman's horse chases the bird in the meadow."
+        }
+      ],
+      "question" : {
+        "de" : "Wer jagt?",
+        "en" : "Who is chasing?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "horse",
+          "genus" : "n",
+          "lemma" : "Pferd",
+          "phrase" : "Das Pferd",
+          "reason" : "subject",
+          "trigger" : "jagt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The salesman's",
+          "genus" : "m",
+          "lemma" : "Verkäufer",
+          "phrase" : "des Verkäufers",
+          "reason" : "attribute",
+          "trigger" : "Pferd"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "the bird",
+          "genus" : "m",
+          "lemma" : "Vogel",
+          "phrase" : "den Vogel",
+          "reason" : "object",
+          "trigger" : "jagt"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "f",
+          "lemma" : "Wiese",
+          "phrase" : "der Wiese",
+          "reason" : "inferred",
+          "trigger" : "auf"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-213",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        1
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Das Pferd jagt den Vogel des Mannes.",
+          "en" : "The horse chases the man's bird."
+        }
+      ],
+      "question" : {
+        "de" : "Wer jagt?",
+        "en" : "Who is chasing?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The horse",
+          "genus" : "n",
+          "lemma" : "Pferd",
+          "phrase" : "Das Pferd",
+          "reason" : "subject",
+          "trigger" : "jagt"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "bird",
+          "genus" : "m",
+          "lemma" : "Vogel",
+          "phrase" : "den Vogel",
+          "reason" : "object",
+          "trigger" : "jagt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the man's",
+          "genus" : "m",
+          "lemma" : "Mann",
+          "phrase" : "des Mannes",
+          "reason" : "attribute",
+          "trigger" : "Vogel"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 2,
+      "id" : "kc-sg-gen-wer-214",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Die Ärztin des Kindes kennt der Vater.",
+          "en" : "The father knows the child's doctor."
+        }
+      ],
+      "question" : {
+        "de" : "Wer kennt?",
+        "en" : "Who knows?"
+      },
+      "targets" : [
+        {
+          "case" : "akkusativ",
+          "en" : "doctor",
+          "genus" : "f",
+          "lemma" : "Ärztin",
+          "phrase" : "Die Ärztin",
+          "reason" : "object",
+          "trigger" : "kennt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the child's",
+          "genus" : "n",
+          "lemma" : "Kind",
+          "phrase" : "des Kindes",
+          "reason" : "attribute",
+          "trigger" : "Ärztin"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "The father",
+          "genus" : "m",
+          "lemma" : "Vater",
+          "phrase" : "der Vater",
+          "reason" : "subject",
+          "trigger" : "kennt"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-215",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        1
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Die Schülerin findet den Sohn der Kellnerin nach der Schule.",
+          "en" : "The female student finds the waitress's son after school."
+        }
+      ],
+      "question" : {
+        "de" : "Wer findet?",
+        "en" : "Who finds?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The female student",
+          "genus" : "f",
+          "lemma" : "Schülerin",
+          "phrase" : "Die Schülerin",
+          "reason" : "subject",
+          "trigger" : "findet"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "son",
+          "genus" : "m",
+          "lemma" : "Sohn",
+          "phrase" : "den Sohn",
+          "reason" : "object",
+          "trigger" : "findet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the waitress's",
+          "genus" : "f",
+          "lemma" : "Kellnerin",
+          "phrase" : "der Kellnerin",
+          "reason" : "attribute",
+          "trigger" : "Sohn"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "f",
+          "lemma" : "Schule",
+          "phrase" : "der Schule",
+          "reason" : "inferred",
+          "trigger" : "nach"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 2,
+      "id" : "kc-sg-gen-wer-216",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Dem Arzt des Kindes antwortet die Schülerin.",
+          "en" : "The female student answers the child's doctor."
+        }
+      ],
+      "question" : {
+        "de" : "Wer antwortet?",
+        "en" : "Who is answering?"
+      },
+      "targets" : [
+        {
+          "case" : "dativ",
+          "en" : "doctor",
+          "genus" : "m",
+          "lemma" : "Arzt",
+          "phrase" : "Dem Arzt",
+          "reason" : "dativeVerb",
+          "trigger" : "antwortet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the child's",
+          "genus" : "n",
+          "lemma" : "Kind",
+          "phrase" : "des Kindes",
+          "reason" : "attribute",
+          "trigger" : "Arzt"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "The female student",
+          "genus" : "f",
+          "lemma" : "Schülerin",
+          "phrase" : "die Schülerin",
+          "reason" : "subject",
+          "trigger" : "antwortet"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-217",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        1
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Die Verkäuferin dankt dem Fahrer des Chefs für die Fahrt.",
+          "en" : "The saleswoman thanks the boss's driver for the ride."
+        }
+      ],
+      "question" : {
+        "de" : "Wer dankt?",
+        "en" : "Who is thanking?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The saleswoman",
+          "genus" : "f",
+          "lemma" : "Verkäuferin",
+          "phrase" : "Die Verkäuferin",
+          "reason" : "subject",
+          "trigger" : "dankt"
+        },
+        {
+          "case" : "dativ",
+          "en" : "driver",
+          "genus" : "m",
+          "lemma" : "Fahrer",
+          "phrase" : "dem Fahrer",
+          "reason" : "dativeVerb",
+          "trigger" : "dankt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the boss's",
+          "genus" : "m",
+          "lemma" : "Chef",
+          "phrase" : "des Chefs",
+          "reason" : "attribute",
+          "trigger" : "Fahrer"
+        },
+        {
+          "case" : "akkusativ",
+          "genus" : "f",
+          "lemma" : "Fahrt",
+          "phrase" : "die Fahrt",
+          "reason" : "inferred",
+          "trigger" : "für"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-218",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Die Katze der Lehrerin jagt den Hund im Hof.",
+          "en" : "The teacher's cat chases the dog in the yard."
+        }
+      ],
+      "question" : {
+        "de" : "Wer jagt?",
+        "en" : "Who is chasing?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "cat",
+          "genus" : "f",
+          "lemma" : "Katze",
+          "phrase" : "Die Katze",
+          "reason" : "subject",
+          "trigger" : "jagt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The teacher's",
+          "genus" : "f",
+          "lemma" : "Lehrerin",
+          "phrase" : "der Lehrerin",
+          "reason" : "attribute",
+          "trigger" : "Katze"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "the dog",
+          "genus" : "m",
+          "lemma" : "Hund",
+          "phrase" : "den Hund",
+          "reason" : "object",
+          "trigger" : "jagt"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Hof",
+          "phrase" : "im Hof",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 2,
+      "id" : "kc-sg-gen-wer-219",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Das Kind des Kellners sucht der Lehrer im Park.",
+          "en" : "The teacher is looking for the waiter's child in the park."
+        }
+      ],
+      "question" : {
+        "de" : "Wer sucht?",
+        "en" : "Who is searching?"
+      },
+      "targets" : [
+        {
+          "case" : "akkusativ",
+          "en" : "child",
+          "genus" : "n",
+          "lemma" : "Kind",
+          "phrase" : "Das Kind",
+          "reason" : "object",
+          "trigger" : "sucht"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the waiter's",
+          "genus" : "m",
+          "lemma" : "Kellner",
+          "phrase" : "des Kellners",
+          "reason" : "attribute",
+          "trigger" : "Kind"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "The teacher",
+          "genus" : "m",
+          "lemma" : "Lehrer",
+          "phrase" : "der Lehrer",
+          "reason" : "subject",
+          "trigger" : "sucht"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Park",
+          "phrase" : "im Park",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-220",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Das Pferd des Vaters jagt den Vogel.",
+          "en" : "The father's horse chases the bird."
+        }
+      ],
+      "question" : {
+        "de" : "Wer jagt?",
+        "en" : "Who is chasing?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "horse",
+          "genus" : "n",
+          "lemma" : "Pferd",
+          "phrase" : "Das Pferd",
+          "reason" : "subject",
+          "trigger" : "jagt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The father's",
+          "genus" : "m",
+          "lemma" : "Vater",
+          "phrase" : "des Vaters",
+          "reason" : "attribute",
+          "trigger" : "Pferd"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "the bird",
+          "genus" : "m",
+          "lemma" : "Vogel",
+          "phrase" : "den Vogel",
+          "reason" : "object",
+          "trigger" : "jagt"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 1,
+      "id" : "kc-sg-gen-wer-221",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        1
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Dem Arzt hilft die Freundin des Chefs bei der Arbeit.",
+          "en" : "The boss's girlfriend helps the doctor at work."
+        }
+      ],
+      "question" : {
+        "de" : "Wer hilft?",
+        "en" : "Who is helping?"
+      },
+      "targets" : [
+        {
+          "case" : "dativ",
+          "en" : "the doctor",
+          "genus" : "m",
+          "lemma" : "Arzt",
+          "phrase" : "Dem Arzt",
+          "reason" : "dativeVerb",
+          "trigger" : "hilft"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "girlfriend",
+          "genus" : "f",
+          "lemma" : "Freundin",
+          "phrase" : "die Freundin",
+          "reason" : "subject",
+          "trigger" : "hilft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The boss's",
+          "genus" : "m",
+          "lemma" : "Chef",
+          "phrase" : "des Chefs",
+          "reason" : "attribute",
+          "trigger" : "Freundin"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "f",
+          "lemma" : "Arbeit",
+          "phrase" : "der Arbeit",
+          "reason" : "inferred",
+          "trigger" : "bei"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 2,
+      "id" : "kc-sg-gen-wer-222",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Den Vater des Kindes fragt die Oma nach dem Weg.",
+          "en" : "The grandma asks the child's father for directions."
+        }
+      ],
+      "question" : {
+        "de" : "Wer fragt?",
+        "en" : "Who is asking?"
+      },
+      "targets" : [
+        {
+          "case" : "akkusativ",
+          "en" : "father",
+          "genus" : "m",
+          "lemma" : "Vater",
+          "phrase" : "Den Vater",
+          "reason" : "object",
+          "trigger" : "fragt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the child's",
+          "genus" : "n",
+          "lemma" : "Kind",
+          "phrase" : "des Kindes",
+          "reason" : "attribute",
+          "trigger" : "Vater"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "The grandma",
+          "genus" : "f",
+          "lemma" : "Oma",
+          "phrase" : "die Oma",
+          "reason" : "subject",
+          "trigger" : "fragt"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Weg",
+          "phrase" : "dem Weg",
+          "reason" : "inferred",
+          "trigger" : "nach"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 2,
+      "id" : "kc-sg-gen-wer-223",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Dem Chef der Kellnerin antwortet die Chefin.",
+          "en" : "The female boss answers the waitress's male boss."
+        }
+      ],
+      "question" : {
+        "de" : "Wer antwortet?",
+        "en" : "Who is answering?"
+      },
+      "targets" : [
+        {
+          "case" : "dativ",
+          "en" : "male boss",
+          "genus" : "m",
+          "lemma" : "Chef",
+          "phrase" : "Dem Chef",
+          "reason" : "dativeVerb",
+          "trigger" : "antwortet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the waitress's",
+          "genus" : "f",
+          "lemma" : "Kellnerin",
+          "phrase" : "der Kellnerin",
+          "reason" : "attribute",
+          "trigger" : "Chef"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "The female boss",
+          "genus" : "f",
+          "lemma" : "Chefin",
+          "phrase" : "die Chefin",
+          "reason" : "subject",
+          "trigger" : "antwortet"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-224",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        1
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Die Tochter sieht den Gast der Chefin im Restaurant.",
+          "en" : "The daughter sees the female boss's guest in the restaurant."
+        }
+      ],
+      "question" : {
+        "de" : "Wer sieht?",
+        "en" : "Who sees?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The daughter",
+          "genus" : "f",
+          "lemma" : "Tochter",
+          "phrase" : "Die Tochter",
+          "reason" : "subject",
+          "trigger" : "sieht"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "guest",
+          "genus" : "m",
+          "lemma" : "Gast",
+          "phrase" : "den Gast",
+          "reason" : "object",
+          "trigger" : "sieht"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the female boss's",
+          "genus" : "f",
+          "lemma" : "Chefin",
+          "phrase" : "der Chefin",
+          "reason" : "attribute",
+          "trigger" : "Gast"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Restaurant",
+          "phrase" : "im Restaurant",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-225",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        1
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Der Opa antwortet der Schülerin der Lehrerin.",
+          "en" : "The grandpa answers the teacher's student."
+        }
+      ],
+      "question" : {
+        "de" : "Wer antwortet?",
+        "en" : "Who is answering?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The grandpa",
+          "genus" : "m",
+          "lemma" : "Opa",
+          "phrase" : "Der Opa",
+          "reason" : "subject",
+          "trigger" : "antwortet"
+        },
+        {
+          "case" : "dativ",
+          "en" : "student",
+          "genus" : "f",
+          "lemma" : "Schülerin",
+          "phrase" : "der Schülerin",
+          "reason" : "dativeVerb",
+          "trigger" : "antwortet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the teacher's",
+          "genus" : "f",
+          "lemma" : "Lehrerin",
+          "phrase" : "der Lehrerin",
+          "reason" : "attribute",
+          "trigger" : "Schülerin"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 2,
+      "id" : "kc-sg-gen-wer-226",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Den Mann der Kollegin findet die Frau im Büro.",
+          "en" : "The woman finds the colleague's husband in the office."
+        }
+      ],
+      "question" : {
+        "de" : "Wer findet?",
+        "en" : "Who finds?"
+      },
+      "targets" : [
+        {
+          "case" : "akkusativ",
+          "en" : "husband",
+          "genus" : "m",
+          "lemma" : "Mann",
+          "phrase" : "Den Mann",
+          "reason" : "object",
+          "trigger" : "findet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the colleague's",
+          "genus" : "f",
+          "lemma" : "Kollegin",
+          "phrase" : "der Kollegin",
+          "reason" : "attribute",
+          "trigger" : "Mann"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "The woman",
+          "genus" : "f",
+          "lemma" : "Frau",
+          "phrase" : "die Frau",
+          "reason" : "subject",
+          "trigger" : "findet"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Büro",
+          "phrase" : "im Büro",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 2,
+      "id" : "kc-sg-gen-wer-227",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Der Mutter der Freundin antwortet der Chef.",
+          "en" : "The boss answers the female friend's mother."
+        }
+      ],
+      "question" : {
+        "de" : "Wer antwortet?",
+        "en" : "Who is answering?"
+      },
+      "targets" : [
+        {
+          "case" : "dativ",
+          "en" : "mother",
+          "genus" : "f",
+          "lemma" : "Mutter",
+          "phrase" : "Der Mutter",
+          "reason" : "dativeVerb",
+          "trigger" : "antwortet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the female friend's",
+          "genus" : "f",
+          "lemma" : "Freundin",
+          "phrase" : "der Freundin",
+          "reason" : "attribute",
+          "trigger" : "Mutter"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "The boss",
+          "genus" : "m",
+          "lemma" : "Chef",
+          "phrase" : "der Chef",
+          "reason" : "subject",
+          "trigger" : "antwortet"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 0,
+      "id" : "kc-sg-gen-wer-228",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        1
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Der Freund ruft die Tante des Mädchens.",
+          "en" : "The friend calls the girl's aunt."
+        }
+      ],
+      "question" : {
+        "de" : "Wer ruft?",
+        "en" : "Who is calling?"
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The friend",
+          "genus" : "m",
+          "lemma" : "Freund",
+          "phrase" : "Der Freund",
+          "reason" : "subject",
+          "trigger" : "ruft"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "aunt",
+          "genus" : "f",
+          "lemma" : "Tante",
+          "phrase" : "die Tante",
+          "reason" : "object",
+          "trigger" : "ruft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the girl's",
+          "genus" : "n",
+          "lemma" : "Mädchen",
+          "phrase" : "des Mädchens",
+          "reason" : "attribute",
+          "trigger" : "Tante"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 2,
+      "id" : "kc-sg-gen-wer-229",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Den Gast des Chefs sucht die Schülerin im Hotel.",
+          "en" : "The female student is looking for the boss's guest in the hotel."
+        }
+      ],
+      "question" : {
+        "de" : "Wer sucht?",
+        "en" : "Who is searching?"
+      },
+      "targets" : [
+        {
+          "case" : "akkusativ",
+          "en" : "guest",
+          "genus" : "m",
+          "lemma" : "Gast",
+          "phrase" : "Den Gast",
+          "reason" : "object",
+          "trigger" : "sucht"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the boss's",
+          "genus" : "m",
+          "lemma" : "Chef",
+          "phrase" : "des Chefs",
+          "reason" : "attribute",
+          "trigger" : "Gast"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "The female student",
+          "genus" : "f",
+          "lemma" : "Schülerin",
+          "phrase" : "die Schülerin",
+          "reason" : "subject",
+          "trigger" : "sucht"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Hotel",
+          "phrase" : "im Hotel",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "answer" : 2,
+      "id" : "kc-sg-gen-wer-230",
+      "kind" : "whoDoesWhat",
+      "level" : "B1",
+      "options" : [
+        0,
+        2
+      ],
+      "paragraphs" : [
+        {
+          "de" : "Der Tante des Mädchens antwortet der Gast.",
+          "en" : "The guest answers the girl's aunt."
+        }
+      ],
+      "question" : {
+        "de" : "Wer antwortet?",
+        "en" : "Who is answering?"
+      },
+      "targets" : [
+        {
+          "case" : "dativ",
+          "en" : "aunt",
+          "genus" : "f",
+          "lemma" : "Tante",
+          "phrase" : "Der Tante",
+          "reason" : "dativeVerb",
+          "trigger" : "antwortet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the girl's",
+          "genus" : "n",
+          "lemma" : "Mädchen",
+          "phrase" : "des Mädchens",
+          "reason" : "attribute",
+          "trigger" : "Tante"
+        },
+        {
+          "case" : "nominativ",
+          "en" : "The guest",
+          "genus" : "m",
+          "lemma" : "Gast",
+          "phrase" : "der Gast",
+          "reason" : "subject",
+          "trigger" : "antwortet"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-209",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Das Pferd der Verkäuferin wartet.",
+          "en" : "The saleswoman's horse is waiting."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "horse",
+          "genus" : "n",
+          "lemma" : "Pferd",
+          "phrase" : "Das Pferd",
+          "reason" : "subject",
+          "trigger" : "wartet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The saleswoman's",
+          "genus" : "f",
+          "lemma" : "Verkäuferin",
+          "phrase" : "der Verkäuferin",
+          "reason" : "attribute",
+          "trigger" : "Pferd"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-211",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Sohn der Kollegin wartete vor der Schule.",
+          "en" : "The colleague's son waited in front of the school."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "son",
+          "genus" : "m",
+          "lemma" : "Sohn",
+          "phrase" : "Der Sohn",
+          "reason" : "subject",
+          "trigger" : "wartete"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The colleague's",
+          "genus" : "f",
+          "lemma" : "Kollegin",
+          "phrase" : "der Kollegin",
+          "reason" : "attribute",
+          "trigger" : "Sohn"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "f",
+          "lemma" : "Schule",
+          "phrase" : "der Schule",
+          "reason" : "inferred",
+          "trigger" : "vor"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-219",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Hund der Ärztin spielt im Garten.",
+          "en" : "The doctor's dog is playing in the garden."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "dog",
+          "genus" : "m",
+          "lemma" : "Hund",
+          "phrase" : "Der Hund",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The doctor's",
+          "genus" : "f",
+          "lemma" : "Ärztin",
+          "phrase" : "der Ärztin",
+          "reason" : "attribute",
+          "trigger" : "Hund"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Garten",
+          "phrase" : "im Garten",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-231",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Bruder der Verkäuferin spielt draußen.",
+          "en" : "The saleswoman's brother is playing outside."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "brother",
+          "genus" : "m",
+          "lemma" : "Bruder",
+          "phrase" : "Der Bruder",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The saleswoman's",
+          "genus" : "f",
+          "lemma" : "Verkäuferin",
+          "phrase" : "der Verkäuferin",
+          "reason" : "attribute",
+          "trigger" : "Bruder"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-234",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Hund der Mutter schläft auf dem Sofa.",
+          "en" : "The mother's dog is sleeping on the sofa."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "dog",
+          "genus" : "m",
+          "lemma" : "Hund",
+          "phrase" : "Der Hund",
+          "reason" : "subject",
+          "trigger" : "schläft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The mother's",
+          "genus" : "f",
+          "lemma" : "Mutter",
+          "phrase" : "der Mutter",
+          "reason" : "attribute",
+          "trigger" : "Hund"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Sofa",
+          "phrase" : "dem Sofa",
+          "reason" : "inferred",
+          "trigger" : "auf"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-237",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Vogel der Verkäuferin wartete lange.",
+          "en" : "The saleswoman's bird waited for a long time."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "bird",
+          "genus" : "m",
+          "lemma" : "Vogel",
+          "phrase" : "Der Vogel",
+          "reason" : "subject",
+          "trigger" : "wartete"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The saleswoman's",
+          "genus" : "f",
+          "lemma" : "Verkäuferin",
+          "phrase" : "der Verkäuferin",
+          "reason" : "attribute",
+          "trigger" : "Vogel"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-239",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Chef trägt die Tasche der Tante ins Haus.",
+          "en" : "The boss carries the aunt's bag into the house."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 2
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The boss",
+          "genus" : "m",
+          "lemma" : "Chef",
+          "phrase" : "Der Chef",
+          "reason" : "subject",
+          "trigger" : "trägt"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "bag",
+          "genus" : "f",
+          "lemma" : "Tasche",
+          "phrase" : "die Tasche",
+          "reason" : "object",
+          "trigger" : "trägt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the aunt's",
+          "genus" : "f",
+          "lemma" : "Tante",
+          "phrase" : "der Tante",
+          "reason" : "attribute",
+          "trigger" : "Tasche"
+        },
+        {
+          "case" : "akkusativ",
+          "genus" : "n",
+          "lemma" : "Haus",
+          "phrase" : "ins Haus",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-241",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Das Pferd der Frau spielt auf der Wiese.",
+          "en" : "The woman's horse is playing in the meadow."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "horse",
+          "genus" : "n",
+          "lemma" : "Pferd",
+          "phrase" : "Das Pferd",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The woman's",
+          "genus" : "f",
+          "lemma" : "Frau",
+          "phrase" : "der Frau",
+          "reason" : "attribute",
+          "trigger" : "Pferd"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "f",
+          "lemma" : "Wiese",
+          "phrase" : "der Wiese",
+          "reason" : "inferred",
+          "trigger" : "auf"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-244",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Verkäufer nahm den Rucksack der Mutter aus dem Auto.",
+          "en" : "The salesman took the mother's backpack out of the car."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 2
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The salesman",
+          "genus" : "m",
+          "lemma" : "Verkäufer",
+          "phrase" : "Der Verkäufer",
+          "reason" : "subject",
+          "trigger" : "nahm"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "backpack",
+          "genus" : "m",
+          "lemma" : "Rucksack",
+          "phrase" : "den Rucksack",
+          "reason" : "object",
+          "trigger" : "nahm"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the mother's",
+          "genus" : "f",
+          "lemma" : "Mutter",
+          "phrase" : "der Mutter",
+          "reason" : "attribute",
+          "trigger" : "Rucksack"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Auto",
+          "phrase" : "dem Auto",
+          "reason" : "inferred",
+          "trigger" : "aus"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-246",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Freund liest das Buch der Ärztin im Park.",
+          "en" : "The friend is reading the doctor's book in the park."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 2
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The friend",
+          "genus" : "m",
+          "lemma" : "Freund",
+          "phrase" : "Der Freund",
+          "reason" : "subject",
+          "trigger" : "liest"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "book",
+          "genus" : "n",
+          "lemma" : "Buch",
+          "phrase" : "das Buch",
+          "reason" : "object",
+          "trigger" : "liest"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the doctor's",
+          "genus" : "f",
+          "lemma" : "Ärztin",
+          "phrase" : "der Ärztin",
+          "reason" : "attribute",
+          "trigger" : "Buch"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Park",
+          "phrase" : "im Park",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-247",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Bruder der Kollegin wartete am Bahnhof.",
+          "en" : "The colleague's brother waited at the station."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "brother",
+          "genus" : "m",
+          "lemma" : "Bruder",
+          "phrase" : "Der Bruder",
+          "reason" : "subject",
+          "trigger" : "wartete"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The colleague's",
+          "genus" : "f",
+          "lemma" : "Kollegin",
+          "phrase" : "der Kollegin",
+          "reason" : "attribute",
+          "trigger" : "Bruder"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Bahnhof",
+          "phrase" : "am Bahnhof",
+          "reason" : "inferred",
+          "trigger" : "an"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-252",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Das Pferd der Schülerin spielte draußen.",
+          "en" : "The student's horse played outside."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "horse",
+          "genus" : "n",
+          "lemma" : "Pferd",
+          "phrase" : "Das Pferd",
+          "reason" : "subject",
+          "trigger" : "spielte"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The student's",
+          "genus" : "f",
+          "lemma" : "Schülerin",
+          "phrase" : "der Schülerin",
+          "reason" : "attribute",
+          "trigger" : "Pferd"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-269",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Vater sieht die Katze der Frau am Fenster.",
+          "en" : "The father sees the woman's cat at the window."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 2
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The father",
+          "genus" : "m",
+          "lemma" : "Vater",
+          "phrase" : "Der Vater",
+          "reason" : "subject",
+          "trigger" : "sieht"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "cat",
+          "genus" : "f",
+          "lemma" : "Katze",
+          "phrase" : "die Katze",
+          "reason" : "object",
+          "trigger" : "sieht"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the woman's",
+          "genus" : "f",
+          "lemma" : "Frau",
+          "phrase" : "der Frau",
+          "reason" : "attribute",
+          "trigger" : "Katze"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Fenster",
+          "phrase" : "am Fenster",
+          "reason" : "inferred",
+          "trigger" : "an"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-288",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Bruder der Kollegin spielt am Strand.",
+          "en" : "The colleague's brother is playing on the beach."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "brother",
+          "genus" : "m",
+          "lemma" : "Bruder",
+          "phrase" : "Der Bruder",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The colleague's",
+          "genus" : "f",
+          "lemma" : "Kollegin",
+          "phrase" : "der Kollegin",
+          "reason" : "attribute",
+          "trigger" : "Bruder"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Strand",
+          "phrase" : "am Strand",
+          "reason" : "inferred",
+          "trigger" : "an"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-291",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Mann nimmt den Koffer der Mutter aus dem Zug.",
+          "en" : "The man takes the mother's suitcase off the train."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 2
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The man",
+          "genus" : "m",
+          "lemma" : "Mann",
+          "phrase" : "Der Mann",
+          "reason" : "subject",
+          "trigger" : "nimmt"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "suitcase",
+          "genus" : "m",
+          "lemma" : "Koffer",
+          "phrase" : "den Koffer",
+          "reason" : "object",
+          "trigger" : "nimmt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the mother's",
+          "genus" : "f",
+          "lemma" : "Mutter",
+          "phrase" : "der Mutter",
+          "reason" : "attribute",
+          "trigger" : "Koffer"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Zug",
+          "phrase" : "dem Zug",
+          "reason" : "inferred",
+          "trigger" : "aus"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-296",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Das Pferd der Mutter schlief.",
+          "en" : "The mother's horse slept."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "horse",
+          "genus" : "n",
+          "lemma" : "Pferd",
+          "phrase" : "Das Pferd",
+          "reason" : "subject",
+          "trigger" : "schlief"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The mother's",
+          "genus" : "f",
+          "lemma" : "Mutter",
+          "phrase" : "der Mutter",
+          "reason" : "attribute",
+          "trigger" : "Pferd"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-298",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Bruder der Schülerin wartet an der Haltestelle.",
+          "en" : "The student's brother is waiting at the bus stop."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "brother",
+          "genus" : "m",
+          "lemma" : "Bruder",
+          "phrase" : "Der Bruder",
+          "reason" : "subject",
+          "trigger" : "wartet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The student's",
+          "genus" : "f",
+          "lemma" : "Schülerin",
+          "phrase" : "der Schülerin",
+          "reason" : "attribute",
+          "trigger" : "Bruder"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "f",
+          "lemma" : "Haltestelle",
+          "phrase" : "der Haltestelle",
+          "reason" : "inferred",
+          "trigger" : "an"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-304",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Sohn der Freundin schläft im Auto.",
+          "en" : "The girlfriend's son is sleeping in the car."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "son",
+          "genus" : "m",
+          "lemma" : "Sohn",
+          "phrase" : "Der Sohn",
+          "reason" : "subject",
+          "trigger" : "schläft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The girlfriend's",
+          "genus" : "f",
+          "lemma" : "Freundin",
+          "phrase" : "der Freundin",
+          "reason" : "attribute",
+          "trigger" : "Sohn"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Auto",
+          "phrase" : "im Auto",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-316",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Hund der Kellnerin wartet.",
+          "en" : "The waitress's dog is waiting."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "dog",
+          "genus" : "m",
+          "lemma" : "Hund",
+          "phrase" : "Der Hund",
+          "reason" : "subject",
+          "trigger" : "wartet"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The waitress's",
+          "genus" : "f",
+          "lemma" : "Kellnerin",
+          "phrase" : "der Kellnerin",
+          "reason" : "attribute",
+          "trigger" : "Hund"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-322",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Bruder der Nachbarin schlief lange.",
+          "en" : "The neighbor's brother slept for a long time."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "brother",
+          "genus" : "m",
+          "lemma" : "Bruder",
+          "phrase" : "Der Bruder",
+          "reason" : "subject",
+          "trigger" : "schlief"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The neighbor's",
+          "genus" : "f",
+          "lemma" : "Nachbarin",
+          "phrase" : "der Nachbarin",
+          "reason" : "attribute",
+          "trigger" : "Bruder"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-335",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Bruder sah die Katze der Chefin auf dem Dach.",
+          "en" : "The brother saw the boss's cat on the roof."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 2
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The brother",
+          "genus" : "m",
+          "lemma" : "Bruder",
+          "phrase" : "Der Bruder",
+          "reason" : "subject",
+          "trigger" : "sah"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "cat",
+          "genus" : "f",
+          "lemma" : "Katze",
+          "phrase" : "die Katze",
+          "reason" : "object",
+          "trigger" : "sah"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the boss's",
+          "genus" : "f",
+          "lemma" : "Chefin",
+          "phrase" : "der Chefin",
+          "reason" : "attribute",
+          "trigger" : "Katze"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Dach",
+          "phrase" : "dem Dach",
+          "reason" : "inferred",
+          "trigger" : "auf"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-342",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Das Pferd der Tochter schläft.",
+          "en" : "The daughter's horse is sleeping."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "horse",
+          "genus" : "n",
+          "lemma" : "Pferd",
+          "phrase" : "Das Pferd",
+          "reason" : "subject",
+          "trigger" : "schläft"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The daughter's",
+          "genus" : "f",
+          "lemma" : "Tochter",
+          "phrase" : "der Tochter",
+          "reason" : "attribute",
+          "trigger" : "Pferd"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-347",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Vogel der Ärztin spielt im Wohnzimmer.",
+          "en" : "The doctor's bird is playing in the living room."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "bird",
+          "genus" : "m",
+          "lemma" : "Vogel",
+          "phrase" : "Der Vogel",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The doctor's",
+          "genus" : "f",
+          "lemma" : "Ärztin",
+          "phrase" : "der Ärztin",
+          "reason" : "attribute",
+          "trigger" : "Vogel"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Wohnzimmer",
+          "phrase" : "im Wohnzimmer",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-348",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Freund der Nachbarin spielte im Hof.",
+          "en" : "The neighbor's friend played in the yard."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "friend",
+          "genus" : "m",
+          "lemma" : "Freund",
+          "phrase" : "Der Freund",
+          "reason" : "subject",
+          "trigger" : "spielte"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The neighbor's",
+          "genus" : "f",
+          "lemma" : "Nachbarin",
+          "phrase" : "der Nachbarin",
+          "reason" : "attribute",
+          "trigger" : "Freund"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Hof",
+          "phrase" : "im Hof",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-351",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Schüler sucht die Brille der Kollegin im Büro.",
+          "en" : "The student is looking for the colleague's glasses in the office."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 2
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "The student",
+          "genus" : "m",
+          "lemma" : "Schüler",
+          "phrase" : "Der Schüler",
+          "reason" : "subject",
+          "trigger" : "sucht"
+        },
+        {
+          "case" : "akkusativ",
+          "en" : "glasses",
+          "genus" : "f",
+          "lemma" : "Brille",
+          "phrase" : "die Brille",
+          "reason" : "object",
+          "trigger" : "sucht"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "the colleague's",
+          "genus" : "f",
+          "lemma" : "Kollegin",
+          "phrase" : "der Kollegin",
+          "reason" : "attribute",
+          "trigger" : "Brille"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Büro",
+          "phrase" : "im Büro",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-362",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Freund der Schwester spielt im Wohnzimmer.",
+          "en" : "The sister's friend is playing in the living room."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "friend",
+          "genus" : "m",
+          "lemma" : "Freund",
+          "phrase" : "Der Freund",
+          "reason" : "subject",
+          "trigger" : "spielt"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The sister's",
+          "genus" : "f",
+          "lemma" : "Schwester",
+          "phrase" : "der Schwester",
+          "reason" : "attribute",
+          "trigger" : "Freund"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Wohnzimmer",
+          "phrase" : "im Wohnzimmer",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-367",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Sohn der Kellnerin spielte im Garten.",
+          "en" : "The waitress's son played in the garden."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "son",
+          "genus" : "m",
+          "lemma" : "Sohn",
+          "phrase" : "Der Sohn",
+          "reason" : "subject",
+          "trigger" : "spielte"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The waitress's",
+          "genus" : "f",
+          "lemma" : "Kellnerin",
+          "phrase" : "der Kellnerin",
+          "reason" : "attribute",
+          "trigger" : "Sohn"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "m",
+          "lemma" : "Garten",
+          "phrase" : "im Garten",
+          "reason" : "inferred",
+          "trigger" : "in"
+        }
+      ],
+      "unit" : "genitiv"
+    },
+    {
+      "id" : "kc-sg-gen-probe-371",
+      "kind" : "probe",
+      "level" : "B1",
+      "paragraphs" : [
+        {
+          "de" : "Der Freund der Schwester wartete vor dem Kino.",
+          "en" : "The sister's friend waited in front of the cinema."
+        }
+      ],
+      "probe" : {
+        "noun" : "Mann",
+        "target" : 1
+      },
+      "targets" : [
+        {
+          "case" : "nominativ",
+          "en" : "friend",
+          "genus" : "m",
+          "lemma" : "Freund",
+          "phrase" : "Der Freund",
+          "reason" : "subject",
+          "trigger" : "wartete"
+        },
+        {
+          "case" : "genitiv",
+          "en" : "The sister's",
+          "genus" : "f",
+          "lemma" : "Schwester",
+          "phrase" : "der Schwester",
+          "reason" : "attribute",
+          "trigger" : "Freund"
+        },
+        {
+          "case" : "dativ",
+          "genus" : "n",
+          "lemma" : "Kino",
+          "phrase" : "dem Kino",
+          "reason" : "inferred",
+          "trigger" : "vor"
+        }
+      ],
+      "unit" : "genitiv"
+    }
+  ],
+  "version" : 1
+}

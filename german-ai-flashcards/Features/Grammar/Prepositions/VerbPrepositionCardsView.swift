@@ -223,7 +223,9 @@ struct VerbPrepositionCardsView: View {
 
 // MARK: - The card
 
-private struct VerbPrepositionCard: View {
+/// One verb pair as a flippable card. Shared by the reference deck and the review box
+/// (`VerbPrepositionReviewView`), which differ in what happens after the flip, not in the card.
+struct VerbPrepositionCard: View {
     let pair: VerbPreposition
     let height: CGFloat
     @Binding var isFlipped: Bool

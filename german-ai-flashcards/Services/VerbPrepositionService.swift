@@ -44,6 +44,9 @@ enum VerbPrepositionService {
     /// Every pair, in the class sheet's order (Akkusativ first, then Dativ).
     static func all() -> [VerbPreposition] { file.verbs }
 
+    /// How many scenes the pairs act in: fewer than the pairs, since a few share one.
+    static var sceneCount: Int { Set(all().map(\.scene)).count }
+
     static func verbs(governing groups: Set<PrepositionCase>) -> [VerbPreposition] {
         all().filter { groups.contains($0.governs) }
     }
@@ -194,6 +197,122 @@ enum VerbPrepositionService {
             germanTileTints: tints,
             tintLegend: legend
         )
+    }
+}
+
+// MARK: - Review box (spaced repetition)
+//
+// One synced SRS deck holding every pair, studied in `VerbPrepositionReviewView` with the verb
+// card (gap on the front, scene, answer on the back) and the app's SM-2 scheduler. Not in the
+// generic card player: that shows the German side verbatim, so „warten auf“ would sit on the
+// card's face with the answer already on it, and it has no per-deck front side to turn around.
+//
+// The deck is a sync singleton (`SyncSingletonDecks`): its id comes from (generator, topic) and
+// each card's from (deck, verb), so two devices that each create it make one deck. It fills
+// itself from the whole bundled list on every open, unlike the Perfekt deck, which only ever
+// holds the subsets it was launched with.
+
+extension VerbPrepositionService {
+
+    /// `SavedDeck.generatorRaw` for the review box. Nonisolated so `SavedDeck.kind` and the sync
+    /// tables can read it off the main actor.
+    nonisolated static let deckGenerator = "verb-prep-srs"
+    nonisolated static let deckTopic = "Verben mit Präpositionen"
+
+    /// New pairs a review session may introduce. A session is due cards first, then this many
+    /// new ones, so the 42 arrive in steady handfuls rather than all at once.
+    static let newPerSession = 10
+    /// The most cards one session holds, re-shown misses aside.
+    static let sessionCap = 25
+
+    /// The review box, created on first use and topped up with any pair the bundle has gained.
+    @MainActor
+    @discardableResult
+    static func fetchOrCreateDeck(in context: ModelContext) -> SavedDeck {
+        let generator = deckGenerator
+        let descriptor = FetchDescriptor<SavedDeck>(predicate: #Predicate { $0.generatorRaw == generator })
+        let deck: SavedDeck
+        if let existing = (try? context.fetch(descriptor))?.first {
+            deck = existing
+        } else {
+            deck = SavedDeck(topic: deckTopic, wordCount: all().count, includeExamples: true, includeGender: false)
+            deck.generatorRaw = deckGenerator
+            deck.id = SyncSingletonDecks.deckID(generatorRaw: deckGenerator, topic: deckTopic)
+            context.insert(deck)
+        }
+
+        let existing = Set(deck.cards.map(\.germanWord))
+        for (index, pair) in all().enumerated() where !existing.contains(pair.verb) {
+            let card = SavedCard(
+                germanWord: pair.verb,
+                englishTranslation: pair.english,
+                wordType: "verb",
+                article: nil,
+                exampleSentence: pair.example?.german,
+                sortOrder: index
+            )
+            card.id = SyncSingletonDecks.cardID(deckID: deck.id, germanWord: pair.verb)
+            deck.cards.append(card)
+            context.insert(card)
+        }
+        deck.wordCount = deck.cards.count
+        try? context.save()
+        return deck
+    }
+
+    /// A never-reviewed card: new, not due.
+    static func isNew(_ card: SavedCard) -> Bool {
+        card.nextReviewDate == nil && card.totalReviews == 0
+    }
+
+    static func isDue(_ card: SavedCard, now: Date = .now) -> Bool {
+        guard let next = card.nextReviewDate else { return false }
+        return next <= now
+    }
+
+    /// Learned by the app's one rule (the pyramid's and the Wortschatz box's): three good
+    /// reviews in a row, or an interval of three weeks.
+    static func isLearned(_ card: SavedCard) -> Bool {
+        card.interval >= 21 || card.repetitions >= 3
+    }
+
+    /// What a session would hold: every due card, soonest first, then new ones in the class
+    /// sheet's order up to `newPerSession`, capped at `sessionCap`.
+    static func reviewQueue(
+        _ cards: [SavedCard],
+        newBudget: Int = newPerSession,
+        cap: Int = sessionCap,
+        now: Date = .now
+    ) -> [SavedCard] {
+        let due = cards.filter { isDue($0, now: now) }
+            .sorted { ($0.nextReviewDate ?? now) < ($1.nextReviewDate ?? now) }
+        let new = cards.filter { isNew($0) }.sorted { $0.sortOrder < $1.sortOrder }.prefix(newBudget)
+        return Array((due + new).prefix(cap))
+    }
+
+    struct BoxCounts: Equatable {
+        var due: Int
+        var new: Int
+        var learned: Int
+    }
+
+    /// The box's numbers straight from the store, without creating it. For screens that show the
+    /// counts but must not observe 42 cards in their body.
+    static func counts(in context: ModelContext, now: Date = .now) -> BoxCounts {
+        let generator = deckGenerator
+        var descriptor = FetchDescriptor<SavedDeck>(predicate: #Predicate { $0.generatorRaw == generator })
+        descriptor.fetchLimit = 1
+        return counts((try? context.fetch(descriptor))?.first?.cards, now: now)
+    }
+
+    /// The hub row's numbers. A box not created yet is all new.
+    static func counts(_ cards: [SavedCard]?, now: Date = .now) -> BoxCounts {
+        guard let cards, !cards.isEmpty else {
+            return BoxCounts(due: 0, new: all().count, learned: 0)
+        }
+        return BoxCounts(due: cards.filter { isDue($0, now: now) }.count,
+                         new: cards.filter { isNew($0) }.count,
+                         learned: cards.filter { isLearned($0) }.count)
     }
 }
 

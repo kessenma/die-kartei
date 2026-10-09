@@ -35,12 +35,37 @@ Kyle took every recommendation below. Shipped on main (uncommitted), sim-verifie
   fill-in rounds, and recording apart from the 28 prepositions.
 - **Asset budget:** 10 MB of USDZ (the dog decimated to a quarter) plus 7.7 MB of stills.
 
+Added 2026-10-04:
+- **Wiederholen** (`VerbPrepositionReviewView`): the spaced-repetition review.
+  - **Cards:** the verb card (gap, scene, then answer), rated with the card player's four buttons
+    and interval previews, on the app's SM-2 scheduler.
+  - **Store:** one synced singleton deck, `verb-prep-srs`, filled from the whole list.
+  - **Session:** due pairs first, then up to 10 new, capped at 25. A miss comes back once.
+  - **Where it shows:**
+    - a hub row with due, new and learned counts;
+    - its own Today step („Verben · N due“);
+    - kept out of the generic Daily Review, whose German-side-first card would show the answer.
+- **The Kasus lexicon** (`KasusVerbPairs`, docs/KASUS.md "Verb pairs"): stories now let a verb
+  pair decide its preposition's case. A clash rejects a tutor's story, except where it may be a
+  place.
+
+Added later on 2026-10-04:
+- **„In Arbeit · In progress“**, a hub section on both tracks and in every build, holding the new
+  work: **Verb-Szenen** (`VerbSceneGalleryView`, every pair's scene with a Frage/Antwort switch, a
+  jump list and replay, one canvas like the Animation Gallery), Verb-Karten and Wiederholen. Debug
+  builds add the old "Work in Progress" rows (Animation Gallery, Figur, Tutor-Szene) here.
+- **The freeze fix.** Once the review box existed, pushing any screen from the hub (Verb-Karten,
+  Wiederholen) froze the app: the hub re-rendered endlessly at 100% CPU, which iOS kills on a
+  phone. The cause was the Wiederholen row reading the box's 42 cards in `body` through a filtered
+  `@Query`. The hub now reads `VerbPrepositionService.counts(in:)` on appear into `@State`.
+  **Invariant:** the hub never observes the box's cards in `body`.
+
 Still open:
-- Check on device that the question side shows the key pose. On the sim it does: clips stopped,
-  the pose frozen, and they play on the reveal.
+- Check on device that the question side shows the key pose. On the sim, Frage shows a still
+  pose with the object uncolored and Antwort plays; the gallery's Frage switch is for this check.
 - Smaller stills, if the 7.7 MB matters.
-- The SRS deck.
-- The Kasus lexicon.
+- Planning verb-pair phrases into tutor stories: today they are only checked when a tutor
+  happens to write one.
 
 This doc plans how the set joins the app's preposition experience, and how that experience
 changes so the two kinds of preposition stop blurring together.

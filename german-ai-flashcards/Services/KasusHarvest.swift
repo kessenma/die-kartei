@@ -114,6 +114,10 @@ nonisolated enum KasusUnverifiable: String, Codable, CaseIterable, Hashable {
     /// Only a Genitiv plural reading fits, but nothing it could hang on: no noun in front and no
     /// Genitiv preposition. More likely a wrong gender („Der Zimmer ist groß“).
     case genitiveRole
+    /// A verb pair stands in the clause and fixes another case than the form shows, but the phrase
+    /// may simply be a place: „wartet auf dem Bahnsteig“ (fine) reads like „wartet auf dem Bus“
+    /// (wrong), or the preposition appears twice there (KasusVerbPairs).
+    case verbPair
     /// A Dativ with no preposition where sein is the verb: right in „Das ist dem Kind egal“,
     /// wrong in „Ich war dem Haus zu Hause“, and the form can't tell them apart.
     case copula
@@ -201,6 +205,25 @@ enum KasusHarvest {
                     }
                 }
 
+                // A verb that fixes its preposition's case („warten auf“ + Akk) decides, the same
+                // rule the validator applies (`KasusValidator.verbPairScope`). It also lets a soft
+                // „um“ count when its pair's verb is there („kümmert sich um den Hund“).
+                let scope = KasusValidator.verbPairScope(range, in: paragraph)
+                let scopeWords = Set(scope.map { $0.text.lowercased() })
+                if preposition == nil, contraction == nil, i > 0, paragraph.isWhitespaceGap(tokens[i - 1], token) {
+                    let before = tokens[i - 1].text.lowercased()
+                    if KasusForms.softPrepositions.contains(before),
+                       lexicon.verbPair(preposition: before, among: scopeWords) != nil,
+                       let cases = lexicon.prepositionCases(before) {
+                        preposition = before
+                        prepositionCases = cases
+                    }
+                }
+                let pair = preposition.flatMap { lexicon.verbPair(preposition: $0, among: scopeWords) }
+                let pairMayBePlace = pair.map { match in
+                    match.spatialToo || KasusValidator.prepositionCount(match.preposition, in: scope) > 1
+                } ?? false
+
                 let article = contraction?.article ?? lower
                 let family = determiner?.family
                 let adjective = nounIndex != i + 1
@@ -221,8 +244,21 @@ enum KasusHarvest {
                     if blocked == nil, isNominalised(noun: nounToken.text, article: article, readings: readings, lexicon: lexicon) {
                         verdict = .unverifiable(.nominalised)
                     } else {
+                        let narrowed = pair.map { (prepositionCases ?? []).intersection([$0.kasus]) } ?? prepositionCases
                         (verdict, chosen) = decide(readings: readings, blocked: blocked,
-                                                   prepositionCases: prepositionCases, mayReject: mayReject)
+                                                   prepositionCases: narrowed, mayReject: mayReject)
+                        // The pair's case doesn't fit, but it may be a place: leave it alone, unless
+                        // it is wrong German whatever the verb („das Bus“).
+                        if pair != nil, pairMayBePlace, verdict != .proven, blocked == nil {
+                            let plain = decide(readings: readings, blocked: blocked,
+                                               prepositionCases: prepositionCases, mayReject: mayReject)
+                            if plain.0 == .wrong {
+                                (verdict, chosen) = plain
+                            } else {
+                                verdict = .unverifiable(.verbPair)
+                                chosen = nil
+                            }
+                        }
                     }
                     // With an adjective in between, only a wrong article counts: the adjective's
                     // own ending isn't checked, so a phrase that fits stays ungraded.

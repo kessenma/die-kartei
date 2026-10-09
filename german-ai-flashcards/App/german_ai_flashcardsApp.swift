@@ -60,10 +60,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         MetricKitSubscriber.shared.start()
         // The Mac has no memory warnings; its memory-pressure events stand in for them.
         MacMemoryPressure.start()
+        // The Schreibhilfe's Services menu items. Last: requests can arrive the moment it's set.
+        let isDefaultLaunch = notification.userInfo?[NSApplication.launchIsDefaultUserInfoKey] as? Bool ?? true
+        MacWritingServices.shared.noteLaunch(isDefault: isDefaultLaunch)
+        NSApp.servicesProvider = MacWritingServices.shared
+        NSUpdateDynamicServices()
     }
 
-    /// One window, one app: closing it quits, the way a phone app's swipe-away does.
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+    /// One window, one app: closing it quits, the way a phone app's swipe-away does. Except while
+    /// the Schreibhilfe is open or a Services request is running: the panel isn't a window this
+    /// counts, and quitting would close it (or drop the request) out from under the learner.
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        !MacWritingHelper.shared.isVisible && !MacWritingServices.shared.isBusy
+    }
 
     /// Quitting is a normal exit on the Mac (and the scene never reaches `.background` first), so
     /// this is where the session ends cleanly and the last edits are queued for iCloud.

@@ -4,7 +4,8 @@ import SwiftData
 /// Decks whose id both devices derive from (generatorRaw, topic) rather than make up at random:
 /// the Wortschatz deck and the per-topic stats and SRS decks, which each device fetch-or-creates.
 enum SyncSingletonDecks {
-    static let generators: Set<String> = ["goethe", "goethe-srs", "past-tense", "past-tense-srs", "grammar"]
+    static let generators: Set<String> = ["goethe", "goethe-srs", "past-tense", "past-tense-srs", "grammar",
+                                          VerbPrepositionService.deckGenerator]
 
     static func isSingleton(_ deck: SavedDeck?) -> Bool {
         deck.map { generators.contains($0.generatorRaw) } ?? false

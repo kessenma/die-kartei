@@ -27,6 +27,9 @@ Docs accumulated by round, not by topic. When two disagree, the one lower in thi
 | What to generate next and why | [`DATA_GAP_PLAN.md`](DATA_GAP_PLAN.md) |
 | **RL round** — GRPO on verdict calibration: plan, worklog, results, article draft in one file | [`REINFORCEMENT_LEARNING.md`](REINFORCEMENT_LEARNING.md) |
 | Regional-variety audit of corpus + models (AT/CH markers, dialect probes) | [`DIALECT_EVAL.md`](DIALECT_EVAL.md) |
+| **Kasus story slice** — teaching the tutor to write to a plan; `kasus_cli/` (the app's planner + check as a Mac tool); the Kolibri-1 vs gemma-31B bake-offs | [`KASUS_STORY_DATA.md`](KASUS_STORY_DATA.md) |
+| **Kolibri-1 bake-off results** — stories + correction tail vs gemma-31B, hand reads, the check's blind spots it exposed | [`KOLIBRI_BAKEOFF.md`](KOLIBRI_BAKEOFF.md) |
+| **Verstehen-item probe** — can the 4 tutors write one-sentence case exercises around app-planned phrases; the gate, pass rates, hand read, options incl. a training slice | [`KASUS_CONCEPT_PROBE.md`](KASUS_CONCEPT_PROBE.md) |
 | Long-form writeup for publication | [`ARTICLE.md`](ARTICLE.md) |
 
 `german-tutor-cactus-retrain-plan.md` and `DATA_V2_DISTILL_PLAN.md` are historical — superseded by

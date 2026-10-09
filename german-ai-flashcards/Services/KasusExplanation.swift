@@ -76,6 +76,7 @@ nonisolated enum KasusExplanation {
 
     /// The Kasus-Check step that decides this target.
     static func ruleLine(for target: KasusLocatedTarget) -> String {
+        if let pair = target.verbPair { return verbPairLine(for: target, pair) }
         if target.spec.reason == .inferred { return inferredLine(for: target) }
         let phrase = "„\(target.surface)“"
         let trigger = "*\(target.spec.trigger)*"
@@ -155,6 +156,17 @@ nonisolated enum KasusExplanation {
             // A preposition reason with no preposition found; the validator has already flagged it.
             return "\(phrase) is \(kasus) here."
         }
+    }
+
+    /// A verb that fixes its preposition's case decides („warten auf“ + Akkusativ). After a
+    /// two-way preposition the line says so outright, because that is exactly where a learner
+    /// reaches for Wo/Wohin and gets it wrong:
+    ///   „*warten auf* **always** takes the {akk:Akkusativ}: the verb decides here, not {wechsel:Wo?} or {wechsel:Wohin?}.“
+    ///   „*sprechen mit* **always** takes the {dat:Dativ}.“
+    static func verbPairLine(for target: KasusLocatedTarget, _ pair: KasusVerbPairMatch) -> String {
+        let line = "*\(pair.verb)* **always** takes the \(caseName(target.kasus))"
+        guard target.preposition?.isTwoWay == true else { return line + "." }
+        return line + ": the verb decides here, not {wechsel:Wo?} or {wechsel:Wohin?}."
     }
 
     /// A generated story's unplanned phrase (`KasusReason.inferred`): only the article's form and

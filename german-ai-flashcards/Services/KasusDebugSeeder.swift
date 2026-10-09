@@ -77,6 +77,21 @@ enum KasusDebugSeeder {
         kasus.append(quickRound(.nominativ, wrongEvery: 7, seconds: 68, date: day(1, 19, 40)))
         kasus.append(quickRound(.akkusativ, wrongEvery: 3, seconds: 97, date: day(2, 18, 5)))
 
+        // Verstehen: the Dativ lesson read this morning, a Rollen round in the Akkusativ yesterday
+        // with one phrase in three given another role, and a Probe round in the Dativ with one
+        // form in three wrong, all built by the real engine on the bundled items.
+        kasus.append(KasusRound(
+            storyID: KasusService.lessonRoundID(.dativ), unitRaw: KasusUnit.dativ.rawValue,
+            stepRaw: KasusRoundStep.lesson.rawValue, askedCount: 0, firstTryCount: 0, durationSeconds: 130,
+            date: day(0, 9, 10), roundKey: UUID().uuidString
+        ))
+        if let roles = conceptRound(.akkusativ, .roles, wrongEvery: 3, seconds: 212, date: day(1, 19, 20)) {
+            kasus.append(roles)
+        }
+        if let probe = conceptRound(.dativ, .probe, wrongEvery: 3, seconds: 121, date: day(2, 18, 30)) {
+            kasus.append(probe)
+        }
+
         // Three days ago: an Einsetzen from before Endungen, gemischt at Ohne Hilfe, one gap in
         // five wrong. No feedback mode, so the history labels it „Einsetzen“.
         let ohne = KasusService.blanks(in: playable, unit: unit, mixed: true, hint: .ohne)
@@ -143,6 +158,20 @@ enum KasusDebugSeeder {
         }
         return KasusService.round(for: KasusService.quickResult(unit: unit, items: items, durationSeconds: seconds),
                                   date: date)
+    }
+
+    /// A Verstehen round over the unit's bundled items, every `wrongEvery`-th step answered wrong.
+    private static func conceptRound(_ unit: KasusUnit, _ exercise: KasusConceptExercise, wrongEvery: Int,
+                                     seconds: Int, date: Date) -> KasusRound? {
+        guard var round = KasusService.conceptRound(unit: unit, exercise: exercise, rolesMode: .direkt, seed: 7) else { return nil }
+        var step = 0
+        while !round.isFinished {
+            guard let pick = KasusService.debugConceptPick(for: round, step: step, wrong: step % wrongEvery == wrongEvery - 1),
+                  round.answer(pick) != nil else { break }
+            step += 1
+        }
+        guard !round.answers.isEmpty else { return nil }
+        return KasusService.round(for: round.result(durationSeconds: seconds), date: date)
     }
 
     private static func article(_ topic: String, _ count: Int, _ firstTry: Int, _ seconds: Int,

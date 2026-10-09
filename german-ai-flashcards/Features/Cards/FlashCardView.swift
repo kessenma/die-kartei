@@ -360,10 +360,17 @@ struct FlashCardView: View {
     private var imageFace: some View {
         if let cardImage {
             ZStack(alignment: .bottom) {
-                Image(uiImage: cardImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // The picture fills an overlay on a sizeless base so it can't grow the ZStack. A bare
+                // `scaledToFill()` reports its overflowing size: on a wide iPad card a square picture
+                // grows the stack far taller than the card, and the bottom-aligned word lands below
+                // the clip, out of sight.
+                Color.clear
+                    .overlay {
+                        Image(uiImage: cardImage)
+                            .resizable()
+                            .scaledToFill()
+                    }
+                    .clipped()
 
                 scrim
 

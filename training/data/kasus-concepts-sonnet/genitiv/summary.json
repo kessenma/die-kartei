@@ -1,0 +1,25 @@
+{
+  "total": {
+    "written": 88,
+    "pass": 88,
+    "candidates": 88
+  },
+  "slots": {
+    "genitiv/roles": {
+      "written": 30,
+      "pass": 30,
+      "candidates": 30
+    },
+    "genitiv/wer": {
+      "written": 30,
+      "pass": 30,
+      "candidates": 30
+    },
+    "genitiv/probe": {
+      "written": 28,
+      "pass": 28,
+      "candidates": 28
+    }
+  },
+  "rejects": {}
+}

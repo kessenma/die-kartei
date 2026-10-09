@@ -8,7 +8,9 @@
 //    Weiter · Up next              one row: where to pick up (`KasusPath.next`, never stored)
 //    Die vier Fälle · The cases    Nominativ → Akkusativ → Dativ → Genitiv → Alle Fälle
 //    Verlauf · Your rounds         every scored grammar round, with the last one's score
-//    Werkzeuge · Tools             Präpositionen (the 3D scenes), der/die/das, the endings table
+//    Verstehen & Nachschlagen     guided explainers, with tables and memory aids nested inside
+//    Weitere Übungen              Präpositionen (the 3D scenes), der/die/das, the Endungs-Werkstatt
+//                                  (articles as 3D blocks, the ending in its case color)
 //
 //  The toolbar's question mark opens Der Kasus-Check, the decision order every case explanation
 //  in the app follows. Flames come from the coach's profile (`LearnerMemoryService.shakyFocuses`),
@@ -31,12 +33,18 @@ struct GrammarHubView: View {
     /// The hero row launches its story or Schnellrunde through the router.
     @Environment(ActivityRouter.self) private var router
     @Environment(\.appTheme) private var appTheme
+    @Environment(\.modelContext) private var modelContext
 
     @State private var showKasusCheck = false
+    /// The hero's „Lektion“: a sheet, since the lesson isn't an activity.
+    @State private var lessonUnit: KasusUnit?
+    /// The exercise the lesson's Üben asked for, launched once the sheet has gone.
+    @State private var pendingConcept: KasusConceptSession?
 
     var body: some View {
         List {
             heroSection.themedListRow()
+            explainersSection.themedListRow()
             unitsSection.themedListRow()
             historySection.themedListRow()
             toolsSection.themedListRow()
@@ -57,6 +65,22 @@ struct GrammarHubView: View {
         .sheet(isPresented: $showKasusCheck) {
             KasusCheckSheet()
         }
+        .sheet(item: $lessonUnit, onDismiss: launchPendingConcept) { unit in
+            KasusLessonView(
+                unit: unit,
+                onRead: { seconds in KasusService.recordLessonRead(unit: unit, seconds: seconds, in: modelContext) },
+                onPractice: {
+                    pendingConcept = KasusConceptSession(unit: unit, exercise: .roles)
+                    lessonUnit = nil
+                }
+            )
+        }
+    }
+
+    private func launchPendingConcept() {
+        guard let session = pendingConcept else { return }
+        pendingConcept = nil
+        router.launch(.kasusConcept(session))
     }
 
     // MARK: - Learner profile inputs
@@ -78,7 +102,7 @@ struct GrammarHubView: View {
     /// the learner's start unit, or the story played longest ago. Derived on every render.
     private var hero: KasusHero {
         KasusPath.next(profile: profiles.first, level: modelManager.germanLevel,
-                       rounds: rounds, bank: KasusStoryBank.bundled)
+                       rounds: rounds, bank: KasusStoryBank.bundled, concepts: KasusConceptBank.bundled)
     }
 
     private var heroSection: some View {
@@ -87,12 +111,16 @@ struct GrammarHubView: View {
             Button {
                 if let session = hero.storySession {
                     router.launch(.kasusStory(session))
+                } else if let session = hero.conceptSession {
+                    router.launch(.kasusConcept(session))
+                } else if case .lesson = hero.action {
+                    lessonUnit = hero.unit
                 } else {
                     router.launch(.caseEndings(hero.quickRoundSession))
                 }
             } label: {
                 HStack(spacing: 12) {
-                    Image(systemName: hero.unit.symbol)
+                    Image(systemName: heroSymbol(hero))
                         .font(.title2)
                         .foregroundStyle(hero.unit.color)
                         .frame(width: 44, height: 44)
@@ -112,7 +140,7 @@ struct GrammarHubView: View {
                         }
                     }
                     Spacer(minLength: 8)
-                    Image(systemName: "play.circle.fill")
+                    Image(systemName: { if case .lesson = hero.action { "book.pages" } else { "play.circle.fill" } }())
                         .font(.title2)
                         .foregroundStyle(.tint)
                 }
@@ -126,17 +154,38 @@ struct GrammarHubView: View {
         }
     }
 
-    /// Dativ · „Der verlorene Schlüssel“, or Akkusativ · Schnellrunde.
+    /// The unit's symbol, or the lesson's and an exercise's own.
+    private func heroSymbol(_ hero: KasusHero) -> String {
+        switch hero.action {
+        case .lesson:                  "lightbulb.fill"
+        case .concept(let exercise):   exercise.symbol
+        case .story, .quickRound:      hero.unit.symbol
+        }
+    }
+
+    /// Dativ · „Der verlorene Schlüssel“, Akkusativ · Schnellrunde, Dativ · Lektion, Dativ · Rollen.
     private func heroTitle(_ hero: KasusHero) -> String {
         if let title = hero.storyTitle {
             return "\(hero.unit.germanTitle) · „\(title)“"
         }
-        return "\(hero.unit.germanTitle) · Schnellrunde"
+        switch hero.action {
+        case .lesson:                 return "\(hero.unit.germanTitle) · Lektion"
+        case .concept(let exercise):  return "\(hero.unit.germanTitle) · \(exercise.germanTitle)"
+        case .story, .quickRound:     return "\(hero.unit.germanTitle) · Schnellrunde"
+        }
     }
 
     /// The steps still ahead in the story and roughly how long they take, or the Schnellrunde's
-    /// cases.
+    /// cases, or the Verstehen piece and its minutes.
     private func heroSubtitle(_ hero: KasusHero) -> String {
+        switch hero.action {
+        case .lesson:
+            return "Verstehen · What this case is · about 2 min"
+        case .concept(let exercise):
+            return "Verstehen · \(exercise.englishTitle) · about \(exercise.minutes) min"
+        case .story, .quickRound:
+            break
+        }
         guard let step = hero.step else {
             return "10 Sätze · \(hero.unit.casesInPlay.map(\.short).joined(separator: " + "))"
         }
@@ -145,6 +194,21 @@ struct GrammarHubView: View {
         let minutes = Self.storyMinutes[step] ?? 8
         let line = "\(path) · about \(minutes) min"
         return hero.reason == .review ? "Wiederholen · \(line)" : line
+    }
+
+    private var explainersSection: some View {
+        Section {
+            NavigationLink {
+                KasusExplainerLibraryView()
+            } label: {
+                toolRow("Warum dieser Fall? · Why this case?",
+                        "Guided explanations, article tables & memory aids", shaky: false) {
+                    toolChip("text.magnifyingglass")
+                }
+            }
+        } header: {
+            Text("Verstehen & Nachschlagen · Understand & reference").themedSectionHeader()
+        }
     }
 
     // MARK: - Die vier Fälle
@@ -195,14 +259,16 @@ struct GrammarHubView: View {
         .padding(.vertical, 4)
     }
 
-    /// One dot per story (filled once its Markieren and Endungen are both played) and one for the
-    /// Schnellrunde. Keyed on (storyID, unit, step), never on a title.
+    /// One dot for Verstehen (the lesson read and every offered drill played), one per story
+    /// (filled once its Markieren and Endungen are both played) and one for the Schnellrunde.
+    /// Keyed on (storyID, unit, step), never on a title.
     private func progressDots(_ unit: KasusUnit) -> some View {
         let progress = KasusProgress(rounds: rounds)
-        let done = KasusStoryBank.bundled.stories(for: unit).map { story in
-            progress.isDone(storyID: story.id, unit: unit, step: .find)
-                && progress.isDone(storyID: story.id, unit: unit, step: .fill)
-        } + [progress.quickRoundDone(unit)]
+        let done = [progress.verstehenDone(unit, offered: KasusConceptBank.bundled.offered(for: unit))]
+            + KasusStoryBank.bundled.stories(for: unit).map { story in
+                progress.isDone(storyID: story.id, unit: unit, step: .find)
+                    && progress.isDone(storyID: story.id, unit: unit, step: .fill)
+            } + [progress.quickRoundDone(unit)]
         return HStack(spacing: 3) {
             ForEach(Array(done.enumerated()), id: \.offset) { _, filled in
                 Circle()
@@ -288,14 +354,15 @@ struct GrammarHubView: View {
                 }
             }
             NavigationLink {
-                CaseEndingsView()
+                EndungsWerkstattView()
             } label: {
-                toolRow("Die Endungen · The table", "rese · nese · mrmn · srsr", shaky: false) {
-                    toolChip("tablecells")
+                toolRow("Endungs-Werkstatt · Ending workshop", "Watch der turn into dem, in 3D", shaky: false) {
+                    toolChip("cube.fill")
                 }
             }
+
         } header: {
-            Text("Werkzeuge · Tools")
+            Text("Weitere Übungen · More practice")
                 .themedSectionHeader()
         }
     }

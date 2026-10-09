@@ -69,7 +69,7 @@ extension CardDeckView {
                 isRegular: cards[currentIndex].isRegular,
                 exampleSentence: cards[currentIndex].exampleSentence,
                 imageFileName: imageFileName(at: currentIndex),
-                imageDeckID: deckUUID,
+                imageDeckID: imageDeckID(at: currentIndex),
                 hidesArticleUntilFlipped: articleQuiz,
                 forms: cards[currentIndex].forms
             )

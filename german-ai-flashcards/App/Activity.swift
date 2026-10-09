@@ -25,6 +25,8 @@ enum Activity: Identifiable {
     case caseEndings(CaseEndingsSession)
     /// A Kasus story (Lesen → Markieren → Endungen → Ergebnis), configured by a `KasusSession`.
     case kasusStory(KasusSession)
+    /// A Verstehen exercise (Rollen, Wer macht was?, Die Probe), configured by a `KasusConceptSession`.
+    case kasusConcept(KasusConceptSession)
 
     var id: String {
         switch self {
@@ -44,6 +46,8 @@ enum Activity: Identifiable {
             return "caseEndings-\(session.id.uuidString)"
         case .kasusStory(let session):
             return "kasusStory-\(session.id.uuidString)"
+        case .kasusConcept(let session):
+            return "kasusConcept-\(session.id.uuidString)"
         }
     }
 }

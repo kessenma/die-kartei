@@ -113,6 +113,7 @@ across it.)*
 | Rules sheet, two-way test | USDZ, animated | The `wohinwo` demo — the rule, not an example of it |
 | Hub rows, drill buttons, chips | Static `flat` PNG | Shading muds below ~40pt (verified on device) |
 | Matching tiles | **Nothing** | Would leak the meaning being tested |
+| Ending blocks (Werkstatt, endings table, Schnellrunde, Bau das Wort) | Runtime-extruded text, one canvas per screen | No asset: the letters are built on device. See docs/KASUS.md, „Ending blocks in 3D“ |
 
 `RealityView` has real per-instance setup cost, so the rule is **at most one live scene visible at
 a time**. Anything in a list, grid, or repeated row takes a still.

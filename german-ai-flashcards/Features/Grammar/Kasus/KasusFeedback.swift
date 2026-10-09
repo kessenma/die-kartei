@@ -139,6 +139,9 @@ struct KasusOptionGrid: View {
     var columns: Int = 3
     var rowHeight: CGFloat = 58
     var font: Font = .title3.weight(.semibold)
+    /// A color in place of the case's, where a right pick shouldn't name a case yet (a Ja/Nein
+    /// on the way through the Kasus-Check).
+    var color: Color? = nil
     let onPick: (String) -> Void
 
     var body: some View {
@@ -148,7 +151,8 @@ struct KasusOptionGrid: View {
                     option: option,
                     state: state(of: option),
                     kasus: kasus,
-                    font: font
+                    font: font,
+                    color: color
                 ) {
                     guard !graded || picked == nil else { return }
                     onPick(option)
@@ -196,9 +200,14 @@ struct KasusOptionButton: View {
     let state: Look
     let kasus: GrammarCase
     var font: Font = .title3.weight(.semibold)
+    /// A color in place of the case's for the right and revealed looks.
+    var color: Color? = nil
     let action: () -> Void
 
     @Environment(\.appTheme) private var appTheme
+
+    /// The case color, or the override.
+    private var tint: Color { color ?? kasus.color }
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: appTheme.innerRadius(12), style: .continuous)
@@ -259,7 +268,7 @@ struct KasusOptionButton: View {
         switch state {
         // The case colors brighten in dark mode, so the label flips with the ground to stay legible.
         case .pickedRight:              Color(.systemBackground)
-        case .revealed:                 kasus.color
+        case .revealed:                 tint
         case .pickedWrong:              .secondary
         case .open, .passive, .selected: .primary
         }
@@ -267,8 +276,8 @@ struct KasusOptionButton: View {
 
     private var fill: AnyShapeStyle {
         switch state {
-        case .pickedRight:  AnyShapeStyle(kasus.color)
-        case .revealed:     AnyShapeStyle(kasus.color.opacity(0.12))
+        case .pickedRight:  AnyShapeStyle(tint)
+        case .revealed:     AnyShapeStyle(tint.opacity(0.12))
         case .pickedWrong:  AnyShapeStyle(Color.secondary.opacity(0.14))
         case .selected:     AnyShapeStyle(.tint.opacity(0.16))
         case .open, .passive:  AnyShapeStyle(appTheme.surface)
@@ -277,7 +286,7 @@ struct KasusOptionButton: View {
 
     private var stroke: AnyShapeStyle {
         switch state {
-        case .revealed:     AnyShapeStyle(kasus.color)
+        case .revealed:     AnyShapeStyle(tint)
         case .selected:     AnyShapeStyle(.tint)
         case .pickedRight:  AnyShapeStyle(.clear)
         case .pickedWrong:  AnyShapeStyle(Color.secondary.opacity(0.3))

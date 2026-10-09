@@ -35,12 +35,33 @@ nonisolated enum KasusRoundStep: String, Codable, CaseIterable {
     case fill
     /// Schnellrunde: the endings drill for one unit.
     case quick
+    /// Bau das Wort: the Schnellrunde's sentences, answered with ending blocks (d + em) instead
+    /// of whole articles. Graded like the Schnellrunde; extra practice, so it never marks a unit
+    /// done.
+    case build
+    /// Verstehen · Rollen: name each phrase's role (the Kasus-Check step). Counts for the streak
+    /// only, like Markieren.
+    case roles
+    /// Verstehen · Wer macht was?: who does what when only the ending tells (structured input),
+    /// and „Gleich oder anders?“. Counts for the streak only.
+    case wer
+    /// Verstehen · Die Probe: swap in *der Mann* to read an ambiguous article. Production, so it
+    /// may move the coach like the Schnellrunde.
+    case probe
+    /// Verstehen · Lektion: the unit's lesson was read through. Asked 0, answered 0; banks the
+    /// time only, and no list shows it.
+    case lesson
 
     var germanLabel: String {
         switch self {
-        case .find:  "Markieren"
-        case .fill:  "Endungen"
-        case .quick: "Schnellrunde"
+        case .find:   "Markieren"
+        case .fill:   "Endungen"
+        case .quick:  "Schnellrunde"
+        case .build:  "Bau das Wort"
+        case .roles:  "Rollen"
+        case .wer:    "Wer macht was?"
+        case .probe:  "Die Probe"
+        case .lesson: "Lektion"
         }
     }
 
@@ -49,7 +70,15 @@ nonisolated enum KasusRoundStep: String, Codable, CaseIterable {
         switch self {
         case .find:  "Finden"
         case .fill:  "Einsetzen"
-        case .quick: "Schnellrunde"
+        default:     germanLabel
+        }
+    }
+
+    /// The Verstehen exercises and the lesson, whose rounds file under `concept-<unit>-<step>`.
+    var isConcept: Bool {
+        switch self {
+        case .roles, .wer, .probe, .lesson: true
+        case .find, .fill, .quick, .build:  false
         }
     }
 }
@@ -129,7 +158,12 @@ final class KasusRound {
     var unit: KasusUnit? { KasusUnit(rawValue: unitRaw) }
     var step: KasusRoundStep? { KasusRoundStep(rawValue: stepRaw) }
     var hintLevel: KasusHintLevel? { KasusHintLevel(rawValue: hintLevelRaw) }
-    var isQuickRound: Bool { step == .quick }
+    /// A unit drill with no story: the Schnellrunde, or Bau das Wort on its sentences.
+    var isQuickRound: Bool { step == .quick || step == .build }
+    /// A Verstehen round (Rollen, Wer macht was?, Die Probe) or a read lesson.
+    var isConceptRound: Bool { step?.isConcept == true }
+    /// A read lesson: no answers, never listed.
+    var isLessonRound: Bool { step == .lesson }
     var feedbackMode: KasusFeedbackMode? { KasusFeedbackMode(rawValue: feedbackModeRaw) }
     /// Markieren's asked case. Nil on every other round, the old Finden's included.
     var markCase: GrammarCase? { GrammarCase(rawValue: markCaseRaw) }
@@ -275,6 +309,16 @@ nonisolated enum KasusItemOutcome: String, Codable, CaseIterable {
     /// painted it with another case's brush.
     func englishLabel(inMarkingRound marking: Bool) -> String {
         marking && self == .wrongPick ? "It's another case" : englishLabel
+    }
+
+    /// The labels in a Verstehen round: a `wrongPick` there is another role (Rollen) or the other
+    /// phrase or answer (Wer macht was?), and a Probe miss is the usual wrong case.
+    func labels(for step: KasusRoundStep?) -> (german: String, english: String) {
+        switch (step, self) {
+        case (.roles?, .wrongPick): ("Andere Rolle", "Another role")
+        case (.wer?, .wrongPick):   ("Anders gelesen", "Read the other way")
+        default:                    (germanLabel, englishLabel)
+        }
     }
 
     var symbol: String {

@@ -72,6 +72,8 @@ struct KasusRoundDetailView: View {
     }
 
     private var isFinden: Bool { round.step == .find }
+    /// Rollen and Wer macht was?: the pick is a role or a reading, never a form to strike through.
+    private var isRecognition: Bool { round.step == .roles || round.step == .wer }
 
     // MARK: - Header
 
@@ -140,8 +142,9 @@ struct KasusRoundDetailView: View {
     /// Dativ · Endungen · Genus-Hilfe · Sofort, Dativ · Markieren · Akkusativ · Am Ende
     private var stepLine: String {
         var parts = [round.unit?.germanTitle ?? "Kasus"]
-        if let step = round.step, step != .quick { parts.append(round.unitStepLabel) }
+        if let step = round.step, !round.isQuickRound, !step.isConcept { parts.append(round.unitStepLabel) }
         if round.isQuickRound { parts.append("\(round.askedCount) Sätze") }
+        if round.isConceptRound { parts.append(round.displayDetail().components(separatedBy: " · ").first ?? "") }
         if let hint = round.hintLevel { parts.append(hint.germanLabel) }
         if let mode = round.feedbackMode { parts.append(mode.germanLabel) }
         return parts.joined(separator: " · ")
@@ -167,6 +170,7 @@ struct KasusRoundDetailView: View {
             return "Moved the coach's \(names) skill, from \(counting.count) of your own answers."
         }
         if round.step == .find { return "\(round.stepLabel) is for spotting cases, so it never moves the coach." }
+        if isRecognition { return "\(round.stepLabel) is for understanding the roles, so it never moves the coach." }
         if round.unit == .nominativ { return "Nominativ has no coach skill, so this counted for the streak." }
         if let hint = round.hintLevel, hint.neverCountsTowardSkill {
             return "\(hint.germanLabel) counts for the streak but never moves the coach."
@@ -193,7 +197,7 @@ struct KasusRoundDetailView: View {
             HStack(spacing: 6) {
                 Image(systemName: item.outcome.symbol)
                     .accessibilityHidden(true)
-                Text("\(item.outcome.germanLabel) · \(item.outcome.englishLabel(inMarkingRound: round.isMarkingRound))")
+                Text(outcomeLabel(item))
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
                 if item.wasRevealed, item.outcome != .revealed {
@@ -226,6 +230,9 @@ struct KasusRoundDetailView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
+            }
+            if isRecognition {
+                recognitionLine(item)
             }
 
             Text(kasusRich: item.explanation)
@@ -271,6 +278,52 @@ struct KasusRoundDetailView: View {
         .accessibilityHint(isOpen ? "Hides why" : "Shows why")
     }
 
+    /// „Richtig · Right first try“, or the outcome's labels for this step (another role, read the
+    /// other way, wrong case).
+    private func outcomeLabel(_ item: KasusRoundItem) -> String {
+        if round.isMarkingRound || isFinden {
+            return "\(item.outcome.germanLabel) · \(item.outcome.englishLabel(inMarkingRound: round.isMarkingRound))"
+        }
+        let labels = item.outcome.labels(for: round.step)
+        return "\(labels.german) · \(labels.english)"
+    }
+
+    /// Rollen: the role picked struck through, then the phrase's case; or „Schritt für Schritt“
+    /// when the walk went wrong. Wer macht was?: what was picked („die Katze“, „gleich“).
+    @ViewBuilder
+    private func recognitionLine(_ item: KasusRoundItem) -> some View {
+        if let pick = item.pick, !item.outcome.isRight {
+            HStack(spacing: 6) {
+                if round.step == .roles, let role = KasusRole(rawValue: pick) {
+                    Text(role.germanLabel)
+                        .strikethrough()
+                        .foregroundStyle(.secondary)
+                } else if round.step == .roles {
+                    Text("Schritt für Schritt · a wrong step")
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Picked „\(pick)“")
+                        .strikethrough()
+                        .foregroundStyle(.secondary)
+                }
+                if let kasus = item.kasus {
+                    Image(systemName: "arrow.right")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .accessibilityHidden(true)
+                    HStack(spacing: 4) {
+                        Image(systemName: kasus.symbol)
+                            .accessibilityHidden(true)
+                        Text(kasus.name)
+                            .fontWeight(.semibold)
+                    }
+                    .foregroundStyle(kasus.color)
+                }
+            }
+            .font(.subheadline)
+        }
+    }
+
     /// Finden, for a phrase painted with the wrong brush: that brush struck through, then the
     /// case it is. (A missed phrase's header already says so.)
     @ViewBuilder
@@ -313,7 +366,7 @@ struct KasusRoundDetailView: View {
             word.foregroundColor = .secondary
             return Text(out + word + AttributedString(String(text[range.upperBound...])))
         }
-        if !isFinden, let pick = item.pick, !item.outcome.isRight {
+        if !isFinden, !isRecognition, let pick = item.pick, !item.outcome.isRight {
             var struck = AttributedString(pick)
             struck.strikethroughStyle = .single
             struck.foregroundColor = .secondary

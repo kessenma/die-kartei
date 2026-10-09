@@ -28,10 +28,16 @@ nonisolated enum OCRTableLayout {
     /// The page's text: the rebuilt rows when the page is a German | English table, else Vision's order.
     static func text(from lines: [Line]) -> String {
         let visionOrder = lines.map(\.text).joined(separator: "\n")
-        guard let rows = rowText(from: lines) else { return visionOrder }
+        return tableRows(from: lines, readingOrder: visionOrder) ?? visionOrder
+    }
+
+    /// The rebuilt rows when the page is a German | English table that reads at least as well as
+    /// `readingOrder` (the text in the order its source gave it), else nil.
+    static func tableRows(from lines: [Line], readingOrder: String, wrapGap: CGFloat = 0.55) -> String? {
+        guard let rows = rowText(from: lines, wrapGap: wrapGap) else { return nil }
         let table = VocabListParser.parse(rows)
-        guard table.looksLikeList, englishShare(of: table.rows) >= 0.5 else { return visionOrder }
-        return table.listConfidence >= VocabListParser.parse(visionOrder).listConfidence ? rows : visionOrder
+        guard table.looksLikeList, englishShare(of: table.rows) >= 0.5 else { return nil }
+        return table.listConfidence >= VocabListParser.parse(readingOrder).listConfidence ? rows : nil
     }
 
     private struct Cell {
@@ -48,8 +54,9 @@ nonisolated enum OCRTableLayout {
     }
 
     /// The lines regrouped into rows, one per line of text, columns separated by a tab. Nil when
-    /// the page has no two columns of at least three lines each.
-    static func rowText(from lines: [Line]) -> String? {
+    /// the page has no two columns of at least three lines each. `wrapGap`, in line heights, is how
+    /// close under the line above a line must sit to be that cell's second line on a padded table.
+    static func rowText(from lines: [Line], wrapGap: CGFloat = 0.55) -> String? {
         let lines = lines.filter { !$0.text.trimmingCharacters(in: .whitespaces).isEmpty && $0.box.height > 0 }
         guard lines.count >= 6 else { return nil }
         let lineHeight = median(lines.map(\.box.height))
@@ -87,7 +94,7 @@ nonisolated enum OCRTableLayout {
         for (columnIndex, entries) in columns {
             for entry in entries {
                 let line = (text: entry.line.text, extent: (top: 1 - entry.line.box.maxY, bottom: 1 - entry.line.box.minY))
-                if padded, entry.gap < 0.55, let last = merged.indices.last, merged[last].column == columnIndex {
+                if padded, entry.gap < wrapGap, let last = merged.indices.last, merged[last].column == columnIndex {
                     merged[last].lines.append(line)
                 } else {
                     merged.append(Cell(column: columnIndex, lines: [line]))

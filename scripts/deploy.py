@@ -292,8 +292,13 @@ def ensure_release_xcode():
 
 
 def _is_seed_build(build):
-    """Apple seed (beta) builds end in a lowercase letter: 26A5421a. Releases and RCs don't: 25G83."""
-    return bool(re.search(r"[a-z]$", build or ""))
+    """Apple seed (beta) builds carry a 4-digit number from 5000 up: 26A5421a, 27A5194q.
+
+    A trailing letter alone proves nothing: release Xcode 27.0 is 27A266a. Releases and RCs
+    have shorter numbers (25G83, 26A335); security updates use 1xxx-4xxx or 6+ digits.
+    Keep in step with is_seed() in scripts/stamp-release-os.sh.
+    """
+    return bool(re.fullmatch(r"\d+[A-Z][5-9]\d{3}[a-z]?", build or ""))
 
 
 def ensure_release_host_stamp():
@@ -381,9 +386,10 @@ def _report_stamps(infos, app_name):
         bundle = parts[-3] if len(parts) >= 3 and parts[-2] == "Contents" else parts[-2]
         stamps = {k: str(info.get(k, "?")) for k in ("DTXcodeBuild", "DTSDKBuild", "BuildMachineOSBuild")}
         summary = ", ".join(f"{k}={v}" for k, v in stamps.items())
-        # The seed-suffix rule holds for Xcode and macOS builds, but NOT for SDK builds:
-        # release Xcode 26.6 ships iOS SDK 23F81a. A beta SDK only comes with a beta
-        # Xcode anyway, which DTXcodeBuild catches, so DTSDKBuild is shown, not judged.
+        # The seed rule holds for Xcode and macOS builds, but NOT for SDK builds, which number
+        # differently (release Xcode 27.0 ships iOS SDK 24A430, 27.1 beta 24A94403). A beta SDK
+        # only comes with a beta Xcode anyway, which DTXcodeBuild catches, so DTSDKBuild is
+        # shown, not judged.
         beta = [k for k in ("DTXcodeBuild", "BuildMachineOSBuild") if _is_seed_build(stamps[k])]
         if beta:
             log("❌", f"{bundle} carries beta stamp(s) {', '.join(beta)} ({summary}). "

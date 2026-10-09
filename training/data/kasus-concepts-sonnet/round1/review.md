@@ -1,0 +1,638 @@
+# Verstehen items written by Claude Sonnet: review sheet
+
+546 written, 546 pass the app's gate, 544 in `candidates.json` (a duplicate sentence or missing English drops an item).
+
+Mark each passing item: does it read as right, natural German, and do the planned roles match what the sentence says? The same rows are in `review.csv` with `reads_right` and `note` columns to fill in instead.
+
+| unit | exercise | written | pass | in candidates |
+|---|---|---:|---:|---:|
+| Nominativ | Rollen | 42 | 42 | 42 |
+| Akkusativ | Rollen | 42 | 42 | 42 |
+| Akkusativ | Wer macht was? | 42 | 42 | 42 |
+| Akkusativ | Die Probe | 42 | 42 | 40 |
+| Dativ | Rollen | 42 | 42 | 42 |
+| Dativ | Wer macht was? | 42 | 42 | 42 |
+| Dativ | Die Probe | 42 | 42 | 42 |
+| Genitiv | Rollen | 42 | 42 | 42 |
+| Genitiv | Wer macht was? | 42 | 42 | 42 |
+| Genitiv | Die Probe | 42 | 42 | 42 |
+| Alle Fälle | Rollen | 42 | 42 | 42 |
+| Alle Fälle | Wer macht was? | 42 | 42 | 42 |
+| Alle Fälle | Die Probe | 42 | 42 | 42 |
+| **all** | | 546 | 546 | 544 |
+
+Exporter notes:
+
+- kc-s-akk-probe-132: same sentence as an earlier item, skipped
+- kc-s-akk-probe-138: same sentence as an earlier item, skipped
+
+## Nominativ · Rollen
+
+| ✓/✗ | German | English | planned roles | id |
+|---|---|---|---|---|
+|  | Der Hund wartet im Garten. | The dog is waiting in the garden. | der Hund = Nom (subject) | kc-s-nom-roles-101 |
+|  | Der Hund spielt gern. | The dog likes to play. | der Hund = Nom (subject) | kc-s-nom-roles-102 |
+|  | Die Frau lacht laut. | The woman laughs loudly. | die Frau = Nom (subject) | kc-s-nom-roles-103 |
+|  | Die Mutter weint heute. | The mother is crying today. | die Mutter = Nom (subject) | kc-s-nom-roles-104 |
+|  | Das Baby kocht heute. | The baby is cooking today. | das Baby = Nom (subject) | kc-s-nom-roles-105 |
+|  | Die Schwester schläft jetzt. | The sister is sleeping now. | die Schwester = Nom (subject) | kc-s-nom-roles-106 |
+|  | Der Chef tanzt gern. | The boss likes to dance. | der Chef = Nom (subject) | kc-s-nom-roles-107 |
+|  | Die Oma wartet am Bahnhof. | The grandma is waiting at the station. | die Oma = Nom (subject) | kc-s-nom-roles-108 |
+|  | Der Bruder ist ein Chef. | The brother is a boss. | der Bruder = Nom (subject); ein Chef = Nom (predicate) | kc-s-nom-roles-109 |
+|  | Das Baby arbeitet heute. | The baby is working today. | das Baby = Nom (subject) | kc-s-nom-roles-112 |
+|  | Der Opa war ein Chef. | The grandpa was a boss. | der Opa = Nom (subject); ein Chef = Nom (predicate) | kc-s-nom-roles-113 |
+|  | Das Kind lacht im Garten. | The child is laughing in the garden. | das Kind = Nom (subject) | kc-s-nom-roles-114 |
+|  | Der Bruder schläft im Bett. | The brother is sleeping in bed. | der Bruder = Nom (subject) | kc-s-nom-roles-115 |
+|  | Der Chef wartet vor dem Büro. | The boss is waiting in front of the office. | der Chef = Nom (subject) | kc-s-nom-roles-116 |
+|  | Die Frau wartet an der Haltestelle. | The woman is waiting at the bus stop. | die Frau = Nom (subject) | kc-s-nom-roles-118 |
+|  | Das Kind kocht gern. | The child likes to cook. | das Kind = Nom (subject) | kc-s-nom-roles-119 |
+|  | Der Freund spielt heute. | The friend is playing today. | der Freund = Nom (subject) | kc-s-nom-roles-120 |
+|  | Der Opa ruft laut. | The grandpa calls loudly. | der Opa = Nom (subject) | kc-s-nom-roles-122 |
+|  | Das Kind kommt jetzt. | The child is coming now. | das Kind = Nom (subject) | kc-s-nom-roles-123 |
+|  | Das Kind spielt im Park. | The child is playing in the park. | das Kind = Nom (subject) | kc-s-nom-roles-124 |
+|  | Die Tochter ruft heute. | The daughter is calling today. | die Tochter = Nom (subject) | kc-s-nom-roles-125 |
+|  | Die Schwester arbeitet im Büro. | The sister works in the office. | die Schwester = Nom (subject) | kc-s-nom-roles-126 |
+|  | Der Freund ist ein Chef. | The friend is a boss. | der Freund = Nom (subject); ein Chef = Nom (predicate) | kc-s-nom-roles-127 |
+|  | Der Opa schläft gern. | The grandpa likes to sleep. | der Opa = Nom (subject) | kc-s-nom-roles-129 |
+|  | Die Tochter wartet zu Hause. | The daughter is waiting at home. | die Tochter = Nom (subject) | kc-s-nom-roles-131 |
+|  | Der Vater arbeitet heute. | The father is working today. | der Vater = Nom (subject) | kc-s-nom-roles-132 |
+|  | Der Freund weint leise. | The friend cries quietly. | der Freund = Nom (subject) | kc-s-nom-roles-133 |
+|  | Der Bruder kommt heute. | The brother is coming today. | der Bruder = Nom (subject) | kc-s-nom-roles-134 |
+|  | Der Vater ist ein Chef. | The father is a boss. | der Vater = Nom (subject); ein Chef = Nom (predicate) | kc-s-nom-roles-136 |
+|  | Die Oma lacht gern. | The grandma likes to laugh. | die Oma = Nom (subject) | kc-s-nom-roles-140 |
+|  | Der Bruder singt im Bad. | The brother is singing in the bathroom. | der Bruder = Nom (subject) | kc-s-nom-roles-144 |
+|  | Die Tochter singt gern. | The daughter likes to sing. | die Tochter = Nom (subject) | kc-s-nom-roles-145 |
+|  | Die Mutter singt heute. | The mother is singing today. | die Mutter = Nom (subject) | kc-s-nom-roles-146 |
+|  | Die Mutter lacht laut. | The mother laughs loudly. | die Mutter = Nom (subject) | kc-s-nom-roles-149 |
+|  | Der Vater kommt nach der Arbeit. | The father comes after work. | der Vater = Nom (subject) | kc-s-nom-roles-151 |
+|  | Der Opa kocht heute. | The grandpa is cooking today. | der Opa = Nom (subject) | kc-s-nom-roles-152 |
+|  | Die Frau weint leise. | The woman cries quietly. | die Frau = Nom (subject) | kc-s-nom-roles-155 |
+|  | Das Kind schläft im Bett. | The child is sleeping in bed. | das Kind = Nom (subject) | kc-s-nom-roles-160 |
+|  | Der Freund tanzt gern. | The friend likes to dance. | der Freund = Nom (subject) | kc-s-nom-roles-165 |
+|  | Der Vater tanzt heute. | The father is dancing today. | der Vater = Nom (subject) | kc-s-nom-roles-168 |
+|  | Die Schwester tanzt im Wohnzimmer. | The sister is dancing in the living room. | die Schwester = Nom (subject) | kc-s-nom-roles-170 |
+|  | Der Freund arbeitet im Garten. | The friend is working in the garden. | der Freund = Nom (subject) | kc-s-nom-roles-171 |
+
+## Akkusativ · Rollen
+
+| ✓/✗ | German | English | planned roles | id |
+|---|---|---|---|---|
+|  | Der Vater nimmt das Brot. | The father takes the bread. | der Vater = Nom (subject); das Brot = Akk (object) | kc-s-akk-roles-101 |
+|  | Die Frau kauft den Kaffee. | The woman buys the coffee. | die Frau = Nom (subject); den Kaffee = Akk (object) | kc-s-akk-roles-102 |
+|  | Der Chef holt das Wasser. | The boss gets the water. | der Chef = Nom (subject); das Wasser = Akk (object) | kc-s-akk-roles-103 |
+|  | Der Freund holt eine Tasche für die Frau. | The friend gets a bag for the woman. | der Freund = Nom (subject); eine Tasche = Akk (object); für die Frau = Akk (preposition) | kc-s-akk-roles-104 |
+|  | Die Oma sucht den Vogel für den Freund. | The grandma is looking for the bird for the friend. | die Oma = Nom (subject); den Vogel = Akk (object); für den Freund = Akk (preposition) | kc-s-akk-roles-105 |
+|  | Die Schwester trägt den Rock. | The sister is wearing the skirt. | die Schwester = Nom (subject); den Rock = Akk (object) | kc-s-akk-roles-106 |
+|  | Der Vater holt ein Ticket für den Opa. | The father gets a ticket for the grandpa. | der Vater = Nom (subject); ein Ticket = Akk (object); für den Opa = Akk (preposition) | kc-s-akk-roles-107 |
+|  | Der Freund liest eine Karte. | The friend is reading a card. | der Freund = Nom (subject); eine Karte = Akk (object) | kc-s-akk-roles-108 |
+|  | Der Opa findet den Fisch für den Freund. | The grandpa finds the fish for the friend. | der Opa = Nom (subject); den Fisch = Akk (object); für den Freund = Akk (preposition) | kc-s-akk-roles-109 |
+|  | Der Bruder kauft das Ei. | The brother buys the egg. | der Bruder = Nom (subject); das Ei = Akk (object) | kc-s-akk-roles-110 |
+|  | Der Bruder braucht eine Zeitung für die Frau. | The brother needs a newspaper for the woman. | der Bruder = Nom (subject); eine Zeitung = Akk (object); für die Frau = Akk (preposition) | kc-s-akk-roles-111 |
+|  | Der Chef braucht eine Blume. | The boss needs a flower. | der Chef = Nom (subject); eine Blume = Akk (object) | kc-s-akk-roles-112 |
+|  | Der Bruder holt ein Bild. | The brother gets a picture. | der Bruder = Nom (subject); ein Bild = Akk (object) | kc-s-akk-roles-113 |
+|  | Die Frau sucht den Fisch für den Chef. | The woman is looking for the fish for the boss. | die Frau = Nom (subject); den Fisch = Akk (object); für den Chef = Akk (preposition) | kc-s-akk-roles-114 |
+|  | Die Schwester nimmt einen Brief für die Tochter. | The sister takes a letter for the daughter. | die Schwester = Nom (subject); einen Brief = Akk (object); für die Tochter = Akk (preposition) | kc-s-akk-roles-115 |
+|  | Der Vater holt den Wein für die Tochter. | The father gets the wine for the daughter. | der Vater = Nom (subject); den Wein = Akk (object); für die Tochter = Akk (preposition) | kc-s-akk-roles-116 |
+|  | Die Schwester sucht den Fisch für den Vater. | The sister is looking for the fish for the father. | die Schwester = Nom (subject); den Fisch = Akk (object); für den Vater = Akk (preposition) | kc-s-akk-roles-117 |
+|  | Die Mutter liest den Brief. | The mother is reading the letter. | die Mutter = Nom (subject); den Brief = Akk (object) | kc-s-akk-roles-118 |
+|  | Der Chef trinkt das Bier. | The boss is drinking the beer. | der Chef = Nom (subject); das Bier = Akk (object) | kc-s-akk-roles-119 |
+|  | Die Mutter findet den Hund für die Tochter. | The mother finds the dog for the daughter. | die Mutter = Nom (subject); den Hund = Akk (object); für die Tochter = Akk (preposition) | kc-s-akk-roles-120 |
+|  | Der Bruder findet das Ticket für den Freund. | The brother finds the ticket for the friend. | der Bruder = Nom (subject); das Ticket = Akk (object); für den Freund = Akk (preposition) | kc-s-akk-roles-121 |
+|  | Der Chef holt den Saft für die Frau. | The boss gets the juice for the woman. | der Chef = Nom (subject); den Saft = Akk (object); für die Frau = Akk (preposition) | kc-s-akk-roles-122 |
+|  | Der Chef braucht die Jacke für den Bruder. | The boss needs the jacket for the brother. | der Chef = Nom (subject); die Jacke = Akk (object); für den Bruder = Akk (preposition) | kc-s-akk-roles-123 |
+|  | Der Vater holt den Saft für die Mutter. | The father gets the juice for the mother. | der Vater = Nom (subject); den Saft = Akk (object); für die Mutter = Akk (preposition) | kc-s-akk-roles-124 |
+|  | Die Tochter holt den Kaffee. | The daughter gets the coffee. | die Tochter = Nom (subject); den Kaffee = Akk (object) | kc-s-akk-roles-125 |
+|  | Der Vater nimmt die Jacke. | The father takes the jacket. | der Vater = Nom (subject); die Jacke = Akk (object) | kc-s-akk-roles-126 |
+|  | Der Chef nimmt das Bild für die Oma. | The boss takes the picture for the grandma. | der Chef = Nom (subject); das Bild = Akk (object); für die Oma = Akk (preposition) | kc-s-akk-roles-127 |
+|  | Der Bruder kauft eine Blume. | The brother buys a flower. | der Bruder = Nom (subject); eine Blume = Akk (object) | kc-s-akk-roles-128 |
+|  | Der Bruder isst das Ei. | The brother is eating the egg. | der Bruder = Nom (subject); das Ei = Akk (object) | kc-s-akk-roles-129 |
+|  | Der Vater holt die Tasche. | The father gets the bag. | der Vater = Nom (subject); die Tasche = Akk (object) | kc-s-akk-roles-130 |
+|  | Der Freund findet eine Tasche für den Bruder. | The friend finds a bag for the brother. | der Freund = Nom (subject); eine Tasche = Akk (object); für den Bruder = Akk (preposition) | kc-s-akk-roles-131 |
+|  | Der Bruder kauft das Geschenk. | The brother buys the gift. | der Bruder = Nom (subject); das Geschenk = Akk (object) | kc-s-akk-roles-132 |
+|  | Die Mutter holt den Wein. | The mother gets the wine. | die Mutter = Nom (subject); den Wein = Akk (object) | kc-s-akk-roles-133 |
+|  | Der Freund braucht ein Geschenk. | The friend needs a gift. | der Freund = Nom (subject); ein Geschenk = Akk (object) | kc-s-akk-roles-134 |
+|  | Der Freund liest einen Brief. | The friend is reading a letter. | der Freund = Nom (subject); einen Brief = Akk (object) | kc-s-akk-roles-135 |
+|  | Die Tochter holt den Kaffee für die Frau. | The daughter gets the coffee for the woman. | die Tochter = Nom (subject); den Kaffee = Akk (object); für die Frau = Akk (preposition) | kc-s-akk-roles-136 |
+|  | Das Kind sieht den Brief. | The child sees the letter. | das Kind = Nom (subject); den Brief = Akk (object) | kc-s-akk-roles-137 |
+|  | Der Opa sucht eine Zeitung für das Baby. | The grandpa is looking for a newspaper for the baby. | der Opa = Nom (subject); eine Zeitung = Akk (object); für das Baby = Akk (preposition) | kc-s-akk-roles-138 |
+|  | Der Freund kauft die Milch für das Kind. | The friend buys the milk for the child. | der Freund = Nom (subject); die Milch = Akk (object); für das Kind = Akk (preposition) | kc-s-akk-roles-139 |
+|  | Die Oma holt den Wein für das Baby. | The grandma gets the wine for the baby. | die Oma = Nom (subject); den Wein = Akk (object); für das Baby = Akk (preposition) | kc-s-akk-roles-140 |
+|  | Der Chef braucht eine Uhr für den Freund. | The boss needs a watch for the friend. | der Chef = Nom (subject); eine Uhr = Akk (object); für den Freund = Akk (preposition) | kc-s-akk-roles-141 |
+|  | Der Vater findet einen Hund für den Bruder. | The father finds a dog for the brother. | der Vater = Nom (subject); einen Hund = Akk (object); für den Bruder = Akk (preposition) | kc-s-akk-roles-142 |
+
+## Akkusativ · Wer macht was?
+
+| ✓/✗ | German | English | planned roles | id |
+|---|---|---|---|---|
+|  | Der Freund fragt die Tochter heute. | The friend asks the daughter today. · Q: Who is asking? | der Freund = Nom (subject); die Tochter = Akk (object) | kc-s-akk-wer-101 |
+|  | Der Vater besucht das Kind im Park. | The father visits the child in the park. · Q: Who is visiting? | der Vater = Nom (subject); das Kind = Akk (object) | kc-s-akk-wer-102 |
+|  | Der Opa besucht das Kind gern. | The grandpa likes to visit the child. · Q: Who is visiting? | der Opa = Nom (subject); das Kind = Akk (object) | kc-s-akk-wer-103 |
+|  | Der Bruder fragt das Kind im Garten. | The brother asks the child in the garden. · Q: Who is asking? | der Bruder = Nom (subject); das Kind = Akk (object) | kc-s-akk-wer-104 |
+|  | Der Chef kennt die Frau gut. | The boss knows the woman well. · Q: Who knows? | der Chef = Nom (subject); die Frau = Akk (object) | kc-s-akk-wer-105 |
+|  | Das Baby findet den Vater im Zimmer. | The baby finds the father in the room. · Q: Who is finding? | das Baby = Nom (subject); den Vater = Akk (object) | kc-s-akk-wer-106 |
+|  | Der Vater sucht die Mutter im Haus. | The father is looking for the mother in the house. · Q: Who is searching? | der Vater = Nom (subject); die Mutter = Akk (object) | kc-s-akk-wer-107 |
+|  | Den Hund kennt die Oma gut. | The grandma knows the dog well. · Q: Who knows? | die Oma = Nom (subject); den Hund = Akk (object) | kc-s-akk-wer-108 |
+|  | Die Tochter sucht den Opa im Garten. | The daughter is looking for the grandpa in the garden. · Q: Who is searching? | die Tochter = Nom (subject); den Opa = Akk (object) | kc-s-akk-wer-109 |
+|  | Der Chef fragt das Baby heute. | The boss asks the baby today. · Q: Who is asking? | der Chef = Nom (subject); das Baby = Akk (object) | kc-s-akk-wer-110 |
+|  | Die Schwester fragt der Freund heute. | The friend asks the sister today. · Q: Who is asking? | der Freund = Nom (subject); die Schwester = Akk (object) | kc-s-akk-wer-111 |
+|  | Den Vater besucht die Mutter heute. | The mother is visiting the father today. · Q: Who is visiting? | die Mutter = Nom (subject); den Vater = Akk (object) | kc-s-akk-wer-112 |
+|  | Das Kind sucht der Freund im Park. | The friend is looking for the child in the park. · Q: Who is searching? | der Freund = Nom (subject); das Kind = Akk (object) | kc-s-akk-wer-113 |
+|  | Der Bruder besucht die Oma gern. | The brother likes to visit the grandma. · Q: Who is visiting? | der Bruder = Nom (subject); die Oma = Akk (object) | kc-s-akk-wer-114 |
+|  | Der Freund kennt die Frau gut. | The friend knows the woman well. · Q: Who knows? | der Freund = Nom (subject); die Frau = Akk (object) | kc-s-akk-wer-115 |
+|  | Die Schwester kennt den Opa gut. | The sister knows the grandpa well. · Q: Who knows? | die Schwester = Nom (subject); den Opa = Akk (object) | kc-s-akk-wer-116 |
+|  | Der Chef kennt die Oma schon lange. | The boss has known the grandma for a long time. · Q: Who knows? | der Chef = Nom (subject); die Oma = Akk (object) | kc-s-akk-wer-117 |
+|  | Die Frau findet den Chef im Büro. | The woman finds the boss in the office. · Q: Who is finding? | die Frau = Nom (subject); den Chef = Akk (object) | kc-s-akk-wer-118 |
+|  | Die Schwester findet den Chef heute. | The sister finds the boss today. · Q: Who is finding? | die Schwester = Nom (subject); den Chef = Akk (object) | kc-s-akk-wer-119 |
+|  | Die Oma ruft den Opa laut. | The grandma calls the grandpa loudly. · Q: Who is calling? | die Oma = Nom (subject); den Opa = Akk (object) | kc-s-akk-wer-120 |
+|  | Die Schwester kennt den Freund gut. | The sister knows the friend well. · Q: Who knows? | die Schwester = Nom (subject); den Freund = Akk (object) | kc-s-akk-wer-121 |
+|  | Der Vater besucht die Tochter heute. | The father visits the daughter today. · Q: Who is visiting? | der Vater = Nom (subject); die Tochter = Akk (object) | kc-s-akk-wer-122 |
+|  | Der Bruder sucht die Frau im Park. | The brother is looking for the woman in the park. · Q: Who is searching? | der Bruder = Nom (subject); die Frau = Akk (object) | kc-s-akk-wer-123 |
+|  | Der Vater sucht die Schwester im Garten. | The father is looking for the sister in the garden. · Q: Who is searching? | der Vater = Nom (subject); die Schwester = Akk (object) | kc-s-akk-wer-124 |
+|  | Die Mutter kennt der Bruder gut. | The brother knows the mother well. · Q: Who knows? | der Bruder = Nom (subject); die Mutter = Akk (object) | kc-s-akk-wer-125 |
+|  | Der Hund findet die Tochter im Garten. | The dog finds the daughter in the garden. · Q: Who is finding? | der Hund = Nom (subject); die Tochter = Akk (object) | kc-s-akk-wer-126 |
+|  | Die Schwester ruft der Chef laut. | The boss calls the sister loudly. · Q: Who is calling? | der Chef = Nom (subject); die Schwester = Akk (object) | kc-s-akk-wer-127 |
+|  | Den Vater kennt die Tochter gut. | The daughter knows the father well. · Q: Who knows? | die Tochter = Nom (subject); den Vater = Akk (object) | kc-s-akk-wer-128 |
+|  | Das Baby ruft der Freund leise. | The friend calls the baby softly. · Q: Who is calling? | der Freund = Nom (subject); das Baby = Akk (object) | kc-s-akk-wer-129 |
+|  | Der Freund kennt die Oma gut. | The friend knows the grandma well. · Q: Who knows? | der Freund = Nom (subject); die Oma = Akk (object) | kc-s-akk-wer-130 |
+|  | Die Tochter fragt den Chef heute. | The daughter asks the boss today. · Q: Who is asking? | die Tochter = Nom (subject); den Chef = Akk (object) | kc-s-akk-wer-132 |
+|  | Den Opa kennt das Kind gut. | The child knows the grandpa well. · Q: Who knows? | das Kind = Nom (subject); den Opa = Akk (object) | kc-s-akk-wer-133 |
+|  | Den Opa sieht die Oma im Garten. | The grandma sees the grandpa in the garden. · Q: Who sees? | die Oma = Nom (subject); den Opa = Akk (object) | kc-s-akk-wer-134 |
+|  | Den Vater besucht die Tochter gern. | The daughter likes to visit the father. · Q: Who is visiting? | die Tochter = Nom (subject); den Vater = Akk (object) | kc-s-akk-wer-135 |
+|  | Der Opa sucht die Oma im Haus. | The grandpa is looking for the grandma in the house. · Q: Who is searching? | der Opa = Nom (subject); die Oma = Akk (object) | kc-s-akk-wer-136 |
+|  | Den Vogel jagt das Pferd auf dem Feld. | The horse is chasing the bird in the field. · Q: Who is chasing? | das Pferd = Nom (subject); den Vogel = Akk (object) | kc-s-akk-wer-137 |
+|  | Der Freund sucht die Frau im Park. | The friend is looking for the woman in the park. · Q: Who is searching? | der Freund = Nom (subject); die Frau = Akk (object) | kc-s-akk-wer-138 |
+|  | Den Hund kennt die Frau gut. | The woman knows the dog well. · Q: Who knows? | die Frau = Nom (subject); den Hund = Akk (object) | kc-s-akk-wer-139 |
+|  | Das Kind besucht den Vater gern. | The child likes to visit the father. · Q: Who is visiting? | das Kind = Nom (subject); den Vater = Akk (object) | kc-s-akk-wer-140 |
+|  | Die Tochter besucht der Opa heute. | The grandpa visits the daughter today. · Q: Who is visiting? | der Opa = Nom (subject); die Tochter = Akk (object) | kc-s-akk-wer-141 |
+|  | Das Kind fragt der Opa heute. | The grandpa asks the child today. · Q: Who is asking? | der Opa = Nom (subject); das Kind = Akk (object) | kc-s-akk-wer-142 |
+|  | Der Chef fragt die Schwester heute. | The boss asks the sister today. · Q: Who is asking? | der Chef = Nom (subject); die Schwester = Akk (object) | kc-s-akk-wer-143 |
+
+## Akkusativ · Die Probe
+
+| ✓/✗ | German | English | planned roles | id |
+|---|---|---|---|---|
+|  | Der Bruder fragt das Kind heute. | The brother asks the child today. | der Bruder = Nom (subject); das Kind = Akk (object) | kc-s-akk-probe-101 |
+|  | Der Vater besucht die Frau gern. | The father likes to visit the woman. | der Vater = Nom (subject); die Frau = Akk (object) | kc-s-akk-probe-102 |
+|  | Der Vater besucht die Mutter im Krankenhaus. | The father visits the mother in the hospital. | der Vater = Nom (subject); die Mutter = Akk (object) | kc-s-akk-probe-103 |
+|  | Der Bruder fragt die Mutter heute. | The brother asks the mother today. | der Bruder = Nom (subject); die Mutter = Akk (object) | kc-s-akk-probe-104 |
+|  | Der Vater kennt die Mutter gut. | The father knows the mother well. | der Vater = Nom (subject); die Mutter = Akk (object) | kc-s-akk-probe-105 |
+|  | Der Freund findet das Baby im Garten. | The friend finds the baby in the garden. | der Freund = Nom (subject); das Baby = Akk (object) | kc-s-akk-probe-106 |
+|  | Der Hund sucht die Tochter im Haus. | The dog is looking for the daughter in the house. | der Hund = Nom (subject); die Tochter = Akk (object) | kc-s-akk-probe-107 |
+|  | Der Vater kennt die Oma schon lange. | The father has known the grandma for a long time. | der Vater = Nom (subject); die Oma = Akk (object) | kc-s-akk-probe-108 |
+|  | Der Freund sucht die Tochter im Park. | The friend is looking for the daughter in the park. | der Freund = Nom (subject); die Tochter = Akk (object) | kc-s-akk-probe-109 |
+|  | Der Freund fragt die Frau heute. | The friend asks the woman today. | der Freund = Nom (subject); die Frau = Akk (object) | kc-s-akk-probe-110 |
+|  | Der Chef fragt die Frau im Büro. | The boss asks the woman in the office. | der Chef = Nom (subject); die Frau = Akk (object) | kc-s-akk-probe-111 |
+|  | Der Bruder sucht das Kind im Garten. | The brother is looking for the child in the garden. | der Bruder = Nom (subject); das Kind = Akk (object) | kc-s-akk-probe-113 |
+|  | Der Vater besucht die Schwester heute. | The father visits the sister today. | der Vater = Nom (subject); die Schwester = Akk (object) | kc-s-akk-probe-114 |
+|  | Der Vater kennt das Baby gut. | The father knows the baby well. | der Vater = Nom (subject); das Baby = Akk (object) | kc-s-akk-probe-115 |
+|  | Der Freund kennt die Schwester gut. | The friend knows the sister well. | der Freund = Nom (subject); die Schwester = Akk (object) | kc-s-akk-probe-116 |
+|  | Der Chef kennt das Baby nicht gut. | The boss does not know the baby well. | der Chef = Nom (subject); das Baby = Akk (object) | kc-s-akk-probe-117 |
+|  | Der Opa findet die Frau im Park. | The grandpa finds the woman in the park. | der Opa = Nom (subject); die Frau = Akk (object) | kc-s-akk-probe-118 |
+|  | Der Bruder findet die Schwester im Garten. | The brother finds the sister in the garden. | der Bruder = Nom (subject); die Schwester = Akk (object) | kc-s-akk-probe-119 |
+|  | Der Freund ruft die Oma laut. | The friend calls the grandma loudly. | der Freund = Nom (subject); die Oma = Akk (object) | kc-s-akk-probe-120 |
+|  | Der Bruder kennt die Schwester gut. | The brother knows the sister well. | der Bruder = Nom (subject); die Schwester = Akk (object) | kc-s-akk-probe-121 |
+|  | Der Vater besucht die Oma gern. | The father likes to visit the grandma. | der Vater = Nom (subject); die Oma = Akk (object) | kc-s-akk-probe-122 |
+|  | Der Chef sucht die Oma im Büro. | The boss is looking for the grandma in the office. | der Chef = Nom (subject); die Oma = Akk (object) | kc-s-akk-probe-123 |
+|  | Der Hund sucht die Oma im Garten. | The dog is looking for the grandma in the garden. | der Hund = Nom (subject); die Oma = Akk (object) | kc-s-akk-probe-124 |
+|  | Der Bruder kennt das Kind gut. | The brother knows the child well. | der Bruder = Nom (subject); das Kind = Akk (object) | kc-s-akk-probe-125 |
+|  | Der Vater findet das Kind im Park. | The father finds the child in the park. | der Vater = Nom (subject); das Kind = Akk (object) | kc-s-akk-probe-126 |
+|  | Der Opa ruft die Frau laut. | The grandpa calls the woman loudly. | der Opa = Nom (subject); die Frau = Akk (object) | kc-s-akk-probe-127 |
+|  | Der Chef kennt die Tochter gut. | The boss knows the daughter well. | der Chef = Nom (subject); die Tochter = Akk (object) | kc-s-akk-probe-128 |
+|  | Der Chef ruft die Schwester heute. | The boss calls the sister today. | der Chef = Nom (subject); die Schwester = Akk (object) | kc-s-akk-probe-129 |
+|  | Der Bruder kennt die Oma gut. | The brother knows the grandma well. | der Bruder = Nom (subject); die Oma = Akk (object) | kc-s-akk-probe-130 |
+|  | Der Freund kennt das Baby gut. | The friend knows the baby well. | der Freund = Nom (subject); das Baby = Akk (object) | kc-s-akk-probe-131 |
+|  | Der Freund fragt die Tochter heute. | The friend asks the daughter today. | der Freund = Nom (subject); die Tochter = Akk (object) | kc-s-akk-probe-132 |
+|  | Der Freund kennt das Kind gut. | The friend knows the child well. | der Freund = Nom (subject); das Kind = Akk (object) | kc-s-akk-probe-133 |
+|  | Der Freund sieht die Oma im Park. | The friend sees the grandma in the park. | der Freund = Nom (subject); die Oma = Akk (object) | kc-s-akk-probe-134 |
+|  | Der Opa besucht die Tochter gern. | The grandpa likes to visit the daughter. | der Opa = Nom (subject); die Tochter = Akk (object) | kc-s-akk-probe-135 |
+|  | Der Hund sucht das Baby im Haus. | The dog is looking for the baby in the house. | der Hund = Nom (subject); das Baby = Akk (object) | kc-s-akk-probe-136 |
+|  | Der Vogel jagt das Pferd auf dem Feld. | The bird is chasing the horse in the field. | der Vogel = Nom (subject); das Pferd = Akk (object) | kc-s-akk-probe-137 |
+|  | Der Bruder sucht die Frau im Park. | The brother is looking for the woman in the park. | der Bruder = Nom (subject); die Frau = Akk (object) | kc-s-akk-probe-138 |
+|  | Der Vater kennt die Frau gut. | The father knows the woman well. | der Vater = Nom (subject); die Frau = Akk (object) | kc-s-akk-probe-139 |
+|  | Der Bruder besucht das Kind heute. | The brother visits the child today. | der Bruder = Nom (subject); das Kind = Akk (object) | kc-s-akk-probe-140 |
+|  | Der Bruder besucht das Baby gern. | The brother likes to visit the baby. | der Bruder = Nom (subject); das Baby = Akk (object) | kc-s-akk-probe-141 |
+|  | Der Opa fragt die Oma heute. | The grandpa asks the grandma today. | der Opa = Nom (subject); die Oma = Akk (object) | kc-s-akk-probe-143 |
+|  | Der Vater findet die Tochter im Garten. | The father finds the daughter in the garden. | der Vater = Nom (subject); die Tochter = Akk (object) | kc-s-akk-probe-144 |
+
+## Dativ · Rollen
+
+| ✓/✗ | German | English | planned roles | id |
+|---|---|---|---|---|
+|  | Der Freund antwortet dem Baby leise. | The friend answers the baby quietly. | der Freund = Nom (subject); dem Baby = Dat (dativeVerb) | kc-s-dat-roles-101 |
+|  | Der Opa antwortet dem Lehrer höflich. | The grandpa answers the teacher politely. | der Opa = Nom (subject); dem Lehrer = Dat (dativeVerb) | kc-s-dat-roles-102 |
+|  | Der Chef dankt der Kollegin heute. | The boss thanks the colleague today. | der Chef = Nom (subject); der Kollegin = Dat (dativeVerb) | kc-s-dat-roles-103 |
+|  | Der Vater schickt dem Schüler ein Bild. | The father sends the student a picture. | der Vater = Nom (subject); dem Schüler = Dat (recipient); ein Bild = Akk (object) | kc-s-dat-roles-104 |
+|  | Die Freundin bringt dem Bruder einen Ring. | The friend brings the brother a ring. | die Freundin = Nom (subject); dem Bruder = Dat (recipient); einen Ring = Akk (object) | kc-s-dat-roles-105 |
+|  | Das Mädchen dankt dem Mann herzlich. | The girl thanks the man warmly. | das Mädchen = Nom (subject); dem Mann = Dat (dativeVerb) | kc-s-dat-roles-106 |
+|  | Der Schüler schenkt dem Kind einen Brief. | The student gives the child a letter as a gift. | der Schüler = Nom (subject); dem Kind = Dat (recipient); einen Brief = Akk (object) | kc-s-dat-roles-107 |
+|  | Das Baby antwortet dem Gast heute. | The baby answers the guest today. | das Baby = Nom (subject); dem Gast = Dat (dativeVerb) | kc-s-dat-roles-108 |
+|  | Der Freund gibt dem Baby ein Bild. | The friend gives the baby a picture. | der Freund = Nom (subject); dem Baby = Dat (recipient); ein Bild = Akk (object) | kc-s-dat-roles-109 |
+|  | Der Chef gratuliert dem Baby heute. | The boss congratulates the baby today. | der Chef = Nom (subject); dem Baby = Dat (dativeVerb) | kc-s-dat-roles-110 |
+|  | Die Kollegin bringt dem Freund einen Ring. | The colleague brings the friend a ring. | die Kollegin = Nom (subject); dem Freund = Dat (recipient); einen Ring = Akk (object) | kc-s-dat-roles-111 |
+|  | Der Gast antwortet dem Bruder höflich. | The guest answers the brother politely. | der Gast = Nom (subject); dem Bruder = Dat (dativeVerb) | kc-s-dat-roles-112 |
+|  | Das Kind gratuliert dem Schüler heute. | The child congratulates the student today. | das Kind = Nom (subject); dem Schüler = Dat (dativeVerb) | kc-s-dat-roles-113 |
+|  | Der Gast schickt dem Mädchen einen Koffer. | The guest sends the girl a suitcase. | der Gast = Nom (subject); dem Mädchen = Dat (recipient); einen Koffer = Akk (object) | kc-s-dat-roles-114 |
+|  | Der Hund folgt dem Lehrer im Park. | The dog follows the teacher in the park. | der Hund = Nom (subject); dem Lehrer = Dat (dativeVerb) | kc-s-dat-roles-115 |
+|  | Der Bruder schenkt dem Opa eine Brille. | The brother gives the grandpa a pair of glasses as a gift. | der Bruder = Nom (subject); dem Opa = Dat (recipient); eine Brille = Akk (object) | kc-s-dat-roles-116 |
+|  | Der Opa gibt dem Bruder ein Ticket. | The grandpa gives the brother a ticket. | der Opa = Nom (subject); dem Bruder = Dat (recipient); ein Ticket = Akk (object) | kc-s-dat-roles-117 |
+|  | Die Freundin folgt dem Freund durch den Park. | The friend follows the friend through the park. | die Freundin = Nom (subject); dem Freund = Dat (dativeVerb) | kc-s-dat-roles-118 |
+|  | Der Schüler antwortet der Frau freundlich. | The student answers the woman kindly. | der Schüler = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-dat-roles-119 |
+|  | Der Bruder antwortet der Oma am Telefon. | The brother answers the grandma on the phone. | der Bruder = Nom (subject); der Oma = Dat (dativeVerb) | kc-s-dat-roles-120 |
+|  | Der Mann antwortet der Schwester heute. | The man answers the sister today. | der Mann = Nom (subject); der Schwester = Dat (dativeVerb) | kc-s-dat-roles-121 |
+|  | Die Frau gibt dem Gast einen Schlüssel. | The woman gives the guest a key. | die Frau = Nom (subject); dem Gast = Dat (recipient); einen Schlüssel = Akk (object) | kc-s-dat-roles-122 |
+|  | Die Mutter gratuliert dem Gast herzlich. | The mother warmly congratulates the guest. | die Mutter = Nom (subject); dem Gast = Dat (dativeVerb) | kc-s-dat-roles-123 |
+|  | Der Bruder gibt dem Gast einen Brief. | The brother gives the guest a letter. | der Bruder = Nom (subject); dem Gast = Dat (recipient); einen Brief = Akk (object) | kc-s-dat-roles-124 |
+|  | Die Kollegin bringt dem Mädchen einen Schlüssel. | The colleague brings the girl a key. | die Kollegin = Nom (subject); dem Mädchen = Dat (recipient); einen Schlüssel = Akk (object) | kc-s-dat-roles-125 |
+|  | Die Freundin dankt dem Vater herzlich. | The friend thanks the father warmly. | die Freundin = Nom (subject); dem Vater = Dat (dativeVerb) | kc-s-dat-roles-126 |
+|  | Der Bruder hilft der Oma mit der Jacke. | The brother helps the grandma with the jacket. | der Bruder = Nom (subject); der Oma = Dat (dativeVerb); mit der Jacke = Dat (preposition) | kc-s-dat-roles-127 |
+|  | Die Frau dankt dem Mädchen heute. | The woman thanks the girl today. | die Frau = Nom (subject); dem Mädchen = Dat (dativeVerb) | kc-s-dat-roles-128 |
+|  | Der Vater hilft dem Kind mit der Gabel. | The father helps the child with the fork. | der Vater = Nom (subject); dem Kind = Dat (dativeVerb); mit der Gabel = Dat (preposition) | kc-s-dat-roles-129 |
+|  | Der Mann gibt dem Freund einen Ball. | The man gives the friend a ball. | der Mann = Nom (subject); dem Freund = Dat (recipient); einen Ball = Akk (object) | kc-s-dat-roles-130 |
+|  | Der Gast folgt dem Vater. | The guest follows the father. | der Gast = Nom (subject); dem Vater = Dat (dativeVerb) | kc-s-dat-roles-131 |
+|  | Der Opa gibt der Freundin einen Koffer. | The grandpa gives the friend a suitcase. | der Opa = Nom (subject); der Freundin = Dat (recipient); einen Koffer = Akk (object) | kc-s-dat-roles-132 |
+|  | Der Freund bringt dem Opa ein Paket. | The friend brings the grandpa a package. | der Freund = Nom (subject); dem Opa = Dat (recipient); ein Paket = Akk (object) | kc-s-dat-roles-133 |
+|  | Der Schüler gratuliert der Freundin heute. | The student congratulates the friend today. | der Schüler = Nom (subject); der Freundin = Dat (dativeVerb) | kc-s-dat-roles-134 |
+|  | Der Mann hilft der Nachbarin mit der Gabel. | The man helps the neighbor with the fork. | der Mann = Nom (subject); der Nachbarin = Dat (dativeVerb); mit der Gabel = Dat (preposition) | kc-s-dat-roles-135 |
+|  | Der Opa antwortet dem Bruder ruhig. | The grandpa answers the brother calmly. | der Opa = Nom (subject); dem Bruder = Dat (dativeVerb) | kc-s-dat-roles-136 |
+|  | Der Schüler hilft dem Vogel mit dem Ball. | The student helps the bird with the ball. | der Schüler = Nom (subject); dem Vogel = Dat (dativeVerb); mit dem Ball = Dat (preposition) | kc-s-dat-roles-137 |
+|  | Das Mädchen dankt dem Kind. | The girl thanks the child. | das Mädchen = Nom (subject); dem Kind = Dat (dativeVerb) | kc-s-dat-roles-138 |
+|  | Der Lehrer gratuliert dem Chef heute. | The teacher congratulates the boss today. | der Lehrer = Nom (subject); dem Chef = Dat (dativeVerb) | kc-s-dat-roles-139 |
+|  | Die Kollegin dankt dem Lehrer herzlich. | The colleague thanks the teacher warmly. | die Kollegin = Nom (subject); dem Lehrer = Dat (dativeVerb) | kc-s-dat-roles-140 |
+|  | Die Nachbarin gratuliert dem Lehrer. | The neighbor congratulates the teacher. | die Nachbarin = Nom (subject); dem Lehrer = Dat (dativeVerb) | kc-s-dat-roles-141 |
+|  | Die Schwester schenkt dem Kind einen Ring. | The sister gives the child a ring as a gift. | die Schwester = Nom (subject); dem Kind = Dat (recipient); einen Ring = Akk (object) | kc-s-dat-roles-142 |
+
+## Dativ · Wer macht was?
+
+| ✓/✗ | German | English | planned roles | id |
+|---|---|---|---|---|
+|  | Dem Pferd folgt die Mutter. | The mother is following the horse. · Q: Who is following? | die Mutter = Nom (subject); dem Pferd = Dat (dativeVerb) | kc-s-dat-wer-101 |
+|  | Dem Kind antwortet die Mutter. | The mother is answering the child. · Q: Who is answering? | die Mutter = Nom (subject); dem Kind = Dat (dativeVerb) | kc-s-dat-wer-102 |
+|  | Die Schülerin folgt dem Opa. | The student is following the grandpa. · Q: Who is following? | die Schülerin = Nom (subject); dem Opa = Dat (dativeVerb) | kc-s-dat-wer-103 |
+|  | Der Bruder dankt der Schwester. | The brother thanks the sister. · Q: Who thanks? | der Bruder = Nom (subject); der Schwester = Dat (dativeVerb) | kc-s-dat-wer-104 |
+|  | Der Bruder hilft der Chefin. | The brother is helping the boss. · Q: Who is helping? | der Bruder = Nom (subject); der Chefin = Dat (dativeVerb) | kc-s-dat-wer-105 |
+|  | Die Schülerin gratuliert dem Opa. | The student congratulates the grandpa. · Q: Who congratulates? | die Schülerin = Nom (subject); dem Opa = Dat (dativeVerb) | kc-s-dat-wer-106 |
+|  | Der Freund antwortet der Frau. | The friend is answering the woman. · Q: Who is answering? | der Freund = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-dat-wer-107 |
+|  | Der Lehrer hilft der Mutter. | The teacher is helping the mother. · Q: Who is helping? | der Lehrer = Nom (subject); der Mutter = Dat (dativeVerb) | kc-s-dat-wer-108 |
+|  | Die Freundin hilft dem Gast. | The friend is helping the guest. · Q: Who is helping? | die Freundin = Nom (subject); dem Gast = Dat (dativeVerb) | kc-s-dat-wer-109 |
+|  | Dem Bruder gratuliert die Mutter. | The mother congratulates the brother. · Q: Who congratulates? | die Mutter = Nom (subject); dem Bruder = Dat (dativeVerb) | kc-s-dat-wer-110 |
+|  | Dem Lehrer antwortet die Freundin. | The friend is answering the teacher. · Q: Who is answering? | die Freundin = Nom (subject); dem Lehrer = Dat (dativeVerb) | kc-s-dat-wer-111 |
+|  | Dem Freund gratuliert die Kollegin. | The colleague congratulates the friend. · Q: Who congratulates? | die Kollegin = Nom (subject); dem Freund = Dat (dativeVerb) | kc-s-dat-wer-112 |
+|  | Der Schüler hilft der Oma. | The student is helping the grandma. · Q: Who is helping? | der Schüler = Nom (subject); der Oma = Dat (dativeVerb) | kc-s-dat-wer-113 |
+|  | Der Chef folgt der Schülerin. | The boss is following the student. · Q: Who is following? | der Chef = Nom (subject); der Schülerin = Dat (dativeVerb) | kc-s-dat-wer-114 |
+|  | Dem Kind dankt die Tochter. | The daughter thanks the child. · Q: Who thanks? | die Tochter = Nom (subject); dem Kind = Dat (dativeVerb) | kc-s-dat-wer-115 |
+|  | Das Baby hilft dem Bruder. | The baby is helping the brother. · Q: Who is helping? | das Baby = Nom (subject); dem Bruder = Dat (dativeVerb) | kc-s-dat-wer-116 |
+|  | Dem Opa gratuliert die Oma. | The grandma congratulates the grandpa. · Q: Who congratulates? | die Oma = Nom (subject); dem Opa = Dat (dativeVerb) | kc-s-dat-wer-117 |
+|  | Dem Vater antwortet die Oma. | The grandma is answering the father. · Q: Who is answering? | die Oma = Nom (subject); dem Vater = Dat (dativeVerb) | kc-s-dat-wer-118 |
+|  | Der Tochter dankt der Lehrer. | The teacher thanks the daughter. · Q: Who thanks? | der Lehrer = Nom (subject); der Tochter = Dat (dativeVerb) | kc-s-dat-wer-119 |
+|  | Die Tochter dankt dem Mädchen. | The daughter thanks the girl. · Q: Who thanks? | die Tochter = Nom (subject); dem Mädchen = Dat (dativeVerb) | kc-s-dat-wer-120 |
+|  | Der Vater hilft der Mutter. | The father is helping the mother. · Q: Who is helping? | der Vater = Nom (subject); der Mutter = Dat (dativeVerb) | kc-s-dat-wer-121 |
+|  | Der Chef hilft der Tochter. | The boss is helping the daughter. · Q: Who is helping? | der Chef = Nom (subject); der Tochter = Dat (dativeVerb) | kc-s-dat-wer-122 |
+|  | Dem Lehrer dankt die Frau. | The woman thanks the teacher. · Q: Who thanks? | die Frau = Nom (subject); dem Lehrer = Dat (dativeVerb) | kc-s-dat-wer-123 |
+|  | Der Freund antwortet der Chefin. | The friend is answering the boss. · Q: Who is answering? | der Freund = Nom (subject); der Chefin = Dat (dativeVerb) | kc-s-dat-wer-124 |
+|  | Dem Gast hilft die Chefin. | The boss is helping the guest. · Q: Who is helping? | die Chefin = Nom (subject); dem Gast = Dat (dativeVerb) | kc-s-dat-wer-125 |
+|  | Der Chef dankt der Mutter. | The boss thanks the mother. · Q: Who thanks? | der Chef = Nom (subject); der Mutter = Dat (dativeVerb) | kc-s-dat-wer-126 |
+|  | Der Freund folgt der Mutter. | The friend is following the mother. · Q: Who is following? | der Freund = Nom (subject); der Mutter = Dat (dativeVerb) | kc-s-dat-wer-127 |
+|  | Dem Freund gratuliert die Oma. | The grandma congratulates the friend. · Q: Who congratulates? | die Oma = Nom (subject); dem Freund = Dat (dativeVerb) | kc-s-dat-wer-128 |
+|  | Das Mädchen hilft dem Pferd. | The girl is helping the horse. · Q: Who is helping? | das Mädchen = Nom (subject); dem Pferd = Dat (dativeVerb) | kc-s-dat-wer-129 |
+|  | Das Baby hilft dem Opa. | The baby is helping the grandpa. · Q: Who is helping? | das Baby = Nom (subject); dem Opa = Dat (dativeVerb) | kc-s-dat-wer-131 |
+|  | Dem Schüler folgt die Freundin. | The friend is following the student. · Q: Who is following? | die Freundin = Nom (subject); dem Schüler = Dat (dativeVerb) | kc-s-dat-wer-132 |
+|  | Der Gast dankt der Freundin. | The guest thanks the friend. · Q: Who thanks? | der Gast = Nom (subject); der Freundin = Dat (dativeVerb) | kc-s-dat-wer-133 |
+|  | Der Oma hilft der Bruder. | The brother is helping the grandma. · Q: Who is helping? | der Bruder = Nom (subject); der Oma = Dat (dativeVerb) | kc-s-dat-wer-134 |
+|  | Dem Kind antwortet die Kollegin. | The colleague is answering the child. · Q: Who is answering? | die Kollegin = Nom (subject); dem Kind = Dat (dativeVerb) | kc-s-dat-wer-135 |
+|  | Der Schülerin hilft der Freund. | The friend is helping the student. · Q: Who is helping? | der Freund = Nom (subject); der Schülerin = Dat (dativeVerb) | kc-s-dat-wer-136 |
+|  | Die Nachbarin gratuliert dem Mann. | The neighbor congratulates the man. · Q: Who congratulates? | die Nachbarin = Nom (subject); dem Mann = Dat (dativeVerb) | kc-s-dat-wer-137 |
+|  | Der Frau gratuliert der Freund. | The friend congratulates the woman. · Q: Who congratulates? | der Freund = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-dat-wer-138 |
+|  | Der Schülerin gratuliert der Gast. | The guest congratulates the student. · Q: Who congratulates? | der Gast = Nom (subject); der Schülerin = Dat (dativeVerb) | kc-s-dat-wer-139 |
+|  | Der Katze folgt der Vogel. | The bird is following the cat. · Q: Who is following? | der Vogel = Nom (subject); der Katze = Dat (dativeVerb) | kc-s-dat-wer-140 |
+|  | Dem Chef folgt die Schwester. | The sister is following the boss. · Q: Who is following? | die Schwester = Nom (subject); dem Chef = Dat (dativeVerb) | kc-s-dat-wer-141 |
+|  | Der Mann dankt der Chefin. | The man thanks the boss. · Q: Who thanks? | der Mann = Nom (subject); der Chefin = Dat (dativeVerb) | kc-s-dat-wer-142 |
+|  | Die Mutter hilft dem Lehrer. | The mother is helping the teacher. · Q: Who is helping? | die Mutter = Nom (subject); dem Lehrer = Dat (dativeVerb) | kc-s-dat-wer-143 |
+
+## Dativ · Die Probe
+
+| ✓/✗ | German | English | planned roles | id |
+|---|---|---|---|---|
+|  | Der Vater folgt der Schwester heute. | The father follows the sister today. | der Vater = Nom (subject); der Schwester = Dat (dativeVerb) | kc-s-dat-probe-101 |
+|  | Der Chef antwortete der Frau freundlich. | The boss answered the woman kindly. | der Chef = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-dat-probe-102 |
+|  | Der Mann folgt der Oma langsam. | The man follows the grandma slowly. | der Mann = Nom (subject); der Oma = Dat (dativeVerb) | kc-s-dat-probe-103 |
+|  | Der Mann dankt der Chefin für ihre Hilfe. | The man thanks the boss for her help. | der Mann = Nom (subject); der Chefin = Dat (dativeVerb) | kc-s-dat-probe-104 |
+|  | Der Schüler hilft der Frau heute. | The student helps the woman today. | der Schüler = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-dat-probe-105 |
+|  | Der Freund gratuliert der Freundin heute. | The friend congratulates the girlfriend today. | der Freund = Nom (subject); der Freundin = Dat (dativeVerb) | kc-s-dat-probe-106 |
+|  | Der Mann antwortet der Schwester gern. | The man gladly answers the sister. | der Mann = Nom (subject); der Schwester = Dat (dativeVerb) | kc-s-dat-probe-107 |
+|  | Der Lehrer hilft der Schwester im Garten. | The teacher helps the sister in the garden. | der Lehrer = Nom (subject); der Schwester = Dat (dativeVerb) | kc-s-dat-probe-108 |
+|  | Der Gast hilft der Tochter gern. | The guest gladly helps the daughter. | der Gast = Nom (subject); der Tochter = Dat (dativeVerb) | kc-s-dat-probe-109 |
+|  | Der Freund gratuliert der Schülerin heute. | The friend congratulates the student today. | der Freund = Nom (subject); der Schülerin = Dat (dativeVerb) | kc-s-dat-probe-110 |
+|  | Der Mann antwortete der Nachbarin höflich. | The man answered the neighbor politely. | der Mann = Nom (subject); der Nachbarin = Dat (dativeVerb) | kc-s-dat-probe-111 |
+|  | Der Bruder gratuliert der Frau zum Geburtstag. | The brother congratulates the woman on her birthday. | der Bruder = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-dat-probe-112 |
+|  | Der Gast half der Chefin sofort. | The guest helped the boss right away. | der Gast = Nom (subject); der Chefin = Dat (dativeVerb) | kc-s-dat-probe-113 |
+|  | Der Bruder folgt der Chefin ins Büro. | The brother follows the boss into the office. | der Bruder = Nom (subject); der Chefin = Dat (dativeVerb) | kc-s-dat-probe-114 |
+|  | Der Vater dankt der Tochter heute. | The father thanks the daughter today. | der Vater = Nom (subject); der Tochter = Dat (dativeVerb) | kc-s-dat-probe-115 |
+|  | Der Lehrer hilft der Freundin gern. | The teacher gladly helps the friend. | der Lehrer = Nom (subject); der Freundin = Dat (dativeVerb) | kc-s-dat-probe-116 |
+|  | Der Chef gratuliert der Oma heute. | The boss congratulates the grandma today. | der Chef = Nom (subject); der Oma = Dat (dativeVerb) | kc-s-dat-probe-117 |
+|  | Der Chef antwortet der Nachbarin freundlich. | The boss answers the neighbor kindly. | der Chef = Nom (subject); der Nachbarin = Dat (dativeVerb) | kc-s-dat-probe-118 |
+|  | Der Lehrer dankt der Schwester herzlich. | The teacher warmly thanks the sister. | der Lehrer = Nom (subject); der Schwester = Dat (dativeVerb) | kc-s-dat-probe-119 |
+|  | Der Gast dankt der Schülerin heute. | The guest thanks the student today. | der Gast = Nom (subject); der Schülerin = Dat (dativeVerb) | kc-s-dat-probe-120 |
+|  | Der Schüler half der Schwester gestern. | The student helped the sister yesterday. | der Schüler = Nom (subject); der Schwester = Dat (dativeVerb) | kc-s-dat-probe-121 |
+|  | Der Mann hilft der Frau im Garten. | The man helps the woman in the garden. | der Mann = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-dat-probe-122 |
+|  | Der Schüler dankt der Nachbarin freundlich. | The student kindly thanks the neighbor. | der Schüler = Nom (subject); der Nachbarin = Dat (dativeVerb) | kc-s-dat-probe-123 |
+|  | Der Freund antwortet der Mutter gern. | The friend gladly answers the mother. | der Freund = Nom (subject); der Mutter = Dat (dativeVerb) | kc-s-dat-probe-124 |
+|  | Der Schüler hilft der Katze heute. | The student helps the cat today. | der Schüler = Nom (subject); der Katze = Dat (dativeVerb) | kc-s-dat-probe-125 |
+|  | Der Mann dankt der Kollegin herzlich. | The man warmly thanks the colleague. | der Mann = Nom (subject); der Kollegin = Dat (dativeVerb) | kc-s-dat-probe-126 |
+|  | Der Schüler folgt der Freundin nach der Schule. | The student follows the friend after school. | der Schüler = Nom (subject); der Freundin = Dat (dativeVerb) | kc-s-dat-probe-127 |
+|  | Der Lehrer gratuliert der Schülerin heute. | The teacher congratulates the student today. | der Lehrer = Nom (subject); der Schülerin = Dat (dativeVerb) | kc-s-dat-probe-128 |
+|  | Der Bruder hilft der Mutter im Haus. | The brother helps the mother in the house. | der Bruder = Nom (subject); der Mutter = Dat (dativeVerb) | kc-s-dat-probe-129 |
+|  | Der Gast gratuliert der Oma zum Geburtstag. | The guest congratulates the grandma on her birthday. | der Gast = Nom (subject); der Oma = Dat (dativeVerb) | kc-s-dat-probe-130 |
+|  | Der Freund hilft der Frau heute. | The friend helps the woman today. | der Freund = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-dat-probe-131 |
+|  | Der Gast folgte der Kollegin langsam. | The guest followed the colleague slowly. | der Gast = Nom (subject); der Kollegin = Dat (dativeVerb) | kc-s-dat-probe-132 |
+|  | Der Lehrer dankt der Kollegin für ihre Hilfe. | The teacher thanks the colleague for her help. | der Lehrer = Nom (subject); der Kollegin = Dat (dativeVerb) | kc-s-dat-probe-133 |
+|  | Der Opa hilft der Frau gern. | The grandpa gladly helps the woman. | der Opa = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-dat-probe-134 |
+|  | Der Freund antwortet der Tochter freundlich. | The friend answers the daughter kindly. | der Freund = Nom (subject); der Tochter = Dat (dativeVerb) | kc-s-dat-probe-135 |
+|  | Der Mann hilft der Oma heute. | The man helps the grandma today. | der Mann = Nom (subject); der Oma = Dat (dativeVerb) | kc-s-dat-probe-136 |
+|  | Der Schüler gratuliert der Nachbarin heute. | The student congratulates the neighbor today. | der Schüler = Nom (subject); der Nachbarin = Dat (dativeVerb) | kc-s-dat-probe-137 |
+|  | Der Schüler gratuliert der Chefin herzlich. | The student warmly congratulates the boss. | der Schüler = Nom (subject); der Chefin = Dat (dativeVerb) | kc-s-dat-probe-138 |
+|  | Der Mann gratuliert der Kollegin zum Geburtstag. | The man congratulates the colleague on her birthday. | der Mann = Nom (subject); der Kollegin = Dat (dativeVerb) | kc-s-dat-probe-139 |
+|  | Der Chef folgt der Katze langsam. | The boss follows the cat slowly. | der Chef = Nom (subject); der Katze = Dat (dativeVerb) | kc-s-dat-probe-140 |
+|  | Der Vater folgt der Frau heute. | The father follows the woman today. | der Vater = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-dat-probe-141 |
+|  | Der Opa dankt der Oma herzlich. | The grandpa warmly thanks the grandma. | der Opa = Nom (subject); der Oma = Dat (dativeVerb) | kc-s-dat-probe-142 |
+
+## Genitiv · Rollen
+
+| ✓/✗ | German | English | planned roles | id |
+|---|---|---|---|---|
+|  | Der Kellner holt die Lampe wegen der Prüfung. | The waiter fetches the lamp because of the exam. | der Kellner = Nom (subject); die Lampe = Akk (object); wegen der Prüfung = Gen (preposition) | kc-s-gen-roles-101 |
+|  | Das Mädchen trinkt den Kaffee wegen des Sturms. | The girl drinks the coffee because of the storm. | das Mädchen = Nom (subject); den Kaffee = Akk (object); wegen des Sturms = Gen (preposition) | kc-s-gen-roles-102 |
+|  | Die Frau isst den Apfel wegen der Baustelle. | The woman eats the apple because of the construction site. | die Frau = Nom (subject); den Apfel = Akk (object); wegen der Baustelle = Gen (preposition) | kc-s-gen-roles-103 |
+|  | Die Schwester trägt einen Mantel trotz der Krankheit. | The sister wears a coat despite the illness. | die Schwester = Nom (subject); einen Mantel = Akk (object); trotz der Krankheit = Gen (preposition) | kc-s-gen-roles-104 |
+|  | Der Schüler liest das Buch trotz des Wetters. | The student reads the book despite the weather. | der Schüler = Nom (subject); das Buch = Akk (object); trotz des Wetters = Gen (preposition) | kc-s-gen-roles-105 |
+|  | Der Onkel braucht den Ball wegen des Schnees. | The uncle needs the ball because of the snow. | der Onkel = Nom (subject); den Ball = Akk (object); wegen des Schnees = Gen (preposition) | kc-s-gen-roles-106 |
+|  | Der Onkel liest die Karte wegen des Fiebers. | The uncle reads the card because of the fever. | der Onkel = Nom (subject); die Karte = Akk (object); wegen des Fiebers = Gen (preposition) | kc-s-gen-roles-107 |
+|  | Die Ärztin sieht den Vogel wegen der Kälte. | The doctor sees the bird because of the cold. | die Ärztin = Nom (subject); den Vogel = Akk (object); wegen der Kälte = Gen (preposition) | kc-s-gen-roles-108 |
+|  | Die Nachbarin trinkt den Wein trotz des Wetters. | The neighbor drinks the wine despite the weather. | die Nachbarin = Nom (subject); den Wein = Akk (object); trotz des Wetters = Gen (preposition) | kc-s-gen-roles-109 |
+|  | Der Lehrer liest ein Buch trotz des Gewitters. | The teacher reads a book despite the thunderstorm. | der Lehrer = Nom (subject); ein Buch = Akk (object); trotz des Gewitters = Gen (preposition) | kc-s-gen-roles-110 |
+|  | Der Vater isst den Käse wegen der Hitze. | The father eats the cheese because of the heat. | der Vater = Nom (subject); den Käse = Akk (object); wegen der Hitze = Gen (preposition) | kc-s-gen-roles-111 |
+|  | Der Sohn kauft einen Teller wegen des Problems. | The son buys a plate because of the problem. | der Sohn = Nom (subject); einen Teller = Akk (object); wegen des Problems = Gen (preposition) | kc-s-gen-roles-112 |
+|  | Die Frau holt den Kaffee trotz des Unfalls. | The woman fetches the coffee despite the accident. | die Frau = Nom (subject); den Kaffee = Akk (object); trotz des Unfalls = Gen (preposition) | kc-s-gen-roles-113 |
+|  | Der Lehrer sieht eine Gabel trotz des Sturms. | The teacher sees a fork despite the storm. | der Lehrer = Nom (subject); eine Gabel = Akk (object); trotz des Sturms = Gen (preposition) | kc-s-gen-roles-114 |
+|  | Die Kellnerin trägt den Rucksack trotz des Termins. | The waitress carries the backpack despite the appointment. | die Kellnerin = Nom (subject); den Rucksack = Akk (object); trotz des Termins = Gen (preposition) | kc-s-gen-roles-115 |
+|  | Die Schülerin findet den Schlüssel trotz des Regens. | The student finds the key despite the rain. | die Schülerin = Nom (subject); den Schlüssel = Akk (object); trotz des Regens = Gen (preposition) | kc-s-gen-roles-116 |
+|  | Der Chef nimmt einen Computer trotz des Lärms. | The boss takes a computer despite the noise. | der Chef = Nom (subject); einen Computer = Akk (object); trotz des Lärms = Gen (preposition) | kc-s-gen-roles-117 |
+|  | Der Freund liest ein Heft wegen der Baustelle. | The friend reads a notebook because of the construction site. | der Freund = Nom (subject); ein Heft = Akk (object); wegen der Baustelle = Gen (preposition) | kc-s-gen-roles-118 |
+|  | Die Verkäuferin nimmt den Käse wegen der Hitze. | The saleswoman takes the cheese because of the heat. | die Verkäuferin = Nom (subject); den Käse = Akk (object); wegen der Hitze = Gen (preposition) | kc-s-gen-roles-119 |
+|  | Der Lehrer sieht die Gabel trotz der Verspätung. | The teacher sees the fork despite the delay. | der Lehrer = Nom (subject); die Gabel = Akk (object); trotz der Verspätung = Gen (preposition) | kc-s-gen-roles-120 |
+|  | Der Bruder nimmt die Zeitung trotz des Nebels. | The brother takes the newspaper despite the fog. | der Bruder = Nom (subject); die Zeitung = Akk (object); trotz des Nebels = Gen (preposition) | kc-s-gen-roles-121 |
+|  | Der Bruder findet eine Katze wegen des Sturms. | The brother finds a cat because of the storm. | der Bruder = Nom (subject); eine Katze = Akk (object); wegen des Sturms = Gen (preposition) | kc-s-gen-roles-122 |
+|  | Der Fahrer sieht den Fisch trotz des Termins. | The driver sees the fish despite the appointment. | der Fahrer = Nom (subject); den Fisch = Akk (object); trotz des Termins = Gen (preposition) | kc-s-gen-roles-123 |
+|  | Der Freund trägt die Lampe wegen des Wetters. | The friend carries the lamp because of the weather. | der Freund = Nom (subject); die Lampe = Akk (object); wegen des Wetters = Gen (preposition) | kc-s-gen-roles-124 |
+|  | Das Kind trinkt den Wein trotz des Windes. | The child drinks the wine despite the wind. | das Kind = Nom (subject); den Wein = Akk (object); trotz des Windes = Gen (preposition) | kc-s-gen-roles-125 |
+|  | Der Mann sucht den Vogel trotz des Streiks. | The man looks for the bird despite the strike. | der Mann = Nom (subject); den Vogel = Akk (object); trotz des Streiks = Gen (preposition) | kc-s-gen-roles-126 |
+|  | Der Lehrer holt das Wasser trotz der Prüfung. | The teacher fetches the water despite the exam. | der Lehrer = Nom (subject); das Wasser = Akk (object); trotz der Prüfung = Gen (preposition) | kc-s-gen-roles-127 |
+|  | Der Opa kauft die Blume trotz der Krankheit. | The grandpa buys the flower despite the illness. | der Opa = Nom (subject); die Blume = Akk (object); trotz der Krankheit = Gen (preposition) | kc-s-gen-roles-128 |
+|  | Die Oma trägt den Rock trotz der Verspätung. | The grandma wears the skirt despite the delay. | die Oma = Nom (subject); den Rock = Akk (object); trotz der Verspätung = Gen (preposition) | kc-s-gen-roles-129 |
+|  | Der Opa trägt den Pullover wegen der Hitze. | The grandpa wears the sweater because of the heat. | der Opa = Nom (subject); den Pullover = Akk (object); wegen der Hitze = Gen (preposition) | kc-s-gen-roles-130 |
+|  | Der Bruder nimmt die Zeitung wegen der Prüfung. | The brother takes the newspaper because of the exam. | der Bruder = Nom (subject); die Zeitung = Akk (object); wegen der Prüfung = Gen (preposition) | kc-s-gen-roles-131 |
+|  | Die Oma sieht den Fisch trotz der Verspätung. | The grandma sees the fish despite the delay. | die Oma = Nom (subject); den Fisch = Akk (object); trotz der Verspätung = Gen (preposition) | kc-s-gen-roles-132 |
+|  | Die Schwester sieht einen Vogel wegen des Problems. | The sister sees a bird because of the problem. | die Schwester = Nom (subject); einen Vogel = Akk (object); wegen des Problems = Gen (preposition) | kc-s-gen-roles-133 |
+|  | Der Gast trinkt die Milch wegen des Wetters. | The guest drinks the milk because of the weather. | der Gast = Nom (subject); die Milch = Akk (object); wegen des Wetters = Gen (preposition) | kc-s-gen-roles-134 |
+|  | Der Onkel holt die Kerze wegen des Fiebers. | The uncle fetches the candle because of the fever. | der Onkel = Nom (subject); die Kerze = Akk (object); wegen des Fiebers = Gen (preposition) | kc-s-gen-roles-135 |
+|  | Der Chef trägt ein Hemd trotz der Arbeit. | The boss wears a shirt despite the work. | der Chef = Nom (subject); ein Hemd = Akk (object); trotz der Arbeit = Gen (preposition) | kc-s-gen-roles-136 |
+|  | Der Freund liest den Brief trotz der Baustelle. | The friend reads the letter despite the construction site. | der Freund = Nom (subject); den Brief = Akk (object); trotz der Baustelle = Gen (preposition) | kc-s-gen-roles-137 |
+|  | Der Opa holt ein Handy trotz des Staus. | The grandpa fetches a cell phone despite the traffic jam. | der Opa = Nom (subject); ein Handy = Akk (object); trotz des Staus = Gen (preposition) | kc-s-gen-roles-138 |
+|  | Der Opa kauft das Brot wegen des Lärms. | The grandpa buys the bread because of the noise. | der Opa = Nom (subject); das Brot = Akk (object); wegen des Lärms = Gen (preposition) | kc-s-gen-roles-139 |
+|  | Der Bruder trinkt den Saft trotz des Sturms. | The brother drinks the juice despite the storm. | der Bruder = Nom (subject); den Saft = Akk (object); trotz des Sturms = Gen (preposition) | kc-s-gen-roles-140 |
+|  | Der Mann sieht den Hund trotz des Termins. | The man sees the dog despite the appointment. | der Mann = Nom (subject); den Hund = Akk (object); trotz des Termins = Gen (preposition) | kc-s-gen-roles-141 |
+|  | Der Kellner isst das Ei wegen des Windes. | The waiter eats the egg because of the wind. | der Kellner = Nom (subject); das Ei = Akk (object); wegen des Windes = Gen (preposition) | kc-s-gen-roles-142 |
+
+## Genitiv · Wer macht was?
+
+| ✓/✗ | German | English | planned roles | id |
+|---|---|---|---|---|
+|  | Dem Kellner dankt die Frau herzlich. | The woman warmly thanks the waiter. · Q: Who thanks? | die Frau = Nom (subject); dem Kellner = Dat (dativeVerb) | kc-s-gen-wer-101 |
+|  | Der Freund antwortet der Kollegin gern. | The friend gladly answers the colleague. · Q: Who answers? | der Freund = Nom (subject); der Kollegin = Dat (dativeVerb) | kc-s-gen-wer-102 |
+|  | Die Verkäuferin sieht den Vogel heute. | The saleswoman sees the bird today. · Q: Who sees? | die Verkäuferin = Nom (subject); den Vogel = Akk (object) | kc-s-gen-wer-103 |
+|  | Die Schülerin fragt der Schüler heute. | The male student asks the female student today. · Q: Who asks? | der Schüler = Nom (subject); die Schülerin = Akk (object) | kc-s-gen-wer-104 |
+|  | Die Schwester folgt dem Lehrer langsam. | The sister follows the teacher slowly. · Q: Who follows? | die Schwester = Nom (subject); dem Lehrer = Dat (dativeVerb) | kc-s-gen-wer-105 |
+|  | Den Bruder fragt das Baby heute. | The baby asks the brother today. · Q: Who asks? | das Baby = Nom (subject); den Bruder = Akk (object) | kc-s-gen-wer-106 |
+|  | Der Schüler dankt der Mutter herzlich. | The student warmly thanks the mother. · Q: Who thanks? | der Schüler = Nom (subject); der Mutter = Dat (dativeVerb) | kc-s-gen-wer-107 |
+|  | Die Mutter ruft den Bruder laut. | The mother calls the brother loudly. · Q: Who is calling? | die Mutter = Nom (subject); den Bruder = Akk (object) | kc-s-gen-wer-108 |
+|  | Der Vater findet das Mädchen im Garten. | The father finds the girl in the garden. · Q: Who finds? | der Vater = Nom (subject); das Mädchen = Akk (object) | kc-s-gen-wer-109 |
+|  | Die Verkäuferin kennt den Verkäufer gut. | The saleswoman knows the salesman well. · Q: Who knows? | die Verkäuferin = Nom (subject); den Verkäufer = Akk (object) | kc-s-gen-wer-110 |
+|  | Die Tochter sucht den Gast im Haus. | The daughter is looking for the guest in the house. · Q: Who is looking? | die Tochter = Nom (subject); den Gast = Akk (object) | kc-s-gen-wer-111 |
+|  | Die Nachbarin antwortet dem Verkäufer freundlich. | The neighbor answers the salesman in a friendly way. · Q: Who answers? | die Nachbarin = Nom (subject); dem Verkäufer = Dat (dativeVerb) | kc-s-gen-wer-112 |
+|  | Der Schüler sieht die Mutter heute. | The student sees the mother today. · Q: Who sees? | der Schüler = Nom (subject); die Mutter = Akk (object) | kc-s-gen-wer-113 |
+|  | Der Schülerin dankt der Mann herzlich. | The man warmly thanks the female student. · Q: Who thanks? | der Mann = Nom (subject); der Schülerin = Dat (dativeVerb) | kc-s-gen-wer-114 |
+|  | Die Ärztin antwortet dem Opa ruhig. | The doctor calmly answers the grandpa. · Q: Who answers? | die Ärztin = Nom (subject); dem Opa = Dat (dativeVerb) | kc-s-gen-wer-115 |
+|  | Der Frau antwortet der Chef freundlich. | The boss answers the woman in a friendly way. · Q: Who answers? | der Chef = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-gen-wer-116 |
+|  | Den Onkel sucht die Nachbarin heute. | The neighbor is looking for the uncle today. · Q: Who is looking? | die Nachbarin = Nom (subject); den Onkel = Akk (object) | kc-s-gen-wer-117 |
+|  | Der Chefin gratuliert der Gast herzlich. | The guest warmly congratulates the boss. · Q: Who congratulates? | der Gast = Nom (subject); der Chefin = Dat (dativeVerb) | kc-s-gen-wer-118 |
+|  | Das Mädchen dankt dem Lehrer freundlich. | The girl kindly thanks the teacher. · Q: Who thanks? | das Mädchen = Nom (subject); dem Lehrer = Dat (dativeVerb) | kc-s-gen-wer-119 |
+|  | Der Verkäufer besucht die Mutter heute. | The salesman visits the mother today. · Q: Who is visiting? | der Verkäufer = Nom (subject); die Mutter = Akk (object) | kc-s-gen-wer-120 |
+|  | Der Schüler antwortet der Tochter leise. | The student answers the daughter quietly. · Q: Who answers? | der Schüler = Nom (subject); der Tochter = Dat (dativeVerb) | kc-s-gen-wer-121 |
+|  | Dem Opa hilft die Oma gern. | The grandma gladly helps the grandpa. · Q: Who is helping? | die Oma = Nom (subject); dem Opa = Dat (dativeVerb) | kc-s-gen-wer-122 |
+|  | Die Freundin dankt dem Mann herzlich. | The friend warmly thanks the man. · Q: Who thanks? | die Freundin = Nom (subject); dem Mann = Dat (dativeVerb) | kc-s-gen-wer-123 |
+|  | Die Schwester findet den Hund im Garten. | The sister finds the dog in the garden. · Q: Who finds? | die Schwester = Nom (subject); den Hund = Akk (object) | kc-s-gen-wer-124 |
+|  | Der Gast fragt die Oma freundlich. | The guest asks the grandma in a friendly way. · Q: Who asks? | der Gast = Nom (subject); die Oma = Akk (object) | kc-s-gen-wer-125 |
+|  | Den Arzt fragt die Schwester heute. | The sister asks the doctor today. · Q: Who asks? | die Schwester = Nom (subject); den Arzt = Akk (object) | kc-s-gen-wer-126 |
+|  | Die Lehrerin hilft dem Mädchen gern. | The teacher gladly helps the girl. · Q: Who is helping? | die Lehrerin = Nom (subject); dem Mädchen = Dat (dativeVerb) | kc-s-gen-wer-127 |
+|  | Das Pferd jagt der Hund heute. | The dog is chasing the horse today. · Q: Who is chasing? | der Hund = Nom (subject); das Pferd = Akk (object) | kc-s-gen-wer-128 |
+|  | Die Schülerin fragt den Vater höflich. | The student politely asks the father. · Q: Who asks? | die Schülerin = Nom (subject); den Vater = Akk (object) | kc-s-gen-wer-129 |
+|  | Die Katze findet den Sohn im Garten. | The cat finds the son in the garden. · Q: Who finds? | die Katze = Nom (subject); den Sohn = Akk (object) | kc-s-gen-wer-130 |
+|  | Die Frau findet den Freund im Park. | The woman finds the friend in the park. · Q: Who finds? | die Frau = Nom (subject); den Freund = Akk (object) | kc-s-gen-wer-131 |
+|  | Der Frau antwortet der Bruder höflich. | The brother politely answers the woman. · Q: Who answers? | der Bruder = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-gen-wer-132 |
+|  | Den Hund jagt die Katze im Garten. | The cat is chasing the dog in the garden. · Q: Who is chasing? | die Katze = Nom (subject); den Hund = Akk (object) | kc-s-gen-wer-133 |
+|  | Der Bruder sucht die Tochter im Haus. | The brother is looking for the daughter in the house. · Q: Who is looking? | der Bruder = Nom (subject); die Tochter = Akk (object) | kc-s-gen-wer-134 |
+|  | Die Mutter sieht den Hund im Garten. | The mother sees the dog in the garden. · Q: Who sees? | die Mutter = Nom (subject); den Hund = Akk (object) | kc-s-gen-wer-135 |
+|  | Die Nachbarin besucht den Vater heute. | The neighbor visits the father today. · Q: Who is visiting? | die Nachbarin = Nom (subject); den Vater = Akk (object) | kc-s-gen-wer-136 |
+|  | Dem Vater folgt die Oma langsam. | The grandma slowly follows the father. · Q: Who follows? | die Oma = Nom (subject); dem Vater = Dat (dativeVerb) | kc-s-gen-wer-137 |
+|  | Den Vogel ruft die Mutter laut. | The mother calls the bird loudly. · Q: Who is calling? | die Mutter = Nom (subject); den Vogel = Akk (object) | kc-s-gen-wer-138 |
+|  | Der Katze hilft der Lehrer gern. | The teacher gladly helps the cat. · Q: Who is helping? | der Lehrer = Nom (subject); der Katze = Dat (dativeVerb) | kc-s-gen-wer-139 |
+|  | Den Gast fragt die Tante höflich. | The aunt politely asks the guest. · Q: Who asks? | die Tante = Nom (subject); den Gast = Akk (object) | kc-s-gen-wer-140 |
+|  | Die Tochter sieht den Vater heute. | The daughter sees the father today. · Q: Who sees? | die Tochter = Nom (subject); den Vater = Akk (object) | kc-s-gen-wer-141 |
+|  | Die Kollegin sucht den Opa im Park. | The colleague is looking for the grandpa in the park. · Q: Who is looking? | die Kollegin = Nom (subject); den Opa = Akk (object) | kc-s-gen-wer-142 |
+
+## Genitiv · Die Probe
+
+| ✓/✗ | German | English | planned roles | id |
+|---|---|---|---|---|
+|  | Der Mann schläft wegen der Hitze schlecht. | The man sleeps badly because of the heat. | der Mann = Nom (subject); wegen der Hitze = Gen (preposition) | kc-s-gen-probe-101 |
+|  | Der Freund ruft das Baby leise. | The friend calls the baby quietly. | der Freund = Nom (subject); das Baby = Akk (object) | kc-s-gen-probe-102 |
+|  | Der Schüler sucht das Mädchen im Park. | The student is looking for the girl in the park. | der Schüler = Nom (subject); das Mädchen = Akk (object) | kc-s-gen-probe-103 |
+|  | Der Schüler gratuliert der Lehrerin herzlich. | The student warmly congratulates the teacher. | der Schüler = Nom (subject); der Lehrerin = Dat (dativeVerb) | kc-s-gen-probe-104 |
+|  | Der Bruder dankt der Mutter herzlich. | The brother warmly thanks the mother. | der Bruder = Nom (subject); der Mutter = Dat (dativeVerb) | kc-s-gen-probe-105 |
+|  | Der Kellner folgt der Frau langsam. | The waiter slowly follows the woman. | der Kellner = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-gen-probe-106 |
+|  | Der Arzt folgt der Schülerin langsam. | The doctor slowly follows the student. | der Arzt = Nom (subject); der Schülerin = Dat (dativeVerb) | kc-s-gen-probe-107 |
+|  | Der Opa gratuliert der Lehrerin herzlich. | The grandpa warmly congratulates the teacher. | der Opa = Nom (subject); der Lehrerin = Dat (dativeVerb) | kc-s-gen-probe-108 |
+|  | Der Vater sieht das Mädchen im Garten. | The father sees the girl in the garden. | der Vater = Nom (subject); das Mädchen = Akk (object) | kc-s-gen-probe-109 |
+|  | Der Vogel folgt der Freundin heute. | The bird follows the friend today. | der Vogel = Nom (subject); der Freundin = Dat (dativeVerb) | kc-s-gen-probe-110 |
+|  | Der Bruder fragt die Nachbarin höflich. | The brother politely asks the neighbor. | der Bruder = Nom (subject); die Nachbarin = Akk (object) | kc-s-gen-probe-111 |
+|  | Der Chef antwortet der Tochter freundlich. | The boss answers the daughter in a friendly way. | der Chef = Nom (subject); der Tochter = Dat (dativeVerb) | kc-s-gen-probe-112 |
+|  | Das Kind spielt wegen der Krankheit drinnen. | The child plays inside because of the illness. | das Kind = Nom (subject); wegen der Krankheit = Gen (preposition) | kc-s-gen-probe-113 |
+|  | Der Mann besucht die Tante heute. | The man visits the aunt today. | der Mann = Nom (subject); die Tante = Akk (object) | kc-s-gen-probe-114 |
+|  | Der Freund hilft der Schülerin gern. | The friend gladly helps the student. | der Freund = Nom (subject); der Schülerin = Dat (dativeVerb) | kc-s-gen-probe-115 |
+|  | Der Arzt spielt wegen der Hitze drinnen. | The doctor plays inside because of the heat. | der Arzt = Nom (subject); wegen der Hitze = Gen (preposition) | kc-s-gen-probe-116 |
+|  | Der Schüler kennt die Katze gut. | The student knows the cat well. | der Schüler = Nom (subject); die Katze = Akk (object) | kc-s-gen-probe-117 |
+|  | Der Vater spielt wegen der Erkältung drinnen. | The father plays inside because of the cold. | der Vater = Nom (subject); wegen der Erkältung = Gen (preposition) | kc-s-gen-probe-118 |
+|  | Das Mädchen wartet wegen der Erkältung zu Hause. | The girl waits at home because of the cold. | das Mädchen = Nom (subject); wegen der Erkältung = Gen (preposition) | kc-s-gen-probe-119 |
+|  | Der Opa arbeitet wegen der Prüfung nicht. | The grandpa is not working because of the exam. | der Opa = Nom (subject); wegen der Prüfung = Gen (preposition) | kc-s-gen-probe-120 |
+|  | Der Schüler hilft der Katze gern. | The student gladly helps the cat. | der Schüler = Nom (subject); der Katze = Dat (dativeVerb) | kc-s-gen-probe-121 |
+|  | Der Opa schläft wegen der Erkältung lange. | The grandpa sleeps for a long time because of the cold. | der Opa = Nom (subject); wegen der Erkältung = Gen (preposition) | kc-s-gen-probe-122 |
+|  | Der Onkel ruft das Baby leise. | The uncle calls the baby quietly. | der Onkel = Nom (subject); das Baby = Akk (object) | kc-s-gen-probe-123 |
+|  | Der Schüler spielt wegen der Verspätung nicht. | The student is not playing because of the delay. | der Schüler = Nom (subject); wegen der Verspätung = Gen (preposition) | kc-s-gen-probe-124 |
+|  | Der Bruder folgt der Katze langsam. | The brother slowly follows the cat. | der Bruder = Nom (subject); der Katze = Dat (dativeVerb) | kc-s-gen-probe-125 |
+|  | Der Sohn gratuliert der Ärztin herzlich. | The son warmly congratulates the doctor. | der Sohn = Nom (subject); der Ärztin = Dat (dativeVerb) | kc-s-gen-probe-126 |
+|  | Der Gast antwortet der Oma freundlich. | The guest answers the grandma in a friendly way. | der Gast = Nom (subject); der Oma = Dat (dativeVerb) | kc-s-gen-probe-127 |
+|  | Der Arzt sucht die Kollegin im Haus. | The doctor is looking for the colleague in the house. | der Arzt = Nom (subject); die Kollegin = Akk (object) | kc-s-gen-probe-128 |
+|  | Der Opa findet die Chefin im Park. | The grandpa finds the boss in the park. | der Opa = Nom (subject); die Chefin = Akk (object) | kc-s-gen-probe-129 |
+|  | Der Fahrer weint wegen der Krankheit leise. | The driver cries quietly because of the illness. | der Fahrer = Nom (subject); wegen der Krankheit = Gen (preposition) | kc-s-gen-probe-130 |
+|  | Der Fahrer dankt der Kollegin herzlich. | The driver warmly thanks the colleague. | der Fahrer = Nom (subject); der Kollegin = Dat (dativeVerb) | kc-s-gen-probe-131 |
+|  | Der Chef singt trotz der Baustelle laut. | The boss sings loudly despite the construction site. | der Chef = Nom (subject); trotz der Baustelle = Gen (preposition) | kc-s-gen-probe-132 |
+|  | Der Vater sucht die Freundin im Park. | The father is looking for the friend in the park. | der Vater = Nom (subject); die Freundin = Akk (object) | kc-s-gen-probe-133 |
+|  | Der Verkäufer dankt der Frau freundlich. | The salesman kindly thanks the woman. | der Verkäufer = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-gen-probe-134 |
+|  | Der Fahrer lacht trotz der Prüfung laut. | The driver laughs loudly despite the exam. | der Fahrer = Nom (subject); trotz der Prüfung = Gen (preposition) | kc-s-gen-probe-135 |
+|  | Der Gast tanzt wegen der Hitze nicht. | The guest is not dancing because of the heat. | der Gast = Nom (subject); wegen der Hitze = Gen (preposition) | kc-s-gen-probe-136 |
+|  | Der Bruder spielt wegen der Prüfung nicht. | The brother is not playing because of the exam. | der Bruder = Nom (subject); wegen der Prüfung = Gen (preposition) | kc-s-gen-probe-137 |
+|  | Der Vater hilft der Tante gern. | The father gladly helps the aunt. | der Vater = Nom (subject); der Tante = Dat (dativeVerb) | kc-s-gen-probe-138 |
+|  | Der Kellner findet die Tante heute. | The waiter finds the aunt today. | der Kellner = Nom (subject); die Tante = Akk (object) | kc-s-gen-probe-139 |
+|  | Der Sohn ruft die Tante laut. | The son calls the aunt loudly. | der Sohn = Nom (subject); die Tante = Akk (object) | kc-s-gen-probe-140 |
+|  | Der Kellner wartet trotz der Hitze draußen. | The waiter waits outside despite the heat. | der Kellner = Nom (subject); trotz der Hitze = Gen (preposition) | kc-s-gen-probe-141 |
+|  | Der Opa tanzt wegen der Hitze nicht. | The grandpa is not dancing because of the heat. | der Opa = Nom (subject); wegen der Hitze = Gen (preposition) | kc-s-gen-probe-142 |
+
+## Alle Fälle · Rollen
+
+| ✓/✗ | German | English | planned roles | id |
+|---|---|---|---|---|
+|  | Der Kellner zeigt dem Opa wegen des Fiebers einen Rucksack. | The waiter shows the grandpa a backpack because of the fever. | der Kellner = Nom (subject); dem Opa = Dat (recipient); einen Rucksack = Akk (object); wegen des Fiebers = Gen (preposition) | kc-s-alle-roles-101 |
+|  | Der Mann bringt der Tante wegen des Regens einen Rucksack. | The man brings the aunt a backpack because of the rain. | der Mann = Nom (subject); der Tante = Dat (recipient); einen Rucksack = Akk (object); wegen des Regens = Gen (preposition) | kc-s-alle-roles-102 |
+|  | Der Fahrer zeigt dem Mädchen einen Spiegel für den Verkäufer. | The driver shows the girl a mirror for the salesman. | der Fahrer = Nom (subject); dem Mädchen = Dat (recipient); einen Spiegel = Akk (object); für den Verkäufer = Akk (preposition) | kc-s-alle-roles-103 |
+|  | Die Nachbarin schickt dem Arzt einen Teller für den Lehrer. | The neighbor sends the doctor a plate for the teacher. | die Nachbarin = Nom (subject); dem Arzt = Dat (recipient); einen Teller = Akk (object); für den Lehrer = Akk (preposition) | kc-s-alle-roles-104 |
+|  | Die Freundin gibt dem Kellner einen Schlüssel für den Fahrer. | The friend gives the waiter a key for the driver. | die Freundin = Nom (subject); dem Kellner = Dat (recipient); einen Schlüssel = Akk (object); für den Fahrer = Akk (preposition) | kc-s-alle-roles-105 |
+|  | Der Onkel gibt der Verkäuferin einen Löffel für die Chefin. | The uncle gives the saleswoman a spoon for the boss. | der Onkel = Nom (subject); der Verkäuferin = Dat (recipient); einen Löffel = Akk (object); für die Chefin = Akk (preposition) | kc-s-alle-roles-106 |
+|  | Der Vater gibt dem Verkäufer trotz der Hitze ein Paket. | The father gives the salesman a package despite the heat. | der Vater = Nom (subject); dem Verkäufer = Dat (recipient); ein Paket = Akk (object); trotz der Hitze = Gen (preposition) | kc-s-alle-roles-107 |
+|  | Der Bruder bringt dem Opa trotz des Problems einen Brief. | The brother brings the grandpa a letter despite the problem. | der Bruder = Nom (subject); dem Opa = Dat (recipient); einen Brief = Akk (object); trotz des Problems = Gen (preposition) | kc-s-alle-roles-108 |
+|  | Der Vater schenkt dem Bruder trotz des Nebels einen Ball. | The father gives the brother a ball despite the fog. | der Vater = Nom (subject); dem Bruder = Dat (recipient); einen Ball = Akk (object); trotz des Nebels = Gen (preposition) | kc-s-alle-roles-109 |
+|  | Die Kellnerin bringt dem Lehrer einen Rucksack für die Frau. | The waitress brings the teacher a backpack for the woman. | die Kellnerin = Nom (subject); dem Lehrer = Dat (recipient); einen Rucksack = Akk (object); für die Frau = Akk (preposition) | kc-s-alle-roles-110 |
+|  | Der Arzt zeigt dem Fahrer wegen der Krankheit eine Kerze. | The doctor shows the driver a candle because of the illness. | der Arzt = Nom (subject); dem Fahrer = Dat (recipient); eine Kerze = Akk (object); wegen der Krankheit = Gen (preposition) | kc-s-alle-roles-111 |
+|  | Der Arzt gibt der Ärztin trotz der Erkältung einen Teller. | The doctor gives the female doctor a plate despite the cold. | der Arzt = Nom (subject); der Ärztin = Dat (recipient); einen Teller = Akk (object); trotz der Erkältung = Gen (preposition) | kc-s-alle-roles-112 |
+|  | Der Lehrer schenkt dem Onkel einen Koffer für die Kollegin. | The teacher gives the uncle a suitcase for the colleague. | der Lehrer = Nom (subject); dem Onkel = Dat (recipient); einen Koffer = Akk (object); für die Kollegin = Akk (preposition) | kc-s-alle-roles-113 |
+|  | Der Vater zeigt dem Sohn ein Buch für den Bruder. | The father shows the son a book for the brother. | der Vater = Nom (subject); dem Sohn = Dat (recipient); ein Buch = Akk (object); für den Bruder = Akk (preposition) | kc-s-alle-roles-114 |
+|  | Der Opa zeigt dem Kind wegen des Windes ein Buch. | The grandpa shows the child a book because of the wind. | der Opa = Nom (subject); dem Kind = Dat (recipient); ein Buch = Akk (object); wegen des Windes = Gen (preposition) | kc-s-alle-roles-115 |
+|  | Der Mann gibt dem Onkel trotz des Streiks ein Buch. | The man gives the uncle a book despite the strike. | der Mann = Nom (subject); dem Onkel = Dat (recipient); ein Buch = Akk (object); trotz des Streiks = Gen (preposition) | kc-s-alle-roles-116 |
+|  | Der Lehrer gibt dem Schüler trotz des Sturms eine Tasche. | The teacher gives the student a bag despite the storm. | der Lehrer = Nom (subject); dem Schüler = Dat (recipient); eine Tasche = Akk (object); trotz des Sturms = Gen (preposition) | kc-s-alle-roles-117 |
+|  | Der Schüler gibt der Schwester einen Spiegel für die Mutter. | The student gives the sister a mirror for the mother. | der Schüler = Nom (subject); der Schwester = Dat (recipient); einen Spiegel = Akk (object); für die Mutter = Akk (preposition) | kc-s-alle-roles-118 |
+|  | Der Arzt bringt dem Chef ein Bild für die Oma. | The doctor brings the boss a picture for the grandma. | der Arzt = Nom (subject); dem Chef = Dat (recipient); ein Bild = Akk (object); für die Oma = Akk (preposition) | kc-s-alle-roles-119 |
+|  | Die Freundin zeigt dem Kellner einen Löffel für die Ärztin. | The friend shows the waiter a spoon for the doctor. | die Freundin = Nom (subject); dem Kellner = Dat (recipient); einen Löffel = Akk (object); für die Ärztin = Akk (preposition) | kc-s-alle-roles-120 |
+|  | Der Bruder schickt dem Mädchen wegen der Baustelle eine Karte. | The brother sends the girl a card because of the construction site. | der Bruder = Nom (subject); dem Mädchen = Dat (recipient); eine Karte = Akk (object); wegen der Baustelle = Gen (preposition) | kc-s-alle-roles-121 |
+|  | Der Vater zeigt dem Chef trotz des Fiebers eine Flasche. | The father shows the boss a bottle despite the fever. | der Vater = Nom (subject); dem Chef = Dat (recipient); eine Flasche = Akk (object); trotz des Fiebers = Gen (preposition) | kc-s-alle-roles-122 |
+|  | Der Gast schenkt dem Vater trotz des Termins einen Löffel. | The guest gives the father a spoon despite the appointment. | der Gast = Nom (subject); dem Vater = Dat (recipient); einen Löffel = Akk (object); trotz des Termins = Gen (preposition) | kc-s-alle-roles-123 |
+|  | Der Gast zeigt dem Chef trotz der Verspätung ein Ticket. | The guest shows the boss a ticket despite the delay. | der Gast = Nom (subject); dem Chef = Dat (recipient); ein Ticket = Akk (object); trotz der Verspätung = Gen (preposition) | kc-s-alle-roles-124 |
+|  | Der Onkel zeigt dem Opa trotz des Schnees eine Uhr. | The uncle shows the grandpa a watch despite the snow. | der Onkel = Nom (subject); dem Opa = Dat (recipient); eine Uhr = Akk (object); trotz des Schnees = Gen (preposition) | kc-s-alle-roles-125 |
+|  | Die Mutter zeigt dem Mädchen einen Schlüssel für den Lehrer. | The mother shows the girl a key for the teacher. | die Mutter = Nom (subject); dem Mädchen = Dat (recipient); einen Schlüssel = Akk (object); für den Lehrer = Akk (preposition) | kc-s-alle-roles-126 |
+|  | Der Onkel zeigt dem Vater trotz des Schnees ein Ticket. | The uncle shows the father a ticket despite the snow. | der Onkel = Nom (subject); dem Vater = Dat (recipient); ein Ticket = Akk (object); trotz des Schnees = Gen (preposition) | kc-s-alle-roles-127 |
+|  | Der Onkel zeigt dem Schüler trotz des Staus einen Brief. | The uncle shows the student a letter despite the traffic jam. | der Onkel = Nom (subject); dem Schüler = Dat (recipient); einen Brief = Akk (object); trotz des Staus = Gen (preposition) | kc-s-alle-roles-128 |
+|  | Der Lehrer bringt dem Baby trotz des Windes eine Pflanze. | The teacher brings the baby a plant despite the wind. | der Lehrer = Nom (subject); dem Baby = Dat (recipient); eine Pflanze = Akk (object); trotz des Windes = Gen (preposition) | kc-s-alle-roles-129 |
+|  | Die Verkäuferin bringt dem Mädchen trotz der Baustelle einen Ball. | The saleswoman brings the girl a ball despite the construction site. | die Verkäuferin = Nom (subject); dem Mädchen = Dat (recipient); einen Ball = Akk (object); trotz der Baustelle = Gen (preposition) | kc-s-alle-roles-130 |
+|  | Der Arzt gibt dem Onkel ein Paket für den Gast. | The doctor gives the uncle a package for the guest. | der Arzt = Nom (subject); dem Onkel = Dat (recipient); ein Paket = Akk (object); für den Gast = Akk (preposition) | kc-s-alle-roles-131 |
+|  | Der Arzt schickt dem Onkel trotz der Arbeit ein Geschenk. | The doctor sends the uncle a gift despite the work. | der Arzt = Nom (subject); dem Onkel = Dat (recipient); ein Geschenk = Akk (object); trotz der Arbeit = Gen (preposition) | kc-s-alle-roles-132 |
+|  | Der Freund zeigt dem Mädchen eine Gabel für die Schülerin. | The friend shows the girl a fork for the student. | der Freund = Nom (subject); dem Mädchen = Dat (recipient); eine Gabel = Akk (object); für die Schülerin = Akk (preposition) | kc-s-alle-roles-133 |
+|  | Der Lehrer schickt der Tochter wegen der Baustelle einen Schlüssel. | The teacher sends the daughter a key because of the construction site. | der Lehrer = Nom (subject); der Tochter = Dat (recipient); einen Schlüssel = Akk (object); wegen der Baustelle = Gen (preposition) | kc-s-alle-roles-134 |
+|  | Der Gast bringt der Schülerin wegen des Staus einen Ball. | The guest brings the student a ball because of the traffic jam. | der Gast = Nom (subject); der Schülerin = Dat (recipient); einen Ball = Akk (object); wegen des Staus = Gen (preposition) | kc-s-alle-roles-135 |
+|  | Der Sohn gibt dem Kind einen Schlüssel für den Arzt. | The son gives the child a key for the doctor. | der Sohn = Nom (subject); dem Kind = Dat (recipient); einen Schlüssel = Akk (object); für den Arzt = Akk (preposition) | kc-s-alle-roles-136 |
+|  | Der Chef schenkt dem Kind einen Löffel für die Schwester. | The boss gives the child a spoon for the sister. | der Chef = Nom (subject); dem Kind = Dat (recipient); einen Löffel = Akk (object); für die Schwester = Akk (preposition) | kc-s-alle-roles-137 |
+|  | Der Kellner schenkt dem Baby eine Brille für den Opa. | The waiter gives the baby a pair of glasses for the grandpa. | der Kellner = Nom (subject); dem Baby = Dat (recipient); eine Brille = Akk (object); für den Opa = Akk (preposition) | kc-s-alle-roles-138 |
+|  | Die Tochter schickt dem Opa einen Rucksack für den Fahrer. | The daughter sends the grandpa a backpack for the driver. | die Tochter = Nom (subject); dem Opa = Dat (recipient); einen Rucksack = Akk (object); für den Fahrer = Akk (preposition) | kc-s-alle-roles-139 |
+|  | Der Onkel bringt der Nachbarin einen Spiegel für den Kellner. | The uncle brings the neighbor a mirror for the waiter. | der Onkel = Nom (subject); der Nachbarin = Dat (recipient); einen Spiegel = Akk (object); für den Kellner = Akk (preposition) | kc-s-alle-roles-140 |
+|  | Der Chef gibt dem Opa wegen der Erkältung ein Heft. | The boss gives the grandpa a notebook because of the cold. | der Chef = Nom (subject); dem Opa = Dat (recipient); ein Heft = Akk (object); wegen der Erkältung = Gen (preposition) | kc-s-alle-roles-141 |
+|  | Der Schüler gibt dem Gast ein Bild für den Vater. | The student gives the guest a picture for the father. | der Schüler = Nom (subject); dem Gast = Dat (recipient); ein Bild = Akk (object); für den Vater = Akk (preposition) | kc-s-alle-roles-142 |
+
+## Alle Fälle · Wer macht was?
+
+| ✓/✗ | German | English | planned roles | id |
+|---|---|---|---|---|
+|  | Der Chef dankt der Verkäuferin. | The boss thanks the saleswoman. · Q: Who thanks? | der Chef = Nom (subject); der Verkäuferin = Dat (dativeVerb) | kc-s-alle-wer-101 |
+|  | Die Kollegin antwortet dem Mädchen. | The colleague answers the girl. · Q: Who answers? | die Kollegin = Nom (subject); dem Mädchen = Dat (dativeVerb) | kc-s-alle-wer-102 |
+|  | Die Oma dankt dem Vater. | The grandma thanks the father. · Q: Who thanks? | die Oma = Nom (subject); dem Vater = Dat (dativeVerb) | kc-s-alle-wer-103 |
+|  | Den Verkäufer ruft die Verkäuferin. | The saleswoman calls the salesman. · Q: Who is calling? | die Verkäuferin = Nom (subject); den Verkäufer = Akk (object) | kc-s-alle-wer-104 |
+|  | Die Lehrerin sieht den Kellner. | The teacher sees the waiter. · Q: Who sees? | die Lehrerin = Nom (subject); den Kellner = Akk (object) | kc-s-alle-wer-105 |
+|  | Der Arzt findet die Mutter. | The doctor finds the mother. · Q: Who finds? | der Arzt = Nom (subject); die Mutter = Akk (object) | kc-s-alle-wer-106 |
+|  | Der Freundin dankt der Arzt. | The doctor thanks the friend. · Q: Who thanks? | der Arzt = Nom (subject); der Freundin = Dat (dativeVerb) | kc-s-alle-wer-107 |
+|  | Dem Freund dankt das Baby. | The baby thanks the friend. · Q: Who thanks? | das Baby = Nom (subject); dem Freund = Dat (dativeVerb) | kc-s-alle-wer-108 |
+|  | Die Tochter findet den Lehrer. | The daughter finds the teacher. · Q: Who finds? | die Tochter = Nom (subject); den Lehrer = Akk (object) | kc-s-alle-wer-109 |
+|  | Dem Mann folgt die Tante. | The aunt follows the man. · Q: Who is following? | die Tante = Nom (subject); dem Mann = Dat (dativeVerb) | kc-s-alle-wer-110 |
+|  | Die Frau fragt der Opa. | The grandpa asks the woman. · Q: Who is asking? | der Opa = Nom (subject); die Frau = Akk (object) | kc-s-alle-wer-111 |
+|  | Der Gast sieht die Tante. | The guest sees the aunt. · Q: Who sees? | der Gast = Nom (subject); die Tante = Akk (object) | kc-s-alle-wer-112 |
+|  | Der Gast hilft der Katze. | The guest helps the cat. · Q: Who is helping? | der Gast = Nom (subject); der Katze = Dat (dativeVerb) | kc-s-alle-wer-113 |
+|  | Der Opa sieht die Verkäuferin. | The grandpa sees the saleswoman. · Q: Who sees? | der Opa = Nom (subject); die Verkäuferin = Akk (object) | kc-s-alle-wer-114 |
+|  | Den Verkäufer besucht das Kind. | The child visits the salesman. · Q: Who is visiting? | das Kind = Nom (subject); den Verkäufer = Akk (object) | kc-s-alle-wer-115 |
+|  | Dem Gast folgt die Mutter. | The mother follows the guest. · Q: Who is following? | die Mutter = Nom (subject); dem Gast = Dat (dativeVerb) | kc-s-alle-wer-116 |
+|  | Der Lehrer findet die Verkäuferin. | The teacher finds the saleswoman. · Q: Who finds? | der Lehrer = Nom (subject); die Verkäuferin = Akk (object) | kc-s-alle-wer-117 |
+|  | Der Tochter dankt der Vater. | The father thanks the daughter. · Q: Who thanks? | der Vater = Nom (subject); der Tochter = Dat (dativeVerb) | kc-s-alle-wer-118 |
+|  | Der Freund fragt das Baby. | The friend asks the baby. · Q: Who is asking? | der Freund = Nom (subject); das Baby = Akk (object) | kc-s-alle-wer-119 |
+|  | Der Kellner besucht die Tochter. | The waiter visits the daughter. · Q: Who is visiting? | der Kellner = Nom (subject); die Tochter = Akk (object) | kc-s-alle-wer-120 |
+|  | Das Pferd jagt den Hund. | The horse is chasing the dog. · Q: Who is chasing? | das Pferd = Nom (subject); den Hund = Akk (object) | kc-s-alle-wer-121 |
+|  | Die Chefin ruft der Mann. | The man calls the boss. · Q: Who is calling? | der Mann = Nom (subject); die Chefin = Akk (object) | kc-s-alle-wer-122 |
+|  | Die Freundin sieht den Lehrer. | The friend sees the teacher. · Q: Who sees? | die Freundin = Nom (subject); den Lehrer = Akk (object) | kc-s-alle-wer-123 |
+|  | Das Mädchen dankt dem Baby. | The girl thanks the baby. · Q: Who thanks? | das Mädchen = Nom (subject); dem Baby = Dat (dativeVerb) | kc-s-alle-wer-124 |
+|  | Die Lehrerin sieht der Fahrer. | The driver sees the teacher. · Q: Who sees? | der Fahrer = Nom (subject); die Lehrerin = Akk (object) | kc-s-alle-wer-125 |
+|  | Den Lehrer besucht die Verkäuferin. | The saleswoman visits the teacher. · Q: Who is visiting? | die Verkäuferin = Nom (subject); den Lehrer = Akk (object) | kc-s-alle-wer-126 |
+|  | Der Chef hilft der Kellnerin. | The boss helps the waitress. · Q: Who is helping? | der Chef = Nom (subject); der Kellnerin = Dat (dativeVerb) | kc-s-alle-wer-127 |
+|  | Der Chefin gratuliert der Freund. | The friend congratulates the boss. · Q: Who congratulates? | der Freund = Nom (subject); der Chefin = Dat (dativeVerb) | kc-s-alle-wer-128 |
+|  | Der Lehrer folgt der Mutter. | The teacher follows the mother. · Q: Who is following? | der Lehrer = Nom (subject); der Mutter = Dat (dativeVerb) | kc-s-alle-wer-129 |
+|  | Die Schwester findet den Freund. | The sister finds the friend. · Q: Who finds? | die Schwester = Nom (subject); den Freund = Akk (object) | kc-s-alle-wer-130 |
+|  | Der Freund besucht die Freundin. | The friend visits the girlfriend. · Q: Who is visiting? | der Freund = Nom (subject); die Freundin = Akk (object) | kc-s-alle-wer-131 |
+|  | Der Onkel dankt der Tochter. | The uncle thanks the daughter. · Q: Who thanks? | der Onkel = Nom (subject); der Tochter = Dat (dativeVerb) | kc-s-alle-wer-132 |
+|  | Der Chef sucht das Kind. | The boss is looking for the child. · Q: Who is looking? | der Chef = Nom (subject); das Kind = Akk (object) | kc-s-alle-wer-133 |
+|  | Die Katze jagt der Vogel. | The bird is chasing the cat. · Q: Who is chasing? | der Vogel = Nom (subject); die Katze = Akk (object) | kc-s-alle-wer-134 |
+|  | Den Freund fragt die Tochter. | The daughter asks the friend. · Q: Who is asking? | die Tochter = Nom (subject); den Freund = Akk (object) | kc-s-alle-wer-135 |
+|  | Den Hund jagt das Pferd. | The horse is chasing the dog. · Q: Who is chasing? | das Pferd = Nom (subject); den Hund = Akk (object) | kc-s-alle-wer-136 |
+|  | Dem Sohn antwortet die Ärztin. | The doctor answers the son. · Q: Who answers? | die Ärztin = Nom (subject); dem Sohn = Dat (dativeVerb) | kc-s-alle-wer-137 |
+|  | Die Freundin findet der Arzt. | The doctor finds the girlfriend. · Q: Who finds? | der Arzt = Nom (subject); die Freundin = Akk (object) | kc-s-alle-wer-138 |
+|  | Das Mädchen findet der Freund. | The friend finds the girl. · Q: Who finds? | der Freund = Nom (subject); das Mädchen = Akk (object) | kc-s-alle-wer-139 |
+|  | Den Gast fragt die Verkäuferin. | The saleswoman asks the guest. · Q: Who is asking? | die Verkäuferin = Nom (subject); den Gast = Akk (object) | kc-s-alle-wer-140 |
+|  | Den Arzt fragt die Lehrerin. | The teacher asks the doctor. · Q: Who is asking? | die Lehrerin = Nom (subject); den Arzt = Akk (object) | kc-s-alle-wer-141 |
+|  | Der Vogel findet die Tante. | The bird finds the aunt. · Q: Who finds? | der Vogel = Nom (subject); die Tante = Akk (object) | kc-s-alle-wer-142 |
+
+## Alle Fälle · Die Probe
+
+| ✓/✗ | German | English | planned roles | id |
+|---|---|---|---|---|
+|  | Der Gast weint trotz der Baustelle. | The guest is crying despite the construction site. | der Gast = Nom (subject); trotz der Baustelle = Gen (preposition) | kc-s-alle-probe-101 |
+|  | Der Vater sucht die Oma im Garten. | The father is looking for the grandma in the garden. | der Vater = Nom (subject); die Oma = Akk (object) | kc-s-alle-probe-102 |
+|  | Der Schüler dankt der Ärztin herzlich. | The student warmly thanks the doctor. | der Schüler = Nom (subject); der Ärztin = Dat (dativeVerb) | kc-s-alle-probe-103 |
+|  | Der Verkäufer lacht wegen der Hitze. | The salesman laughs because of the heat. | der Verkäufer = Nom (subject); wegen der Hitze = Gen (preposition) | kc-s-alle-probe-104 |
+|  | Der Schüler hilft der Tante heute. | The student is helping the aunt today. | der Schüler = Nom (subject); der Tante = Dat (dativeVerb) | kc-s-alle-probe-105 |
+|  | Der Mann ruft wegen der Hitze laut. | The man shouts loudly because of the heat. | der Mann = Nom (subject); wegen der Hitze = Gen (preposition) | kc-s-alle-probe-106 |
+|  | Der Arzt hilft der Lehrerin gern. | The doctor gladly helps the teacher. | der Arzt = Nom (subject); der Lehrerin = Dat (dativeVerb) | kc-s-alle-probe-107 |
+|  | Der Gast findet die Kellnerin heute. | The guest finds the waitress today. | der Gast = Nom (subject); die Kellnerin = Akk (object) | kc-s-alle-probe-108 |
+|  | Der Mann dankt der Ärztin heute. | The man thanks the doctor today. | der Mann = Nom (subject); der Ärztin = Dat (dativeVerb) | kc-s-alle-probe-109 |
+|  | Der Sohn sucht die Lehrerin in der Schule. | The son is looking for the teacher at school. | der Sohn = Nom (subject); die Lehrerin = Akk (object) | kc-s-alle-probe-110 |
+|  | Der Fahrer findet die Schülerin an der Haltestelle. | The driver finds the student at the bus stop. | der Fahrer = Nom (subject); die Schülerin = Akk (object) | kc-s-alle-probe-111 |
+|  | Der Kellner kennt die Tante gut. | The waiter knows the aunt well. | der Kellner = Nom (subject); die Tante = Akk (object) | kc-s-alle-probe-112 |
+|  | Der Lehrer ruft trotz der Krankheit. | The teacher calls out despite the illness. | der Lehrer = Nom (subject); trotz der Krankheit = Gen (preposition) | kc-s-alle-probe-113 |
+|  | Der Verkäufer ruft trotz der Krankheit. | The salesman calls out despite the illness. | der Verkäufer = Nom (subject); trotz der Krankheit = Gen (preposition) | kc-s-alle-probe-114 |
+|  | Der Gast antwortet der Verkäuferin freundlich. | The guest answers the saleswoman in a friendly way. | der Gast = Nom (subject); der Verkäuferin = Dat (dativeVerb) | kc-s-alle-probe-115 |
+|  | Der Gast weint wegen der Kälte. | The guest is crying because of the cold. | der Gast = Nom (subject); wegen der Kälte = Gen (preposition) | kc-s-alle-probe-116 |
+|  | Der Lehrer findet die Verkäuferin im Laden. | The teacher finds the saleswoman in the shop. | der Lehrer = Nom (subject); die Verkäuferin = Akk (object) | kc-s-alle-probe-117 |
+|  | Der Vater hilft der Oma im Haus. | The father helps the grandma in the house. | der Vater = Nom (subject); der Oma = Dat (dativeVerb) | kc-s-alle-probe-118 |
+|  | Der Freund besucht das Baby heute. | The friend is visiting the baby today. | der Freund = Nom (subject); das Baby = Akk (object) | kc-s-alle-probe-119 |
+|  | Der Kellner antwortet der Oma höflich. | The waiter answers the grandma politely. | der Kellner = Nom (subject); der Oma = Dat (dativeVerb) | kc-s-alle-probe-120 |
+|  | Der Arzt hilft der Mutter gern. | The doctor gladly helps the mother. | der Arzt = Nom (subject); der Mutter = Dat (dativeVerb) | kc-s-alle-probe-121 |
+|  | Der Mann ruft die Chefin heute. | The man calls the boss today. | der Mann = Nom (subject); die Chefin = Akk (object) | kc-s-alle-probe-122 |
+|  | Der Gast dankt der Kollegin herzlich. | The guest warmly thanks the colleague. | der Gast = Nom (subject); der Kollegin = Dat (dativeVerb) | kc-s-alle-probe-123 |
+|  | Der Opa antwortet der Chefin freundlich. | The grandpa answers the boss in a friendly way. | der Opa = Nom (subject); der Chefin = Dat (dativeVerb) | kc-s-alle-probe-124 |
+|  | Das Mädchen spielt trotz der Hitze draußen. | The girl plays outside despite the heat. | das Mädchen = Nom (subject); trotz der Hitze = Gen (preposition) | kc-s-alle-probe-125 |
+|  | Der Verkäufer spielt trotz der Erkältung. | The salesman plays despite the cold. | der Verkäufer = Nom (subject); trotz der Erkältung = Gen (preposition) | kc-s-alle-probe-126 |
+|  | Der Vogel folgt der Kellnerin langsam. | The bird slowly follows the waitress. | der Vogel = Nom (subject); der Kellnerin = Dat (dativeVerb) | kc-s-alle-probe-127 |
+|  | Der Freund sieht die Verkäuferin im Laden. | The friend sees the saleswoman in the shop. | der Freund = Nom (subject); die Verkäuferin = Akk (object) | kc-s-alle-probe-128 |
+|  | Der Lehrer folgt der Mutter langsam. | The teacher slowly follows the mother. | der Lehrer = Nom (subject); der Mutter = Dat (dativeVerb) | kc-s-alle-probe-129 |
+|  | Der Schüler tanzt heute wegen der Baustelle. | The student dances today because of the construction site. | der Schüler = Nom (subject); wegen der Baustelle = Gen (preposition) | kc-s-alle-probe-130 |
+|  | Der Freund fragt die Freundin heute. | The friend asks the girlfriend today. | der Freund = Nom (subject); die Freundin = Akk (object) | kc-s-alle-probe-131 |
+|  | Der Mann arbeitet wegen der Verspätung länger. | The man works longer because of the delay. | der Mann = Nom (subject); wegen der Verspätung = Gen (preposition) | kc-s-alle-probe-132 |
+|  | Der Bruder antwortet der Schülerin schnell. | The brother answers the student quickly. | der Bruder = Nom (subject); der Schülerin = Dat (dativeVerb) | kc-s-alle-probe-133 |
+|  | Der Arzt folgt der Frau leise. | The doctor quietly follows the woman. | der Arzt = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-alle-probe-134 |
+|  | Der Sohn arbeitet heute wegen der Baustelle. | The son works today because of the construction site. | der Sohn = Nom (subject); wegen der Baustelle = Gen (preposition) | kc-s-alle-probe-135 |
+|  | Der Onkel hilft der Frau gern. | The uncle gladly helps the woman. | der Onkel = Nom (subject); der Frau = Dat (dativeVerb) | kc-s-alle-probe-136 |
+|  | Der Schüler besucht die Tochter heute. | The student is visiting the daughter today. | der Schüler = Nom (subject); die Tochter = Akk (object) | kc-s-alle-probe-137 |
+|  | Der Arzt sieht die Freundin im Park. | The doctor sees the girlfriend in the park. | der Arzt = Nom (subject); die Freundin = Akk (object) | kc-s-alle-probe-138 |
+|  | Der Arzt kommt heute trotz der Verspätung. | The doctor comes today despite the delay. | der Arzt = Nom (subject); trotz der Verspätung = Gen (preposition) | kc-s-alle-probe-139 |
+|  | Der Verkäufer weint trotz der Verspätung. | The salesman cries despite the delay. | der Verkäufer = Nom (subject); trotz der Verspätung = Gen (preposition) | kc-s-alle-probe-140 |
+|  | Der Opa hilft der Ärztin gern. | The grandpa gladly helps the doctor. | der Opa = Nom (subject); der Ärztin = Dat (dativeVerb) | kc-s-alle-probe-141 |
+|  | Der Opa hilft der Verkäuferin im Laden. | The grandpa helps the saleswoman in the shop. | der Opa = Nom (subject); der Verkäuferin = Dat (dativeVerb) | kc-s-alle-probe-142 |

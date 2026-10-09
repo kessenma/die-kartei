@@ -251,9 +251,9 @@ extension CardDeckView {
                 currentIndex = ankiDueIndices[0]
             }
         } else if isLeitnerMode {
-            let sessionNumber = leitnerSessionNumber
+            let isDue = leitnerIsDue
             ankiDueIndices = savedCards.enumerated().compactMap { index, card in
-                LeitnerService.isDue(box: card.leitnerBox, sessionNumber: sessionNumber) ? index : nil
+                isDue(card) ? index : nil
             }
             if shuffleCards { ankiDueIndices.shuffle() }
             ankiDuePosition = 0

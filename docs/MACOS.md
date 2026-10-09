@@ -103,12 +103,14 @@ writing "iPhone" or "your phone" into a string. It's nonisolated, so services of
 | `ARCHS[sdk=macosx*] = arm64` | MLX needs Apple Silicon |
 | `LSApplicationCategoryType = public.app-category.education` | Required by the Mac App Store |
 | The keyboard extension is embedded with `platformFilters = (ios)` | iOS keyboard extensions don't exist on macOS |
+| `NSServices` in `Info-macOS.plist` | The Schreibhilfe's four Services menu items; see [Schreibhilfe](#schreibhilfe-the-german-writing-helper) |
+| `Services/GermanWriter.swift` belongs to the app target, plus the keyboard through a `PBXFileSystemSynchronizedBuildFileExceptionSet` | The keyboard and the Mac helper share one copy of the prompts |
 
 ## What differs on the Mac
 
 - **Lifecycle:** an `NSApplicationDelegate` does the iOS delegate's launch work. It also turns
   memory-pressure events into the memory-warning notification (`MacMemoryPressure`), and quits
-  when the window closes.
+  when the window closes, unless the Schreibhilfe panel is open or a Services request is running.
 - **iCloud Sync:**
   - It flushes on quit and when the app goes inactive, because a Mac app rarely reaches
     `.background`.
@@ -130,11 +132,65 @@ writing "iPhone" or "your phone" into a string. It's nonisolated, so services of
   idle sleep instead of the iOS idle timer.
 - **Hidden on the Mac:**
   - the camera buttons (no `UIImagePickerController`; `PhotosPicker` and the file importer stay)
-  - the keyboard setup row in Settings
+  - the keyboard setup row in Settings (the Mac has App ▸ Schreibhilfe instead)
   - Job Prep's saved-PDF and live-page reading surfaces (the text surface works)
 - **Window:** 1100×900 by default, with a minimum of 760×820 so phone-shaped screens and their
   sheets fit, and a unified toolbar. `Form`s use `.grouped` app-wide, because the Mac default is a
   two-column layout.
+
+## Schreibhilfe: the German writing helper
+
+The Mac's stand-in for the iOS keyboard. macOS has no keyboard extensions, and an InputMethodKit
+input method can't ship on the Mac App Store, so the keyboard's two jobs, „Auf Deutsch" and
+„Korrigieren", come to the Mac as two things inside the app:
+
+- **Services menu items** (`Services/MacWritingServices.swift`, declared under `NSServices` in
+  `Info-macOS.plist`): „Auf Deutsch (Sie)", „Auf Deutsch (du)" and „Deutsch korrigieren" replace
+  the selection in any app; „In der Schreibhilfe öffnen" hands it to the panel. Learners bind
+  shortcuts in System Settings ▸ Keyboard ▸ Keyboard Shortcuts ▸ Services.
+- **The Schreibhilfe panel** (`App/MacWritingHelper.swift`): a floating, non-activating panel
+  (editor, streaming reply, „Kopieren & schließen"). It opens from Edit ▸ Schreibhilfe… (⌥⌘D) and
+  from every request that can't finish in place.
+- **Settings:** App ▸ Schreibhilfe (`SettingsPane.writingHelper`, Mac only).
+
+The prompts and the model call are shared with the keyboard: `GermanWriting` in
+`Services/GermanWriter.swift`.
+
+**Invariants:**
+- `GermanWriting` stays `nonisolated` and `perform` stays `@concurrent`. A service must have its
+  result on the pasteboard when its method returns, so the provider waits on the main thread by
+  spinning the run loop in 50 ms slices. A hidden hop to the main actor (this project's default
+  isolation) inside the core would hang until the deadline. Don't swap the spin for a semaphore.
+- Nothing is written back unless it's a clean German reply that didn't hit the token cap. Too
+  long (over 1,500 characters), unavailable, not German, cut short or too slow: the selection
+  stays untouched and the panel opens with the text and the reason.
+- The Services path uses the non-streaming `respond`. Apple rate-limits streaming for an app that
+  isn't frontmost, which a Services provider never is.
+- `NSTimeout` (45 s) stays well above the provider's own 20 s deadline: it also has to cover a
+  cold launch.
+- Never rename the service titles or `NSMessage`. Learners' custom shortcuts are keyed by them.
+- Never read `NSPasteboard.general` (macOS prompts for paste permission). The panel only writes to
+  it; the learner pastes with ⌘V. The panel handles ⌘V/⌘C/⌘X/⌘A/⌘Z itself, because while another
+  app is active the menu bar is that app's.
+- Send and return types are exactly `public.utf8-plain-text`: Chrome and Electron apps only offer a
+  service for that type. Formatting in the selection comes back plain.
+- The translate prompt's wording was tuned against the model (see the comment on
+  `GermanWriting.instructions`); rerun the comparison before changing it.
+
+**Checking it** (no UI, no keystrokes):
+- `swift scripts/mac_service_probe.swift "Auf Deutsch (Sie)" "Hi Anna, can we move our call?"`
+  runs a service end to end and prints `ok`, `changed`, the seconds and the reply. `changed=false`
+  means nothing was written back.
+- After a build: `/System/Library/CoreServices/pbs -update`, then
+  `pbs -dump | grep -A12 'Auf Deutsch'` to see the registered items. Old Die Kartei copies in
+  DerivedData don't declare the services, so the newest build wins; a TestFlight copy in
+  /Applications would compete.
+- Measured on this Mac (2026-10-04, macOS 27.2): about 0.6–3 s per email warm, 8 s on a cold
+  launch; ten requests in a row weren't rate-limited.
+
+**Known gaps:** a cold launch opens the main window behind the app you're in. Korrigieren, on
+Apple's model, misses some errors (it left „habe … gegangen"). Only the macOS 27 error and usage
+paths have run for real; the 26.x paths rest on the unit tests.
 
 ## Running and checking it
 
@@ -167,4 +223,3 @@ App Store Connect step (add the macOS platform, Mac screenshots and description)
   - right-click menus mirroring swipe actions
   - dropping files onto the window
   - a deck or story in its own window
-  - the German-writing Services-menu helper (the Mac stand-in for the iOS keyboard)

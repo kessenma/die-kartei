@@ -182,22 +182,37 @@ final class SyncApplier {
     }
 
     /// Children held for a missing parent are inserted once the parent exists.
+    ///
+    /// Held parents can be children themselves (a handout waiting for its entry, the entry waiting
+    /// for its course), so this goes parents-first and repeats until a pass inserts nothing. A
+    /// single pass in fetch order could leave the handout held until some unrelated record arrived.
     private func releaseHeldChildren(_ outcome: inout Outcome, needsKey: inout [(SyncRecordState, any PersistentModel)]) {
         let d = FetchDescriptor<SyncRecordState>(predicate: #Predicate { $0.heldReason != nil })
-        guard let held = try? context.fetch(d), !held.isEmpty else { return }
-        for state in held where state.heldReason?.hasPrefix("parent:") == true {
-            guard let data = state.heldPayload, let payload = try? SyncJSON(data: data).objectValue,
-                  let name = SyncRecordName(state.recordName),
-                  let handler = SyncRegistry.byKind[name.kind]
-            else { continue }
-            let base = state.copies.base ?? payload
-            let flat = SyncMerge.flatten(base, spec: handler.spec)
-            guard let created = handler.insert(flat, name: name, in: context) else { continue }
-            state.heldPayload = nil
-            state.heldReason = nil
-            needsKey.append((state, created))
-            outcome.inserted += 1
-            outcome.changedKinds.insert(name.kind)
+        guard let fetched = try? context.fetch(d) else { return }
+        var held = fetched
+            .filter { $0.heldReason?.hasPrefix("parent:") == true }
+            .sorted { (SyncRegistry.order[$0.kind] ?? .max) < (SyncRegistry.order[$1.kind] ?? .max) }
+        while !held.isEmpty {
+            var waiting: [SyncRecordState] = []
+            for state in held {
+                guard let data = state.heldPayload, let payload = try? SyncJSON(data: data).objectValue,
+                      let name = SyncRecordName(state.recordName),
+                      let handler = SyncRegistry.byKind[name.kind]
+                else { continue }
+                let base = state.copies.base ?? payload
+                let flat = SyncMerge.flatten(base, spec: handler.spec)
+                guard let created = handler.insert(flat, name: name, in: context) else {
+                    waiting.append(state)
+                    continue
+                }
+                state.heldPayload = nil
+                state.heldReason = nil
+                needsKey.append((state, created))
+                outcome.inserted += 1
+                outcome.changedKinds.insert(name.kind)
+            }
+            if waiting.count == held.count { break }
+            held = waiting
         }
     }
 

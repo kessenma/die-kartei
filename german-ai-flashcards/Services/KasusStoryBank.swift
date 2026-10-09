@@ -153,6 +153,10 @@ struct AppKasusLexicon: KasusLexicon {
         PrepositionService.preposition(word)?.governs == .wechsel
     }
 
+    func verbPair(preposition: String, among words: Set<String>) -> KasusVerbPairMatch? {
+        KasusVerbPairs.match(preposition: preposition, among: words)
+    }
+
     func partsOfSpeech(_ word: String) -> Set<String>? {
         WiktionaryValidator.shared.partsOfSpeech(of: word)
     }

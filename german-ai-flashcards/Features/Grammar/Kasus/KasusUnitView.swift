@@ -5,6 +5,8 @@
 //  One case on the Grammatik path. Every unit runs the same loop, top to bottom:
 //
 //    Die Regel · The rule        a few lines, the endings table with this case lit, the Kasus-Check
+//    Verstehen · Understand      the lesson (a sheet) and the concept drills the unit offers:
+//                                Rollen, Wer macht was?, Die Probe (`KasusVerstehenSection`)
 //    Geschichten · Stories       the bundled stories for this unit (Lesen → Markieren → Endungen)
 //    Deine KI-Geschichten        „Neue Geschichte · New story (KI)“ and the tutor-written stories
 //                                (Phase 3, behind the developer toggle; `KasusAIStorySection`)
@@ -29,6 +31,7 @@ struct KasusUnitView: View {
 
     @Environment(ActivityRouter.self) private var router
     @Environment(\.appTheme) private var appTheme
+    @Environment(\.modelContext) private var modelContext
     /// Optional so previews and hosts without one still render; the download state then points
     /// at Settings ▸ Model in words.
     @Environment(SettingsRouter.self) private var settingsRouter: SettingsRouter?
@@ -49,6 +52,10 @@ struct KasusUnitView: View {
     /// unit's first round, so a returning learner lands on the exercises instead of the rule.
     @State private var ruleExpandedChoice: Bool?
     @State private var showKasusCheck = false
+    /// Verstehen: the lesson sheet, and the exercise its Üben asked for, launched once the sheet
+    /// has gone (a full-screen cover can't come up over a sheet).
+    @State private var showLesson = false
+    @State private var pendingConcept: KasusConceptSession?
 
     /// Questions in one Schnellrunde.
     private let quickRoundCount = 10
@@ -63,6 +70,7 @@ struct KasusUnitView: View {
         List {
             headerSection.themedListRow()
             ruleSection.themedListRow()
+            verstehenSection.themedListRow()
             storiesSection
             aiStoriesSection
             quickRoundSection.themedListRow()
@@ -74,6 +82,16 @@ struct KasusUnitView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showKasusCheck) {
             KasusCheckSheet()
+        }
+        .sheet(isPresented: $showLesson, onDismiss: launchPendingConcept) {
+            KasusLessonView(
+                unit: unit,
+                onRead: { seconds in KasusService.recordLessonRead(unit: unit, seconds: seconds, in: modelContext) },
+                onPractice: {
+                    pendingConcept = KasusConceptSession(unit: unit, exercise: .roles)
+                    showLesson = false
+                }
+            )
         }
         .sheet(item: $generation, onDismiss: launchPendingSession) { job in
             KasusGenerationSheet(job: job, onPlay: { pendingSession = $0 })
@@ -114,7 +132,7 @@ struct KasusUnitView: View {
     // MARK: - Die Regel
 
     private var hasPlayedUnit: Bool {
-        rounds.contains { $0.unitRaw == unit.rawValue }
+        rounds.contains { $0.unitRaw == unit.rawValue && !$0.isLessonRound }
     }
 
     private var isRuleExpanded: Binding<Bool> {
@@ -145,18 +163,47 @@ struct KasusUnitView: View {
                 CaseEndingsTable(cases: unit.casesInPlay, highlight: unit.focusCase)
                     .padding(.vertical, 6)
 
-                Button {
-                    showKasusCheck = true
-                } label: {
-                    Label("Der Kasus-Check · Which case?", systemImage: "questionmark.circle")
-                        .font(.subheadline.weight(.medium))
+                HStack(spacing: 18) {
+                    Button {
+                        showLesson = true
+                    } label: {
+                        Label("Lektion · Understand this case", systemImage: "lightbulb")
+                            .font(.subheadline.weight(.medium))
+                    }
+                    .buttonStyle(.borderless)
+                    Button {
+                        showKasusCheck = true
+                    } label: {
+                        Label("Der Kasus-Check", systemImage: "questionmark.circle")
+                            .font(.subheadline.weight(.medium))
+                    }
+                    .buttonStyle(.borderless)
                 }
-                .buttonStyle(.borderless)
             } label: {
                 Text("Die Regel · The rule")
                     .font(.subheadline.weight(.semibold))
             }
         }
+    }
+
+    // MARK: - Verstehen
+
+    private var verstehenSection: some View {
+        KasusVerstehenSection(
+            unit: unit,
+            progress: KasusProgress(rounds: rounds),
+            offered: KasusConceptBank.bundled.offered(for: unit),
+            onLesson: { showLesson = true },
+            onExercise: { exercise in
+                router.launch(.kasusConcept(KasusConceptSession(unit: unit, exercise: exercise)))
+            }
+        )
+    }
+
+    private func launchPendingConcept() {
+        guard let session = pendingConcept else { return }
+        pendingConcept = nil
+        router.launch(.kasusConcept(session))
     }
 
     // MARK: - Geschichten
@@ -297,39 +344,47 @@ struct KasusUnitView: View {
         router.launch(.kasusStory(session))
     }
 
+    private func quickRoundRow(_ style: CaseEndingsSession.Style, symbol: String, title: String,
+                               detail: String) -> some View {
+        Button {
+            router.launch(.caseEndings(CaseEndingsSession(unit: unit, style: style)))
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: symbol)
+                    .font(.title3)
+                    .foregroundStyle(.tint)
+                    .frame(width: 34, height: 34)
+                    .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.primary)
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "play.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.tint)
+            }
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Schnellrunde
 
     private var quickRoundSection: some View {
         Section {
-            Button {
-                router.launch(.caseEndings(CaseEndingsSession(unit: unit)))
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "character.cursor.ibeam")
-                        .font(.title3)
-                        .foregroundStyle(.tint)
-                        .frame(width: 34, height: 34)
-                        .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Schnellrunde · Quick round")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.primary)
-                        Text("\(quickRoundCount) Sätze · \(unit.casesInPlay.map(\.short).joined(separator: " + "))")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Image(systemName: "play.circle.fill")
-                        .font(.title3)
-                        .foregroundStyle(.tint)
-                }
-                .padding(.vertical, 4)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
+            quickRoundRow(.schnellrunde, symbol: "character.cursor.ibeam", title: "Schnellrunde · Quick round",
+                          detail: "\(quickRoundCount) Sätze · \(unit.casesInPlay.map(\.short).joined(separator: " + "))")
+            quickRoundRow(.bauDasWort, symbol: "cube.fill", title: "Bau das Wort · Build the word",
+                          detail: "The same sentences, the ending snapped onto the stem in 3D")
         } footer: {
-            Text("Pick the article that fits the sentence. Every miss shows which case it is and why.")
+            Text("Pick the article that fits the sentence, or in Bau das Wort just its ending. Every miss shows which case it is and why.")
         }
     }
 

@@ -127,12 +127,60 @@ struct KasusGenerationReviewTests {
         #expect(KasusRich.plain(KasusExplanation.inferredLine(for: tisch))
                 == "dem + a masculine noun can only be Dativ, so after unter it's Wo? (a place). liegt says where something is.")
 
-        // „Oma freut sich über die Blumen“: no Wo/Wohin verb, so no direction is claimed.
+        // „Oma freut sich über die Blumen“: no Wo/Wohin verb, so no direction is claimed. The form
+        // line still says only what the form shows…
         let akk = check(.akkusativ, KasusGenerationFixtures.akkusativGood)
         let blumen = try #require(akk.report?.located.first { $0.surface == "die Blumen" && $0.preposition?.word == "über" })
-        #expect(blumen.gradable && !blumen.blankable)
         #expect(KasusRich.plain(KasusExplanation.inferredLine(for: blumen))
                 == "By its form, die could be Nominativ or Akkusativ, and über takes only Akkusativ or Dativ: so Akkusativ.")
+        // …but „sich freuen über“ is a verb pair, so the verb settles the case: the phrase can be
+        // blanked, and its rule line names the pair (see verbPairs below).
+        #expect(blumen.verbPair?.verb == "sich freuen über" && blumen.gradable && blumen.blankable)
+    }
+
+    // MARK: - Verb pairs
+
+    @Test("A verb that fixes its preposition's case decides an unplanned phrase")
+    func verbPairVerdicts() {
+        #expect(verdicts("Er wartet auf den Bus.")["den Bus"] == .proven)
+        // warten auf + Dativ may be a place („auf dem Bahnsteig“): never endorsed, never rejected.
+        #expect(verdicts("Er wartet auf dem Bus.")["dem Bus"] == .unverifiable(.verbPair))
+        // The same preposition twice: the matching one is the pair's, the other may be a place.
+        let twice = verdicts("Wir warten auf dem Platz auf den Zug.")
+        #expect(twice["den Zug"] == .proven && twice["dem Platz"] == .unverifiable(.verbPair), "\(twice)")
+        // No place reading: a clash is wrong German.
+        #expect(verdicts("Er denkt an dem Hund.")["dem Hund"] == .wrong)
+        #expect(verdicts("Er hat Angst vor den Hund.")["den Hund"] == .wrong)
+        // A soft „um“ counts once its pair's verb is there.
+        #expect(verdicts("Sie kümmert sich um den Hund.")["den Hund"] == .proven)
+        #expect(verdicts("Er passt auf den Hund auf.")["den Hund"] == .proven)
+        // Wrong whatever the verb stays wrong, even where a place reading is possible.
+        #expect(verdicts("Er wartet auf das Bus.")["das Bus"] == .wrong)
+    }
+
+    @Test("A verb-pair clash rejects a tutor's story; a possible place only goes ungraded")
+    func verbPairPolicy() throws {
+        let clash = dativ([("Sie ist sechs Jahre alt.", "Sie ist sechs Jahre alt. Er denkt an dem Hund.")])
+        #expect(!clash.passes && clash.rejectingCodes.contains(.triggerPrepositionCase), "\(explain(clash))")
+
+        let place = dativ([("Sie ist sechs Jahre alt.", "Sie ist sechs Jahre alt. Er wartet auf dem Bus.")])
+        #expect(place.passes, "\(explain(place))")
+        #expect(!(place.report?.located.contains { $0.surface == "dem Bus" && $0.gradable } ?? true))
+    }
+
+    @Test("A verb-pair phrase is blankable and its rule line names the pair")
+    func verbPairExplains() throws {
+        let result = dativ([("Sie ist sechs Jahre alt.", "Sie ist sechs Jahre alt. Er wartet auf den Bus.")])
+        #expect(result.passes, "\(explain(result))")
+        let bus = try #require(result.report?.located.first { $0.surface == "den Bus" })
+        #expect(bus.verbPair?.verb == "warten auf" && bus.gradable && bus.blankable && bus.wechselVerb == nil)
+        #expect(KasusRich.plain(KasusExplanation.ruleLine(for: bus))
+                == "warten auf always takes the Akkusativ: the verb decides here, not Wo? or Wohin?.")
+
+        // A fixed preposition needs no Wo/Wohin clause.
+        let mit = dativ([("Sie ist sechs Jahre alt.", "Sie ist sechs Jahre alt. Er spricht mit dem Hund.")])
+        let hund = try #require(mit.report?.located.first { $0.surface == "dem Hund" && $0.preposition?.word == "mit" })
+        #expect(KasusRich.plain(KasusExplanation.ruleLine(for: hund)) == "sprechen mit always takes the Dativ.")
     }
 
     @Test("A two-way phrase describing a noun goes plain instead of rejecting the story")

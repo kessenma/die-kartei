@@ -36,10 +36,14 @@ protocol KasusLexicon {
     /// „verb“, „adj“, „adv“); empty when it doesn't know the word. Nil when the lexicon has no
     /// dictionary, and then the generated-story sentence checks that need one are skipped.
     func partsOfSpeech(_ word: String) -> Set<String>?
+    /// A verb that fixes `preposition`'s case and stands among `words` (lowercased, the phrase's
+    /// part of its clause): „warten auf“ + Akkusativ. Nil when the lexicon knows no verb pairs.
+    func verbPair(preposition: String, among words: Set<String>) -> KasusVerbPairMatch?
 }
 
 extension KasusLexicon {
     func partsOfSpeech(_ word: String) -> Set<String>? { nil }
+    func verbPair(preposition: String, among words: Set<String>) -> KasusVerbPairMatch? { nil }
 }
 
 nonisolated enum KasusLexiconVerdict: Hashable {
@@ -289,8 +293,12 @@ enum KasusValidator {
                 if case .verified = located.genderVerdict {} else { gradable = false }
                 // An unplanned two-way phrase with no position or placement verb to confirm it:
                 // only the tutor chose Wo or Wohin, so it's marked by its form but never blanked.
+                // A verb pair decides instead, so the phrase can be blanked like any other.
                 if located.spec.reason == .inferred, located.preposition?.isTwoWay == true,
-                   located.wechselVerb == nil { blankable = false }
+                   located.wechselVerb == nil, located.verbPair == nil { blankable = false }
+                // A verb pair around it says one case and the form another, and it may simply be a
+                // place („wartet auf dem Bahnsteig“): neither endorsed nor rejected.
+                if located.verbPairUnsure { gradable = false }
             }
             located.gradable = gradable
             located.blankable = blankable && gradable && located.kind == .article && located.parsed != nil
@@ -572,6 +580,29 @@ enum KasusValidator {
             effective = nil
         }
 
+        // A verb that fixes its preposition's case decides it, not Wo/Wohin and not the
+        // preposition alone: „wartet auf den Bus“ is Akkusativ though nothing moves, „hat Angst
+        // vor dem Hund“ Dativ. The pair must stand in the phrase's own part of its clause. A
+        // clash narrows the preposition to the pair's case, so a generated story with it is
+        // rejected, except where the phrase may just be a place: the same preposition twice in
+        // that part („wartet auf dem Bahnsteig auf den Zug“), or a pair whose preposition is also
+        // a place with that verb (`spatialToo`). There the phrase is only kept from being graded.
+        var verbPair: KasusVerbPairMatch?
+        var verbPairUnsure = false
+        var deciding = effective?.cases
+        if let current = effective, current.position == .before {
+            let scope = verbPairScope(range, in: paragraph, clause: clause)
+            if let match = lexicon.verbPair(preposition: current.word, among: Set(scope.map { $0.text.lowercased() })) {
+                let twice = prepositionCount(current.word, in: scope) > 1
+                if spec.kasus == match.kasus || (!twice && !match.spatialToo) {
+                    verbPair = match
+                    deciding = current.cases.intersection([match.kasus])
+                } else {
+                    verbPairUnsure = true
+                }
+            }
+        }
+
         // A main-verb copula, for predicate targets.
         let copulaVerb = spec.reason == .predicate ? mainCopula(in: clause, of: paragraph) : nil
 
@@ -581,8 +612,8 @@ enum KasusValidator {
             proof = .form
         } else if candidates.count > 1 {
             var narrowed = candidates
-            if let effective {
-                narrowed.formIntersection(effective.cases)
+            if let deciding {
+                narrowed.formIntersection(deciding)
                 if narrowed.count == 1 { proof = .preposition }
             }
             if proof == .label, copulaVerb != nil {
@@ -663,10 +694,11 @@ enum KasusValidator {
 
         // A fixed-case preposition decides, whatever the label says.
         var prepositionCaseFired = false
-        if let effective, !effective.cases.contains(spec.kasus) {
+        if let effective, let deciding, !deciding.contains(spec.kasus) {
             prepositionCaseFired = true
-            let takes = GrammarCase.allCases.filter(effective.cases.contains).map(\.name).joined(separator: " or ")
-            issues.append(issue(.triggerPrepositionCase, "„\(effective.word)“ takes the \(takes), but „\(spec.phrase)“ is labelled \(spec.kasus.name)"))
+            let takes = GrammarCase.allCases.filter(deciding.contains).map(\.name).joined(separator: " or ")
+            let decider = verbPair.map { "„\($0.verb)“" } ?? "„\(effective.word)“"
+            issues.append(issue(.triggerPrepositionCase, "\(decider) takes the \(takes), but „\(spec.phrase)“ is labelled \(spec.kasus.name)"))
         }
 
         // liegen/stehen/sitzen answer Wo? (Dativ); legen/stellen/setzen answer Wohin? (Akkusativ).
@@ -677,7 +709,7 @@ enum KasusValidator {
         // alone in its clause („sitzt auf den Stuhl“) it still rejects.
         var wechselVerb: String?
         if let effective, effective.isTwoWay, effective.position == .before,
-           spec.reason != .prepObject, spec.reason != .time {
+           spec.reason != .prepObject, spec.reason != .time, verbPair == nil {
             let scope = spec.reason == .inferred ? paragraph.coordinatedPart(of: range, in: clause) : clause
             let clauseWords = tokens.filter { scope.contains($0.range.lowerBound) && !range.contains($0.range.lowerBound) }
             let found = clauseWords.compactMap { token -> (String, KasusForms.WechselVerbKind)? in
@@ -753,7 +785,7 @@ enum KasusValidator {
             issues.append(issue(.reasonCaseMismatch, "reason \(spec.reason.rawValue) means \(wants), but „\(spec.phrase)“ is labelled \(spec.kasus.name)"))
         }
 
-        let located = KasusLocatedTarget(
+        var located = KasusLocatedTarget(
             index: index,
             spec: spec,
             paragraphIndex: paragraphIndex,
@@ -778,7 +810,28 @@ enum KasusValidator {
             kind: kind,
             contractedArticle: contraction?.article
         )
+        located.verbPair = verbPair
+        located.verbPairUnsure = verbPairUnsure
         return (located, issues)
+    }
+
+    /// The words a verb pair is looked for in: the phrase's own part of its clause (in „Er steht
+    /// da und wartet auf den Bus“ only „wartet auf den Bus“), the phrase itself left out. Shared
+    /// with the harvest, so a phrase it proves by a pair is one the validator confirms the same way.
+    static func verbPairScope(_ range: Range<String.Index>, in paragraph: KasusScannedParagraph,
+                              clause: Range<String.Index>? = nil) -> [KasusScanner.Token] {
+        let clause = clause ?? paragraph.clause(containing: range,
+                                                in: paragraph.sentence(containing: range.lowerBound))
+        let part = paragraph.coordinatedPart(of: range, in: clause)
+        return paragraph.tokens.filter { part.contains($0.range.lowerBound) && !range.contains($0.range.lowerBound) }
+    }
+
+    /// How often `preposition` stands among `tokens`, its contractions included („am“ for an).
+    static func prepositionCount(_ preposition: String, in tokens: [KasusScanner.Token]) -> Int {
+        tokens.filter { token in
+            let lower = token.text.lowercased()
+            return lower == preposition || KasusForms.contraction(lower)?.preposition == preposition
+        }.count
     }
 
     /// „gibt es“, „es gab“, or a Nominativ pronoun and a form of haben/brauchen/kaufen in either

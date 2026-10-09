@@ -29,6 +29,10 @@ struct UnifiedLibraryView: View {
     @State private var deckForStats: SavedDeck?
     /// The deck whose course is being chosen (the leading swipe's Course action).
     @State private var deckForCourse: SavedDeck?
+    @State private var showingDeckMix = false
+    /// Decks picked in the mix sheet, launched once the sheet is gone (a cover can't present
+    /// over a sheet that's still dismissing).
+    @State private var pendingMix: [SavedDeck] = []
 
     // Where each deck belongs and comes from, for the rows.
     @Query(sort: \ClassCourse.sortOrder) private var courses: [ClassCourse]
@@ -38,6 +42,7 @@ struct UnifiedLibraryView: View {
 
     private var deckStore: DeckStore { DeckStore(modelContext: modelContext) }
     private var browsableDecks: [SavedDeck] { decks.filter(\.isBrowsableContent) }
+    private var mixableDecks: [SavedDeck] { browsableDecks.filter { !$0.cards.isEmpty } }
 
     var body: some View {
         NavigationStack {
@@ -62,6 +67,9 @@ struct UnifiedLibraryView: View {
                     .pickerStyle(.segmented)
                     .frame(maxWidth: 340)
                 }
+            }
+            .sheet(isPresented: $showingDeckMix, onDismiss: launchPendingMix) {
+                DeckMixPickerSheet(decks: mixableDecks) { pendingMix = $0 }
             }
             .sheet(item: $deckForStats) { deck in
                 DeckStatsSheet(deck: deck, sortedResults: deck.quizResults.sorted { $0.date > $1.date })
@@ -100,6 +108,34 @@ struct UnifiedLibraryView: View {
                 .frame(maxWidth: .infinity)
             } else {
                 let links = DeckLinks(courses: courses, stories: stories, papers: papers, handouts: handouts)
+                if mixableDecks.count >= 2 {
+                    Button {
+                        showingDeckMix = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "square.stack.3d.up.fill")
+                                .font(.title3)
+                                .foregroundStyle(.tint)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Mix decks")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.primary)
+                                Text("Study several decks as one session")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .padding(.vertical, 4)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .themedListRow()
+                }
                 DeckIconLegend()
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
@@ -167,6 +203,13 @@ struct UnifiedLibraryView: View {
             }
         }
         .themedListScreen()
+    }
+
+    private func launchPendingMix() {
+        guard pendingMix.count >= 2 else { return }
+        let mix = pendingMix
+        pendingMix = []
+        router.launch(.cardDeck(deckStore.mixSession(for: mix, style: modelManager.flashcardStyle)))
     }
 
     private func setCourse(_ course: ClassCourse?, for deck: SavedDeck) {

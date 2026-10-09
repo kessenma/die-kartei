@@ -246,7 +246,7 @@ struct DocumentDeckImportView: View {
             let needsAccess = url.startAccessingSecurityScopedResource()
             let data = try? Data(contentsOf: url)
             if needsAccess { url.stopAccessingSecurityScopedResource() }
-            guard let data, let extracted = PDFTextExtractor.extract(from: url) else {
+            guard let data, let extracted = PDFTextExtractor.extract(from: url, rebuildingTables: true) else {
                 errorMessage = "Couldn't read that PDF."
                 return
             }

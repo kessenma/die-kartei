@@ -10,6 +10,16 @@ extension CardDeckView {
         return deck.quizResults.count
     }
 
+    /// The Leitner due check for this session's cards. Boxes are scheduled per deck, so a deck
+    /// mix counts each card against its own deck's session number.
+    var leitnerIsDue: (SavedCard) -> Bool {
+        if isDeckMix {
+            return { LeitnerService.isDue(box: $0.leitnerBox, sessionNumber: $0.deck?.quizResults.count ?? 0) }
+        }
+        let session = leitnerSessionNumber
+        return { LeitnerService.isDue(box: $0.leitnerBox, sessionNumber: session) }
+    }
+
     var srsDueCount: Int {
         if isAnkiMode {
             return savedCards.filter { card in
@@ -17,16 +27,14 @@ extension CardDeckView {
                 return next <= .now
             }.count
         } else if isLeitnerMode {
-            let session = leitnerSessionNumber
-            return savedCards.filter { LeitnerService.isDue(box: $0.leitnerBox, sessionNumber: session) }.count
+            return savedCards.filter(leitnerIsDue).count
         }
         return cards.count
     }
 
     @ViewBuilder
     var leitnerSetupInfo: some View {
-        let session = leitnerSessionNumber
-        let dueCards = LeitnerService.dueCards(in: savedCards, sessionNumber: session)
+        let dueCards = savedCards.filter(leitnerIsDue)
         let distribution = LeitnerService.boxDistribution(savedCards)
 
         VStack(spacing: 8) {
@@ -179,6 +187,7 @@ extension CardDeckView {
         let missed = sessionLapses.sorted()
         let correct = max(0, total - missed.count)
         onQuizComplete?(correct, total, missed, elapsedSeconds, .leitner, nil)
+        creditDeckMix(mode: .leitner)
         clearPauseProgress()
         showQuizSummary = true
     }

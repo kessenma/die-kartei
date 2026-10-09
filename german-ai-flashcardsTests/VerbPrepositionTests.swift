@@ -47,6 +47,79 @@ struct VerbPrepositionTests {
         }
     }
 
+    @Test func everyPairCanBeFoundInAStory() {
+        for pair in verbs {
+            #expect(!pair.forms.isEmpty, "\(pair.verb): no forms for the Kasus check")
+            #expect(pair.forms.allSatisfy { $0 == $0.lowercased() }, "\(pair.verb): forms are matched lowercased")
+            // The pair's case must be one its preposition can take, or the check would reject
+            // every phrase after it.
+            let own = PrepositionService.preposition(pair.preposition)?.governs
+            #expect(own == pair.governs || own == .wechsel, "\(pair.verb): \(pair.preposition) can't take the \(pair.governs)")
+        }
+        #expect(KasusVerbPairs.match(preposition: "auf", among: ["er", "wartet", "auf"])?.verb == "warten auf")
+        #expect(KasusVerbPairs.match(preposition: "auf", among: ["er", "passt", "auf"])?.verb == "aufpassen auf")
+        #expect(KasusVerbPairs.match(preposition: "vor", among: ["er", "hat", "angst", "vor"])?.kasus == .dativ)
+        #expect(KasusVerbPairs.match(preposition: "vor", among: ["er", "hat", "vor"]) == nil, "haben alone is no pair")
+        #expect(KasusVerbPairs.match(preposition: "an", among: ["sie", "arbeitet", "an"])?.kasus == .dativ)
+    }
+
+    // MARK: - Review box
+
+    @Test func theReviewBoxHoldsEveryPairOnce() throws {
+        let (container, context) = try reviewStore()
+        _ = container
+        // The hub reads the counts before the box exists; that read must not create it.
+        #expect(VerbPrepositionService.counts(in: context) == .init(due: 0, new: 42, learned: 0))
+        #expect(try context.fetch(FetchDescriptor<SavedDeck>()).isEmpty)
+        let deck = VerbPrepositionService.fetchOrCreateDeck(in: context)
+        #expect(deck.cards.count == 42)
+        SpacedRepetitionService.apply(rating: .good, to: deck.cards[0])
+        #expect(VerbPrepositionService.counts(in: context).new == 41)
+        #expect(deck.kind == .verbPrepositionSRS && !deck.isBrowsableContent)
+        #expect(deck.id == SyncSingletonDecks.deckID(generatorRaw: VerbPrepositionService.deckGenerator,
+                                                     topic: VerbPrepositionService.deckTopic))
+        #expect(SyncSingletonDecks.isSingleton(deck))
+        // Opening it again adds nothing.
+        let again = VerbPrepositionService.fetchOrCreateDeck(in: context)
+        #expect(again.id == deck.id && again.cards.count == 42)
+        #expect(try context.fetch(FetchDescriptor<SavedDeck>()).count == 1)
+    }
+
+    @Test func aReviewIsDueFirstThenAHandfulOfNew() throws {
+        let (container, context) = try reviewStore()
+        _ = container
+        let deck = VerbPrepositionService.fetchOrCreateDeck(in: context)
+        let fresh = VerbPrepositionService.reviewQueue(deck.cards)
+        #expect(fresh.count == VerbPrepositionService.newPerSession, "a first session is all new, capped")
+        #expect(VerbPrepositionService.counts(deck.cards) == .init(due: 0, new: 42, learned: 0))
+
+        // Rate three: they leave the new pile and come back once due.
+        for card in fresh.prefix(3) { SpacedRepetitionService.apply(rating: .good, to: card) }
+        let later = Calendar.current.date(byAdding: .day, value: 2, to: .now)!
+        let queue = VerbPrepositionService.reviewQueue(deck.cards, now: later)
+        #expect(Array(queue.prefix(3)).allSatisfy { !VerbPrepositionService.isNew($0) }, "due cards lead")
+        #expect(queue.count == 3 + VerbPrepositionService.newPerSession)
+        #expect(VerbPrepositionService.counts(deck.cards, now: later).due == 3)
+        #expect(VerbPrepositionService.counts(deck.cards).new == 39)
+    }
+
+    @Test func dueVerbPairsGetTheirOwnTodayStep() {
+        var snapshot = TodaySnapshot(dueCardCount: 0, weaknesses: [], hasCoachContent: false, streak: 1,
+                                     studiedToday: false, hasStartedLearning: true, dayIndex: 0)
+        #expect(!TodayPlanner.plan(snapshot).contains { $0.intent == .verbReview })
+        snapshot.verbDue = 4
+        let step = TodayPlanner.plan(snapshot).first { $0.intent == .verbReview }
+        #expect(step?.title == "Verben · 4 due")
+    }
+
+    private func reviewStore() throws -> (container: ModelContainer, context: ModelContext) {
+        let container = try ModelContainer(
+            for: SavedDeck.self, SavedCard.self,
+            configurations: SwiftData.ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none)
+        )
+        return (container, ModelContext(container))
+    }
+
     @Test func everyPairHasItsSceneAndStills() {
         for pair in verbs {
             let pose = PrepositionScene.pose(for: pair.sceneKey)

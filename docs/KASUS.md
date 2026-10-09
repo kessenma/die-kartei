@@ -34,12 +34,19 @@ Status legend: ✅ done · ⬜ open
 | Right/wrong signal: verdict header, answer buttons, progress strip, capped tray scroll | `Features/Grammar/Kasus/KasusFeedback.swift` |
 | The `{m:den}` / `{dat:Dativ}` / `**bold**` markup and `Text(kasusRich:)` | `Features/Grammar/Kasus/KasusRichText.swift` |
 | Endings table (and its compact tray version with a highlighted cell) + Schnellrunde (`CaseEndingsDrillView`) | `Features/Grammar/CaseEndingsView.swift` |
+| Verstehen: kinds, exercises, roles, the Probe noun, items, facts (Foundation only) | `Models/KasusConcept.swift` |
+| Verstehen: the lessons' cards and the Merkhilfen, as literals | `Models/KasusLesson.swift` |
+| Verstehen: the item bank, its audit, the DEBUG assert | `Services/KasusConceptBank.swift` |
+| Verstehen: playable items, the round, picks, the walk, explanations, `KasusService` entry points, progress marks | `Services/KasusConcepts.swift` |
+| Verstehen: golden numbers per unit and kind, the verify block (DEBUG) | `Services/KasusConceptFixtures.swift` |
+| The bundled Verstehen items | `Resources/kasus_concepts.json` |
+| Verstehen screens: the lesson sheet, the Merkhilfen list, the activity and its panels, the unit section | `Features/Grammar/Kasus/KasusLessonView.swift`, `KasusMnemonicsView.swift`, `KasusConceptView.swift`, `KasusConceptPanels.swift`, `KasusVerstehenSection.swift` |
 | Day detail in the calendar | `Features/Home/StreakCalendarView.swift` |
 | Verlauf (every round by day) and a round's answers | `Features/Grammar/Kasus/KasusHistoryView.swift`, `KasusRoundDetailView.swift` |
 | Sample rounds for the simulator (DEBUG) | `Services/KasusDebugSeeder.swift` |
 | Where a grammar focus goes from Today, Coach's Notes, the pyramid and a class entry | `Services/GrammarRoute.swift` |
 | Tutor-written stories: plan model, planner, verb frames and noun pools | `Models/KasusStoryPlan.swift`, `Services/KasusStoryPlanner.swift`, `Resources/kasus_triggers.json` |
-| Tutor-written stories: prompt, generator, check, harvest, sentence checks, store | `Services/KasusStoryGenerator.swift`, `KasusStoryCheck.swift`, `KasusHarvest.swift`, `KasusSentenceCheck.swift`, `KasusStoryStore.swift`, `Models/GeneratedKasusStory.swift` |
+| Tutor-written stories: prompt, generator, check, harvest, sentence checks, store | `Services/KasusStoryPrompt.swift` (prompt, request/result; no MLX, so `training/kasus_cli` compiles it), `KasusStoryGenerator.swift`, `KasusStoryCheck.swift`, `KasusHarvest.swift`, `KasusSentenceCheck.swift`, `KasusStoryStore.swift`, `Models/GeneratedKasusStory.swift` |
 | Kasus Lab numbers and canned fixtures (DEBUG) | `Services/KasusLab.swift`, `Services/KasusGenerationFixtures.swift` |
 | Unit row, generation sheet, Lab screen | `Features/Grammar/Kasus/KasusAIStorySection.swift`, `KasusGenerationSheet.swift`, `KasusLabView.swift` |
 | Swift Testing target (engine, validator, explanations, service, recording) | `german-ai-flashcardsTests/` |
@@ -56,12 +63,14 @@ Status legend: ✅ done · ⬜ open
 
 **Entry.** Home ▸ Grammar pushes the hub directly, and so does the pyramid's Grammatik-Kern
 layer. The hub has four sections: **Weiter** (one hero row), **Die vier Fälle** (a row per unit,
-with a dot per story, filled once its Markieren and Endungen are both played, one for the
-Schnellrunde, and a flame on a case the coach has as shaky), **Verlauf** (one row with the last
-round's score) and **Werkzeuge** (Präpositionen, Der · Die · Das, Die Endungen). A unit screen
-has **Die Regel** (open until the unit's first round), **Geschichten** (one row per story:
-level, Markieren ✓/○, Endungen ✓/○), the **Schnellrunde**, the endings drill limited to the
-unit's cases, **Deine Runden** (the unit's last three rounds and "Alle anzeigen") and **Mehr
+with a dot for Verstehen (the lesson read and every offered drill played), a dot per story,
+filled once its Markieren and Endungen are both played, one for the Schnellrunde, and a flame on
+a case the coach has as shaky), **Verlauf** (one row with the last round's score) and
+**Werkzeuge** (Präpositionen, Der · Die · Das, Die Endungen, Merkhilfen). A unit screen
+has **Die Regel** (open until the unit's first round; with a link to the Lektion and the
+Kasus-Check), **Verstehen** ([below](#verstehen--understand)), **Geschichten** (one row per
+story: level, Markieren ✓/○, Endungen ✓/○), the **Schnellrunde**, the endings drill limited to
+the unit's cases, **Deine Runden** (the unit's last three rounds and "Alle anzeigen") and **Mehr
 dazu**: the preposition cards opened on the case's group, with a 3D still (Akkusativ →
 `.akkusativ`; Dativ → `.dativ` and "Wo oder Wohin?" → `.wechsel`; Genitiv → `.genitiv`; Alle
 Fälle → every group), and Der · Die · Das for Nominativ and Alle Fälle.
@@ -84,6 +93,9 @@ every render and never stored. First rule that fits:
 
 1. a shaky akk/dat/gen case whose unit has a story → its least-recently-played story (Lesen if
    never played, else Endungen);
+1b. with the Verstehen items in hand (the hub passes `concepts: .bundled`; the default `nil`
+   keeps every older expectation): before a unit's first story, its Lektion while unread, then
+   Rollen while unplayed;
 2. an unplayed story, from the start unit on;
 3. the first unfinished step from the start unit (Markieren, Endungen, then the Schnellrunde);
 4. the story played longest ago ("Wiederholen").
@@ -97,6 +109,115 @@ main-verb sein/werden/bleiben/heißen equates with the subject → receiver or D
 otherwise Akkusativ. The traps get their own line: gefallen/gehören/schmecken turn the roles
 around, and fragen/anrufen/besuchen take the Akkusativ although they feel like they have a
 receiver.
+
+## Verstehen · Understand
+
+The concept layer the path lacked: for an English speaker the hard part isn't the ending, it's
+knowing what a *direct object* or a *receiver* is before the endings mean anything. Two findings
+shaped it. Explicit information plus **structured input** (VanPatten's Processing Instruction;
+Henry, Culman & VanPatten 2009 on German `den`) beats either alone: a short rule, then sentences
+where the ending is the only clue to who does what, because English speakers read the first noun
+as the doer. And the German classroom's **Satzproben**: the Ersatzprobe (swap in *der Mann*, the
+one gender whose article shows every case) and the Umstellprobe (a block moves, the meaning
+stays). The Kasus-Check stays the way to decide; wer/wen/wem/wessen appear only as the English
+speaker's handles on the roles. Sources are in Settings ▸ About ▸ Sources.
+
+Every unit screen has a **Verstehen** section between Die Regel and Geschichten, with ✓ per row:
+
+| Row | What the learner does | Records as | Coach |
+|---|---|---|---|
+| **Lektion** (`KasusLessonView`, a sheet) | 4–6 paged cards (`KasusLesson.cards`): the role, „Englisch zuerst“ (I/me, he/him, who/whom/whose; the „to“ test for the Dativ; 's / of for the Genitiv), the case's trick, a worked example in Kasus-Check order, the trap, a Merkhilfe. Every German example has an English twin with the phrases in the same case colors. „Üben“ launches Rollen once the sheet has gone. | one `lesson` round per unit (asked 0, time only) when the last card is first shown; hidden from every list | never |
+| **Rollen** (`.roles`) | 8 sentences as word chips; each asked phrase is ringed and gets a role chip (the Kasus-Check step: Präposition · Gehört zu · Subjekt · = Subjekt · Empfänger · Direktes Objekt, only the steps in play). The case is revealed after the pick. **Schritt für Schritt** (the default, `kasus.rolesMode`) asks the Check's questions one at a time with Ja/Nein instead: the first Ja decides, a Nein to every question is the direct object; a wrong Ja is explained and the walk goes on, a wrong Nein at the deciding question ends it with the answer. The mode is in the toolbar and locks once an answer is in. | `concept-<unit>-roles`, one item per phrase | never |
+| **Wer macht was?** (`.wer`) | 10 items: 7 „Wer …?“ sentences (3–4 object-first: „Den Hund jagt die Katze“), two phrases to pick from, and 3 „Gleich oder anders?“ pairs (the Umstellprobe). After the pick the phrases take their case colors and the English appears. | `concept-<unit>-wer`, filed under the **clue's** case | never |
+| **Die Probe** (`.probe`) | 8 sentences with an ambiguous phrase underlined („Ich helfe *der Frau*“): pick the form of the test noun that fits (der · den · dem Mann, des Mannes once the Genitiv is in play). The swapped sentence appears under the original. | `concept-<unit>-probe`, the swapped sentence as the item | like the Schnellrunde: first picks, ≥3 per case; an f/n/pl Akkusativ counts too, since nothing names the article |
+
+The Nominativ unit offers Lektion and Rollen only; which rows a unit offers comes from the data
+(`KasusConceptBank.offered`: an exercise needs `minimumItems`, 4 / 6 / 4). **Merkhilfen** (the
+hub's Werkzeuge, `KasusMnemonicsView`; `KasusMnemonics.all`) lists the memory aids one line
+each: the role hooks (Name · Accused · Donation · Genes), the model sentence, the Check, the
+masculine chain, the code words, „nur der wird den“, DOGFU, the Blue Danube, the two-way tune,
+the Genitiv four beats, the noun endings, the „to“ test. Never a chart.
+
+**Items are mini-stories** (`Resources/kasus_concepts.json`, `KasusConceptItem`): one flat object
+per item with the story fields the validator needs (`id`, `unit`, `level`, `paragraphs`,
+`targets`, `notTargets`) plus `kind` (`roles` · `whoDoesWhat` · `sameMeaning` · `probe`) and the
+kind's keys: `ask` (Rollen, optional), `question {de, en}` + `options` + `answer` (target
+indices; the answer is the subject), two paragraphs + `same`, `probe {target, noun}` (Mann · Hund
+· Lehrer · Vater). A target may carry `en`, its phrase in the English line, so the twin can wear
+the case color. Ids are `kc-<case>-<kind>-<slug>` for the 124 hand-written items, and
+`kc-s-<case>-<kind>-<seed>` / `kc-sg-gen-<kind>-<seed>` for the 592 Claude Sonnet wrote around
+the app's own plans (2026-10-07; every one through the concept gate, `audit-concepts` and a read;
+`training/data/kasus-concepts-sonnet/`, `training/KASUS_CONCEPT_PROBE.md` §7). 716 in all, about
+40–50 per unit and exercise. Their added place and time phrases are validated targets that
+Rollen never asks (`ask` lists the planned phrases). Everything else is derived at load into
+`KasusConceptFacts`: a target's **role** is read off the Kasus-Check (`preposition != nil` →
+Präposition, else `subject` → Subjekt, `predicate` → = Subjekt, `object` → Direktes Objekt,
+`recipient` / `dativeVerb` / `dativeOther` → Empfänger, `attribute` → Gehört zu; a bare time
+phrase or an inferred target has none and is never asked), the asked targets, the Wer item's
+**clue** (the option whose proof is `form` or `preposition`), whether it is object-first, and the
+Probe phrase's ambiguity. `KasusConceptBank.audit` is the answer key: the validator under the
+`.authored` policy with the story-level codes left out (a one-sentence item is always "too
+short"), zero warnings, plus the facts' `problems`. The DEBUG loader asserts every bundled item
+passes; `-kasus.debugVerify 1` prints one line per unit and kind with golden numbers
+(`KasusConceptFixtures.golden`) and „Concepts ALL OK“.
+
+Invariants:
+
+- **Never single-case past Nominativ.** `KasusConceptRound.compose` reshuffles until a Rollen
+  round covers two cases and a Probe round asks two different forms.
+- **A Wer item is decided by a form.** Its clue is form- or preposition-proven; the partner of a
+  feminine/neuter/plural doer may be label-proven, which is exactly the processing problem the
+  exercise trains. Nothing but word order deciding is refused. Per unit, 4 of 8 are object-first.
+- **A Probe phrase could be two cases** (`candidates.count > 1`), is an article phrase, never
+  masculine. Dativ probes are feminine (`dem` + n and `den` + pl already show their case).
+- **Rollen, Wer and a lesson never move the coach;** the Probe may (`countsTowardSkill`).
+- **No new `KasusRound` field:** the four new `KasusRoundStep` raw values (`roles`, `wer`,
+  `probe`, `lesson`) and the `concept-` story ids carry everything, so the sync codec is untouched.
+  A build that doesn't know a step reads the round with `step == nil` and a plain row.
+
+Explanations are the target's own (`KasusExplanation`) with a role line in front („**Empfänger**
+(the receiver) → {dat:Dativ}. …“), the walk's Ja/Nein lines (`KasusConceptExplanation.whyNot`),
+the Wer reading („{m:Den} + a masculine noun can only be {akk:Akkusativ}: „Den Hund“ is what
+*jagt* acts on, so „die Katze“ is the doer, even though it comes second. Word order doesn't decide
+here; the ending does.“), „Gleich/Anders“ from the two sentences' roles, and the Probe's swap line.
+The screen is `KasusConceptView` (the Schnellrunde's layout: strip, hero, pinned answer panel,
+Weiter slot that never moves), with `KasusRolesHero` / `KasusRoleGrid` / `KasusWalkPanel`,
+`KasusWerHero` and `KasusProbeHero` in `KasusConceptPanels.swift`. Right is the case color, wrong
+grey; the Ja/Nein buttons take the tint until the deciding question, so they never name the case
+ahead of the Check.
+
+The **AI seam**: an item is a `KasusStory`, so a tutor-written set can go through the same
+planner / prompt / check and `KasusConceptBank.audit`, and merge in by id
+(`KasusConceptBank.merging`, `KasusConceptSource.generated`). Not built; nothing reads it yet.
+
+### Tutor-written Verstehen items (probe 2026-10-06)
+
+Measured, not shipped. The tutor only writes one sentence around phrases the app planned; it never
+decides a case. Full numbers, the hand read and the options: `training/KASUS_CONCEPT_PROBE.md`.
+
+- **Code** (Foundation only, compiled into `training/kasus_cli` too): `KasusConceptPlan`,
+  `KasusConceptPlanner` (seeded; one shared verb with er/sie/es present and past forms; at most
+  one bare phrase whose article fits several cases), `KasusConceptPrompt` (`SATZ: …`, additions
+  with a preposition allowed, no person, no clause), `KasusConceptCheck` (verbatim phrases, verb
+  form, Wer order, no planned phrase behind a preposition or a noun, one simple clause, extras only
+  behind a preposition and proven, then `KasusConceptBank.audit` with the plan as the label plus
+  the generated-story rejects). Proven additions become targets that Rollen never asks.
+- **Why an ambiguous phrase is gradable here:** the label is the app's plan, and one clause with
+  a form-proven subject and one more phrase fixes who is who. Two ambiguous bare phrases are
+  refused (`concept.ambiguousRoles`).
+- **Results** (2 samples × 130 plans per tutor): templates 100%; E4B 70% (84% of plans with one
+  retry), E2B 63% (78%), Granite 4.1 39% (55%), Granite 3.3 17% (27%). No E4B or E2B pass had
+  a wrong case or role; their few slips sit in added phrases. Wer macht was? is the weak
+  exercise: the tutors "fix" object-first sentences into subject-first ones, and the gate turns
+  those away.
+- **Tests:** `KasusConceptGenerationTests` (planner determinism and coverage, every template
+  passes, prompt hygiene, one fixture per reject code). `kasus-cli audit-concepts` keeps every
+  bundled item passing the same audit (716/716; `--golden` prints the table for
+  `KasusConceptFixtures`).
+- **Shipped instead:** no on-device generation. The bundle grew to 716 items, written offline by
+  Claude Sonnet through the same planner and gate, read, then merged (`concept-export`). The
+  planner also learned the Genitiv attribute (a phrase's `head`; possessors from a table of
+  plausible relations), which the gate only accepts right behind its noun.
 
 ## The story format
 
@@ -302,6 +423,32 @@ there it most likely describes a noun („auf den Tisch neben der Tür“) and g
 (`trigger.wechselUnconfirmed`). The check looks only at its own half of an und/oder clause, so
 „Er steht da und wartet auf den Bus“ is fine.
 
+**Verb pairs** (`KasusVerbPairs`, 2026-10-04): a verb that fixes its preposition's case decides it,
+not Wo/Wohin and not the preposition alone. „Er wartet auf den Bus“ is Akkusativ though nothing
+moves; „Er hat Angst vor dem Hund“ is Dativ.
+- **Source:** the 42 pairs of `verb_prepositions.json` (Verben mit Präpositionen). Each lists the
+  verb's conjugated forms; a separable verb is listed as its two words („passt auf“, „denkt nach“),
+  and „Angst haben“ as „angst“ plus a form of haben.
+- **Scope:** a pair counts when all the words of one of its forms stand in the phrase's own part of
+  its clause (`KasusValidator.verbPairScope`). The validator and the harvest share that function.
+- **The rule:**
+  - When the pair's case fits, the pair narrows the preposition. The phrase is then graded and
+    explained by the pair („*warten auf* **always** takes the {akk:Akkusativ}: the verb decides
+    here, not {wechsel:Wo?} or {wechsel:Wohin?}“).
+  - An inferred two-way phrase decided by a pair may be blanked, since the verb rather than the
+    tutor settled it.
+  - A soft „um“ counts once its pair's verb is there („kümmert sich um den Hund“).
+  - A clash narrows the preposition all the same, so `trigger.prepositionCase` fires and a
+    generated story is rejected („Er denkt an dem Hund“, „Er hat Angst vor den Hund“).
+- **Where a clash may just be a place,** the phrase is neither endorsed nor rejected
+  (`KasusUnverifiable.verbPair`, `KasusLocatedTarget.verbPairUnsure`). That covers two cases:
+  - the same preposition stands twice in that part („Wir warten auf dem Platz auf den Zug“: the
+    pair takes „den Zug“);
+  - the pair's preposition is also a plain place with that verb (`spatialToo`: warten auf,
+    aufpassen auf, schreiben an). So „wartet auf dem Bus“ is no longer graded as a correct Dativ,
+    but it doesn't reject either, because „wartet auf dem Bahnsteig“ reads the same.
+- **Bundled stories:** they kept every golden number.
+
 **Sentence checks** (`KasusSentenceCheck`, generated only, each rejects): ich + ist/sind/hat …, er
 + bin/sind/hast …, ich/er or a singular Nominativ phrase + an -en form that no modal, werden,
 haben/sein, zu or bare-infinitive verb in its clause explains („Der Bruder lachen laut“); a word
@@ -413,7 +560,7 @@ contract A story.
 ### Mac probe (2026-09-25)
 
 Before any device run, the planner, prompt and check (the app's own Swift, compiled into a small
-command-line tool over the real `wiktionary_de.db`, `prepositions.json` and Goethe lists) were run
+command-line tool, rebuilt and kept as `training/kasus_cli`, see `training/KASUS_STORY_DATA.md`, over the real `wiktionary_de.db`, `prepositions.json` and Goethe lists) were run
 against the tutors with Python mlx_lm on an M1 Max (32 GB), sampling like the app (system + user
 chat, temperature 0.75, the level's token budget). Mac numbers, a stand-in for the phone. Plans:
 Nom A1, Akk A1, Dat A2 ×2, Gen B1, Alle B1, 2 runs each, each run being attempt 1 plus the retry;
@@ -681,6 +828,47 @@ instead of one gender color. Round items store the explanation already in markup
 recorded before the markup existed stay plain in the round detail. The tests check every rule line,
 every explanation and every Schnellrunde feedback for leftover `*`, `{` or `}`.
 
+## Ending blocks in 3D: Endungs-Werkstatt and Bau das Wort
+
+A determiner drawn as blocks on a plate: the **stem in ink** (d, ein, mein, dies), the **ending in
+its case color** (`CasePalette`), and a thin **plate in the noun's gender color**
+(`GenderPalette`). The case is what changes, so the case color sits where the change happens.
+Forms with no ending (ein, kein, mein in m. Nom and n. Nom/Akk) show an empty slot, a translucent
+block in the case color. The ink is die Figur's (`FigurScene.defaultTint`): charcoal on light,
+cream on dark.
+
+| Piece | Where |
+|---|---|
+| The split, d + em, eur + en, dies + e | `KasusForms.parts(family:stem:case:genus:)` → `KasusFormParts`; nil exactly where `form` is |
+| Every ending a family uses, in table order | `KasusForms.endingOptions` |
+| The stems a learner can pick | `KasusStemChoice.all` (der, ein, kein, the six possessives, dieser, jeder, welcher) |
+| What is shown, and how it moves | `EndingBlocks/EndingBlocksState.swift`: `EndingBlocksState` (`.open` grey slot, `.built` with an optional `rejected` ending), `EndingBlocksTransition` (rise, snap, swap, bounceThenSnap, recolor, hold), `EndingBlocksPose.at(_:time:)`, `EndingBlocksFraming` |
+| The canvas | `EndingBlocks/EndingBlocksScene.swift`: letters extruded at runtime (`MeshResource(extruding:)`, Futura Bold, cached per string), so nothing ships and any stem works |
+| The 2D twin | `EndingBlocks/EndingBlocksFlat.swift`, shown for Stills Only (`LightweightGraphics`) and Reduce Motion; builds no RealityKit |
+| The workshop | `EndingBlocks/EndungsWerkstattView.swift`, the hub's „Weitere Übungen“ |
+
+Where it shows, one live canvas per screen each time:
+
+- **Endungs-Werkstatt** (hub ▸ Weitere Übungen): pick a stem, a gender and a case; the old ending
+  flies off and the new one drops onto the stem. Durchblättern steps Nom → Akk → Dat → Gen. The
+  caption names the cells that share the word („Same word: Akk f“). The canvas is pinned above
+  the list, framed for the stem's widest form so the camera holds still while flipping.
+- **The endings table** (`CaseEndingsView`): tapping a cell builds it in a panel pinned above the
+  list, with a der · ein · kein · mein · dieser picker. ein's plural cell shows kein's.
+  `CaseEndingsTable(selectedCell:onSelectCell:)`; callers that pass neither are unchanged.
+- **The Schnellrunde**: a strip above the sentence, dimmed, with the stem and a grey slot until the
+  pick. Then the answer snaps in, after a wrong ending lands grey and bounces off.
+- **Bau das Wort** (`CaseEndingsSession(unit:style: .bauDasWort)`, unit screen ▸ Schnellrunde
+  section, and the Werkstatt): the Schnellrunde's sentences with the stem in the gap („Ich helfe
+  mein___ Pferd“) and ending buttons (`-em`, `–` for none, `KasusEndingGap.label`). A tapped
+  ending is turned back into the whole word (`EndingsQuestion.form(endingLabel:)`), so grading,
+  slips, feedback, `roundItem` and the debug prefill are the Schnellrunde's unchanged.
+
+Moves: every one settles within a second and ends on `EndingBlocksPose.settled`. A landing ending
+starts grey and takes its case color on contact, and the stem squashes slightly. The same form in
+another case („die“ Nom → Akk) hops in place and changes color; the same form in another gender
+(„dem“ m. → n.) only changes the plate. The `TimelineView` runs only while something moves.
+
 ## Where practice goes (`GrammarRoute`)
 
 Today's weak spot, Coach's Notes' "Practice this", the pyramid's rows and a class entry all ask
@@ -710,7 +898,9 @@ call `recordRound` once per scored step.
   Time is per step: hopping between Markieren and Endungen pauses the other's clock.
 - One `KasusRound` per scored step (below).
 - The coach (`applyDrillResult`) only from Endungen (and Einsetzen) and the Schnellrunde, only
-  unscaffolded first picks, only a case with at least 3 of them, once per case per round. Left
+  unscaffolded first picks, only a case with at least 3 of them, once per case per round. Bau
+  das Wort counts like the Schnellrunde (`countsTowardSkill`), but only the Schnellrunde marks a
+  unit's dot done. Left
   out: Lernhilfe and Viel Hilfe; f/n/pl at Genus-Hilfe; at Ohne Hilfe a Tipp that showed the case
   or answer, or the gender of an f/n/pl Akkusativ; f/n/pl Akkusativ in the Schnellrunde (its
   header names the article); every slip; every answer Lösung zeigen filled and every gap left
@@ -724,9 +914,9 @@ A SwiftData model, additive, every field defaulted (registered in `german_ai_fla
 | Field | Holds |
 |---|---|
 | `date` | when the step was scored |
-| `storyID` | the story's id, or `quick-<unit>` for a Schnellrunde |
+| `storyID` | the story's id, `quick-<unit>` for a Schnellrunde, `build-<unit>` for Bau das Wort, or `concept-<unit>-<exercise>` / `concept-<unit>-lesson` for Verstehen |
 | `unitRaw` | a `KasusUnit` raw value |
-| `stepRaw` | `find` · `fill` · `quick` (`KasusRoundStep`) |
+| `stepRaw` | `find` · `fill` · `quick` · `build` (Bau das Wort), and Verstehen's `roles` · `wer` · `probe` · `lesson` (`KasusRoundStep`) |
 | `hintLevelRaw` | `lern` · `viel` · `genus` · `ohne` for Endungen (and Einsetzen); empty otherwise |
 | `askedCount`, `firstTryCount` | items asked, right on the first pick. Markieren: the words to find, the words marked right |
 | `wrongCount` | Markieren: words marked that weren't in the asked case. Score = max(0, firstTry − wrong) / asked (`markScore`) |
@@ -798,6 +988,9 @@ broken story instead of failing one test.
 | `KasusGenerationTests` | Phase 3: planner determinism, provable frames and counts, the prompt, locate / harvest / gate on the canned fixtures, contract B, the generator's retry, fallback and cancel, the store, the Lab export |
 | `KasusGenerationScreenTests` | the generation sheet's lines, tutor names, the unit row's availability, the Lab runner |
 | `KasusGenerationReviewTests` | the review fixes: third-person subject verbs, the sentence checks (what they catch and what they spare), two-way phrases, adjectives, copula, „ihr“, „beim Spielen“, the Genitiv plural, planner collocations and levels, the length rule, the retry's prepare, trimming, stopping, labels by noun |
+| `KasusConceptTests` | Verstehen: every bundled item plays, the golden numbers, the Wer / Probe / Rollen invariants, negative fixtures, the role mapping and chips, seeded composing, grading per kind, clean explanations for every pick, the Kasus-Check walk, `countsTowardSkill`, recording a Probe and a Rollen round, a read lesson, an unknown step, the hub's row with Verstehen |
+| `KasusLessonTests` | every unit's cards and Merkhilfen are clean markup, worked examples in Check order, the English bridge and the „to“ test |
+| `KasusFormPartsTests` | the stem + ending split against every hand-written table, euer, the three empty ein-word cells, no plural for ein and jeder, ending options in table order; `EndingBlocksStateTests`: which move each change makes, every move settling, framing; `BauDasWortTests`: an ending pick grades like the whole word over 50 rounds, `build-<unit>` filing and skill counting |
 | `KasusPlayStateTests` | the players' state (`KasusMarkPlay`, `KasusEndingsPlay`): a round recorded once at the first Prüfen or last pick, never after Noch mal or a mode switch; Lösung zeigen flagging the recorded attempt; Nächster Fall recorded on its own; „Alle Fälle“ off after Noch mal, a mode switch and the next case; a DEBUG prefill never handed on; a Tipp locking the help level and mode |
 
 A wording change to an explanation moves the pinned lines in `KasusExplanationTests.swift`; a
@@ -813,7 +1006,9 @@ The lines print to the console with a `[kasus.debugVerify]` (or `[kasus.debugVer
 `[kasus.debugOpen]`, `[kasus.debugRoute]`, `[kasus.debugSeedRounds]`) prefix.
 
 **`-kasus.debugVerify 1`** validates every bundled story against the real lexicon, then runs the
-fixtures, the table round trip and the service checks. Nothing is written. Expected (four lines
+fixtures, the table round trip, the Verstehen items (one line per unit and kind, ending
+„Concepts ALL OK“) and the service checks (now with three Weiter-row checks for Verstehen).
+Nothing is written. Expected (four lines
 per story, all seven `OK` with `golden ✓`; the numbers are the table in "The bundled stories"):
 
 ```
@@ -915,6 +1110,15 @@ its way there, and prints `[kasus.debugOpen] open <screen>`:
 | `fill` | Endungen, all but the last three gaps answered if `-kasus.debugAnswers` is given (Sofort: the last wrong one's verdict in the tray) |
 | `fill-checked` | Endungen in Am Ende (whatever is stored) after Prüfen, the last gap left empty |
 | `result` | Ergebnis |
+| `lesson:<unit>` | the unit's Lektion, in a sheet; its Üben launches Rollen |
+| `merkhilfen` | the Merkhilfen list, in a sheet |
+| `werkstatt` | the Endungs-Werkstatt, in a sheet; `-kasus.debugWerkstatt dieser:dat:m` opens on that word, a fourth field `:flip` starts Durchblättern |
+| `table` | the endings table, in a sheet; `-kasus.debugCell dat:m` builds that cell in 3D |
+| `build:<unit>` | the unit's Bau das Wort, prefilled like `quick:<unit>` |
+| (with `lesson:<unit>`) `-kasus.debugPlayScene 1` | every lesson scene starts live instead of as a still |
+| (with `lesson:<unit>`) `-kasus.debugLessonPage <n>` | the lesson opens on card n (from 0) |
+| (with `roles:` · `wer:` · `probe:`) `-kasus.debugItem <id>` | that item comes first in the round |
+| `roles:<unit>` · `wer:<unit>` · `probe:<unit>` | a Verstehen round, prefilled from `-kasus.debugAnswers right\|mixed` (the first four steps) and `-kasus.debugQuickState right\|wrong\|done` (the next step, or the summary); Rollen plays in the stored mode (`-kasus.debugRolesMode schritt\|direkt` picks one for that launch), a walk included |
 | `history` | Verlauf, in a sheet |
 | `round` | the newest Kasus round that kept its answers, in a sheet |
 | `round-mark` | the newest Markieren round that kept its answers (one with a miss or a wrong mark first), in a sheet |
@@ -930,7 +1134,9 @@ its way there, and prints `[kasus.debugOpen] open <screen>`:
 - `-kasus.debugStory <id>` opens `read` … `result` on that story instead of the first, e.g.
   `-kasus.debugOpen mark-checked -kasus.debugStory ks-nom-a1-foto -kasus.debugAnswers mixed`.
 - `-app.theme klar|sanft|kritzel|grundform` shows the player in another theme.
-- `-kasus.debugQuickState right|wrong|slip|done`, with `quick:<unit>`, answers the Schnellrunde's
+- `-lightweightGraphicsMode on` shows the ending blocks' 2D twin (and every other 3D canvas's
+  still) for that launch.
+- `-kasus.debugQuickState right|wrong|slip|done`, with `quick:<unit>` or `build:<unit>`, answers the Schnellrunde's
   next question that way (`done` finishes the round); with `-kasus.debugAnswers right|mixed` the
   first four are answered first. Never recorded.
 - `-kasus.debugRoute 1` prints where every `GrammarFocus` goes from Today, Coach's Notes, the
@@ -942,7 +1148,8 @@ its way there, and prints `[kasus.debugOpen] open <screen>`:
 **`-kasus.debugSeedRounds 1`** inserts most of a week of rounds so Verlauf has something to show:
 today Markieren in the Dativ (Am Ende, misses and wrong marks), Markieren in the Akkusativ
 (Sofort, all right) and Endungen at Genus-Hilfe (Am Ende, answers shown afterwards) on the bundled
-Dativ story; the Nominativ and Akkusativ Schnellrunden; an Einsetzen from before Endungen (the old
+Dativ story; the Dativ Lektion read, a Rollen round (Akkusativ) and a Probe round (Dativ) built by
+the real engine; the Nominativ and Akkusativ Schnellrunden; an Einsetzen from before Endungen (the old
 label); one Dativ Schnellrunde stored without answers (how older rounds look); and two
 der/die/das and two preposition rounds. The
 Kasus rounds are built by the service, so their sentences and explanations are real. Nothing
@@ -991,6 +1198,34 @@ and `grammar_topics.json` stay as the source of story topics, though nothing rea
 
 ## Open
 
+- ✅ Verstehen (2026-10-06): the lessons with English twins and Merkhilfen, Rollen (chips and
+  Schritt für Schritt), Wer macht was? (structured input + Gleich oder anders?), Die Probe, the
+  item bank with its audit and golden numbers, the unit section, the hub dot and hero rule 1b,
+  Verlauf / round detail / calendar labels, the Sources section, debug arguments, tests.
+- ⬜ Verstehen on a device: the role chips under a thumb, the Ja/Nein pace, the lesson's paging;
+  seen in the simulator (Klar) only.
+- ✅ Verstehen imagery, first two scenes (`tools/blender/kasus_szenen.py --ship`, on the verben.py
+  rig): „Der Mann gibt dem Kind einen Ball“ (`kasus3d-geben`: the ball arcs from his hand to the
+  child's, the subject tinted Akkusativ) and „Die Nachbarin hilft dem Kind mit der Hausaufgabe“
+  (`kasus3d-helfen`: she bends over the desk and taps the sheet, tinted Dativ). Das Kind is a
+  second, smaller Figur (`staemmig`, 1.1) with a teal (Dativ) torso; the doer stays the plain
+  Figur. `kasus3d-manifest.json` merges into `PrepositionScene`'s lookup. They sit on the Dativ
+  lesson's first and Dativ-verb cards, the Alle Fälle lesson's first two cards and the model
+  sentence's Merkhilfe (`KasusLessonExample.scene`, `KasusLessonSceneView`): a still, and
+  „Abspielen · Play“ swaps in the live scene (only on tap, so one RealityKit surface at most).
+- ✅ Three more scenes (same tool and rig): the picture pair „Der Hund jagt die Katze“ /
+  „Die Katze jagt den Hund“ (`kasus3d-jagen-hund`, `kasus3d-jagen-katze`: a dark dog and a pale
+  cat, the chaser hopping after the other), on the Akkusativ lesson's „Warum überhaupt?“ card and
+  as the two answers of three Wer macht was? items (`pictures` in `kasus_concepts.json`,
+  `KasusPictureChoice`: tap the picture that fits; the still is zoomed 3.4× since the pair fills
+  only the middle third of the 512-px render); and „Der Hund des Kindes spielt“ (`kasus3d-leine`:
+  das Kind holds the dog on a lead, tinted Genitiv) on the Genitiv lesson's „Wessen?“ card.
+- ✅ More Verstehen items (2026-10-07): 592 written offline by Claude Sonnet around the app's
+  plans, gated, read and merged (124 → 716); a Genitiv round adds the attribute („Den Vater des
+  Kindes fragt die Oma“). On-device generation measured and not built. See [Tutor-written
+  Verstehen items](#tutor-written-verstehen-items-probe-2026-10-06) and
+  `training/KASUS_CONCEPT_PROBE.md`.
+
 - ✅ Phase 2: six more stories (Nominativ A1, Akkusativ A1 ×2, Dativ A2, Genitiv B1, Alle Fälle
   B1), contraction/pronoun/dieser targets, `GrammarRoute`, the "Mehr dazu" rows, and the Swift
   Testing target `german-ai-flashcardsTests` (`test_sim` on the `german-ai-flashcards` scheme; Debug
@@ -1028,8 +1263,10 @@ and `grammar_topics.json` stay as the source of story topics, though nothing rea
   the Lab on a phone per tutor, export to `training/results/kasus-lab_<model>.jsonl`, and keep the
   toggle off in Release until those runs have been read.
 - ⬜ Phase 3 gaps: generated stories have no comprehension question or English; the level is the
-  unit's default, not the learner's; no learner nouns are passed; prepositional objects
-  („wartet auf unserem Freund“) and adjective endings aren't checked; nouns off the Goethe lists
+  unit's default, not the learner's; no learner nouns are passed; prepositional objects are
+  checked only for the 42 verb pairs (above), and only where no place reading is possible, so
+  „wartet auf unserem Freund“ is now ungraded rather than caught; adjective endings aren't
+  checked; nouns off the Goethe lists
   are never read, so „die hohen Anteil“ passes; Tag, Jahr, Abend and Samstag have no article in the
   Goethe lists, so „jeden Tag“ and „am Abend“ in a generated story stay ungraded.
 - ⬜ Phase 3 debug side effects: every passing `-kasus.debugGenerate` run saves a real story (the
@@ -1045,3 +1282,26 @@ and `grammar_topics.json` stay as the source of story topics, though nothing rea
   mark after Prüfen (the ✗ and the strikethrough tell them apart).
 - ⬜ Device verdict in all four themes; the new screens were seen in the simulator in Klar and
   Grundform (Bauhaus), and at the largest text size on a small phone.
+
+
+## Guided explainers and exercise reference
+
+`KasusExplainer` contains eight curated, unscored explainers, separate from lesson cards and
+concept items. Grammar ▸ Warum dieser Fall? groups them into foundations, contrasts and deeper
+explanations, with article tables and memory aids nested under Reference. Each unit's Verstehen
+section links to the relevant subset. Each explainer has two translated, case-colored examples,
+a reason for each, an optional self-explanation reveal, links back to unit practice, and an IDS
+source link. Reading these does not write a round or change lesson completion.
+
+`kasusReference()` adds the same question-mark menu to lessons, concept drills, quick rounds,
+stories and explainers. Open table is a dismissible reference sheet; Keep table visible pins a
+neutral compact table above the activity. Pinning lasts across questions and story steps, but
+resets when the activity is left. It never selects the current answer or changes the story's
+existing hint level. The table has a bounded scroll area so exercise controls retain space.
+
+Grammar checks: IDS grammis [Kasus](https://grammis.ids-mannheim.de/sgt/2218),
+[Objekt](https://grammis.ids-mannheim.de/sgt/2279),
+[Wechselpräpositionen](https://grammis.ids-mannheim.de/progr@mm/6858), and
+[Rollen und Situationen](https://grammis.ids-mannheim.de/progr@mm/6727).
+The contrasts and self-explanation prompts are an editorial design choice, not a claim of
+measured learning gains in this app. The generated concept bank and its review gate are unchanged.

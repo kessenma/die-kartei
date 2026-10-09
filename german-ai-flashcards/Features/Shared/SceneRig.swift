@@ -116,3 +116,15 @@ extension Entity {
         }
     }
 }
+
+extension Color {
+    /// A RealityKit-ready color for this appearance. The palette's colors are dynamic
+    /// (`Color(light:dark:)`), and `UIColor(color)` hands RealityKit that dynamic color to resolve
+    /// on its own, against whatever trait it finds. Resolving in the view's environment pins the
+    /// theme the learner is actually looking at, and works the same on the Mac.
+    func sceneColor(in environment: EnvironmentValues) -> UIColor {
+        let resolved = resolve(in: environment)
+        return UIColor(red: CGFloat(resolved.red), green: CGFloat(resolved.green),
+                       blue: CGFloat(resolved.blue), alpha: CGFloat(resolved.opacity))
+    }
+}

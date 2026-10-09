@@ -35,6 +35,55 @@ nonisolated struct KasusDeterminer: Hashable {
     let word: String
 }
 
+/// A table form in two pieces: the stem that stays and the ending the case puts on it. The 3D
+/// ending blocks build a word from exactly these two.
+nonisolated struct KasusFormParts: Hashable, Sendable {
+    let stem: String
+    let ending: String
+
+    var word: String { stem + ending }
+    /// False for ein, kein, mein … in the cells with no ending (m. Nom, n. Nom and Akk).
+    var hasEnding: Bool { !ending.isEmpty }
+}
+
+/// One stem a learner can pick to watch its endings: der, ein, kein, the possessives, the der-words.
+nonisolated struct KasusStemChoice: Hashable, Identifiable, Sendable {
+    let family: KasusFamily
+    /// The base `KasusForms.form` takes: "" for der, "ein", "mein", "euer", "dies" …
+    let stem: String
+    /// How the picker names it: der, ein, mein, dieser.
+    let label: String
+
+    var id: String { label }
+
+    /// ein and jeder have no plural (*eine Kinder, *jede Kinder).
+    var hasPlural: Bool { !(family == .ein || (family == .derWord && stem == "jed")) }
+
+    func parts(_ kasus: GrammarCase, _ genus: Gender) -> KasusFormParts? {
+        KasusForms.parts(family: family, stem: stem, case: kasus, genus: genus)
+    }
+
+    /// Every form this stem takes, for framing a scene wide enough for the longest.
+    var allParts: [KasusFormParts] {
+        GrammarCase.allCases.flatMap { kasus in Gender.allCases.compactMap { parts(kasus, $0) } }
+    }
+
+    static let definite = KasusStemChoice(family: .definite, stem: "", label: "der")
+
+    static let all: [KasusStemChoice] = [
+        definite,
+        KasusStemChoice(family: .ein, stem: "ein", label: "ein"),
+        KasusStemChoice(family: .kein, stem: "kein", label: "kein"),
+    ] + KasusForms.possessiveStems.map { KasusStemChoice(family: .possessive, stem: $0, label: $0) }
+      + [("dies", "dieser"), ("jed", "jeder"), ("welch", "welcher")].map {
+          KasusStemChoice(family: .derWord, stem: $0.0, label: $0.1)
+      }
+
+    static func named(_ label: String) -> KasusStemChoice? {
+        all.first { $0.label == label.lowercased() }
+    }
+}
+
 nonisolated enum KasusForms {
 
     static let definiteForms: Set<String> = ["der", "die", "das", "den", "dem", "des"]
@@ -112,6 +161,42 @@ nonisolated enum KasusForms {
 
     static func form(_ determiner: KasusDeterminer, case kasus: GrammarCase, genus: Gender) -> String? {
         form(family: determiner.family, stem: determiner.stem, case: kasus, genus: genus)
+    }
+
+    /// One cell's form split where the case shows: d|em, ein|en, eur|en, dies|e. The stem is the
+    /// part that never changes down a column (euer's is „eur“ once an ending follows, „euer“ when
+    /// none does), so `stem + ending` is always `form`. Nil exactly where `form` is.
+    static func parts(family: KasusFamily, stem: String, case kasus: GrammarCase, genus: Gender) -> KasusFormParts? {
+        guard let word = form(family: family, stem: stem, case: kasus, genus: genus) else { return nil }
+        switch family {
+        case .definite:
+            return KasusFormParts(stem: "d", ending: String(word.dropFirst()))
+        case .derWord:
+            let ending = derWordEnding(case: kasus, genus: genus)
+            return KasusFormParts(stem: String(word.dropLast(ending.count)), ending: ending)
+        case .ein, .kein, .possessive:
+            let ending = kasus.einEnding(genus)
+            return KasusFormParts(stem: String(word.dropLast(ending.count)), ending: ending)
+        }
+    }
+
+    static func parts(_ determiner: KasusDeterminer, case kasus: GrammarCase, genus: Gender) -> KasusFormParts? {
+        parts(family: determiner.family, stem: determiner.stem, case: kasus, genus: genus)
+    }
+
+    /// Every ending the family's table uses, in table order (Nominativ m · f · n · pl, then down),
+    /// once each. The ein-words' empty ending comes first, as „–“ in the tray.
+    static func endingOptions(family: KasusFamily, stem: String, includeGenitive: Bool) -> [String] {
+        let cases = GrammarCase.allCases.filter { includeGenitive || $0 != .genitiv }
+        var options: [String] = []
+        for kasus in cases {
+            for genus in Gender.allCases {
+                guard let ending = parts(family: family, stem: stem, case: kasus, genus: genus)?.ending,
+                      !options.contains(ending) else { continue }
+                options.append(ending)
+            }
+        }
+        return options
     }
 
     /// Every case this determiner can be with this gender: the table read backwards. „der“ with a

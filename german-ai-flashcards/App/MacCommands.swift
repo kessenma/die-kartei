@@ -2,8 +2,8 @@
 import SwiftUI
 
 /// The Mac menu bar: Go (⌘1–⌘0 to the sidebar's places), the navigation choices under View,
-/// Import Deck… in File (it takes New Window's place: the app is one window), and What's New and
-/// Send Feedback under Help.
+/// Import Deck… in File (it takes New Window's place: the app is one window), Schreibhilfe… in
+/// Edit, and What's New, the Schreibhilfe guide and Send Feedback under Help.
 struct MacCommands: Commands {
     var navigator: MacNavigator
 
@@ -16,6 +16,13 @@ struct MacCommands: Commands {
         CommandGroup(replacing: .newItem) {
             Button("Import Deck…") { navigator.showsDeckImporter = true }
                 .keyboardShortcut("o")
+        }
+
+        // The Schreibhilfe, the Mac's stand-in for the iPhone's German keyboard. ⌥⌘D: Deutsch.
+        CommandGroup(after: .textEditing) {
+            Divider()
+            Button("Schreibhilfe…") { MacWritingHelper.shared.show() }
+                .keyboardShortcut("d", modifiers: [.command, .option])
         }
 
         CommandGroup(before: .toolbar) {
@@ -59,6 +66,7 @@ struct MacCommands: Commands {
 
         CommandGroup(replacing: .help) {
             Button("What's New in Die Kartei") { open(.whatsNew) }
+            Button("Using the Schreibhilfe") { open(.writingHelper) }
             Button("Send Feedback…") { open(.feedback) }
         }
     }

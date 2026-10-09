@@ -58,6 +58,10 @@ struct PrepositionHubView: View {
         }
     }
 
+    /// The verb review box's counts for the Wiederholen rows, read on appear (and so again on the
+    /// way back from a review). Not a live @Query: reading the box's 42 cards in `body` sent this
+    /// hub into an endless re-render whenever a screen was pushed over it, which froze the app.
+    @State private var reviewCounts = VerbPrepositionService.counts(nil)
     @State private var showRules = false
     @State private var showsTutorLab = false
     @State private var isOptionsExpanded = false
@@ -117,9 +121,7 @@ struct PrepositionHubView: View {
                 .themedListRow()
             }
 
-            #if DEBUG
-            renderTestSection.themedListRow()
-            #endif
+            inProgressSection.themedListRow()
         }
         .themedListScreen()
         .navigationTitle("Präpositionen")
@@ -135,6 +137,9 @@ struct PrepositionHubView: View {
         }
         .sheet(isPresented: $showRules) {
             PrepositionRulesSheet()
+        }
+        .onAppear {
+            reviewCounts = VerbPrepositionService.counts(in: modelContext)
         }
     }
 
@@ -428,6 +433,17 @@ struct PrepositionHubView: View {
 
     private var verbCount: Int { VerbPrepositionService.all().count }
 
+    private var reviewSubtitle: String {
+        let counts = reviewCounts
+        let next = min(counts.new, VerbPrepositionService.newPerSession)
+        var parts: [String] = []
+        if counts.due > 0 { parts.append("\(counts.due) due") }
+        if next > 0 { parts.append(counts.due > 0 ? "\(next) new" : "Start with \(next) new pairs") }
+        if parts.isEmpty { parts.append("Nothing due") }
+        if counts.learned > 0 { parts.append("\(counts.learned) of \(verbCount) learned") }
+        return parts.joined(separator: " · ")
+    }
+
     private var verbLearnSection: some View {
         Section {
             NavigationLink {
@@ -439,6 +455,12 @@ struct PrepositionHubView: View {
                     "rectangle.stack",
                     isLauncher: false
                 )
+            }
+
+            NavigationLink {
+                VerbPrepositionReviewView()
+            } label: {
+                sourceRow("Wiederholen", reviewSubtitle, "arrow.triangle.2.circlepath", isLauncher: false)
             }
 
             Button {
@@ -459,7 +481,7 @@ struct PrepositionHubView: View {
         } header: {
             Text("Lernen")
         } footer: {
-            Text("Start with the cards. Each pair is one piece to learn: the verb, its preposition and its case.")
+            Text("Start with the cards. Each pair is one piece to learn: the verb, its preposition and its case. Wiederholen brings each pair back just before you'd forget it, a few new ones at a time.")
         }
     }
 
@@ -515,14 +537,44 @@ struct PrepositionHubView: View {
         }
     }
 
-    // MARK: - Animation gallery (tuning surface)
+    // MARK: - In Arbeit (new work, still being tuned)
 
-    #if DEBUG
-    /// Every preposition scene playing its live choreography, one per page — the place to
-    /// judge motion timings on a real device without driving to each drill. Debug builds only:
-    /// a tuning surface, not something a learner should land on.
-    private var renderTestSection: some View {
+    /// The newest preposition work in one place, on both tracks and in every build: the verb
+    /// pairs from class and their 39 scenes, while they're still being tuned on the phone. The
+    /// verb track holds the same cards and review; this is the way in from either side. Debug
+    /// builds add the tuning surfaces a learner shouldn't land on.
+    private var inProgressSection: some View {
         Section {
+            NavigationLink {
+                VerbSceneGalleryView()
+            } label: {
+                sourceRow(
+                    "Verb-Szenen",
+                    "All \(VerbPrepositionService.sceneCount) verb scenes live, question side and answer",
+                    "figure.wave",
+                    isLauncher: false
+                )
+            }
+
+            NavigationLink {
+                VerbPrepositionCardsView()
+            } label: {
+                sourceRow(
+                    "Verb-Karten",
+                    "\(verbCount) verb pairs from class, each with its scene",
+                    "rectangle.stack",
+                    isLauncher: false
+                )
+            }
+
+            NavigationLink {
+                VerbPrepositionReviewView()
+            } label: {
+                sourceRow("Wiederholen", reviewSubtitle, "arrow.triangle.2.circlepath", isLauncher: false)
+            }
+
+            #if DEBUG
+            // Every preposition scene playing its live choreography, one per page.
             NavigationLink {
                 PrepositionSceneGalleryView()
             } label: {
@@ -534,7 +586,7 @@ struct PrepositionHubView: View {
                 )
             }
 
-            // Not a preposition scene — it rides here because this is the tuning surface where
+            // Not a preposition scene: it rides here because this is the tuning surface where
             // motion gets judged on a real device, and the figure has nowhere else to live yet.
             NavigationLink {
                 FigurGalleryView()
@@ -548,7 +600,7 @@ struct PrepositionHubView: View {
             }
 
             // Also not a preposition scene. The onboarding download pitch, judged against the
-            // wizard's own copy — throwaway until it is settled.
+            // wizard's own copy, throwaway until it is settled.
             //
             // A cover rather than a push: the real wizard is presented as a cover, with no NavBar
             // under it, so mocking it as one is the only way the geometry being judged is the
@@ -564,14 +616,18 @@ struct PrepositionHubView: View {
                 )
             }
             .buttonStyle(.plain)
+            #endif
         } header: {
-            Text("Work in Progress")
+            Text("In Arbeit · In progress")
+        } footer: {
+            Text("New and still being tuned: the verbs from class and their scenes. These may change.")
         }
+        #if DEBUG
         .fullScreenCover(isPresented: $showsTutorLab) {
             TutorSceneLabView(modelManager: modelManager, mlxService: mlxService)
         }
+        #endif
     }
-    #endif
 
     // MARK: - Launch
 
@@ -657,5 +713,5 @@ struct PrepositionHubView: View {
         }
     }
     .environment(ActivityRouter())
-    .inMemoryModelContainer(for: [PrepositionRound.self, PrepositionStat.self])
+    .inMemoryModelContainer(for: [PrepositionRound.self, PrepositionStat.self, SavedDeck.self, SavedCard.self])
 }

@@ -59,11 +59,17 @@ nonisolated struct VerbPreposition: Codable, Identifiable, Hashable {
     var note: String?
     /// The class sheet's original line, when it needed correcting.
     var sheet: String?
+    /// The verb's conjugated forms, lowercased; a separable one as its two words („passt auf“).
+    /// How the Kasus check spots the pair in a story's clause (`KasusVerbPairs`).
+    var forms: [String]
+    /// The preposition can also be a plain place with this verb, in the other case („wartet auf
+    /// dem Bahnsteig“), so a clash in a story stays ungraded instead of rejecting it.
+    var spatialToo: Bool?
 
     var id: String { verb }
 
     enum CodingKeys: String, CodingKey {
-        case verb, preposition, english, fit, scene, level, examples, note, sheet
+        case verb, preposition, english, fit, scene, level, examples, note, sheet, forms, spatialToo
         case governs = "case"
     }
 

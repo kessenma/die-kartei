@@ -610,7 +610,8 @@ registered with a GitHub account that can read it. Check with
 **ITMS-90111 "Unsupported SDK or Xcode version" even though `xcodebuild -version`
 is a release.** ASC also keys this rejection off `BuildMachineOSBuild` in the
 app's Info.plist, which Xcode stamps with the *host* macOS build. A beta host
-(build ending in a lowercase letter, e.g. `26A5421a`) trips it even with a
+(a 4-digit build number from 5000 up, e.g. `26A5421a`; a trailing letter alone
+means nothing, since release Xcode 27.0 is `27A266a`) trips it even with a
 release Xcode and SDK. Fixed on 2026-09-07 by the "Stamp release macOS build"
 phase on the Die Kartei target, which rewrites that key (in the app and the SPM
 resource bundles) to the macOS build of the selected Xcode's own macOS SDK,
@@ -624,8 +625,8 @@ The phase acts on **archives only** (`ACTION=install`). Debug, simulator and
 test builds, including ones made in Xcode-beta for day-to-day work, get a
 one-line note and are otherwise untouched. Archiving *with* a beta Xcode is
 refused outright, since ASC checks `DTXcodeBuild` too and no stamp would save
-it. Note that the seed-suffix rule does not hold for SDK builds: the release
-Xcode 26.6 ships iOS SDK `23F81a`, which ASC accepts. To inspect any build by
+it. Note that the seed rule does not hold for SDK builds, which number
+differently (release Xcode 26.6 ships iOS SDK `23F81a`, which ASC accepts). To inspect any build by
 hand:
 
 ```bash

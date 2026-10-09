@@ -86,11 +86,72 @@ extension CardDeckView {
         }
     }
 
+    /// Each card's first rating this session, so the breakdown adds up to the cards reviewed.
+    /// Only Didn't know re-queues a card, so a lapsed card's first rating was Didn't know, and
+    /// every other card was rated exactly once (that rating still sits in `ankiRatings`).
+    /// `ankiRatings` itself holds a re-queued card's *last* rating.
+    var ankiFirstRatings: [Int: AnkiRating] {
+        var first = ankiRatings.filter { !sessionLapses.contains($0.key) }
+        for idx in sessionLapses { first[idx] = .again }
+        return first
+    }
+
+    /// The Anki summary's centrepiece: four ratings don't fit an n / n score, so show how the
+    /// session split across them, as a proportional bar plus a count per button.
+    @ViewBuilder
+    var ankiRatingBreakdown: some View {
+        let counts = Dictionary(grouping: ankiFirstRatings.values, by: { $0 }).mapValues(\.count)
+        let rated = AnkiRating.allCases.filter { counts[$0, default: 0] > 0 }
+        let sum = rated.reduce(0) { $0 + counts[$1, default: 0] }
+        let gap: CGFloat = 2
+
+        VStack(spacing: 12) {
+            GeometryReader { geo in
+                let usable = max(0, geo.size.width - gap * CGFloat(max(0, rated.count - 1)))
+                HStack(spacing: gap) {
+                    ForEach(rated, id: \.rawValue) { rating in
+                        ankiButtonColor(rating)
+                            .frame(width: sum > 0 ? usable * CGFloat(counts[rating, default: 0]) / CGFloat(sum) : 0)
+                    }
+                }
+            }
+            .frame(height: 12)
+            .background(Color.secondary.opacity(0.15))
+            .clipShape(Capsule())
+            .accessibilityHidden(true)
+
+            HStack(spacing: 8) {
+                ForEach(AnkiRating.allCases, id: \.rawValue) { rating in
+                    let n = counts[rating, default: 0]
+                    VStack(spacing: 2) {
+                        Text("\(n)")
+                            .font(.title2.weight(.bold))
+                            .monospacedDigit()
+                        Text(rating.label)
+                            .font(.caption)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .foregroundStyle(n > 0 ? ankiButtonColor(rating) : .secondary)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(ankiButtonColor(rating).opacity(n > 0 ? 0.1 : 0.04))
+                    )
+                    .accessibilityElement(children: .combine)
+                }
+            }
+        }
+        .padding(.horizontal)
+    }
+
     func finishAnkiSession() {
         let total = sessionDueCount
         let missed = sessionLapses.sorted()
         let correct = max(0, total - missed.count)
-        onQuizComplete?(correct, total, missed, elapsedSeconds, .anki, ankiRatings)
+        onQuizComplete?(correct, total, missed, elapsedSeconds, .anki, ankiFirstRatings)
+        creditDeckMix(mode: .anki)
         clearPauseProgress()
         showQuizSummary = true
     }

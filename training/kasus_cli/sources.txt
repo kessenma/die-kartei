@@ -1,0 +1,52 @@
+# App sources compiled into kasus-cli, relative to german-ai-flashcards/ (the app target).
+# The planner, the prompt and the check are the app's own code, never copies. When an app change
+# breaks this build, add the file that now defines the missing type, or split the pure part of a
+# heavy file out the way StoryStudyService+Prompt.swift and PrepositionService+Content.swift are.
+
+# Planner, prompt, check (stories, then the one-sentence Verstehen items)
+Models/KasusStoryPlan.swift
+Services/KasusConceptPlanner.swift
+Services/KasusConceptPrompt.swift
+Services/KasusConceptCheck.swift
+Services/KasusStoryPlanner.swift
+Services/KasusStoryPrompt.swift
+Services/StoryStudyService+Prompt.swift
+Services/KasusStoryCheck.swift
+Services/KasusHarvest.swift
+Services/KasusSentenceCheck.swift
+Services/KasusValidator.swift
+Services/KasusExplanation.swift
+Services/KasusVerbPairs.swift
+
+# Story format, forms, units
+Models/KasusStory.swift
+Models/KasusConcept.swift
+Models/KasusConceptPlan.swift
+Models/KasusForms.swift
+Models/KasusUnit.swift
+Models/GrammarPalette.swift
+Models/GrammarFocus.swift
+
+# The lexicon and its data: Wiktionary, Goethe lists, prepositions
+Services/KasusStoryBank.swift
+Services/WiktionaryValidator.swift
+Services/GermanGenderInference.swift
+Services/A1VocabService.swift
+Services/PrepositionService+Content.swift
+Models/Preposition.swift
+Models/VerbPreposition.swift
+
+# Pulled in by the above (CEFRLevel, StoryGenre, the think-block stripper, VocabCard)
+Models/ConversationConfig.swift
+Models/StudyStory.swift
+Services/ConversationPrompts.swift
+Models/ChatConversation.swift
+Models/ArticleGame.swift
+Models/ValidationResult.swift
+Models/VocabCard.swift
+
+# DEBUG: the Lab's record and summary, the validator fixtures, the Verstehen items' audit
+Services/KasusLab.swift
+Services/KasusFixtures.swift
+Services/KasusConceptBank.swift
+Services/KasusConceptFixtures.swift

@@ -24,6 +24,9 @@ struct CardDeckView: View {
     var badgeLogoName: String? = nil
     /// Backs the in-session card settings sheet; nil hides its shortcuts.
     var modelManager: MLXModelManager? = nil
+    /// Several saved decks studied as one (`StudySession.isDeckMix`). No single deck backs the
+    /// session, so the per-deck controls hide and each deck is credited its share at the end.
+    var isDeckMix: Bool = false
 
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -90,8 +93,10 @@ struct CardDeckView: View {
     @State var localAutoAdvance: Bool = false
     @State var localCards: [VocabCard] = []
     @State var localValidationResults: [ValidationResult] = []
+    /// The decks registered with `SyncInUse` on appear, so disappear ends exactly those.
+    @State var openDeckUUIDs: [UUID] = []
 
-    var isQuizMode: Bool { deckID != nil }
+    var isQuizMode: Bool { deckID != nil || isDeckMix }
     var isAnkiMode: Bool { localStyle == .anki && !savedCards.isEmpty }
     var isLeitnerMode: Bool { localStyle == .leitner && !savedCards.isEmpty }
     var isSRSMode: Bool { isAnkiMode || isLeitnerMode }
@@ -141,7 +146,7 @@ struct CardDeckView: View {
 
     /// The saved deck being studied, when this is a library/saved deck rather than a loose set
     /// of cards. `savedCards` is index-aligned with `cards` (both ordered by `sortOrder`).
-    var savedDeck: SavedDeck? { savedCards.first?.deck }
+    var savedDeck: SavedDeck? { isDeckMix ? nil : savedCards.first?.deck }
 
     /// The deck UUID that card pictures are filed under, or nil when there's no saved deck.
     var deckUUID: UUID? { savedDeck?.id }
@@ -150,6 +155,18 @@ struct CardDeckView: View {
     /// finish generating in the background pop in without a manual refresh.
     func imageFileName(at index: Int) -> String? {
         savedCards.indices.contains(index) ? savedCards[index].imageFileName : nil
+    }
+
+    /// The folder this card's picture is filed under: its own deck's, since a deck mix or the
+    /// Daily Review holds cards from many decks.
+    func imageDeckID(at index: Int) -> UUID? {
+        savedCards.indices.contains(index) ? savedCards[index].deck?.id ?? deckUUID : deckUUID
+    }
+
+    /// Every deck this session's cards come from — one, or several for a mix. Held open against
+    /// sync deletes while the player is up.
+    var inUseDeckUUIDs: [UUID] {
+        isDeckMix ? Array(Set(savedCards.compactMap { $0.deck?.id })) : (deckUUID.map { [$0] } ?? [])
     }
 
     func applyCorrection(at index: Int, newArticle: String?) {
@@ -334,7 +351,8 @@ struct CardDeckView: View {
             }
         }
         .onAppear {
-            SyncInUse.begin(deckUUID)
+            openDeckUUIDs = inUseDeckUUIDs
+            openDeckUUIDs.forEach { SyncInUse.begin($0) }
             localStyle = flashcardStyle
             localAutoAdvance = autoAdvance
             if localCards.isEmpty { localCards = cards }
@@ -394,7 +412,7 @@ struct CardDeckView: View {
             if hasStarted, !showQuizSummary, !isPaused {
                 savePauseProgress()
             }
-            SyncInUse.end(deckUUID)
+            openDeckUUIDs.forEach { SyncInUse.end($0) }
         }
         .memoryContext("Deck study")
         // Keyed on the summary flag too: the loop exits when the session ends, and "Try Again"

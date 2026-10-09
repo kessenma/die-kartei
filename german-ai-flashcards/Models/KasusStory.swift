@@ -290,6 +290,13 @@ nonisolated struct KasusPrepositionContext: Hashable {
 nonisolated struct KasusLocatedTarget: Identifiable, Hashable {
     /// Position in `story.targets`.
     let index: Int
+    /// The verb pair that decides this phrase („warten auf“ + Akkusativ), when one stands in its
+    /// clause and agrees (KasusVerbPairs). Its explanation then names the pair, and an inferred
+    /// two-way phrase may be blanked, since the verb rather than the tutor settled the case.
+    var verbPair: KasusVerbPairMatch?
+    /// A verb pair stands there but says another case, and the phrase may just be a place
+    /// („wartet auf dem Bahnsteig“): a generated story's phrase is then left ungraded.
+    var verbPairUnsure = false
     let spec: KasusTargetSpec
     let paragraphIndex: Int
     /// The whole phrase, determiner to noun.

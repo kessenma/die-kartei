@@ -76,8 +76,9 @@ enum PrepositionScene {
     }
 
     /// The preposition scenes, plus the verb-pair scenes from their own manifest under
-    /// `verb3d-<scene>` keys. Two files because two rigs write them; one lookup because every
-    /// caller treats a scene as a scene.
+    /// `verb3d-<scene>` keys and the Kasus lessons' under `kasus3d-<scene>`. A file per rig
+    /// (prep_render, verben, kasus_szenen); one lookup because every caller treats a scene as
+    /// a scene.
     private static let manifest: Manifest = {
         func load(_ name: String) -> [String: Pose] {
             guard let url = Bundle.main.url(forResource: name, withExtension: "json"),
@@ -87,7 +88,8 @@ enum PrepositionScene {
             return decoded.relations
         }
         return Manifest(relations: load("prep3d-manifest")
-            .merging(load("verb3d-manifest")) { prep, _ in prep })
+            .merging(load("verb3d-manifest")) { prep, _ in prep }
+            .merging(load("kasus3d-manifest")) { prep, _ in prep })
     }()
 
     static func pose(for word: String) -> Pose? { manifest.relations[word] }

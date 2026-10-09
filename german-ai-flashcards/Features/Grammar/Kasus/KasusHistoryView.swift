@@ -92,7 +92,7 @@ struct GrammarHistoryEntry: Identifiable {
     var shortLabel: String {
         switch source {
         case .kasus(let round):
-            round.isQuickRound
+            round.isQuickRound || round.isConceptRound
                 ? round.displayTitle(showsUnit: true)
                 : "\(round.unit?.germanTitle ?? "Kasus") · \(round.unitStepLabel)"
         case .article:     "Der · Die · Das"
@@ -111,9 +111,10 @@ struct GrammarHistoryEntry: Identifiable {
 }
 
 extension KasusRound {
-    /// False for the synthetic rounds `-kasus.debugVerifyRecord keep` leaves behind, which no
-    /// screen lists.
+    /// False for a read lesson (nothing answered; the unit screen's ✓ is where it shows) and, in
+    /// DEBUG, for the synthetic rounds `-kasus.debugVerifyRecord keep` leaves behind.
     var isListed: Bool {
+        if isLessonRound { return false }
         #if DEBUG
         return storyID != KasusService.debugVerifyStoryID
         #else
@@ -126,8 +127,14 @@ extension KasusRound {
     /// when a context is given, while the story is kept; after it's deleted, the unit's name.
     @MainActor func displayTitle(showsUnit: Bool, in context: ModelContext? = nil) -> String {
         if isQuickRound {
-            guard showsUnit, let unit else { return "Schnellrunde" }
-            return "Schnellrunde · \(unit.germanTitle)"
+            let name = step?.germanLabel ?? "Schnellrunde"
+            guard showsUnit, let unit else { return name }
+            return "\(name) · \(unit.germanTitle)"
+        }
+        // Verstehen: „Rollen · Dativ“, „Wer macht was? · Akkusativ“, „Die Probe · Genitiv“.
+        if let step, step.isConcept {
+            guard showsUnit, let unit else { return step.germanLabel }
+            return "\(step.germanLabel) · \(unit.germanTitle)"
         }
         if let title = KasusStoryBank.bundled.story(id: storyID)?.title { return "„\(title)“" }
         if let context, let title = KasusStoryStore.title(id: storyID, in: context) { return "„\(title)“" }
@@ -139,9 +146,13 @@ extension KasusRound {
     func displayDetail() -> String {
         var parts: [String] = []
         switch step {
-        case .quick?: parts.append("\(askedCount) Sätze")
-        case .some: parts.append(stepLabel)
-        case nil: break
+        case .quick?:  parts.append("\(askedCount) Sätze")
+        case .roles?:  parts.append("\(askedCount) Rollen")
+        case .wer?:    parts.append("\(askedCount) Sätze")
+        case .probe?:  parts.append("\(askedCount) Formen")
+        case .lesson?: parts.append("gelesen")
+        case .some:    parts.append(stepLabel)
+        case nil:      break
         }
         if let hintLevel { parts.append(hintLevel.germanLabel) }
         if durationSeconds > 0 { parts.append(KasusHistoryFormat.duration(durationSeconds)) }

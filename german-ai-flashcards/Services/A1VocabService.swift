@@ -199,10 +199,6 @@ enum GoetheVocabService {
     /// This is the order new words are introduced in, and the stable `sortOrder` of the SRS deck.
     static var orderedWords: [GoetheWord] { merged.ordered }
 
-    static func words(in scope: WortschatzScope) -> [GoetheWord] {
-        orderedWords.filter { scope.contains($0) }
-    }
-
     private static let merged: (byWord: [String: GoetheWord], ordered: [GoetheWord]) = buildIndex()
 
     /// Iterates A1 → A2 → B1. The first list a word appears on defines it (word, translation,

@@ -19,6 +19,8 @@ enum TodayIntent: Equatable {
     case resumePausedDeck
     /// The Goethe word box: today's due reviews plus the new-word budget, in one session.
     case wortschatz
+    /// The verb-pair review box (Verben mit Präpositionen), studied on its own verb cards.
+    case verbReview
 }
 
 /// One ordered item in the Today plan.
@@ -38,6 +40,7 @@ struct TodayRecommendation: Identifiable {
         case .generateDeck:     return "generate"
         case .resumePausedDeck: return "resume"
         case .wortschatz:       return "wortschatz"
+        case .verbReview:       return "verbs"
         }
     }
 }
@@ -61,6 +64,9 @@ struct TodaySnapshot {
     var resume: ResumeInfo? = nil
     /// What the Goethe box has waiting today, once the learner has opened it at all.
     var wortschatz: WortschatzInfo? = nil
+    /// Verb pairs that have come due in their review box. Only scheduled ones: the plan never
+    /// offers the 42 new pairs to someone who hasn't opened the box.
+    var verbDue: Int = 0
 
     struct ResumeInfo: Equatable {
         var topic: String
@@ -97,6 +103,11 @@ enum TodayPlanner {
         if let w = s.wortschatz, w.todo > 0 {
             recs.append(wortschatz(w))
         }
+        // The verb pairs keep their own step too: they review on their own cards (the generic
+        // review would show the answer on the card's face), so they are not in `dueCardCount`.
+        if s.verbDue > 0 {
+            recs.append(verbReview(count: s.verbDue))
+        }
         if s.dueCardCount > 0 {
             recs.append(review(count: s.dueCardCount))
         } else if s.hasCoachContent, s.wortschatz?.todo ?? 0 == 0 {
@@ -130,6 +141,18 @@ enum TodayPlanner {
             title: "Review \(count) due card\(count == 1 ? "" : "s")",
             subtitle: "Spaced repetition · ~\(minutes) min",
             systemImage: "rectangle.stack.badge.play.fill",
+            accent: .blue
+        )
+    }
+
+    private static func verbReview(count: Int) -> TodayRecommendation {
+        let minutes = max(1, Int((Double(count) * 10.0 / 60.0).rounded()))
+        return TodayRecommendation(
+            intent: .verbReview,
+            title: "Verben · \(count) due",
+            subtitle: "Verbs with prepositions · ~\(minutes) min",
+            systemImage: "link",
+            // Blue like the generic review: teal is the Dativ's color, and this row is not Dativ.
             accent: .blue
         )
     }

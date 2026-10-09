@@ -18,8 +18,10 @@ enum PDFTextExtractor {
         }
     }
 
-    /// Returns extracted text, or nil if the PDF couldn't be opened.
-    static func extract(from url: URL) -> Result? {
+    /// Returns extracted text, or nil if the PDF couldn't be opened. `rebuildingTables` puts a
+    /// German | English vocabulary table back into rows (see `tableRows(on:readingOrder:)`); only
+    /// class material asks for it, since a two-column CV or brochure can pass for a table.
+    static func extract(from url: URL, rebuildingTables: Bool = false) -> Result? {
         let needsAccess = url.startAccessingSecurityScopedResource()
         defer { if needsAccess { url.stopAccessingSecurityScopedResource() } }
 
@@ -28,10 +30,35 @@ enum PDFTextExtractor {
         var out = ""
         for index in 0..<doc.pageCount {
             if let page = doc.page(at: index), let pageText = page.string, !pageText.isEmpty {
-                out += "\n\n[Seite \(index + 1)]\n" + pageText + "\n"
+                let text = rebuildingTables ? tableRows(on: page, readingOrder: pageText) ?? pageText : pageText
+                out += "\n\n[Seite \(index + 1)]\n" + text + "\n"
             }
         }
         return Result(text: out, pageCount: doc.pageCount)
+    }
+
+    /// A vocabulary table's rows put back together from where its lines sit on the page. iOS's
+    /// PDFKit reads a bordered table a column at a time (every German cell, then every English
+    /// one), so `page.string` pairs nothing and the ✓ marks land on the wrong rows; the Mac reads
+    /// the same file row by row. Nil when the page isn't a table, and its own text stands.
+    private static func tableRows(on page: PDFPage, readingOrder: String) -> String? {
+        let pageBounds = page.bounds(for: .mediaBox)
+        guard pageBounds.width > 0, pageBounds.height > 0,
+              let lines = page.selection(for: pageBounds)?.selectionsByLine() else { return nil }
+        let placed: [OCRTableLayout.Line] = lines.compactMap { line in
+            guard let text = line.string?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return nil }
+            let box = line.bounds(for: page)
+            // Normalized to the page with the origin bottom-left, as Vision reports its boxes.
+            return OCRTableLayout.Line(text: text, box: CGRect(
+                x: (box.minX - pageBounds.minX) / pageBounds.width,
+                y: (box.minY - pageBounds.minY) / pageBounds.height,
+                width: box.width / pageBounds.width,
+                height: box.height / pageBounds.height
+            ))
+        }
+        // A PDF's line boxes are exact: a wrapped cell's lines touch, while two short rows can sit
+        // barely half a line apart, closer than the photo default allows for.
+        return OCRTableLayout.tableRows(from: placed, readingOrder: readingOrder, wrapGap: 0.25)
     }
 
     #if canImport(UIKit) || os(macOS)

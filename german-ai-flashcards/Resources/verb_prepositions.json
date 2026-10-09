@@ -1,5 +1,5 @@
 {
-  "about": "Verben mit Präpositionen, the prototype set (2026-10-02). Kyle's class sheet, corrected. Each verb names the scene that depicts its first example; tools/blender/verben.py renders the scenes from this file. `object` is the prepositional phrase exactly as it appears in the sentence, the part a scene tints. `fit` is the scene backlog's grouping in docs/PREPOSITION_3D.md: echo (the place meaning survives and agrees with the case), trap (a two-way preposition with a fixed case and no movement), abstract. Each example carries the Lückentext `gap` (the text the blank removes) and three `wrong` options. `falle` pairs one preposition's two lives, place versus verb, with article-only gaps so the choice is purely the case.",
+  "about": "Verben mit Präpositionen, the prototype set (2026-10-02). Kyle's class sheet, corrected. Each verb names the scene that depicts its first example; tools/blender/verben.py renders the scenes from this file. `object` is the prepositional phrase exactly as it appears in the sentence, the part a scene tints. `fit` is the scene backlog's grouping in docs/PREPOSITION_3D.md: echo (the place meaning survives and agrees with the case), trap (a two-way preposition with a fixed case and no movement), abstract. Each example carries the Lückentext `gap` (the text the blank removes) and three `wrong` options. `falle` pairs one preposition's two lives, place versus verb, with article-only gaps so the choice is purely the case. `forms` lists the verb's conjugated forms (a separable verb as „passt auf“, all words must stand in the clause), which is how the Kasus check finds a pair in a story. `spatialToo` marks the pairs whose preposition can also be a plain place with that verb („wartet auf dem Bahnsteig“): a clash there stays ungraded instead of rejecting.",
   "verbs": [
     {
       "verb": "antworten auf",
@@ -24,7 +24,18 @@
           "gender": "m"
         }
       ],
-      "note": "The person answered is a plain Dativ: „Er antwortet dem Freund.“"
+      "note": "The person answered is a plain Dativ: „Er antwortet dem Freund.“",
+      "forms": [
+        "antworte",
+        "antwortest",
+        "antwortet",
+        "antworten",
+        "antwortete",
+        "antwortetest",
+        "antworteten",
+        "antwortetet",
+        "geantwortet"
+      ]
     },
     {
       "verb": "aufpassen auf",
@@ -49,7 +60,20 @@
           "gender": "m"
         }
       ],
-      "note": "Separable: „passt … auf“."
+      "note": "Separable: „passt … auf“.",
+      "forms": [
+        "passe auf",
+        "passt auf",
+        "passen auf",
+        "passte auf",
+        "passtest auf",
+        "passten auf",
+        "passtet auf",
+        "aufpassen",
+        "aufgepasst",
+        "aufzupassen"
+      ],
+      "spatialToo": true
     },
     {
       "verb": "sich ärgern über",
@@ -73,6 +97,17 @@
           "noun": "Hund",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "ärgere",
+        "ärgerst",
+        "ärgert",
+        "ärgern",
+        "ärgerte",
+        "ärgertest",
+        "ärgerten",
+        "ärgertet",
+        "geärgert"
       ]
     },
     {
@@ -98,7 +133,17 @@
           "gender": "m"
         }
       ],
-      "note": "The person you complain to takes bei: „beim Freund“."
+      "note": "The person you complain to takes bei: „beim Freund“.",
+      "forms": [
+        "beschwere",
+        "beschwerst",
+        "beschwert",
+        "beschweren",
+        "beschwerte",
+        "beschwertest",
+        "beschwerten",
+        "beschwertet"
+      ]
     },
     {
       "verb": "bitten um",
@@ -123,7 +168,18 @@
           "gender": "m"
         }
       ],
-      "note": "The person asked is a plain Akkusativ object too: „den Freund“."
+      "note": "The person asked is a plain Akkusativ object too: „den Freund“.",
+      "forms": [
+        "bitte",
+        "bittest",
+        "bittet",
+        "bitten",
+        "bat",
+        "batest",
+        "baten",
+        "batet",
+        "gebeten"
+      ]
     },
     {
       "verb": "denken an",
@@ -148,7 +204,18 @@
           "gender": "m"
         }
       ],
-      "note": "Having something in mind. Mulling it over is nachdenken über."
+      "note": "Having something in mind. Mulling it over is nachdenken über.",
+      "forms": [
+        "denke",
+        "denkst",
+        "denkt",
+        "denken",
+        "dachte",
+        "dachtest",
+        "dachten",
+        "dachtet",
+        "gedacht"
+      ]
     },
     {
       "verb": "sich erinnern an",
@@ -172,6 +239,16 @@
           "noun": "Hund",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "erinnere",
+        "erinnerst",
+        "erinnert",
+        "erinnern",
+        "erinnerte",
+        "erinnertest",
+        "erinnerten",
+        "erinnertet"
       ]
     },
     {
@@ -197,7 +274,18 @@
           "gender": "m"
         }
       ],
-      "note": "auf: something still to come. über: something already here."
+      "note": "auf: something still to come. über: something already here.",
+      "forms": [
+        "freue",
+        "freust",
+        "freut",
+        "freuen",
+        "freute",
+        "freutest",
+        "freuten",
+        "freutet",
+        "gefreut"
+      ]
     },
     {
       "verb": "sich freuen über",
@@ -222,7 +310,18 @@
           "gender": "m"
         }
       ],
-      "note": "über: something already here. auf: something still to come."
+      "note": "über: something already here. auf: something still to come.",
+      "forms": [
+        "freue",
+        "freust",
+        "freut",
+        "freuen",
+        "freute",
+        "freutest",
+        "freuten",
+        "freutet",
+        "gefreut"
+      ]
     },
     {
       "verb": "sich gewöhnen an",
@@ -246,6 +345,16 @@
           "noun": "Hund",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "gewöhne",
+        "gewöhnst",
+        "gewöhnt",
+        "gewöhnen",
+        "gewöhnte",
+        "gewöhntest",
+        "gewöhnten",
+        "gewöhntet"
       ]
     },
     {
@@ -270,6 +379,17 @@
           "noun": "Regenschauer",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "hoffe",
+        "hoffst",
+        "hofft",
+        "hoffen",
+        "hoffte",
+        "hofftest",
+        "hofften",
+        "hofftet",
+        "gehofft"
       ]
     },
     {
@@ -296,7 +416,17 @@
         }
       ],
       "note": "Reflexive. The sheet leaves out the sich.",
-      "sheet": "interessieren für (acc)"
+      "sheet": "interessieren für (acc)",
+      "forms": [
+        "interessiere",
+        "interessierst",
+        "interessiert",
+        "interessieren",
+        "interessierte",
+        "interessiertest",
+        "interessierten",
+        "interessiertet"
+      ]
     },
     {
       "verb": "sich kümmern um",
@@ -320,6 +450,17 @@
           "noun": "Hund",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "kümmere",
+        "kümmerst",
+        "kümmert",
+        "kümmern",
+        "kümmerte",
+        "kümmertest",
+        "kümmerten",
+        "kümmertet",
+        "gekümmert"
       ]
     },
     {
@@ -345,7 +486,20 @@
           "gender": "m"
         }
       ],
-      "note": "Separable: „denkt … nach“. Compare fragen nach dem Weg (Dativ)."
+      "note": "Separable: „denkt … nach“. Compare fragen nach dem Weg (Dativ).",
+      "forms": [
+        "denke nach",
+        "denkst nach",
+        "denkt nach",
+        "denken nach",
+        "dachte nach",
+        "dachtest nach",
+        "dachten nach",
+        "dachtet nach",
+        "nachdenken",
+        "nachgedacht",
+        "nachzudenken"
+      ]
     },
     {
       "verb": "reden über",
@@ -369,6 +523,17 @@
           "noun": "Hund",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "rede",
+        "redest",
+        "redet",
+        "reden",
+        "redete",
+        "redetest",
+        "redeten",
+        "redetet",
+        "geredet"
       ]
     },
     {
@@ -393,6 +558,17 @@
           "noun": "Hund",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "sorge",
+        "sorgst",
+        "sorgt",
+        "sorgen",
+        "sorgte",
+        "sorgtest",
+        "sorgten",
+        "sorgtet",
+        "gesorgt"
       ]
     },
     {
@@ -418,7 +594,19 @@
           "gender": "m"
         }
       ],
-      "note": "Compare erzählen von: the same picture, in the Dativ."
+      "note": "Compare erzählen von: the same picture, in the Dativ.",
+      "forms": [
+        "spreche",
+        "sprichst",
+        "spricht",
+        "sprechen",
+        "sprecht",
+        "sprach",
+        "sprachst",
+        "sprachen",
+        "spracht",
+        "gesprochen"
+      ]
     },
     {
       "verb": "schreiben an",
@@ -442,7 +630,19 @@
           "noun": "Freund",
           "gender": "m"
         }
-      ]
+      ],
+      "forms": [
+        "schreibe",
+        "schreibst",
+        "schreibt",
+        "schreiben",
+        "schrieb",
+        "schriebst",
+        "schrieben",
+        "schriebt",
+        "geschrieben"
+      ],
+      "spatialToo": true
     },
     {
       "verb": "sich streiten über",
@@ -467,7 +667,18 @@
           "gender": "m"
         }
       ],
-      "note": "Fighting over who gets something is usually streiten um."
+      "note": "Fighting over who gets something is usually streiten um.",
+      "forms": [
+        "streite",
+        "streitest",
+        "streitet",
+        "streiten",
+        "stritt",
+        "strittest",
+        "stritten",
+        "strittet",
+        "gestritten"
+      ]
     },
     {
       "verb": "sich vorbereiten auf",
@@ -493,7 +704,20 @@
         }
       ],
       "note": "Reflexive and separable: „bereitet sich … vor“. The sheet leaves out the sich.",
-      "sheet": "vorbereiten auf (acc)"
+      "sheet": "vorbereiten auf (acc)",
+      "forms": [
+        "bereite vor",
+        "bereitest vor",
+        "bereitet vor",
+        "bereiten vor",
+        "bereitete vor",
+        "bereitetest vor",
+        "bereiteten vor",
+        "bereitetet vor",
+        "vorbereiten",
+        "vorbereitet",
+        "vorzubereiten"
+      ]
     },
     {
       "verb": "warten auf",
@@ -517,7 +741,19 @@
           "noun": "Bus",
           "gender": "m"
         }
-      ]
+      ],
+      "forms": [
+        "warte",
+        "wartest",
+        "wartet",
+        "warten",
+        "wartete",
+        "wartetest",
+        "warteten",
+        "wartetet",
+        "gewartet"
+      ],
+      "spatialToo": true
     },
     {
       "verb": "sich wundern über",
@@ -541,6 +777,17 @@
           "noun": "Hund",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "wundere",
+        "wunderst",
+        "wundert",
+        "wundern",
+        "wunderte",
+        "wundertest",
+        "wunderten",
+        "wundertet",
+        "gewundert"
       ]
     },
     {
@@ -566,7 +813,20 @@
           "gender": "n"
         }
       ],
-      "note": "Separable: „hängt … ab“. vom = von dem."
+      "note": "Separable: „hängt … ab“. vom = von dem.",
+      "forms": [
+        "hänge ab",
+        "hängst ab",
+        "hängt ab",
+        "hängen ab",
+        "hing ab",
+        "hingst ab",
+        "hingen ab",
+        "hingt ab",
+        "abhängen",
+        "abgehangen",
+        "abzuhängen"
+      ]
     },
     {
       "verb": "angeben mit",
@@ -591,7 +851,21 @@
           "gender": "m"
         }
       ],
-      "note": "Separable: „gibt … an“."
+      "note": "Separable: „gibt … an“.",
+      "forms": [
+        "gebe an",
+        "gibst an",
+        "gibt an",
+        "geben an",
+        "gebt an",
+        "gab an",
+        "gabst an",
+        "gaben an",
+        "gabt an",
+        "angeben",
+        "angegeben",
+        "anzugeben"
+      ]
     },
     {
       "verb": "Angst haben vor",
@@ -615,6 +889,18 @@
           "noun": "Spinne",
           "gender": "f"
         }
+      ],
+      "forms": [
+        "angst habe",
+        "angst hast",
+        "angst hat",
+        "angst haben",
+        "angst habt",
+        "angst hatte",
+        "angst hattest",
+        "angst hatten",
+        "angst hattet",
+        "angst gehabt"
       ]
     },
     {
@@ -640,7 +926,18 @@
           "gender": "m"
         }
       ],
-      "note": "an + Dativ here, unlike denken an (Akkusativ)."
+      "note": "an + Dativ here, unlike denken an (Akkusativ).",
+      "forms": [
+        "arbeite",
+        "arbeitest",
+        "arbeitet",
+        "arbeiten",
+        "arbeitete",
+        "arbeitetest",
+        "arbeiteten",
+        "arbeitetet",
+        "gearbeitet"
+      ]
     },
     {
       "verb": "sich ekeln vor",
@@ -664,6 +961,18 @@
           "noun": "Spinne",
           "gender": "f"
         }
+      ],
+      "forms": [
+        "ekle",
+        "ekele",
+        "ekelst",
+        "ekelt",
+        "ekeln",
+        "ekelte",
+        "ekeltest",
+        "ekelten",
+        "ekeltet",
+        "geekelt"
       ]
     },
     {
@@ -689,7 +998,17 @@
           "gender": "pl"
         }
       ],
-      "note": "The Dativ plural adds -n: Äpfel → Äpfeln."
+      "note": "The Dativ plural adds -n: Äpfel → Äpfeln.",
+      "forms": [
+        "ernähre",
+        "ernährst",
+        "ernährt",
+        "ernähren",
+        "ernährte",
+        "ernährtest",
+        "ernährten",
+        "ernährtet"
+      ]
     },
     {
       "verb": "erzählen von",
@@ -714,7 +1033,17 @@
           "gender": "m"
         }
       ],
-      "note": "vom = von dem. Compare sprechen über: the same picture, in the Akkusativ."
+      "note": "vom = von dem. Compare sprechen über: the same picture, in the Akkusativ.",
+      "forms": [
+        "erzähle",
+        "erzählst",
+        "erzählt",
+        "erzählen",
+        "erzählte",
+        "erzähltest",
+        "erzählten",
+        "erzähltet"
+      ]
     },
     {
       "verb": "fragen nach",
@@ -739,7 +1068,18 @@
           "gender": "m"
         }
       ],
-      "note": "Compare nachdenken über den Weg (Akkusativ)."
+      "note": "Compare nachdenken über den Weg (Akkusativ).",
+      "forms": [
+        "frage",
+        "fragst",
+        "fragt",
+        "fragen",
+        "fragte",
+        "fragtest",
+        "fragten",
+        "fragtet",
+        "gefragt"
+      ]
     },
     {
       "verb": "sich fürchten vor",
@@ -763,6 +1103,17 @@
           "noun": "Spinne",
           "gender": "f"
         }
+      ],
+      "forms": [
+        "fürchte",
+        "fürchtest",
+        "fürchtet",
+        "fürchten",
+        "fürchtete",
+        "fürchtetest",
+        "fürchteten",
+        "fürchtetet",
+        "gefürchtet"
       ]
     },
     {
@@ -788,7 +1139,17 @@
           "gender": "n"
         }
       ],
-      "note": "zum = zu dem. Without zu, gehören means to belong to someone: „Der Hund gehört mir.“"
+      "note": "zum = zu dem. Without zu, gehören means to belong to someone: „Der Hund gehört mir.“",
+      "forms": [
+        "gehöre",
+        "gehörst",
+        "gehört",
+        "gehören",
+        "gehörte",
+        "gehörtest",
+        "gehörten",
+        "gehörtet"
+      ]
     },
     {
       "verb": "handeln von",
@@ -812,6 +1173,18 @@
           "noun": "Hund",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "handle",
+        "handele",
+        "handelst",
+        "handelt",
+        "handeln",
+        "handelte",
+        "handeltest",
+        "handelten",
+        "handeltet",
+        "gehandelt"
       ]
     },
     {
@@ -837,7 +1210,19 @@
           "gender": "m"
         }
       ],
-      "note": "beim = bei dem. The person helped is Dativ too: „dem Mann“."
+      "note": "beim = bei dem. The person helped is Dativ too: „dem Mann“.",
+      "forms": [
+        "helfe",
+        "hilfst",
+        "hilft",
+        "helfen",
+        "helft",
+        "half",
+        "halfst",
+        "halfen",
+        "halft",
+        "geholfen"
+      ]
     },
     {
       "verb": "leiden unter",
@@ -861,6 +1246,17 @@
           "noun": "Regen",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "leide",
+        "leidest",
+        "leidet",
+        "leiden",
+        "litt",
+        "littest",
+        "litten",
+        "littet",
+        "gelitten"
       ]
     },
     {
@@ -885,6 +1281,17 @@
           "noun": "Freund",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "sehne",
+        "sehnst",
+        "sehnt",
+        "sehnen",
+        "sehnte",
+        "sehntest",
+        "sehnten",
+        "sehntet",
+        "gesehnt"
       ]
     },
     {
@@ -909,6 +1316,17 @@
           "noun": "Hund",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "schimpfe",
+        "schimpfst",
+        "schimpft",
+        "schimpfen",
+        "schimpfte",
+        "schimpftest",
+        "schimpften",
+        "schimpftet",
+        "geschimpft"
       ]
     },
     {
@@ -935,7 +1353,19 @@
         }
       ],
       "note": "The sheet marks it (acc), but mit always takes the Dativ.",
-      "sheet": "sprechen mit (acc)"
+      "sheet": "sprechen mit (acc)",
+      "forms": [
+        "spreche",
+        "sprichst",
+        "spricht",
+        "sprechen",
+        "sprecht",
+        "sprach",
+        "sprachst",
+        "sprachen",
+        "spracht",
+        "gesprochen"
+      ]
     },
     {
       "verb": "träumen von",
@@ -959,6 +1389,17 @@
           "noun": "Pokal",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "träume",
+        "träumst",
+        "träumt",
+        "träumen",
+        "träumte",
+        "träumtest",
+        "träumten",
+        "träumtet",
+        "geträumt"
       ]
     },
     {
@@ -983,6 +1424,16 @@
           "noun": "Ball",
           "gender": "m"
         }
+      ],
+      "forms": [
+        "verlange",
+        "verlangst",
+        "verlangt",
+        "verlangen",
+        "verlangte",
+        "verlangtest",
+        "verlangten",
+        "verlangtet"
       ]
     },
     {
@@ -1008,7 +1459,18 @@
           "gender": "pl"
         }
       ],
-      "note": "Dativ plural: den … Hunden."
+      "note": "Dativ plural: den … Hunden.",
+      "forms": [
+        "zähle",
+        "zählst",
+        "zählt",
+        "zählen",
+        "zählte",
+        "zähltest",
+        "zählten",
+        "zähltet",
+        "gezählt"
+      ]
     },
     {
       "verb": "zweifeln an",
@@ -1033,7 +1495,19 @@
           "gender": "f"
         }
       ],
-      "note": "The sheet's example should read „ich zweifle an der Wahrheit“. an + Dativ, unlike denken an."
+      "note": "The sheet's example should read „ich zweifle an der Wahrheit“. an + Dativ, unlike denken an.",
+      "forms": [
+        "zweifle",
+        "zweifele",
+        "zweifelst",
+        "zweifelt",
+        "zweifeln",
+        "zweifelte",
+        "zweifeltest",
+        "zweifelten",
+        "zweifeltet",
+        "gezweifelt"
+      ]
     }
   ],
   "falle": [

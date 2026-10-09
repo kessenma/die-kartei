@@ -26,3 +26,6 @@ runpod/e2b_artifacts/
 *.safetensors
 *.mlmodelc/
 *.mlpackage/
+
+# kasus-cli build output (training/kasus_cli/build.sh); resources are symlinks into the app
+kasus_cli/build/

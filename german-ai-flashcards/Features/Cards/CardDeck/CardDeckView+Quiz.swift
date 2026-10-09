@@ -59,16 +59,34 @@ extension CardDeckView {
                     .font(.system(size: 48))
                     .foregroundStyle(percentage >= 80 ? .yellow : percentage >= 50 ? .blue : .orange)
 
-                Text("Quiz Complete!")
+                Text(isAnkiMode ? "Session Complete!" : "Quiz Complete!")
                     .font(.title)
                     .fontWeight(.bold)
 
-                Text("\(correct) / \(total)")
-                    .font(.system(size: 56, weight: .bold, design: .rounded))
+                if isAnkiMode {
+                    // Four ratings, not right/wrong: lead with how many cards were reviewed and
+                    // how they split, and keep "knew it" (anything but Didn't know) as the score.
+                    VStack(spacing: 0) {
+                        Text("\(total)")
+                            .font(.system(size: 56, weight: .bold, design: .rounded))
+                        Text(total == 1 ? "card reviewed" : "cards reviewed")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
 
-                Text("\(percentage)%")
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
+                    ankiRatingBreakdown
+
+                    Text("Knew \(correct) of \(total) · \(percentage)%")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("\(correct) / \(total)")
+                        .font(.system(size: 56, weight: .bold, design: .rounded))
+
+                    Text("\(percentage)%")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                }
 
                 Label(timerDisplay, systemImage: "clock")
                     .font(.subheadline)
@@ -76,7 +94,7 @@ extension CardDeckView {
 
                 if !missed.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Missed Words")
+                        Text(isAnkiMode ? "Didn't Know" : "Missed Words")
                             .font(.headline)
                             .padding(.bottom, 4)
 
@@ -157,6 +175,7 @@ extension CardDeckView {
         let total = cards.count
         let missed = cardResults.filter { !$0.value }.map { $0.key }.sorted()
         onQuizComplete?(correct, total, missed, elapsedSeconds, localStyle, nil)
+        creditDeckMix(mode: localStyle)
         clearPauseProgress()
         showQuizSummary = true
     }

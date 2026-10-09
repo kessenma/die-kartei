@@ -198,7 +198,7 @@ struct ClassMaterialImportView: View {
                 errorMessage = "Couldn't read that PDF."
                 return
             }
-            guard let extracted = PDFTextExtractor.extract(from: url) else {
+            guard let extracted = PDFTextExtractor.extract(from: url, rebuildingTables: true) else {
                 errorMessage = "Couldn't read that PDF."
                 return
             }

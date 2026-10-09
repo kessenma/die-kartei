@@ -19,7 +19,7 @@ German for identity words and headings, plain English for explanation.
 - `docs/CLASS_NOTES.md` — Deutschkurs: courses, class entries, handouts, homework, the per-course deck.
 - `docs/DOCUMENT_DECKS.md` — flashcards from a document: the vocab-sheet pairer, phrase picking, decks on a course.
 - `docs/WORTSCHATZ.md` — the Goethe word box: merged index, one SRS deck, sessions, status, debug args.
-- `docs/KASUS.md` — the Grammatik case path: units, story format and targets, validator, exercises and right/wrong feedback, rich-text markup, Verlauf, GrammarRoute, coach rules, adding a story, tutor-written stories (planner, gate, fallback, Kasus Lab, Mac probe), tests, debug args.
+- `docs/KASUS.md` — the Grammatik case path: units, story format and targets, validator, exercises and right/wrong feedback, rich-text markup, the 3D ending blocks (Endungs-Werkstatt, Bau das Wort), Verlauf, GrammarRoute, coach rules, adding a story, tutor-written stories (planner, gate, fallback, Kasus Lab, Mac probe), tests, debug args.
 - `docs/PREPOSITION_3D.md` — the 3D preposition scenes and die Figur.
 - `docs/VERB_PREPOSITIONS.md` — Verben mit Präpositionen: 42 verb pairs in the preposition hub's
   second track (cards, drills, Die Falle), their data, the baked 3D scenes, and what is still open.
@@ -31,7 +31,8 @@ German for identity words and headings, plain English for explanation.
   Production, the one-time schema deploy, and models being per device (`ModelHandoff`). Adding a field to a
   synced model means adding it to its codec.
 - `docs/MACOS.md` — the Mac app: the same target compiled for macOS, `App/MacCompat.swift` stand-ins,
-  Mac twins of the UIKit-wrapped views, what's hidden or different on the Mac. Wrap every
+  Mac twins of the UIKit-wrapped views, what's hidden or different on the Mac, and the Schreibhilfe
+  (the keyboard's Mac stand-in: Services menu items + a floating panel). Wrap every
   `import UIKit` in `#if canImport(UIKit)`, and keep the iOS build green.
 - `docs/MAC_PICTURES.md` — Mac-only picture models (Z-Image Turbo, FLUX.2 klein via the vendored
   `KarteiDiffusion` package; keep mlx-swift on the tutors' 0.31 pin) and "Draw on my Mac" (a phone

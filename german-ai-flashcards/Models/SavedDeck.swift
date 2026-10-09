@@ -120,6 +120,9 @@ final class SavedDeck {
         case goethe, goetheSRS
         case pastTense, pastTenseSRS
         case grammar
+        /// The Verben-mit-Präpositionen review box: one card per verb pair, studied in the
+        /// preposition hub's own review (VerbPrepositionReviewView), not the generic player.
+        case verbPrepositionSRS
         /// Real saved-word content built from the phrase library / a conversation / a paper / a story
         /// / a job posting the learner studied / a class the learner is taking / a document (a vocab
         /// sheet, a handout) the learner turned into cards.
@@ -133,6 +136,7 @@ final class SavedDeck {
         case "past-tense": .pastTense
         case "past-tense-srs": .pastTenseSRS
         case "grammar": .grammar
+        case VerbPrepositionService.deckGenerator: .verbPrepositionSRS
         case "phrase": .phrase
         case "conversation": .conversation
         case "paper": .paper
@@ -165,7 +169,7 @@ final class SavedDeck {
     var isBrowsableContent: Bool {
         switch kind {
         case .generated, .phrase, .conversation, .paper, .story, .job, .classNotes, .document: true
-        case .goethe, .goetheSRS, .pastTense, .pastTenseSRS, .grammar: false
+        case .goethe, .goetheSRS, .pastTense, .pastTenseSRS, .grammar, .verbPrepositionSRS: false
         }
     }
 
