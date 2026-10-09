@@ -2,7 +2,7 @@ import Foundation
 
 /// One browsable topic, a German theme word with its English gloss. Kept for story topics since
 /// the AI exercise screen that first used it was deleted; nothing reads it today.
-struct GrammarTopic: Codable, Identifiable, Hashable {
+struct StoryTopic: Codable, Identifiable, Hashable {
     let de: String
     let en: String
 
@@ -12,15 +12,15 @@ struct GrammarTopic: Codable, Identifiable, Hashable {
 }
 
 private struct GrammarTopicsFile: Codable {
-    let topics: [GrammarTopic]
+    let topics: [StoryTopic]
 }
 
 /// Loads the bundled catalog of ~100 exercise topics the learner can scroll through
 /// (or have picked at random) instead of typing their own.
 enum GrammarTopicService {
-    private static var cache: [GrammarTopic]?
+    private static var cache: [StoryTopic]?
 
-    static func topics() -> [GrammarTopic] {
+    static func topics() -> [StoryTopic] {
         if let cached = cache { return cached }
         guard let url = Bundle.main.url(forResource: "grammar_topics", withExtension: "json"),
               let data = try? Data(contentsOf: url),
@@ -30,7 +30,7 @@ enum GrammarTopicService {
         return file.topics
     }
 
-    static func randomTopic() -> GrammarTopic? {
+    static func randomTopic() -> StoryTopic? {
         topics().randomElement()
     }
 }

@@ -94,7 +94,7 @@ struct GrammarHistoryEntry: Identifiable {
         case .kasus(let round):
             round.isQuickRound || round.isConceptRound
                 ? round.displayTitle(showsUnit: true)
-                : "\(round.unit?.germanTitle ?? "Kasus") · \(round.unitStepLabel)"
+                : [round.unit?.germanTitle ?? "Kasus", round.unitStepLabel].filter { !$0.isEmpty }.joined(separator: " · ")
         case .article:     "Der · Die · Das"
         case .preposition: "Präpositionen"
         }
@@ -145,14 +145,12 @@ extension KasusRound {
     /// Schnellrunde. (A row shows „Lösung angezeigt“ as an eye in front.)
     func displayDetail() -> String {
         var parts: [String] = []
-        switch step {
-        case .quick?:  parts.append("\(askedCount) Sätze")
-        case .roles?:  parts.append("\(askedCount) Rollen")
-        case .wer?:    parts.append("\(askedCount) Sätze")
-        case .probe?:  parts.append("\(askedCount) Formen")
-        case .lesson?: parts.append("gelesen")
-        case .some:    parts.append(stepLabel)
-        case nil:      break
+        if let step {
+            switch step.meta.filing {
+            case .lesson:               parts.append("gelesen")
+            case .topicDrill, .concept: parts.append("\(askedCount) \(step.meta.countNoun.de)")
+            case .story:                parts.append(stepLabel)
+            }
         }
         if let hintLevel { parts.append(hintLevel.germanLabel) }
         if durationSeconds > 0 { parts.append(KasusHistoryFormat.duration(durationSeconds)) }

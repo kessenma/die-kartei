@@ -14,7 +14,7 @@
 
 import SwiftUI
 
-enum KasusUnit: String, CaseIterable, Identifiable {
+nonisolated enum KasusUnit: String, CaseIterable, Identifiable {
     case nominativ, akkusativ, dativ, genitiv, alleFaelle
 
     var id: String { rawValue }

@@ -656,14 +656,14 @@ extension KasusService {
 
     /// Every Verstehen round files under this prefix: `concept-<unit>-<exercise>`, and a read
     /// lesson under `concept-<unit>-lesson`.
-    static let conceptIDPrefix = "concept-"
+    static let conceptIDPrefix = KasusDrillMeta.conceptPrefix
 
     static func conceptRoundID(_ unit: KasusUnit, _ exercise: KasusConceptExercise) -> String {
-        "\(conceptIDPrefix)\(unit.rawValue)-\(exercise.rawValue)"
+        exercise.roundStep.roundID(topicKey: unit.rawValue)
     }
 
     static func lessonRoundID(_ unit: KasusUnit) -> String {
-        "\(conceptIDPrefix)\(unit.rawValue)-\(KasusRoundStep.lesson.rawValue)"
+        KasusRoundStep.lesson.roundID(topicKey: unit.rawValue)
     }
 
     /// A unit's items for one exercise, validated and read for play. An item that fails its audit
@@ -741,12 +741,12 @@ extension KasusService {
 extension KasusProgress {
     /// The unit's lesson has been read through.
     func lessonRead(_ unit: KasusUnit) -> Bool {
-        isDone(storyID: KasusService.lessonRoundID(unit), unit: unit, step: .lesson)
+        drillDone(.lesson, topicKey: unit.rawValue)
     }
 
     /// A round of the exercise has been played in the unit.
     func conceptDone(_ unit: KasusUnit, _ exercise: KasusConceptExercise) -> Bool {
-        isDone(storyID: KasusService.conceptRoundID(unit, exercise), unit: unit, step: exercise.roundStep)
+        drillDone(exercise.roundStep, topicKey: unit.rawValue)
     }
 
     /// The lesson read and every offered exercise played: the hub's Verstehen dot.

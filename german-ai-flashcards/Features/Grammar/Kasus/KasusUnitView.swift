@@ -57,8 +57,8 @@ struct KasusUnitView: View {
     @State private var showLesson = false
     @State private var pendingConcept: KasusConceptSession?
 
-    /// Questions in one Schnellrunde.
-    private let quickRoundCount = 10
+    /// Questions in one Schnellrunde (the registry's round size).
+    private let quickRoundCount = KasusRoundStep.quick.meta.roundSize
 
     init(unit: KasusUnit, modelManager: MLXModelManager? = nil, mlxService: MLXGenerationService? = nil) {
         self.unit = unit
@@ -379,10 +379,11 @@ struct KasusUnitView: View {
 
     private var quickRoundSection: some View {
         Section {
-            quickRoundRow(.schnellrunde, symbol: "character.cursor.ibeam", title: "Schnellrunde · Quick round",
+            let quick = KasusRoundStep.quick.meta, build = KasusRoundStep.build.meta
+            quickRoundRow(.schnellrunde, symbol: quick.symbol, title: "\(quick.germanTitle) · \(quick.englishTitle)",
                           detail: "\(quickRoundCount) Sätze · \(unit.casesInPlay.map(\.short).joined(separator: " + "))")
-            quickRoundRow(.bauDasWort, symbol: "cube.fill", title: "Bau das Wort · Build the word",
-                          detail: "The same sentences, the ending snapped onto the stem in 3D")
+            quickRoundRow(.bauDasWort, symbol: build.symbol, title: "\(build.germanTitle) · \(build.englishTitle)",
+                          detail: build.blurb)
         } footer: {
             Text("Pick the article that fits the sentence, or in Bau das Wort just its ending. Every miss shows which case it is and why.")
         }

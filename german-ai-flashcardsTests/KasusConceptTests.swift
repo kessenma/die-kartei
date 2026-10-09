@@ -571,6 +571,11 @@ struct KasusConceptTests {
         #expect(round.displayDetail() == "10s")
         #expect(!round.isConceptRound && !round.isLessonRound && round.isListed)
         #expect(round.displayTitle(showsUnit: true) == "Dativ")
+        // And a unit this build doesn't know: a plain row titled „Kasus“, nothing hidden.
+        let elsewhere = KasusRound(storyID: "future-topic", unitRaw: "zukunft", stepRaw: "quick",
+                                   askedCount: 3, firstTryCount: 2, durationSeconds: 10)
+        #expect(elsewhere.unit == nil && elsewhere.topic == nil && elsewhere.isListed)
+        #expect(elsewhere.displayTitle(showsUnit: true) == "Schnellrunde")
     }
 
     @Test("The hub's Weiter row: the lesson, then Rollen, then the story")

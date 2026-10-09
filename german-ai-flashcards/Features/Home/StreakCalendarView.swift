@@ -1020,19 +1020,17 @@ struct DayDetailSheet: View {
             predicate: #Predicate<KasusRound> { $0.date >= dayStart && $0.date < end }
         ))) ?? []
         for r in kasusRounds {
-            let step = r.step ?? .fill
-            let noun = switch step {
-            case .find:   r.isMarkingRound ? "words" : "phrases"
-            case .fill:   r.isLegacyStoryRound ? "articles" : "endings"
-            case .quick:  "sentences"
-            case .build:  "words"
-            case .roles:  "roles"
-            case .wer:    "sentences"
-            case .probe:  "swaps"
-            case .lesson: "cards"
+            // The two story steps count by the round's own state; every other step by its meta.
+            // A step this build doesn't know counts plain answers.
+            let step = r.step
+            let noun: String = switch step {
+            case .find?:      r.isMarkingRound ? "words" : "phrases"
+            case .fill?:      r.isLegacyStoryRound ? "articles" : "endings"
+            case let known?:  known.meta.countNoun.en
+            case nil:         "answers"
             }
             var parts: [String] = []
-            if step == .lesson {
+            if step?.meta.filing == .lesson {
                 // A read lesson: nothing asked, so „gelesen“ instead of 0/0.
                 parts.append("gelesen")
             } else if let score = r.markScore {
@@ -1047,10 +1045,12 @@ struct DayDetailSheet: View {
             if r.durationSeconds > 0 { parts.append("\(r.durationSeconds)s") }
             // "Kasus · Der verlorene Schlüssel · Markieren · Dativ", "Kasus · Schnellrunde · Dativ",
             // "Kasus · Rollen · Dativ" (Verstehen), "Kasus · Lektion · Dativ".
-            let title = step == .quick || step == .build || step.isConcept
-                ? ["Kasus", step.germanLabel, r.unit?.germanTitle]
-                : ["Kasus", KasusStoryBank.bundled.story(id: r.storyID)?.title
-                            ?? KasusStoryStore.title(id: r.storyID, in: context), r.stepLabel]
+            let title: [String?] = if let step, step.meta.filing != .story {
+                ["Kasus", step.germanLabel, r.unit?.germanTitle]
+            } else {
+                ["Kasus", KasusStoryBank.bundled.story(id: r.storyID)?.title
+                          ?? KasusStoryStore.title(id: r.storyID, in: context), r.stepLabel]
+            }
             out.append(DayExercise(
                 time: r.date,
                 icon: r.unit?.symbol ?? "checklist",

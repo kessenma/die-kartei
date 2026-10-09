@@ -72,8 +72,9 @@ struct KasusRoundDetailView: View {
     }
 
     private var isFinden: Bool { round.step == .find }
-    /// Rollen and Wer macht was?: the pick is a role or a reading, never a form to strike through.
-    private var isRecognition: Bool { round.step == .roles || round.step == .wer }
+    /// Rollen and Wer macht was?: the pick is a role or a reading, never a form to strike through
+    /// (the registry's `pickIsForm`; Finden is handled apart).
+    private var isRecognition: Bool { round.step.map { !$0.meta.pickIsForm && $0 != .find } ?? false }
 
     // MARK: - Header
 
@@ -143,7 +144,7 @@ struct KasusRoundDetailView: View {
     private var stepLine: String {
         var parts = [round.unit?.germanTitle ?? "Kasus"]
         if let step = round.step, !round.isQuickRound, !step.isConcept { parts.append(round.unitStepLabel) }
-        if round.isQuickRound { parts.append("\(round.askedCount) Sätze") }
+        if round.isQuickRound, let step = round.step { parts.append("\(round.askedCount) \(step.meta.countNoun.de)") }
         if round.isConceptRound { parts.append(round.displayDetail().components(separatedBy: " · ").first ?? "") }
         if let hint = round.hintLevel { parts.append(hint.germanLabel) }
         if let mode = round.feedbackMode { parts.append(mode.germanLabel) }
@@ -169,8 +170,7 @@ struct KasusRoundDetailView: View {
             let names = moved.map(\.name).joined(separator: " and ")
             return "Moved the coach's \(names) skill, from \(counting.count) of your own answers."
         }
-        if round.step == .find { return "\(round.stepLabel) is for spotting cases, so it never moves the coach." }
-        if isRecognition { return "\(round.stepLabel) is for understanding the roles, so it never moves the coach." }
+        if let step = round.step, let note = step.meta.coachNote { return "\(round.stepLabel) \(note)" }
         if round.unit == .nominativ { return "Nominativ has no coach skill, so this counted for the streak." }
         if let hint = round.hintLevel, hint.neverCountsTowardSkill {
             return "\(hint.germanLabel) counts for the streak but never moves the coach."

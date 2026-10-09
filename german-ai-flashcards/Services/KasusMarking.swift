@@ -837,3 +837,20 @@ nonisolated enum KasusMarking {
         return items.dropLast().joined(separator: ", ") + " and " + items[items.count - 1]
     }
 }
+
+// MARK: - Round history
+
+extension KasusRoundItem {
+    /// Markieren: an ordinary word marked in a round that asked `asked`. The phrase is the word,
+    /// with no answer and no gender; the explanation says why it isn't part of the case.
+    static func markedWord(_ word: KasusWord, in sentence: KasusSentence, asked: GrammarCase,
+                           explanation: String) -> KasusRoundItem {
+        var item = KasusRoundItem(sentence: sentence.text, phraseStart: word.range.location, phrase: word.text,
+                                  answer: "", pick: asked.rawValue, kasus: asked, genus: .der,
+                                  outcome: .wrongMark, explanation: explanation, hasNounGender: false)
+        item.genusRaw = ""
+        item.markedWords = 1
+        item.wordCount = 1
+        return item
+    }
+}

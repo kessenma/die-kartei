@@ -753,6 +753,19 @@ struct EndingsQuestion: Identifiable {
     }
 }
 
+extension EndingsQuestion {
+    /// A Schnellrunde answer for the round history: the frame with the right article in place.
+    func roundItem(pick: String) -> KasusRoundItem {
+        let (before, after) = parts
+        let outcome: KasusItemOutcome = pick == answer ? .right : isGenderSlip(pick) ? .genderSlip : .caseMiss
+        return KasusRoundItem(sentence: before + answer + after, phraseStart: before.utf16.count,
+                              phrase: "\(answer) \(nounForm)", answer: answer, pick: pick,
+                              kasus: kasus, genus: gender, outcome: outcome,
+                              // The slip note for a gender slip, as the drill showed it.
+                              explanation: feedback(pick: pick))
+    }
+}
+
 /// One Schnellrunde: which cases it asks, and which one it leans on. Launched through
 /// `ActivityRouter` as `.caseEndings`; its round is filed under the unit
 /// (`KasusService.quickRoundID(for:)`).

@@ -45,20 +45,26 @@ nonisolated enum KasusConceptKind: String, Codable, CaseIterable, Hashable {
     }
 }
 
-/// The three Verstehen exercises, each one row on a unit screen and one `KasusRoundStep`.
+/// The three Verstehen exercises, each one row on a unit screen and one `KasusRoundStep`. What a
+/// row shows and how a round files come from the registry (`kind.meta`, `KasusRoundStep.swift`);
+/// what stays here is the item side: which item kinds play in the exercise and how many items a
+/// unit needs before it offers it.
 nonisolated enum KasusConceptExercise: String, CaseIterable, Identifiable, Hashable {
     case roles, wer, probe
 
     var id: String { rawValue }
 
-    /// What a finished round records as.
-    var roundStep: KasusRoundStep {
+    /// The exercise's kind in the registry.
+    var kind: KasusDrillKind {
         switch self {
         case .roles: .roles
         case .wer:   .wer
         case .probe: .probe
         }
     }
+
+    /// What a finished round records as.
+    var roundStep: KasusRoundStep { kind.step }
 
     init?(step: KasusRoundStep) {
         guard let exercise = Self.allCases.first(where: { $0.roundStep == step }) else { return nil }
@@ -70,67 +76,24 @@ nonisolated enum KasusConceptExercise: String, CaseIterable, Identifiable, Hasha
         KasusConceptKind.allCases.filter { $0.exercise == self }
     }
 
-    var germanTitle: String {
-        switch self {
-        case .roles: "Rollen"
-        case .wer:   "Wer macht was?"
-        case .probe: "Die Probe"
-        }
-    }
-
-    var englishTitle: String {
-        switch self {
-        case .roles: "Who does what?"
-        case .wer:   "Only the ending tells"
-        case .probe: "Swap in der Mann"
-        }
-    }
-
+    var germanTitle: String { kind.meta.germanTitle }
+    var englishTitle: String { kind.meta.englishTitle }
     /// One line for the unit screen's row.
-    var blurb: String {
-        switch self {
-        case .roles: "Name each phrase's job: the doer, the done-to, the receiver …"
-        case .wer:   "Read who does what when the word order doesn't say"
-        case .probe: "Read an article that could be two cases"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .roles: "tag.fill"
-        case .wer:   "person.2.fill"
-        case .probe: "arrow.2.squarepath"
-        }
-    }
-
+    var blurb: String { kind.meta.blurb }
+    var symbol: String { kind.meta.symbol }
     /// Items per round. Rollen asks every phrase of its items, so eight sentences are about
     /// eighteen roles.
-    var roundSize: Int {
-        switch self {
-        case .roles: 8
-        case .wer:   10
-        case .probe: 8
-        }
-    }
+    var roundSize: Int { kind.meta.roundSize }
+    /// About how long a round takes, for the hub's hero line.
+    var minutes: Int { kind.meta.minutes }
 
-    /// Fewer items than this in a unit, and the unit doesn't offer the exercise.
+    /// Fewer items than this in a unit, and the unit doesn't offer the exercise. A property of
+    /// the item bank, not of the kind.
     var minimumItems: Int {
         switch self {
         case .roles: 4
         case .wer:   6
         case .probe: 4
-        }
-    }
-
-    /// Only the Probe is production: the form the learner picks is the learner's own.
-    var movesCoach: Bool { self == .probe }
-
-    /// About how long a round takes, for the hub's hero line.
-    var minutes: Int {
-        switch self {
-        case .roles: 4
-        case .wer:   3
-        case .probe: 3
         }
     }
 }

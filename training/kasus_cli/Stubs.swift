@@ -20,12 +20,6 @@ enum PrepositionService {}
 // ConversationConfig.swift, home of CEFRLevel, names the tutor model in a chat config.
 enum MLXModel: String, Codable, Hashable { case stub }
 
-// KasusRound.swift is a SwiftData model; the Verstehen items (KasusConcept.swift) only name the
-// step each exercise records as. The same raw values as the app's.
-nonisolated enum KasusRoundStep: String, Codable, CaseIterable {
-    case find, fill, quick, roles, wer, probe, lesson
-}
-
 // GrammarPalette.swift's colors. Display only.
 extension Color { nonisolated init(light: UInt, dark: UInt) { self.init(white: 0) } }
 

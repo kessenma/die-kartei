@@ -261,7 +261,7 @@ struct KasusBlank: Identifiable, Hashable {
 }
 
 /// How far the Ohne Hilfe Tipp button went before the first pick.
-enum KasusTipp: Int, CaseIterable, Comparable, Hashable {
+nonisolated enum KasusTipp: Int, CaseIterable, Comparable, Hashable {
     case none, trigger, gender, kasus, answer
 
     static func < (a: KasusTipp, b: KasusTipp) -> Bool { a.rawValue < b.rawValue }
@@ -309,10 +309,22 @@ enum KasusFindMark: Hashable {
     case missed
 }
 
+extension KasusPickOutcome {
+    /// The stored form of an Einsetzen pick's grade.
+    var itemOutcome: KasusItemOutcome {
+        switch self {
+        case .right:       .right
+        case .genderSlip:  .genderSlip
+        case .numberSlip:  .numberSlip
+        case .caseMiss:    .caseMiss
+        }
+    }
+}
+
 // MARK: - Round results
 
 /// One answer, as `recordRound` needs it.
-struct KasusItemResult: Hashable {
+nonisolated struct KasusItemResult: Hashable {
     let kasus: GrammarCase
     let genus: Gender
     /// Right on the first pick (Endungen, Schnellrunde), every word marked (Markieren), or painted
@@ -341,9 +353,10 @@ struct KasusItemResult: Hashable {
 /// A finished Markieren, Endungen or Schnellrunde (or an old Finden or Einsetzen), handed to
 /// `KasusService.recordRound`.
 struct KasusRoundResult {
-    /// The story's id, or `KasusService.quickRoundID(for:)` for a Schnellrunde.
+    /// The story's id, or the step's `roundID(topicKey:)` for a round with no story.
     let storyID: String
-    let unit: KasusUnit
+    /// What the round files under (`KasusRound.unitRaw`): a unit of the case path, or a topic.
+    let topic: GrammarTopic
     let step: KasusRoundStep
     /// Einsetzen only.
     var hintLevel: KasusHintLevel? = nil
@@ -400,6 +413,22 @@ struct KasusRoundResult {
 
     /// Something to record: an answer, or a marking round with words to find.
     var isEmpty: Bool { items.isEmpty && (markScore?.caseWords ?? 0) == 0 }
+
+    /// The unit, for a round of the case path; nil for a topic that isn't a case.
+    var unit: KasusUnit? { topic.unit }
+}
+
+extension KasusRoundResult {
+    /// A round of the case path, filed under its unit. The memberwise labels, so every caller
+    /// that names a unit keeps reading as before.
+    init(storyID: String, unit: KasusUnit, step: KasusRoundStep, hintLevel: KasusHintLevel? = nil,
+         items: [KasusItemResult], durationSeconds: Int, paintedCount: Int? = nil,
+         feedbackMode: KasusFeedbackMode? = nil, markCase: GrammarCase? = nil, markScore: KasusMarkScore? = nil,
+         revealedAnswers: Bool = false, id: UUID = UUID()) {
+        self.init(storyID: storyID, topic: .kasus(unit), step: step, hintLevel: hintLevel, items: items,
+                  durationSeconds: durationSeconds, paintedCount: paintedCount, feedbackMode: feedbackMode,
+                  markCase: markCase, markScore: markScore, revealedAnswers: revealedAnswers, id: id)
+    }
 }
 
 /// One `applyDrillResult` call `recordRound` made.
@@ -446,14 +475,14 @@ enum KasusService {
     /// Finden's note for a tap on a word that isn't a target. Always true, whatever was tapped.
     static let nonTargetNote = "Only article + noun phrases count here: der, ein, mein, kein … with their noun."
 
-    /// The storyID a Schnellrunde is filed under: "quick-dativ".
+    /// The storyID a Schnellrunde is filed under: "quick-dativ" (`KasusRoundStep.roundID`).
     static func quickRoundID(for unit: KasusUnit) -> String {
-        "quick-\(unit.rawValue)"
+        KasusRoundStep.quick.roundID(topicKey: unit.rawValue)
     }
 
     /// The storyID a Bau das Wort round is filed under: "build-dativ".
     static func buildRoundID(for unit: KasusUnit) -> String {
-        "build-\(unit.rawValue)"
+        KasusRoundStep.build.roundID(topicKey: unit.rawValue)
     }
 
     // MARK: Preparing a story
@@ -730,9 +759,17 @@ enum KasusService {
     /// Bau das Wort (`step: .build`) is graded the same way and filed under `buildRoundID`.
     static func quickResult(unit: KasusUnit, items: [KasusItemResult], durationSeconds: Int,
                             step: KasusRoundStep = .quick) -> KasusRoundResult {
-        let id = step == .build ? buildRoundID(for: unit) : quickRoundID(for: unit)
-        return KasusRoundResult(storyID: id, unit: unit, step: step, items: items,
-                                durationSeconds: durationSeconds)
+        drillResult(step: step, topic: .kasus(unit), items: items, durationSeconds: durationSeconds)
+    }
+
+    /// A round with no story (a unit drill or a Verstehen exercise), for `recordRound`: filed
+    /// under the step's own id in the topic (`KasusRoundStep.roundID(topicKey:)`), so no step can
+    /// land under another step's id.
+    static func drillResult(step: KasusRoundStep, topic: GrammarTopic, items: [KasusItemResult],
+                            durationSeconds: Int, id: UUID = UUID()) -> KasusRoundResult {
+        precondition(step.meta.filing != .story, "a story step files under its story")
+        return KasusRoundResult(storyID: step.roundID(topicKey: topic.key), topic: topic, step: step,
+                                items: items, durationSeconds: durationSeconds, id: id)
     }
 
     /// Whether Ergebnis offers "eine Stufe schwerer".
@@ -779,21 +816,19 @@ enum KasusService {
         // The f/n/pl Akkusativ is the dictionary form (die Katze · die Katze), so once the gender
         // is on screen, so is the answer.
         let genderGivesItAway = item.kasus == .akkusativ && item.genus != .der
-        switch step {
-        case .find:
+        switch step.meta.coachPolicy {
+        // Recognition (Markieren, Rollen, Wer macht was?, a lesson, a timed round): never.
+        case .never:
             return false
-        // Verstehen: Rollen and Wer macht was? are recognition (the role, the reading), and a
-        // lesson is nothing answered; none ever moves the coach.
-        case .roles, .wer, .lesson:
-            return false
-        // Die Probe is production: the masculine test noun shows nothing until the learner picks
-        // its form, so even an f/n/pl Akkusativ phrase is the learner's own answer here.
-        case .probe:
+        // Production whose screen shows nothing of the answer (Die Probe's test noun): even an
+        // f/n/pl Akkusativ phrase is the learner's own answer.
+        case .production:
             return true
-        case .quick, .build:
-            // The drill names the noun with its article („Noun: die Katze“).
+        // The drill names the noun with its article („Noun: die Katze“).
+        case .productionUnlessGenderShown:
             return !genderGivesItAway
-        case .fill:
+        // Endungen, by help level.
+        case .hintLadder:
             switch hint {
             case .lern?, .viel?, nil: return false
             case .genus?:             return item.genus == .der
@@ -847,7 +882,7 @@ enum KasusService {
         }
         return KasusRound(
             storyID: result.storyID,
-            unitRaw: result.unit.rawValue,
+            unitRaw: result.topic.key,
             stepRaw: result.step.rawValue,
             hintLevelRaw: result.hintLevel?.rawValue ?? "",
             askedCount: result.askedCount,
@@ -1358,11 +1393,22 @@ struct KasusProgress {
     }
 
     func isDone(storyID: String, unit: KasusUnit, step: KasusRoundStep) -> Bool {
-        lastPlayed(storyID: storyID, unit: unit, step: step) != nil
+        isDone(storyID: storyID, topicKey: unit.rawValue, step: step)
     }
 
     func lastPlayed(storyID: String, unit: KasusUnit, step: KasusRoundStep) -> Date? {
         latest[Key(storyID: storyID, unitRaw: unit.rawValue, stepRaw: step.rawValue)]
+    }
+
+    /// By the topic key `KasusRound.unitRaw` stores: a unit's raw value, or a topic's own key.
+    func isDone(storyID: String, topicKey: String, step: KasusRoundStep) -> Bool {
+        latest[Key(storyID: storyID, unitRaw: topicKey, stepRaw: step.rawValue)] != nil
+    }
+
+    /// A round of a step with no story has been played in the topic: the Schnellrunde, Bau das
+    /// Wort, a Verstehen exercise, a read lesson. Keyed on the step's own round id.
+    func drillDone(_ step: KasusRoundStep, topicKey: String) -> Bool {
+        isDone(storyID: step.roundID(topicKey: topicKey), topicKey: topicKey, step: step)
     }
 
     /// The last Markieren or Endungen (or Finden or Einsetzen) of a story. Nil when never played.
@@ -1386,7 +1432,7 @@ struct KasusProgress {
     }
 
     func quickRoundDone(_ unit: KasusUnit) -> Bool {
-        isDone(storyID: KasusService.quickRoundID(for: unit), unit: unit, step: .quick)
+        drillDone(.quick, topicKey: unit.rawValue)
     }
 }
 
