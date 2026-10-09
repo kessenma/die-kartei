@@ -91,6 +91,14 @@ enum KasusDebugSeeder {
         if let probe = conceptRound(.dativ, .probe, wrongEvery: 3, seconds: 121, date: day(2, 18, 30)) {
             kasus.append(probe)
         }
+        // Played through by the modules themselves: a Bau das Wort round in the Akkusativ and a
+        // Wer macht was? round in the Dativ, so Verlauf has every kind's row.
+        if let build = KasusDrillKind.build.debugRound(topic: .kasus(.akkusativ), wrongEvery: 4, seed: 11) {
+            kasus.append(KasusService.round(for: build, date: day(2, 17, 40)))
+        }
+        if let wer = KasusDrillKind.wer.debugRound(topic: .kasus(.dativ), wrongEvery: 3, seed: 5) {
+            kasus.append(KasusService.round(for: wer, date: day(1, 18, 50)))
+        }
 
         // Three days ago: an Einsetzen from before Endungen, gemischt at Ohne Hilfe, one gap in
         // five wrong. No feedback mode, so the history labels it „Einsetzen“.
@@ -147,8 +155,7 @@ enum KasusDebugSeeder {
     /// A Schnellrunde over the unit's cases, every `wrongEvery`-th question answered with another
     /// of its buttons.
     private static func quickRound(_ unit: KasusUnit, wrongEvery: Int, seconds: Int, date: Date) -> KasusRound {
-        let session = CaseEndingsSession(unit: unit)
-        let questions = EndingsQuestion.round(cases: session.cases, emphasis: session.emphasis)
+        let questions = EndingsQuestion.round(cases: unit.casesInPlay, emphasis: unit.focusCase)
         let items = questions.enumerated().map { i, q -> KasusItemResult in
             let others = q.options.filter { $0 != q.answer }
             let pick = i % wrongEvery == wrongEvery - 1 && !others.isEmpty ? others[i % others.count] : q.answer

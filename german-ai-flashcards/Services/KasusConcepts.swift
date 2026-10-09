@@ -11,7 +11,6 @@
 //    KasusProbeQuestion     the Probe's swap: the phrase, the test noun, the swapped sentence
 //    KasusConceptRound      one round: steps in order, `answer` / `answerStep`, `result`
 //    KasusConceptExplanation the Wer and Probe lines, the role reveal, the walk's Ja/Nein lines
-//    KasusConceptSession    what `Activity.kasusConcept` launches
 //
 //  Rollen and Wer macht was? are recognition and count for the streak only; the Probe is
 //  production and may move the coach like the Schnellrunde (`KasusService.countsTowardSkill`).
@@ -311,10 +310,24 @@ struct KasusConceptRound {
     /// does a Nein to the last question (then it's the direct object). A wrong Ja is explained
     /// and the walk goes on; a wrong Nein at the deciding question ends it with the answer shown.
     mutating func answerStep(yes: Bool) -> KasusConceptStepResult? {
-        guard exercise == .roles, var walk, let question = walk.current, let step = current,
+        guard exercise == .roles, var walk, walk.current != nil, let step = current,
               let index = step.target, let target = items[step.item].target(index),
               let actual = items[step.item].facts.roles[index] else { return nil }
-        let item = items[step.item]
+        let result = Self.walk(&walk, yes: yes, target: target, actual: actual, item: items[step.item], step: cursor)
+        self.walk = walk
+        if let finished = result.finished {
+            answers.append(finished)
+            startWalkIfNeeded()
+        }
+        return result
+    }
+
+    /// One Ja or Nein on `walk`'s current question for the phrase `target`, whose role is
+    /// `actual`: the line to show, whether it was right, and the phrase's graded answer once the
+    /// walk is over. Shared with the drill shell's Rollen module, which keeps the walk itself.
+    static func walk(_ walk: inout KasusConceptWalk, yes: Bool, target: KasusLocatedTarget, actual: KasusRole,
+                     item: KasusConceptPlayable, step: Int) -> KasusConceptStepResult {
+        let question = walk.current ?? walk.questions.last ?? .direktesObjekt
         let decides = actual == question
         let right = yes == decides
         if !right { walk.wrong += 1 }
@@ -336,13 +349,8 @@ struct KasusConceptRound {
         }
         var finished: KasusConceptAnswer?
         if walk.isOver {
-            finished = Self.gradeRole(picked: nil, right: walk.wrong == 0, target: target, actual: actual,
-                                      item: item, step: cursor, pick: .step(question, yes: yes))
-        }
-        self.walk = walk
-        if let finished {
-            answers.append(finished)
-            startWalkIfNeeded()
+            finished = gradeRole(picked: nil, right: walk.wrong == 0, target: target, actual: actual,
+                                 item: item, step: step, pick: .step(question, yes: yes))
         }
         return KasusConceptStepResult(question: question, yes: yes, right: right, line: line, finished: finished)
     }
@@ -350,7 +358,7 @@ struct KasusConceptRound {
     // MARK: Grading
 
     /// `picked` is the chip (Direkt); nil for a walk, whose lines already said what went wrong.
-    private static func gradeRole(picked: KasusRole?, right: Bool, target: KasusLocatedTarget, actual: KasusRole,
+    static func gradeRole(picked: KasusRole?, right: Bool, target: KasusLocatedTarget, actual: KasusRole,
                                   item: KasusConceptPlayable, step: Int, pick: KasusConceptPick) -> KasusConceptAnswer {
         let kasus = actual.revealedCase(for: target)
         let explanation = KasusConceptExplanation.role(picked: right ? nil : picked, actual: actual,
@@ -364,7 +372,7 @@ struct KasusConceptRound {
                                   kasus: kasus, explanation: explanation, record: record, result: result)
     }
 
-    private static func gradeOption(_ picked: Int, item: KasusConceptPlayable, step: Int) -> KasusConceptAnswer? {
+    static func gradeOption(_ picked: Int, item: KasusConceptPlayable, step: Int) -> KasusConceptAnswer? {
         guard let doer = item.doer, let clueIndex = item.facts.clue, let clue = item.target(clueIndex),
               let pickedTarget = item.target(picked) else { return nil }
         let right = picked == doer.index
@@ -379,7 +387,7 @@ struct KasusConceptRound {
                                   kasus: clue.kasus, explanation: explanation, record: record, result: result)
     }
 
-    private static func gradeSame(_ picked: Bool, item: KasusConceptPlayable, step: Int) -> KasusConceptAnswer? {
+    static func gradeSame(_ picked: Bool, item: KasusConceptPlayable, step: Int) -> KasusConceptAnswer? {
         guard let same = item.same, let clueIndex = item.facts.clues.last, let clue = item.target(clueIndex)
         else { return nil }
         let right = picked == same
@@ -394,7 +402,7 @@ struct KasusConceptRound {
                                   kasus: clue.kasus, explanation: explanation, record: record, result: result)
     }
 
-    private static func gradeForm(_ form: String, item: KasusConceptPlayable, step: Int) -> KasusConceptAnswer? {
+    static func gradeForm(_ form: String, item: KasusConceptPlayable, step: Int) -> KasusConceptAnswer? {
         guard let probe = item.probe else { return nil }
         let right = probe.isRight(form)
         let explanation = KasusConceptExplanation.probe(probe, in: item.story)
@@ -484,20 +492,6 @@ struct KasusConceptRound {
             return true
         }
     }
-}
-
-// MARK: - Session
-
-/// The payload for launching a Verstehen exercise via `Activity.kasusConcept`.
-struct KasusConceptSession: Identifiable {
-    let id = UUID()
-    let unit: KasusUnit
-    let exercise: KasusConceptExercise
-    var source: KasusConceptSource = .bundled
-    /// Set only by the DEBUG launch arguments; nil in every real session.
-    var prefill: KasusPrefill? = nil
-
-    var title: String { "\(exercise.germanTitle) · \(unit.germanTitle)" }
 }
 
 // MARK: - Explanations

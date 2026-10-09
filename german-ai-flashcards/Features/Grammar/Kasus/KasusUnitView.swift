@@ -55,7 +55,7 @@ struct KasusUnitView: View {
     /// Verstehen: the lesson sheet, and the exercise its Üben asked for, launched once the sheet
     /// has gone (a full-screen cover can't come up over a sheet).
     @State private var showLesson = false
-    @State private var pendingConcept: KasusConceptSession?
+    @State private var pendingConcept: GrammarDrillSession?
 
     /// Questions in one Schnellrunde (the registry's round size).
     private let quickRoundCount = KasusRoundStep.quick.meta.roundSize
@@ -88,7 +88,7 @@ struct KasusUnitView: View {
                 unit: unit,
                 onRead: { seconds in KasusService.recordLessonRead(unit: unit, seconds: seconds, in: modelContext) },
                 onPractice: {
-                    pendingConcept = KasusConceptSession(unit: unit, exercise: .roles)
+                    pendingConcept = GrammarDrillSession(kind: .roles, topic: .kasus(unit))
                     showLesson = false
                 }
             )
@@ -195,7 +195,7 @@ struct KasusUnitView: View {
             offered: KasusConceptBank.bundled.offered(for: unit),
             onLesson: { showLesson = true },
             onExercise: { exercise in
-                router.launch(.kasusConcept(KasusConceptSession(unit: unit, exercise: exercise)))
+                router.launch(.grammarDrill(GrammarDrillSession(kind: exercise.kind, topic: .kasus(unit))))
             }
         )
     }
@@ -203,7 +203,7 @@ struct KasusUnitView: View {
     private func launchPendingConcept() {
         guard let session = pendingConcept else { return }
         pendingConcept = nil
-        router.launch(.kasusConcept(session))
+        router.launch(.grammarDrill(session))
     }
 
     // MARK: - Geschichten
@@ -344,10 +344,10 @@ struct KasusUnitView: View {
         router.launch(.kasusStory(session))
     }
 
-    private func quickRoundRow(_ style: CaseEndingsSession.Style, symbol: String, title: String,
+    private func quickRoundRow(_ kind: KasusDrillKind, symbol: String, title: String,
                                detail: String) -> some View {
         Button {
-            router.launch(.caseEndings(CaseEndingsSession(unit: unit, style: style)))
+            router.launch(.grammarDrill(GrammarDrillSession(kind: kind, topic: .kasus(unit))))
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: symbol)
@@ -380,9 +380,9 @@ struct KasusUnitView: View {
     private var quickRoundSection: some View {
         Section {
             let quick = KasusRoundStep.quick.meta, build = KasusRoundStep.build.meta
-            quickRoundRow(.schnellrunde, symbol: quick.symbol, title: "\(quick.germanTitle) · \(quick.englishTitle)",
+            quickRoundRow(.quick, symbol: quick.symbol, title: "\(quick.germanTitle) · \(quick.englishTitle)",
                           detail: "\(quickRoundCount) Sätze · \(unit.casesInPlay.map(\.short).joined(separator: " + "))")
-            quickRoundRow(.bauDasWort, symbol: build.symbol, title: "\(build.germanTitle) · \(build.englishTitle)",
+            quickRoundRow(.build, symbol: build.symbol, title: "\(build.germanTitle) · \(build.englishTitle)",
                           detail: build.blurb)
         } footer: {
             Text("Pick the article that fits the sentence, or in Bau das Wort just its ending. Every miss shows which case it is and why.")

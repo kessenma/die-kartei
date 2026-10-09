@@ -164,6 +164,6 @@ struct BauDasWortTests {
         #expect(KasusService.countsTowardSkill(item, step: .build, hint: nil)
                 == KasusService.countsTowardSkill(item, step: .quick, hint: nil))
         #expect(KasusRoundStep(rawValue: "build") == .build)
-        #expect(CaseEndingsSession(unit: .dativ, style: .bauDasWort).title == "Bau das Wort · Dativ")
+        #expect(GrammarDrillSession(kind: .build, topic: .kasus(.dativ)).title == "Bau das Wort · Dativ")
     }
 }

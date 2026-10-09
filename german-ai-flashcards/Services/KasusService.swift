@@ -191,6 +191,9 @@ struct KasusPrefill: Hashable {
     var hint: KasusHintLevel?
     /// Both exercises' feedback mode for that launch, without overwriting the stored ones.
     var feedback: KasusFeedbackMode? = nil
+    /// `-kasus.debugSeed <n>`: the drill shell composes its round from this seed, so a screenshot
+    /// gets the same questions every launch.
+    var seed: UInt64? = nil
 
     #if DEBUG
     /// `-kasus.debugAnswers right|mixed`, `-kasus.debugHint lern|viel|genus|ohne` and
@@ -199,8 +202,9 @@ struct KasusPrefill: Hashable {
         let answers = defaults.string(forKey: "kasus.debugAnswers").flatMap { Answers(rawValue: $0.lowercased()) }
         let hint = defaults.string(forKey: "kasus.debugHint").flatMap { KasusHintLevel(rawValue: $0.lowercased()) }
         let feedback = defaults.string(forKey: "kasus.debugFeedback").flatMap(KasusFeedbackMode.parse)
-        guard answers != nil || hint != nil || feedback != nil else { return nil }
-        return KasusPrefill(answers: answers, hint: hint, feedback: feedback)
+        let seed = defaults.string(forKey: "kasus.debugSeed").flatMap { UInt64($0) }
+        guard answers != nil || hint != nil || feedback != nil || seed != nil else { return nil }
+        return KasusPrefill(answers: answers, hint: hint, feedback: feedback, seed: seed)
     }
     #endif
 }
@@ -345,6 +349,9 @@ nonisolated struct KasusItemResult: Hashable {
     var revealed: Bool = false
     /// Am Ende: the gap was still empty at Prüfen. Asked, but not answered.
     var unanswered: Bool = false
+    /// The answer was given with the article table pinned over the round (the question-mark
+    /// menu's „Keep table visible“), so the cell was on screen: practice, never evidence.
+    var scaffolded: Bool = false
 
     /// The learner gave an answer (right or wrong): what the streak counts.
     var isAnswered: Bool { !revealed && !unanswered }
@@ -812,7 +819,7 @@ enum KasusService {
     /// Whether one answer may move the coach's case skill. See the header for the rules.
     static func countsTowardSkill(_ item: KasusItemResult, step: KasusRoundStep, hint: KasusHintLevel?) -> Bool {
         // A gap Lösung zeigen filled, or one left empty, was never the learner's answer.
-        guard item.kasus.focus != nil, !item.slip, item.isAnswered else { return false }
+        guard item.kasus.focus != nil, !item.slip, item.isAnswered, !item.scaffolded else { return false }
         // The f/n/pl Akkusativ is the dictionary form (die Katze · die Katze), so once the gender
         // is on screen, so is the answer.
         let genderGivesItAway = item.kasus == .akkusativ && item.genus != .der
@@ -1496,10 +1503,13 @@ struct KasusHero: Hashable {
         }
     }
 
-    /// What to launch for a Verstehen exercise action.
-    var conceptSession: KasusConceptSession? {
-        guard case .concept(let exercise) = action else { return nil }
-        return KasusConceptSession(unit: unit, exercise: exercise)
+    /// What to launch for a drill action: the unit's Schnellrunde, or a Verstehen exercise.
+    var drillSession: GrammarDrillSession? {
+        switch action {
+        case .quickRound:            GrammarDrillSession(kind: .quick, topic: .kasus(unit))
+        case .concept(let exercise): GrammarDrillSession(kind: exercise.kind, topic: .kasus(unit))
+        case .story, .lesson:        nil
+        }
     }
 
     /// What to launch for a story action.
@@ -1507,9 +1517,6 @@ struct KasusHero: Hashable {
         guard case .story(let id, let step) = action else { return nil }
         return KasusSession(storyID: id, unit: unit, startStep: step)
     }
-
-    /// What to launch for a Schnellrunde action.
-    var quickRoundSession: CaseEndingsSession { CaseEndingsSession(unit: unit) }
 }
 
 enum KasusPath {

@@ -4,8 +4,13 @@ import SwiftUI
 /// This neutral table never highlights the current answer or changes the hint level.
 private struct KasusReferenceModifier: ViewModifier {
     var cases: [GrammarCase]
-    @State private var pinned = false
+    /// The activity's own pin state, when it wants to know (the drill shell marks answers given
+    /// with the table pinned as scaffolded). Nil keeps the state here.
+    var external: Binding<Bool>?
+    @State private var ownPinned = false
     @State private var sheet: ReferenceSheet?
+
+    private var pinned: Binding<Bool> { external ?? $ownPinned }
 
     private enum ReferenceSheet: String, Identifiable {
         case table, check
@@ -15,14 +20,14 @@ private struct KasusReferenceModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .safeAreaInset(edge: .top, spacing: 0) {
-                if pinned {
+                if pinned.wrappedValue {
                     VStack(spacing: 6) {
                         HStack {
                             Label("Artikeltabelle · Reference", systemImage: "pin.fill")
                                 .font(.caption.weight(.semibold))
                             Spacer()
                             Button {
-                                pinned = false
+                                pinned.wrappedValue = false
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
                                     .padding(8)
@@ -52,7 +57,7 @@ private struct KasusReferenceModifier: ViewModifier {
                         } label: {
                             Label("Tabelle öffnen · Open table", systemImage: "tablecells")
                         }
-                        Toggle(isOn: $pinned) {
+                        Toggle(isOn: pinned) {
                             Label("Tabelle sichtbar lassen · Keep table visible", systemImage: "pin")
                         }
                         Button {
@@ -61,10 +66,10 @@ private struct KasusReferenceModifier: ViewModifier {
                             Label("Der Kasus-Check · Choose the case", systemImage: "questionmark.circle")
                         }
                     } label: {
-                        Image(systemName: pinned ? "pin.circle.fill" : "questionmark.circle")
+                        Image(systemName: pinned.wrappedValue ? "pin.circle.fill" : "questionmark.circle")
                     }
                     .accessibilityLabel("Case help and article table")
-                    .accessibilityValue(pinned ? "Table pinned" : "Table hidden")
+                    .accessibilityValue(pinned.wrappedValue ? "Table pinned" : "Table hidden")
                 }
             }
             .sheet(item: $sheet) { destination in
@@ -80,7 +85,7 @@ private struct KasusReferenceModifier: ViewModifier {
                                 CaseEndingsTable(cases: cases)
                                 Text("The top form is the definite article (der/die/das). The lower form shows ein and possessives such as mein; the plural uses mein. There is no plural ein.")
                                     .font(.caption).foregroundStyle(.secondary)
-                                Toggle("Sichtbar lassen · Keep visible in this activity", isOn: $pinned)
+                                Toggle("Sichtbar lassen · Keep visible in this activity", isOn: pinned)
                                 Text("Close this reference to return to the same question. A pinned table stays until you hide it or leave this activity.")
                                     .font(.caption).foregroundStyle(.secondary)
                             }
@@ -103,7 +108,7 @@ private struct KasusReferenceModifier: ViewModifier {
 }
 
 extension View {
-    func kasusReference(cases: [GrammarCase] = GrammarCase.allCases) -> some View {
-        modifier(KasusReferenceModifier(cases: cases))
+    func kasusReference(cases: [GrammarCase] = GrammarCase.allCases, pinned: Binding<Bool>? = nil) -> some View {
+        modifier(KasusReferenceModifier(cases: cases, external: pinned))
     }
 }

@@ -276,7 +276,7 @@ struct ContentView: View {
                             KasusService.recordLessonRead(unit: unit, seconds: seconds, in: modelContext)
                         }, onPractice: {
                             kasusDebugSheet = nil
-                            router.launch(.kasusConcept(KasusConceptSession(unit: unit, exercise: .roles)))
+                            router.launch(.grammarDrill(GrammarDrillSession(kind: .roles, topic: .kasus(unit))))
                         })
                     case .mnemonics:
                         KasusMnemonicsView()
@@ -596,12 +596,8 @@ struct ContentView: View {
                 switch open {
                 case .hub, .unit, .lesson, .mnemonics, .werkstatt, .table:
                     kasusDebugSheet = open
-                case .quick(let unit):
-                    router.launch(.caseEndings(KasusDebugOpen.quickSession(for: unit)))
-                case .build(let unit):
-                    router.launch(.caseEndings(KasusDebugOpen.quickSession(for: unit, style: .bauDasWort)))
-                case .concept(let unit, let exercise):
-                    router.launch(.kasusConcept(KasusDebugOpen.conceptSession(for: unit, exercise: exercise)))
+                case .drill(let kind, let topic):
+                    router.launch(.grammarDrill(KasusDebugOpen.drillSession(kind, in: topic)))
                 case .story(let screen):
                     if let session = KasusDebugOpen.session(for: screen) {
                         router.launch(.kasusStory(session))
@@ -1010,20 +1006,6 @@ struct ContentView: View {
                 }
             )
 
-        case .caseEndings(let session):
-            CaseEndingsDrillView(
-                session: session,
-                hapticMode: coordinator.modelManager.hapticFeedbackMode,
-                onComplete: { result in
-                    // Streak and time (as grammar practice), a KasusRound for the calendar, and
-                    // the coach's per-case skills all live inside recordRound.
-                    KasusService.recordRound(result, in: modelContext)
-                },
-                onDismiss: {
-                    router.dismiss()
-                }
-            )
-
         case .kasusStory(let session):
             KasusStoryView(
                 session: session,
@@ -1043,13 +1025,14 @@ struct ContentView: View {
                 }
             )
 
-        case .kasusConcept(let session):
-            KasusConceptView(
-                session: session,
+        case .grammarDrill(let session):
+            // Every drill kind on the one shell. Streak and time (as grammar practice), a
+            // KasusRound for Verlauf and the calendar, and the coach's skills from the answers
+            // that count all live inside recordRound, which tells the kinds apart by the step.
+            session.kind.makeView(
+                session,
                 hapticMode: coordinator.modelManager.hapticFeedbackMode,
                 onComplete: { result in
-                    // Rollen and Wer macht was? count for the streak only; Die Probe may move a
-                    // case skill. recordRound tells them apart by the step.
                     KasusService.recordRound(result, in: modelContext)
                 },
                 onDismiss: {

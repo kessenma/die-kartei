@@ -21,12 +21,11 @@ enum Activity: Identifiable {
     case prepositionCase(PrepositionCaseSession)
     /// Personalized fill-in-the-blank practice over the learner's own corrected sentences.
     case cloze(ClozeSession)
-    /// The case-endings drill: a Kasus unit's Schnellrunde, configured by a `CaseEndingsSession`.
-    case caseEndings(CaseEndingsSession)
     /// A Kasus story (Lesen → Markieren → Endungen → Ergebnis), configured by a `KasusSession`.
     case kasusStory(KasusSession)
-    /// A Verstehen exercise (Rollen, Wer macht was?, Die Probe), configured by a `KasusConceptSession`.
-    case kasusConcept(KasusConceptSession)
+    /// Any grammar drill on the shell (the Schnellrunde, Bau das Wort, Rollen, Wer macht was?,
+    /// Die Probe, and the kinds to come), configured by a `GrammarDrillSession`.
+    case grammarDrill(GrammarDrillSession)
 
     var id: String {
         switch self {
@@ -42,12 +41,10 @@ enum Activity: Identifiable {
             return "prepositionCase-\(session.id.uuidString)"
         case .cloze(let session):
             return "cloze-\(session.id.uuidString)"
-        case .caseEndings(let session):
-            return "caseEndings-\(session.id.uuidString)"
         case .kasusStory(let session):
             return "kasusStory-\(session.id.uuidString)"
-        case .kasusConcept(let session):
-            return "kasusConcept-\(session.id.uuidString)"
+        case .grammarDrill(let session):
+            return "grammarDrill-\(session.id.uuidString)"
         }
     }
 }

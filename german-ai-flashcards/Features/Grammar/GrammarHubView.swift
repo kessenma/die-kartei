@@ -39,7 +39,7 @@ struct GrammarHubView: View {
     /// The hero's „Lektion“: a sheet, since the lesson isn't an activity.
     @State private var lessonUnit: KasusUnit?
     /// The exercise the lesson's Üben asked for, launched once the sheet has gone.
-    @State private var pendingConcept: KasusConceptSession?
+    @State private var pendingConcept: GrammarDrillSession?
 
     var body: some View {
         List {
@@ -70,7 +70,7 @@ struct GrammarHubView: View {
                 unit: unit,
                 onRead: { seconds in KasusService.recordLessonRead(unit: unit, seconds: seconds, in: modelContext) },
                 onPractice: {
-                    pendingConcept = KasusConceptSession(unit: unit, exercise: .roles)
+                    pendingConcept = GrammarDrillSession(kind: .roles, topic: .kasus(unit))
                     lessonUnit = nil
                 }
             )
@@ -80,7 +80,7 @@ struct GrammarHubView: View {
     private func launchPendingConcept() {
         guard let session = pendingConcept else { return }
         pendingConcept = nil
-        router.launch(.kasusConcept(session))
+        router.launch(.grammarDrill(session))
     }
 
     // MARK: - Learner profile inputs
@@ -111,12 +111,10 @@ struct GrammarHubView: View {
             Button {
                 if let session = hero.storySession {
                     router.launch(.kasusStory(session))
-                } else if let session = hero.conceptSession {
-                    router.launch(.kasusConcept(session))
-                } else if case .lesson = hero.action {
-                    lessonUnit = hero.unit
+                } else if let session = hero.drillSession {
+                    router.launch(.grammarDrill(session))
                 } else {
-                    router.launch(.caseEndings(hero.quickRoundSession))
+                    lessonUnit = hero.unit
                 }
             } label: {
                 HStack(spacing: 12) {

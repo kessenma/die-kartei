@@ -2,7 +2,7 @@
 //  KasusConceptPanels.swift
 //  german-ai-flashcards
 //
-//  The pieces `KasusConceptView` shows per exercise:
+//  The pieces the Verstehen modules (Features/Grammar/Drill/ConceptModules.swift) show per exercise:
 //
 //    KasusRolesHero      the sentence as word chips (the asked phrase ringed, answered phrases
 //                        washed in their case color), and the English twin on demand

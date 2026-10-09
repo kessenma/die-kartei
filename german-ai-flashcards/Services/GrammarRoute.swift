@@ -103,7 +103,7 @@ enum GrammarRoute: Hashable {
         if let story = practiceStory(for: unit, rounds: rounds, bank: bank) {
             return .kasusStory(KasusSession(storyID: story.id, unit: unit, startStep: .einsetzen))
         }
-        return .caseEndings(CaseEndingsSession(unit: unit))
+        return .grammarDrill(GrammarDrillSession(kind: .quick, topic: .kasus(unit)))
     }
 
     /// The unit's least-recently-played story: an unplayed one first, in the bank's order.
@@ -215,9 +215,9 @@ enum GrammarRoute: Hashable {
             case .kasusStory(let session):
                 let title = session.story?.title ?? session.storyID
                 return "\(session.startStep.germanLabel) · „\(title)“ (\(session.storyID), \(session.unit.germanTitle))"
-            case .caseEndings(let session):
-                let cases = session.cases.map(\.short).joined(separator: " + ")
-                return "\(session.title) · \(cases) (no \(session.unit.germanTitle) story yet)"
+            case .grammarDrill(let session):
+                let cases = session.topic.casesInPlay.map(\.short).joined(separator: " + ")
+                return "\(session.title) · \(cases) (no \(session.topic.germanTitle) story yet)"
             case .articleGame(let session):
                 return "der/die/das round · \(session.topic) · \(session.questionCount) nouns"
             default:

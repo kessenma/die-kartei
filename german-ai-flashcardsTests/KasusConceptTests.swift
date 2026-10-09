@@ -595,7 +595,7 @@ struct KasusConceptTests {
         #expect(fresh.subtitle == "Lektion · Verstehen")
         let read = next(played([(KasusService.lessonRoundID(.dativ), .dativ, .lesson)]))
         #expect(read.action == .concept(.roles) && read.reason == .understand)
-        #expect(read.conceptSession?.exercise == .roles)
+        #expect(read.drillSession?.kind == .roles)
         let rolled = next(played([(KasusService.lessonRoundID(.dativ), .dativ, .lesson),
                                   (KasusService.conceptRoundID(.dativ, .roles), .dativ, .roles)]))
         #expect(rolled.storyID == story.id && rolled.step == .lesen && rolled.reason == .newStory)

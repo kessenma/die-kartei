@@ -738,33 +738,29 @@ struct KasusStoryView: View {
 enum KasusDebugOpen: Identifiable, Hashable {
     case hub
     case unit(KasusUnit)
-    case quick(KasusUnit)
     case story(KasusStoryScreen)
-    /// Verstehen: `lesson:<unit>` (the lesson sheet), `merkhilfen` (the memory aids), and
-    /// `roles:<unit>` · `wer:<unit>` · `probe:<unit>` (an exercise, prefilled from
-    /// `-kasus.debugAnswers` and `-kasus.debugQuickState`).
+    /// Verstehen: `lesson:<unit>` (the lesson sheet) and `merkhilfen` (the memory aids).
     case lesson(KasusUnit)
     case mnemonics
-    case concept(KasusUnit, KasusConceptExercise)
+    /// Any drill on the shell, `<kind>:<topic>` by the registry's raw values: `quick:dativ`,
+    /// `build:dativ`, `roles:dativ` · `wer:akkusativ` · `probe:genitiv`, prefilled from
+    /// `-kasus.debugAnswers`, `-kasus.debugQuickState` and `-kasus.debugSeed`.
+    case drill(KasusDrillKind, GrammarTopic)
     /// The 3D ending blocks: `werkstatt` (Endungs-Werkstatt, preset by `-kasus.debugWerkstatt
-    /// dieser:dat:m`), `table` (the endings table, a cell built with `-kasus.debugCell dat:m`),
-    /// and `build:<unit>` (Bau das Wort, prefilled like `quick:<unit>`).
+    /// dieser:dat:m`) and `table` (the endings table, a cell built with `-kasus.debugCell dat:m`).
     case werkstatt
     case table
-    case build(KasusUnit)
 
     var id: String {
         switch self {
         case .hub:                "hub"
         case .unit(let unit):     "unit:\(unit.rawValue)"
-        case .quick(let unit):    "quick:\(unit.rawValue)"
         case .story(let screen):  screen.rawValue
         case .lesson(let unit):   "lesson:\(unit.rawValue)"
         case .mnemonics:          "merkhilfen"
         case .werkstatt:          "werkstatt"
         case .table:              "table"
-        case .build(let unit):    "build:\(unit.rawValue)"
-        case .concept(let unit, let exercise): "\(exercise.rawValue):\(unit.rawValue)"
+        case .drill(let kind, let topic): "\(kind.rawValue):\(topic.key)"
         }
     }
 
@@ -779,9 +775,6 @@ enum KasusDebugOpen: Identifiable, Hashable {
         } else if value.lowercased().hasPrefix("unit:") {
             guard let unit = unitNamed(after: "unit:") else { return nil }
             self = .unit(unit)
-        } else if value.lowercased().hasPrefix("quick:") {
-            guard let unit = unitNamed(after: "quick:") else { return nil }
-            self = .quick(unit)
         } else if value.lowercased().hasPrefix("lesson:") {
             guard let unit = unitNamed(after: "lesson:") else { return nil }
             self = .lesson(unit)
@@ -791,12 +784,10 @@ enum KasusDebugOpen: Identifiable, Hashable {
             self = .werkstatt
         } else if value.lowercased() == "table" {
             self = .table
-        } else if value.lowercased().hasPrefix("build:") {
-            guard let unit = unitNamed(after: "build:") else { return nil }
-            self = .build(unit)
-        } else if let exercise = KasusConceptExercise.allCases.first(where: { value.lowercased().hasPrefix($0.rawValue + ":") }) {
-            guard let unit = unitNamed(after: exercise.rawValue + ":") else { return nil }
-            self = .concept(unit, exercise)
+        } else if let kind = KasusDrillKind.allCases.first(where: { value.lowercased().hasPrefix($0.rawValue + ":") }) {
+            // Only the shell's kinds parse here; a story step's raw value (`fill`) never does.
+            guard let topic = GrammarTopic(key: String(value.dropFirst(kind.rawValue.count + 1))) else { return nil }
+            self = .drill(kind, topic)
         } else if let screen = KasusStoryScreen(rawValue: value.lowercased()) {
             self = .story(screen)
         } else {
@@ -820,16 +811,16 @@ enum KasusDebugOpen: Identifiable, Hashable {
                             prefill: KasusPrefill.fromLaunchArguments() ?? KasusPrefill())
     }
 
-    /// The Schnellrunde `quick:<unit>` launches, with a prefill so the drill reads its state from
-    /// the launch arguments.
-    static func quickSession(for unit: KasusUnit, style: CaseEndingsSession.Style = .schnellrunde) -> CaseEndingsSession {
-        CaseEndingsSession(unit: unit, style: style, prefill: KasusPrefill.fromLaunchArguments() ?? KasusPrefill())
-    }
-
-    /// The Verstehen exercise `roles:<unit>` · `wer:<unit>` · `probe:<unit>` launches, with a
-    /// prefill so the screen reads its state from the launch arguments.
-    static func conceptSession(for unit: KasusUnit, exercise: KasusConceptExercise) -> KasusConceptSession {
-        KasusConceptSession(unit: unit, exercise: exercise, prefill: KasusPrefill.fromLaunchArguments() ?? KasusPrefill())
+    /// The drill `<kind>:<topic>` launches, with a prefill so the shell reads its state from the
+    /// launch arguments. `-kasus.debugRolesMode schritt|direkt` picks Rollen's mode for that
+    /// launch without storing it.
+    static func drillSession(_ kind: KasusDrillKind, in topic: GrammarTopic) -> GrammarDrillSession {
+        var session = GrammarDrillSession(kind: kind, topic: topic, prefill: KasusPrefill.fromLaunchArguments() ?? KasusPrefill())
+        if kind == .roles,
+           let forced = UserDefaults.standard.string(forKey: "kasus.debugRolesMode").flatMap({ KasusRolesMode(rawValue: $0.lowercased()) }) {
+            session.variant = .concept(ConceptConfig(exercise: .roles, rolesMode: forced))
+        }
+        return session
     }
 }
 #endif

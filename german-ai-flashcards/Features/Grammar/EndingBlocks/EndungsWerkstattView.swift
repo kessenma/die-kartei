@@ -166,7 +166,7 @@ struct EndungsWerkstattView: View {
             ForEach(KasusUnit.allCases) { unit in
                 Button {
                     stopFlipping()
-                    router.launch(.caseEndings(CaseEndingsSession(unit: unit, style: .bauDasWort)))
+                    router.launch(.grammarDrill(GrammarDrillSession(kind: .build, topic: .kasus(unit))))
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: unit.symbol)
