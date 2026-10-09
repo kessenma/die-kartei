@@ -313,6 +313,12 @@ nonisolated enum KasusForms {
         }
     }
 
+    // MARK: - Ending labels
+
+    /// A button's label for an ending: „-em“, or „–“ for no ending (ein, kein, mein in m. Nom and
+    /// n. Nom/Akk). Endungen's and Bau das Wort's buttons both read it.
+    static func endingLabel(_ ending: String) -> String { ending.isEmpty ? "–" : "-" + ending }
+
     // MARK: - Nouns
 
     /// Whether the plural may look exactly like the singular (der Schlüssel · die Schlüssel), so a

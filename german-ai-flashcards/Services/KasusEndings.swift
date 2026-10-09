@@ -92,7 +92,7 @@ struct KasusEndingGap: Identifiable, Hashable {
     var answerForm: String { form(answer) }
 
     /// A button's label: „-em“, or „–“ for no ending.
-    nonisolated static func label(_ ending: String) -> String { ending.isEmpty ? "–" : "-" + ending }
+    nonisolated static func label(_ ending: String) -> String { KasusForms.endingLabel(ending) }
 
     /// Where the answer sits in the endings table: Lernhilfe highlights this cell (case row ×
     /// gender column), whose article and ein ending are the answer.
