@@ -409,7 +409,7 @@ struct KasusUnitView: View {
                     }
                 }
                 NavigationLink {
-                    KasusHistoryView(unit: unit)
+                    KasusHistoryView(topic: .kasus(unit))
                 } label: {
                     Text(played.count > 3 ? "Alle anzeigen · All \(played.count)" : "Alle anzeigen · Show all")
                         .font(.subheadline.weight(.medium))

@@ -689,9 +689,15 @@ extension KasusService {
     /// the reading time and nothing else. Returns false when the unit already has one.
     @discardableResult
     static func recordLessonRead(unit: KasusUnit, seconds: Int, in context: ModelContext) -> Bool {
-        let id = lessonRoundID(unit)
-        if progress(in: context).lessonRead(unit) { return false }
-        context.insert(KasusRound(storyID: id, unitRaw: unit.rawValue, stepRaw: KasusRoundStep.lesson.rawValue,
+        recordLessonRead(topicKey: unit.rawValue, seconds: seconds, in: context)
+    }
+
+    /// The same for any topic, filed under `concept-<topicKey>-lesson`.
+    @discardableResult
+    static func recordLessonRead(topicKey: String, seconds: Int, in context: ModelContext) -> Bool {
+        let id = KasusRoundStep.lesson.roundID(topicKey: topicKey)
+        if progress(in: context).lessonRead(topicKey: topicKey) { return false }
+        context.insert(KasusRound(storyID: id, unitRaw: topicKey, stepRaw: KasusRoundStep.lesson.rawValue,
                                   askedCount: 0, firstTryCount: 0, durationSeconds: max(0, seconds),
                                   roundKey: UUID().uuidString))
         if seconds > 0 {
@@ -735,7 +741,12 @@ extension KasusService {
 extension KasusProgress {
     /// The unit's lesson has been read through.
     func lessonRead(_ unit: KasusUnit) -> Bool {
-        drillDone(.lesson, topicKey: unit.rawValue)
+        lessonRead(topicKey: unit.rawValue)
+    }
+
+    /// The topic's lesson has been read through.
+    func lessonRead(topicKey: String) -> Bool {
+        drillDone(.lesson, topicKey: topicKey)
     }
 
     /// A round of the exercise has been played in the unit.

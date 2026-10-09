@@ -137,6 +137,24 @@ final class KasusRound {
     /// „Lösung angezeigt · Answers shown“, for a round whose answers Lösung zeigen showed.
     static let answersShownLabel = "Lösung angezeigt · Answers shown"
 
+    /// The coach's skills this round moved, read back from its stored answers the way
+    /// `recordRound` counted them: per case for a round of the case path (a case needs
+    /// `KasusService.minItemsPerCase` counting answers), pooled into the topic's focus for a topic
+    /// that isn't a case (the step's `minItemsPerFocus`). Empty for a round without answers.
+    var coachMoves: [GrammarFocus] {
+        let counting = items.filter(\.countsTowardSkill)
+        guard !counting.isEmpty, let step else { return [] }
+        if let topic, topic.unit == nil {
+            guard let focus = topic.focus, counting.count >= step.meta.minItemsPerFocus else { return [] }
+            return [focus]
+        }
+        return GrammarCase.allCases.compactMap { kasus in
+            guard let focus = kasus.focus,
+                  counting.filter({ $0.kasus == kasus }).count >= KasusService.minItemsPerCase else { return nil }
+            return focus
+        }
+    }
+
     /// Lösung zeigen after the round was recorded: the round and every answer it showed are
     /// flagged. A gap left empty becomes `revealed`; a wrong or missed answer keeps its outcome
     /// (it was the learner's) and gains `revealed`. In Markieren only the missed and partly

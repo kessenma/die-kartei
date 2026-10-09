@@ -150,15 +150,21 @@ struct KasusDrillMetaTests {
         #expect(KasusItemOutcome.wrongPick.labels(for: nil) == ("Anderer Fall", "Marked as another case"))
     }
 
-    @Test("A round under a topic this build doesn't know still reads as a plain Kasus row")
+    @Test("A round under a topic that isn't a unit reads as the topic's row; an unknown topic as a plain one")
     @MainActor
-    func unknownTopic() {
+    func topicRounds() {
         let round = KasusRound(storyID: "reflexcase-reflexiv", unitRaw: "reflexiv", stepRaw: "reflexcase",
                                askedCount: 10, firstTryCount: 6, durationSeconds: 40)
-        #expect(round.unit == nil && round.topic == nil)
+        #expect(round.unit == nil && round.topic == .reflexiv)
         #expect(round.step == .reflexCase && round.isQuickRound && round.isListed)
-        #expect(round.displayTitle(showsUnit: true) == "Akkusativ oder Dativ?")
+        #expect(round.displayTitle(showsUnit: true) == "Akkusativ oder Dativ? · Reflexive Verben")
         #expect(round.displayDetail() == "10 Sätze · 40s")
+        #expect(GrammarHistoryEntry(source: .kasus(round)).kind == .reflexiv)
+        #expect(round.coachMoves.isEmpty)
+        let elsewhere = KasusRound(storyID: "quick-zukunft", unitRaw: "zukunft", stepRaw: "quick",
+                                   askedCount: 10, firstTryCount: 6, durationSeconds: 40)
+        #expect(elsewhere.topic == nil && elsewhere.displayTitle(showsUnit: true) == "Schnellrunde")
+        #expect(GrammarHistoryEntry(source: .kasus(elsewhere)).kind == .faelle)
         let progress = KasusProgress(rounds: [round])
         #expect(progress.drillDone(.reflexCase, topicKey: "reflexiv"))
         #expect(!progress.drillDone(.reflexCase, topicKey: "dativ"))
@@ -202,13 +208,18 @@ struct KasusDrillMetaTests {
         #expect(GrammarTopic(key: "dativ") == .kasus(.dativ))
         #expect(GrammarTopic(key: "Dativ") == .kasus(.dativ))
         #expect(GrammarTopic(key: "alleFaelle") == .kasus(.alleFaelle))
-        #expect(GrammarTopic(key: "reflexiv") == nil)
-        #expect(GrammarTopic.allCases.map(\.key) == KasusUnit.allCases.map(\.rawValue))
+        #expect(GrammarTopic(key: "reflexiv") == .reflexiv && GrammarTopic(key: "Reflexiv") == .reflexiv)
+        #expect(GrammarTopic.allCases.map(\.key) == KasusUnit.allCases.map(\.rawValue) + ["reflexiv"])
         for topic in GrammarTopic.allCases {
             #expect(GrammarTopic(key: topic.key) == topic)
-            #expect(topic.unit != nil && topic.germanTitle == topic.unit?.germanTitle)
-            #expect(topic.casesInPlay == topic.unit?.casesInPlay && topic.focus == topic.unit?.focus)
+            if let unit = topic.unit {
+                #expect(topic.germanTitle == unit.germanTitle && topic.casesInPlay == unit.casesInPlay && topic.focus == unit.focus)
+                #expect(topic.isAvailable && topic.practiceLabel == "Üben · Practice: Rollen")
+            }
         }
+        #expect(GrammarTopic.reflexiv.unit == nil && GrammarTopic.reflexiv.casesInPlay == [.akkusativ, .dativ])
+        #expect(!GrammarTopic.reflexiv.isAvailable && GrammarTopic.reflexiv.exercises().isEmpty)
+        #expect(GrammarTopic.reflexiv.lessonPractice == .reflexCase)
         #expect(GrammarTopic.kasus(.dativ).exercises() == [.roles, .wer, .probe, .quick, .build])
         #expect(GrammarTopic.kasus(.nominativ).exercises() == [.roles, .quick, .build])
         #expect(GrammarTopic.kasus(.dativ).lessonPractice == .roles)

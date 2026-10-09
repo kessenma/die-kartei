@@ -79,15 +79,15 @@ struct KasusRoundDetailView: View {
     // MARK: - Header
 
     private func headerSection(_ items: [KasusRoundItem]) -> some View {
-        let unit = round.unit
+        let topic = round.topic
         return Section {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 12) {
-                    Image(systemName: unit?.symbol ?? "checklist")
+                    Image(systemName: topic?.symbol ?? "checklist")
                         .font(.title2)
-                        .foregroundStyle(unit?.color ?? .secondary)
+                        .foregroundStyle(topic?.color ?? .secondary)
                         .frame(width: 44, height: 44)
-                        .background((unit?.color ?? .secondary).opacity(0.12),
+                        .background((topic?.color ?? .secondary).opacity(0.12),
                                     in: RoundedRectangle(cornerRadius: appTheme.innerRadius(10), style: .continuous))
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
@@ -142,7 +142,7 @@ struct KasusRoundDetailView: View {
 
     /// Dativ · Endungen · Genus-Hilfe · Sofort, Dativ · Markieren · Akkusativ · Am Ende
     private var stepLine: String {
-        var parts = [round.unit?.germanTitle ?? "Kasus"]
+        var parts = [round.topic?.germanTitle ?? "Kasus"]
         if let step = round.step, !round.isQuickRound, !step.isConcept { parts.append(round.unitStepLabel) }
         if round.isQuickRound, let step = round.step { parts.append("\(round.askedCount) \(step.meta.countNoun.de)") }
         if round.isConceptRound { parts.append(round.displayDetail().components(separatedBy: " · ").first ?? "") }
@@ -163,11 +163,9 @@ struct KasusRoundDetailView: View {
     private func coachLine(_ items: [KasusRoundItem]) -> String? {
         guard !items.isEmpty else { return nil }
         let counting = items.filter(\.countsTowardSkill)
-        let moved = GrammarCase.allCases.filter { kasus in
-            counting.filter { $0.kasus == kasus }.count >= KasusService.minItemsPerCase
-        }
+        let moved = round.coachMoves
         if !moved.isEmpty {
-            let names = moved.map(\.name).joined(separator: " and ")
+            let names = moved.map(\.germanLabel).joined(separator: " and ")
             return "Moved the coach's \(names) skill, from \(counting.count) of your own answers."
         }
         if let step = round.step, let note = step.meta.coachNote { return "\(round.stepLabel) \(note)" }

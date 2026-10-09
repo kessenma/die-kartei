@@ -16,9 +16,20 @@
 import SwiftUI
 
 struct KasusLessonView: View {
-    let unit: KasusUnit
+    let topic: GrammarTopic
     var onRead: (Int) -> Void = { _ in }
     var onPractice: () -> Void = {}
+
+    init(topic: GrammarTopic, onRead: @escaping (Int) -> Void = { _ in }, onPractice: @escaping () -> Void = {}) {
+        self.topic = topic
+        self.onRead = onRead
+        self.onPractice = onPractice
+    }
+
+    /// A unit of the case path.
+    init(unit: KasusUnit, onRead: @escaping (Int) -> Void = { _ in }, onPractice: @escaping () -> Void = {}) {
+        self.init(topic: .kasus(unit), onRead: onRead, onPractice: onPractice)
+    }
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.appTheme) private var appTheme
@@ -36,7 +47,7 @@ struct KasusLessonView: View {
     @State private var startedAt = Date()
     @State private var reported = false
 
-    private var cards: [KasusLessonCard] { KasusLesson.cards(for: unit) }
+    private var cards: [KasusLessonCard] { topic.lessonCards }
 
     var body: some View {
         let cards = self.cards
@@ -63,9 +74,9 @@ struct KasusLessonView: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     VStack(spacing: 0) {
-                        Text("Lektion · \(unit.germanTitle)")
+                        Text("Lektion · \(topic.germanTitle)")
                             .font(.headline)
-                        Text(unit.englishRole)
+                        Text(topic.englishRole)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -131,7 +142,7 @@ struct KasusLessonView: View {
     /// The cases in play, each in its color: the key every card's colors follow.
     private var colorKey: some View {
         HStack(spacing: 14) {
-            ForEach(unit.casesInPlay) { kasus in
+            ForEach(topic.casesInPlay) { kasus in
                 CaseLabel(kasus: kasus, style: .short)
                     .font(.caption.weight(.semibold))
             }
@@ -223,7 +234,7 @@ struct KasusLessonView: View {
                     .controlSize(.large)
                 } else {
                     Button(action: onPractice) {
-                        Text(KasusLesson.practiceLabel)
+                        Text(topic.practiceLabel)
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)

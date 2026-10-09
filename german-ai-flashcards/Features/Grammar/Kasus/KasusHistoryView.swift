@@ -23,6 +23,8 @@ import SwiftData
 /// Which rounds Verlauf lists.
 enum GrammarHistoryFilter: String, CaseIterable, Identifiable {
     case alle, faelle, artikel, praepositionen
+    /// The reflexive topic's rounds. Its pill shows once there is one.
+    case reflexiv
 
     var id: String { rawValue }
 
@@ -32,8 +34,12 @@ enum GrammarHistoryFilter: String, CaseIterable, Identifiable {
         case .faelle:         "Fälle"
         case .artikel:        "Der·Die·Das"
         case .praepositionen: "Präpositionen"
+        case .reflexiv:       "Reflexiv"
         }
     }
+
+    /// Always on the row, or only once a round of its kind exists.
+    var isAlwaysShown: Bool { self != .reflexiv }
 }
 
 /// One Verlauf row, from whichever round model wrote it.
@@ -81,9 +87,9 @@ struct GrammarHistoryEntry: Identifiable {
 
     var kind: GrammarHistoryFilter {
         switch source {
-        case .kasus:       .faelle
-        case .article:     .artikel
-        case .preposition: .praepositionen
+        case .kasus(let round): round.topic == .reflexiv ? .reflexiv : .faelle
+        case .article:          .artikel
+        case .preposition:      .praepositionen
         }
     }
 
@@ -94,7 +100,7 @@ struct GrammarHistoryEntry: Identifiable {
         case .kasus(let round):
             round.isQuickRound || round.isConceptRound
                 ? round.displayTitle(showsUnit: true)
-                : [round.unit?.germanTitle ?? "Kasus", round.unitStepLabel].filter { !$0.isEmpty }.joined(separator: " · ")
+                : [round.topic?.germanTitle ?? "Kasus", round.unitStepLabel].filter { !$0.isEmpty }.joined(separator: " · ")
         case .article:     "Der · Die · Das"
         case .preposition: "Präpositionen"
         }
@@ -128,17 +134,17 @@ extension KasusRound {
     @MainActor func displayTitle(showsUnit: Bool, in context: ModelContext? = nil) -> String {
         if isQuickRound {
             let name = step?.germanLabel ?? "Schnellrunde"
-            guard showsUnit, let unit else { return name }
-            return "\(name) · \(unit.germanTitle)"
+            guard showsUnit, let topic else { return name }
+            return "\(name) · \(topic.germanTitle)"
         }
         // Verstehen: „Rollen · Dativ“, „Wer macht was? · Akkusativ“, „Die Probe · Genitiv“.
         if let step, step.isConcept {
-            guard showsUnit, let unit else { return step.germanLabel }
-            return "\(step.germanLabel) · \(unit.germanTitle)"
+            guard showsUnit, let topic else { return step.germanLabel }
+            return "\(step.germanLabel) · \(topic.germanTitle)"
         }
         if let title = KasusStoryBank.bundled.story(id: storyID)?.title { return "„\(title)“" }
         if let context, let title = KasusStoryStore.title(id: storyID, in: context) { return "„\(title)“" }
-        return unit?.germanTitle ?? "Kasus"
+        return topic?.germanTitle ?? "Kasus"
     }
 
     /// Endungen · Genus-Hilfe · 3m 12s, Markieren · Dativ · 4m 11s, or 10 Sätze · 1m 5s for a
@@ -206,8 +212,16 @@ enum KasusHistoryFormat {
 // MARK: - Verlauf
 
 struct KasusHistoryView: View {
-    /// Set by a unit screen's "Alle anzeigen": only that unit's rounds, and no pills.
-    var unit: KasusUnit? = nil
+    /// Set by a unit or topic screen's "Alle anzeigen": only that topic's rounds, and no pills.
+    var topic: GrammarTopic? = nil
+
+    init(topic: GrammarTopic? = nil) {
+        self.topic = topic
+    }
+
+    init(unit: KasusUnit) {
+        self.init(topic: .kasus(unit))
+    }
 
     @Query(sort: \KasusRound.date, order: .reverse) private var kasusRounds: [KasusRound]
     @Query(sort: \ArticleRound.date, order: .reverse) private var articleRounds: [ArticleRound]
@@ -218,9 +232,9 @@ struct KasusHistoryView: View {
     @State private var filter: GrammarHistoryFilter = .alle
 
     private var entries: [GrammarHistoryEntry] {
-        if let unit {
+        if let topic {
             return kasusRounds
-                .filter { $0.isListed && $0.unitRaw == unit.rawValue }
+                .filter { $0.isListed && $0.unitRaw == topic.key }
                 .map { GrammarHistoryEntry(source: .kasus($0)) }
         }
         let all = GrammarHistoryEntry.all(kasus: kasusRounds, articles: articleRounds,
@@ -238,7 +252,7 @@ struct KasusHistoryView: View {
     var body: some View {
         let entries = entries
         List {
-            if unit == nil {
+            if topic == nil {
                 Section {
                     filterPills
                 }
@@ -263,27 +277,34 @@ struct KasusHistoryView: View {
             }
         }
         .themedListScreen()
-        .navigationTitle(unit.map { "Deine Runden · \($0.germanTitle)" } ?? "Verlauf · Your rounds")
+        .navigationTitle(topic.map { "Deine Runden · \($0.germanTitle)" } ?? "Verlauf · Your rounds")
         .navigationBarTitleDisplayMode(.inline)
         .contentMargins(.top, 8, for: .scrollContent)
     }
 
     private var emptyDescription: String {
-        switch (unit, filter) {
+        switch (topic, filter) {
         case (.some, _):        "Play a story or the Schnellrunde. Every scored round shows up here with its answers."
         case (nil, .artikel):   "Rounds of der · die · das show up here."
         case (nil, .praepositionen): "Rounds of the preposition drill show up here."
+        case (nil, .reflexiv):  "Rounds of the reflexive verbs show up here."
         default:                "Play a story, a Schnellrunde, der · die · das or the preposition drill. Every scored round shows up here."
         }
     }
 
     // MARK: Pills
 
+    /// A topic's pill shows once a round of its kind exists.
+    private var shownFilters: [GrammarHistoryFilter] {
+        let present = Set(kasusRounds.filter(\.isListed).map { GrammarHistoryEntry(source: .kasus($0)).kind })
+        return GrammarHistoryFilter.allCases.filter { $0.isAlwaysShown || present.contains($0) }
+    }
+
     private var filterPills: some View {
         let accent = appTheme.accent(model: modelTheme)
         return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(GrammarHistoryFilter.allCases) { option in
+                ForEach(shownFilters) { option in
                     FilterPill(label: option.label, tint: accent, isOn: filter == option,
                                showsClearGlyph: false) {
                         filter = option
@@ -299,8 +320,9 @@ struct KasusHistoryView: View {
     private func summarySection(_ entries: [GrammarHistoryEntry]) -> some View {
         let asked = entries.reduce(0) { $0 + $1.asked }
         let firstTry = entries.reduce(0) { $0 + $1.firstTry }
+        // The case path only: a reflexive pick (sich, uns, euch) can't demonstrate a case.
         let perCase = entries.reduce(into: [GrammarCase: KasusRound.CaseTally]()) { totals, entry in
-            guard case .kasus(let round) = entry.source else { return }
+            guard case .kasus(let round) = entry.source, round.unit != nil else { return }
             for (kasus, tally) in round.perCase {
                 totals[kasus, default: .init()].asked += tally.asked
                 totals[kasus, default: .init()].firstTry += tally.firstTry
@@ -368,7 +390,7 @@ struct KasusHistoryView: View {
             NavigationLink {
                 KasusRoundDetailView(round: round)
             } label: {
-                KasusRoundRow(round: round, showsUnit: unit == nil, groupedByDay: true)
+                KasusRoundRow(round: round, showsUnit: topic == nil, groupedByDay: true)
             }
         case .article(let round):
             DrillRoundRow(
@@ -410,9 +432,9 @@ struct KasusRoundRow: View {
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
-        let unit = round.unit
+        let topic = round.topic
         HStack(spacing: 12) {
-            HistoryIcon(symbol: unit?.symbol ?? "checklist", color: unit?.color ?? .secondary)
+            HistoryIcon(symbol: topic?.symbol ?? "checklist", color: topic?.color ?? .secondary)
             VStack(alignment: .leading, spacing: 3) {
                 Text(round.displayTitle(showsUnit: showsUnit, in: modelContext))
                     .font(.subheadline)

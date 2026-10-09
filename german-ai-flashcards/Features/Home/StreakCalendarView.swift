@@ -1046,15 +1046,15 @@ struct DayDetailSheet: View {
             // "Kasus · Der verlorene Schlüssel · Markieren · Dativ", "Kasus · Schnellrunde · Dativ",
             // "Kasus · Rollen · Dativ" (Verstehen), "Kasus · Lektion · Dativ".
             let title: [String?] = if let step, step.meta.filing != .story {
-                ["Kasus", step.germanLabel, r.unit?.germanTitle]
+                ["Kasus", step.germanLabel, r.topic?.germanTitle]
             } else {
                 ["Kasus", KasusStoryBank.bundled.story(id: r.storyID)?.title
                           ?? KasusStoryStore.title(id: r.storyID, in: context), r.stepLabel]
             }
             out.append(DayExercise(
                 time: r.date,
-                icon: r.unit?.symbol ?? "checklist",
-                tint: r.unit?.color ?? .purple,
+                icon: r.topic?.symbol ?? "checklist",
+                tint: r.topic?.color ?? .purple,
                 title: title.compactMap { $0 }.joined(separator: " · "),
                 subtitle: parts.joined(separator: " · ")
             ))
