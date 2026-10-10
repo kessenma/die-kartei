@@ -102,12 +102,24 @@ Verstehen items (`kasus_concepts.json`, 716 items) and the gap-choice items
    gates a file in the pack's format and prints the golden rows to paste. `selftest` loads the
    bank.
 
-A batch (not built yet; the plan is in `/Users/ke/.claude/plans/i-am-interested-in-curried-wirth.md`,
-part 3): a planner writes the German from the tables (`gap-plans`), the gate checks it
-(`gap-check`), a review script writes `review.csv` for a hand read, `gap-export` drops the fails,
-the export is appended to the pack, `audit-gaps --golden` updates the fixtures. A bad item is
-fixed in the table and the pack regenerated, never patched in the output. No model writes grammar
-content for the app; the tutors on the device never do.
+A batch, from `training/`:
+
+```bash
+python3 scripts/gap_review.py data/gap-choice/reflexiv-2026-10 --focus case:120 person:100 --seed 7
+python3 scripts/gap_review.py data/gap-choice/reflexiv-2026-10 --merge     # after the read
+```
+
+`GapChoicePlanner` (`Services/Grammar/Content/`) writes the German and the English from the
+tables alone (verb × subject × object or tail, the pronoun from person and case, the English from
+the verb's pattern with `{S} {V} {B} {R} {P} {O}` tokens), with the pack's composition built in
+(every verb, every person, both cases, no sentence a drill already asks). `kasus-cli gap-plans`
+emits it as JSON lines, `gap-check` gates it, `gap-export` keeps the passing items in bundle
+format, `audit-gaps` audits the export; the script writes `review.csv` (fill in `reads_right` and
+`note`), `review.md`, `summary.json` and a `README.md` run log. A ✗ in the read names a table row
+to fix (`ReflexivForms.swift`), and the pack regenerates from the same seed. `--merge` appends the
+export to `Resources/gap_choice_items.json` and prints the golden rows for
+`GapChoiceFixtures.golden`. No model writes grammar content for the app; the tutors on the device
+never do.
 
 ## Adding an exercise type
 

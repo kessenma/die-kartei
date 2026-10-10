@@ -140,6 +140,7 @@ nonisolated struct ReflexivObject: Hashable {
     static let adresse = ReflexivObject(text: "die Adresse", lemma: "Adresse", genus: .die, number: .sg, en: "the address", possessed: false)
     static let film = ReflexivObject(text: "den Film", lemma: "Film", genus: .der, number: .sg, en: "the film", possessed: false)
     static let foto = ReflexivObject(text: "das Foto", lemma: "Foto", genus: .das, number: .sg, en: "the photo", possessed: false)
+    static let bild = ReflexivObject(text: "das Bild", lemma: "Bild", genus: .das, number: .sg, en: "the picture", possessed: false)
     static let reise = ReflexivObject(text: "eine Reise", lemma: "Reise", genus: .die, number: .sg, en: "a trip", possessed: false)
     static let antwort = ReflexivObject(text: "die Antwort", lemma: "Antwort", genus: .die, number: .sg, en: "the answer", possessed: false)
     static let plan = ReflexivObject(text: "einen Plan", lemma: "Plan", genus: .der, number: .sg, en: "a plan", possessed: false)
@@ -153,10 +154,17 @@ nonisolated struct ReflexivObject: Hashable {
 nonisolated struct ReflexivEnglish: Hashable {
     let base: String
     let third: String
-    /// The Akkusativ reading: `{S}` subject, `{V}` verb, `{R}` myself …, `{O}` the object.
+    /// The Akkusativ reading: `{S}` subject, `{V}` verb, `{B}` am / are / is, `{R}` myself …, `{O}` the object.
     let akk: String?
     /// The Dativ reading: `{P}` the possessive (my hands) or `{O}` the object as written.
     let dat: String?
+}
+
+/// A fixed phrase after the pronoun that rounds the sentence off („am Wochenende“), with its
+/// English. Never asked, never read into; the gate takes it verbatim.
+nonisolated struct ReflexivTail: Hashable {
+    let de: String
+    let en: String
 }
 
 nonisolated struct ReflexivVerb: Hashable {
@@ -170,6 +178,10 @@ nonisolated struct ReflexivVerb: Hashable {
     let en: ReflexivEnglish
     /// The second objects the verb naturally takes (none for an always-Akkusativ verb).
     var objects: [ReflexivObject] = []
+    /// Tails for the Akkusativ reading of an always-Akkusativ verb („Ich beeile mich heute“). A
+    /// verb that takes either case gets none: a phrase after the pronoun could read as the second
+    /// object the lesson talks about.
+    var tails: [ReflexivTail] = []
 
     /// The finite form for a subject.
     func form(person: Int, number: GrammarNumber) -> String? {
@@ -206,16 +218,16 @@ nonisolated struct ReflexivVerb: Hashable {
                      en: ReflexivEnglish(base: "wash", third: "washes", akk: "{S} {V} {R}.", dat: "{S} {V} {P} {O}."),
                      objects: [.haende, .haare, .gesicht]),
         ReflexivVerb(lemma: "kämmen", takes: .both, forms: regular("kämm"),
-                     en: ReflexivEnglish(base: "comb", third: "combs", akk: "{S} {V} {R}.", dat: "{S} {V} {P} {O}."),
+                     en: ReflexivEnglish(base: "comb", third: "combs", akk: "{S} {V} {P} hair.", dat: "{S} {V} {P} {O}."),
                      objects: [.haare]),
         ReflexivVerb(lemma: "rasieren", takes: .both, forms: regular("rasier"),
                      en: ReflexivEnglish(base: "shave", third: "shaves", akk: "{S} {V}.", dat: "{S} {V} {P} {O}."),
-                     objects: [.beine, .bart]),
+                     objects: [.beine, .gesicht]),
         ReflexivVerb(lemma: "putzen", takes: .both, forms: regular("putz"),
-                     en: ReflexivEnglish(base: "clean", third: "cleans", akk: "{S} {V} {R} up.", dat: "{S} {V} {P} {O}."),
+                     en: ReflexivEnglish(base: "brush", third: "brushes", akk: nil, dat: "{S} {V} {P} {O}."),
                      objects: [.zaehne, .nase]),
         ReflexivVerb(lemma: "abtrocknen", prefix: "ab", takes: .both, forms: regular("trockn"),
-                     en: ReflexivEnglish(base: "dry", third: "dries", akk: "{S} {V} {R}.", dat: "{S} {V} {P} {O}."),
+                     en: ReflexivEnglish(base: "dry", third: "dries", akk: "{S} {V} {R} off.", dat: "{S} {V} {P} {O}."),
                      objects: [.haende, .haare]),
         ReflexivVerb(lemma: "anziehen", prefix: "an", takes: .both, forms: regular("zieh"),
                      en: ReflexivEnglish(base: "get dressed", third: "gets dressed", akk: "{S} {V}.", dat: "{S} {V:put|puts} on {P} {O}."),
@@ -237,8 +249,8 @@ nonisolated struct ReflexivVerb: Hashable {
                      en: ReflexivEnglish(base: "buy", third: "buys", akk: nil, dat: "{S} {V} {R} {O}."),
                      objects: [.buch, .auto, .kaffee]),
         ReflexivVerb(lemma: "ansehen", prefix: "an", takes: .dat, forms: ["sehe", "siehst", "sieht", "sehen", "seht", "sehen"],
-                     en: ReflexivEnglish(base: "watch", third: "watches", akk: nil, dat: "{S} {V} {O}."),
-                     objects: [.film, .foto]),
+                     en: ReflexivEnglish(base: "look at", third: "looks at", akk: nil, dat: "{S} {V} {O}."),
+                     objects: [.foto, .bild]),
         ReflexivVerb(lemma: "leisten", takes: .dat, forms: regular("leist"),
                      en: ReflexivEnglish(base: "afford", third: "affords", akk: nil, dat: "{S} can afford {O}."),
                      objects: [.auto, .reise]),
@@ -247,29 +259,41 @@ nonisolated struct ReflexivVerb: Hashable {
                      objects: [.antwort, .plan]),
         // Akkusativ only: the person is the only object.
         ReflexivVerb(lemma: "beeilen", takes: .akk, forms: regular("beeil"),
-                     en: ReflexivEnglish(base: "hurry", third: "hurries", akk: "{S} {V}.", dat: nil)),
+                     en: ReflexivEnglish(base: "hurry", third: "hurries", akk: "{S} {V}.", dat: nil),
+                     tails: [ReflexivTail(de: "heute", en: "today"), ReflexivTail(de: "jetzt", en: "now")]),
         ReflexivVerb(lemma: "erholen", takes: .akk, forms: regular("erhol"),
-                     en: ReflexivEnglish(base: "rest", third: "rests", akk: "{S} {V}.", dat: nil)),
+                     en: ReflexivEnglish(base: "rest", third: "rests", akk: "{S} {V}.", dat: nil),
+                     tails: [ReflexivTail(de: "am Wochenende", en: "at the weekend"), ReflexivTail(de: "im Urlaub", en: "on holiday")]),
         ReflexivVerb(lemma: "setzen", takes: .akk, forms: regular("setz"),
-                     en: ReflexivEnglish(base: "sit down", third: "sits down", akk: "{S} {V}.", dat: nil)),
+                     en: ReflexivEnglish(base: "sit down", third: "sits down", akk: "{S} {V}.", dat: nil),
+                     tails: [ReflexivTail(de: "auf den Stuhl", en: "on the chair"), ReflexivTail(de: "ans Fenster", en: "by the window")]),
         ReflexivVerb(lemma: "freuen", takes: .akk, forms: regular("freu"),
-                     en: ReflexivEnglish(base: "look forward", third: "looks forward", akk: "{S} {V}.", dat: nil)),
+                     en: ReflexivEnglish(base: "look forward", third: "looks forward", akk: "{S} {V}.", dat: nil),
+                     tails: [ReflexivTail(de: "auf die Ferien", en: "to the holidays"), ReflexivTail(de: "auf das Wochenende", en: "to the weekend")]),
         ReflexivVerb(lemma: "ärgern", takes: .akk, forms: ["ärgere", "ärgerst", "ärgert", "ärgern", "ärgert", "ärgern"],
-                     en: ReflexivEnglish(base: "get annoyed", third: "gets annoyed", akk: "{S} {V}.", dat: nil)),
+                     en: ReflexivEnglish(base: "get annoyed", third: "gets annoyed", akk: "{S} {V}.", dat: nil),
+                     tails: [ReflexivTail(de: "über den Lärm", en: "about the noise"), ReflexivTail(de: "über das Wetter", en: "about the weather")]),
         ReflexivVerb(lemma: "erinnern", takes: .akk, forms: ["erinnere", "erinnerst", "erinnert", "erinnern", "erinnert", "erinnern"],
-                     en: ReflexivEnglish(base: "remember", third: "remembers", akk: "{S} {V}.", dat: nil)),
+                     en: ReflexivEnglish(base: "remember", third: "remembers", akk: "{S} {V}.", dat: nil),
+                     tails: [ReflexivTail(de: "an den Sommer", en: "the summer"), ReflexivTail(de: "an die Reise", en: "the trip")]),
         ReflexivVerb(lemma: "interessieren", takes: .akk, forms: regular("interessier"),
-                     en: ReflexivEnglish(base: "are interested", third: "is interested", akk: "{S} {V}.", dat: nil)),
+                     en: ReflexivEnglish(base: "interested", third: "interested", akk: "{S} {B} interested.", dat: nil),
+                     tails: [ReflexivTail(de: "für Musik", en: "in music"), ReflexivTail(de: "für Fußball", en: "in football")]),
         ReflexivVerb(lemma: "entschuldigen", takes: .akk, forms: regular("entschuldig"),
-                     en: ReflexivEnglish(base: "apologise", third: "apologises", akk: "{S} {V}.", dat: nil)),
+                     en: ReflexivEnglish(base: "apologise", third: "apologises", akk: "{S} {V}.", dat: nil),
+                     tails: [ReflexivTail(de: "beim Lehrer", en: "to the teacher"), ReflexivTail(de: "bei der Nachbarin", en: "to the neighbour")]),
         ReflexivVerb(lemma: "umziehen", prefix: "um", takes: .akk, forms: regular("zieh"),
-                     en: ReflexivEnglish(base: "get changed", third: "gets changed", akk: "{S} {V}.", dat: nil)),
+                     en: ReflexivEnglish(base: "get changed", third: "gets changed", akk: "{S} {V}.", dat: nil),
+                     tails: [ReflexivTail(de: "schnell", en: "quickly")]),
         ReflexivVerb(lemma: "duschen", takes: .akk, forms: regular("dusch"),
-                     en: ReflexivEnglish(base: "shower", third: "showers", akk: "{S} {V}.", dat: nil)),
+                     en: ReflexivEnglish(base: "shower", third: "showers", akk: "{S} {V}.", dat: nil),
+                     tails: [ReflexivTail(de: "am Morgen", en: "in the morning"), ReflexivTail(de: "nach dem Sport", en: "after sport")]),
         ReflexivVerb(lemma: "fühlen", takes: .akk, forms: regular("fühl"),
-                     en: ReflexivEnglish(base: "feel", third: "feels", akk: "{S} {V}.", dat: nil)),
+                     en: ReflexivEnglish(base: "feel", third: "feels", akk: "{S} {V}.", dat: nil),
+                     tails: [ReflexivTail(de: "gut", en: "good"), ReflexivTail(de: "müde", en: "tired")]),
         ReflexivVerb(lemma: "treffen", takes: .akk, forms: ["treffe", "triffst", "trifft", "treffen", "trefft", "treffen"],
-                     en: ReflexivEnglish(base: "meet", third: "meets", akk: "{S} {V}.", dat: nil)),
+                     en: ReflexivEnglish(base: "meet", third: "meets", akk: "{S} {V}.", dat: nil),
+                     tails: [ReflexivTail(de: "im Park", en: "in the park"), ReflexivTail(de: "um sieben", en: "at seven")]),
     ]
 }
 

@@ -236,23 +236,25 @@ enum GapChoiceCheck {
             .union(ReflexivSubject.all.map { $0.text.lowercased() })
             .union([item.verb.form.lowercased(), (item.verb.prefix ?? "").lowercased()])
         for word in lower where !known.contains(word) && !word.isEmpty && word.allSatisfy(\.isLetter) {
-            // Articles and contractions are the forms engine's, not the dictionary's.
-            if KasusForms.parseDeterminer(word) != nil || KasusForms.contraction(word) != nil { continue }
+            // Articles, contractions and prepositions are the forms engine's and the lexicon's, not
+            // the dictionary's.
+            if KasusForms.parseDeterminer(word) != nil || KasusForms.contraction(word) != nil || lexicon.prepositionCases(word) != nil { continue }
             if let parts = lexicon.partsOfSpeech(word), parts.isEmpty { flag(.unknownWord, "„\(word)“") }
         }
 
         return GapChoiceCheckResult(item: item, codes: codes, problems: problems)
     }
 
-    /// The whole pack: duplicates, and the balance an Akkusativ-oder-Dativ pack needs. From
-    /// `batchSize` items on, every table verb and every person must appear.
+    /// The whole pack: duplicate ids, a sentence asked twice by the same drill (two drills may
+    /// ask different questions about one sentence), and the balance an Akkusativ-oder-Dativ pack
+    /// needs. From `batchSize` items on, every table verb and every person must appear.
     static func composition(_ items: [GapChoiceItem], batchSize: Int = 40) -> [GapCompositionProblem] {
         var problems: [GapCompositionProblem] = []
         var ids = Set<String>()
         var sentences = Set<String>()
         for item in items {
             if !ids.insert(item.id).inserted { problems.append(.init(code: .duplicateID, detail: item.id)) }
-            if !sentences.insert(item.filled.lowercased()).inserted { problems.append(.init(code: .duplicateSentence, detail: item.filled)) }
+            if !sentences.insert(sentenceKey(item)).inserted { problems.append(.init(code: .duplicateSentence, detail: "\(item.focus.rawValue): \(item.filled)")) }
         }
         let packs = Dictionary(grouping: items) { "\($0.topic)/\($0.focus.rawValue)" }
         for (key, pack) in packs.sorted(by: { $0.key < $1.key }) {
@@ -277,5 +279,10 @@ enum GapChoiceCheck {
             }
         }
         return problems
+    }
+
+    /// What makes two items the same question: the drill and the sentence.
+    static func sentenceKey(_ item: GapChoiceItem) -> String {
+        "\(item.topic)/\(item.focus.rawValue): \(item.filled.lowercased())"
     }
 }

@@ -36,6 +36,7 @@ Models/Grammar/Kasus/ReflexivForms.swift
 Services/Grammar/Check/GapChoiceCheck.swift
 Services/Grammar/Content/GapChoiceBank.swift
 Services/Grammar/Content/GapChoiceFixtures.swift
+Services/Grammar/Content/GapChoicePlanner.swift
 
 # The lexicon and its data: Wiktionary, Goethe lists, prepositions
 Services/Grammar/Content/KasusStoryBank.swift

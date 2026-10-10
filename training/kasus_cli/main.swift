@@ -102,6 +102,12 @@ func selftest() {
     count("bundled stories", KasusStoryBank.bundled.stories.count)
     // Loading the gap-choice bank runs its gate and composition check (an assert on a failure).
     count("gap-choice items", GapChoiceBank.bundled.items.count)
+    let packA = GapChoicePlanner.pack(focus: .case, count: 40, seed: 7)
+    let packB = GapChoicePlanner.pack(focus: .case, count: 40, seed: 7)
+    print("gap-plans case:40:7: \(packA.count) items · first \(packA.first?.filled ?? "–")")
+    if packA.map(\.id) != packB.map(\.id) { problems.append("the gap planner gave two packs for one seed") }
+    let composition = GapChoiceCheck.composition(packA)
+    if !composition.isEmpty { problems.append("the gap planner's case pack fails composition: " + composition.map(\.detail).joined(separator: "; ")) }
 
     let lexicon = AppKasusLexicon()
     let a = KasusStoryPlanner.plan(unit: .dativ, level: .a2, seed: 1003, governed: false, lexicon: lexicon)
@@ -303,8 +309,12 @@ case "concept-check":   conceptCheck(Array(arguments.dropFirst()))
 case "audit-concepts":  auditConcepts(Array(arguments.dropFirst()))
 case "concept-export":  conceptExport(Array(arguments.dropFirst()))
 case "audit-gaps":      auditGaps(Array(arguments.dropFirst()))
+case "gap-plans":       gapPlans(Array(arguments.dropFirst()))
+case "gap-check":       gapCheck(Array(arguments.dropFirst()))
+case "gap-export":      gapExport(Array(arguments.dropFirst()))
 default:
     fail("usage: kasus-cli selftest | prompts <unit:level:seed[-to]>... [--governed] [--contract A|B] | check [file]"
          + " | concept-prompts <kind:unit:from-to>... | concept-check [file] [--template] | audit-concepts [file]"
-         + " | concept-export [file] --prefix <p> | audit-gaps [file] [--golden]")
+         + " | concept-export [file] --prefix <p> | audit-gaps [file] [--golden]"
+         + " | gap-plans <case|person|all> [--count N] [--seed S] [--prefix p] | gap-check [file] | gap-export [file]")
 }

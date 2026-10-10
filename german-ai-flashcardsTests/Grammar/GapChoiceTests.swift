@@ -47,7 +47,8 @@ struct GapChoiceTests {
             #expect(Set(verb.forms).count >= 3, Comment(rawValue: "\(verb.lemma) has too few distinct forms"))
             #expect(verb.takes == .akk ? verb.objects.isEmpty : !verb.objects.isEmpty, Comment(rawValue: verb.lemma))
             #expect(verb.takes == .akk ? verb.en.dat == nil : verb.en.dat != nil, Comment(rawValue: verb.lemma))
-            #expect(verb.takes == .dat ? verb.en.akk == nil : verb.en.akk != nil, Comment(rawValue: verb.lemma))
+            #expect(verb.takes == .dat ? verb.en.akk == nil : verb.takes == .both || verb.en.akk != nil, Comment(rawValue: verb.lemma))
+            #expect(verb.takes == .akk || verb.tails.isEmpty, Comment(rawValue: "\(verb.lemma): tails only on an always-Akkusativ verb"))
         }
         #expect(ReflexivVerb.named("waschen")?.form(person: 2, number: .sg) == "wäschst")
         #expect(ReflexivVerb.named("abtrocknen")?.form(person: 3, number: .sg) == "trocknet")
