@@ -5,17 +5,12 @@
       "highlights": [
         {
           "title": "Fälle verstehen · Understand cases",
-          "detail": "Eight case explainers and a pinnable article table.",
+          "detail": "Eight case explainers, a pinnable article table, and the Endungs-Werkstatt: watch der become dem in 3D, then build words yourself.",
           "symbol": "text.magnifyingglass"
         },
         {
-          "title": "Endungs-Werkstatt · Ending workshop",
-          "detail": "See der become dem in 3D, the ending in its case color, then build words yourself.",
-          "symbol": "cube.fill"
-        },
-        {
           "title": "Reflexive Verben · Reflexive verbs",
-          "detail": "A new Grammatik topic: the lesson, the pronoun table and two drills on mich or mir, sich or dich.",
+          "detail": "A new Grammatik topic: a lesson, the pronoun table and two drills on mich or mir, sich or dich.",
           "symbol": "arrow.uturn.backward.circle.fill"
         }
       ]
@@ -26,42 +21,22 @@
       "highlights": [
         {
           "title": "Die vier Fälle · The four cases",
-          "detail": "Grammar is now one path through Nominativ, Akkusativ, Dativ and Genitiv, each with its own color, its rule, a quick round and an endings drill.",
+          "detail": "Grammar is one path through Nominativ, Akkusativ, Dativ and Genitiv: a lesson with die Figur, seven worksheet stories, three drills with over 700 sentences, a quick round, and every round kept per case.",
           "symbol": "square.grid.2x2"
         },
         {
-          "title": "Geschichten · Case stories",
-          "detail": "Seven stories from A1 to B1 to work through like a class worksheet: mark every word in one case, or fill in the endings.",
-          "symbol": "text.book.closed"
-        },
-        {
-          "title": "Verlauf · Your rounds",
-          "detail": "Every grammar round is kept with your score per case, and a weak case on Today or in Coach's Notes opens the right practice.",
-          "symbol": "clock.arrow.circlepath"
-        },
-        {
           "title": "iCloud-Sync · iCloud Sync",
-          "detail": "Your cards, progress, streak, stories and conversations stay the same on your iPhone and iPad, through your own iCloud.",
+          "detail": "Cards, progress, streak, stories and conversations stay the same on your iPhone and iPad, through your own iCloud.",
           "symbol": "icloud"
         },
         {
           "title": "Deutschkurs · Class notes",
-          "detail": "Log what each class covered, keep your handouts, track homework, and turn the new words into flashcards for that course.",
+          "detail": "Log what each class covered, read handouts side by side with tap-to-translate, and turn a word list, photo or PDF into a deck for that course.",
           "symbol": "graduationcap.fill"
         },
         {
-          "title": "Handouts lesen · Read your handouts",
-          "detail": "Read a handout side by side in German and English, and double-tap any word to translate it and save it to your course deck.",
-          "symbol": "rectangle.split.2x1"
-        },
-        {
-          "title": "Karten aus dem Dokument · Flashcards from a document",
-          "detail": "Turn a teacher's word list, even a photo of one, into a deck in one go, or highlight phrases in any PDF, photo or text to make cards.",
-          "symbol": "doc.plaintext"
-        },
-        {
           "title": "Tastatur · German keyboard",
-          "detail": "A keyboard for Mail, Messages and anywhere you write: tap Auf Deutsch to translate, Korrigieren to fix your German, and hold a, o, u or s for ä, ö, ü and ß. It runs on your device and never asks for Full Access.",
+          "detail": "A keyboard for Mail, Messages and anywhere you write: Auf Deutsch translates, Korrigieren fixes your German, hold a, o, u or s for ä, ö, ü and ß. On your device, never Full Access.",
           "symbol": "keyboard"
         },
         {
@@ -71,12 +46,12 @@
         },
         {
           "title": "Karteikarten · Flashcards",
-          "detail": "Nouns hide their article until you flip, cards show plural and Perfekt forms, missed cards come back soon, and you can share a deck with its progress.",
+          "detail": "Nouns hide their article until you flip, cards show plural and Perfekt forms, missed cards come back soon, and a deck can be shared with its progress.",
           "symbol": "rectangle.on.rectangle"
         },
         {
           "title": "Dein Weg · Your journey",
-          "detail": "A timeline of your progress with badges, a „Weißt du es noch?“ check on older words, and a Lernpyramide that shows what you've proven.",
+          "detail": "A timeline with badges, a „Weißt du es noch?“ check on older words, and a Lernpyramide of what you've proven.",
           "symbol": "map"
         },
         {
@@ -86,53 +61,33 @@
         },
         {
           "title": "Gespräch · Conversations",
-          "detail": "Type a turn instead of speaking, switch keyboards between German and English, and pick an interrupted chat back up.",
+          "detail": "Type a turn instead of speaking, switch between German and English keyboards, and pick an interrupted chat back up.",
           "symbol": "bubble.left.and.bubble.right"
         },
         {
-          "title": "Stabiler · More stable",
-          "detail": "Runs more reliably on devices with less memory, and Settings ▸ Speicher shows what's using it.",
-          "symbol": "checkmark.shield"
-        },
-        {
-          "title": "Cloud-Bilder · Cloud pictures",
-          "detail": "Draw card and story pictures in seconds with Muse Image or Nano Banana on your own OpenRouter account, at a cent or a few each. On-device drawing stays the default.",
-          "symbol": "cloud"
-        },
-        {
           "title": "Verben mit Präpositionen · Verbs with prepositions",
-          "detail": "42 pairs like warten auf and Angst haben vor, each with its own 3D scene. Flip the cards, drill the case, fill the gaps, and spot the trap in Die Falle.",
+          "detail": "42 pairs like warten auf, each with a 3D scene: cards, a case drill, gap fills, Die Falle, and spaced review that shows up on Today.",
           "symbol": "link"
         },
         {
+          "title": "Bilder · Pictures",
+          "detail": "Draw card and story pictures in seconds with Muse Image or Nano Banana on your own OpenRouter account, or much sharper ones on your Mac and send a deck there from your iPhone.",
+          "symbol": "cloud"
+        },
+        {
           "title": "Die Kartei für Mac · Die Kartei on Mac",
-          "detail": "Study on your Mac with the same decks, tutors and progress, kept in step with your iPhone and iPad through iCloud, in a window with a sidebar, menus and its own Settings.",
+          "detail": "Study on your Mac with the same decks, tutors and progress via iCloud, and fix text in any Mac app with Services ▸ Auf Deutsch or Deutsch korrigieren.",
           "symbol": "macbook"
         },
         {
-          "title": "Bilder vom Mac · Pictures from your Mac",
-          "detail": "On a Mac, draw much sharper pictures with Z-Image Turbo or FLUX.2 klein, and send a deck or story from your iPhone to be illustrated there.",
-          "symbol": "macbook.and.iphone"
-        },
-        {
-          "title": "Verben wiederholen · Verb review",
-          "detail": "Review the 42 verb pairs with spaced repetition, each with its scene. A pair comes back just before you'd forget it, and due ones show up on Today.",
-          "symbol": "arrow.triangle.2.circlepath"
-        },
-        {
-          "title": "Schreibhilfe · Writing helper on the Mac",
-          "detail": "Select text in any Mac app, then Services ▸ Auf Deutsch or Deutsch korrigieren, and the German replaces it. Longer text opens in a small floating window.",
-          "symbol": "text.badge.checkmark"
-        },
-        {
           "title": "Stapel mischen · Mix decks",
-          "detail": "Pick several decks in the Library and study them as one session. Each deck keeps its own progress, and your last mix is remembered.",
+          "detail": "Study several decks as one session; each keeps its own progress.",
           "symbol": "square.stack.3d.up.fill"
         },
         {
-          "title": "Verstehen · Understand the cases",
-          "detail": "Each case now opens with a short lesson in English and German, with die Figur acting out the sentences, memory aids, and three drills with over 700 practice sentences: name a phrase's job, read who does what by the ending, and swap in der Mann.",
-          "symbol": "lightbulb"
+          "title": "Stabiler · More stable",
+          "detail": "Runs more reliably on devices with less memory; Settings ▸ Speicher shows what's using it.",
+          "symbol": "checkmark.shield"
         }
       ]
     },
