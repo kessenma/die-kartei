@@ -45,7 +45,7 @@ struct EndingsQuestionTests {
     @Test("A frame family narrows the pool and reports the cases it can cover")
     func families() {
         let dativVerbs = EndingsQuestion.frames(family: .dativVerb)
-        #expect(dativVerbs.count == 3 && Set(dativVerbs.map(\.kasus)) == [.akkusativ, .dativ])
+        #expect(dativVerbs.count >= 15 && Set(dativVerbs.map(\.kasus)) == [.akkusativ, .dativ])
         #expect(EndingsQuestion.frames(family: nil).count == EndingsFrame.all.count)
         #expect(EndingsQuestion.coversCases(KasusUnit.dativ.casesInPlay, family: .dativVerb))
         #expect(!EndingsQuestion.coversCases(KasusUnit.nominativ.casesInPlay, family: .dativVerb))

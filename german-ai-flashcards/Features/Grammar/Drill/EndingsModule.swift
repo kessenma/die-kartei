@@ -19,8 +19,10 @@ struct EndingsModule: KasusDrillModule {
 
     let kind: KasusDrillKind
     let config: EndingsConfig
+    let session: GrammarDrillSession
 
     init(session: GrammarDrillSession) {
+        self.session = session
         kind = session.kind
         if case .endings(let config) = session.variant {
             self.config = config
@@ -30,13 +32,19 @@ struct EndingsModule: KasusDrillModule {
     }
 
     var isBuilding: Bool { config.style == .ending }
+    var isTimed: Bool { config.timeLimit != nil }
+    /// A confusion pair: two forms as buttons, nothing else.
+    var isPair: Bool { config.options != nil }
+
+    var defersFeedback: Bool { config.deferredFeedback }
 
     // MARK: Items and grading
 
     func compose(_ session: GrammarDrillSession, rng: inout KasusSeededRandom) -> [EndingsQuestion]? {
         guard EndingsQuestion.coversCases(config.cases, family: config.family) else { return nil }
         let round = EndingsQuestion.round(cases: config.cases, emphasis: config.emphasis, count: config.count,
-                                          family: config.family, rng: &rng)
+                                          family: config.family, genders: config.genders,
+                                          determiners: config.determiners, options: config.options, rng: &rng)
         return round.isEmpty ? nil : round
     }
 
@@ -62,11 +70,19 @@ struct EndingsModule: KasusDrillModule {
 
     /// The word in 3D: an open slot on the stem until the pick, then the answer snapping in (a
     /// wrong ending bounces off first). A hero in Bau das Wort, a dimmed strip in the Schnellrunde.
+    /// The Blitzrunde has the clock there instead.
     func stage(_ ctx: KasusDrillContext<Self>) -> some View {
-        EndingBlocksScene(state: blocks(ctx))
-            .frame(height: stageHeight(ctx.playHeight))
-            .frame(maxWidth: 640)
-            .opacity(ctx.picked == nil && !isBuilding ? 0.55 : 1)
+        Group {
+            if let limit = config.timeLimit {
+                BlitzTimerStage(seconds: limit, answered: ctx.round.answers.count, right: ctx.round.firstTryCount,
+                                best: ctx.session.personalBest, onExpire: ctx.finish)
+            } else {
+                EndingBlocksScene(state: blocks(ctx))
+                    .frame(height: stageHeight(ctx.playHeight))
+                    .frame(maxWidth: 640)
+                    .opacity(ctx.picked == nil && !isBuilding ? 0.55 : 1)
+            }
+        }
     }
 
     private func blocks(_ ctx: KasusDrillContext<Self>) -> EndingBlocksState {
@@ -108,11 +124,72 @@ struct EndingsModule: KasusDrillModule {
     }
 
     func hint(_ ctx: KasusDrillContext<Self>) -> String {
-        isBuilding ? "Tap the ending that fits." : "Tap the article that fits."
+        if isTimed { return "Fast: tap the article, and the next sentence comes straight up." }
+        if isPair { return "Tap the form that fits." }
+        return isBuilding ? "Tap the ending that fits." : "Tap the article that fits."
     }
 
     func missText(_ item: EndingsQuestion, _ answer: KasusDrillAnswer<String>) -> Text {
         EndingsHero.sentence(item, picked: answer.pick, isBuilding: isBuilding)
+    }
+
+    func scoreLine(_ round: KasusDrillRound<Self>) -> String {
+        if let limit = config.timeLimit { return "right in \(limit) seconds" }
+        return "right on the first try"
+    }
+
+    func summaryNote(_ round: KasusDrillRound<Self>) -> String? {
+        if isTimed {
+            let best = session.personalBest.map { " Best so far: \($0)." } ?? ""
+            return "A speed round: it counts for your streak and your time, never for the coach." + best
+        }
+        if isPair { return "Two forms are practice, not evidence: this round never moves the coach." }
+        return nil
+    }
+}
+
+/// The Blitzrunde's clock above the sentence: the seconds left, how many were answered, the
+/// personal best. When it reaches zero the round ends over what was answered.
+struct BlitzTimerStage: View {
+    let seconds: Int
+    let answered: Int
+    let right: Int
+    let best: Int?
+    let onExpire: () -> Void
+
+    @State private var start = Date()
+    @State private var expired = false
+
+    var body: some View {
+        TimelineView(.periodic(from: start, by: 1)) { context in
+            let elapsed = Int(context.date.timeIntervalSince(start))
+            let remaining = max(0, seconds - elapsed)
+            HStack(spacing: 14) {
+                Label(String(format: "%d:%02d", remaining / 60, remaining % 60), systemImage: "bolt.fill")
+                    .font(.title2.weight(.bold))
+                    .monospacedDigit()
+                    .foregroundStyle(remaining <= 10 ? .red : .primary)
+                    .contentTransition(.numericText())
+                Spacer()
+                Text("\(right) / \(answered)")
+                    .font(.headline)
+                    .monospacedDigit()
+                if let best {
+                    Text("Best \(best)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 8)
+            .frame(maxWidth: 640)
+            .onChange(of: remaining) { _, left in
+                guard left == 0, !expired else { return }
+                expired = true
+                onExpire()
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 

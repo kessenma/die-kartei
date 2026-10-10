@@ -250,7 +250,8 @@ extension KasusRoundStep {
             KasusDrillMeta(germanTitle: "Blitzrunde", englishTitle: "Speed round",
                            blurb: "Sixty seconds, as many sentences as you can; the misses wait for the end",
                            symbol: "bolt.fill", minutes: 1, roundSize: 0, countNoun: .init(de: "Sätze", en: "sentences"),
-                           filing: .topicDrill, coachPolicy: .never, placement: .hidden, allowsReference: false)
+                           filing: .topicDrill, coachPolicy: .never, placement: .ueben,
+                           coachNote: "is a speed round, so it never moves the coach", allowsReference: false)
         case .pair:
             KasusDrillMeta(germanTitle: "Verwechslungs-Paar", englishTitle: "Confusion pair",
                            blurb: "The two forms you mix up, ten sentences", symbol: "arrow.left.arrow.right",
@@ -261,12 +262,14 @@ extension KasusRoundStep {
                            blurb: "helfen, danken, gefallen … and the verbs that only feel like them",
                            symbol: "hand.raised.fill", minutes: 3, roundSize: 10,
                            countNoun: .init(de: "Sätze", en: "sentences"), filing: .topicDrill,
-                           coachPolicy: .productionUnlessGenderShown, placement: .hidden, summaryShowsCodeWord: true)
+                           coachPolicy: .productionUnlessGenderShown, placement: .ueben, summaryShowsCodeWord: true)
         case .fehler:
             KasusDrillMeta(germanTitle: "Finde den Fehler", englishTitle: "Find the mistake",
                            blurb: "One ending is wrong: tap it, then fix it", symbol: "exclamationmark.magnifyingglass",
                            minutes: 3, roundSize: 8, countNoun: .init(de: "Sätze", en: "sentences"),
-                           filing: .topicDrill, coachPolicy: .productionUnlessGenderShown, placement: .hidden)
+                           filing: .topicDrill, coachPolicy: .productionUnlessGenderShown, placement: .ueben,
+                           coachNote: "moves the coach only for a mistake you found yourself",
+                           outcomeLabels: [.wrongPick: .init(de: "Übersehen", en: "Missed the word")])
         case .reflexCase:
             KasusDrillMeta(germanTitle: "Akkusativ oder Dativ?", englishTitle: "mich or mir?",
                            blurb: "Which reflexive pronoun fits: the person, and whether a second object follows",
@@ -288,9 +291,10 @@ extension KasusRoundStep {
         case .bridge:
             KasusDrillMeta(germanTitle: "Pronomen-Brücke", englishTitle: "Pronoun bridge",
                            blurb: "You already say him, not he: German does the same to every noun",
-                           symbol: "point.topleft.down.to.point.bottomright.curvepath", minutes: 3, roundSize: 10,
+                           symbol: "point.topleft.down.to.point.bottomright.curvepath", minutes: 3, roundSize: 8,
                            countNoun: .init(de: "Sätze", en: "sentences"), filing: .topicDrill,
-                           coachPolicy: .never, placement: .hidden)
+                           coachPolicy: .never, placement: .verstehen,
+                           coachNote: "is recognition of a job you already feel in English, so it never moves the coach")
         }
     }
 

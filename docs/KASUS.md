@@ -1121,6 +1121,8 @@ its way there, and prints `[kasus.debugOpen] open <screen>`:
 | (with `roles:` · `wer:` · `probe:`) `-kasus.debugItem <id>` | that item comes first in the round |
 | `roles:<unit>` · `wer:<unit>` · `probe:<unit>` | a Verstehen round, prefilled from `-kasus.debugAnswers right\|mixed` (the first four steps) and `-kasus.debugQuickState right\|wrong\|done` (the next step, or the summary); Rollen plays in the stored mode (`-kasus.debugRolesMode schritt\|direkt` picks one for that launch), a walk included |
 | `reflexcase:reflexiv` · `reflexperson:reflexiv` | a reflexive drill on the bundled gap-choice items (`docs/GRAMMAR_EXERCISES.md`), prefilled the same way; `-kasus.debugItem <id>` puts that item first |
+| `dativverben:<unit>` · `blitz:<unit>` · `fehler:<unit>` · `bridge:<unit>` | the Üben and Verstehen variants on the shell: the Dativ-Verben round (Dativ and Alle Fälle), the 60-second Blitzrunde (no card mid-round; the clock ends it), Finde den Fehler (`-kasus.debugQuickState right` lands on a found word, `done` on the summary) and the Pronomen-Brücke (three taps per frame); prefilled from `-kasus.debugAnswers` as the others |
+| (with `-kasus.debugSeedRounds 1`) `-kasus.debugConfusion 1` | seeds two confusion-pair rounds with dem ↔ den missed, so `hub` and Coach's Notes show the Verwechslungs-Paar card |
 | `history` | Verlauf, in a sheet |
 | `round` | the newest Kasus round that kept its answers, in a sheet |
 | `round-mark` | the newest Markieren round that kept its answers (one with a miss or a wrong mark first), in a sheet |

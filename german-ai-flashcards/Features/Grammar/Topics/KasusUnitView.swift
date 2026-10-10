@@ -193,9 +193,13 @@ struct KasusUnitView: View {
             unit: unit,
             progress: KasusProgress(rounds: rounds),
             offered: KasusConceptBank.bundled.offered(for: unit),
+            extra: GrammarTopic.kasus(unit).exercises().filter { $0.meta.placement == .verstehen && KasusConceptExercise(step: $0.step) == nil },
             onLesson: { showLesson = true },
             onExercise: { exercise in
                 router.launch(.grammarDrill(GrammarDrillSession(kind: exercise.kind, topic: .kasus(unit))))
+            },
+            onDrill: { kind in
+                router.launch(.grammarDrill(GrammarDrillSession(kind: kind, topic: .kasus(unit))))
             }
         )
     }
@@ -347,7 +351,7 @@ struct KasusUnitView: View {
     private func quickRoundRow(_ kind: KasusDrillKind, symbol: String, title: String,
                                detail: String) -> some View {
         Button {
-            router.launch(.grammarDrill(GrammarDrillSession(kind: kind, topic: .kasus(unit))))
+            router.launch(.grammarDrill(drillSession(kind)))
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: symbol)
@@ -375,18 +379,50 @@ struct KasusUnitView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Schnellrunde
+    // MARK: - Üben
+
+    /// The endings drills the registry files under Üben for this unit: the Schnellrunde, Bau das
+    /// Wort, the Dativ-Verben once the Dativ is in play, the Blitzrunde.
+    private var uebenKinds: [KasusDrillKind] {
+        GrammarTopic.kasus(unit).exercises().filter { $0.meta.placement == .ueben }
+    }
 
     private var quickRoundSection: some View {
         Section {
-            let quick = KasusRoundStep.quick.meta, build = KasusRoundStep.build.meta
-            quickRoundRow(.quick, symbol: quick.symbol, title: "\(quick.germanTitle) · \(quick.englishTitle)",
-                          detail: "\(quickRoundCount) Sätze · \(unit.casesInPlay.map(\.short).joined(separator: " + "))")
-            quickRoundRow(.build, symbol: build.symbol, title: "\(build.germanTitle) · \(build.englishTitle)",
-                          detail: build.blurb)
+            ForEach(uebenKinds) { kind in
+                quickRoundRow(kind, symbol: kind.meta.symbol, title: "\(kind.meta.germanTitle) · \(kind.meta.englishTitle)",
+                              detail: rowDetail(kind))
+            }
+        } header: {
+            Text("Üben · Practice")
+                .themedSectionHeader()
         } footer: {
-            Text("Pick the article that fits the sentence, or in Bau das Wort just its ending. Every miss shows which case it is and why.")
+            Text("Pick the article that fits the sentence, or in Bau das Wort just its ending. Every miss shows which case it is and why; the Blitzrunde saves the misses for the end.")
         }
+    }
+
+    private func rowDetail(_ kind: KasusDrillKind) -> String {
+        switch kind {
+        case .quick:
+            return "\(quickRoundCount) Sätze · \(unit.casesInPlay.map(\.short).joined(separator: " + "))"
+        case .blitz:
+            let best = blitzBest.map { " · best \($0)" } ?? ""
+            return "\(EndingsConfig.blitzSeconds) seconds, as many as you can\(best)"
+        default:
+            return kind.meta.blurb
+        }
+    }
+
+    /// The Blitzrunde's personal best: the most right answers in one round of it here.
+    private var blitzBest: Int? {
+        let id = KasusRoundStep.blitz.roundID(topicKey: unit.rawValue)
+        return rounds.filter { $0.storyID == id && $0.unitRaw == unit.rawValue }.map(\.firstTryCount).max()
+    }
+
+    private func drillSession(_ kind: KasusDrillKind) -> GrammarDrillSession {
+        var session = GrammarDrillSession(kind: kind, topic: .kasus(unit))
+        if kind == .blitz { session.personalBest = blitzBest }
+        return session
     }
 
     // MARK: - Deine Runden

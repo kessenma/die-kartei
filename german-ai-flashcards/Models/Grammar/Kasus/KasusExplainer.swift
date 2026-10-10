@@ -71,6 +71,18 @@ nonisolated struct KasusExplainer: Identifiable {
               prompt: "Why does „Ich danke dem Lehrer“ use dem?",
               reveal: "*danken* takes Dativ. The verb's pattern is stronger evidence than an English translation or the idea that a person is affected.",
               source: "https://grammis.ids-mannheim.de/sgt/2279"),
+        .init(id: "dativ-verbs", title: "Die Dativ-Verben", subtitle: "helfen, danken, gefallen … and the verbs that only feel like them.",
+              group: .contrasts, units: [.dativ],
+              idea: "A small set of verbs always puts its person in the {dat:Dativ}, with no „to“ anywhere in the English: *helfen, danken, gefallen, gehören, folgen, antworten, gratulieren, schmecken, passen, fehlen, zuhören, glauben, vertrauen, begegnen*. Three verbs feel just like them and take the {akk:Akkusativ}: *fragen, anrufen, besuchen*.",
+              examples: [
+                .init(de: "Ich danke {dat:dem Lehrer}.", en: "I thank {dat:the teacher}.", why: "*danken* takes the Dativ. English „thank *him*“ hides it."),
+                .init(de: "Das Essen gefällt {dat:dem Kind}.", en: "{dat:The child} likes the food.", why: "With *gefallen* the thing liked is the subject; the one who likes it is the Dativ receiver."),
+                .init(de: "Ich frage {akk:den Lehrer}.", en: "I ask {akk:the teacher}.", why: "*fragen* takes the Akkusativ, although the teacher gets the question.")
+              ],
+              takeaway: "Learn the verb with its case, the way you learn a noun with its article: jemandem helfen, jemanden fragen. Dativ ▸ Üben ▸ Dativ-Verben asks exactly these.",
+              prompt: "„Ich rufe ___ Freund an.“ Which form?",
+              reveal: "**den**: *anrufen* takes the Akkusativ, even though the call reaches someone. It is a false friend, with *fragen* and *besuchen*.",
+              source: "https://grammis.ids-mannheim.de/sgt/2279"),
         .init(id: "place-goal", title: "Bewegung reicht nicht", subtitle: "Movement within a place versus movement into it.",
               group: .contrasts, units: [.akkusativ, .dativ],
               idea: "With spatial two-way prepositions such as *in*, ask what the prepositional phrase describes: the place where the activity happens, or its destination? Both can involve movement.",

@@ -54,6 +54,12 @@ struct KasusDrillRound<Module: KasusDrillModule> {
         answers.append(last)
     }
 
+    /// Ends the round early: the steps answered so far are the round (a timer ran out).
+    mutating func truncate() {
+        items = Array(items.prefix(cursor))
+        partial = nil
+    }
+
     /// Brings the item at `index` forward to `position` (the DEBUG prefill wants a slippable
     /// question next). Only before that position is answered.
     mutating func swapItems(_ position: Int, _ index: Int) {

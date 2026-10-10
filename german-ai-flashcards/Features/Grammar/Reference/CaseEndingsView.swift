@@ -85,8 +85,28 @@ struct GenderTag: View {
 /// the table reads like the ending buttons under it. `highlightCell` (Lernhilfe) rings one cell,
 /// the gap's case row × gender column, and lets the rest step back.
 struct CaseEndingsTable: View {
+    /// How the table is read: the forms, each with its plain-English job (the / acts on / to /
+    /// of, with the Mandarin particles as an overlay), or as four chantable beats.
+    enum Lens: String, CaseIterable, Identifiable {
+        case plain, particle, rhythm
+        var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .plain:    "Formen · Forms"
+            case .particle: "Sinn · Meaning"
+            case .rhythm:   "Takt · Rhythm"
+            }
+        }
+    }
+
     var cases: [GrammarCase] = GrammarCase.allCases
     var highlight: GrammarCase?
+    var lens: Lens = .plain
+    /// With the meaning lens: 把 bǎ (acts on), 给 gěi (to), 的 de (of) next to the English, for a
+    /// learner who reads Mandarin. Never the default.
+    var chineseOverlay = false
+    /// The rhythm lens taps a beat per form when a row is tapped.
+    @State private var beat = 0
     var highlightCell: KasusTableCell? = nil
     var compact = false
     /// The pinned reference shows whole definite articles, without extra ending rows.
@@ -99,6 +119,63 @@ struct CaseEndingsTable: View {
     @Environment(\.appTheme) private var appTheme
 
     var body: some View {
+        if lens == .rhythm, !compact, !articlesOnly {
+            rhythmRows
+        } else {
+            grid
+        }
+    }
+
+    /// The job each case does, in a word: what the meaning lens writes under a form.
+    static func particle(_ kasus: GrammarCase, chinese: Bool) -> String {
+        switch kasus {
+        case .nominativ: chinese ? "the one · —" : "the one"
+        case .akkusativ: chinese ? "acts on · 把 bǎ" : "acts on"
+        case .dativ:     chinese ? "to / for · 给 gěi" : "to / for"
+        case .genitiv:   chinese ? "of · 的 de" : "of"
+        }
+    }
+
+    /// The four chantable beats, one row per case, each tap a beat on the haptics. The headline
+    /// is honest: three of the four Akkusativ forms are the Nominativ's.
+    private var rhythmRows: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(kasusRich: "**Nur der zuckt · Only der flinches:** three of four {akk:Akkusativ} forms are the {nom:Nominativ}'s. Tap a row and say it to its beat.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach(cases) { kasus in
+                Button {
+                    beat += Gender.allCases.count
+                } label: {
+                    HStack(spacing: 10) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(kasus.short)
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(kasus.color)
+                            codeText(kasus)
+                                .font(.headline.weight(.heavy))
+                        }
+                        .frame(width: 62, alignment: .leading)
+                        ForEach(Gender.allCases) { gender in
+                            Text(kasus.article(gender))
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(gender.color)
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(kasus.name): " + Gender.allCases.map { kasus.article($0) }.joined(separator: ", "))
+                .accessibilityHint("Taps the four beats")
+            }
+        }
+        .sensoryFeedback(.impact(weight: .light), trigger: beat)
+    }
+
+    private var grid: some View {
         Grid(alignment: .center, horizontalSpacing: compact ? 4 : 6, verticalSpacing: compact ? 3 : 14) {
             GridRow {
                 Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
@@ -192,6 +269,12 @@ struct CaseEndingsTable: View {
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(gender.color)
             }
+            if lens == .particle {
+                Text(Self.particle(kasus, chinese: chineseOverlay))
+                    .font(.caption2)
+                    .foregroundStyle(kasus.color)
+                    .minimumScaleFactor(0.6)
+            }
         }
         .frame(maxWidth: .infinity)
         .minimumScaleFactor(0.8)
@@ -251,6 +334,11 @@ struct CaseEndingsView: View {
     /// The cell built in 3D above the table, nil until one is tapped.
     @State private var selectedCell: KasusTableCell?
     @State private var stem: KasusStemChoice = .definite
+    /// How the table reads, remembered; the Mandarin overlay is a separate opt-in.
+    @AppStorage("kasus.tableLens") private var lensRaw = CaseEndingsTable.Lens.plain.rawValue
+    @AppStorage("kasus.tableChinese") private var chineseOverlay = false
+
+    private var lens: CaseEndingsTable.Lens { CaseEndingsTable.Lens(rawValue: lensRaw) ?? .plain }
 
     /// The stems the 3D panel offers: the table's two rows, plus kein and dieser.
     private static let panelStems = ["der", "ein", "kein", "mein", "dieser"].compactMap(KasusStemChoice.named)
@@ -258,12 +346,29 @@ struct CaseEndingsView: View {
     var body: some View {
         List {
             Section {
-                CaseEndingsTable(selectedCell: selectedCell) { cell in
+                Picker("Lens", selection: $lensRaw) {
+                    ForEach(CaseEndingsTable.Lens.allCases) { lens in
+                        Text(lens.label).tag(lens.rawValue)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                CaseEndingsTable(lens: lens, chineseOverlay: chineseOverlay, selectedCell: selectedCell) { cell in
                     withAnimation(.snappy) { selectedCell = cell }
                 }
                 .padding(.vertical, 6)
+                if lens == .particle {
+                    Toggle(isOn: $chineseOverlay) {
+                        Text("把 · 给 · 的 · Mandarin particles")
+                            .font(.subheadline)
+                    }
+                }
             } footer: {
-                Text(kasusRich: "The last letter of each article spells the code on the left. The noun itself changes in two places: **+ n** in the {dat:Dativ} plural, **+ s** on masculine and neuter in the {gen:Genitiv}. Tap a cell to build it in 3D.")
+                Text(kasusRich: lens == .particle
+                     ? "Each form is the article plus a job: {akk:acts on}, {dat:to / for}, {gen:of}. In Mandarin those jobs are their own words, 把, 给 and 的; German glues them onto the article."
+                     : lens == .rhythm
+                     ? "Four beats per case, the code word on the left. Say them until they say themselves."
+                     : "The last letter of each article spells the code on the left. The noun itself changes in two places: **+ n** in the {dat:Dativ} plural, **+ s** on masculine and neuter in the {gen:Genitiv}. Tap a cell to build it in 3D.")
             }
             .themedListRow()
 

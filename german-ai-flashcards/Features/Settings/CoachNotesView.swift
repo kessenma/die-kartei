@@ -12,6 +12,8 @@ struct CoachNotesView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(ActivityRouter.self) private var router
     @Query private var profiles: [LearnerProfile]
+    /// For the confusion pair: the two forms mixed up most across the grammar rounds.
+    @Query private var kasusRounds: [KasusRound]
     @Query(sort: \ArchivedMemoryItem.archivedAt, order: .reverse) private var archived: [ArchivedMemoryItem]
 
     @State private var showResetConfirm = false
@@ -129,6 +131,11 @@ struct CoachNotesView: View {
     @ViewBuilder private var grammarSection: some View {
         if !grammarRows.isEmpty {
             Section {
+                if let pair = KasusConfusion.standout(rounds: kasusRounds), let session = KasusConfusion.drill(for: pair) {
+                    KasusConfusionCard(pair: pair, session: session) {
+                        router.launch(.grammarDrill(session))
+                    }
+                }
                 ForEach(grammarRows, id: \.focus) { row in
                     let route = GrammarRoute(row.focus)
                     GrammarConfidenceRow(focus: row.focus, skill: row.skill,

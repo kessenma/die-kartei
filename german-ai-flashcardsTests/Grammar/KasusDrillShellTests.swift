@@ -106,7 +106,7 @@ struct KasusDrillShellTests {
     @Test("Every shipped kind composes a round where its unit offers it, and files under its id")
     @MainActor
     func modulesCompose() {
-        for kind in [KasusDrillKind.quick, .build, .roles, .wer, .probe] {
+        for kind in [KasusDrillKind.quick, .build, .roles, .wer, .probe, .dativVerbs, .fehler, .bridge] {
             for unit in KasusUnit.allCases {
                 let topic = GrammarTopic.kasus(unit)
                 let offered = topic.exercises().contains(kind)
@@ -141,7 +141,7 @@ struct KasusDrillShellTests {
         let first = module.compose(session, rng: &a)!.map { "\($0.frame.singular)|\($0.noun.singular)|\($0.determiner)" }
         let second = module.compose(session, rng: &b)!.map { "\($0.frame.singular)|\($0.noun.singular)|\($0.determiner)" }
         #expect(first == second && first.count == 10)
-        #expect(module.hint(KasusDrillContext(session: session, round: KasusDrillRound(items: []), item: EndingsQuestion.round(cases: [.dativ])[0], stepIndex: 0, picked: nil, answer: nil, partial: nil, partialLine: nil, playHeight: 0, showEnglish: .constant(false), referencePinned: false, pick: { _ in }, restart: { _ in })) == "Tap the article that fits.")
+        #expect(module.hint(KasusDrillContext(session: session, round: KasusDrillRound(items: []), item: EndingsQuestion.round(cases: [.dativ])[0], stepIndex: 0, picked: nil, answer: nil, partial: nil, partialLine: nil, playHeight: 0, showEnglish: .constant(false), referencePinned: false, pick: { _ in }, restart: { _ in }, finish: {})) == "Tap the article that fits.")
     }
 
     @Test("Rollen in Schritt für Schritt walks a phrase as partials until the deciding question")

@@ -56,11 +56,26 @@ A module (`KasusDrillModule`) is a value with nine requirements:
 | `hint` | the line under the inputs until a pick |
 | `missText` · `scoreLine` · `summaryNote` | optional summary wording |
 
-Modules today: `EndingsModule` (Schnellrunde, Bau das Wort, and the variants on the same engine:
-a frame family, a pair of forms, a timer), `RollenModule` (direct roles, or the Kasus-Check walk
-as a multi-tap step), `WerModule`, `ProbeModule`, `GapChoiceModule` (a bundled sentence with a
-gap: buttons, or two chips in the sentence), `UnbuiltModule` (a registered kind without a module
-yet: it composes nothing).
+Modules today: `EndingsModule` (Schnellrunde, Bau das Wort, and the variants on the same engine
+by `EndingsConfig`: the Dativ-Verben frame family, a confusion pair's two forms on one gender,
+the Blitzrunde's minute with deferred feedback and the clock as its stage), `RollenModule`
+(direct roles, or the Kasus-Check walk as a multi-tap step), `WerModule`, `ProbeModule`,
+`GapChoiceModule` (a bundled sentence with a gap: buttons, or two chips in the sentence),
+`FehlerModule` (a mistake planted in a Rollen sentence by `FehlerQuestion`: tap the word, then
+fix it; a fix after a missed find is practice), `BridgeModule` (`BridgeQuestion`: the English
+pronoun, the German pronoun, then the article on one frame, derived from the Schnellrunde's
+frames with English twins). `UnbuiltModule` stays for a registered kind without a module.
+
+The unit screens read the registry: `GrammarTopic.exercises()` lists a unit's kinds (the concept
+bank's, the Brücke once the Akkusativ is in play, the Schnellrunde and Bau das Wort, the
+Dativ-Verben once the Dativ is in play, Finde den Fehler where two cases can be confused, the
+Blitzrunde) and `KasusDrillMeta.placement` says which section shows each one. A kind the hub's
+Verstehen dot never counted stays out of it when it arrives.
+
+Verwechslungs-Paare (`KasusConfusion`) read every form pick in the round history: once one pair
+of forms has six misses and twice the runner-up's, the hub and Coach's Notes show the pair with
+its two-button drill on the gender the misses were on (`KasusDrillKind.pair`), which never moves
+the coach.
 
 ## Topics
 
@@ -151,18 +166,19 @@ seeder and `-kasus.debugOpen <kind>:<topic>` need nothing.
 
 | Argument | Opens / prints |
 |---|---|
-| `-kasus.debugOpen <kind>:<topic>` | any drill on the shell: `quick:dativ`, `build:dativ`, `roles:dativ`, `wer:akkusativ`, `probe:genitiv`, `reflexcase:reflexiv`, `reflexperson:reflexiv` |
+| `-kasus.debugOpen <kind>:<topic>` | any drill on the shell: `quick:dativ`, `build:dativ`, `roles:dativ`, `wer:akkusativ`, `probe:genitiv`, `dativverben:dativ`, `blitz:akkusativ`, `fehler:dativ`, `bridge:akkusativ`, `reflexcase:reflexiv`, `reflexperson:reflexiv` |
+| `-kasus.debugSeedRounds 1 -kasus.debugConfusion 1` | seeded rounds with dem ↔ den missed, so the Verwechslungs-Paar card shows on `hub` |
 | `-kasus.debugOpen lesson:<topic>` | the lesson sheet: `lesson:dativ`, `lesson:reflexiv` |
 | `-kasus.debugAnswers right\|mixed` · `-kasus.debugQuickState right\|wrong\|slip\|done` · `-kasus.debugSeed <n>` · `-kasus.debugItem <id>` · `-kasus.debugRolesMode schritt\|direkt` | the prefill (never recorded) |
 | `-kasus.debugVerify 1` | the stories, the Verstehen items and the gap-choice items with their golden numbers and planted errors |
-| `-kasus.debugVerifyRecord 1` | the nineteen synthetic rounds through `recordRound` |
+| `-kasus.debugVerifyRecord 1` | the twenty-five synthetic rounds through `recordRound` |
 | `-kasus.debugRoute 1` | where every `GrammarFocus` goes, incl. `reflexivverben → Akkusativ oder Dativ? · Reflexive Verben` |
 
 ## Still open
 
 - The batch pipeline for the gap-choice packs (part 3 of the plan), `reflexverb` (the double
   gap) on the same planner.
-- Phase 6: confusion pairs, Finde den Fehler, Blitzrunde, Dativ-Verben (frames + an explainer),
-  the Pronomen-Brücke items, the table lenses.
+- A Dativ-Verben pack of bundled sentences (the frames are runtime for now), a Fehler pack beyond
+  the Rollen items.
 - Splitting `KasusService.swift`, `KasusStoryView.swift` (`KasusDebugOpen`) and
   `CaseEndingsView.swift` (the table) into their own files.

@@ -160,9 +160,20 @@ nonisolated enum GrammarTopic: Hashable, Identifiable {
     func exercises(concepts: KasusConceptBank, gaps: GapChoiceBank) -> [KasusDrillKind] {
         switch self {
         case .kasus(let unit):
-            concepts.offered(for: unit).map(\.kind) + [.quick, .build]
+            var kinds = concepts.offered(for: unit).map(\.kind)
+            // Verstehen: the Pronomen-Brücke once the Akkusativ is in play (English shows no case
+            // on a subject alone).
+            if unit.casesInPlay.contains(.akkusativ) { kinds.append(.bridge) }
+            // Üben: the Schnellrunde and Bau das Wort always; the Dativ verbs once the Dativ is
+            // in play; Finde den Fehler where two cases can be confused and the Rollen items are
+            // there to plant in; the Blitzrunde for every unit.
+            kinds += [.quick, .build]
+            if unit.casesInPlay.contains(.dativ) { kinds.append(.dativVerbs) }
+            if unit.casesInPlay.count >= 2, concepts.items(for: unit, exercise: .roles).count >= 10 { kinds.append(.fehler) }
+            kinds.append(.blitz)
+            return kinds
         case .reflexiv:
-            gaps.offered(topic: key).compactMap(\.kind)
+            return gaps.offered(topic: key).compactMap(\.kind)
         }
     }
 

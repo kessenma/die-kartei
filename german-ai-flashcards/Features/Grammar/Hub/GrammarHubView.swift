@@ -44,6 +44,7 @@ struct GrammarHubView: View {
     var body: some View {
         List {
             heroSection.themedListRow()
+            confusionSection.themedListRow()
             explainersSection.themedListRow()
             unitsSection.themedListRow()
             topicsSection.themedListRow()
@@ -278,6 +279,23 @@ struct GrammarHubView: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(done.filter { $0 }.count) of \(done.count) done")
+    }
+
+    // MARK: - Verwechslungs-Paar
+
+    /// The two forms the learner mixes up most, once one pair stands out (`KasusConfusion`).
+    @ViewBuilder
+    private var confusionSection: some View {
+        if let pair = KasusConfusion.standout(rounds: rounds), let session = KasusConfusion.drill(for: pair) {
+            Section {
+                KasusConfusionCard(pair: pair, session: session) {
+                    router.launch(.grammarDrill(session))
+                }
+            } header: {
+                Text("Dein Verwechslungs-Paar · Your mix-up")
+                    .themedSectionHeader()
+            }
+        }
     }
 
     // MARK: - Themen

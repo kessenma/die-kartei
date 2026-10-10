@@ -25,8 +25,10 @@ extension KasusDrillKind {
             shell(session, hapticMode, onComplete, onDismiss, make: ProbeModule.init(session:))
         case .reflexCase, .reflexPerson:
             shell(session, hapticMode, onComplete, onDismiss, make: GapChoiceModule.init(session:))
-        case .fehler, .bridge:
-            shell(session, hapticMode, onComplete, onDismiss, make: UnbuiltModule.init(session:))
+        case .fehler:
+            shell(session, hapticMode, onComplete, onDismiss, make: FehlerModule.init(session:))
+        case .bridge:
+            shell(session, hapticMode, onComplete, onDismiss, make: BridgeModule.init(session:))
         }
     }
 
@@ -46,7 +48,12 @@ extension KasusDrillKind {
     /// `wrongEvery`-th step wrong. Nil when the topic can't offer the kind.
     @MainActor
     func debugRound(topic: GrammarTopic, wrongEvery: Int, seed: UInt64) -> KasusRoundResult? {
-        let session = GrammarDrillSession(kind: self, topic: topic)
+        debugRound(session: GrammarDrillSession(kind: self, topic: topic), wrongEvery: wrongEvery, seed: seed)
+    }
+
+    /// The same for a configured session (a confusion pair, a timed round).
+    @MainActor
+    func debugRound(session: GrammarDrillSession, wrongEvery: Int, seed: UInt64) -> KasusRoundResult? {
         switch self {
         case .quick, .build, .blitz, .pair, .dativVerbs:
             return play(EndingsModule(session: session), session, wrongEvery: wrongEvery, seed: seed)
@@ -58,8 +65,10 @@ extension KasusDrillKind {
             return play(ProbeModule(session: session), session, wrongEvery: wrongEvery, seed: seed)
         case .reflexCase, .reflexPerson:
             return play(GapChoiceModule(session: session), session, wrongEvery: wrongEvery, seed: seed)
-        case .fehler, .bridge:
-            return nil
+        case .fehler:
+            return play(FehlerModule(session: session), session, wrongEvery: wrongEvery, seed: seed)
+        case .bridge:
+            return play(BridgeModule(session: session), session, wrongEvery: wrongEvery, seed: seed)
         }
     }
 

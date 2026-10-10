@@ -221,8 +221,9 @@ struct KasusDrillMetaTests {
         #expect(GrammarTopic.reflexiv.isAvailable && GrammarTopic.reflexiv.exercises() == [.reflexCase, .reflexPerson])
         #expect(GrammarTopic.reflexiv.lessonPractice == .reflexCase && GrammarTopic.reflexiv.focus == .reflexivverben)
         #expect(GrammarTopic.reflexiv.practiceLabel == "Üben · Practice: Akkusativ oder Dativ?")
-        #expect(GrammarTopic.kasus(.dativ).exercises() == [.roles, .wer, .probe, .quick, .build])
-        #expect(GrammarTopic.kasus(.nominativ).exercises() == [.roles, .quick, .build])
+        #expect(GrammarTopic.kasus(.dativ).exercises() == [.roles, .wer, .probe, .bridge, .quick, .build, .dativVerbs, .fehler, .blitz])
+        #expect(GrammarTopic.kasus(.nominativ).exercises() == [.roles, .quick, .build, .blitz])
+        #expect(GrammarTopic.kasus(.akkusativ).exercises() == [.roles, .wer, .probe, .bridge, .quick, .build, .fehler, .blitz])
         #expect(GrammarTopic.kasus(.dativ).lessonPractice == .roles)
     }
 }

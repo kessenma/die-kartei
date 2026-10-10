@@ -6,7 +6,7 @@
 //  hears about unscaffolded first picks, at least three per case, never slips, never Markieren (or
 //  the old Finden), never Lernhilfe or Viel Hilfe, never an answer Lösung zeigen showed, and
 //  Nominativ has no skill at all. A topic that isn't a case (Reflexive Verben) pools its counting
-//  answers into one skill once six count, never the two-chip sentences. The same nineteen rounds
+//  answers into one skill once six count, never the two-chip sentences. The same twenty-five rounds
 //  `-kasus.debugVerifyRecord 1` runs, here against an in-memory store instead of the live one. Also: Lösung zeigen after recording flags
 //  the same row, and older rounds (no new fields) still read.
 //
@@ -58,7 +58,9 @@ struct KasusRecordingTests {
     }
 
     /// The debug record check's rounds: #1–#13 move nothing, #14 moves Dativ, #15 Akkusativ,
-    /// #16–#17 (reflexive, under six pooled; inline chips) nothing, #18–#19 Reflexivverben.
+    /// #16–#17 (reflexive, under six pooled; inline chips) nothing, #18–#19 Reflexivverben,
+    /// #20 (Blitz) nothing, #21 (Dativ-Verben) Dativ, #22 (a confusion pair) nothing, #23 (Fehler, found)
+    /// Dativ, #24 (Fehler, missed find) nothing, #25 (Brücke) nothing.
     private var scenarios: [(name: String, result: KasusRoundResult, moves: Set<GrammarFocus>)] {
         [
             ("Viel Hilfe · 5 Akk m, all wrong (scaffolded)",
@@ -110,6 +112,19 @@ struct KasusRecordingTests {
                         + Array(repeating: item(.dativ, .der, false), count: 3)), [.reflexivverben]),
             ("Die richtige Person · 6 Dat right (one case) → moves Reflexivverben",
              topicRound(.reflexPerson, .reflexiv, Array(repeating: item(.dativ, .der, true), count: 6)), [.reflexivverben]),
+            ("Blitzrunde · 8 Dat m wrong (a speed round never counts)",
+             round(.blitz, .dativ, nil, Array(repeating: item(.dativ, .der, false), count: 8)), []),
+            ("Dativ-Verben · 4 Dat m wrong + 2 Akk f → moves Dativ",
+             round(.dativVerbs, .dativ, nil, Array(repeating: item(.dativ, .der, false), count: 4)
+                   + Array(repeating: item(.akkusativ, .die, true), count: 2)), [.dativ]),
+            ("Verwechslungs-Paar · 10 Dat m wrong (practice, never counts)",
+             round(.pair, .dativ, nil, Array(repeating: item(.dativ, .der, false), count: 10)), []),
+            ("Finde den Fehler · 4 Dat m found and fixed wrong → moves Dativ",
+             round(.fehler, .dativ, nil, Array(repeating: item(.dativ, .der, false), count: 4)), [.dativ]),
+            ("Finde den Fehler · 4 Dat m fixed after a missed find (scaffolded, never counts)",
+             round(.fehler, .dativ, nil, (0..<4).map { _ in var row = item(.dativ, .der, true); row.scaffolded = true; return row }), []),
+            ("Pronomen-Brücke · 8 Akk m wrong (recognition, never counts)",
+             round(.bridge, .akkusativ, nil, Array(repeating: item(.akkusativ, .der, false), count: 8)), []),
         ]
     }
 

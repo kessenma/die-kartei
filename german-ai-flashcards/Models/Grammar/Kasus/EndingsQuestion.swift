@@ -48,6 +48,10 @@ nonisolated struct EndingsNoun: Hashable {
         .init(singular: "Hund", plural: "Hunde", genitive: "Hundes", gender: .der),
         .init(singular: "Lehrer", plural: "Lehrer", genitive: "Lehrers", gender: .der),
         .init(singular: "Vater", plural: "Väter", genitive: "Vaters", gender: .der),
+        .init(singular: "Freund", plural: "Freunde", genitive: "Freundes", gender: .der),
+        .init(singular: "Bruder", plural: "Brüder", genitive: "Bruders", gender: .der),
+        .init(singular: "Sohn", plural: "Söhne", genitive: "Sohnes", gender: .der),
+        .init(singular: "Arzt", plural: "Ärzte", genitive: "Arztes", gender: .der),
         .init(singular: "Frau", plural: "Frauen", genitive: "Frau", gender: .die),
         .init(singular: "Katze", plural: "Katzen", genitive: "Katze", gender: .die),
         .init(singular: "Lehrerin", plural: "Lehrerinnen", genitive: "Lehrerin", gender: .die),
@@ -113,16 +117,44 @@ nonisolated struct EndingsFrame: Hashable {
     let plural: String
     let why: String
     var family: Family = .core
+    /// The English twin with its own blank („I see ___.“), for the Pronomen-Brücke. Nil where
+    /// English has no natural pronoun there („That is he“).
+    var englishSingular: String? = nil
+    var englishPlural: String? = nil
 
     static let all: [EndingsFrame] = [
         .init(kasus: .nominativ, singular: "Das ist ___ {N}.", plural: "Das sind ___ {N}.", why: "„*sein*“ links it back to the **subject**, so it stays {nom:Nominativ}"),
-        .init(kasus: .nominativ, singular: "Hier kommt ___ {N}.", plural: "Hier kommen ___ {N}.", why: "It's the **subject** of „*kommen*“, so {nom:Nominativ}"),
-        .init(kasus: .akkusativ, singular: "Ich sehe ___ {N}.", plural: "Ich sehe ___ {N}.", why: "It's what „*sehen*“ acts on: the **direct object**, so {akk:Akkusativ}"),
-        .init(kasus: .akkusativ, singular: "Kennst du ___ {N}?", plural: "Kennst du ___ {N}?", why: "It's what „*kennen*“ acts on: the **direct object**, so {akk:Akkusativ}"),
-        .init(kasus: .akkusativ, singular: "Wir besuchen ___ {N}.", plural: "Wir besuchen ___ {N}.", why: "It's what „*besuchen*“ acts on, so {akk:Akkusativ}. „*besuchen*“ can feel like it has a receiver, but it takes the {akk:Akkusativ}", family: .dativVerb),
-        .init(kasus: .dativ, singular: "Ich helfe ___ {N}.", plural: "Ich helfe ___ {N}.", why: "„*helfen*“ is one of the verbs that always take the {dat:Dativ}", family: .dativVerb),
-        .init(kasus: .dativ, singular: "Wir sprechen mit ___ {N}.", plural: "Wir sprechen mit ___ {N}.", why: "„*mit*“ always takes the {dat:Dativ}"),
-        .init(kasus: .dativ, singular: "Das Buch gehört ___ {N}.", plural: "Das Buch gehört ___ {N}.", why: "„*gehören*“ takes the {dat:Dativ}: the thing owned is the subject, the **owner** is {dat:Dativ}", family: .dativVerb),
+        .init(kasus: .nominativ, singular: "Hier kommt ___ {N}.", plural: "Hier kommen ___ {N}.", why: "It's the **subject** of „*kommen*“, so {nom:Nominativ}",
+              englishSingular: "Here comes ___.", englishPlural: "Here come ___."),
+        .init(kasus: .akkusativ, singular: "Ich sehe ___ {N}.", plural: "Ich sehe ___ {N}.", why: "It's what „*sehen*“ acts on: the **direct object**, so {akk:Akkusativ}",
+              englishSingular: "I see ___.", englishPlural: "I see ___."),
+        .init(kasus: .akkusativ, singular: "Kennst du ___ {N}?", plural: "Kennst du ___ {N}?", why: "It's what „*kennen*“ acts on: the **direct object**, so {akk:Akkusativ}",
+              englishSingular: "Do you know ___?", englishPlural: "Do you know ___?"),
+        .init(kasus: .akkusativ, singular: "Wir besuchen ___ {N}.", plural: "Wir besuchen ___ {N}.", why: "It's what „*besuchen*“ acts on, so {akk:Akkusativ}. „*besuchen*“ can feel like it has a receiver, but it takes the {akk:Akkusativ}", family: .dativVerb,
+              englishSingular: "We visit ___.", englishPlural: "We visit ___."),
+        .init(kasus: .dativ, singular: "Ich helfe ___ {N}.", plural: "Ich helfe ___ {N}.", why: "„*helfen*“ is one of the verbs that always take the {dat:Dativ}", family: .dativVerb,
+              englishSingular: "I help ___.", englishPlural: "I help ___."),
+        .init(kasus: .dativ, singular: "Wir sprechen mit ___ {N}.", plural: "Wir sprechen mit ___ {N}.", why: "„*mit*“ always takes the {dat:Dativ}",
+              englishSingular: "We speak with ___.", englishPlural: "We speak with ___."),
+        .init(kasus: .dativ, singular: "Das Buch gehört ___ {N}.", plural: "Das Buch gehört ___ {N}.", why: "„*gehören*“ takes the {dat:Dativ}: the thing owned is the subject, the **owner** is {dat:Dativ}", family: .dativVerb,
+              englishSingular: "The book belongs to ___.", englishPlural: "The book belongs to ___."),
+        // Dativ-Verben: the verbs that take the Dativ without any „to“, and the ones that only
+        // feel like they do.
+        .init(kasus: .dativ, singular: "Ich danke ___ {N}.", plural: "Ich danke ___ {N}.", why: "„*danken*“ always takes the {dat:Dativ}: the thanks go **to** someone, even though English says „thank *him*“", family: .dativVerb),
+        .init(kasus: .dativ, singular: "Das Essen gefällt ___ {N}.", plural: "Das Essen gefällt ___ {N}.", why: "„*gefallen*“ takes the {dat:Dativ}: the thing liked is the subject, the one who likes it the **receiver**", family: .dativVerb),
+        .init(kasus: .dativ, singular: "Der Hund folgt ___ {N}.", plural: "Der Hund folgt ___ {N}.", why: "„*folgen*“ is one of the verbs that always take the {dat:Dativ}", family: .dativVerb),
+        .init(kasus: .dativ, singular: "Ich antworte ___ {N}.", plural: "Ich antworte ___ {N}.", why: "„*antworten*“ takes the {dat:Dativ}: the answer goes **to** someone", family: .dativVerb),
+        .init(kasus: .dativ, singular: "Wir gratulieren ___ {N}.", plural: "Wir gratulieren ___ {N}.", why: "„*gratulieren*“ always takes the {dat:Dativ}", family: .dativVerb),
+        .init(kasus: .dativ, singular: "Die Suppe schmeckt ___ {N}.", plural: "Die Suppe schmeckt ___ {N}.", why: "„*schmecken*“ takes the {dat:Dativ}: the soup is the subject, the one tasting it the **receiver**", family: .dativVerb),
+        .init(kasus: .dativ, singular: "Die Jacke passt ___ {N}.", plural: "Die Jacke passt ___ {N}.", why: "„*passen*“ takes the {dat:Dativ}: the jacket is the subject, the wearer the **receiver**", family: .dativVerb),
+        .init(kasus: .dativ, singular: "Du fehlst ___ {N}.", plural: "Du fehlst ___ {N}.", why: "„*fehlen*“ takes the {dat:Dativ}: you are the subject, the one missing you the **receiver**", family: .dativVerb),
+        .init(kasus: .dativ, singular: "Ich höre ___ {N} zu.", plural: "Ich höre ___ {N} zu.", why: "„*zuhören*“ always takes the {dat:Dativ}", family: .dativVerb),
+        .init(kasus: .dativ, singular: "Ich glaube ___ {N}.", plural: "Ich glaube ___ {N}.", why: "„*glauben*“ with a person takes the {dat:Dativ}", family: .dativVerb),
+        .init(kasus: .dativ, singular: "Wir vertrauen ___ {N}.", plural: "Wir vertrauen ___ {N}.", why: "„*vertrauen*“ always takes the {dat:Dativ}", family: .dativVerb),
+        .init(kasus: .dativ, singular: "Ich begegne ___ {N}.", plural: "Ich begegne ___ {N}.", why: "„*begegnen*“ always takes the {dat:Dativ}", family: .dativVerb),
+        .init(kasus: .akkusativ, singular: "Ich frage ___ {N}.", plural: "Ich frage ___ {N}.", why: "It's what „*fragen*“ acts on, so {akk:Akkusativ}. The person gets a question, but „*fragen*“ takes the {akk:Akkusativ}", family: .dativVerb),
+        .init(kasus: .akkusativ, singular: "Ich rufe ___ {N} an.", plural: "Ich rufe ___ {N} an.", why: "It's what „*anrufen*“ acts on, so {akk:Akkusativ}. The call reaches someone, but „*anrufen*“ takes the {akk:Akkusativ}", family: .dativVerb),
+        .init(kasus: .akkusativ, singular: "Wir brauchen ___ {N}.", plural: "Wir brauchen ___ {N}.", why: "It's what „*brauchen*“ acts on, so {akk:Akkusativ}", family: .dativVerb),
         .init(kasus: .genitiv, singular: "Das ist der Name ___ {N}.", plural: "Das sind die Namen ___ {N}.", why: "It hangs on **another noun** (*der Name*), so {gen:Genitiv}"),
         .init(kasus: .genitiv, singular: "Wegen ___ {N} bleiben wir zu Hause.", plural: "Wegen ___ {N} bleiben wir zu Hause.", why: "„*wegen*“ takes the {gen:Genitiv}"),
     ]
@@ -267,16 +299,22 @@ nonisolated struct EndingsQuestion: Identifiable, Hashable {
     /// A round over `cases`, weighted toward `emphasis`, no repeats. One case in, one case out:
     /// only the Nominativ unit asks a single case, since the others always keep earlier ones in.
     static func round(cases: [GrammarCase], emphasis: GrammarCase? = nil, count: Int = 10,
-                      family: EndingsFrame.Family? = nil) -> [EndingsQuestion] {
+                      family: EndingsFrame.Family? = nil, genders: Set<Gender>? = nil,
+                      determiners: [EndingsDeterminer]? = nil, options: [String]? = nil) -> [EndingsQuestion] {
         var rng = SystemRandomNumberGenerator()
-        return round(cases: cases, emphasis: emphasis, count: count, family: family, using: &rng)
+        return round(cases: cases, emphasis: emphasis, count: count, family: family, genders: genders,
+                     determiners: determiners, options: options, using: &rng)
     }
 
     /// The same round from a seed, so a test or a screenshot gets the same questions every time
-    /// (`KasusSeededRandom`).
+    /// (`KasusSeededRandom`). `genders`, `determiners` and `options` narrow a variant: a confusion
+    /// pair asks masculine nouns with the definite article and offers only dem and den.
     static func round(cases: [GrammarCase], emphasis: GrammarCase? = nil, count: Int = 10,
-                      family: EndingsFrame.Family? = nil, rng: inout KasusSeededRandom) -> [EndingsQuestion] {
-        round(cases: cases, emphasis: emphasis, count: count, family: family, using: &rng)
+                      family: EndingsFrame.Family? = nil, genders: Set<Gender>? = nil,
+                      determiners: [EndingsDeterminer]? = nil, options: [String]? = nil,
+                      rng: inout KasusSeededRandom) -> [EndingsQuestion] {
+        round(cases: cases, emphasis: emphasis, count: count, family: family, genders: genders,
+              determiners: determiners, options: options, using: &rng)
     }
 
     /// The frames a round draws on: every frame, or a family's. A family that has no frame for a
@@ -294,9 +332,16 @@ nonisolated struct EndingsQuestion: Identifiable, Hashable {
     }
 
     private static func round<G: RandomNumberGenerator>(cases: [GrammarCase], emphasis: GrammarCase?, count: Int,
-                                                        family: EndingsFrame.Family?, using rng: inout G) -> [EndingsQuestion] {
+                                                        family: EndingsFrame.Family?, genders: Set<Gender>? = nil,
+                                                        determiners: [EndingsDeterminer]? = nil, options: [String]? = nil,
+                                                        using rng: inout G) -> [EndingsQuestion] {
         let includesGenitiv = cases.contains(.genitiv)
         let pool = frames(family: family)
+        let nouns = EndingsNoun.all.filter { genders == nil || genders!.contains($0.gender) }
+        let singularAllowed = genders == nil || genders!.contains(where: { $0 != .plural })
+        let pluralAllowed = genders == nil || genders!.contains(.plural)
+        let families = determiners ?? EndingsDeterminer.allCases
+        guard !nouns.isEmpty || pluralAllowed, singularAllowed || pluralAllowed else { return [] }
         var seen = Set<String>()
         var out: [EndingsQuestion] = []
         // Table order, so the same seed always walks the cases the same way.
@@ -307,19 +352,20 @@ nonisolated struct EndingsQuestion: Identifiable, Hashable {
             guard !frames.isEmpty else { continue }
             for _ in 0..<share {
                 for _ in 0..<50 {
-                    let noun = EndingsNoun.all.randomElement(using: &rng)!
-                    let isPlural = Int.random(in: 0..<4, using: &rng) == 0
+                    let noun = (nouns.isEmpty ? EndingsNoun.all : nouns).randomElement(using: &rng)!
+                    let isPlural = !singularAllowed || (pluralAllowed && Int.random(in: 0..<4, using: &rng) == 0)
                     let key = "\(kasus)|\(noun.singular)|\(isPlural)"
                     guard seen.insert(key).inserted else { continue }
                     // ein has no plural, and kein stays out of the Genitiv frames
                     // („wegen keines Hundes“ is German nobody says).
-                    let determiner = EndingsDeterminer.allCases.filter {
-                        !(isPlural && $0 == .ein) && !(kasus == .genitiv && $0 == .kein)
-                    }.randomElement(using: &rng)!
+                    let allowed = families.filter { !(isPlural && $0 == .ein) && !(kasus == .genitiv && $0 == .kein) }
+                    guard let determiner = allowed.randomElement(using: &rng) else { continue }
+                    let offered = options ?? determiner.options(includesGenitiv: includesGenitiv)
+                    // A narrowed option row must still hold the answer.
+                    guard offered.contains(determiner.form(kasus, isPlural ? .plural : noun.gender)) else { continue }
                     out.append(.init(
                         frame: frames.randomElement(using: &rng)!, noun: noun, isPlural: isPlural,
-                        determiner: determiner,
-                        options: determiner.options(includesGenitiv: includesGenitiv)
+                        determiner: determiner, options: offered
                     ))
                     break
                 }

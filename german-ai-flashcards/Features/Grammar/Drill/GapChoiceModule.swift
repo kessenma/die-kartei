@@ -121,8 +121,13 @@ struct GapChoiceModule: KasusDrillModule {
     // MARK: Views
 
     func hero(_ ctx: KasusDrillContext<Self>) -> some View {
-        GapChoiceHero(item: ctx.item, filled: ctx.partial?.filled ?? [], picked: ctx.picked,
-                      locked: ctx.isShowingFeedback, showEnglish: ctx.showEnglish) { option in
+        // The picks so far: the walk's, or once graded the record's (never the shell's last pick,
+        // which belongs to the gap just answered).
+        let picks: [String] = ctx.answer != nil
+            ? (ctx.answer?.result.record?.pick?.components(separatedBy: " · ") ?? [])
+            : (ctx.partial?.filled ?? [])
+        return GapChoiceHero(item: ctx.item, filled: picks, picked: nil,
+                             locked: ctx.isShowingFeedback, showEnglish: ctx.showEnglish) { option in
             ctx.pick(option)
         }
     }

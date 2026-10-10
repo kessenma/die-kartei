@@ -121,6 +121,17 @@ enum KasusDebugSeeder {
             date: day(5, 8, 30)
         ))
 
+        // `-kasus.debugConfusion 1`: two confusion-pair rounds with every second answer wrong, so
+        // dem ↔ den stands out and the hub shows its card.
+        if UserDefaults.standard.bool(forKey: "kasus.debugConfusion"),
+           let session = KasusConfusion.drill(for: KasusConfusionPair(a: "dem", b: "den", count: 0)) {
+            for (seed, date) in [(UInt64(21), day(0, 8, 40)), (UInt64(22), day(1, 17, 15))] {
+                if let pair = KasusDrillKind.pair.debugRound(session: session, wrongEvery: 2, seed: seed) {
+                    kasus.append(KasusService.round(for: pair, date: date))
+                }
+            }
+        }
+
         let articles = [
             article("Goethe A1", 10, 8, 61, day(1, 20, 10)),
             article("Tricky Nouns", 10, 6, 83, day(4, 12, 45)),

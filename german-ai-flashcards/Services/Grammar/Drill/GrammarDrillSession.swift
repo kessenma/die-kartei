@@ -51,11 +51,19 @@ enum DrillVariant: Hashable {
         case .build:
             return .endings(EndingsConfig(style: .ending, cases: topic.casesInPlay, emphasis: topic.emphasis,
                                           count: kind.meta.roundSize))
+        case .dativVerbs:
+            // The family holds Dativ and Akkusativ frames only, so the round spans those two.
+            return .endings(EndingsConfig(style: .article, cases: topic.casesInPlay, emphasis: .dativ,
+                                          count: kind.meta.roundSize, family: .dativVerb))
+        case .blitz:
+            return .endings(EndingsConfig(style: .article, cases: topic.casesInPlay, emphasis: topic.emphasis,
+                                          count: EndingsConfig.blitzQuestions, deferredFeedback: true,
+                                          timeLimit: EndingsConfig.blitzSeconds))
         case .reflexCase:
             return .gap(GapConfig(focus: .case, count: kind.meta.roundSize))
         case .reflexPerson:
             return .gap(GapConfig(focus: .person, count: kind.meta.roundSize))
-        case .quick, .blitz, .pair, .dativVerbs, .fehler, .bridge:
+        case .quick, .pair, .fehler, .bridge:
             return .endings(EndingsConfig(style: .article, cases: topic.casesInPlay, emphasis: topic.emphasis,
                                           count: max(1, kind.meta.roundSize)))
         }
@@ -81,10 +89,16 @@ struct EndingsConfig: Hashable {
     var options: [String]? = nil
     /// Only nouns of these genders. Nil: every noun.
     var genders: Set<Gender>? = nil
+    /// Only these article families (a confusion pair of definite forms). Nil: every family.
+    var determiners: [EndingsDeterminer]? = nil
     /// No feedback card mid-round; the misses wait for the summary (Blitzrunde).
     var deferredFeedback = false
     /// Seconds on the clock (Blitzrunde). Nil: untimed.
     var timeLimit: Int? = nil
+
+    /// The Blitzrunde: a minute on the clock, and more questions than anyone answers in it.
+    static let blitzSeconds = 60
+    static let blitzQuestions = 60
 }
 
 /// The gap-choice drills on the bundled items (`GapChoiceBank`).

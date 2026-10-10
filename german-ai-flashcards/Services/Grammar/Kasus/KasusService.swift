@@ -1232,8 +1232,9 @@ enum KasusService {
 
     /// `-kasus.debugVerifyRecord 1`: runs `recordRound` on synthetic rounds in the live store and
     /// checks each one against the rules: every round adds its answered items to today's
-    /// `grammarExercises` and one `KasusRound`, and only the last four may move a skill (two case
-    /// rounds, two reflexive rounds pooled into `reflexivverben`). The
+    /// `grammarExercises` and one `KasusRound`, and only the rounds that say so may move a skill
+    /// (two case rounds, two reflexive rounds pooled into `reflexivverben`, a Dativ-Verben round;
+    /// never the Blitzrunde or a confusion pair). The
     /// Markieren round is also read back: its asked case, wrong marks and class score.
     /// Afterwards the coach's skills, the rounds and the day's count are put back, unless the
     /// argument is `keep`. Returns printable lines; the caller adds the prefix.
@@ -1325,6 +1326,19 @@ enum KasusService {
                         + Array(repeating: item(.dativ, .der, reflexRight), count: 3)), [.reflexivverben]),
             ("Die richtige Person · 6 Dat \(reflexRight ? "right" : "wrong") (one case) → moves Reflexivverben",
              topicRound(.reflexPerson, .reflexiv, Array(repeating: item(.dativ, .der, reflexRight), count: 6)), [.reflexivverben]),
+            ("Blitzrunde · 8 Dat m wrong (a speed round never counts)",
+             round(.blitz, .dativ, nil, Array(repeating: item(.dativ, .der, false), count: 8)), []),
+            ("Dativ-Verben · 4 Dat m \(datRight ? "right" : "wrong") + 2 Akk f → moves Dativ",
+             round(.dativVerbs, .dativ, nil, Array(repeating: item(.dativ, .der, datRight), count: 4)
+                   + Array(repeating: item(.akkusativ, .die, true), count: 2)), [.dativ]),
+            ("Verwechslungs-Paar · 10 Dat m wrong (practice, never counts)",
+             round(.pair, .dativ, nil, Array(repeating: item(.dativ, .der, false), count: 10)), []),
+            ("Finde den Fehler · 4 Dat m found and fixed \(datRight ? "right" : "wrong") → moves Dativ",
+             round(.fehler, .dativ, nil, Array(repeating: item(.dativ, .der, datRight), count: 4)), [.dativ]),
+            ("Finde den Fehler · 4 Dat m fixed after a missed find (scaffolded, never counts)",
+             round(.fehler, .dativ, nil, (0..<4).map { _ in var row = item(.dativ, .der, true); row.scaffolded = true; return row }), []),
+            ("Pronomen-Brücke · 8 Akk m wrong (recognition, never counts)",
+             round(.bridge, .akkusativ, nil, Array(repeating: item(.akkusativ, .der, false), count: 8)), []),
         ]
 
         var lines: [String] = []

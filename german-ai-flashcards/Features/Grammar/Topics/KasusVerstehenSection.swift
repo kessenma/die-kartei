@@ -14,8 +14,11 @@ struct KasusVerstehenSection: View {
     let unit: KasusUnit
     let progress: KasusProgress
     let offered: [KasusConceptExercise]
+    /// Drills the registry files under Verstehen beyond the concept bank's (the Pronomen-Brücke).
+    var extra: [KasusDrillKind] = []
     let onLesson: () -> Void
     let onExercise: (KasusConceptExercise) -> Void
+    var onDrill: (KasusDrillKind) -> Void = { _ in }
 
     @Environment(\.appTheme) private var appTheme
 
@@ -43,6 +46,13 @@ struct KasusVerstehenSection: View {
                     caption: "\(exercise.blurb) · about \(exercise.minutes) min",
                     done: progress.conceptDone(unit, exercise), isLesson: false) {
                     onExercise(exercise)
+                }
+            }
+            ForEach(extra) { kind in
+                row(symbol: kind.meta.symbol, title: "\(kind.meta.germanTitle) · \(kind.meta.englishTitle)",
+                    caption: "\(kind.meta.blurb) · about \(kind.meta.minutes) min",
+                    done: progress.drillDone(kind.step, topicKey: unit.rawValue), isLesson: false) {
+                    onDrill(kind)
                 }
             }
         } header: {

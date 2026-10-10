@@ -135,7 +135,7 @@ struct GrammarDrillShell<Module: KasusDrillModule>: View {
             session: session, round: round, item: round.items[index], stepIndex: index,
             picked: picked, answer: answer, partial: round.partial, partialLine: partialLine?.text,
             playHeight: playHeight, showEnglish: $showEnglish, referencePinned: referencePinned,
-            pick: { choose($0) }, restart: { restart(variant: $0) }
+            pick: { choose($0) }, restart: { restart(variant: $0) }, finish: { finishEarly() }
         )
     }
 
@@ -234,7 +234,9 @@ struct GrammarDrillShell<Module: KasusDrillModule>: View {
     /// missed, the ring for the step being asked (only once Weiter has moved on from the
     /// answered one).
     private func marks(_ round: KasusDrillRound<Module>) -> [KasusProgressStrip.Mark] {
-        round.items.indices.map { i in
+        // A speed round has more questions than anyone answers: its strip grows with the answers.
+        let shown = module.defersFeedback && !round.isFinished ? min(round.items.count, round.answers.count + 1) : round.items.count
+        return (0..<shown).map { i in
             if i < round.answers.count {
                 let graded = round.answers[i].graded
                 return graded.isRight ? .right(graded.kasus) : graded.isSlip ? .slip : .miss
@@ -255,8 +257,11 @@ struct GrammarDrillShell<Module: KasusDrillModule>: View {
             self.round = round
             picked = pick
             answer = graded
-            guard haptics else { return }
-            if graded.cardRight ?? graded.isRight { rightCount += 1 } else if graded.isSlip { slipCount += 1 } else { wrongCount += 1 }
+            if haptics {
+                if graded.cardRight ?? graded.isRight { rightCount += 1 } else if graded.isSlip { slipCount += 1 } else { wrongCount += 1 }
+            }
+            // A speed round shows no card: the next step comes straight up.
+            if module.defersFeedback { next() }
         case .partial(_, let line, let right):
             self.round = round
             picked = pick
@@ -283,6 +288,17 @@ struct GrammarDrillShell<Module: KasusDrillModule>: View {
         picked = nil
         partialLine = nil
         if round.isFinished { record() }
+    }
+
+    /// The timer ran out: the round is what was answered, and it goes to the summary.
+    private func finishEarly() {
+        guard var round, !round.isFinished else { return }
+        round.truncate()
+        self.round = round
+        answer = nil
+        picked = nil
+        partialLine = nil
+        record()
     }
 
     /// A fresh round over the same items in another variant. Only while nothing is answered.

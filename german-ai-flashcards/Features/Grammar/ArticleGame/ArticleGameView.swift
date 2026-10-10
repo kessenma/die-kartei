@@ -56,7 +56,9 @@ struct ArticleGameView: View {
     @State private var showSummary = false
     @State private var showRules = false
 
-    private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    // State, not a stored constant: a constant publisher is rebuilt on every re-render of the
+    // view, which restarts its interval and can starve the tick.
+    @State private var ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         ZStack {

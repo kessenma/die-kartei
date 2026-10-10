@@ -75,6 +75,9 @@ protocol KasusDrillModule {
 
     /// The kind this module plays; its step is what the round records as.
     var kind: KasusDrillKind { get }
+    /// No feedback card mid-round: a graded step moves straight on, and the misses wait for the
+    /// summary (the Blitzrunde).
+    var defersFeedback: Bool { get }
 
     /// The round's steps in play order. Nil when the topic can't offer the kind (no items, or a
     /// variant that would turn single-case).
@@ -103,6 +106,8 @@ protocol KasusDrillModule {
 
 extension KasusDrillModule {
     var meta: KasusDrillMeta { kind.meta }
+
+    var defersFeedback: Bool { false }
 
     func missText(_ item: Item, _ answer: KasusDrillAnswer<Pick>) -> Text {
         answer.graded.result.record.map(KasusConceptSentence.text) ?? Text("")
@@ -154,6 +159,8 @@ struct KasusDrillContext<Module: KasusDrillModule> {
     /// Rebuilds the round over the same items with another variant (a mode switch). Only before
     /// the first answer; the shell ignores it afterwards.
     let restart: (DrillVariant) -> Void
+    /// Ends the round now, over the steps answered so far (a timer running out).
+    let finish: () -> Void
 
     /// Something was answered or a step is under way: a mode can't change any more.
     var isLocked: Bool { !round.answers.isEmpty || partial != nil || partialLine != nil || answer != nil }
