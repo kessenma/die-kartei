@@ -55,6 +55,7 @@ struct GapChoiceTests {
         #expect(ReflexivVerb.named("leisten")?.form(person: 2, number: .sg) == "leistest")
         #expect(ReflexivVerb.named("putzen")?.form(person: 2, number: .sg) == "putzt")
         #expect(ReflexivVerb.named("anziehen")?.infinitive == "sich anziehen")
+        #expect(ReflexivVerb.named("treffen")?.numbers == [.pl] && ReflexivVerb.named("waschen")?.numbers == [.sg, .pl])
         for subject in ReflexivSubject.all {
             #expect(ReflexivPronoun.form(person: subject.person, number: subject.number, kasus: .akkusativ) != nil)
             #expect(ReflexivPronoun.form(person: subject.person, number: subject.number, kasus: .dativ) != nil)

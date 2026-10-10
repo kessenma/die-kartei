@@ -1,219 +1,213 @@
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-entschuldigen-2sg-t-beim-lehrer","passes":true,"sentence":"Du entschuldigst dich beim Lehrer.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-interessieren-1sg-t-fuer-fussball","passes":true,"sentence":"Ich interessiere mich für Fußball.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-vorstellen-1sg-stadt","passes":true,"sentence":"Ich stelle mir die Stadt vor.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-rasieren-2sg-gesicht","passes":true,"sentence":"Du rasierst dir das Gesicht.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ueberlegen-2sg-antwort","passes":true,"sentence":"Du überlegst dir die Antwort.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-2sg-schuh","passes":true,"sentence":"Du ziehst dir die Schuhe aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-putzen-1sg-nase","passes":true,"sentence":"Ich putze mir die Nase.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ueberlegen-1sg-antwort","passes":true,"sentence":"Ich überlege mir die Antwort.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-entschuldigen-1sg-t-beim-lehrer","passes":true,"sentence":"Ich entschuldige mich beim Lehrer.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-leisten-1sg-reise","passes":true,"sentence":"Ich leiste mir eine Reise.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-merken-1sg-nummer","passes":true,"sentence":"Ich merke mir die Nummer.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-fuehlen-1sg-t-muede","passes":true,"sentence":"Ich fühle mich müde.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-setzen-2sg-t-auf-den-stuhl","passes":true,"sentence":"Du setzt dich auf den Stuhl.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-entschuldigen-1sg-t-bei-der-nachbarin","passes":true,"sentence":"Ich entschuldige mich bei der Nachbarin.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-waschen-2sg-gesicht","passes":true,"sentence":"Du wäschst dir das Gesicht.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-verletzen-1sg","passes":true,"sentence":"Ich verletze mich.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-treffen-2sg-t-im-park","passes":true,"sentence":"Du triffst dich im Park.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-erholen-2sg-t-im-urlaub","passes":true,"sentence":"Du erholst dich im Urlaub.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-duschen-2sg-t-nach-dem-sport","passes":true,"sentence":"Du duschst dich nach dem Sport.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaemmen-1sg-haar","passes":true,"sentence":"Ich kämme mir die Haare.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaemmen-2sg","passes":true,"sentence":"Du kämmst dich.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-umziehen-1sg-t-schnell","passes":true,"sentence":"Ich ziehe mich schnell um.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-abtrocknen-2sg","passes":true,"sentence":"Du trocknest dich ab.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-erholen-1sg-t-im-urlaub","passes":true,"sentence":"Ich erhole mich im Urlaub.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-fuehlen-2sg-t-gut","passes":true,"sentence":"Du fühlst dich gut.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-vorstellen-2sg","passes":true,"sentence":"Du stellst dich vor.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-anziehen-1sg-schuh","passes":true,"sentence":"Ich ziehe mir die Schuhe an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-setzen-2sg-t-ans-fenster","passes":true,"sentence":"Du setzt dich ans Fenster.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-aergern-2sg-t-ueber-das-wetter","passes":true,"sentence":"Du ärgerst dich über das Wetter.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-leisten-2sg-auto","passes":true,"sentence":"Du leistest dir ein Auto.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-freuen-2sg-t-auf-das-wochenende","passes":true,"sentence":"Du freust dich auf das Wochenende.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-rasieren-2sg","passes":true,"sentence":"Du rasierst dich.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-erinnern-2sg-t-an-die-reise","passes":true,"sentence":"Du erinnerst dich an die Reise.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-treffen-2sg-t-um-sieben","passes":true,"sentence":"Du triffst dich um sieben.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-rasieren-1sg-bein","passes":true,"sentence":"Ich rasiere mir die Beine.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-abtrocknen-2sg-hand","passes":true,"sentence":"Du trocknest dir die Hände ab.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-1sg-schuh","passes":true,"sentence":"Ich ziehe mir die Schuhe aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ansehen-2sg-foto","passes":true,"sentence":"Du siehst dir das Foto an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-beeilen-1sg-t-jetzt","passes":true,"sentence":"Ich beeile mich jetzt.","warnings":[]}
 {"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-abtrocknen-1sg","passes":true,"sentence":"Ich trockne mich ab.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-merken-2sg-name","passes":true,"sentence":"Du merkst dir den Namen.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-1sg-jacke","passes":true,"sentence":"Ich ziehe mir die Jacke aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-merken-2sg-adresse","passes":true,"sentence":"Du merkst dir die Adresse.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-waschen-2sg-haar","passes":true,"sentence":"Du wäschst dir die Haare.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ueberlegen-1sg-plan","passes":true,"sentence":"Ich überlege mir einen Plan.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-setzen-1sg-t-ans-fenster","passes":true,"sentence":"Ich setze mich ans Fenster.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-leisten-2sg-reise","passes":true,"sentence":"Du leistest dir eine Reise.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-verletzen-2sg-arm","passes":true,"sentence":"Du verletzt dir den Arm.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaufen-2sg-buch","passes":true,"sentence":"Du kaufst dir ein Buch.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-rasieren-1sg","passes":true,"sentence":"Ich rasiere mich.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-rasieren-1sg-gesicht","passes":true,"sentence":"Ich rasiere mir das Gesicht.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-2sg-mantel","passes":true,"sentence":"Du ziehst dir den Mantel aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-1sg","passes":true,"sentence":"Ich ziehe mich aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-putzen-1sg-zahn","passes":true,"sentence":"Ich putze mir die Zähne.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-duschen-1sg-t-nach-dem-sport","passes":true,"sentence":"Ich dusche mich nach dem Sport.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-verletzen-1sg-knie","passes":true,"sentence":"Ich verletze mir das Knie.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-interessieren-2sg-t-fuer-musik","passes":true,"sentence":"Du interessierst dich für Musik.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-abtrocknen-1sg-haar","passes":true,"sentence":"Ich trockne mir die Haare ab.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-fuehlen-2sg-t-muede","passes":true,"sentence":"Du fühlst dich müde.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-treffen-1sg-t-im-park","passes":true,"sentence":"Ich treffe mich im Park.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-beeilen-2sg-t-jetzt","passes":true,"sentence":"Du beeilst dich jetzt.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-merken-1sg-adresse","passes":true,"sentence":"Ich merke mir die Adresse.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-beeilen-2sg-t-heute","passes":true,"sentence":"Du beeilst dich heute.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaemmen-2sg-haar","passes":true,"sentence":"Du kämmst dir die Haare.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-abtrocknen-1sg-hand","passes":true,"sentence":"Ich trockne mir die Hände ab.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-freuen-2sg-t-auf-die-ferien","passes":true,"sentence":"Du freust dich auf die Ferien.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ansehen-1sg-foto","passes":true,"sentence":"Ich sehe mir das Foto an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-erholen-1sg-t-am-wochenende","passes":true,"sentence":"Ich erhole mich am Wochenende.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-abtrocknen-2sg-hand","passes":true,"sentence":"Du trocknest dir die Hände ab.","warnings":[]}
 {"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-anziehen-1sg","passes":true,"sentence":"Ich ziehe mich an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaufen-2sg-kaffee","passes":true,"sentence":"Du kaufst dir einen Kaffee.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-aergern-2sg-t-ueber-den-laerm","passes":true,"sentence":"Du ärgerst dich über den Lärm.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-rasieren-2sg-bein","passes":true,"sentence":"Du rasierst dir die Beine.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-vorstellen-2sg-haus","passes":true,"sentence":"Du stellst dir das Haus vor.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-merken-1sg-name","passes":true,"sentence":"Ich merke mir den Namen.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-verletzen-2sg","passes":true,"sentence":"Du verletzt dich.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ansehen-2sg-bild","passes":true,"sentence":"Du siehst dir das Bild an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ansehen-1sg-foto","passes":true,"sentence":"Ich sehe mir das Foto an.","warnings":[]}
 {"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-fuehlen-1sg-t-gut","passes":true,"sentence":"Ich fühle mich gut.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-verletzen-2sg-knie","passes":true,"sentence":"Du verletzt dir das Knie.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-abtrocknen-2sg-haar","passes":true,"sentence":"Du trocknest dir die Haare ab.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-interessieren-2sg-t-fuer-fussball","passes":true,"sentence":"Du interessierst dich für Fußball.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-umziehen-2sg-t-schnell","passes":true,"sentence":"Du ziehst dich schnell um.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-erinnern-2sg-t-an-den-sommer","passes":true,"sentence":"Du erinnerst dich an den Sommer.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-anziehen-2sg-jacke","passes":true,"sentence":"Du ziehst dir die Jacke an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-anziehen-2sg-mantel","passes":true,"sentence":"Du ziehst dir den Mantel an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-freuen-1sg-t-auf-die-ferien","passes":true,"sentence":"Ich freue mich auf die Ferien.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-2sg-jacke","passes":true,"sentence":"Du ziehst dir die Jacke aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-waschen-1sg-gesicht","passes":true,"sentence":"Ich wasche mir das Gesicht.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-aergern-1sg-t-ueber-den-laerm","passes":true,"sentence":"Ich ärgere mich über den Lärm.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaufen-1sg-kaffee","passes":true,"sentence":"Ich kaufe mir einen Kaffee.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-putzen-2sg-nase","passes":true,"sentence":"Du putzt dir die Nase.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-entschuldigen-2sg-t-bei-der-nachbarin","passes":true,"sentence":"Du entschuldigst dich bei der Nachbarin.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-anziehen-2sg-schuh","passes":true,"sentence":"Du ziehst dir die Schuhe an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-vorstellen-1sg-haus","passes":true,"sentence":"Ich stelle mir das Haus vor.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-duschen-1sg-t-am-morgen","passes":true,"sentence":"Ich dusche mich am Morgen.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-2sg","passes":true,"sentence":"Du ziehst dich aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-treffen-1sg-t-um-sieben","passes":true,"sentence":"Ich treffe mich um sieben.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-anziehen-1sg-mantel","passes":true,"sentence":"Ich ziehe mir den Mantel an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-waschen-1sg-haar","passes":true,"sentence":"Ich wasche mir die Haare.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-aergern-1sg-t-ueber-das-wetter","passes":true,"sentence":"Ich ärgere mich über das Wetter.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ueberlegen-2sg-plan","passes":true,"sentence":"Du überlegst dir einen Plan.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-vorstellen-1sg","passes":true,"sentence":"Ich stelle mich vor.","warnings":[]}
 {"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-verletzen-1sg-arm","passes":true,"sentence":"Ich verletze mir den Arm.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-leisten-1sg-auto","passes":true,"sentence":"Ich leiste mir ein Auto.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-setzen-1sg-t-auf-den-stuhl","passes":true,"sentence":"Ich setze mich auf den Stuhl.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaufen-1sg-auto","passes":true,"sentence":"Ich kaufe mir ein Auto.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-freuen-1sg-t-auf-das-wochenende","passes":true,"sentence":"Ich freue mich auf das Wochenende.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-erinnern-1sg-t-an-den-sommer","passes":true,"sentence":"Ich erinnere mich an den Sommer.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-anziehen-2sg","passes":true,"sentence":"Du ziehst dich an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-beeilen-1sg-t-heute","passes":true,"sentence":"Ich beeile mich heute.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-vorstellen-2sg-stadt","passes":true,"sentence":"Du stellst dir die Stadt vor.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-duschen-2sg-t-nach-dem-sport","passes":true,"sentence":"Du duschst dich nach dem Sport.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-umziehen-2sg-t-schnell","passes":true,"sentence":"Du ziehst dich schnell um.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-merken-1sg-adresse","passes":true,"sentence":"Ich merke mir die Adresse.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-waschen-2sg-gesicht","passes":true,"sentence":"Du wäschst dir das Gesicht.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-setzen-2sg-t-ans-fenster","passes":true,"sentence":"Du setzt dich ans Fenster.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-rasieren-2sg-bein","passes":true,"sentence":"Du rasierst dir die Beine.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaufen-2sg-kaffee","passes":true,"sentence":"Du kaufst dir einen Kaffee.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-erholen-2sg-t-im-urlaub","passes":true,"sentence":"Du erholst dich im Urlaub.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-beeilen-2sg-t-heute","passes":true,"sentence":"Du beeilst dich heute.","warnings":[]}
 {"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaufen-2sg-auto","passes":true,"sentence":"Du kaufst dir ein Auto.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-anziehen-2sg","passes":true,"sentence":"Du ziehst dich an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-setzen-1sg-t-ans-fenster","passes":true,"sentence":"Ich setze mich ans Fenster.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-rasieren-1sg-gesicht","passes":true,"sentence":"Ich rasiere mir das Gesicht.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-vorstellen-2sg-haus","passes":true,"sentence":"Du stellst dir das Haus vor.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-umziehen-1sg-t-schnell","passes":true,"sentence":"Ich ziehe mich schnell um.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-duschen-1sg-t-am-morgen","passes":true,"sentence":"Ich dusche mich am Morgen.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-setzen-1sg-t-auf-den-stuhl","passes":true,"sentence":"Ich setze mich auf den Stuhl.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-freuen-1sg-t-auf-die-ferien","passes":true,"sentence":"Ich freue mich auf die Ferien.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-vorstellen-2sg","passes":true,"sentence":"Du stellst dich vor.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-waschen-1sg-gesicht","passes":true,"sentence":"Ich wasche mir das Gesicht.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-vorstellen-1sg-haus","passes":true,"sentence":"Ich stelle mir das Haus vor.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-rasieren-1sg","passes":true,"sentence":"Ich rasiere mich.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-verletzen-1sg-knie","passes":true,"sentence":"Ich verletze mir das Knie.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-aergern-1sg-t-ueber-den-laerm","passes":true,"sentence":"Ich ärgere mich über den Lärm.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-aergern-2sg-t-ueber-den-laerm","passes":true,"sentence":"Du ärgerst dich über den Lärm.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-beeilen-1sg-t-heute","passes":true,"sentence":"Ich beeile mich heute.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-rasieren-2sg","passes":true,"sentence":"Du rasierst dich.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-interessieren-1sg-t-fuer-fussball","passes":true,"sentence":"Ich interessiere mich für Fußball.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-waschen-2sg-haar","passes":true,"sentence":"Du wäschst dir die Haare.","warnings":[]}
 {"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaemmen-1sg","passes":true,"sentence":"Ich kämme mich.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-anziehen-1sg-mantel","passes":true,"sentence":"Ich ziehe mir den Mantel an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-leisten-1sg-auto","passes":true,"sentence":"Ich leiste mir ein Auto.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaufen-1sg-auto","passes":true,"sentence":"Ich kaufe mir ein Auto.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-anziehen-1sg-schuh","passes":true,"sentence":"Ich ziehe mir die Schuhe an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-waschen-1sg-haar","passes":true,"sentence":"Ich wasche mir die Haare.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-vorstellen-1sg","passes":true,"sentence":"Ich stelle mich vor.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-2sg-mantel","passes":true,"sentence":"Du ziehst dir den Mantel aus.","warnings":[]}
 {"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-erinnern-1sg-t-an-die-reise","passes":true,"sentence":"Ich erinnere mich an die Reise.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-waschen-2sg","passes":true,"sentence":"Du wäschst dich.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-interessieren-1sg-t-fuer-musik","passes":true,"sentence":"Ich interessiere mich für Musik.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-1sg-schuh","passes":true,"sentence":"Ich ziehe mir die Schuhe aus.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-fuehlen-2sg-t-muede","passes":true,"sentence":"Du fühlst dich müde.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-anziehen-2sg-mantel","passes":true,"sentence":"Du ziehst dir den Mantel an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ueberlegen-2sg-plan","passes":true,"sentence":"Du überlegst dir einen Plan.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-verletzen-2sg","passes":true,"sentence":"Du verletzt dich.","warnings":[]}
 {"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-1sg-mantel","passes":true,"sentence":"Ich ziehe mir den Mantel aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-waschen-2sg-hand","passes":true,"sentence":"Du wäschst dir die Hände.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ansehen-1sg-bild","passes":true,"sentence":"Ich sehe mir das Bild an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-abtrocknen-1sg-haar","passes":true,"sentence":"Ich trockne mir die Haare ab.","warnings":[]}
 {"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-duschen-2sg-t-am-morgen","passes":true,"sentence":"Du duschst dich am Morgen.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-beeilen-1sg-t-jetzt","passes":true,"sentence":"Ich beeile mich jetzt.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-rasieren-3sg-gesicht","passes":true,"sentence":"Sie rasiert sich das Gesicht.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-2sg-adresse","passes":true,"sentence":"Du merkst dir die Adresse.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-rasieren-3sg-bein","passes":true,"sentence":"Sie rasiert sich die Beine.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-treffen-1sg-t-um-sieben","passes":true,"sentence":"Ich treffe mich um sieben.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-freuen-3pl-t-auf-das-wochenende","passes":true,"sentence":"Sie freuen sich auf das Wochenende.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-duschen-3sg-t-nach-dem-sport","passes":true,"sentence":"Er duscht sich nach dem Sport.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-setzen-3sg-t-ans-fenster","passes":true,"sentence":"Er setzt sich ans Fenster.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-erholen-3sg-t-am-wochenende","passes":true,"sentence":"Sie erholt sich am Wochenende.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-interessieren-1sg-t-fuer-musik","passes":true,"sentence":"Ich interessiere mich für Musik.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-anziehen-3sg-schuh","passes":true,"sentence":"Sie zieht sich die Schuhe an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ausziehen-3pl-mantel","passes":true,"sentence":"Sie ziehen sich den Mantel aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-aergern-3sg-t-ueber-das-wetter","passes":true,"sentence":"Sie ärgert sich über das Wetter.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-2pl-gesicht","passes":true,"sentence":"Ihr wascht euch das Gesicht.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-erholen-2sg-t-im-urlaub","passes":true,"sentence":"Du erholst dich im Urlaub.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-fuehlen-1pl-t-muede","passes":true,"sentence":"Wir fühlen uns müde.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ansehen-1sg-bild","passes":true,"sentence":"Ich sehe mir das Bild an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-verletzen-3sg","passes":true,"sentence":"Sie verletzt sich.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-rasieren-1sg-bein","passes":true,"sentence":"Ich rasiere mir die Beine.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-anziehen-1sg","passes":true,"sentence":"Ich ziehe mich an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-vorstellen-3pl","passes":true,"sentence":"Sie stellen sich vor.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ausziehen-2pl","passes":true,"sentence":"Ihr zieht euch aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-3sg-adresse","passes":true,"sentence":"Er merkt sich die Adresse.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-1sg","passes":true,"sentence":"Ich wasche mich.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ueberlegen-3sg-antwort","passes":true,"sentence":"Er überlegt sich die Antwort.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-erinnern-3sg-t-an-die-reise","passes":true,"sentence":"Sie erinnert sich an die Reise.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-fuehlen-3sg-t-muede","passes":true,"sentence":"Er fühlt sich müde.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ueberlegen-3pl-plan","passes":true,"sentence":"Sie überlegen sich einen Plan.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-erinnern-3sg-t-an-den-sommer","passes":true,"sentence":"Sie erinnert sich an den Sommer.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-aergern-2sg-t-ueber-den-laerm","passes":true,"sentence":"Du ärgerst dich über den Lärm.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ueberlegen-1sg-antwort","passes":true,"sentence":"Ich überlege mir die Antwort.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-leisten-3sg-auto","passes":true,"sentence":"Sie leistet sich ein Auto.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-umziehen-1pl-t-schnell","passes":true,"sentence":"Wir ziehen uns schnell um.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-kaemmen-2sg","passes":true,"sentence":"Du kämmst dich.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-fuehlen-3pl-t-gut","passes":true,"sentence":"Sie fühlen sich gut.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-3pl-nummer","passes":true,"sentence":"Sie merken sich die Nummer.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-3pl","passes":true,"sentence":"Sie waschen sich.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-putzen-2sg-zahn","passes":true,"sentence":"Du putzt dir die Zähne.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ansehen-2pl-bild","passes":true,"sentence":"Ihr seht euch das Bild an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-2sg-nummer","passes":true,"sentence":"Du merkst dir die Nummer.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-fuehlen-2pl-t-muede","passes":true,"sentence":"Ihr fühlt euch müde.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-fuehlen-1sg-t-muede","passes":true,"sentence":"Ich fühle mich müde.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-3pl-hand","passes":true,"sentence":"Sie waschen sich die Hände.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-entschuldigen-2sg-t-beim-lehrer","passes":true,"sentence":"Du entschuldigst dich beim Lehrer.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-kaufen-1pl-buch","passes":true,"sentence":"Wir kaufen uns ein Buch.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-vorstellen-3sg-stadt","passes":true,"sentence":"Sie stellt sich die Stadt vor.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-erholen-1sg-t-am-wochenende","passes":true,"sentence":"Ich erhole mich am Wochenende.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-rasieren-2pl","passes":true,"sentence":"Ihr rasiert euch.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-duschen-2sg-t-am-morgen","passes":true,"sentence":"Du duschst dich am Morgen.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ansehen-1pl-bild","passes":true,"sentence":"Wir sehen uns das Bild an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-beeilen-3pl-t-heute","passes":true,"sentence":"Sie beeilen sich heute.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-3sg-gesicht","passes":true,"sentence":"Er wäscht sich das Gesicht.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-entschuldigen-2pl-t-beim-lehrer","passes":true,"sentence":"Ihr entschuldigt euch beim Lehrer.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-leisten-1pl-auto","passes":true,"sentence":"Wir leisten uns ein Auto.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-verletzen-1sg-arm","passes":true,"sentence":"Ich verletze mir den Arm.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-setzen-3sg-t-auf-den-stuhl","passes":true,"sentence":"Er setzt sich auf den Stuhl.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-vorstellen-2pl","passes":true,"sentence":"Ihr stellt euch vor.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-vorstellen-3pl-stadt","passes":true,"sentence":"Sie stellen sich die Stadt vor.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ausziehen-3sg-schuh","passes":true,"sentence":"Sie zieht sich die Schuhe aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-vorstellen-1sg-stadt","passes":true,"sentence":"Ich stelle mir die Stadt vor.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-rasieren-2pl-gesicht","passes":true,"sentence":"Ihr rasiert euch das Gesicht.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-1sg-hand","passes":true,"sentence":"Ich wasche mir die Hände.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-2sg-name","passes":true,"sentence":"Du merkst dir den Namen.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-fuehlen-2pl-t-gut","passes":true,"sentence":"Ihr fühlt euch gut.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-entschuldigen-1sg-t-bei-der-nachbarin","passes":true,"sentence":"Ich entschuldige mich bei der Nachbarin.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-kaemmen-1sg-haar","passes":true,"sentence":"Ich kämme mir die Haare.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-1pl-name","passes":true,"sentence":"Wir merken uns den Namen.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-entschuldigen-2sg-t-bei-der-nachbarin","passes":true,"sentence":"Du entschuldigst dich bei der Nachbarin.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-putzen-3sg-zahn","passes":true,"sentence":"Er putzt sich die Zähne.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-rasieren-2sg-gesicht","passes":true,"sentence":"Du rasierst dir das Gesicht.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-aergern-1sg-t-ueber-das-wetter","passes":true,"sentence":"Ich ärgere mich über das Wetter.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaufen-2sg-buch","passes":true,"sentence":"Du kaufst dir ein Buch.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-aergern-2sg-t-ueber-das-wetter","passes":true,"sentence":"Du ärgerst dich über das Wetter.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-entschuldigen-2sg-t-beim-lehrer","passes":true,"sentence":"Du entschuldigst dich beim Lehrer.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-merken-1sg-nummer","passes":true,"sentence":"Ich merke mir die Nummer.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-erholen-1sg-t-am-wochenende","passes":true,"sentence":"Ich erhole mich am Wochenende.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-freuen-2sg-t-auf-das-wochenende","passes":true,"sentence":"Du freust dich auf das Wochenende.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-erinnern-2sg-t-an-den-sommer","passes":true,"sentence":"Du erinnerst dich an den Sommer.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-erholen-1sg-t-im-urlaub","passes":true,"sentence":"Ich erhole mich im Urlaub.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-abtrocknen-2sg-haar","passes":true,"sentence":"Du trocknest dir die Haare ab.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-freuen-2sg-t-auf-die-ferien","passes":true,"sentence":"Du freust dich auf die Ferien.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-merken-2sg-name","passes":true,"sentence":"Du merkst dir den Namen.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-vorstellen-1sg-stadt","passes":true,"sentence":"Ich stelle mir die Stadt vor.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ansehen-1sg-bild","passes":true,"sentence":"Ich sehe mir das Bild an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-leisten-2sg-reise","passes":true,"sentence":"Du leistest dir eine Reise.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-verletzen-1sg","passes":true,"sentence":"Ich verletze mich.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-merken-2sg-adresse","passes":true,"sentence":"Du merkst dir die Adresse.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-beeilen-2sg-t-jetzt","passes":true,"sentence":"Du beeilst dich jetzt.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ueberlegen-1sg-plan","passes":true,"sentence":"Ich überlege mir einen Plan.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-2sg-schuh","passes":true,"sentence":"Du ziehst dir die Schuhe aus.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-merken-1sg-name","passes":true,"sentence":"Ich merke mir den Namen.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-beeilen-1sg-t-jetzt","passes":true,"sentence":"Ich beeile mich jetzt.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaemmen-1sg-haar","passes":true,"sentence":"Ich kämme mir die Haare.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-anziehen-2sg-jacke","passes":true,"sentence":"Du ziehst dir die Jacke an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-setzen-2sg-t-auf-den-stuhl","passes":true,"sentence":"Du setzt dich auf den Stuhl.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-interessieren-2sg-t-fuer-musik","passes":true,"sentence":"Du interessierst dich für Musik.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-fuehlen-1sg-t-muede","passes":true,"sentence":"Ich fühle mich müde.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-rasieren-1sg-bein","passes":true,"sentence":"Ich rasiere mir die Beine.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-leisten-1sg-reise","passes":true,"sentence":"Ich leiste mir eine Reise.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-waschen-2sg","passes":true,"sentence":"Du wäschst dich.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-1sg-jacke","passes":true,"sentence":"Ich ziehe mir die Jacke aus.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-anziehen-2sg-schuh","passes":true,"sentence":"Du ziehst dir die Schuhe an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ueberlegen-2sg-antwort","passes":true,"sentence":"Du überlegst dir die Antwort.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-abtrocknen-1sg-hand","passes":true,"sentence":"Ich trockne mir die Hände ab.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-abtrocknen-2sg","passes":true,"sentence":"Du trocknest dich ab.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-leisten-2sg-auto","passes":true,"sentence":"Du leistest dir ein Auto.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-2sg-jacke","passes":true,"sentence":"Du ziehst dir die Jacke aus.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-interessieren-2sg-t-fuer-fussball","passes":true,"sentence":"Du interessierst dich für Fußball.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-entschuldigen-1sg-t-beim-lehrer","passes":true,"sentence":"Ich entschuldige mich beim Lehrer.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-1sg","passes":true,"sentence":"Ich ziehe mich aus.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-verletzen-2sg-arm","passes":true,"sentence":"Du verletzt dir den Arm.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaufen-1sg-kaffee","passes":true,"sentence":"Ich kaufe mir einen Kaffee.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-freuen-1sg-t-auf-das-wochenende","passes":true,"sentence":"Ich freue mich auf das Wochenende.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ausziehen-2sg","passes":true,"sentence":"Du ziehst dich aus.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-entschuldigen-2sg-t-bei-der-nachbarin","passes":true,"sentence":"Du entschuldigst dich bei der Nachbarin.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-duschen-1sg-t-nach-dem-sport","passes":true,"sentence":"Ich dusche mich nach dem Sport.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ueberlegen-1sg-antwort","passes":true,"sentence":"Ich überlege mir die Antwort.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-vorstellen-2sg-stadt","passes":true,"sentence":"Du stellst dir die Stadt vor.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-fuehlen-2sg-t-gut","passes":true,"sentence":"Du fühlst dich gut.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaemmen-2sg","passes":true,"sentence":"Du kämmst dich.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-erinnern-2sg-t-an-die-reise","passes":true,"sentence":"Du erinnerst dich an die Reise.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-verletzen-2sg-knie","passes":true,"sentence":"Du verletzt dir das Knie.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-erinnern-1sg-t-an-den-sommer","passes":true,"sentence":"Ich erinnere mich an den Sommer.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-interessieren-1sg-t-fuer-musik","passes":true,"sentence":"Ich interessiere mich für Musik.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ansehen-2sg-foto","passes":true,"sentence":"Du siehst dir das Foto an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-kaemmen-2sg-haar","passes":true,"sentence":"Du kämmst dir die Haare.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-ansehen-2sg-bild","passes":true,"sentence":"Du siehst dir das Bild an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-waschen-2sg-hand","passes":true,"sentence":"Du wäschst dir die Hände.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-entschuldigen-1sg-t-bei-der-nachbarin","passes":true,"sentence":"Ich entschuldige mich bei der Nachbarin.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"case","id":"rx-s-case-putzen-1sg-zahn","passes":true,"sentence":"Ich putze mir die Zähne.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-verletzen-3pl","passes":true,"sentence":"Sie verletzen sich.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-kaufen-1sg-buch","passes":true,"sentence":"Ich kaufe mir ein Buch.","warnings":[]}
 {"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-3pl-gesicht","passes":true,"sentence":"Sie waschen sich das Gesicht.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-anziehen-2pl-mantel","passes":true,"sentence":"Ihr zieht euch den Mantel an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-kaufen-3pl-kaffee","passes":true,"sentence":"Sie kaufen sich einen Kaffee.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ueberlegen-1pl-plan","passes":true,"sentence":"Wir überlegen uns einen Plan.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ueberlegen-2pl-antwort","passes":true,"sentence":"Ihr überlegt euch die Antwort.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ausziehen-3sg-jacke","passes":true,"sentence":"Sie zieht sich die Jacke aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-rasieren-1sg","passes":true,"sentence":"Ich rasiere mich.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-abtrocknen-2sg","passes":true,"sentence":"Du trocknest dich ab.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-putzen-3pl-nase","passes":true,"sentence":"Sie putzen sich die Nase.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-setzen-2sg-t-ans-fenster","passes":true,"sentence":"Du setzt dich ans Fenster.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-duschen-1sg-t-am-morgen","passes":true,"sentence":"Ich dusche mich am Morgen.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ausziehen-2pl-mantel","passes":true,"sentence":"Ihr zieht euch den Mantel aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-verletzen-2pl","passes":true,"sentence":"Ihr verletzt euch.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-treffen-3sg-t-um-sieben","passes":true,"sentence":"Sie trifft sich um sieben.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-vorstellen-3sg-haus","passes":true,"sentence":"Sie stellt sich das Haus vor.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-umziehen-1sg-t-schnell","passes":true,"sentence":"Ich ziehe mich schnell um.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-putzen-2sg-nase","passes":true,"sentence":"Du putzt dir die Nase.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-erholen-2pl-t-am-wochenende","passes":true,"sentence":"Ihr erholt euch am Wochenende.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-vorstellen-2pl-stadt","passes":true,"sentence":"Ihr stellt euch die Stadt vor.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-freuen-3sg-t-auf-die-ferien","passes":true,"sentence":"Sie freut sich auf die Ferien.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-entschuldigen-3sg-t-beim-lehrer","passes":true,"sentence":"Sie entschuldigt sich beim Lehrer.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-2pl-hand","passes":true,"sentence":"Ihr wascht euch die Hände.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ansehen-2pl-foto","passes":true,"sentence":"Ihr seht euch das Foto an.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ausziehen-1pl-mantel","passes":true,"sentence":"Wir ziehen uns den Mantel aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ausziehen-2pl-jacke","passes":true,"sentence":"Ihr zieht euch die Jacke aus.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-erholen-1pl-t-im-urlaub","passes":true,"sentence":"Wir erholen uns im Urlaub.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-vorstellen-1pl-stadt","passes":true,"sentence":"Wir stellen uns die Stadt vor.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-entschuldigen-1pl-t-beim-lehrer","passes":true,"sentence":"Wir entschuldigen uns beim Lehrer.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-erholen-1sg-t-im-urlaub","passes":true,"sentence":"Ich erhole mich im Urlaub.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-2pl-gesicht","passes":true,"sentence":"Ihr wascht euch das Gesicht.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ausziehen-3pl-schuh","passes":true,"sentence":"Sie ziehen sich die Schuhe aus.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-duschen-3sg-t-nach-dem-sport","passes":true,"sentence":"Sie duscht sich nach dem Sport.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-vorstellen-2sg-haus","passes":true,"sentence":"Du stellst dir das Haus vor.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-2sg-adresse","passes":true,"sentence":"Du merkst dir die Adresse.","warnings":[]}
 {"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-3sg","passes":true,"sentence":"Er wäscht sich.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-interessieren-1pl-t-fuer-musik","passes":true,"sentence":"Wir interessieren uns für Musik.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-duschen-1pl-t-am-morgen","passes":true,"sentence":"Wir duschen uns am Morgen.","warnings":[]}
-{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-abtrocknen-1pl","passes":true,"sentence":"Wir trocknen uns ab.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-fuehlen-2sg-t-muede","passes":true,"sentence":"Du fühlst dich müde.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-1sg-nummer","passes":true,"sentence":"Ich merke mir die Nummer.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ueberlegen-2sg-plan","passes":true,"sentence":"Du überlegst dir einen Plan.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-vorstellen-3pl-haus","passes":true,"sentence":"Sie stellen sich das Haus vor.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-erinnern-2sg-t-an-den-sommer","passes":true,"sentence":"Du erinnerst dich an den Sommer.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-1pl-name","passes":true,"sentence":"Wir merken uns den Namen.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-fuehlen-3sg-t-muede","passes":true,"sentence":"Sie fühlt sich müde.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-3sg-nummer","passes":true,"sentence":"Er merkt sich die Nummer.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-putzen-2sg-zahn","passes":true,"sentence":"Du putzt dir die Zähne.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-umziehen-1sg-t-schnell","passes":true,"sentence":"Ich ziehe mich schnell um.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-interessieren-1sg-t-fuer-fussball","passes":true,"sentence":"Ich interessiere mich für Fußball.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-umziehen-2pl-t-schnell","passes":true,"sentence":"Ihr zieht euch schnell um.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-kaemmen-2sg","passes":true,"sentence":"Du kämmst dich.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-treffen-3pl-t-um-sieben","passes":true,"sentence":"Sie treffen sich um sieben.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-leisten-3sg-reise","passes":true,"sentence":"Sie leistet sich eine Reise.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-leisten-3pl-reise","passes":true,"sentence":"Sie leisten sich eine Reise.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-fuehlen-2sg-t-gut","passes":true,"sentence":"Du fühlst dich gut.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-kaemmen-2pl","passes":true,"sentence":"Ihr kämmt euch.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-entschuldigen-1sg-t-beim-lehrer","passes":true,"sentence":"Ich entschuldige mich beim Lehrer.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-rasieren-3sg-bein","passes":true,"sentence":"Sie rasiert sich die Beine.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-aergern-2sg-t-ueber-das-wetter","passes":true,"sentence":"Du ärgerst dich über das Wetter.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-3pl","passes":true,"sentence":"Sie waschen sich.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-abtrocknen-3pl","passes":true,"sentence":"Sie trocknen sich ab.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ueberlegen-2pl-plan","passes":true,"sentence":"Ihr überlegt euch einen Plan.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-aergern-1pl-t-ueber-den-laerm","passes":true,"sentence":"Wir ärgern uns über den Lärm.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-anziehen-1pl-jacke","passes":true,"sentence":"Wir ziehen uns die Jacke an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-duschen-2pl-t-nach-dem-sport","passes":true,"sentence":"Ihr duscht euch nach dem Sport.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-verletzen-3sg-knie","passes":true,"sentence":"Sie verletzt sich das Knie.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-erholen-3sg-t-im-urlaub","passes":true,"sentence":"Sie erholt sich im Urlaub.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-leisten-3sg-auto","passes":true,"sentence":"Er leistet sich ein Auto.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-2sg-haar","passes":true,"sentence":"Du wäschst dir die Haare.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-interessieren-2sg-t-fuer-musik","passes":true,"sentence":"Du interessierst dich für Musik.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-verletzen-1sg-arm","passes":true,"sentence":"Ich verletze mir den Arm.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-interessieren-2pl-t-fuer-fussball","passes":true,"sentence":"Ihr interessiert euch für Fußball.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-verletzen-2sg-arm","passes":true,"sentence":"Du verletzt dir den Arm.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-verletzen-2pl-arm","passes":true,"sentence":"Ihr verletzt euch den Arm.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-2sg-nummer","passes":true,"sentence":"Du merkst dir die Nummer.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-vorstellen-1pl-haus","passes":true,"sentence":"Wir stellen uns das Haus vor.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-2sg-name","passes":true,"sentence":"Du merkst dir den Namen.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-3sg-gesicht","passes":true,"sentence":"Sie wäscht sich das Gesicht.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-verletzen-2pl-knie","passes":true,"sentence":"Ihr verletzt euch das Knie.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-leisten-2sg-reise","passes":true,"sentence":"Du leistest dir eine Reise.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-entschuldigen-2pl-t-bei-der-nachbarin","passes":true,"sentence":"Ihr entschuldigt euch bei der Nachbarin.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ueberlegen-3pl-antwort","passes":true,"sentence":"Sie überlegen sich die Antwort.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-abtrocknen-3sg","passes":true,"sentence":"Sie trocknet sich ab.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-anziehen-2pl","passes":true,"sentence":"Ihr zieht euch an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-rasieren-1pl","passes":true,"sentence":"Wir rasieren uns.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-erholen-3sg-t-am-wochenende","passes":true,"sentence":"Sie erholt sich am Wochenende.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-erinnern-1pl-t-an-die-reise","passes":true,"sentence":"Wir erinnern uns an die Reise.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ansehen-2pl-bild","passes":true,"sentence":"Ihr seht euch das Bild an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-interessieren-1pl-t-fuer-fussball","passes":true,"sentence":"Wir interessieren uns für Fußball.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-anziehen-3sg-schuh","passes":true,"sentence":"Sie zieht sich die Schuhe an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-anziehen-3pl-mantel","passes":true,"sentence":"Sie ziehen sich den Mantel an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-putzen-1sg-zahn","passes":true,"sentence":"Ich putze mir die Zähne.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ansehen-1pl-bild","passes":true,"sentence":"Wir sehen uns das Bild an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-2sg","passes":true,"sentence":"Du wäschst dich.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-fuehlen-3pl-t-muede","passes":true,"sentence":"Sie fühlen sich müde.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ausziehen-2pl-mantel","passes":true,"sentence":"Ihr zieht euch den Mantel aus.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-erinnern-2sg-t-an-die-reise","passes":true,"sentence":"Du erinnerst dich an die Reise.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-setzen-2sg-t-auf-den-stuhl","passes":true,"sentence":"Du setzt dich auf den Stuhl.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-rasieren-3sg","passes":true,"sentence":"Sie rasiert sich.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-rasieren-1pl-gesicht","passes":true,"sentence":"Wir rasieren uns das Gesicht.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ausziehen-1pl-mantel","passes":true,"sentence":"Wir ziehen uns den Mantel aus.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-beeilen-2pl-t-jetzt","passes":true,"sentence":"Ihr beeilt euch jetzt.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ueberlegen-1pl-antwort","passes":true,"sentence":"Wir überlegen uns die Antwort.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-3sg-adresse","passes":true,"sentence":"Sie merkt sich die Adresse.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-duschen-1sg-t-nach-dem-sport","passes":true,"sentence":"Ich dusche mich nach dem Sport.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-3sg-haar","passes":true,"sentence":"Er wäscht sich die Haare.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-putzen-3sg-zahn","passes":true,"sentence":"Er putzt sich die Zähne.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-1sg-hand","passes":true,"sentence":"Ich wasche mir die Hände.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-2sg-gesicht","passes":true,"sentence":"Du wäschst dir das Gesicht.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ansehen-1sg-bild","passes":true,"sentence":"Ich sehe mir das Bild an.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-rasieren-3pl","passes":true,"sentence":"Sie rasieren sich.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-entschuldigen-3sg-t-beim-lehrer","passes":true,"sentence":"Er entschuldigt sich beim Lehrer.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-kaufen-1pl-kaffee","passes":true,"sentence":"Wir kaufen uns einen Kaffee.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-abtrocknen-2sg-haar","passes":true,"sentence":"Du trocknest dir die Haare ab.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-freuen-2pl-t-auf-das-wochenende","passes":true,"sentence":"Ihr freut euch auf das Wochenende.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-setzen-1sg-t-auf-den-stuhl","passes":true,"sentence":"Ich setze mich auf den Stuhl.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-treffen-2pl-t-im-park","passes":true,"sentence":"Ihr trefft euch im Park.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-rasieren-2pl-gesicht","passes":true,"sentence":"Ihr rasiert euch das Gesicht.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-beeilen-2pl-t-heute","passes":true,"sentence":"Ihr beeilt euch heute.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-waschen-3sg-hand","passes":true,"sentence":"Er wäscht sich die Hände.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-vorstellen-3pl","passes":true,"sentence":"Sie stellen sich vor.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-setzen-2sg-t-ans-fenster","passes":true,"sentence":"Du setzt dich ans Fenster.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-freuen-1pl-t-auf-die-ferien","passes":true,"sentence":"Wir freuen uns auf die Ferien.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-merken-3pl-name","passes":true,"sentence":"Sie merken sich den Namen.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-ausziehen-1pl","passes":true,"sentence":"Wir ziehen uns aus.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-beeilen-1sg-t-heute","passes":true,"sentence":"Ich beeile mich heute.","warnings":[]}
+{"codes":[],"errors":[],"firstReject":null,"focus":"person","id":"rx-s-person-vorstellen-1pl","passes":true,"sentence":"Wir stellen uns vor.","warnings":[]}

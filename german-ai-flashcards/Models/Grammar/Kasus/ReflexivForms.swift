@@ -182,6 +182,9 @@ nonisolated struct ReflexivVerb: Hashable {
     /// verb that takes either case gets none: a phrase after the pronoun could read as the second
     /// object the lesson talks about.
     var tails: [ReflexivTail] = []
+    /// The subject numbers the verb takes. A reciprocal verb (sich treffen) needs a plural
+    /// subject: „Ich treffe mich im Park“ is missing its „mit …“.
+    var numbers: Set<GrammarNumber> = [.sg, .pl]
 
     /// The finite form for a subject.
     func form(person: Int, number: GrammarNumber) -> String? {
@@ -225,7 +228,7 @@ nonisolated struct ReflexivVerb: Hashable {
                      objects: [.beine, .gesicht]),
         ReflexivVerb(lemma: "putzen", takes: .both, forms: regular("putz"),
                      en: ReflexivEnglish(base: "brush", third: "brushes", akk: nil, dat: "{S} {V} {P} {O}."),
-                     objects: [.zaehne, .nase]),
+                     objects: [.zaehne]),
         ReflexivVerb(lemma: "abtrocknen", prefix: "ab", takes: .both, forms: regular("trockn"),
                      en: ReflexivEnglish(base: "dry", third: "dries", akk: "{S} {V} {R} off.", dat: "{S} {V} {P} {O}."),
                      objects: [.haende, .haare]),
@@ -293,7 +296,8 @@ nonisolated struct ReflexivVerb: Hashable {
                      tails: [ReflexivTail(de: "gut", en: "good"), ReflexivTail(de: "müde", en: "tired")]),
         ReflexivVerb(lemma: "treffen", takes: .akk, forms: ["treffe", "triffst", "trifft", "treffen", "trefft", "treffen"],
                      en: ReflexivEnglish(base: "meet", third: "meets", akk: "{S} {V}.", dat: nil),
-                     tails: [ReflexivTail(de: "im Park", en: "in the park"), ReflexivTail(de: "um sieben", en: "at seven")]),
+                     tails: [ReflexivTail(de: "im Park", en: "in the park"), ReflexivTail(de: "um sieben", en: "at seven")],
+                     numbers: [.pl]),
     ]
 }
 

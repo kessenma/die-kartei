@@ -123,7 +123,7 @@ struct KasusDrillShellTests {
         for kind in [KasusDrillKind.reflexCase, .reflexPerson] {
             let result = kind.debugRound(topic: .reflexiv, wrongEvery: 3, seed: 42)
             #expect(result?.storyID == kind.step.roundID(topicKey: "reflexiv") && result?.topic == .reflexiv)
-            #expect(result?.items.count == 8, "\(kind): \(result?.items.count ?? 0) items")
+            #expect(result?.items.count == kind.meta.roundSize, "\(kind): \(result?.items.count ?? 0) items")
             if kind == .reflexCase {
                 #expect(result?.items.contains { $0.kasus == .akkusativ } == true && result?.items.contains { $0.kasus == .dativ } == true)
             }

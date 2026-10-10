@@ -87,6 +87,9 @@ struct GapChoicePlannerTests {
         #expect(!pack.contains { $0.filled.lowercased() == "ich wasche mir die hände." })
         #expect(pack.contains { $0.filled == "Ich ziehe mir die Jacke an." })
         #expect(pack.contains { $0.filled == "Du beeilst dich heute." })
+        // A reciprocal verb never gets a singular subject.
+        #expect(!pack.contains { $0.verb.lemma == "treffen" })
+        #expect(GapChoicePlanner.pack(focus: .person, count: 200, seed: 3).filter { $0.verb.lemma == "treffen" }.allSatisfy { $0.subject.number == .pl })
         #expect(GapChoicePlanner.slugify("Hände") == "haende" && GapChoicePlanner.slugify("am Wochenende") == "am-wochenende")
     }
 }

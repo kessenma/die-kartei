@@ -24,8 +24,8 @@ enum GapChoiceFixtures {
 
     /// Keyed `"<topic>/<focus>"`.
     static let golden: [String: Golden] = [
-        "reflexiv/case":   Golden(items: 8, akk: 3, dat: 5, inline: 2),
-        "reflexiv/person": Golden(items: 8, akk: 5, dat: 3, inline: 2),
+        "reflexiv/case":   Golden(items: 121, akk: 59, dat: 62, inline: 30),
+        "reflexiv/person": Golden(items: 108, akk: 55, dat: 53, inline: 27),
     ]
 
     // MARK: Planted errors

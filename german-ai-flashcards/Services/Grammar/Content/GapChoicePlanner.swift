@@ -30,7 +30,7 @@ nonisolated enum GapChoicePlanner {
         let subjects = focus == .case ? ReflexivSubject.all.filter { $0.number == .sg && $0.person < 3 } : ReflexivSubject.all
         var out: [GapChoiceItem] = []
         for verb in ReflexivVerb.table {
-            for subject in subjects {
+            for subject in subjects where verb.numbers.contains(subject.number) {
                 guard let form = verb.form(person: subject.person, number: subject.number) else { continue }
                 if verb.takes != .dat, let pattern = verb.en.akk {
                     let tails: [ReflexivTail?] = verb.tails.isEmpty ? [nil] : verb.tails

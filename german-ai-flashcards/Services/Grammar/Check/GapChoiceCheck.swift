@@ -153,6 +153,7 @@ enum GapChoiceCheck {
         let lower = words.map { $0.lowercased() }
         if let verb = ReflexivVerb.named(item.verb.lemma) {
             if verb.takes != item.verb.takes { flag(.verbUnknown, "„\(verb.lemma)“ takes \(verb.takes.rawValue), not \(item.verb.takes.rawValue)") }
+            if !verb.numbers.contains(item.subject.number) { flag(.subject, "„sich \(verb.lemma)“ needs a \(verb.numbers.contains(.pl) ? "plural" : "singular") subject") }
             if let expected = verb.form(person: item.subject.person, number: item.subject.number), expected != item.verb.form {
                 flag(.verbForm, "„\(item.verb.form)“ for \(item.subject.text): the table says „\(expected)“")
             }
@@ -269,6 +270,8 @@ enum GapChoiceCheck {
             if pack.count >= batchSize, focus == .case || focus == .person {
                 let verbs = Set(pack.map(\.verb.lemma))
                 for verb in ReflexivVerb.table where !verbs.contains(verb.lemma) {
+                    // Akkusativ oder Dativ? asks ich and du only; a plural-only verb can't be there.
+                    if focus == .case, !verb.numbers.contains(.sg) { continue }
                     problems.append(.init(code: .verbCoverage, detail: "\(key): „\(verb.lemma)“ never appears"))
                 }
                 let persons = Set(pack.map { "\($0.subject.person)\($0.subject.number.rawValue)" })
