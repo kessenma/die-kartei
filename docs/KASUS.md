@@ -49,7 +49,10 @@ Status legend: ✅ done · ⬜ open
 | Tutor-written stories: prompt, generator, check, harvest, sentence checks, store | `Services/Grammar/Tutor/KasusStoryPrompt.swift` (prompt, request/result; no MLX, so `training/kasus_cli` compiles it), `KasusStoryGenerator.swift`, `KasusStoryCheck.swift`, `KasusHarvest.swift`, `KasusSentenceCheck.swift`, `KasusStoryStore.swift`, `Models/Grammar/Kasus/GeneratedKasusStory.swift` |
 | Kasus Lab numbers and canned fixtures (DEBUG) | `Services/Grammar/Tutor/KasusLab.swift`, `Services/Grammar/Content/KasusGenerationFixtures.swift` |
 | Unit row, generation sheet, Lab screen | `Features/Grammar/Story/Tutor/KasusAIStorySection.swift`, `KasusGenerationSheet.swift`, `KasusLabView.swift` |
-| Swift Testing target (engine, validator, explanations, service, recording) | `german-ai-flashcardsTests/` |
+| The exercise framework: registry (`KasusRoundStep` + meta + `KasusDrillKind`), one shell and its modules, `GrammarTopic`, content packs (`docs/GRAMMAR_EXERCISES.md`) | `Models/Grammar/Kasus/KasusRoundStep.swift`, `Features/Grammar/Drill/`, `Models/Grammar/GrammarTopic.swift` |
+| Reflexive Verben: the gap-choice format, tables, gate, bank, planner, lesson, topic screen | `Models/Grammar/Kasus/GapChoiceItem.swift`, `ReflexivForms.swift`, `ReflexivLesson.swift`, `Services/Grammar/Check/GapChoiceCheck.swift`, `Services/Grammar/Content/GapChoiceBank.swift`, `GapChoiceFixtures.swift`, `GapChoicePlanner.swift`, `Features/Grammar/Topics/ReflexivTopicView.swift`, `Resources/gap_choice_items.json` |
+| Finde den Fehler (planted mistakes on Rollen sentences), die Pronomen-Brücke (derived from the frames), Verwechslungs-Paare | `Services/Grammar/Kasus/FehlerQuestion.swift`, `Models/Grammar/Kasus/BridgeQuestion.swift`, `Services/Grammar/Kasus/KasusConfusion.swift`, `Features/Grammar/Hub/KasusConfusionCard.swift` |
+| Swift Testing target (engine, validator, explanations, service, recording, the framework, the packs) | `german-ai-flashcardsTests/Grammar/` |
 
 ## The path
 
