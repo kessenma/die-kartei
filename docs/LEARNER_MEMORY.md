@@ -126,6 +126,17 @@ of the named follow-ons (`FUTURE_FEATURES.md` #1) — turns the profile into a c
   (Akkusativ/Dativ), else a `GrammarFocus.explanation` mini-lesson sheet (seeds #4); chat pushes
   `ConversationListView`
 - ✅ Weak-spot rotation (`dayIndex % weaknesses.count`) for day-to-day interleaving
+- ✅ **Förderplan** (roadmap item 9, 2026-11-20): ten days on one shaky grammar point, started from
+  Coach's Notes ("Ten-day plan"). Stored on the profile (`foerderplanData`, synced LWW): the plan,
+  the struggle score at the start, the done days (one per day, counted when the day's task is
+  started), and past outcomes. Days 1, 4 and 8 open the 30-second explainer; every day a round
+  through `GrammarRoute`. Day 10 is the re-check: it **reads** the coach's score and records then →
+  now; it never writes `profile.grammar` (the drills move it the ordinary way). Today shows the
+  day's task first. No automatic trigger until `WeakSpotHistory` has weeks of data.
+  `-today.debugFoerderplan <focus>` starts one.
+- ✅ **Monatsbericht** (roadmap item 10): `MonthlyNoteSection` under the week in review, from the
+  newest snapshot and the newest one at least 25 days older: layers' earned fill, Goethe words,
+  solid grammar, conversations, grammar that left "shaky", XP; then what to do next.
 - ✅ **Leichte Runde** (roadmap item 6, 2026-11-20): `TodayIntent.easyRound` after a hard session
   (today's last quiz or grammar round under 60% first try) or when two or more weak spots are on,
   from ten cards known well (Leitner box 4+ or a 3-week interval, last answered right, not due).

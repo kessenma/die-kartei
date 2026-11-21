@@ -292,7 +292,7 @@ struct ZahlenDiktatView: View {
         round.modeRaw = config.mode.rawValue
         round.playbackRaw = config.playback.rawValue
         round.levelRaw = config.level.rawValue
-        round.sourceRaw = config.kinds.map(\.rawValue).joined(separator: ",")
+        round.sourceRaw = (config.tag.map { "\($0):" } ?? "") + config.kinds.map(\.rawValue).joined(separator: ",")
         round.askedCount = results.count
         round.correctCount = results.filter(\.correct).count
         round.firstPassCount = results.filter(\.firstPass).count

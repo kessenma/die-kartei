@@ -15,6 +15,8 @@ struct ZahlenConfig: Identifiable, Hashable {
     var mode: HoerenNumberMode
     var playback: HoerenPlayback
     var items: [HoerenNumberItem]
+    /// "check" for the Hör-Check (roadmap item 11): stored as the round's source prefix.
+    var tag: String? = nil
 }
 
 struct ZahlenSetupView: View {

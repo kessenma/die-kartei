@@ -129,6 +129,15 @@ opens a story straight into it (`StoryDetailView(initialMode: .listen)`).
   slice and day rows in the streak calendar. Items count right or wrong; listening is the work.
 - A round is saved once, on finishing or on leaving with at least one answer.
 
+## Hör-Check (roadmap item 11)
+
+Every four weeks, for someone who uses Hören, Today offers a Hör-Check (`HoerenCheckView`): eight
+numbers in sentences and three dictated sentences at the learner's level (B1 at most), single pass.
+They are ordinary rounds tagged `check:` in `sourceRaw`. Hören ▸ Statistik shows a **Hörprofil**
+(numbers and Diktat words right, per level) and the **Hör-Checks** over time. The app names no
+listening level: that rule waits for the numbers. DLI's ODA, the roadmap's model, could not be
+reached to read, so nothing cites it. `-today.debugHoerCheck 1` offers the check now.
+
 ## Debug launch arguments (DEBUG only)
 
 | Argument | Does |

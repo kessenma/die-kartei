@@ -240,6 +240,47 @@ struct HoerenStatsView: View {
                 }
                 .themedListRow()
             }
+            if !stats.numbersByLevel.isEmpty || !stats.wordsByLevel.isEmpty {
+                Section {
+                    ForEach(["A1", "A2", "B1"], id: \.self) { level in
+                        let n = stats.numbersByLevel[level], w = stats.wordsByLevel[level]
+                        if n != nil || w != nil {
+                            HStack {
+                                Text(level).font(.headline).frame(width: 36, alignment: .leading)
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 1) {
+                                    if let n { Text("Numbers \(percent(n.right, n.asked)) of \(n.asked)").monospacedDigit() }
+                                    if let w { Text("Diktat words \(percent(w.right, w.total)) of \(w.total)").monospacedDigit() }
+                                }
+                                .font(.callout)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Hörprofil · By level").themedSectionHeader()
+                } footer: {
+                    Text("What you hear right at each level you have practised. The app names no listening level from this yet.")
+                }
+                .themedListRow()
+            }
+            if !stats.checks.isEmpty {
+                Section {
+                    ForEach(stats.checks, id: \.date) { check in
+                        HStack {
+                            Text(check.date, format: .dateTime.day().month().year())
+                            Spacer()
+                            Text([check.numbers.map { "Zahlen \(Int(($0 * 100).rounded()))%" },
+                                  check.words.map { "Diktat \(Int(($0 * 100).rounded()))%" }].compactMap { $0 }.joined(separator: " · "))
+                                .monospacedDigit().foregroundStyle(.secondary)
+                        }
+                    }
+                } header: {
+                    Text("Hör-Checks").themedSectionHeader()
+                } footer: {
+                    Text("The short check Today offers every four weeks.")
+                }
+                .themedListRow()
+            }
             if stats.gistRounds > 0 {
                 Section {
                     HStack {

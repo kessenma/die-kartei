@@ -22,6 +22,11 @@
           "title": "Erste Schritte · Getting started",
           "detail": "Deutschkurs starts with a short setup for your class, your tutor or learning on your own, then a checklist that ticks itself off as you go. Restart it from the ? button.",
           "symbol": "checklist"
+        },
+        {
+          "title": "Förderplan & Monatsbericht · Plans and a monthly note",
+          "detail": "Give a shaky grammar point ten days of short daily tasks, read a monthly note on what improved, and take a quick listening check every four weeks.",
+          "symbol": "calendar.badge.checkmark"
         }
       ]
     },

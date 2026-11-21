@@ -154,6 +154,14 @@ struct TodaySection: View {
         case .classWords:
             Button { launchClassWords() } label: { rowLabel(rec, hero: hero, chevron: true) }
                 .buttonStyle(.plain)
+        case .hoerCheck:
+            NavigationLink {
+                HoerenCheckView(modelManager: coordinator.modelManager)
+            } label: { rowLabel(rec, hero: hero) }
+        case .foerderplan:
+            NavigationLink {
+                FoerderplanView(modelManager: coordinator.modelManager)
+            } label: { rowLabel(rec, hero: hero) }
         case .beforeClass(let id):
             if let course = course(id) {
                 NavigationLink {
@@ -215,6 +223,8 @@ struct TodaySection: View {
                 classCourseName: classCourses.first?.name,
                 classFocus: classFocus,
                 worksheetRedo: worksheetRedo,
+                foerderplan: foerderplanInfo,
+                hoerCheckDue: hoerCheckDue,
                 classSession: classSession
             )
         )
@@ -362,6 +372,26 @@ struct TodaySection: View {
             return .init(courseID: course.id, courseName: course.name, moment: .before, detail: detail)
         }
         return nil
+    }
+
+    private var foerderplanInfo: TodaySnapshot.FoerderplanInfo? {
+        #if DEBUG
+        // `-today.debugFoerderplan <focus>`: start a plan on that grammar point if none runs.
+        if let raw = UserDefaults.standard.string(forKey: "today.debugFoerderplan"), let focus = GrammarFocus(rawValue: raw),
+           FoerderplanService.current(in: modelContext) == nil {
+            FoerderplanService.start(focus, in: modelContext)
+        }
+        #endif
+        guard let plan = FoerderplanService.current(in: modelContext), !plan.doneToday(), let focus = plan.focus else { return nil }
+        return .init(focus: focus, day: plan.dayNumber)
+    }
+
+    private var hoerCheckDue: Bool {
+        #if DEBUG
+        // `-today.debugHoerCheck 1`: offer the Hör-Check now.
+        if UserDefaults.standard.bool(forKey: "today.debugHoerCheck") { return true }
+        #endif
+        return HoerenCheck.isDue(in: modelContext)
     }
 
     private func course(_ id: UUID) -> ClassCourse? {

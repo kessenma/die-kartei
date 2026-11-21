@@ -85,6 +85,7 @@ enum LearnerProfileCodec: SyncCodec {
         } else {
             f.set("selfReports", jsonData: p.selfReportsData)
         }
+        f.set("foerderplan", jsonData: p.foerderplanData)
         return f.payload
     }
 
@@ -106,6 +107,8 @@ enum LearnerProfileCodec: SyncCodec {
         p.vocabData = flat.jsonData("vocab")
         p.slipsData = flat.jsonData("slips")
         p.selfReportsData = flat.jsonData("selfReports")
+        // Last writer wins; a copy from a build without the field leaves the plan alone.
+        if let v = flat.jsonData("foerderplan") { p.foerderplanData = v }
     }
 
     /// The profile row sync reads and writes: the smallest id, so the choice never depends on
@@ -264,6 +267,7 @@ enum ArchivedMemoryItemCodec: SyncCodec {
 //   selfReportsData "selfReports"   .set(idField: "id", item: .lwwBy("notedAt"), sortBy: "notedAt")
 //                                   [SelfReportNote]: text, focus?, notedAt, timesNoted, pinned, source?, entryID?,
 //                                   plus "id" written in by the codec (id is computed)
+//   foerderplanData "foerderplan"   .lww  FoerderplanRecord: the current plan and past outcomes
 //
 // ArchivedMemoryItem
 //   id             "id"             .lww (names the record only when the payload won't decode)

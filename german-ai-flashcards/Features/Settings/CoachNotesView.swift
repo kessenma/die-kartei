@@ -144,6 +144,9 @@ struct CoachNotesView: View {
                     let route = GrammarRoute(row.focus)
                     GrammarConfidenceRow(focus: row.focus, skill: row.skill,
                                          practice: route.hasExercise ? { practise(route) } : nil)
+                    if row.skill.struggle >= GrammarSkill.shakyThreshold, route.hasExercise {
+                        StartFoerderplanButton(focus: row.focus)
+                    }
                 }
             } header: {
                 Text("Grammar").themedSectionHeader()

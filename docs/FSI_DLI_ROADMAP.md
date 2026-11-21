@@ -180,34 +180,38 @@ turn-taking" and "coping with background noise".
 ## D. Diagnose and tailor
 
 ### 9. Förderplan (ten days on one weak spot) · effort M
-- [ ] **Shipped**
+- [x] **Shipped** 2026-11-20, started by hand (Coach's Notes ▸ a shaky grammar row ▸ "Ten-day plan").
+      The automatic trigger waits for the weekly history. `docs/LEARNER_MEMORY.md` ▸ Förderplan.
 
 Source: `DLI-TI`: a weak skill gets a written list of "deficiencies" and "specific actions",
 followed by "a minimum of 10 days of tailored instruction". `FSI-9`: frequent formative feedback.
 
 - [ ] Trigger: a grammar tag that stays weak across sessions. Measure first, then set the rule.
       (History started 2026-11-20: `ProgressSnapshot.grammarStruggle`, shown in Messungen.)
-- [ ] The plan names the weak spot in plain words and sets ten short daily tasks from existing
+- [x] The plan names the weak spot in plain words and sets ten short daily tasks from existing
       drills, shown in Today.
-- [ ] A short re-check at the end, with the outcome written to the profile. It never fills the
-      pyramid by itself (estimated is not earned).
+- [x] A short re-check at the end, with the outcome written to the profile. It never fills the
+      pyramid by itself: it reads the coach's struggle score then and now and writes no score.
 
 ### 10. Monthly written feedback · effort S
-- [ ] **Shipped**
+- [x] **Shipped** 2026-11-20 (`Features/Home/MonthlyNoteSection.swift`)
 
 Source: `DLI-TI`: "At least once a month, this feedback will be in writing."
 
-- [ ] A monthly note beside `WeekInReviewSection`: what got better, what to do next. Built from
-      the weekly snapshots, with no tutor needed.
+- [x] A monthly note beside `WeekInReviewSection`: what got better, what to do next. Built from
+      the weekly snapshots (earned fill only), with no tutor needed.
 
 ### 11. Listening in the diagnosis · effort M, after items 1–2
-- [ ] **Shipped**
+- [x] **Shipped** 2026-11-20 as measurement: a profile by level and the Hör-Check history in Hören ▸
+      Statistik. `ODA` could not be read (its host did not resolve on 2026-11-20), so nothing cites
+      it and the app names no listening level yet.
 
 Source: `ODA`: an adaptive check that finds a floor and a ceiling, profiles strengths and
 weaknesses, and points to matching lessons. Read the source before building.
 
-- [ ] A listening level in the learner profile, fed by Hören results.
-- [ ] A short periodic re-check that Today can offer.
+- [ ] A listening level in the learner profile, fed by Hören results. (The per-level numbers are
+      there; the rule that turns them into a level waits for real data.)
+- [x] A short periodic re-check that Today can offer (Hör-Check, every four weeks).
 
 ## E. With a class or a tutor (Deutschkurs)
 

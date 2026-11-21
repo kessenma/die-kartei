@@ -98,11 +98,36 @@ struct HoerenStats {
     var endingByFocus: [GrammarFocus: Int] = [:]
     var gistRounds = 0
     var predictionsMade = 0, predictionsHit = 0
+    /// Per level: numbers right / asked, and Diktat words right / words (the listening profile).
+    var numbersByLevel: [String: (right: Int, asked: Int)] = [:]
+    var wordsByLevel: [String: (right: Int, total: Int)] = [:]
+    /// Hör-Checks, newest first: the day and each part's share right.
+    var checks: [(date: Date, numbers: Double?, words: Double?)] = []
 
     init(rounds: [HoerenRound]) {
         var byKind: [HoerenNumberKind: (asked: Int, right: Int, first: Int)] = [:]
         var pairCounts: [String: (String, String, HoerenConfusion, Int)] = [:]
+        var checkDays: [Date: (n: (Int, Int), w: (Int, Int))] = [:]
         for round in rounds {
+            let isCheck = round.sourceRaw.hasPrefix(HoerenCheck.tag + ":")
+            let day = Calendar.current.startOfDay(for: round.date)
+            switch round.kind {
+            case .zahlen:
+                var line = numbersByLevel[round.levelRaw] ?? (0, 0)
+                line.right += round.correctCount
+                line.asked += round.askedCount
+                numbersByLevel[round.levelRaw] = line
+                if isCheck { checkDays[day, default: ((0, 0), (0, 0))].n.0 += round.correctCount; checkDays[day, default: ((0, 0), (0, 0))].n.1 += round.askedCount }
+            case .diktat:
+                let results = round.items.compactMap(\.diktat)
+                let right = results.reduce(0) { $0 + $1.rightCount }, total = results.reduce(0) { $0 + $1.referenceCount }
+                var line = wordsByLevel[round.levelRaw] ?? (0, 0)
+                line.right += right
+                line.total += total
+                wordsByLevel[round.levelRaw] = line
+                if isCheck { checkDays[day, default: ((0, 0), (0, 0))].w.0 += right; checkDays[day, default: ((0, 0), (0, 0))].w.1 += total }
+            default: break
+            }
             switch round.kind {
             case .zahlen:
                 let carrier = round.modeRaw == HoerenNumberMode.carrier.rawValue
@@ -142,6 +167,11 @@ struct HoerenStats {
             case nil:
                 break
             }
+        }
+        checks = checkDays.sorted { $0.key > $1.key }.map { day, v in
+            (date: day,
+             numbers: v.n.1 > 0 ? Double(v.n.0) / Double(v.n.1) : nil,
+             words: v.w.1 > 0 ? Double(v.w.0) / Double(v.w.1) : nil)
         }
         kinds = HoerenNumberKind.allCases.compactMap { k in
             byKind[k].map { KindLine(kind: k, asked: $0.asked, right: $0.right, firstPass: $0.first) }

@@ -134,6 +134,9 @@ final class LearnerProfile {
     /// Encoded `[SelfReportNote]` — LRU-capped at `selfReportCap`. Defaulted so profiles stored
     /// before the journal existed migrate unchanged.
     var selfReportsData: Data? = nil
+    /// Encoded `FoerderplanRecord`: the ten-day plan on one weak spot, and past plans' outcomes
+    /// (roadmap item 9). Nil until the first plan.
+    var foerderplanData: Data? = nil
 
     init() {
         self.id = UUID()

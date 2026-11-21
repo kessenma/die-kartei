@@ -83,6 +83,7 @@ struct HomeHubView: View {
             }
             StreakCalendarSection()
             WeekInReviewSection(coordinator: coordinator)
+            MonthlyNoteSection()
             TodaySection(
                 coordinator: coordinator,
                 onGenerationComplete: onGenerationComplete,

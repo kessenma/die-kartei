@@ -33,6 +33,10 @@ enum TodayIntent: Equatable {
     /// The loop around a session (roadmap items 12, 13): prepare the day before, review the same day.
     case beforeClass(courseID: UUID)
     case afterClass(courseID: UUID)
+    /// Today's task in a running Förderplan (roadmap item 9).
+    case foerderplan(day: Int)
+    /// The four-weekly listening check (roadmap item 11).
+    case hoerCheck
 }
 
 /// One ordered item in the Today plan.
@@ -59,6 +63,8 @@ struct TodayRecommendation: Identifiable {
         case .worksheetRedo(let id): return "redo-\(id.uuidString)"
         case .beforeClass(let id): return "before-\(id.uuidString)"
         case .afterClass(let id): return "after-\(id.uuidString)"
+        case .foerderplan:      return "foerderplan"
+        case .hoerCheck:        return "hoer-check"
         }
     }
 }
@@ -99,6 +105,17 @@ struct TodaySnapshot {
     var classFocus: ClassFocusInfo? = nil
     /// A sent worksheet her review plan brings back today.
     var worksheetRedo: WorksheetRedoInfo? = nil
+    /// A running Förderplan whose task for today is not done: its focus and day.
+    var foerderplan: FoerderplanInfo? = nil
+
+    struct FoerderplanInfo: Equatable {
+        var focus: GrammarFocus
+        var day: Int
+    }
+
+    /// The Hör-Check is due (four weeks since the last, for someone who uses Hören).
+    var hoerCheckDue: Bool = false
+
     /// A class today to review, or tomorrow to prepare for.
     var classSession: ClassSessionInfo? = nil
 
@@ -169,6 +186,17 @@ enum TodayPlanner {
             recs.append(classSession(session))
         }
 
+        // 0c. A running Förderplan: one short task a day, chosen by the learner.
+        if let plan = s.foerderplan {
+            recs.append(TodayRecommendation(
+                intent: .foerderplan(day: plan.day),
+                title: "Förderplan · \(plan.focus.germanLabel), Tag \(plan.day) von \(Foerderplan.length)",
+                subtitle: Foerderplan.task(day: plan.day).title,
+                systemImage: "calendar.badge.checkmark",
+                accent: .orange
+            ))
+        }
+
         // 0b. Her review plan: a sent worksheet again, on the day it's due.
         if let redo = s.worksheetRedo {
             recs.append(worksheetRedo(redo))
@@ -208,6 +236,13 @@ enum TodayPlanner {
         //     tasks should be easy (FSI lesson 7). Only with enough well-known cards to fill one.
         if s.knownCardCount >= TodaySnapshot.easyRoundMinimum, s.hardSessionToday || s.weaknesses.count >= 2 {
             recs.append(easyRound(count: min(10, s.knownCardCount), afterHard: s.hardSessionToday))
+        }
+
+        // 2c. The four-weekly listening check.
+        if s.hoerCheckDue {
+            recs.append(TodayRecommendation(intent: .hoerCheck, title: "Hör-Check · 5 minutes",
+                                            subtitle: "Numbers and three sentences, heard once",
+                                            systemImage: HoerenTile.systemImage, accent: HoerenTile.tint))
         }
 
         // 2b. A few lines in the journal: every day once the habit has lapsed three days, else
