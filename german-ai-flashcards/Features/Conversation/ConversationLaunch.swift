@@ -48,6 +48,11 @@ extension ChatConversation {
         c.jobSnapshotFile = jobSnapshotFile
         c.jobPostingID = jobPostingID
         c.stammtisch = stammtischData.flatMap { try? JSONDecoder().decode(StammtischOptions.self, from: $0) }
+        // The résumé stays on the device: re-read it here, capped to this tutor's slice.
+        if usesResume, let context = modelContext, let resume = ResumeStore.current(in: context), !resume.kurzprofil.isEmpty {
+            c.resumeProfile = String(resume.kurzprofil.prefix(ResumePrompts.kurzprofilSlice(saver: MemorySaver.isActive(for: model))))
+            c.resumeFacts = resume.facts.map(\.text)
+        }
         return c
     }
 

@@ -23,6 +23,8 @@ enum AppSchema {
         WordArtwork.self, WordDrawingStat.self, QuickDrawSet.self,
         JournalEntry.self,
         HoerenRound.self,
+        // On this device only: never in SyncRegistry (docs/JOB_PREP.md ▸ Lebenslauf).
+        Resume.self,
         // Local-only iCloud Sync bookkeeping (never synced itself).
         SyncRecordState.self, SyncMeta.self,
     ]

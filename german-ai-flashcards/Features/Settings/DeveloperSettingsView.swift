@@ -95,6 +95,13 @@ struct DeveloperSettingsView: View {
                 } label: {
                     Label("Messungen · Measurements", systemImage: "ruler")
                 }
+                if let modelManager, let mlxService {
+                    NavigationLink {
+                        ResumeProbeView(modelManager: modelManager, mlxService: mlxService)
+                    } label: {
+                        Label("Lebenslauf-Probe", systemImage: "person.text.rectangle")
+                    }
+                }
             } footer: {
                 Text("Answer times and how weak spots move week to week: the numbers to read before \"right and fast\" or \"stays weak\" becomes a rule.")
                     .font(.caption2)

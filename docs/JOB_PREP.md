@@ -130,11 +130,40 @@ Comparison notes (fill in after device testing):
   the chat leaves the posting readable; Practice an interview prefills; the deck appears under
   Job decks and Library ▸ Decks with the briefcase badge.
 
+## Lebenslauf (built 2026-11-20, roadmap item 18)
+
+Job prep ▸ Lebenslauf (`Features/JobPrep/Resume/ResumeView.swift`). The résumé is imported by
+paste, PDF (`PDFTextExtractor`; a scanned PDF's first four pages go through `PhotoOCRService`) or
+photo, and kept whole in `Resume.fullText`, uncapped.
+
+- **Kurzprofil**: the tutor writes a German digest of at most ~500 characters once
+  (`ResumePrompts.kurzprofilSystem`: role, years, skills, two achievements, education, languages,
+  nothing invented). The learner reads and edits it; that exact text is what the recruiter gets.
+- **Facts**: one role, project, degree or skill per line. A heuristic split (dated or bulleted
+  lines) fills them at import; "Split the facts with the tutor" replaces them; the learner edits.
+- **One budget, two parts**: in the interview setup the Kurzprofil takes a fixed slice
+  (`ResumePrompts.kurzprofilSlice`: 500, 300 under Memory Saver) and the posting gets
+  `JobContextBudget.characters(for:)` minus that. The setup's Lebenslauf section shows both.
+- **A fact per turn**: `interviewProgressNote` adds the one fact that shares the most content words
+  with the plan point coming up (`ResumePrompts.bestFact`), so the recruiter can ask about it by
+  name. The persona says the profile is all it knows and to invent no employers, dates or numbers.
+- **Without a posting**: with the résumé on, a posting is optional. The recruiter runs a general
+  interview over `ResumePrompts.generalPlan` (Werdegang, Stärken, a gap or change in the CV, goals).
+- **Career words**: the tutor picks 8–12 words from the résumé (`deutsch = english`), saved to the
+  "Lebenslauf" deck through `DeckCardAdder` (the `CardKind` path).
+- **Privacy (decided for now: on this device only)**: `Resume` is in `AppSchema` but not in
+  `SyncRegistry`, so it never syncs; the chat stores only `usesResume` (synced) and re-reads the
+  local résumé on resume. Never part of cloud pictures or the coach hand-off. Syncing it is open
+  for Kyle to decide.
+- **Measure first**: Settings ▸ Developer ▸ Lebenslauf-Probe runs the chosen tutor over the
+  learner's own résumé for each general plan point and marks whether the question named the fact
+  and which years or names in it the résumé doesn't have (`ResumeProbe`). Runs on a device or the
+  Mac; read the questions too. No numbers yet.
+
 ## Later
 
-- **Lebenslauf.** The learner's résumé in interview practice, as an edited ~500-character
-  Kurzprofil plus one matching fact per turn, so it fits beside the posting. Planned as item 18
-  of `FSI_DLI_ROADMAP.md`.
+- Lebenslauf: posting against résumé (which requirements are covered, which gaps need a prepared
+  answer); a decision on syncing the résumé.
 - Group Past interviews by posting once most chats carry `jobPostingIDRaw`.
 - Streak: `StudyDay.jobSeconds` + a `StudyTimeBucket` / `StudyActivity` case, a teal slice on the
   calendar, backfill from `readingSeconds`.

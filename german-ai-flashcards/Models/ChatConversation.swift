@@ -96,6 +96,8 @@ final class ChatConversation {
     var jobPostingIDRaw: String? = nil
     /// Encoded `StammtischOptions` when the chat is a Stammtisch (roadmap item 8). Nil otherwise.
     var stammtischData: Data? = nil
+    /// The interview used the learner's résumé. Only the flag: the résumé itself never leaves the device.
+    var usesResume: Bool = false
 
     /// Encoded `ConversationSummary`, set when the session is ended & analyzed.
     var summaryData: Data?
@@ -138,6 +140,7 @@ final class ChatConversation {
         self.jobSnapshotFile = config.jobSnapshotFile
         self.jobPostingIDRaw = config.jobPostingID?.uuidString
         self.stammtischData = config.stammtisch.flatMap { try? JSONEncoder().encode($0) }
+        self.usesResume = config.resumeProfile != nil
         self.summaryData = nil
         self.messages = []
     }

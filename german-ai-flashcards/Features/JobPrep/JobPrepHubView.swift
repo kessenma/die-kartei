@@ -121,6 +121,16 @@ struct JobPrepHubView: View {
                 )
             }
             .buttonStyle(.plain)
+            NavigationLink {
+                ResumeView(modelManager: modelManager, mlxService: mlxService)
+            } label: {
+                JobPrepHeroRow(
+                    title: "Lebenslauf · Your résumé",
+                    subtitle: "So the recruiter asks about your own career. Stays on this device.",
+                    systemImage: "person.text.rectangle",
+                    accent: JobPrepTile.tint
+                )
+            }
         } header: {
             Text("Practice").themedSectionHeader()
         } footer: {

@@ -23,6 +23,26 @@ enum ConversationPrompts {
 
             Ask thoughtful questions about the paper's content, probe the learner's understanding, gently correct mistaken claims about the paper, and keep the whole discussion in German.
             """)
+        } else if config.mode == .interview, (config.jobContext ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  let profile = config.resumeProfile {
+            // Lebenslauf without a posting: a general "tell me about yourself" interview (item 18).
+            let persona = config.interviewRound?.persona ?? "an experienced recruiter"
+            parts.append("""
+            You are \(persona) conducting a general job interview in German. There is no specific posting: \
+            the interview is about the candidate's own career. This is the candidate's profile, written by them; \
+            it is all you know about them, so never invent employers, dates, numbers or projects:
+
+            \"\"\"
+            \(profile)
+            \"\"\"
+
+            How to run the interview:
+            - Your first message: greet the candidate and ask them to introduce themselves.
+            - Work through the plan in order, one point per turn, and ask about the profile by name. React to each answer in one short sentence.
+            - Stay in character as the interviewer for the whole session.
+            """)
+            let numbered = ResumePrompts.generalPlan.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
+            parts.append("Interview plan:\n\(numbered)")
         } else if config.mode == .interview {
             let posting = (config.jobContext ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             let position = config.jobTitle.map { " for the position \"\($0)\"" } ?? ""
@@ -55,6 +75,10 @@ enum ConversationPrompts {
             if !plan.isEmpty {
                 let numbered = plan.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
                 parts.append("Interview plan, taken from the posting:\n\(numbered)")
+            }
+            // Lebenslauf (item 18): the candidate's own profile, capped to its slice of the budget.
+            if let profile = config.resumeProfile {
+                parts.append("The candidate's profile, written by them. Ask about it where it meets the posting; it is all you know about their career, so never invent employers, dates, numbers or projects:\n\"\"\"\n\(profile)\n\"\"\"")
             }
             // Round and channel refine the script above; older chats have neither.
             let steering = [config.interviewRound?.promptInstruction, config.interviewFormat?.promptInstruction]
@@ -219,8 +243,13 @@ enum ConversationPrompts {
     /// including the one just given; the first answer is the self-introduction.
     static func interviewProgressNote(for config: ConversationConfig, candidateTurns: Int) -> String? {
         guard config.mode == .interview else { return nil }
-        let plan = interviewPlan(from: config.jobContext ?? "")
+        let posting = (config.jobContext ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let plan = posting.isEmpty && config.resumeProfile != nil ? ResumePrompts.generalPlan : interviewPlan(from: posting)
         let next = candidateTurns - 1
+        // One fact from the résumé per turn: the one that best matches the point coming up.
+        if next >= 0, next < plan.count, let fact = ResumePrompts.bestFact(for: plan[next], facts: config.resumeFacts) {
+            return "Progress: the candidate has answered \(candidateTurns) question(s). Plan point \(next + 1) is next: „\(plan[next])“. From their résumé: „\(fact)“. Ask about this point and name that fact, unless their last answer needs one short follow-up first."
+        }
         if plan.isEmpty {
             return "Progress: the candidate has answered \(candidateTurns) question(s). Ask about a concrete requirement or responsibility from the posting they have not covered yet, naming it as the posting phrases it."
         }

@@ -573,6 +573,12 @@ struct ConversationConfig {
     /// Stammtisch mode (roadmap item 8): app-driven topic changes, a reply timer, background
     /// noise. Nil for an ordinary chat. Stored on the chat (`stammtischData`) so it survives resume.
     var stammtisch: StammtischOptions? = nil
+    /// Lebenslauf (roadmap item 18): the Kurzprofil the recruiter reads, already capped to its slice
+    /// of the budget, and the single facts one of which goes with each question. Nil / empty when the
+    /// interview doesn't use the résumé. Never stored on the chat (it stays on the device); a resumed
+    /// chat re-reads it from `Resume` when `ChatConversation.usesResume` is set.
+    var resumeProfile: String? = nil
+    var resumeFacts: [String] = []
     var level: CEFRLevel = .a2
     var formality: Formality = .du
     var correctionsEnabled: Bool = true

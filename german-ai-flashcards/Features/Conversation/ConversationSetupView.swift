@@ -51,6 +51,9 @@ struct ConversationSetupView: View {
     @State private var stammtischSeconds = 20
     @State private var stammtischNoise = false
     @State private var listenerPhrasesSaved = false
+    /// Lebenslauf (roadmap item 18): the Kurzprofil takes a fixed slice of the reading window.
+    @Query(sort: \Resume.updatedAt, order: .reverse) private var resumes: [Resume]
+    @State private var useResume = true
     @State private var didLoadDefaults = false
 
     // Interview mode: the job posting, captured in the in-app browser or pasted in.
@@ -87,7 +90,8 @@ struct ConversationSetupView: View {
 
     private var canStart: Bool {
         if mode == .decks { return !selectedDeckIDs.isEmpty }
-        if mode == .interview { return !jobDescriptionText.isEmpty }
+        // With the résumé, a posting is optional: a general "tell me about yourself" interview.
+        if mode == .interview { return !jobDescriptionText.isEmpty || (useResume && resume != nil) }
         return true
     }
 
@@ -99,7 +103,13 @@ struct ConversationSetupView: View {
 
     /// Characters of posting the chosen tutor reads on this device; what the meters show and
     /// what `start()` injects.
-    private var jobContextCap: Int { JobContextBudget.characters(for: model) }
+    /// The posting's share: the tutor's window minus the Kurzprofil's fixed slice when it's used.
+    private var jobContextCap: Int { JobContextBudget.characters(for: model) - resumeSlice }
+
+    private var resume: Resume? { resumes.first.flatMap { $0.kurzprofil.isEmpty ? nil : $0 } }
+    private var resumeSlice: Int {
+        mode == .interview && useResume && resume != nil ? ResumePrompts.kurzprofilSlice(saver: MemorySaver.isActive(for: model)) : 0
+    }
 
     private var interviewRound: Binding<InterviewRound> {
         Binding(
@@ -133,6 +143,7 @@ struct ConversationSetupView: View {
 
                 if mode == .interview {
                     interviewSection.themedListRow()
+                    resumeSection.themedListRow()
                     interviewStyleSection.themedListRow()
                 }
 
@@ -491,6 +502,30 @@ struct ConversationSetupView: View {
         }
     }
 
+    private var resumeSection: some View {
+        Section {
+            if let resume {
+                Toggle("Use my résumé", isOn: $useResume)
+                if useResume {
+                    Text("Kurzprofil \(JobContextBudget.label(used: min(resume.kurzprofil.count, resumeSlice), cap: resumeSlice)) · posting gets \(jobContextCap.formatted())")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(resume.kurzprofil.count > resumeSlice ? Color.orange : Color.secondary)
+                }
+            } else {
+                Text("No résumé yet. Add one in Job prep ▸ Lebenslauf and the recruiter asks about your own career.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Lebenslauf").themedSectionHeader()
+        } footer: {
+            if resume != nil, useResume {
+                Text(jobDescriptionText.isEmpty
+                     ? "No posting: a general interview about your career, your strengths, a gap in your CV and your goals."
+                     : "The recruiter reads your Kurzprofil and gets one matching fact per question. Your résumé stays on this device.")
+            }
+        }
+    }
+
     private var stammtischSection: some View {
         Section {
             Toggle(isOn: $stammtisch.animation()) {
@@ -655,6 +690,10 @@ struct ConversationSetupView: View {
             config.interviewFormat = interviewFormat.wrappedValue
             config.jobSnapshotFile = jobSource == .link ? storedSnapshotFile() : nil
             config.jobPostingID = jobPostingID
+            if useResume, let resume {
+                config.resumeProfile = String(resume.kurzprofil.prefix(resumeSlice))
+                config.resumeFacts = resume.facts.map(\.text)
+            }
         }
         config.focusAreas = GrammarFocus.allCases.filter { focus.contains($0) }
         config.level = level

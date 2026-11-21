@@ -32,6 +32,11 @@
           "title": "Stammtisch · Keep up with a real chat",
           "detail": "A free conversation where the topic jumps every few turns, an optional timer has the tutor move on, background noise is optional, and Ach so! or Genau. is one tap.",
           "symbol": "person.3.fill"
+        },
+        {
+          "title": "Lebenslauf · Your résumé in interviews",
+          "detail": "Import your CV, edit a short German profile, and the recruiter asks about your own career, with or without a job posting. It stays on this device.",
+          "symbol": "person.text.rectangle"
         }
       ]
     },

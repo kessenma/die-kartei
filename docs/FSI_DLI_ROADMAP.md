@@ -287,7 +287,8 @@ Source: `DLI-STRAT` 3f: ask a teacher "to help you listen for and correct mistak
 ## F. Interview practice (Job prep)
 
 ### 18. Lebenslauf (your résumé in the interview) · effort M
-- [ ] **Shipped**
+- [x] **Shipped** 2026-11-20 (`docs/JOB_PREP.md` ▸ Lebenslauf). The per-tutor probe exists; its
+      numbers are not in yet.
 
 Source: `DLI-FLO` lists "Bio data interview" as a speaking objective: talking about your own
 background is a tested skill. `FSI-6`: adults learn faster when they have "things to talk about".
@@ -297,25 +298,25 @@ largest tutor, 4,500 on the mid one, 3,000 on the small ones and Apple Intellige
 under Memory Saver (`JobContextBudget`). A one-page résumé is about 2,500–4,000 characters by
 itself (an estimate, not measured). So the résumé never goes into the prompt whole.
 
-- [ ] Import through the handout path: PDF, scan, photo, paste. Keep the full text on the
+- [x] Import through the handout path: PDF, scan, photo, paste. Keep the full text on the
       device, uncapped, as `JobPosting.text` is.
-- [ ] **Kurzprofil:** a digest of about 500 characters in German, written once at import:
+- [x] **Kurzprofil:** a digest of about 500 characters in German, written once at import:
       current role, years, main skills, two achievements, education, languages. The learner
       reads and edits it. What they see is what the tutor gets.
-- [ ] **Facts:** the résumé split into short single facts (one role, one project, one degree).
-- [ ] One budget, two parts: `JobContextBudget` gives the Kurzprofil a fixed slice (about 500
+- [x] **Facts:** the résumé split into short single facts (one role, one project, one degree).
+- [x] One budget, two parts: `JobContextBudget` gives the Kurzprofil a fixed slice (about 500
       characters, 300 under Memory Saver) and the posting the rest. The setup meter shows both.
-- [ ] A fact per turn, not all up front: `ConversationPrompts.interviewProgressNote` already
+- [x] A fact per turn, not all up front: `ConversationPrompts.interviewProgressNote` already
       adds one line each turn naming the next plan point. The app adds the one fact that best
       matches that point, so the recruiter can ask about it by name.
-- [ ] Without a posting: a short "tell me about yourself" interview that needs only the
+- [x] Without a posting: a short "tell me about yourself" interview that needs only the
       Kurzprofil (Werdegang, Stärken, a gap in the CV). It fits the small tutors.
-- [ ] The words for your own career go to a deck through `CardKind` (`docs/PHRASES.md`).
+- [x] The words for your own career go to a deck through `CardKind` (`docs/PHRASES.md`).
 - [ ] Measure first: on each tutor, check that the recruiter uses the fact and does not invent
-      career details.
-- [ ] Privacy: on the device only. Decide whether it syncs (a synced model needs its codec,
+      career details. (The probe is built: Settings ▸ Developer ▸ Lebenslauf-Probe. Run it per tutor.)
+- [x] Privacy: on the device only (not synced for now; the chat keeps only a flag). Decide whether it syncs (a synced model needs its codec,
       `docs/ICLOUD_SYNC.md`). Never part of cloud pictures or the coach hand-off unless opted in.
-- [ ] New `ConversationConfig` fields are copied at the four sites listed under item 8.
+- [x] New `ConversationConfig` fields: set in the setup, re-read from the device's résumé on resume.
 - [ ] Later: posting against résumé. Which requirements you cover, and which gaps need a
       prepared answer.
 
