@@ -78,6 +78,9 @@ German for identity words and headings, plain English for explanation.
   Stories ▸ Hören as predict → listen with the text hidden → summary → compare with key points
   (self-ticked; the tutor judge is DEBUG-only until `training/GIST_PROBE.md` is read), `HoerenRound`
   + sync, the day counter, debug args.
+- `docs/STAMMTISCH.md` — Stammtisch chats: app-injected topic changes every third turn, the reply
+  timer and the silent turn (`tutorMovesOn`, a hidden `(…)` line), generated background noise
+  under the tutor's voice only, one-tap listener phrases, `stammtischData` on the chat.
 - `docs/FSI_DLI_ROADMAP.md` — the checklist of features borrowed from the US government language
   schools (Hören room: Zahlen-Diktat, Diktat, gist; answer time; Stammtisch; Förderplan; the
   loop around a class or tutor session), plus the queue of sources still to read. Every item
