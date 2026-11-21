@@ -94,6 +94,8 @@ final class ChatConversation {
     /// The `JobPosting` this interview was started from (Job prep ▸ a studied posting), so the
     /// two can be grouped later. Nil for chats started straight from the setup screen.
     var jobPostingIDRaw: String? = nil
+    /// Encoded `StammtischOptions` when the chat is a Stammtisch (roadmap item 8). Nil otherwise.
+    var stammtischData: Data? = nil
 
     /// Encoded `ConversationSummary`, set when the session is ended & analyzed.
     var summaryData: Data?
@@ -135,6 +137,7 @@ final class ChatConversation {
         self.interviewFormatRaw = config.interviewFormat?.rawValue
         self.jobSnapshotFile = config.jobSnapshotFile
         self.jobPostingIDRaw = config.jobPostingID?.uuidString
+        self.stammtischData = config.stammtisch.flatMap { try? JSONEncoder().encode($0) }
         self.summaryData = nil
         self.messages = []
     }

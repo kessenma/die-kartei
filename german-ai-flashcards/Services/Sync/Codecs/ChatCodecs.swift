@@ -60,6 +60,7 @@ enum ChatConversationCodec: SyncCodec {
         f.set("interviewFormatRaw", c.interviewFormatRaw)
         f.set("jobSnapshotFile", c.jobSnapshotFile)
         f.set("jobPostingIDRaw", c.jobPostingIDRaw)
+        f.set("stammtisch", jsonData: c.stammtischData)
         f.set("summary", jsonData: c.summaryData)
         f.set("savedVocab", jsonData: c.savedVocabData)
         return f.payload
@@ -107,6 +108,7 @@ enum ChatConversationCodec: SyncCodec {
         c.interviewFormatRaw = flat.string("interviewFormatRaw")
         c.jobSnapshotFile = flat.string("jobSnapshotFile")
         c.jobPostingIDRaw = flat.string("jobPostingIDRaw")
+        if let v = flat.jsonData("stammtisch") { c.stammtischData = v }
         c.summaryData = flat.jsonData("summary")
         c.savedVocabData = flat.jsonData("savedVocab")
     }
@@ -338,6 +340,7 @@ enum JobPostingCodec: SyncCodec {
 //   interviewFormatRaw  -> "interviewFormatRaw" .lww
 //   jobSnapshotFile     -> "jobSnapshotFile" .lww (the file syncs separately)
 //   jobPostingIDRaw     -> "jobPostingIDRaw" .lww
+//   stammtischData      -> "stammtisch"      .lww (set once at creation)
 //   summaryData         -> "summary" jsonData .lww (ConversationSummary, whole)
 //   savedVocabData      -> "savedVocab" jsonData .set(idField: "german", lowercasedID: true)
 //   messages            -> not a field: each ChatMessage carries "conversation"; cascadeChildren

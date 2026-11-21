@@ -568,14 +568,24 @@ final class ConversationEngine: WordInspecting {
         phraseSimilarity(original, corrected) >= 0.8
     }
 
-    private func runReply() async {
+    private func runReply(silentLearner: Bool = false) async {
         streamingReply = ""
-        let history = recentHistory()
+        var history = recentHistory()
         // Interviews get a one-line progress note per turn (which plan point comes next), so a
         // small model keeps moving through the posting instead of circling on pleasantries.
         let candidateTurns = conversation.messages.filter(\.isUser).count
         let progress = ConversationPrompts.interviewProgressNote(for: config, candidateTurns: candidateTurns)
-        let system = progress.map { systemPrompt + "\n\n" + $0 } ?? systemPrompt
+        // Stammtisch: the app changes the topic every few turns; a silent turn gets its own note.
+        var notes = [progress].compactMap { $0 }
+        if silentLearner {
+            notes.append(ConversationPrompts.silentLearnerNote)
+            // A hidden user line stands for the silence, so the turns still alternate. Never stored.
+            history.append((role: .user, content: ConversationPrompts.silentLearnerLine))
+        } else if let topic = ConversationPrompts.stammtischNote(for: config, learnerTurns: candidateTurns,
+                                                                 seed: StammtischTopics.seed(conversation.id)) {
+            notes.append(topic)
+        }
+        let system = notes.isEmpty ? systemPrompt : systemPrompt + "\n\n" + notes.joined(separator: "\n\n")
         do {
             let reply = try await mlxService.streamChatReply(
                 history: history,
@@ -629,6 +639,19 @@ final class ConversationEngine: WordInspecting {
             guard await ensureModelLoaded() else { return }
             phase = .thinking
             await runReply()
+            phase = .idle
+        }
+    }
+
+    /// Stammtisch's reply timer ran out with no answer: the tutor moves on, as a friend at the table
+    /// would. Only when the AI spoke last and nothing is running.
+    func tutorMovesOn() {
+        guard config.stammtisch != nil, phase == .idle,
+              let last = conversation.sortedMessages.last, !last.isUser else { return }
+        Task {
+            guard await ensureModelLoaded() else { return }
+            phase = .thinking
+            await runReply(silentLearner: true)
             phase = .idle
         }
     }
@@ -1134,6 +1157,9 @@ final class ConversationEngine: WordInspecting {
         speakingMessageID = message.id
         spokenText = message.text
         spokenRange = nil
+        // Stammtisch's background noise plays only under the tutor's voice, never into the mic.
+        let noise = config.stammtisch?.backgroundNoise == true
+        if noise { StammtischNoise.shared.start() }
         SpeechService.shared.speak(
             message.text,
             slow: slow,
@@ -1142,6 +1168,7 @@ final class ConversationEngine: WordInspecting {
                 self?.spokenRange = range
             },
             onFinish: { [weak self] in
+                if noise { StammtischNoise.shared.stop() }
                 if self?.speakingMessageID == message.id {
                     self?.speakingMessageID = nil
                     self?.spokenRange = nil
@@ -1153,6 +1180,7 @@ final class ConversationEngine: WordInspecting {
 
     func stopPlayback() {
         SpeechService.shared.stop()
+        StammtischNoise.shared.stop()
         speakingMessageID = nil
         spokenRange = nil
         spokenText = nil

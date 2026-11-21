@@ -47,6 +47,7 @@ extension ChatConversation {
         c.interviewFormat = interviewFormat
         c.jobSnapshotFile = jobSnapshotFile
         c.jobPostingID = jobPostingID
+        c.stammtisch = stammtischData.flatMap { try? JSONDecoder().decode(StammtischOptions.self, from: $0) }
         return c
     }
 

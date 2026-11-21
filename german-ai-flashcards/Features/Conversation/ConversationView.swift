@@ -599,7 +599,11 @@ struct ConversationView: View {
 
     /// The controls that flank the input whichever way the learner is taking their turn: load the
     /// model, switch input, review saved words, end the session.
+    @ViewBuilder
     private func sessionControls(_ engine: ConversationEngine) -> some View {
+        if let options = engine.config.stammtisch {
+            StammtischBar(engine: engine, options: options, isTyping: !draft.isEmpty)
+        }
         HStack(spacing: 12) {
             // An obvious one-tap loader, shown beside the mic only until the model is in memory.
             if !engine.isModelReady && !engine.isLoadingModel {

@@ -27,6 +27,11 @@
           "title": "Förderplan & Monatsbericht · Plans and a monthly note",
           "detail": "Give a shaky grammar point ten days of short daily tasks, read a monthly note on what improved, and take a quick listening check every four weeks.",
           "symbol": "calendar.badge.checkmark"
+        },
+        {
+          "title": "Stammtisch · Keep up with a real chat",
+          "detail": "A free conversation where the topic jumps every few turns, an optional timer has the tutor move on, background noise is optional, and Ach so! or Genau. is one tap.",
+          "symbol": "person.3.fill"
         }
       ]
     },

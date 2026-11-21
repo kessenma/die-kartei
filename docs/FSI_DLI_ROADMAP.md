@@ -161,20 +161,20 @@ Source: `FSI-7`: adults need "considerable amounts of 'easy' material" to build 
 ## C. Conversation under pressure
 
 ### 8. Stammtisch mode · effort M
-- [ ] **Shipped**
+- [x] **Shipped** 2026-11-20 (`docs/STAMMTISCH.md`)
 
 Source: `FSI-10`: conversation is the hardest skill. Learners must practise "following rapid and
 unpredictable turns in topic", "producing unplanned speech", "coping with the speed of the
 turn-taking" and "coping with background noise".
 
-- [ ] Topic changes driven by the app: every few turns the engine injects one. Do not rely on
+- [x] Topic changes driven by the app: every few turns the engine injects one. Do not rely on
       the tutor to do it. All prompts still go through `ChatTurnNormalizer`.
-- [ ] Optional reply timer. When it runs out, the tutor moves on.
-- [ ] Optional café noise under the voice, off by default.
-- [ ] Short listener phrases (Ach so, Genau, Echt?) as phrase cards: `FSI-10` "displaying
-      understanding and involvement".
-- [ ] A new `ConversationConfig` field is copied at four sites: `ConversationSetupView.start()`,
-      `ConversationListView.makeConfig`, `PaperDetailView`, `WeekInReviewSection`.
+- [x] Optional reply timer. When it runs out, the tutor moves on.
+- [x] Optional café noise under the voice, off by default (generated brown noise, tutor turns only).
+- [x] Short listener phrases (Ach so, Genau, Echt?) as phrase cards: `FSI-10` "displaying
+      understanding and involvement". Also one-tap replies in the chat.
+- [x] A new `ConversationConfig` field: set in `ConversationSetupView.start()`, stored on the chat
+      and read back by `ChatConversation.makeConfig`; paper and recap chats never set it.
 - [ ] Later: two tutor voices in one chat. Stories already have dialogue voices.
 
 ## D. Diagnose and tailor

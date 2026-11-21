@@ -570,6 +570,9 @@ struct ConversationConfig {
     /// the engine at session start when `classFeedsCoach` is on. Never stored: a resumed chat reads
     /// the class as it is now.
     var classContext: String? = nil
+    /// Stammtisch mode (roadmap item 8): app-driven topic changes, a reply timer, background
+    /// noise. Nil for an ordinary chat. Stored on the chat (`stammtischData`) so it survives resume.
+    var stammtisch: StammtischOptions? = nil
     var level: CEFRLevel = .a2
     var formality: Formality = .du
     var correctionsEnabled: Bool = true

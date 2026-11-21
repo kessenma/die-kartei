@@ -111,6 +111,11 @@ enum ConversationPrompts {
             parts.append("These specific words are due for the learner's spaced review right now: \(list). Make a natural, unforced effort to steer toward topics where the learner would want to say each one, and gently invite them to use it — but only where it fits the conversation. Never list these words, translate them, or mention that they're being reviewed.")
         }
 
+        // Stammtisch: the pace of a table of friends, not a lesson.
+        if config.stammtisch != nil {
+            parts.append("This is a Stammtisch: a relaxed table of friends in a German pub. Keep every turn short (one or two sentences), use everyday spoken German, react like a friend would, and ask one quick question at a time. When a new topic is given to you, switch to it at once with a natural bridge (\"Ach, übrigens …\").")
+        }
+
         // The learner's class (docs/CLASS_NOTES.md ▸ Tutors read the class). Steering only.
         if let classContext = config.classContext, !classContext.isEmpty {
             parts.append(ClassTutorContext.promptSection(classContext))
@@ -123,6 +128,19 @@ enum ConversationPrompts {
 
         return parts.joined(separator: "\n\n")
     }
+
+    /// The per-turn note that changes the topic, when one is due (the app drives it, never the tutor).
+    static func stammtischNote(for config: ConversationConfig, learnerTurns: Int, seed: Int) -> String? {
+        guard let options = config.stammtisch,
+              let topic = StammtischTopics.topic(learnerTurns: learnerTurns, every: options.topicEvery, seed: seed) else { return nil }
+        return "Wechsle jetzt das Thema, ohne das alte zu Ende zu führen: \(topic). Ein kurzer Übergang, dann eine Frage dazu."
+    }
+
+    /// The note for a turn the learner let pass (the reply timer ran out).
+    static let silentLearnerNote = "Der Lernende hat nicht geantwortet. Reagiere locker darauf (zum Beispiel „Na, macht nichts“), sag einen kurzen Satz und stell eine neue, einfachere Frage."
+
+    /// The hidden user line that stands for that silence in the history the model sees.
+    static let silentLearnerLine = "(…)"
 
     /// The hidden seed turn that prompts the AI to open the conversation.
     static let openerSeed = "Beginne jetzt das Gespräch auf Deutsch mit einer kurzen, freundlichen Begrüßung und einer Frage an mich."

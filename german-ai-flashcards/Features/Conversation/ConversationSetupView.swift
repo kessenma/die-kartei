@@ -45,6 +45,12 @@ struct ConversationSetupView: View {
     @State private var model: MLXModel = .hero
     @State private var inputMode: ChatInputMode = .speak
     @State private var autoHints = false
+    /// Stammtisch mode (roadmap item 8), for a free conversation.
+    @State private var stammtisch = false
+    @State private var stammtischTimer = false
+    @State private var stammtischSeconds = 20
+    @State private var stammtischNoise = false
+    @State private var listenerPhrasesSaved = false
     @State private var didLoadDefaults = false
 
     // Interview mode: the job posting, captured in the in-app browser or pasted in.
@@ -128,6 +134,10 @@ struct ConversationSetupView: View {
                 if mode == .interview {
                     interviewSection.themedListRow()
                     interviewStyleSection.themedListRow()
+                }
+
+                if mode == .freestyle {
+                    stammtischSection.themedListRow()
                 }
 
                 GrammarFocusPickerSection(selected: $focus)
@@ -481,6 +491,37 @@ struct ConversationSetupView: View {
         }
     }
 
+    private var stammtischSection: some View {
+        Section {
+            Toggle(isOn: $stammtisch.animation()) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Stammtisch")
+                    Text("Quick turns, and the topic changes every few turns").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            if stammtisch {
+                Toggle("Reply timer", isOn: $stammtischTimer.animation())
+                if stammtischTimer {
+                    Stepper("\(stammtischSeconds) seconds to start answering", value: $stammtischSeconds, in: 10...60, step: 5)
+                }
+                Toggle("Background noise under the voice", isOn: $stammtischNoise)
+                Button {
+                    let target = PhraseDeckStore.target(context: modelContext)
+                    for phrase in StammtischTopics.listenerPhrases { target.save(phrase.german, phrase.english) }
+                    listenerPhrasesSaved = true
+                } label: {
+                    Label(listenerPhrasesSaved ? "Listener phrases are in your Phrasen deck" : "Add listener phrases to my Phrasen deck (Ach so, Genau, Echt?)",
+                          systemImage: listenerPhrasesSaved ? "checkmark" : "plus.rectangle.on.rectangle")
+                }
+                .disabled(listenerPhrasesSaved)
+            }
+        } header: {
+            Text("Stammtisch").themedSectionHeader()
+        } footer: {
+            Text(stammtisch ? "Like a table of friends: short turns, sudden new topics, and with the timer, the tutor moves on if you say nothing. One tap sends a quick reply like „Ach so!“." : "Practise keeping up with a real conversation, not a lesson.")
+        }
+    }
+
     private var levelSection: some View {
         Section {
             Picker("Level", selection: $level) {
@@ -597,6 +638,10 @@ struct ConversationSetupView: View {
         config.deckWords = deckWords
         config.scenario = (mode == .scenario) ? scenario : nil
         config.customScenario = customScenario
+        if mode == .freestyle, stammtisch {
+            config.stammtisch = StammtischOptions(topicEvery: 3, replySeconds: stammtischTimer ? stammtischSeconds : nil,
+                                                  backgroundNoise: stammtischNoise)
+        }
         if mode == .interview {
             let title = jobTitleText.trimmingCharacters(in: .whitespacesAndNewlines)
             config.jobTitle = title.isEmpty ? nil : String(title.prefix(ConversationConfig.jobTitleCap))
