@@ -455,6 +455,14 @@ struct WorksheetCheckView: View {
                 Text(row.stale ? "Changed since the check" : source(row.check.by))
                     .font(.caption2)
                     .foregroundStyle(row.stale ? .orange : .secondary)
+                if row.check.outcome != .right {
+                    AskTeacherButton(
+                        prefill: "„\(row.line)“: why" + (row.check.correction.map { " „\($0)“" } ?? " not like this") + "?",
+                        context: "Übung · " + (session.material.title.isEmpty ? "Worksheet" : session.material.title)
+                    )
+                    .font(.caption)
+                    .buttonStyle(.borderless)
+                }
                 if editingKey == row.key {
                     fixEditor(row)
                 }

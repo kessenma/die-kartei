@@ -225,6 +225,26 @@ enum ClassNotesDebugSeeder {
             guard let deck = decks.first(where: { $0.courseID == uniID && !$0.cards.isEmpty }) else { return nil }
             seedWordListProgress(deck, in: context)
             return .wordList(deck)
+        // The loop around a session (roadmap section E). The seeded course meets tomorrow and
+        // today, so Today shows its steps too.
+        case "before", "after", "speak", "report", "redo":
+            guard let uni else { return nil }
+            uni.meetingWeekdays = [Calendar.current.component(.weekday, from: .now),
+                                   Calendar.current.component(.weekday, from: Date().addingTimeInterval(86_400))]
+            if uni.openQuestions.isEmpty {
+                uni.upsert(ClassQuestion(text: "Wann benutzt man „wo“ und wann „wohin“?", context: "Debug"))
+            }
+            try? context.save()
+            switch raw.lowercased() {
+            case "before": return .loop(.before, uni)
+            case "after": return .loop(.after, uni)
+            case "speak": return .loop(.speak, uni)
+            case "report": return .loop(.report, uni)
+            default:
+                let pages = [2, 3, 4].map { WorksheetPagePlan(page: $0, mode: .answer, title: "Seite \($0)") }
+                guard let tutor, let material = worksheetMaterial(in: tutor, plan: pages, context: context) else { return nil }
+                return .redo(material)
+            }
         case "builder":
             return .builder(DocumentDeckDraft(title: "Hänsel und Gretel Vokabelliste", text: vocabSheetText, sourceLabel: "PDF"))
         case "slides":
@@ -529,6 +549,10 @@ enum ClassNotesDebugScreen: Identifiable {
     case worksheetSetup(ClassMaterial)
     case worksheet(ClassMaterial)
     case wordList(SavedDeck)
+    case loop(LoopScreen, ClassCourse)
+    case redo(ClassMaterial)
+
+    enum LoopScreen: String { case before, after, speak, report }
 
     var id: String {
         switch self {
@@ -542,6 +566,8 @@ enum ClassNotesDebugScreen: Identifiable {
         case .worksheetSetup(let material): "worksheet-setup-\(material.id)"
         case .worksheet(let material): "worksheet-\(material.id)"
         case .wordList(let deck): "wordlist-\(deck.id)"
+        case .loop(let screen, let course): "loop-\(screen.rawValue)-\(course.id)"
+        case .redo(let material): "redo-\(material.id)"
         }
     }
 }
@@ -573,6 +599,15 @@ struct ClassNotesDebugScreenView: View {
             WorksheetView(material: material, modelManager: modelManager, mlxService: mlxService)
         case .wordList(let deck):
             DeckWordTableView(deck: deck)
+        case .loop(let screen, let course):
+            switch screen {
+            case .before: BeforeClassView(course: course, modelManager: modelManager, mlxService: mlxService)
+            case .after: AfterClassView(course: course, modelManager: modelManager, mlxService: mlxService)
+            case .speak: SpeakPrepView(course: course, modelManager: modelManager, mlxService: mlxService)
+            case .report: TeacherReportView(course: course)
+            }
+        case .redo(let material):
+            WorksheetRedoView(material: material, modelManager: modelManager, mlxService: mlxService)
         }
     }
 }

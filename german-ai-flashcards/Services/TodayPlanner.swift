@@ -30,6 +30,9 @@ enum TodayIntent: Equatable {
     case classWords(count: Int)
     /// Her review plan: a sent worksheet again, answers hidden (docs/WORKSHEETS.md ▸ Wiederholen).
     case worksheetRedo(materialID: UUID)
+    /// The loop around a session (roadmap items 12, 13): prepare the day before, review the same day.
+    case beforeClass(courseID: UUID)
+    case afterClass(courseID: UUID)
 }
 
 /// One ordered item in the Today plan.
@@ -54,6 +57,8 @@ struct TodayRecommendation: Identifiable {
         case .easyRound:        return "easy"
         case .classWords:       return "class-words"
         case .worksheetRedo(let id): return "redo-\(id.uuidString)"
+        case .beforeClass(let id): return "before-\(id.uuidString)"
+        case .afterClass(let id): return "after-\(id.uuidString)"
         }
     }
 }
@@ -94,6 +99,17 @@ struct TodaySnapshot {
     var classFocus: ClassFocusInfo? = nil
     /// A sent worksheet her review plan brings back today.
     var worksheetRedo: WorksheetRedoInfo? = nil
+    /// A class today to review, or tomorrow to prepare for.
+    var classSession: ClassSessionInfo? = nil
+
+    struct ClassSessionInfo: Equatable {
+        enum Moment: Equatable { case before, after }
+        var courseID: UUID
+        var courseName: String
+        var moment: Moment
+        /// "No entry yet", "3 questions for her", …
+        var detail: String
+    }
 
     struct ClassFocusInfo: Equatable {
         var focus: GrammarFocus
@@ -146,6 +162,11 @@ enum TodayPlanner {
         // 0. Resume an unfinished session first — the learner was literally mid-deck.
         if let resume = s.resume {
             recs.append(resumeRec(resume))
+        }
+
+        // 0a. The loop around a class: review today's, or prepare tomorrow's.
+        if let session = s.classSession {
+            recs.append(classSession(session))
         }
 
         // 0b. Her review plan: a sent worksheet again, on the day it's due.
@@ -217,6 +238,19 @@ enum TodayPlanner {
             systemImage: "rectangle.stack.badge.play.fill",
             accent: .blue
         )
+    }
+
+    private static func classSession(_ c: TodaySnapshot.ClassSessionInfo) -> TodayRecommendation {
+        switch c.moment {
+        case .before:
+            return TodayRecommendation(intent: .beforeClass(courseID: c.courseID),
+                                       title: "Vor der Stunde · \(c.courseName) tomorrow",
+                                       subtitle: c.detail, systemImage: "sunrise.fill", accent: .brown)
+        case .after:
+            return TodayRecommendation(intent: .afterClass(courseID: c.courseID),
+                                       title: "Nach der Stunde · \(c.courseName)",
+                                       subtitle: c.detail, systemImage: "moon.stars.fill", accent: .brown)
+        }
     }
 
     private static func worksheetRedo(_ r: TodaySnapshot.WorksheetRedoInfo) -> TodayRecommendation {

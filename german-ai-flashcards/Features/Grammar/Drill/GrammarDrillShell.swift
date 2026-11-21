@@ -381,6 +381,14 @@ struct GrammarDrillShell<Module: KasusDrillModule>: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
+                            if let record = miss.graded.result.record {
+                                AskTeacherButton(
+                                    prefill: "„\(record.sentence)“: why „\(record.answer)“" + (record.pick.map { " and not „\($0)“" } ?? "") + "?",
+                                    context: "Grammatik · \(module.kind.step.germanLabel)"
+                                )
+                                .font(.caption)
+                                .buttonStyle(.borderless)
+                            }
                         }
                     }
                 }

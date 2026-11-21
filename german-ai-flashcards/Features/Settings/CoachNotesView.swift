@@ -284,6 +284,10 @@ struct CoachNotesView: View {
                                 Text("you wrote this in a Diktat: the ending you heard")
                                     .font(.caption2)
                                     .foregroundStyle(.tertiary)
+                            } else if slip.source == MemorySource.teacher {
+                                Text("corrected by your teacher")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
                             }
                         }
                         Spacer()

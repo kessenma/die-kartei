@@ -98,7 +98,7 @@ enum LearnerMemoryService {
         // a form the app put on screen and the learner tapped, never one they produced. Telling the
         // coach to watch for it would be inventing a mistake they've never made.
         let slipForms = p.slips
-            .filter { $0.source == nil }
+            .filter { $0.source == nil || $0.source == MemorySource.teacher }
             .sorted { $0.timesSeen > $1.timesSeen }
             .prefix(3)
             .map(\.wrong)

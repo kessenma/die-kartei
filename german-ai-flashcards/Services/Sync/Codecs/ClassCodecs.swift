@@ -33,7 +33,10 @@ private enum ClassDayKey {
 enum ClassCourseCodec: SyncCodec {
     typealias Model = ClassCourse
 
-    static let spec = SyncKindSpec(kind: "ClassCourse", rules: ["updatedAt": .max])
+    static let spec = SyncKindSpec(kind: "ClassCourse", rules: [
+        "updatedAt": .max,
+        "questions": .keyed(item: .lwwBy("at")),
+    ])
 
     static func recordName(for model: ClassCourse) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)
@@ -56,6 +59,10 @@ enum ClassCourseCodec: SyncCodec {
         f.set("isArchived", c.isArchived)
         f.set("deckIDRaw", c.deckIDRaw)
         f.set("sortOrder", c.sortOrder)
+        f.set("meetingWeekdaysRaw", c.meetingWeekdaysRaw)
+        f.set("meetingMinutes", c.meetingMinutes)
+        f.set("nextSessionAt", c.nextSessionAt)
+        f.set("questions", jsonData: c.questionsData)
         return f.payload
     }
 
@@ -86,6 +93,10 @@ enum ClassCourseCodec: SyncCodec {
         if let v = flat.bool("isArchived") { c.isArchived = v }
         c.deckIDRaw = flat.string("deckIDRaw")
         if let v = flat.int("sortOrder") { c.sortOrder = v }
+        if let v = flat.string("meetingWeekdaysRaw") { c.meetingWeekdaysRaw = v }
+        if let v = flat.int("meetingMinutes") { c.meetingMinutes = v }
+        if flat["meetingWeekdaysRaw"] != nil { c.nextSessionAt = flat.date("nextSessionAt") }
+        if let v = flat.jsonData("questions") { c.questionsData = v }
     }
 
     /// Deleting a course cascades to its entries, and theirs to their handouts. The applier
@@ -126,6 +137,7 @@ enum ClassEntryCodec: SyncCodec {
         rules: [
             "updatedAt": .max,
             "words": .set(idField: "id"),
+            "teacherCorrections": .set(idField: "id"),
         ]
     )
 
@@ -150,6 +162,8 @@ enum ClassEntryCodec: SyncCodec {
         f.set("homework", e.homework)
         f.set("homeworkDueDay", ClassDayKey.key(e.homeworkDue))
         f.set("homeworkDone", e.homeworkDone)
+        f.set("recall", jsonData: e.recallData)
+        f.set("teacherCorrections", jsonData: e.teacherCorrectionsData)
         return f.payload
     }
 
@@ -186,6 +200,8 @@ enum ClassEntryCodec: SyncCodec {
         if let v = flat.string("homework") { e.homework = v }
         e.homeworkDue = ClassDayKey.date(flat.string("homeworkDueDay"))
         if let v = flat.bool("homeworkDone") { e.homeworkDone = v }
+        if let v = flat.jsonData("recall") { e.recallData = v }
+        if let v = flat.jsonData("teacherCorrections") { e.teacherCorrectionsData = v }
     }
 
     static func cascadeChildren(of entry: ClassEntry) -> [any PersistentModel] {

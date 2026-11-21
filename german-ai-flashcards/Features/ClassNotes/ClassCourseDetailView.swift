@@ -61,9 +61,11 @@ struct ClassCourseDetailView: View {
             headerSection
             actionsSection
             decksSection
+            loopSection
             if !course.openHomework.isEmpty {
                 homeworkSection
             }
+            ClassQuestionsSection(course: course)
             if groups.isEmpty {
                 emptySection
             } else {
@@ -281,6 +283,35 @@ struct ClassCourseDetailView: View {
                 Text("Also under Library ▸ Decks. Swipe to take a deck off the course; the deck itself stays.")
                     .font(.caption2)
             }
+        }
+        .themedListRow()
+    }
+
+    /// The loop around a session (roadmap section E).
+    private var loopSection: some View {
+        Section {
+            NavigationLink {
+                BeforeClassView(course: course, modelManager: modelManager, mlxService: mlxService)
+            } label: {
+                ActivityRow("Vor der Stunde · Prepare", ClassLoop.sessionLine(course).map { "Next: \($0)" } ?? "The lesson's words and handouts", "sunrise")
+            }
+            NavigationLink {
+                AfterClassView(course: course, modelManager: modelManager, mlxService: mlxService)
+            } label: {
+                ActivityRow("Nach der Stunde · Review", "Three things from memory, then today's words", "moon.stars")
+            }
+            NavigationLink {
+                SpeakPrepView(course: course, modelManager: modelManager, mlxService: mlxService)
+            } label: {
+                ActivityRow("Sprechen vorbereiten · Rehearse", "An outline, then practise it with the tutor", "text.bubble")
+            }
+            NavigationLink {
+                TeacherReportView(course: course)
+            } label: {
+                ActivityRow("Bericht für die Lehrerin · Report", "What the app saw since your last session, to send", "doc.text")
+            }
+        } header: {
+            Text("Rund um die Stunde · Around a session").themedSectionHeader()
         }
         .themedListRow()
     }

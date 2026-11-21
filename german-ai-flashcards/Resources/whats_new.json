@@ -12,6 +12,16 @@
           "title": "Deutschkurs · Your class, everywhere",
           "detail": "Conversations work in what your class covered, Today offers your class words and grammar, and a sent worksheet comes back a day and a week later, answers hidden.",
           "symbol": "graduationcap"
+        },
+        {
+          "title": "Rund um die Stunde · Around each class",
+          "detail": "Prepare the day before, recall three things after, save questions for your teacher, keep her corrections as cards, rehearse with the tutor, and send her a progress report.",
+          "symbol": "calendar.badge.clock"
+        },
+        {
+          "title": "Erste Schritte · Getting started",
+          "detail": "Deutschkurs starts with a short setup for your class, your tutor or learning on your own, then a checklist that ticks itself off as you go. Restart it from the ? button.",
+          "symbol": "checklist"
         }
       ]
     },

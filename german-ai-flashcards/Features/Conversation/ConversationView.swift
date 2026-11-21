@@ -955,6 +955,11 @@ private struct CorrectionCard: View {
                     } label: {
                         Label("Slow", systemImage: "tortoise.fill").font(.caption2)
                     }
+                    AskTeacherButton(
+                        prefill: "I said „\(message.text)“, the tutor suggested „\(corrected)“. Why?",
+                        context: "Gespräch"
+                    )
+                    .font(.caption2)
                 }
                 .buttonStyle(.borderless)
                 .padding(.top, 1)

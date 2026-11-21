@@ -34,6 +34,11 @@ final class ClassEntry {
     var homework: String = ""
     var homeworkDue: Date? = nil
     var homeworkDone: Bool = false
+    /// Encoded `[String]`: the three things the learner recalled after class, before any quiz
+    /// (roadmap item 13). Nil until they do.
+    var recallData: Data? = nil
+    /// Encoded `[TeacherCorrection]`: what I said, what she said instead (item 17).
+    var teacherCorrectionsData: Data? = nil
 
     var course: ClassCourse? = nil
 

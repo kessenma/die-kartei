@@ -207,6 +207,15 @@ swiftly toolchain on PATH can't build against the SDK).
   three-column slide module, for the page pills and the example/plural captions), or `wordlist`
   (the Hänsel vocab deck's Wortliste) in a sheet.
 - `-classNotes.debugRemove 1` — removes both courses and their files.
+- `-classNotes.debugOpen intro` — the hub over whatever is on the device, **unseeded**, with the
+  onboarding intro open: the first run with no course, the restart with one (add
+  `-classNotes.debugSeed 1`). `-classNotes.debugIntroStep kind|notInClass|basics|materials|plan`
+  opens it on one step; `-classNotes.debugIntroKind university|evening|tutor|selfStudy` picks the
+  answer behind it.
+- `-classNotes.debugOpen guide` — the seeded hub with the "Erste Schritte" checklist on it, half
+  done.
+- `-classNotes.debugIntro 1` — forgets the intro and the checklist (`ClassNotesGuide.Keys.all`),
+  so the intro opens by itself on the next visit with no course.
 
 Only one presenting argument per launch (see `WhatsNewService`).
 
@@ -251,6 +260,86 @@ briefing is unchanged; the class section sits next to it.
   and a preposition in the reason points at Präpositionen), else the grammar an entry in the last
   week covered, rotating day to day. Launched through `GrammarRoute` like any grammar step.
 - **Her review plan**: see docs/WORKSHEETS.md ▸ Wiederholen.
+
+## The loop around a session (built 2026-11-20, roadmap section E)
+
+On the course page, "Rund um die Stunde"; on Today, the day before and the day of a class.
+Files: `Models/ClassLoop.swift` (schedule, questions, corrections), `Features/ClassNotes/Loop/`,
+`Features/ClassNotes/AskTeacherSheet.swift`.
+
+- **When it meets** (course editor): weekdays (`meetingWeekdaysRaw`), an optional start time
+  (`meetingMinutes`), and a tutor's one-off next date (`nextSessionAt`, wins when sooner). All
+  synced. `ClassSchedule.nextSessionDay` / `previousSessionDay` are pure.
+- **Vor der Stunde** (item 12): the day before a session Today offers `BeforeClassView`: the
+  questions saved for her, the lesson's words as a plain card round, and its handouts in the reader.
+  The lesson is an entry dated on the next session (a handout imported ahead); without one it warms
+  up with the last entry and says so.
+- **Nach der Stunde** (item 13): on a class day (scheduled, or an entry dated today), after the start
+  time, Today offers `AfterClassView`: three things from memory first (`ClassEntry.recall`, synced),
+  then the entry as logged, its words as a card round, its grammar through `GrammarRoute`. No entry
+  yet: "Log today's class". The step leaves Today once the recall is saved.
+- **Fragen für die Stunde** (item 14): "Ask my teacher" (`AskTeacherButton`) in the word inspector,
+  a conversation's correction card, a drill's misses and a worksheet check row. Questions park on
+  the course (`ClassCourse.questionsData`, a dictionary merged per question by `at`, deletes kept as
+  tombstones) and show on the course page and before class. Ticking one asks for her answer and
+  appends "Frage: … / Antwort: …" to that day's entry (else the newest).
+- **Bericht für die Lehrerin** (item 15): `TeacherReportBuilder` writes a German page since the last
+  session (by the schedule, else the newest earlier entry, else a week): time practised, course words
+  practised, words that keep failing (2+ lapses or last missed), weak grammar with two of the coach's
+  real "you said → better" samples each, her corrections being practised, homework, open questions.
+  The learner edits it, then shares as PDF (`TeacherReportPDF`, Core Text, works on the Mac) or text.
+- **Sprechen vorbereiten** (item 16): a topic (the course goal, else the last entry), an outline,
+  phrases straight to the course deck, then a rehearsal: a custom-scenario chat built from the outline
+  with the learner's own chat settings (`ConversationConfig.fromSettings`). The tutor reads the class
+  too (`classFeedsCoach`).
+- **Korrekturen der Lehrerin** (item 17): on an entry, "what I said / what she said". Each pair is
+  stored on the entry (`teacherCorrectionsData`, a set by id), becomes a card on the course deck
+  through `DeckCardAdder` (a phrase stays a phrase card), and a slip tagged `MemorySource.teacher`:
+  a one-word fix is a cloze-ready word slip. Teacher slips, unlike other sourced ones, reach the
+  coach's correction hint. No recording of the lesson.
+- Debug: `-classNotes.debugOpen before|after|speak|report|redo` (the seeded course meets today and
+  tomorrow and has one open question).
+
+## Onboarding (built 2026-11-20)
+
+`Features/ClassNotes/Guide/`. A short intro that sets up the real course, then an "Erste Schritte
+· Getting started" checklist at the top of the hub that ticks itself off from the learner's data.
+
+- **Intro** (`ClassNotesIntroView`, a `.sheet`, never a cover: on the Mac a cover is a window).
+  Steps: *kind* (university, evening class, tutor, on my own, plus **"I'm not taking a class"**) →
+  *notInClass* (the way out: use it on my own / look around first / back to Home, which is hidden on
+  the Mac where Deutschkurs is a sidebar place) → *basics* (name, level, Semester/Quarter/no dates
+  or a goal) → *materials* (handouts, vocab lists, homework sheets, mostly talking; skipped for
+  self-study, which reads handouts and vocab lists) → *plan* (the checklist preview, then
+  Los geht's or "Log my first class now"). Steps that don't apply are skipped, and "Step x of y"
+  counts only the ones this run shows. Back sits next to that counter, not in the toolbar, where
+  on iOS it would crowd Close.
+- **Exits.** Close on every step, and a swipe down is the same thing. Nothing is saved before the
+  last step. A restart (from the ? menu with a course present) is *materials → plan* only: it
+  re-picks the checklist and never makes a second course.
+- **When it opens.** By itself once, on the first visit by someone with **no course at all**
+  (archived ones count). With iCloud Sync on, it waits for the first fetch first. The seen flag is
+  written before the sheet shows. Any time after that: the hub's ? is a menu with *How it works*
+  (the old sheet) and *Take the tour*.
+- **Checklist** (`ClassNotesGuideSection`, the hub's first section). Items come from
+  `ClassNotesGuide.items(kind:materials:)`: course, log a class (not self-study), add a handout,
+  save a word, turn a vocab list into flashcards, do homework in the app (not self-study), study
+  your deck. **Done is read from data, never ticked by hand** (`ClassNotesGuide.Snapshot`), so work
+  done earlier or on another device is already ticked. Each open row is a button to where it's
+  done. "Save a word" pushes the newest handout with an inline double-tap hint
+  (`ClassMaterialDetailView.showsSaveWordHint`). ✕ hides it, and so does the "All done" row.
+- **Body-loop rule.** The snapshot is fetched in `refreshGuide()` (on appear, on the hub queries'
+  counts, when a sheet or a study session closes), never in `body`. A filtered query read in `body`
+  loops once a screen is pushed over the hub.
+- **State.** UserDefaults `classNotes.intro.seen`, `classNotes.guide.kind`, `.materials`,
+  `.shownAt`, `.hiddenAt` (seconds since the reference date). The checklist is visible while
+  `shownAt > hiddenAt`. Synced in `ProgressSyncDocument`: the intro flag `.or`, `hiddenAt` `.max`,
+  and kind + materials + `shownAt` as one group ordered by `shownAt`. A restart writes a newer
+  `shownAt` and never clears the `.or` flag, so the merge can't undo it.
+- **Adding a step** when the section grows: a case on `ClassNotesGuide.Item` (title, detail,
+  symbol), its place in `items(kind:materials:)`, a fact on `Snapshot` and its `isDone` line, and
+  the hub's `showMe` destination. `ClassNotesGuideTests` covers the item lists, the done rules and
+  the visibility rule.
 
 ## Later
 - **Weekly recap** conversation seeded from the course's entries (`FUTURE_FEATURES.md` #7).

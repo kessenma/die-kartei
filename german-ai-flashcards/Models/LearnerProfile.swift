@@ -106,6 +106,9 @@ enum MemorySource {
     /// A Hören ▸ Diktat miss: an ending the learner did not hear, or a headword they missed.
     /// Kept out of the coach's correction hint like every sourced slip: it was heard, not said.
     static let diktat = "diktat"
+    /// A correction the learner's teacher made in class (Korrekturen der Lehrerin). Produced by the
+    /// learner and confirmed by a teacher, so unlike other sourced slips it reaches the correction hint.
+    static let teacher = "teacher"
 }
 
 // MARK: - Active profile (bounded; the only thing ever shown to the model)

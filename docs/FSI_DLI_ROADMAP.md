@@ -222,63 +222,63 @@ around each session: prepare, review the same day, and tell the teacher what the
       ▸ Wiederholen).
 
 ### 12. Vor der Stunde (prepare the next session) · effort S–M
-- [ ] **Shipped**
+- [x] **Shipped** 2026-11-20 (`docs/CLASS_NOTES.md` ▸ The loop around a session)
 
 Source: `DLI-RESP` 3: "Preview the next day's lesson in advance whenever possible."
 
-- [ ] A course knows its next session: a weekly slot for a course, a date for a tutor.
-- [ ] The day before, Today offers the lesson's words as a short round, from slides or a handout
-      imported ahead.
-- [ ] A read-through of the lesson's explanation slides in the reader.
+- [x] A course knows its next session: a weekly slot for a course, a date for a tutor.
+- [x] The day before, Today offers the lesson's words as a short round, from slides or a handout
+      imported ahead (else the last lesson, said so).
+- [x] A read-through of the lesson's explanation slides in the reader.
 
 ### 13. Nach der Stunde (same-day review) · effort S
-- [ ] **Shipped**
+- [x] **Shipped** 2026-11-20
 
 Source: `DLI-RESP` 5: "At the end of the day, review what you learned in class."
 
-- [ ] On a class day, Today asks for free recall first (three things class covered), then quizzes
+- [x] On a class day, Today asks for free recall first (three things class covered), then quizzes
       the entry's words and grammar.
-- [ ] If a scheduled class day has no entry, offer to log it.
+- [x] If a scheduled class day has no entry, offer to log it.
 
 ### 14. Fragen für die Stunde (questions for the teacher) · effort S
-- [ ] **Shipped**
+- [x] **Shipped** 2026-11-20
 
 Source: `FSI-6`: "If an adult tells you that he needs something in order to learn, the chances
 are very good that he's right." `FSI-9`: student and teacher share responsibility for the learning.
 
-- [ ] An "Ask my teacher" action where the learner gets stuck: the word inspector, a correction
+- [x] An "Ask my teacher" action where the learner gets stuck: the word inspector, a correction
       card, a drill miss, a worksheet check.
-- [ ] Questions park on the course and show before the next session.
-- [ ] Ticking one off writes the answer into that session's class entry.
+- [x] Questions park on the course and show before the next session.
+- [x] Ticking one off writes the answer into that session's class entry.
 
 ### 15. Bericht für die Lehrerin (a progress page to send) · effort M
-- [ ] **Shipped**
+- [x] **Shipped** 2026-11-20
 
 Source: `DLI-TI`: feedback in writing that names the "deficiencies" and the "specific actions".
 Here the learner hands that page to the teacher, so her lesson can start from what the app saw.
 
-- [ ] One page per course since the last session: time practised, words learned, words that keep
+- [x] One page per course since the last session: time practised, words learned, words that keep
       failing, weak grammar with two real example errors each, homework status, the open questions.
-- [ ] The learner reads and edits it before sharing. Nothing is sent automatically.
-- [ ] Shares the export path of the filled-in slides (`docs/WORKSHEETS.md`).
+- [x] The learner reads and edits it before sharing. Nothing is sent automatically.
+- [x] Shared as a PDF (its own Core Text renderer, the worksheet export's pattern) or as text.
 
 ### 16. Sprechen vorbereiten (rehearse before a session) · effort S–M
-- [ ] **Shipped**
+- [x] **Shipped** 2026-11-20
 
 Source: `DLI-STRAT` 3b: "Prepare an outline of what you want to say in conversation practice."
 
-- [ ] Pick the session's topic from the course goal or the last entry, and jot an outline.
-- [ ] Rehearse it with the on-device tutor. Useful phrases go to the course deck.
+- [x] Pick the session's topic from the course goal or the last entry, and jot an outline.
+- [x] Rehearse it with the on-device tutor. Useful phrases go to the course deck.
 
 ### 17. Korrekturen der Lehrerin (keep what she corrected) · effort M
-- [ ] **Shipped**
+- [x] **Shipped** 2026-11-20
 
 Source: `DLI-STRAT` 3f: ask a teacher "to help you listen for and correct mistakes".
 
-- [ ] Quick capture on a class entry: what I said, what she said instead.
-- [ ] Each pair becomes a phrase or gap card (`docs/PHRASES.md`) and a slip in the learner
+- [x] Quick capture on a class entry: what I said, what she said instead.
+- [x] Each pair becomes a phrase or gap card (`docs/PHRASES.md`) and a slip in the learner
       profile, marked as confirmed by a teacher.
-- [ ] No recording of the lesson itself. That needs her consent and is out of scope.
+- [x] No recording of the lesson itself. That needs her consent and is out of scope.
 
 ## F. Interview practice (Job prep)
 

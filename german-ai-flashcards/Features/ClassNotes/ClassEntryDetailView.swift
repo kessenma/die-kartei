@@ -45,6 +45,7 @@ struct ClassEntryDetailView: View {
                 homeworkSection
             }
             materialsSection
+            TeacherCorrectionsSection(entry: entry)
         }
         .themedListScreen()
         .navigationTitle(entry.displayTitle)

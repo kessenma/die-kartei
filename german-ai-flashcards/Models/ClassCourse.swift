@@ -43,6 +43,15 @@ final class ClassCourse {
     /// The course's one flashcard deck (`SavedDeck.id`), created on the first word saved.
     var deckIDRaw: String? = nil
     var sortOrder: Int = 0
+    /// When it meets (roadmap item 12): `Calendar` weekdays (1 = Sunday … 7 = Saturday), comma
+    /// separated. Empty for a course with no fixed slot.
+    var meetingWeekdaysRaw: String = ""
+    /// Start time in minutes after midnight, or -1 when not set.
+    var meetingMinutes: Int = -1
+    /// A tutor's next lesson, when it isn't weekly. Wins over the weekdays when it is sooner.
+    var nextSessionAt: Date? = nil
+    /// Encoded `[String: ClassQuestion]` by id: questions parked for the teacher (item 14).
+    var questionsData: Data? = nil
 
     @Relationship(deleteRule: .cascade, inverse: \ClassEntry.course)
     var entries: [ClassEntry] = []

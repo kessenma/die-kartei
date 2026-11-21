@@ -44,6 +44,12 @@ struct ClassCourseEditorView: View {
     /// Once the learner flips the dates toggle themselves, changing the kind stops flipping it.
     @State private var datesTouched = false
     @State private var isArchived = false
+    /// When it meets (roadmap item 12).
+    @State private var weekdays: Set<Int> = []
+    @State private var hasTime = false
+    @State private var time = Calendar.current.date(bySettingHour: 18, minute: 0, second: 0, of: .now) ?? .now
+    @State private var hasNextSession = false
+    @State private var nextSession = Calendar.current.date(byAdding: .day, value: 1, to: .now) ?? .now
     @State private var showDeleteConfirm = false
     @State private var loaded = false
     @FocusState private var focused: Field?
@@ -60,6 +66,7 @@ struct ClassCourseEditorView: View {
                 detailsSection
                 levelSection
                 datesSection
+                scheduleSection
                 if course != nil {
                     statusSection
                 }
@@ -184,6 +191,49 @@ struct ClassCourseEditorView: View {
             Text("Level").themedSectionHeader()
         } footer: {
             Text("The level the course is pitched at, if you know it.")
+                .font(.caption2)
+        }
+        .themedListRow()
+    }
+
+    /// Weekdays in the calendar's order, Monday first where the locale starts there.
+    private var orderedWeekdays: [Int] {
+        let first = Calendar.current.firstWeekday
+        return (0..<7).map { (first - 1 + $0) % 7 + 1 }
+    }
+
+    private var scheduleSection: some View {
+        Section {
+            HStack(spacing: 6) {
+                ForEach(orderedWeekdays, id: \.self) { day in
+                    let on = weekdays.contains(day)
+                    Button {
+                        if on { weekdays.remove(day) } else { weekdays.insert(day) }
+                    } label: {
+                        Text(Calendar.current.veryShortWeekdaySymbols[day - 1])
+                            .font(.callout.weight(.semibold))
+                            .frame(maxWidth: .infinity, minHeight: 34)
+                            .foregroundStyle(on ? Color.white : Color.primary)
+                            .background(on ? Color.accentColor : Color.primary.opacity(0.07), in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Calendar.current.weekdaySymbols[day - 1])
+                    .accessibilityAddTraits(on ? .isSelected : [])
+                }
+            }
+            .padding(.vertical, 4)
+            Toggle("Start time", isOn: $hasTime.animation())
+            if hasTime {
+                DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
+            }
+            Toggle("Next session on a set date", isOn: $hasNextSession.animation())
+            if hasNextSession {
+                DatePicker("Next session", selection: $nextSession, in: Calendar.current.startOfDay(for: .now)..., displayedComponents: .date)
+            }
+        } header: {
+            Text("Wann · When it meets").themedSectionHeader()
+        } footer: {
+            Text("With a schedule, Today helps you prepare the day before, review the same day, and brings up the questions you saved for the teacher.")
                 .font(.caption2)
         }
         .themedListRow()
@@ -318,6 +368,14 @@ struct ClassCourseEditorView: View {
                 endDate = ClassCourse.endDate(start: startDate, weeks: weeks, calendar: .current)
             }
             isArchived = course.isArchived
+            weekdays = course.meetingWeekdays
+            hasTime = course.meetingMinutes >= 0
+            if course.meetingMinutes >= 0 {
+                time = Calendar.current.date(bySettingHour: course.meetingMinutes / 60, minute: course.meetingMinutes % 60,
+                                             second: 0, of: .now) ?? time
+            }
+            hasNextSession = course.nextSessionAt.map { $0 >= Calendar.current.startOfDay(for: .now) } ?? false
+            if let next = course.nextSessionAt { nextSession = next }
         } else {
             levelRaw = defaultLevel.rawValue
             kind = initialKind
@@ -347,6 +405,10 @@ struct ClassCourseEditorView: View {
         target.startDate = hasDates ? Calendar.current.startOfDay(for: startDate) : nil
         target.endDate = hasDates ? Calendar.current.startOfDay(for: endDate) : nil
         target.isArchived = isArchived
+        target.meetingWeekdays = weekdays
+        let parts = Calendar.current.dateComponents([.hour, .minute], from: time)
+        target.meetingMinutes = hasTime ? (parts.hour ?? 0) * 60 + (parts.minute ?? 0) : -1
+        target.nextSessionAt = hasNextSession ? Calendar.current.startOfDay(for: nextSession) : nil
         target.updatedAt = .now
         try? modelContext.save()
         dismiss()

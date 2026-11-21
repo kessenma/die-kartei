@@ -154,6 +154,18 @@ struct TodaySection: View {
         case .classWords:
             Button { launchClassWords() } label: { rowLabel(rec, hero: hero, chevron: true) }
                 .buttonStyle(.plain)
+        case .beforeClass(let id):
+            if let course = course(id) {
+                NavigationLink {
+                    BeforeClassView(course: course, modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+                } label: { rowLabel(rec, hero: hero) }
+            }
+        case .afterClass(let id):
+            if let course = course(id) {
+                NavigationLink {
+                    AfterClassView(course: course, modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+                } label: { rowLabel(rec, hero: hero) }
+            }
         case .worksheetRedo(let id):
             if let material = material(id) {
                 NavigationLink {
@@ -202,7 +214,8 @@ struct TodaySection: View {
                 classWordsDue: classDueCards.count,
                 classCourseName: classCourses.first?.name,
                 classFocus: classFocus,
-                worksheetRedo: worksheetRedo
+                worksheetRedo: worksheetRedo,
+                classSession: classSession
             )
         )
     }
@@ -326,6 +339,35 @@ struct TodaySection: View {
             }
         }
         return nil
+    }
+
+    /// Today's class to review (after its start time, until three things are recalled), else
+    /// tomorrow's to prepare.
+    private var classSession: TodaySnapshot.ClassSessionInfo? {
+        let courses = ((try? modelContext.fetch(FetchDescriptor<ClassCourse>(predicate: #Predicate { !$0.isArchived })))) ?? []
+        let now = Date()
+        let minutesNow = Calendar.current.component(.hour, from: now) * 60 + Calendar.current.component(.minute, from: now)
+        for course in courses {
+            let entry = course.entry(on: now)
+            let classToday = course.meetsToday(now) || entry != nil
+            guard classToday, entry?.recall.isEmpty ?? true else { continue }
+            // Before the scheduled start the class hasn't happened yet.
+            if entry == nil, course.meetingMinutes >= 0, minutesNow < course.meetingMinutes { continue }
+            return .init(courseID: course.id, courseName: course.name, moment: .after,
+                         detail: entry == nil ? "Nothing logged yet · log it, then review" : "Three things from memory, then today's words")
+        }
+        for course in courses where course.meetsTomorrow(now) {
+            let questions = course.openQuestions.count
+            let detail = questions > 0 ? "The lesson's words · \(questions) question\(questions == 1 ? "" : "s") for her" : "The lesson's words and handouts"
+            return .init(courseID: course.id, courseName: course.name, moment: .before, detail: detail)
+        }
+        return nil
+    }
+
+    private func course(_ id: UUID) -> ClassCourse? {
+        var descriptor = FetchDescriptor<ClassCourse>(predicate: #Predicate { $0.id == id })
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
     }
 
     private func material(_ id: UUID) -> ClassMaterial? {

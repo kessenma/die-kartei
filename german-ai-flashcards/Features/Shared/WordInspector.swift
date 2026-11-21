@@ -297,6 +297,8 @@ struct WordInspectorSheet: View {
                     .buttonStyle(.borderedProminent)
                     .disabled(inspected.loading)
                 }
+                AskTeacherButton(prefill: "How do I use „\(inspected.word)“?", context: "Wort · \(inspected.word)", compact: true)
+                    .buttonStyle(.bordered)
             }
 
             Text(footer)
