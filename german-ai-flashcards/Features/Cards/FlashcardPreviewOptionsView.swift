@@ -9,11 +9,15 @@ struct FlashcardPreviewOptionsView: View {
     @Binding var autoAdvance: Bool
     /// Deal the cards in a random order at Start. Nil where the launcher fixes the order itself.
     var shuffle: Binding<Bool>? = nil
+    /// Phrase cards ask for a missing word. Nil when the deck has no phrase cards.
+    var phraseGaps: Binding<Bool>? = nil
+    /// A missed card asks to be written with the Pencil. Nil off the iPad.
+    var writeAfterMiss: Binding<Bool>? = nil
     var showHints: Binding<Bool>? = nil
     var hasExamples: Bool
     var cards: [VocabCard] = []
-
-    @State private var showingWordList = false
+    /// Opens the deck's Wortliste table. Nil hides the "See all words" link.
+    var onShowWords: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 12) {
@@ -36,15 +40,12 @@ struct FlashcardPreviewOptionsView: View {
                 .frame(maxWidth: 280)
         }
 
-        if !cards.isEmpty {
+        if !cards.isEmpty, let onShowWords {
             Button {
-                showingWordList = true
+                onShowWords()
             } label: {
-                Label("See all \(cards.count) words", systemImage: "list.bullet")
+                Label("See all \(cards.count) words", systemImage: "tablecells")
                     .font(.subheadline)
-            }
-            .sheet(isPresented: $showingWordList) {
-                WordListSheet(cards: cards)
             }
         }
 
@@ -88,6 +89,30 @@ struct FlashcardPreviewOptionsView: View {
             }
         }
 
+        if let phraseGaps {
+            VStack(spacing: 8) {
+                Toggle("Gaps on phrase cards", isOn: phraseGaps)
+                    .frame(maxWidth: 280)
+                Text("A phrase shows with one word missing, the verb or the preposition, and four to choose from.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 280)
+            }
+        }
+
+        if let writeAfterMiss {
+            VStack(spacing: 8) {
+                Toggle("Write it after a miss", isOn: writeAfterMiss)
+                    .frame(maxWidth: 280)
+                Text("Get a card wrong and it asks you to write the word with your Apple Pencil: once looking, once from memory.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 280)
+            }
+        }
+
         VStack(spacing: 8) {
             Toggle("Auto-advance after rating", isOn: $autoAdvance)
                 .frame(maxWidth: 280)
@@ -113,51 +138,3 @@ struct FlashcardPreviewOptionsView: View {
     }
 }
 
-// MARK: - Word list sheet
-
-struct WordListSheet: View {
-    var cards: [VocabCard]
-    @Environment(\.dismiss) private var dismiss
-    @State private var showGerman = false
-
-    var body: some View {
-        NavigationStack {
-            List {
-                ForEach(Array(cards.enumerated()), id: \.offset) { index, card in
-                    HStack(spacing: 12) {
-                        Text("\(index + 1)")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                            .frame(width: 24, alignment: .trailing)
-                            .monospacedDigit()
-
-                        Text(card.englishTranslation)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                        if showGerman {
-                            Text(card.germanWord)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .transition(.move(edge: .trailing).combined(with: .opacity))
-                        }
-                    }
-                    .animation(.easeInOut(duration: 0.25), value: showGerman)
-                }
-            }
-            .listStyle(.plain)
-            .themedListScreen()
-            .navigationTitle("Word List (\(cards.count))")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(showGerman ? "Hide German" : "Reveal German") {
-                        withAnimation { showGerman.toggle() }
-                    }
-                }
-            }
-        }
-    }
-}

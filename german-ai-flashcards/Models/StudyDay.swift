@@ -38,6 +38,10 @@ final class StudyDay {
     var conversationSeconds: Int = 0
     /// Seconds spent on story comprehension quizzes (reading time lives in `storySeconds`).
     var storyQuizSeconds: Int = 0
+    /// Seconds spent in the Spiele room. Its own bucket rather than folded into `cardSeconds`,
+    /// because the Today screen reports that number as flashcards reviewed and a word game is
+    /// not a flashcard review.
+    var gameSeconds: Int = 0
 
     // MARK: New words
     //
@@ -48,6 +52,33 @@ final class StudyDay {
     var newWordsIntroduced: Int = 0
     /// Extra new words the learner asked for today beyond the daily setting ("Learn 10 more").
     var newWordsBonus: Int = 0
+
+    /// Words solved in the Spiele room today — a hangman word guessed, a word found in the grid,
+    /// a word fitted into the crossword.
+    var gameWordsSolved: Int = 0
+
+    /// Words drawn in the Zeichnen room today: a quick sketch, an Atelier piece, a finished
+    /// paint-by-number picture. Counted whether or not the drawing was kept.
+    var wordsDrawn: Int = 0
+    /// Seconds spent drawing. Its own bucket, like `gameSeconds`.
+    var drawingSeconds: Int = 0
+
+    /// Words written in the Schreiben room today (journal entries and essays), credited when an
+    /// entry is put down, in steps of ten or more.
+    var wordsWritten: Int = 0
+    /// Seconds spent writing. Its own bucket, like `drawingSeconds`.
+    var writingSeconds: Int = 0
+
+    /// Words on Schreibblatt sheets marked Fertig today: the vocabulary copied out by hand, each
+    /// word once however many tables it filled. Kept apart from `wordsWritten`, which counts prose.
+    /// A sheet is credited once (`SchreibblattSheet.loggedAt`), however often it is reopened.
+    var sheetWordsWritten: Int = 0
+
+    /// Items done in the Hören room today: a number typed in Zahlen-Diktat, a sentence written in
+    /// Diktat, a summary checked in Worum geht's?. Counted right or wrong; listening is the work.
+    var hoerenItems: Int = 0
+    /// Seconds spent in the Hören room. Its own bucket, like `writingSeconds`.
+    var hoerenSeconds: Int = 0
 
     init(dayStart: Date) {
         self.dayStart = dayStart
@@ -63,6 +94,15 @@ final class StudyDay {
         self.storyQuizSeconds = 0
         self.newWordsIntroduced = 0
         self.newWordsBonus = 0
+        self.gameSeconds = 0
+        self.gameWordsSolved = 0
+        self.wordsDrawn = 0
+        self.drawingSeconds = 0
+        self.wordsWritten = 0
+        self.writingSeconds = 0
+        self.sheetWordsWritten = 0
+        self.hoerenItems = 0
+        self.hoerenSeconds = 0
     }
 
     /// Time only counts as a study day once it passes a minute — a ten-second glance at a story
@@ -76,6 +116,7 @@ final class StudyDay {
     /// Every second logged today, across all activities — the number the calendar totals.
     var totalSeconds: Int {
         cardSeconds + grammarSeconds + conversationSeconds + storySeconds + storyQuizSeconds
+            + gameSeconds + drawingSeconds + writingSeconds + hoerenSeconds
     }
 
     /// Whole minutes studied today, the unit the calendar's time shading buckets on.
@@ -84,7 +125,9 @@ final class StudyDay {
     /// Did the learner do anything at all on this day? (Guards against empty rows.)
     var hasActivity: Bool {
         cardsReviewed > 0 || grammarExercises > 0 || conversations > 0
-            || storyQuestions > 0 || totalSeconds >= Self.storyStreakSeconds
+            || storyQuestions > 0 || gameWordsSolved > 0 || wordsDrawn > 0 || wordsWritten > 0
+            || sheetWordsWritten > 0 || hoerenItems > 0
+            || totalSeconds >= Self.storyStreakSeconds
     }
 }
 

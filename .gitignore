@@ -66,3 +66,6 @@ training/**/*.log
 training/runpod/*.tar.gz
 training/data/packed-v2-balanced/train.jsonl
 training/data/packed-v4/train.jsonl
+
+# App Store Connect CLI working folder (build artifacts, upload reports)
+.asc/

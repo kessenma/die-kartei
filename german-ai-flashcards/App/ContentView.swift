@@ -42,11 +42,14 @@ struct ContentView: View {
 
     @State private var settingsResetToken: Int = 0
     @State private var homeResetToken: Int = 0
+    @State private var grammarResetToken: Int = 0
     /// Where the tabs' safe area ends and where the NavBar begins, in the shell's coordinates.
     /// Measured rather than set, so a bar that changes height (Dynamic Type, a theme's font) or a
     /// device without a home indicator needs nothing done by hand. See `navBarClearance`.
     @State private var tabsSafeBottom: CGFloat = 0
     @State private var navBarTop: CGFloat = .infinity
+    /// Drawing mode: a Pencil page holds the NavBar down while it is up (`.hidesNavBar()`).
+    @State private var navBarVisibility = NavBarVisibility()
     @State private var pendingSelection: CardSelectionPayload?
     @State private var pendingIllustration: PendingIllustration?
     @State private var saveError: String?
@@ -74,6 +77,13 @@ struct ContentView: View {
     @State private var kasusGeneratePending: KasusSession?
     /// `-kasus.debugLab <runs>`: the Kasus Lab, which sits behind Settings ▸ Developer.
     @State private var kasusLabRuns: Int?
+    /// `-schreibblatt.debugOpen hub|wahl`: the Schreibblatt hub and its word picker, two or more
+    /// taps into Home. The sheet itself needs a sheet to exist, so it opens through the hub.
+    @State private var schreibblattDebug: SchreibblattDebugOpen?
+    @State private var zeichnenDebug: ZeichnenDebugOpen?
+    @State private var schreibenDebug: SchreibenDebugOpen?
+    @State private var hoerenDebug: HoerenDebugOpen?
+    @State private var spieleDebug: SpieleDebugOpen?
     #endif
     @Environment(\.modelContext) private var modelContext
 
@@ -124,7 +134,13 @@ struct ContentView: View {
     ///
     /// A difference of two frames rather than the bar's height less its safe-area inset, because
     /// the bar sits in a column that ignores the safe area and so always reads that inset as zero.
-    private var navBarClearance: CGFloat { max(0, tabsSafeBottom - navBarTop) }
+    private var navBarClearance: CGFloat {
+        // Taken from the flag, not the measure: a bar slid off keeps its last measured top.
+        navBarHidden ? 0 : max(0, tabsSafeBottom - navBarTop)
+    }
+
+    /// A screen on the selected tab is in drawing mode.
+    private var navBarHidden: Bool { navBarVisibility.isHidden(on: selectedTab) }
 
     var body: some View {
         shell
@@ -146,6 +162,10 @@ struct ContentView: View {
         // Anyone can ask for a Settings destination by setting the route; the shell is what brings
         // the tab forward to show it.
         .onChange(of: settingsRouter.route) { showSettingsRoute() }
+        #if os(macOS)
+        // "Show Me How" on the missing-voice alert (an NSAlert, which has no router of its own).
+        .onChange(of: VoiceSetup.shared.settingsRequest) { settingsRouter.route = .voice }
+        #endif
         // The loaded model's brand theme, published once for the whole app. Themes that defer
         // their accent to the model (Klar) resolve their tint from this; the identity-forward
         // themes ignore it and assert their own.
@@ -249,6 +269,95 @@ struct ContentView: View {
             .environment(router)
             .environment(settingsRouter)
         }
+        .sheet(item: $zeichnenDebug) { open in
+            NavigationStack {
+                ZeichnenDebugScreen(open: open)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { zeichnenDebug = nil }
+                        }
+                    }
+            }
+            .environment(router)
+            .environment(settingsRouter)
+        }
+        .sheet(item: $hoerenDebug) { open in
+            NavigationStack {
+                HoerenDebugScreen(open: open, modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { hoerenDebug = nil }
+                        }
+                    }
+            }
+            .environment(router)
+            .environment(settingsRouter)
+        }
+        .sheet(item: $schreibenDebug) { open in
+            NavigationStack {
+                SchreibenDebugScreen(open: open, modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { schreibenDebug = nil }
+                        }
+                    }
+            }
+            .environment(router)
+            .environment(settingsRouter)
+        }
+        .sheet(item: $schreibblattDebug) { open in
+            NavigationStack {
+                Group {
+                    switch open {
+                    case .hub: SchreibblattHubView()
+                    case .wahl: SchreibblattWortwahlView()
+                    case .blatt:
+                        if let sheet = SchreibblattDebugSeeder.newest(in: modelContext) {
+                            SchreibblattSheetView(sheet: sheet)
+                        } else {
+                            ContentUnavailableView("No sheet", systemImage: "doc",
+                                                   description: Text("Run with -schreibblatt.debugSeed 1"))
+                        }
+                    }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { schreibblattDebug = nil }
+                    }
+                }
+            }
+            .environment(router)
+            .environment(settingsRouter)
+        }
+        .sheet(item: $spieleDebug) { open in
+            NavigationStack {
+                Group {
+                    if open.startsRound {
+                        HangmanPlayView(
+                            session: SpieleDebugWords.session(
+                                open,
+                                // `-spiele.debugMotif turm|ballon|geruest`
+                                motif: HangmanMotif(rawValue: UserDefaults.standard
+                                    .string(forKey: "spiele.debugMotif") ?? "") ?? .turm
+                            ),
+                            hapticMode: coordinator.modelManager.hapticFeedbackMode,
+                            openingGuesses: open.openingGuesses,
+                            onFinish: { SpieleScoringService.record($0, in: modelContext) },
+                            onDismiss: { spieleDebug = nil }
+                        )
+                    } else {
+                        HangmanSetupView(modelManager: coordinator.modelManager)
+                    }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { spieleDebug = nil }
+                    }
+                }
+            }
+            .environment(router)
+            .environment(settingsRouter)
+        }
         .sheet(item: $classNotesDebugScreen) { screen in
             NavigationStack {
                 ClassNotesDebugScreenView(
@@ -280,6 +389,9 @@ struct ContentView: View {
                         })
                     case .topic(let topic):
                         ReflexivTopicView(topic: topic)
+                    case .bereich(let area):
+                        GrammarBereichView(area: area, modelManager: coordinator.modelManager,
+                                           mlxService: coordinator.mlxService)
                     case .mnemonics:
                         KasusMnemonicsView()
                     case .werkstatt:
@@ -384,6 +496,7 @@ struct ContentView: View {
             if UserDefaults.standard.bool(forKey: "settings.debugOpenModel") {
                 openModelSettings()
             }
+            VoiceSetup.shared.applyDebugLaunchArgumentIfNeeded()
             PlacementService.applyDebugLaunchArgumentIfNeeded()
             PlacementService.applyDebugAttemptsLaunchArgumentIfNeeded()
             // `-review.debugForce 1` raises the App Store ask without the seven-day streak the real
@@ -491,6 +604,75 @@ struct ContentView: View {
             if UserDefaults.standard.bool(forKey: "wortschatz.debugOpen") {
                 showWortschatzHub = true
             }
+
+            // `-schreibblatt.debugSeed 1`: a sheet with ink already on it. A sheet cannot be made
+            // without tapping, so the canvas and the "begonnen" badge are otherwise unreachable.
+            if UserDefaults.standard.bool(forKey: "schreibblatt.debugSeed") {
+                let seeded = SchreibblattDebugSeeder.seed(in: modelContext)
+                print("[schreibblatt] seeded \(seeded.title): \(seeded.strokeCount) strokes")
+            }
+
+            // `-schreibblatt.debugOpen hub|wahl|blatt`: the Schreibblatt hub sits under the third
+            // wide tile on Home, its word picker a tap further in; neither can be tapped here.
+            if let raw = UserDefaults.standard.string(forKey: "schreibblatt.debugOpen") {
+                schreibblattDebug = SchreibblattDebugOpen(argument: raw)
+                print("[schreibblatt] open \(raw): \(schreibblattDebug == nil ? "no such screen" : "ok")")
+            }
+            // `-zeichnen.debugSeedArt 1`: pictures for the first few words without OpenRouter, and a
+            // paint-by-number begun. `-zeichnen.debugOpen hub|quick|run|review|studio|gallery|pbn`:
+            // the Zeichnen room sits under a wide Home tile the simulator can't tap.
+            if UserDefaults.standard.bool(forKey: "zeichnen.debugSeedArt") {
+                let made = ZeichnenDebugSeeder.seed(in: modelContext)
+                print("[zeichnen] seeded \(made) pictures")
+            }
+            if let raw = UserDefaults.standard.string(forKey: "zeichnen.debugOpen") {
+                zeichnenDebug = ZeichnenDebugOpen(argument: raw)
+                print("[zeichnen] open \(raw): \(zeichnenDebug == nil ? "no such screen" : "ok")")
+            }
+            // `-schreiben.debugSeed 1`: a journal entry and an essay with text in them.
+            // `-schreiben.debugOpen hub|timeline|entry|essay`: the Schreiben room sits under a
+            // wide Home tile the simulator can't tap.
+            if UserDefaults.standard.bool(forKey: "schreiben.debugSeed") {
+                print("[schreiben] \(SchreibenDebugSeeder.seed(in: modelContext))")
+            }
+            if let raw = UserDefaults.standard.string(forKey: "schreiben.debugOpen") {
+                schreibenDebug = SchreibenDebugOpen(argument: raw)
+                print("[schreiben] open \(raw): \(schreibenDebug == nil ? "no such screen" : "ok")")
+            }
+            // `-schreiben.debugVerify 1`: the prompt bank's gate, its golden counts and the gate
+            // on tutor-written prompts.
+            if UserDefaults.standard.bool(forKey: "schreiben.debugVerify") {
+                print(WritingPromptBank.runDebugVerification())
+            }
+            // `-hoeren.debugSeed 1`: two rounds and a story with key points.
+            // `-hoeren.debugOpen hub|zahlen|diktat|gist|stats|speller|story`: the Hören room sits
+            // under a wide Home tile the simulator can't tap. `-hoeren.debugVerify 1`: goldens.
+            if UserDefaults.standard.bool(forKey: "hoeren.debugSeed") {
+                print("[hoeren] \(HoerenDebugSeeder.seed(in: modelContext))")
+            }
+            if let raw = UserDefaults.standard.string(forKey: "hoeren.debugOpen") {
+                hoerenDebug = HoerenDebugOpen(argument: raw)
+                print("[hoeren] open \(raw): \(hoerenDebug == nil ? "no such screen" : "ok")")
+            }
+            if UserDefaults.standard.bool(forKey: "hoeren.debugVerify") {
+                print(HoerenDebugSeeder.runVerification())
+            }
+            // `-spiele.debugOpen hangman|hangmanPlay|hangmanWin|hangmanLose`: the Spiele room.
+            // The simulator can't drag or run a tutor, so every screen needs a way in that isn't
+            // a gesture.
+            if let raw = UserDefaults.standard.string(forKey: "spiele.debugOpen") {
+                spieleDebug = SpieleDebugOpen(argument: raw)
+                print("[spiele] open \(raw): \(spieleDebug == nil ? "no such screen" : "ok")")
+            }
+
+            // `-schreibblatt.debugVerifyPDF 1` / `-schreibblatt.debugVerifyInk 1`: round trips
+            // that cannot be tapped — see the two `runDebugVerification`s.
+            if UserDefaults.standard.bool(forKey: "schreibblatt.debugVerifyPDF") {
+                print(SchreibblattPDF.runDebugVerification())
+            }
+            if UserDefaults.standard.bool(forKey: "schreibblatt.debugVerifyInk") {
+                print(SchreibblattInkStore.runDebugVerification())
+            }
             // `-wortschatz.debugOpenSession 1` starts a box session at launch (the player is
             // three taps deep), so the "der · die · das?" front can be checked on a simulator.
             if UserDefaults.standard.bool(forKey: "wortschatz.debugOpenSession"),
@@ -511,6 +693,15 @@ struct ContentView: View {
             }
             if UserDefaults.standard.bool(forKey: "stories.debugOpen") {
                 debugStory = StoryDebugSeeder.seed(in: modelContext)
+            }
+            // `-cards.debugSeedPictures 1` / `-cards.debugRemovePictures 1`: an illustrated deck
+            // without running diffusion, so the picture face can be checked on a simulator — in
+            // particular how a square picture sits in the card on an iPad.
+            if UserDefaults.standard.bool(forKey: "cards.debugRemovePictures") {
+                print("[cards] pictures removed: \(CardPictureDebugSeeder.remove(in: modelContext))")
+            }
+            if UserDefaults.standard.bool(forKey: "cards.debugSeedPictures") {
+                print("[cards] " + CardPictureDebugSeeder.seed(in: modelContext))
             }
             // `-classNotes.debugSeed 1` / `-classNotes.debugOpen 1` / `-classNotes.debugRemove 1`:
             // two courses (a dated semester course, an undated tutor) with entries and handouts,
@@ -600,7 +791,7 @@ struct ContentView: View {
                 }
             } else if let open = KasusDebugOpen.fromLaunchArguments() {
                 switch open {
-                case .hub, .unit, .lesson, .topic, .mnemonics, .werkstatt, .table:
+                case .hub, .unit, .lesson, .topic, .bereich, .mnemonics, .werkstatt, .table:
                     kasusDebugSheet = open
                 case .drill(let kind, let topic):
                     router.launch(.grammarDrill(KasusDebugOpen.drillSession(kind, in: topic)))
@@ -690,16 +881,33 @@ struct ContentView: View {
                 HomeHubView(
                     coordinator: coordinator,
                     onGenerationComplete: handleGenerationComplete,
-                    resetToken: homeResetToken
+                    resetToken: homeResetToken,
+                    onOpenGrammar: showGrammarTab
                 )
+                .environment(\.shellTab, .home)
                 .opacity(selectedTab == .home ? 1 : 0)
                 .allowsHitTesting(selectedTab == .home)
+
+                // The one tab root that needs a stack supplied: `GrammarHubView`'s body starts at
+                // a bare `List`, where Home, Library and Settings each open their own. `.id` on
+                // the stack is what pops a pushed unit screen when the tab is tapped again.
+                if visitedTabs.contains(.grammar) {
+                    NavigationStack {
+                        GrammarHubView(modelManager: coordinator.modelManager,
+                                       mlxService: coordinator.mlxService)
+                    }
+                    .id(grammarResetToken)
+                    .environment(\.shellTab, .grammar)
+                    .opacity(selectedTab == .grammar ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .grammar)
+                }
 
                 if visitedTabs.contains(.library) {
                     UnifiedLibraryView(
                         modelManager: coordinator.modelManager,
                         mlxService: coordinator.mlxService
                     )
+                    .environment(\.shellTab, .library)
                     .opacity(selectedTab == .library ? 1 : 0)
                     .allowsHitTesting(selectedTab == .library)
                 }
@@ -711,10 +919,12 @@ struct ContentView: View {
                         resetToken: settingsResetToken,
                         route: $settingsRouter.route
                     )
+                    .environment(\.shellTab, .settings)
                     .opacity(selectedTab == .settings ? 1 : 0)
                     .allowsHitTesting(selectedTab == .settings)
                 }
             }
+            .environment(\.navBarVisibility, navBarVisibility)
             .onChange(of: selectedTab) { _, newTab in
                 visitedTabs.insert(newTab)
                 // Pressing Home always lands on the hub root, even when arriving from
@@ -749,6 +959,13 @@ struct ContentView: View {
                         .padding(.bottom, 4)
                 }
 
+                // A deck's pictures being drawn, on every tab: the run outlives the deck's screen.
+                DeckPicturesPill()
+                    .padding(.bottom, 6)
+                    .opacity(navBarHidden ? 0 : 1)
+                    .allowsHitTesting(!navBarHidden)
+                    .accessibilityHidden(navBarHidden)
+
                 NavBar(
                     selectedTab: $selectedTab,
                     isGenerating: coordinator.isGenerating || BatchQueueService.shared.isRunning,
@@ -760,14 +977,21 @@ struct ContentView: View {
                         // that tab's root view.
                         switch tab {
                         case .home: homeResetToken += 1
+                        case .grammar: grammarResetToken += 1
                         case .settings: settingsResetToken += 1
                         case .library: break
                         }
                     }
                 )
                 .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named(Self.shellSpace)).minY } action: {
-                    navBarTop = $0
+                    // Only while it is in place: slid away, its frame says nothing about the tabs.
+                    if !navBarHidden { navBarTop = $0 }
                 }
+                // Drawing mode: off the bottom edge, and nothing under it can be tapped.
+                .offset(y: navBarHidden ? 160 : 0)
+                .opacity(navBarHidden ? 0 : 1)
+                .allowsHitTesting(!navBarHidden)
+                .accessibilityHidden(navBarHidden)
             }
             // The bar's column runs through the bottom safe area so the bar can sit on the screen
             // edge rather than floating above the home indicator; the Spacer takes up the slack and
@@ -860,6 +1084,16 @@ struct ContentView: View {
     /// before a route can be honoured, and `.onChange(of: selectedTab)` inserts it only after the
     /// body pass — too late. Nothing here touches `settingsResetToken`: bumping it would give the
     /// stack a fresh identity and throw the push away.
+    /// Brings the Grammatik tab forward, for Home's grammar tile. `visitedTabs.insert` comes
+    /// first for the same reason it does in `showSettingsRoute`: the tab is lazily gated, and
+    /// `onChange(of: selectedTab)` only inserts after the body pass. The token bump lands on the
+    /// hub root, the way pressing the tab itself does.
+    private func showGrammarTab() {
+        visitedTabs.insert(.grammar)
+        selectedTab = .grammar
+        grammarResetToken += 1
+    }
+
     private func showSettingsRoute() {
         #if os(macOS)
         // With the sidebar, Settings is its own window: open it on the pane that was asked for.
@@ -1040,6 +1274,20 @@ struct ContentView: View {
                 hapticMode: coordinator.modelManager.hapticFeedbackMode,
                 onComplete: { result in
                     KasusService.recordRound(result, in: modelContext)
+                },
+                onDismiss: {
+                    router.dismiss()
+                }
+            )
+
+        case .hangman(let session):
+            // Spiele keep their own XP bucket rather than the flashcard one, so playing never
+            // inflates the number the Today screen reports as cards reviewed.
+            HangmanPlayView(
+                session: session,
+                hapticMode: coordinator.modelManager.hapticFeedbackMode,
+                onFinish: { result in
+                    SpieleScoringService.record(result, in: modelContext)
                 },
                 onDismiss: {
                     router.dismiss()

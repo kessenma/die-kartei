@@ -18,6 +18,7 @@ extension StoryGenre {
         case .comedy:    "playful cartoon illustration, bright cheerful colors, exaggerated expressions"
         case .tagebuch:  "hand-drawn journal sketch, soft watercolor wash, personal"
         case .fabel:     "children's picture-book illustration of animals, gentle watercolor"
+        case .nachrichten: "editorial news illustration, clean flat shapes, muted colors"
         }
     }
 }

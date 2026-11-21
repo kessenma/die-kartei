@@ -19,7 +19,7 @@
     "article": null,
     "wordType": null,
     "translation": "but, however",
-    "example": "ich Zeit."
+    "example": ""
   },
   {
     "word": "Abfahrt",
@@ -41,7 +41,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to collect, pick up or fetch someone or something",
-    "example": "hat abgeholt Wir müssen noch meinen Bruder abholen.",
+    "example": "Wir müssen noch meinen Bruder abholen.",
     "verbForms": "holt ab · hat abgeholt"
   },
   {
@@ -163,7 +163,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to offer, to provide",
-    "example": "9WORTLISTE",
+    "example": "",
     "verbForms": "bietet an · hat angeboten"
   },
   {
@@ -171,7 +171,7 @@
     "article": null,
     "wordType": null,
     "translation": "other",
-    "example": "anderen."
+    "example": ""
   },
   {
     "word": "anders",
@@ -260,14 +260,14 @@
     "article": "der",
     "wordType": "noun",
     "translation": "a call upon, an appeal (e.g., to gods, a court, etc.)",
-    "example": "beantworter, - den Anrufbeantworter."
+    "example": ""
   },
   {
     "word": "anrufen",
     "article": null,
     "wordType": "verb",
     "translation": "to call, to ring (by telephone or similar technology)",
-    "example": "hat angerufen Juan ruft seine Freundin an.",
+    "example": "Juan ruft seine Freundin an.",
     "verbForms": "ruft an · hat angerufen"
   },
   {
@@ -283,7 +283,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to look at, to have a look at (taking in information in doing so)",
-    "example": "hat angesehen Ich sehe (mir) diese Sendung jeden Tag an."
+    "example": "Ich sehe (mir) diese Sendung jeden Tag an."
   },
   {
     "word": "Antwort",
@@ -298,7 +298,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to answer, to reply",
-    "example": "antwortet,",
+    "example": "",
     "verbForms": "hat geantwortet"
   },
   {
@@ -352,7 +352,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to work (to do a specific task by employing physical or mental powers)",
-    "example": "hat gearbeitet Ich arbeite als Krankenschwester in einem",
+    "example": "",
     "verbForms": "hat gearbeitet"
   },
   {
@@ -623,7 +623,7 @@
     "article": null,
     "wordType": null,
     "translation": "outside, beyond",
-    "example": "außerhalb."
+    "example": ""
   },
   {
     "word": "Baby",
@@ -644,7 +644,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to bake",
-    "example": "bäckt/backt,"
+    "example": ""
   },
   {
     "word": "Bad",
@@ -659,7 +659,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to bathe, to give a bath to or have a bath.",
-    "example": "hat gebadet In diesem See darf man nicht baden."
+    "example": "In diesem See darf man nicht baden."
   },
   {
     "word": "Bahn",
@@ -811,7 +811,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to imply, to mean, to signify, to indicate, to spell, to betoken",
-    "example": "bedeutet,"
+    "example": ""
   },
   {
     "word": "Beeil",
@@ -833,21 +833,21 @@
     "article": null,
     "wordType": "verb",
     "translation": "hurries",
-    "example": "11WORTLISTE"
+    "example": ""
   },
   {
     "word": "beenden",
     "article": null,
     "wordType": "verb",
     "translation": "to finish, to complete, to (bring/put to an) end",
-    "example": "beendet,"
+    "example": ""
   },
   {
     "word": "beginnen",
     "article": null,
     "wordType": "verb",
     "translation": "to begin",
-    "example": "beginnt,",
+    "example": "",
     "verbForms": "hat begonnen"
   },
   {
@@ -855,7 +855,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to justify, to explain (to give a reason for a chosen course of action)",
-    "example": "begründet,"
+    "example": ""
   },
   {
     "word": "bei",
@@ -912,28 +912,28 @@
     "article": null,
     "wordType": "verb",
     "translation": "to make use (of)",
-    "example": "benutzt,"
+    "example": ""
   },
   {
     "word": "bequem",
     "article": null,
     "wordType": null,
     "translation": "comfortable, convenient",
-    "example": "Meine Kinder ziehen am liebsten bequeme"
+    "example": ""
   },
   {
     "word": "beraten",
     "article": null,
     "wordType": "verb",
     "translation": "to discuss",
-    "example": "hat beraten Fragen haben."
+    "example": "Fragen haben."
   },
   {
     "word": "bereitet",
     "article": null,
     "wordType": null,
     "translation": "prepares",
-    "example": "hat vorbereitet Ich muss mich auf meine Prüfung vorbereiten."
+    "example": "Ich muss mich auf meine Prüfung vorbereiten."
   },
   {
     "word": "Berg",
@@ -948,7 +948,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to relate, to tell, to give an account of",
-    "example": "berichtet,",
+    "example": "",
     "verbForms": "hat berichtet"
   },
   {
@@ -978,7 +978,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to describe",
-    "example": "beschreibt,",
+    "example": "",
     "verbForms": "hat beschrieben"
   },
   {
@@ -993,7 +993,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "weighted",
-    "example": "hat beschwert Kinder, wenn sie im Garten spielen."
+    "example": "Kinder, wenn sie im Garten spielen."
   },
   {
     "word": "besetzt",
@@ -1015,7 +1015,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "inspected",
-    "example": "hat besichtigt besichtigen."
+    "example": ""
   },
   {
     "word": "besonders",
@@ -1045,14 +1045,14 @@
     "article": null,
     "wordType": "verb",
     "translation": "ordered",
-    "example": "hat bestellt Sie bestellen?"
+    "example": "Sie bestellen?"
   },
   {
     "word": "bestätigen",
     "article": null,
     "wordType": "verb",
     "translation": "to confirm, to corroborate",
-    "example": "bestätigt,"
+    "example": ""
   },
   {
     "word": "Besuch",
@@ -1118,7 +1118,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to pay, give money",
-    "example": "bezahlt,",
+    "example": "",
     "verbForms": "hat bezahlt"
   },
   {
@@ -1213,7 +1213,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "third-person singular present of bleiben",
-    "example": "ist geblieben Oh nein, meine Uhr ist stehen geblieben."
+    "example": "Oh nein, meine Uhr ist stehen geblieben."
   },
   {
     "word": "Bleistift",
@@ -1249,7 +1249,7 @@
     "article": null,
     "wordType": null,
     "translation": "stupid, dim-witted",
-    "example": "der/das Blog, -s Ich schreibe einen Blog über Mode."
+    "example": "Ich schreibe einen Blog über Mode."
   },
   {
     "word": "Bohne",
@@ -1368,14 +1368,14 @@
     "article": null,
     "wordType": "verb",
     "translation": "to spell (name the letters of a word)",
-    "example": "buchstabiert,"
+    "example": ""
   },
   {
     "word": "bunt",
     "article": null,
     "wordType": null,
     "translation": "spotted, speckled",
-    "example": "Meine Wohnung ist sehr bunt: Das Wohnzimmer ist"
+    "example": ""
   },
   {
     "word": "Bus",
@@ -1420,14 +1420,14 @@
     "article": "die",
     "wordType": "noun",
     "translation": "cafeteria",
-    "example": "mitbringen?"
+    "example": ""
   },
   {
     "word": "chatten",
     "article": null,
     "wordType": "verb",
     "translation": "to chat",
-    "example": "chattet,"
+    "example": ""
   },
   {
     "word": "Chef",
@@ -1478,7 +1478,7 @@
     "article": null,
     "wordType": null,
     "translation": "pronominal adverb of bei (replaces bei + demonstrative or personal pronoun, unless referring to people)",
-    "example": "ist dabei, Schön, dass du da bist."
+    "example": "Schön, dass du da bist."
   },
   {
     "word": "dagegen",
@@ -1632,7 +1632,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "disco",
-    "example": "diskutieren, diskutiert,"
+    "example": ""
   },
   {
     "word": "doch",
@@ -1705,7 +1705,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to press, to push (a button/key; a finger or other object against something)",
-    "example": "hat gedrückt dann geht sie auf."
+    "example": ""
   },
   {
     "word": "dumm",
@@ -1755,7 +1755,7 @@
     "article": null,
     "wordType": null,
     "translation": "thin, slender, slim",
-    "example": "Mein Bruder ist 1,80 Meter groß und 62 Kilo"
+    "example": ""
   },
   {
     "word": "dürfen",
@@ -1883,14 +1883,14 @@
     "article": null,
     "wordType": "verb",
     "translation": "to shop",
-    "example": "14 WORTLISTE"
+    "example": ""
   },
   {
     "word": "Einkaufs-",
     "article": "das",
     "wordType": "noun",
     "translation": "purchasing",
-    "example": "zentrum, -en"
+    "example": ""
   },
   {
     "word": "einladen",
@@ -1956,7 +1956,7 @@
     "article": null,
     "wordType": null,
     "translation": "singles (game between two individuals)",
-    "example": "sprechen?"
+    "example": ""
   },
   {
     "word": "Einzelzimmer",
@@ -1985,7 +1985,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to propose, to advise in favor of",
-    "example": "empfiehlt,",
+    "example": "",
     "verbForms": "empfiehlt · hat empfohlen"
   },
   {
@@ -2007,7 +2007,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to end",
-    "example": "hat geendet Der Kurs endet in einer Woche."
+    "example": "Der Kurs endet in einer Woche."
   },
   {
     "word": "endlich",
@@ -2035,7 +2035,7 @@
     "article": null,
     "wordType": null,
     "translation": "to excuse (something or (formal) someone)",
-    "example": "(sich), Ich möchte mich bei dir entschuldigen.",
+    "example": "Ich möchte mich bei dir entschuldigen.",
     "verbForms": "hat sich entschuldigt"
   },
   {
@@ -2073,7 +2073,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "reminds",
-    "example": "hat erinnert Kannst du mich morgen bitte an meinen Arzttermin erinnern?"
+    "example": "Kannst du mich morgen bitte an meinen Arzttermin erinnern?"
   },
   {
     "word": "erklären",
@@ -2087,14 +2087,14 @@
     "article": null,
     "wordType": null,
     "translation": "cold",
-    "example": "ist erkältet, gehen."
+    "example": ""
   },
   {
     "word": "erlauben",
     "article": null,
     "wordType": "verb",
     "translation": "to allow",
-    "example": "hat erlaubt ihnen erlaubt."
+    "example": ""
   },
   {
     "word": "Erlaubnis",
@@ -2108,7 +2108,7 @@
     "article": null,
     "wordType": null,
     "translation": "allowed",
-    "example": "ist erlaubt gewesen"
+    "example": ""
   },
   {
     "word": "Ermäßigung",
@@ -2130,7 +2130,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "achieved",
-    "example": "hat erreicht Bis 18 Uhr können Sie mich im Büro erreichen."
+    "example": "Bis 18 Uhr können Sie mich im Büro erreichen."
   },
   {
     "word": "erst",
@@ -2144,7 +2144,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to tell, to narrate, to recount",
-    "example": "hat erzählt Erzählst du mir eine Geschichte?",
+    "example": "Erzählst du mir eine Geschichte?",
     "verbForms": "hat erzählt"
   },
   {
@@ -2152,7 +2152,7 @@
     "article": null,
     "wordType": null,
     "translation": "it",
-    "example": "hin/hin-/-hin Wo gehst du hin?"
+    "example": "Wo gehst du hin?"
   },
   {
     "word": "Essen",
@@ -2174,7 +2174,7 @@
     "article": "das",
     "wordType": "noun",
     "translation": "compartment",
-    "example": "(ab)fahren, Ich fahre mit dem Auto zur Arbeit."
+    "example": "Ich fahre mit dem Auto zur Arbeit."
   },
   {
     "word": "Fahren",
@@ -2211,7 +2211,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to fall",
-    "example": "15WORTLISTE"
+    "example": ""
   },
   {
     "word": "falsch",
@@ -2261,14 +2261,14 @@
     "article": null,
     "wordType": null,
     "translation": "foul, rotten, rancid",
-    "example": "gaben und arbeiten nicht."
+    "example": ""
   },
   {
     "word": "fehlen",
     "article": null,
     "wordType": "verb",
     "translation": "for there to be a lack [with dative ‘to someone/something’ and an (+ dative) ‘of something’] (idiomatically translated by English lack with the dative object as the subject)",
-    "example": "hat gefehlt Tagen."
+    "example": "Tagen."
   },
   {
     "word": "Fehler",
@@ -2290,7 +2290,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to celebrate",
-    "example": "hat gefeiert Die Feier war sehr schön."
+    "example": "Die Feier war sehr schön."
   },
   {
     "word": "Feiertag",
@@ -2334,7 +2334,7 @@
     "article": null,
     "wordType": null,
     "translation": "ready for use",
-    "example": "ist fertig, Wir müssen gleich gehen."
+    "example": "Wir müssen gleich gehen."
   },
   {
     "word": "Fest",
@@ -2378,7 +2378,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to find",
-    "example": "hat gefunden Ich finde es nicht gut, dass du so viel arbeitest.",
+    "example": "Ich finde es nicht gut, dass du so viel arbeitest.",
     "verbForms": "hat gefunden"
   },
   {
@@ -2489,7 +2489,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to photograph",
-    "example": "fotografiert,"
+    "example": ""
   },
   {
     "word": "Frage",
@@ -2504,7 +2504,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to ask",
-    "example": "hat gefragt Ich möchte Sie etwas fragen.",
+    "example": "Ich möchte Sie etwas fragen.",
     "verbForms": "hat gefragt"
   },
   {
@@ -2548,7 +2548,7 @@
     "article": null,
     "wordType": null,
     "translation": "to gladden, to make glad, to make pleased",
-    "example": "bekommen."
+    "example": ""
   },
   {
     "word": "Freund",
@@ -2577,7 +2577,7 @@
     "article": null,
     "wordType": null,
     "translation": "fresh",
-    "example": "gekauft."
+    "example": ""
   },
   {
     "word": "froh",
@@ -2620,7 +2620,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to have breakfast, to breakfast (to eat the morning meal)",
-    "example": "frühstückt,"
+    "example": ""
   },
   {
     "word": "furchtbar",
@@ -2656,14 +2656,14 @@
     "article": null,
     "wordType": null,
     "translation": "third-person singular present of fahren",
-    "example": "ist (ab)gefahren jetzt ab."
+    "example": ""
   },
   {
     "word": "fängt",
     "article": null,
     "wordType": null,
     "translation": "third-person singular present of fangen",
-    "example": "hat angefangen Würden Sie bitte anfangen?"
+    "example": "Würden Sie bitte anfangen?"
   },
   {
     "word": "fühlen",
@@ -2678,7 +2678,7 @@
     "article": "der",
     "wordType": "noun",
     "translation": "guide (person who assists people by providing information, giving directions, etc.)",
-    "example": "schein, -e Sie hat die Führerscheinprüfung bestanden."
+    "example": "Sie hat die Führerscheinprüfung bestanden."
   },
   {
     "word": "Führung",
@@ -2743,7 +2743,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to give (changing ownership)",
-    "example": "hat gegeben Es gibt keine Karten mehr für das Konzert.",
+    "example": "Es gibt keine Karten mehr für das Konzert.",
     "verbForms": "gibt · hat gegeben"
   },
   {
@@ -2773,7 +2773,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to please",
-    "example": "hat gefallen Wie gefällt es Ihnen in Berlin?",
+    "example": "Wie gefällt es Ihnen in Berlin?",
     "verbForms": "gefällt · hat gefallen"
   },
   {
@@ -2781,7 +2781,7 @@
     "article": null,
     "wordType": null,
     "translation": "dangerous, hazardous",
-    "example": "ist gefährlich."
+    "example": ""
   },
   {
     "word": "gegen",
@@ -2824,7 +2824,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to go, to walk",
-    "example": "laufen) Wann kommst du zurück?",
+    "example": "Wann kommst du zurück?",
     "verbForms": "ist gegangen"
   },
   {
@@ -3058,7 +3058,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to believe something (to consider true)",
-    "example": "hat geglaubt Ich glaube, er kommt gleich."
+    "example": "Ich glaube, er kommt gleich."
   },
   {
     "word": "gleich",
@@ -3087,7 +3087,7 @@
     "article": "der",
     "wordType": "noun",
     "translation": "happiness, joy, bliss (state or emotion)",
-    "example": "wunsch, ¨-e"
+    "example": ""
   },
   {
     "word": "glücklich",
@@ -3101,7 +3101,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to congratulate",
-    "example": "gratuliert,"
+    "example": ""
   },
   {
     "word": "grillen",
@@ -3159,7 +3159,7 @@
     "article": null,
     "wordType": null,
     "translation": "valid, validated, legal",
-    "example": "ist gültig gewesen"
+    "example": ""
   },
   {
     "word": "günstig",
@@ -3208,7 +3208,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to hold (an object in one's hands)",
-    "example": "hat gehalten Kannst du mal kurz meine Jacke halten?"
+    "example": "Kannst du mal kurz meine Jacke halten?"
   },
   {
     "word": "Haltestelle",
@@ -3326,7 +3326,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to have a name",
-    "example": "hat geheißen Wie heißt das auf Deutsch?",
+    "example": "Wie heißt das auf Deutsch?",
     "verbForms": "hat geheißen"
   },
   {
@@ -3349,7 +3349,7 @@
     "article": "das",
     "wordType": "noun",
     "translation": "shirt, or in particular a dress shirt",
-    "example": "her/her-/-her Komm bitte mal her!",
+    "example": "Komm bitte mal her!",
     "plural": "-en"
   },
   {
@@ -3545,7 +3545,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to hang, to be suspended",
-    "example": "hat gehangen/ Warum hast du das Bild noch nicht an die Wand"
+    "example": ""
   },
   {
     "word": "hässlich",
@@ -3559,7 +3559,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to hear (to perceive sounds (or a sound) through the ear)",
-    "example": "hat gehört Ich habe das Lied schon mal gehört.",
+    "example": "Ich habe das Lied schon mal gehört.",
     "verbForms": "hat gehört"
   },
   {
@@ -3602,7 +3602,7 @@
     "article": null,
     "wordType": null,
     "translation": "to inform, to update",
-    "example": "(sich) (über), informieren."
+    "example": ""
   },
   {
     "word": "informiert",
@@ -3658,7 +3658,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "interested",
-    "example": "hat interessiert interessant."
+    "example": ""
   },
   {
     "word": "international",
@@ -3722,21 +3722,21 @@
     "article": null,
     "wordType": "verb",
     "translation": "to jog",
-    "example": "ist/hat gejoggt"
+    "example": ""
   },
   {
     "word": "Jugend-",
     "article": "die",
     "wordType": "noun",
     "translation": "youth",
-    "example": "herberge, -n"
+    "example": ""
   },
   {
     "word": "Jugendliche",
     "article": null,
     "wordType": null,
     "translation": "female equivalent of Jugendlicher: female youth, female teenager, female adolescent (up to 17–19 years of age)",
-    "example": "ist frei."
+    "example": ""
   },
   {
     "word": "jung",
@@ -3855,7 +3855,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to know",
-    "example": "hat gekannt Kennen Sie Berlin?",
+    "example": "Kennen Sie Berlin?",
     "verbForms": "hat gekannt"
   },
   {
@@ -3922,7 +3922,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to clap (make a soft clapping sound, particularly of something being closed)",
-    "example": "hat geklappt klappt.",
+    "example": "",
     "verbForms": "hat geklappt"
   },
   {
@@ -3981,7 +3981,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to cook, to prepare food (chiefly hot food for lunch or supper)",
-    "example": "hat gekocht Das Wasser kocht.",
+    "example": "Das Wasser kocht.",
     "verbForms": "hat gekocht"
   },
   {
@@ -4026,7 +4026,7 @@
     "article": null,
     "wordType": null,
     "translation": "to come",
-    "example": "wenig, -e Ich habe leider nur wenig verstanden.",
+    "example": "Ich habe leider nur wenig verstanden.",
     "verbForms": "ist gekommen"
   },
   {
@@ -4064,7 +4064,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "controlled",
-    "example": "hat kontrolliert Bitte öffnen Sie Ihren Koffer, wir müssen Ihr"
+    "example": ""
   },
   {
     "word": "Konzert",
@@ -4093,7 +4093,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to cost",
-    "example": "hat gekostet Wie viel kostet das Buch?",
+    "example": "Wie viel kostet das Buch?",
     "verbForms": "hat gekostet"
   },
   {
@@ -4115,7 +4115,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "health",
-    "example": "kasse, -n"
+    "example": ""
   },
   {
     "word": "Krankenhaus",
@@ -4226,7 +4226,7 @@
     "article": null,
     "wordType": null,
     "translation": "to be able (to do or be something), to have the possibility of, can.",
-    "example": "beschreiben?"
+    "example": ""
   },
   {
     "word": "könnt",
@@ -4262,21 +4262,21 @@
     "article": "der",
     "wordType": "noun",
     "translation": "cool",
-    "example": "schrank, ¨-e"
+    "example": ""
   },
   {
     "word": "kümmern",
     "article": null,
     "wordType": null,
     "translation": "to take care, to look after",
-    "example": "kümmert,"
+    "example": ""
   },
   {
     "word": "kündigen",
     "article": null,
     "wordType": "verb",
     "translation": "to cancel, to terminate (a continuous obligation)",
-    "example": "hat gekündigt gekündigt.",
+    "example": "",
     "verbForms": "hat gekündigt"
   },
   {
@@ -4284,7 +4284,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to laugh",
-    "example": "hat gelacht Lachen ist gesund."
+    "example": "Lachen ist gesund."
   },
   {
     "word": "Laden",
@@ -4348,14 +4348,14 @@
     "article": null,
     "wordType": "verb",
     "translation": "to allow",
-    "example": "hat gelassen Kann ich mein Auto hier stehen lassen?"
+    "example": "Kann ich mein Auto hier stehen lassen?"
   },
   {
     "word": "laufen",
     "article": null,
     "wordType": "verb",
     "translation": "to walk",
-    "example": "ist gelaufen Unsere Tochter ist erst ein Jahr alt, aber sie kann",
+    "example": "",
     "verbForms": "läuft · ist gelaufen"
   },
   {
@@ -4420,7 +4420,7 @@
     "article": null,
     "wordType": null,
     "translation": "unfortunately",
-    "example": "22 WORTLISTE"
+    "example": ""
   },
   {
     "word": "leihen",
@@ -4523,7 +4523,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to lie (to be in a horizontal position)",
-    "example": "hat/ist gelegen Judith liegt noch im Bett."
+    "example": "Judith liegt noch im Bett."
   },
   {
     "word": "Link",
@@ -4586,7 +4586,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to tell a lie",
-    "example": "hat gelogen Glaub ihm nicht, er lügt."
+    "example": "Glaub ihm nicht, er lügt."
   },
   {
     "word": "Mach",
@@ -4600,7 +4600,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to make, to produce, to create (an object, arrangement, situation, etc.)",
-    "example": "hat gemacht Ich muss jetzt das Essen machen.",
+    "example": "Ich muss jetzt das Essen machen.",
     "verbForms": "hat gemacht"
   },
   {
@@ -4718,7 +4718,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to opine, to think",
-    "example": "hat gemeint Der Film ist gut."
+    "example": "Der Film ist gut."
   },
   {
     "word": "Meinung",
@@ -4769,7 +4769,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to notice, to sense, to be able to tell (the difference in a situation or state)",
-    "example": "hat gemerkt sofort."
+    "example": ""
   },
   {
     "word": "Merkst",
@@ -4878,7 +4878,7 @@
     "article": "das",
     "wordType": "noun",
     "translation": "mobile",
-    "example": "telefon, -e Mobiltelefon?"
+    "example": ""
   },
   {
     "word": "Mode",
@@ -5117,7 +5117,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to name (to give a name to)",
-    "example": "hat genannt ihn Alex."
+    "example": ""
   },
   {
     "word": "nervös",
@@ -5279,7 +5279,7 @@
     "article": "das",
     "wordType": "noun",
     "translation": "fruit (food)",
-    "example": "ich Äpfel und Orangen.",
+    "example": "",
     "plural": "only sg."
   },
   {
@@ -5409,7 +5409,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to park",
-    "example": "hat geparkt Hier ist Parken verboten."
+    "example": "Hier ist Parken verboten."
   },
   {
     "word": "Partner",
@@ -5444,7 +5444,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to fit",
-    "example": "hat gepasst Welches Wort passt?"
+    "example": "Welches Wort passt?"
   },
   {
     "word": "passieren",
@@ -5459,7 +5459,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "happens",
-    "example": "hat genommen Was möchten Sie?"
+    "example": "Was möchten Sie?"
   },
   {
     "word": "Passwort",
@@ -5494,7 +5494,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "plant",
-    "example": "kümmern?"
+    "example": ""
   },
   {
     "word": "Pizza",
@@ -5522,7 +5522,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to plan (some action or event)",
-    "example": "hat geplant Morgen schwimmen ."
+    "example": ""
   },
   {
     "word": "Platz",
@@ -5738,7 +5738,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to advise",
-    "example": "hat geraten raten Sie mir?"
+    "example": ""
   },
   {
     "word": "Rathaus",
@@ -5781,7 +5781,7 @@
     "article": null,
     "wordType": null,
     "translation": "right, right-hand (direction)",
-    "example": "hat recht gehabt"
+    "example": ""
   },
   {
     "word": "rechts",
@@ -5795,7 +5795,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to talk, to speak, to orate",
-    "example": "hat geredet Rede nicht so viel!"
+    "example": "Rede nicht so viel!"
   },
   {
     "word": "Regen",
@@ -5890,7 +5890,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to renovate",
-    "example": "renoviert, Mein Onkel arbeitet nicht mehr."
+    "example": "Mein Onkel arbeitet nicht mehr."
   },
   {
     "word": "Rentner",
@@ -5919,7 +5919,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to repair",
-    "example": "repariert,",
+    "example": "",
     "verbForms": "hat repariert"
   },
   {
@@ -5978,7 +5978,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to smell (something)",
-    "example": "hat gerochen Hier riecht es nach Fisch."
+    "example": "Hier riecht es nach Fisch."
   },
   {
     "word": "Rind",
@@ -6035,7 +6035,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to call out, to shout, to cry (of a person or animal)",
-    "example": "hat gerufen Wir müssen einen Arzt rufen."
+    "example": "Wir müssen einen Arzt rufen."
   },
   {
     "word": "Rufst",
@@ -6056,7 +6056,7 @@
     "article": null,
     "wordType": null,
     "translation": "quiet",
-    "example": "25WORTLISTE"
+    "example": ""
   },
   {
     "word": "rund",
@@ -6114,7 +6114,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to say (to pronounce; communicate verbally)",
-    "example": "hat gesagt Wie sagt man „sorry“ auf Deutsch?",
+    "example": "Wie sagt man „sorry“ auf Deutsch?",
     "verbForms": "hat gesagt"
   },
   {
@@ -6179,7 +6179,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to create, to call into being",
-    "example": "hat geschafft alleine.",
+    "example": "",
     "verbForms": "hat geschafft"
   },
   {
@@ -6222,7 +6222,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to give as a present, to gift",
-    "example": "schenkt,"
+    "example": ""
   },
   {
     "word": "Schere",
@@ -6236,7 +6236,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to send, to dispatch (a person, letter, money etc. to a destination or a person)",
-    "example": "hat geschickt Ich schicke dir den Brief nach Hause.",
+    "example": "Ich schicke dir den Brief nach Hause.",
     "verbForms": "hat geschickt"
   },
   {
@@ -6272,7 +6272,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to sleep",
-    "example": "hat geschlafen Haben Sie gut geschlafen?",
+    "example": "Haben Sie gut geschlafen?",
     "verbForms": "schläft · hat geschlafen"
   },
   {
@@ -6404,7 +6404,7 @@
     "article": null,
     "wordType": null,
     "translation": "awful, terrible, horrible",
-    "example": "schreiben, schreibt,"
+    "example": ""
   },
   {
     "word": "Schreiben",
@@ -6476,14 +6476,14 @@
     "article": "das",
     "wordType": "noun",
     "translation": "singular imperative of schwimmen",
-    "example": "bad, ¨-er"
+    "example": ""
   },
   {
     "word": "schwimmen",
     "article": null,
     "wordType": "verb",
     "translation": "swim",
-    "example": "schwimmt,",
+    "example": "",
     "verbForms": "ist geschwommen"
   },
   {
@@ -6528,7 +6528,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to see",
-    "example": "hat gesehen Möchtest du einen Film sehen?",
+    "example": "Möchtest du einen Film sehen?",
     "verbForms": "sieht · hat gesehen"
   },
   {
@@ -6536,7 +6536,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "worth seeing",
-    "example": "würdigkeit, -en"
+    "example": ""
   },
   {
     "word": "Sehr",
@@ -6557,7 +6557,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to be; his",
-    "example": "ist gewesen Ich bin Mechaniker."
+    "example": "Ich bin Mechaniker."
   },
   {
     "word": "seit",
@@ -6592,7 +6592,7 @@
     "article": "der",
     "wordType": "noun",
     "translation": "service (e.g. in a restaurant)",
-    "example": "zufrieden."
+    "example": ""
   },
   {
     "word": "setzen",
@@ -6620,7 +6620,7 @@
     "article": null,
     "wordType": null,
     "translation": "third-person singular present of sehen",
-    "example": "hat ausgesehen Das Kleid sieht hübsch aus."
+    "example": "Das Kleid sieht hübsch aus."
   },
   {
     "word": "Sind",
@@ -6648,7 +6648,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to sit",
-    "example": "hat/ist gesessen"
+    "example": ""
   },
   {
     "word": "Ski",
@@ -6741,7 +6741,7 @@
     "article": null,
     "wordType": null,
     "translation": "to take a walk, to stroll, to walk leisurely",
-    "example": "ist spazieren gegangen"
+    "example": ""
   },
   {
     "word": "Spaß",
@@ -6755,7 +6755,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to store, save (keep safe for future use)",
-    "example": "speichert,",
+    "example": "",
     "verbForms": "hat gespeichert"
   },
   {
@@ -6787,7 +6787,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "third-person singular present of spielen",
-    "example": "hat gespielt Jakob spielt Klavier."
+    "example": "Jakob spielt Klavier."
   },
   {
     "word": "Sport",
@@ -6823,7 +6823,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "first-person singular present of sprechen",
-    "example": "stunde, -n Sprechstunde."
+    "example": ""
   },
   {
     "word": "Sprechen",
@@ -6888,7 +6888,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to stand (to be upright, support oneself in an erect position)",
-    "example": "hat/ist gestanden Ich bin Verkäuferin."
+    "example": ""
   },
   {
     "word": "Stelle",
@@ -6910,7 +6910,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to die",
-    "example": "ist gestorben gestern gestorben."
+    "example": ""
   },
   {
     "word": "Stiefel",
@@ -6960,7 +6960,7 @@
     "article": null,
     "wordType": null,
     "translation": "to argue",
-    "example": "streitet,",
+    "example": "",
     "verbForms": "hat sich gestritten"
   },
   {
@@ -7004,7 +7004,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to study at university or college level",
-    "example": "studiert,"
+    "example": ""
   },
   {
     "word": "Studium",
@@ -7026,7 +7026,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to disturb, to interfere, to bother",
-    "example": "hat gestört Darf ich Sie kurz stören?"
+    "example": "Darf ich Sie kurz stören?"
   },
   {
     "word": "Stück",
@@ -7040,7 +7040,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to search, to look for",
-    "example": "hat gesucht Ich suche meine Brille.",
+    "example": "Ich suche meine Brille.",
     "verbForms": "hat gesucht"
   },
   {
@@ -7071,7 +7071,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to surf",
-    "example": "hat/ist gesurft Surfst du oft im Internet?"
+    "example": "Surfst du oft im Internet?"
   },
   {
     "word": "sympathisch",
@@ -7143,7 +7143,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "cup, mug (drinking vessel)",
-    "example": "(aus)tauschen, Können wir bitte die Plätze tauschen?"
+    "example": "Können wir bitte die Plätze tauschen?"
   },
   {
     "word": "Taxi",
@@ -7173,7 +7173,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to split, to share",
-    "example": "28 WORTLISTE"
+    "example": ""
   },
   {
     "word": "teilnehmen",
@@ -7195,7 +7195,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to have a telephone call",
-    "example": "telefoniert,"
+    "example": ""
   },
   {
     "word": "Teller",
@@ -7374,7 +7374,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to carry, to bear (something on one's person)",
-    "example": "hat getragen Er trägt heute einen blauen Anzug.",
+    "example": "Er trägt heute einen blauen Anzug.",
     "verbForms": "trägt · hat getragen"
   },
   {
@@ -7382,7 +7382,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to work out, to exercise, to train",
-    "example": "trainiert,"
+    "example": ""
   },
   {
     "word": "Training",
@@ -7449,7 +7449,7 @@
     "article": null,
     "wordType": null,
     "translation": "third-person singular present of tragen",
-    "example": "hat eingetragen eintragen."
+    "example": ""
   },
   {
     "word": "träumen",
@@ -7463,7 +7463,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "To do (to perform or execute an action).",
-    "example": "hat getan Es tut mir leid, ich kann leider nicht kommen."
+    "example": "Es tut mir leid, ich kann leider nicht kommen."
   },
   {
     "word": "tut",
@@ -7523,7 +7523,7 @@
     "article": "der",
     "wordType": "noun",
     "translation": "move, removal, relocation (change of residence)",
-    "example": "29WORTLISTE",
+    "example": "",
     "plural": "\\u00a8-e"
   },
   {
@@ -7597,7 +7597,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "company",
-    "example": "unternimmt,"
+    "example": ""
   },
   {
     "word": "Unterricht",
@@ -7649,7 +7649,7 @@
     "article": null,
     "wordType": null,
     "translation": "on one’s way, underway, en route, in transit, going, travelling",
-    "example": "ist unterwegs, komme gleich."
+    "example": ""
   },
   {
     "word": "Urlaub",
@@ -7664,7 +7664,7 @@
     "article": null,
     "wordType": null,
     "translation": "arranged",
-    "example": "ist verabredet gewesen"
+    "example": ""
   },
   {
     "word": "verbieten",
@@ -7685,7 +7685,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to make money, to earn",
-    "example": "verdient,",
+    "example": "",
     "verbForms": "hat verdient"
   },
   {
@@ -7701,7 +7701,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to agree upon",
-    "example": "vereinbart,"
+    "example": ""
   },
   {
     "word": "vergessen",
@@ -7738,7 +7738,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to sell (something in exchange for money)",
-    "example": "verkauft,",
+    "example": "",
     "verbForms": "hat verkauft"
   },
   {
@@ -7754,7 +7754,7 @@
     "article": "das",
     "wordType": "noun",
     "translation": "traffic",
-    "example": "mittel, -"
+    "example": ""
   },
   {
     "word": "verletzen",
@@ -7775,7 +7775,7 @@
     "article": null,
     "wordType": null,
     "translation": "to fall in love",
-    "example": "verliebt,"
+    "example": ""
   },
   {
     "word": "verlieren",
@@ -7790,7 +7790,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to rent (to someone), to rent out",
-    "example": "vermietet,",
+    "example": "",
     "verbForms": "hat vermietet"
   },
   {
@@ -7813,7 +7813,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to miss (be late for; be unable to use or attend)",
-    "example": "verpasst,",
+    "example": "",
     "verbForms": "hat verpasst"
   },
   {
@@ -7828,14 +7828,14 @@
     "article": null,
     "wordType": "verb",
     "translation": "traveled",
-    "example": "ist verreist erst nächste Woche zurück."
+    "example": ""
   },
   {
     "word": "verschieben",
     "article": null,
     "wordType": "verb",
     "translation": "to move, to shift",
-    "example": "verschiebt,",
+    "example": "",
     "verbForms": "hat verschoben"
   },
   {
@@ -7874,7 +7874,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "tries",
-    "example": "hat versucht versucht?"
+    "example": ""
   },
   {
     "word": "Vertrag",
@@ -8038,7 +8038,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to hike, to go trekking",
-    "example": "wandert,"
+    "example": ""
   },
   {
     "word": "wann",
@@ -8052,7 +8052,7 @@
     "article": null,
     "wordType": null,
     "translation": "first-person singular preterite of sein: was",
-    "example": "ist fit gewesen"
+    "example": ""
   },
   {
     "word": "warm",
@@ -8123,7 +8123,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "an oblong bread roll",
-    "example": "weckt, weg/weg- Meine Brille ist weg."
+    "example": "Meine Brille ist weg."
   },
   {
     "word": "Weg",
@@ -8175,7 +8175,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to weep, cry",
-    "example": "hat geweint Weine bitte nicht!"
+    "example": "Weine bitte nicht!"
   },
   {
     "word": "weit",
@@ -8231,7 +8231,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "will, to be going to, forms the future tense",
-    "example": "ist geworden Das Wetter am Wochenende wird gut."
+    "example": "Das Wetter am Wochenende wird gut."
   },
   {
     "word": "Werkstatt",
@@ -8282,7 +8282,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to repeat (to do or say again)",
-    "example": "wiederholt,",
+    "example": "",
     "verbForms": "hat wiederholt"
   },
   {
@@ -8340,7 +8340,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to know",
-    "example": "hat gewusst Woher wissen Sie das?",
+    "example": "Woher wissen Sie das?",
     "verbForms": "weiß · hat gewusst"
   },
   {
@@ -8413,7 +8413,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "wool",
-    "example": "wollte, (hat wollen als Modalverb)"
+    "example": ""
   },
   {
     "word": "Workshop",
@@ -8456,7 +8456,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to choose, to select",
-    "example": "hat gewählt Wählen Sie bitte ein Getränk."
+    "example": "Wählen Sie bitte ein Getränk."
   },
   {
     "word": "Wäsche",
@@ -8499,7 +8499,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to draw, to sketch",
-    "example": "zeichnet,"
+    "example": ""
   },
   {
     "word": "Zeig",
@@ -8565,7 +8565,7 @@
     "article": "das",
     "wordType": "noun",
     "translation": "testimony, witness declaration",
-    "example": "(an-)/(aus)ziehen, Ich ziehe (mir) eine Jacke an.",
+    "example": "Ich ziehe (mir) eine Jacke an.",
     "plural": "-se"
   },
   {
@@ -8682,14 +8682,14 @@
     "article": null,
     "wordType": null,
     "translation": "to the",
-    "example": "vorn(e) Bitte vorn(e) einsteigen!"
+    "example": ""
   },
   {
     "word": "zurück",
     "article": null,
     "wordType": null,
     "translation": "back, backward, backwards, to the rear.",
-    "example": "(fahren, geben, Wann muss ich das Buch zurückgeben?"
+    "example": "Wann muss ich das Buch zurückgeben?"
   },
   {
     "word": "zusammen",
@@ -8710,7 +8710,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to change, to alter",
-    "example": "hat geändert Wie kann ich mein Passwort ändern?"
+    "example": "Wie kann ich mein Passwort ändern?"
   },
   {
     "word": "ärgern",
@@ -8724,7 +8724,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to open (to make something accessible or allow for passage by moving from a shut position)",
-    "example": "hat geöffnet Der Laden ist samstags bis 16.",
+    "example": "Der Laden ist samstags bis 16.",
     "verbForms": "hat geöffnet"
   },
   {
@@ -8739,7 +8739,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to practice, to drill, to train",
-    "example": "hat geübt zwei Stunden."
+    "example": ""
   },
   {
     "word": "über",
@@ -8767,7 +8767,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to stay overnight, to overnight, stay the night, sleep over",
-    "example": "übernachtet,",
+    "example": "",
     "verbForms": "hat übernachtet"
   },
   {
@@ -8775,7 +8775,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to translate, to interpret",
-    "example": "übersetzt,"
+    "example": ""
   },
   {
     "word": "überweisen",

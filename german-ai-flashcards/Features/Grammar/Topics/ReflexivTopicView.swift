@@ -2,13 +2,17 @@
 //  ReflexivTopicView.swift
 //  german-ai-flashcards
 //
-//  A topic that isn't a case, on the Grammatik hub under Themen: the same loop as a unit screen,
+//  A topic that isn't a case, reached from the hub's Weitere Bereiche (the Verben room) and
+//  `-kasus.debugOpen topic:reflexiv`: the same loop as a unit screen,
 //  with what a topic has.
 //
 //    Die Regel · The rule        the topic's rule lines and the pronoun table
 //    Verstehen · Understand      the lesson (a sheet) and the drills the bundled items fill:
 //                                Akkusativ oder Dativ?, Die richtige Person, each with ✓ once played
 //    Deine Runden · Your rounds  the topic's last three rounds, and all of them in Verlauf
+//
+//  Each row wears its task drawing (`GrammarTaskArt` through `GrammarTaskRow`), tinted with the
+//  topic's colour — a topic spanning two cases never wears one case's hue.
 //
 //  Built for Reflexive Verben; generalise `KasusUnitView` only when a second non-unit topic
 //  arrives. The lesson's Üben stashes a session and launches it once the sheet has gone (a
@@ -130,17 +134,27 @@ struct ReflexivTopicView: View {
     private var verstehenSection: some View {
         let progress = self.progress
         return Section {
-            row(symbol: "lightbulb.fill", title: "Lektion · The idea",
-                caption: "What sich is, and when it becomes mir · about 2 min",
-                done: progress.lessonRead(topicKey: topic.key), isLesson: true) {
-                showLesson = true
+            let lesson = KasusRoundStep.lesson.meta
+            Button { showLesson = true } label: {
+                // The topic's own caption: `sich` becoming `mir` is not what a case lesson says.
+                GrammarTaskRow(icon: .art(lesson.art),
+                               title: "\(lesson.germanTitle) · \(lesson.englishTitle)",
+                               subtitle: "What sich is, and when it becomes mir · about \(lesson.minutes) min",
+                               done: progress.lessonRead(topicKey: topic.key), tail: .read,
+                               tint: topic.color)
             }
+            .buttonStyle(.plain)
             ForEach(topic.exercises()) { kind in
-                row(symbol: kind.meta.symbol, title: "\(kind.meta.germanTitle) · \(kind.meta.englishTitle)",
-                    caption: "\(kind.meta.blurb) · about \(kind.meta.minutes) min",
-                    done: progress.drillDone(kind.step, topicKey: topic.key), isLesson: false) {
+                Button {
                     router.launch(.grammarDrill(GrammarDrillSession(kind: kind, topic: topic)))
+                } label: {
+                    GrammarTaskRow(icon: .art(kind.meta.art),
+                                   title: "\(kind.meta.germanTitle) · \(kind.meta.englishTitle)",
+                                   subtitle: "\(kind.meta.blurb) · about \(kind.meta.minutes) min",
+                                   done: progress.drillDone(kind.step, topicKey: topic.key),
+                                   tint: topic.color)
                 }
+                .buttonStyle(.plain)
             }
         } header: {
             Text("Verstehen · Understand")
@@ -150,39 +164,6 @@ struct ReflexivTopicView: View {
         }
     }
 
-    private func row(symbol: String, title: String, caption: String, done: Bool, isLesson: Bool,
-                     action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: symbol)
-                    .font(.title3)
-                    .foregroundStyle(topic.color)
-                    .frame(width: 34, height: 34)
-                    .background(topic.color.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.primary)
-                    HStack(spacing: 4) {
-                        Image(systemName: done ? "checkmark.circle.fill" : "circle")
-                        Text(caption)
-                            .lineLimit(2)
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Image(systemName: isLesson ? "book.pages" : "play.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(.tint)
-            }
-            .padding(.vertical, 4)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(title). \(done ? "Done" : "Not yet")")
-    }
 
     // MARK: - Deine Runden
 

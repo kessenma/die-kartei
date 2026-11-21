@@ -167,6 +167,48 @@ struct SourcesView: View {
             }
             .themedListRow()
 
+            // MARK: - How adults learn a language (FSI / DLI — docs/FSI_DLI_ROADMAP.md)
+            // Says only what the app does today. Each roadmap item that ships adds its clause
+            // and its citation here.
+            Section {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "building.columns.fill")
+                        .font(.system(size: 26))
+                        .foregroundStyle(.tint)
+                        .frame(width: 40, height: 40)
+
+                    Text(
+                        "Two US government schools teach adults a language full time: the Foreign Service Institute for diplomats and the Defense Language Institute for the military. What they have published backs several habits of this app. Grammar is explained early, so a wrong ending doesn't settle in. Short drills repeat until the answer comes without thinking. Feedback names the slip, and the next practice is picked from what you got wrong. Listening is practised the way the Defense Language Institute tests it: numbers heard once and typed as digits, sentences written down from dictation with missed endings shown apart from missed words, and a story's gist told in your own words after guessing which words will come up."
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 4)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Citations")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .textCase(.uppercase)
+                    Text("Frederick H. Jackson, Marsha A. Kaplan: Lessons learned from fifty years of theory and practice in government language teaching. In James E. Alatis, Ai-Hui Tan (eds.): Georgetown University Round Table on Languages and Linguistics 1999, pp. 71–87. Georgetown University Press, 2001.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text("Defense Language Institute Foreign Language Center: Student Handbook. Presidio of Monterey.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 2)
+
+                Link(destination: URL(string: "https://www.dliflc.edu/dliflc_student_handbook_20170104")!) {
+                    Label("DLI Foreign Language Center: Student Handbook (PDF)", systemImage: "arrow.up.right.square")
+                        .font(.footnote)
+                }
+            } header: {
+                Text("Wie Erwachsene lernen · How adults learn a language")
+                    .themedSectionHeader()
+            }
+            .themedListRow()
+
             // MARK: - Wiktionary / Kaikki
             Section {
                 HStack(spacing: 12) {
@@ -203,6 +245,36 @@ struct SourcesView: View {
                 .padding(.vertical, 2)
             } header: {
                 Text("Wiktionary (via Kaikki.org / Wiktextract)")
+                    .themedSectionHeader()
+            }
+            .themedListRow()
+
+            // MARK: - Tatoeba
+            Section {
+                Text(
+                    "The Perfekt example sentences in the past-tense deck are real sentences written by native speakers, taken from the Tatoeba corpus rather than generated. Each one is checked to be a true Perfekt clause with the right auxiliary before it reaches a card. Hören ▸ Diktat reads them aloud too."
+                )
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .padding(.vertical, 4)
+
+                Link(destination: URL(string: "https://tatoeba.org")!) {
+                    Label("Tatoeba", systemImage: "arrow.up.right.square")
+                        .font(.footnote)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("License")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .textCase(.uppercase)
+                    Text("Tatoeba sentence data is released under CC BY 2.0 FR.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 2)
+            } header: {
+                Text("Tatoeba")
                     .themedSectionHeader()
             }
             .themedListRow()

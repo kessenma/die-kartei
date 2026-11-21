@@ -10,6 +10,9 @@ struct PastTenseVerbEntry: Codable, Identifiable {
     let isRegular: Bool
     let example: String?
     let level: String
+    /// Where `example` came from: "tatoeba" (a real, checked sentence), "incumbent" (older
+    /// hand-made examples, some with digits) or "missing". Diktat reads only Tatoeba ones.
+    let exampleSource: String?
 
     var id: String { infinitive }
 }

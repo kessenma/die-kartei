@@ -16,8 +16,8 @@ ending blocks); this file is the layer the case path and the other topics share.
 ## The registry
 
 `KasusRoundStep` is every step a round can record as (the stories' `find` and `fill`, the drills,
-the lesson). `KasusRoundStep.meta` is one `KasusDrillMeta` row per step: titles, blurb, symbol,
-minutes, round size, the count noun („Sätze“ / „Wörter“), how it files (`story`, `topicDrill`,
+the lesson). `KasusRoundStep.meta` is one `KasusDrillMeta` row per step: titles, blurb, symbol, the
+task drawing (`art`), minutes, round size, the count noun („Sätze“ / „Wörter“), how it files (`story`, `topicDrill`,
 `concept`, `lesson`), its coach policy (`never`, `production`, `productionUnlessGenderShown`,
 `hintLadder`), where a unit screen offers it, the outcome labels that differ per step, the
 pooled-answer floor for a topic (`minItemsPerFocus`), and the round id it files under in a topic
@@ -30,6 +30,34 @@ Everything downstream reads the meta and never switches on a kind: recording
 (`KasusService.countsTowardSkill`, `skillMoves`), progress (`KasusProgress.drillDone`), Verlauf,
 the round detail, the calendar, the unit screens, the hub dots, the seeder. The only switch over
 modules in the app is `KasusDrillKind+Shell.swift`.
+
+### How an exercise is announced
+
+**Art marks a task you can play. A tinted chip marks a place you can enter or read.**
+
+A launcher row shows the step's `art` — a `GrammarTaskArt`, drawn by `GrammarTaskArtView` as the
+*shape of the task*: a sentence with one word slot empty, a word whose tail is missing, a stem with
+an ending snapping on, lines against a clock. `meta.symbol` stays for the dense, retrospective
+surfaces (Verlauf, the calendar, a round's detail, the drill shell's empty state). Rooms, cases,
+topics, the endings table and the rule sheets keep their chips, because they are places.
+
+Three rules the drawings hold (`GrammarTaskArtTests`):
+
+- **One case per task shape, not per kind.** Two kinds sharing a drawing is a claim that they ask
+  the same thing — `pair` and `reflexCase` are both „a gap, and exactly two candidates“. The test
+  pins which shares are intended, and that no two exercises offered in *one section of one topic*
+  look alike.
+- **Nothing lettered.** docs/PREPOSITION_3D.md's delivery table gives matching tiles nothing rather
+  than leak the meaning being tested; the same holds here, so a drawing is bars, blocks, dashes and
+  blank tags — never a form that is somebody's answer.
+- **No colour of its own.** The row passes its tint (a unit's case colour, a topic's, a preposition
+  group's), so neither the gender nor the case palette gains a meaning. A drawing works in one hue
+  at three strengths; differentiation is by form.
+
+The raw value is an asset slug, so a drawing can later be swapped for a baked Blender still without
+touching a screen — the `BauhausIcon` hatch, resolved in `GrammarTaskArtView` alone. Both rows live
+in `Features/Grammar/Shared/GrammarLauncherRow.swift` (`GrammarTaskRow`, `GrammarShelfRow`);
+a screen never hand-rolls one.
 
 ## The shell and a module
 
@@ -64,7 +92,8 @@ the Blitzrunde's minute with deferred feedback and the clock as its stage), `Rol
 `FehlerModule` (a mistake planted in a Rollen sentence by `FehlerQuestion`: tap the word, then
 fix it; a fix after a missed find is practice), `BridgeModule` (`BridgeQuestion`: the English
 pronoun, the German pronoun, then the article on one frame, derived from the Schnellrunde's
-frames with English twins). `UnbuiltModule` stays for a registered kind without a module.
+frames with English twins), `ArticleTableModule` (Die Tabelle: the article chart as a board,
+below). `UnbuiltModule` stays for a registered kind without a module.
 
 The unit screens read the registry: `GrammarTopic.exercises()` lists a unit's kinds (the concept
 bank's, the Brücke once the Akkusativ is in play, the Schnellrunde and Bau das Wort, the
@@ -91,6 +120,104 @@ them out of every unit screen, the unit's dots and the all-time case bars in Ver
 screen (`ReflexivTopicView`), and one coach focus that pools every counting answer across its
 cases (`KasusService.skillMoves`: `minItemsPerFocus` of them, six for a drill whose buttons are
 few enough to guess). Weiter on the hub never suggests a topic; the case path stays the path.
+
+## The hub's rooms
+
+The hub shelves everything that isn't the case path by domain: one `GrammarArea`
+(`Models/Grammar/GrammarArea.swift`) per room — Präpositionen (its own grown screen), Artikel &
+Endungen, Verben and Englisch & Fälle (one generic `GrammarBereichView` rendering `area.rows`). The grouping is
+display only: no stored key, no registry contact, and a room row's flame is any of its `foci`
+shaky. Reference lives below the rooms under Nachschlagen (the endings table directly, then the
+explainer library, which indexes the Merkhilfen, the Kasus-Check, the Endungs-Werkstatt and the
+rule sheets — an index may list what lives elsewhere; that is order, not duplication).
+
+Three contracts hold the shape as content grows (`GrammarAreaTests`):
+
+- **In-place upgrade.** A structure is one `.struktur(focus)` row on its room's shelf. It renders
+  as a quiet Lektion row (the 30-second `GrammarLessonSheet`) while `GrammarRoute(focus)`
+  `.hasExercise` is false, and as a full topic row (dots, push) the day its `GrammarTopic` ships —
+  same position, one predicate, never two maintained lists.
+- **Every `GrammarTopic` ships with a `GrammarFocus`.** The flames, the shelf row and the upgrade
+  all key on the focus.
+- **A room of exercises has no focus at all.** Englisch & Fälle shelves `.drill` rows only, so its
+  `foci` is empty and `levelLabel` names the span of the path it reads („A1–B1“). That is
+  deliberate: every kind in it is `coachPolicy: .never`, so a flame there would be one nothing
+  could put out, and a `GrammarFocus` nothing moves would show up in the conversation picker, the
+  class-entry picker and the pyramid's „rest“ list as a skill that is never practised.
+- **Overflow hatch.** When a room passes about eight rows, split along the focus mapping (Verben
+  would shed a Zeiten & Formen area): one new `GrammarArea` case, never a new taxonomy. The hub
+  and the room view iterate `allCases` / `rows` and are not edited for it.
+
+Adding to a room is one `BereichRow` in `GrammarArea.rows` (a `.struktur`, a pushed screen, a rule
+sheet, or a `.drill(kind)` that builds its row from `KasusDrillMeta` and pushes the exercise's own
+setup screen); adding a room is one enum case. A room's raw value is one lowercase word, because
+`-kasus.debugOpen <area>` reads it with `GrammarArea(rawValue:)`.
+
+### Die Tabelle
+
+The classroom article chart as a board: the grid is drawn with its cells open and the forms are
+tiles underneath, dragged into place (`ArticleTableBoardView`). Two charts and three shapes
+(`TableConfig`, remembered under `kasus.tabelle.*`, picked on `TabelleSetupView` off the Artikel
+room's shelf). No content: every cell is `GrammarCase.article(_:)` / `einEnding(_:)`, the same
+table `CaseEndingsTable` renders, so the game and the reference cannot disagree.
+
+- **A round is always the whole table** — sixteen cells, whether that is one board (Ganze Tabelle),
+  a case's row at a time (four boards) or four scattered gaps (a Latin square over the four boards,
+  so no board is one case or one column). A score means the same thing across the shapes, and every
+  round spans all four cases, which is why it files under `tabelle-alleFaelle` and needs nothing of
+  Verlauf or the per-case strip.
+- **The module grades the cell that was dropped on** (`pick.cell`), not the step the shell handed
+  it: the learner picks the order. The items are the blanks in a fixed order so the prefill, the
+  seeder and the progress strip have sixteen steps to walk, the board view offers only open cells,
+  and `answer` ignores a drop on anything else. Anything reading a step back reads the pick
+  (`missText`), never `item.blank`.
+- **The tray is the blanks**: one stack per distinct form with a count, and an answered cell
+  consumes one copy of *its own* form, right or wrong — so the counts can never drift from the
+  cells left, and running out of „der“ is itself a signal.
+- **A miss leaves the right form in its cell**, with the wrong pick struck through under it. The
+  learner is building a reference table; a wrong form left sitting in it would teach the wrong
+  thing. The misses are read back in the summary, because feedback is deferred like the
+  Blitzrunde's — a card between two drops would break the board into sixteen screens.
+- **Never evidence** (`coachPolicy: .never`): the tiles are a closed set, so elimination does part
+  of the work. It counts for the streak. `allowsReference` is off for the obvious reason — the
+  pinned table is the answer key.
+- **A drag is not the only path.** The same gesture taps: tap a tile to arm it, tap a cell to place
+  it. VoiceOver, a trackpad and a thumb on a four-column grid all need that, and both paths call
+  one `place`.
+- **The lifted tile is an overlay, never a child.** `position` takes every point its parent
+  offers, so a positioned child made the tray greedy and pushed the chart off the screen the
+  moment a drag started. An overlay is sized to the tray and still draws outside it.
+  `-kasus.debugTabelleLift der` parks a tile in the air over the first open cell, because the
+  simulator cannot drag and a screenshot of the resting state proves nothing about this.
+- **One subtree, one coordinate space.** The grid and the tray are the module's `panel` together
+  are the module's hero and panel, so the drag between them works in `.global` coordinates and
+  shares one `ArticleTableDrag` held by the module (built once per round, unlike the views).
+
+### Englisch & Fälle
+
+The four anchor questions (**Wer oder was? · Wen oder was? · Wem? · Wessen?**) asked on the English
+sentence of a Verstehen item, with „Keine Frage“ as the fifth answer where a preposition decided the
+case. Two exercises today, one module (`FrageModule`), one pool
+(`Services/Grammar/Kasus/EnglishAnchors.swift`) and no content of its own: both read
+`kasus_concepts.json`, whose items already carry an English twin and, per target, that phrase's span
+in the English line.
+
+- **The question is read off the role,** never authored: `KasusConceptFacts.roles` →
+  `KasusQuestion(role:)`. The pool is read off the target's **reason**, because
+  `KasusRole.empfaenger` merges a true receiver with a Dativ verb's partner, and that merge is the
+  trap („The father followed the woman“ → *der Frau*).
+- **Welche Frage?** draws the clean spans and always includes one „Keine Frage“ span where the unit
+  has one: an exercise that never shows a preposition-governed phrase teaches that every phrase
+  answers one of the four, when Kasus-Check step one says the opposite.
+- **Die englische Falle** draws the Dativ-verb spans and mixes in the clean spans an English ear
+  confuses them with, so the answer can never be „always Wem?“. It has no pool before the Dativ.
+- **Nominativ is never offered** (one case in play is a one-button grid), and a round files per
+  unit (`frage-alleFaelle`), so Verlauf, the per-case strip and the done-marks need nothing.
+- **The help preset is the ramp** (`KasusHelp`, `kasus.hilfe`): Leicht pins every item to „Beide“,
+  Normal walks Englisch → Beide → Deutsch across the round, Frei pins „Deutsch“ and asks one phrase
+  per sentence. The same five options at every setting, so a first-try share stays comparable; what
+  changes is the crutches. Seeded from `germanLevel` and never written back — nothing is stored
+  until the dial is touched (`EnglischSetupView`).
 
 ## Content packs
 
@@ -136,15 +263,74 @@ export to `Resources/gap_choice_items.json` and prints the golden rows for
 `GapChoiceFixtures.golden`. No model writes grammar content for the app; the tutors on the device
 never do.
 
+## Checking the content
+
+Three axes decide whether shipped German is good, and none of them subsumes another. Running one
+and calling it done is how `past_tense_verbs.json` reached 70% defective while LanguageTool
+rated it 4%: `"Gestern habe ich gekündigt."` filed under *anbieten* is flawless German and
+completely wrong.
+
+| axis | what it answers | tool |
+|---|---|---|
+| self-consistency | does the item agree with its own metadata? | `scripts/check_content.py` |
+| grammaticality | is the German well formed? | `--languagetool`, and `KasusValidator` in `kasus-cli` |
+| naturalness | would a German actually say this? | a human, on a sample — no tool catches it |
+
+```bash
+python3 scripts/check_content.py              # fail on anything new since the baseline
+python3 scripts/check_content.py --report     # the per-corpus table, exit 0
+python3 scripts/check_content.py --show gender-conflict
+training/.venv/bin/python scripts/check_content.py --languagetool
+```
+
+It lints every bundled corpus: answers inside their option rows, blanks matching gap counts,
+annotated phrases occurring verbatim, and every gender claim in the app cross-checked against
+`wiktionary_de.db`. `scripts/content_baseline.json` records what is accepted today, so the
+script fails only on *new* findings — a linter that is red from day one gets ignored. Re-baseline
+with `--write-baseline` after a deliberate change, and say so in the commit.
+
+There is no CI, so this is a local command. Run it before merging a content batch.
+
+### The Schnellrunde's own sentences
+
+Five kinds (`quick`, `build`, `blitz`, `pair`, `dativVerbs`) read no JSON at all — they assemble
+German at runtime from `EndingsFrame.all` × `EndingsNoun.all` × `EndingsDeterminer.form`. That
+space is finite, so `kasus-cli audit-endings` proves it exhaustively rather than sampling: all
+2,736 reachable cells, each one checked for the article carrying its case for that gender, the
+stem + ending round trip Bau das Wort builds from, the dative-plural `-n`, and the noun's gender
+against the dictionary. It also asserts on the data the two invariants that otherwise live only
+inside `EndingsQuestion.round`: `ein` never reaches a plural cell, `kein` never a Genitiv one.
+
+```bash
+training/kasus_cli/build.sh
+training/kasus_cli/build/kasus-cli audit-endings            # exit 1 on any failing cell
+training/kasus_cli/build/kasus-cli audit-endings --dump     # every cell as JSON, for LanguageTool
+training/kasus_cli/build/kasus-cli audit-endings --matrix   # the frame × noun grid a human reads
+```
+
+What the sweep cannot prove is whether a frame and a noun belong together — `Wir gratulieren dem
+Pferd.` is impeccable and silly. The article and number dimensions being machine-proven is what
+makes that affordable: `--matrix` collapses the question to 25 × 16 frame × noun pairs, one page
+of checkboxes, instead of 2,736 sentences.
+
+Running the dump through LanguageTool flags **16 of 2,736 (0.6%), and all sixteen are false
+alarms**: the rule `DEN_DEM` reads `Ich antworte den Männern.` as an accusative singular and asks
+for „dem“. It is a correct Dativ plural — `antworten` takes the Dativ and the plural article is
+`den`. Do not "fix" those sentences, and keep `DEN_DEM` out of any ignore list you add for other
+corpora: it catches real errors in the singular.
+
 ## Adding an exercise type
 
-1. A case on `KasusRoundStep` with a new raw value (never reuse one) and a `KasusDrillMeta` row.
+1. A case on `KasusRoundStep` with a new raw value (never reuse one) and a `KasusDrillMeta` row,
+   including its `art`: an existing `GrammarTaskArt` if it asks the same thing as a kind that has
+   one, a new case if it doesn't. The field has no default, so the compiler asks.
 2. A case on `KasusDrillKind` with its `step`, and (if it needs content) the pack it reads.
 3. A module file in `Features/Grammar/Drill/`, and its line in `KasusDrillKind+Shell.swift`
    (`makeView` and `debugRound`).
 4. If the module needs configuration, a case on `DrillVariant` and its `standard(for:in:)` row.
-5. `KasusDrillMetaTests` pins the raw value and the meta; `KasusDrillShellTests.modulesCompose`
-   plays it through; a `-kasus.debugVerifyRecord` row says what it moves.
+5. `KasusDrillMetaTests` pins the raw value and the meta; `GrammarTaskArtTests` pins the drawing
+   and re-checks that no section shows one twice; `KasusDrillShellTests.modulesCompose` plays it
+   through; a `-kasus.debugVerifyRecord` row says what it moves.
 6. A What's New bullet.
 
 Recording, Verlauf, the calendar, the round detail, the unit and topic screens, the hub dots, the
@@ -157,8 +343,10 @@ seeder and `-kasus.debugOpen <kind>:<topic>` need nothing.
 2. A `GrammarFocus` case if the coach should hear it, with its five switch rows; the pyramid files
    anything that isn't a case under Strukturen.
 3. A `GrammarRoute` row (`.topic(topic)` for a focus the route should launch).
-4. The topic screen (generalise `ReflexivTopicView` when the second one arrives) and its hub row
-   (the hub lists every non-unit topic that `isAvailable`).
+4. The topic screen (generalise `ReflexivTopicView` when the second one arrives). No hub edit:
+   the topic's `.struktur` row in its room (`GrammarArea.rows`) upgrades from Lektion to topic row
+   by itself once the focus routes to `.topic` — add the row there if the structure was never
+   shelved before.
 5. `GrammarTopicTests` for clean markup and the lesson's shape; `KasusRecordingTests` for what
    its rounds move; the Verlauf filter.
 
@@ -171,8 +359,12 @@ seeder and `-kasus.debugOpen <kind>:<topic>` need nothing.
 | `-kasus.debugOpen lesson:<topic>` | the lesson sheet: `lesson:dativ`, `lesson:reflexiv` |
 | `-kasus.debugAnswers right\|mixed` · `-kasus.debugQuickState right\|wrong\|slip\|done` · `-kasus.debugSeed <n>` · `-kasus.debugItem <id>` · `-kasus.debugRolesMode schritt\|direkt` | the prefill (never recorded) |
 | `-kasus.debugVerify 1` | the stories, the Verstehen items and the gap-choice items with their golden numbers and planted errors |
-| `-kasus.debugVerifyRecord 1` | the twenty-five synthetic rounds through `recordRound` |
+| `-kasus.debugVerifyRecord 1` | the synthetic rounds through `recordRound`, one per policy |
 | `-kasus.debugRoute 1` | where every `GrammarFocus` goes, incl. `reflexivverben → Akkusativ oder Dativ? · Reflexive Verben` |
+| `-kasus.debugOpen verben` · `artikel` · `englisch` | a hub room (`GrammarBereichView`) in a sheet |
+| `-kasus.debugOpen frage:<unit>` · `englischefalle:<unit>` | Englisch & Fälle, straight into a round (`alleFaelle`, `dativ`, `genitiv`, `akkusativ`) |
+| `-kasus.debugOpen tabelle:alleFaelle` | Die Tabelle on the chart and shape last picked (`kasus.tabelle.chart`, `kasus.tabelle.shape`) |
+| `-kasus.debugTabelleLift <form>` | with it, a tile („der“) parked in the air over the first open cell: the drag's look, on a simulator that cannot drag |
 
 ## Still open
 

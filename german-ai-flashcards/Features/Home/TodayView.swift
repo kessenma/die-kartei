@@ -35,6 +35,7 @@ struct TodaySection: View {
     @Query private var profiles: [LearnerProfile]
     @Query private var decks: [SavedDeck]
     @Query private var studyDays: [StudyDay]
+    @Query(sort: \JournalEntry.day, order: .reverse) private var journalEntries: [JournalEntry]
 
     /// Set to present a 30-second mini-lesson for a weak spot that has no drill of its own.
     @State private var lessonFocus: GrammarFocus?
@@ -114,9 +115,10 @@ struct TodaySection: View {
                 .buttonStyle(.plain)
         case .grammar(let focus):
             // `GrammarRoute` decides; the preposition hub is a push, the rest a tap.
-            if GrammarRoute(focus).presentation == .push {
+            if case .prepositionHub(let verbTrack) = GrammarRoute(focus) {
                 NavigationLink {
-                    PrepositionHubView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+                    PrepositionHubView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService,
+                                       initialTrack: verbTrack ? .verb : nil)
                 } label: {
                     rowLabel(rec, hero: hero)
                 }
@@ -146,6 +148,12 @@ struct TodaySection: View {
                 .buttonStyle(.plain)
         case .verbReview:
             NavigationLink { VerbPrepositionReviewView() } label: { rowLabel(rec, hero: hero) }
+        case .write(let prompt):
+            NavigationLink {
+                JournalTodayWriteView(prompt: prompt, modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+            } label: {
+                rowLabel(rec, hero: hero)
+            }
         }
     }
 
@@ -172,9 +180,22 @@ struct TodaySection: View {
                 dayIndex: dayIndex,
                 resume: resumeInfo,
                 wortschatz: wortschatzInfo,
-                verbDue: verbDueCount
+                verbDue: verbDueCount,
+                writing: writingInfo
             )
         )
+    }
+
+    // MARK: - Schreiben
+
+    /// Whether today's page exists, how long since the last one, and today's bank prompt.
+    private var writingInfo: TodaySnapshot.WritingInfo {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: .now)
+        let wroteToday = journalEntries.contains { $0.day == today }
+        let days = journalEntries.first.map { cal.dateComponents([.day], from: $0.day, to: today).day ?? 0 }
+        let prompt = WritingPromptBank.daily(level: coordinator.modelManager.germanLevel, kind: .tagebuch, dayIndex: dayIndex)?.de
+        return .init(wroteToday: wroteToday, daysSinceLastEntry: days, prompt: prompt)
     }
 
     // MARK: - Wortschatz

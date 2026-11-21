@@ -8,6 +8,11 @@ enum StudyActivity {
     case conversation           // one chat finished
     case storyReading(Int)      // n seconds spent reading/listening to a story
     case storyQuestions(Int)    // n story comprehension questions answered
+    case games(Int)             // n words solved in the Spiele room
+    case drawing(Int)           // n words drawn in the Zeichnen room
+    case writing(Int)           // n words written in the Schreiben room
+    case sheetWords(Int)        // n words on a Schreibblatt sheet just marked Fertig
+    case hoeren(Int)            // n items heard and answered in the Hören room
 
     /// Which time bucket this activity's seconds belong to.
     var timeBucket: StudyTimeBucket {
@@ -17,6 +22,12 @@ enum StudyActivity {
         case .conversation:   return .conversation
         case .storyReading:   return .storyReading
         case .storyQuestions: return .storyQuiz
+        case .games:          return .games
+        case .drawing:        return .drawing
+        case .writing:        return .writing
+        // Nothing times a sheet yet; were it to, by-hand writing is writing.
+        case .sheetWords:     return .writing
+        case .hoeren:         return .hoeren
         }
     }
 }
@@ -25,7 +36,7 @@ enum StudyActivity {
 /// can accrue without anything being *finished* — a conversation drips seconds into the day while
 /// it's still running.
 enum StudyTimeBucket {
-    case cards, grammar, conversation, storyReading, storyQuiz
+    case cards, grammar, conversation, storyReading, storyQuiz, games, drawing, writing, hoeren
 }
 
 /// Records daily study activity and derives the streak the "Today" screen shows.
@@ -53,6 +64,11 @@ enum StudyLogService {
         case .conversation:           day.conversations += 1
         case .storyReading(let s):    day.storySeconds += max(0, s)
         case .storyQuestions(let n):  day.storyQuestions += max(0, n)
+        case .games(let n):           day.gameWordsSolved += max(0, n)
+        case .drawing(let n):         day.wordsDrawn += max(0, n)
+        case .writing(let n):         day.wordsWritten += max(0, n)
+        case .sheetWords(let n):      day.sheetWordsWritten += max(0, n)
+        case .hoeren(let n):          day.hoerenItems += max(0, n)
         }
         // Story reading's seconds *are* its count, already added above.
         if case .storyReading = activity {} else {
@@ -117,6 +133,10 @@ enum StudyLogService {
         case .conversation: day.conversationSeconds += s
         case .storyReading: day.storySeconds += s
         case .storyQuiz:    day.storyQuizSeconds += s
+        case .games:        day.gameSeconds += s
+        case .drawing:      day.drawingSeconds += s
+        case .writing:      day.writingSeconds += s
+        case .hoeren:       day.hoerenSeconds += s
         }
     }
 

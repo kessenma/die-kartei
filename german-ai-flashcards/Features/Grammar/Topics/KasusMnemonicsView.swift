@@ -4,7 +4,8 @@
 //
 //  Merkhilfen · Memory aids: every `KasusMnemonic`, one line each with why it works, never a
 //  chart. The ones for every case first, then by case along the path. A pushed screen under the
-//  hub's Werkzeuge, and a sheet (`KasusMnemonicsSheet`) for the debug launch argument.
+//  explainer library's Nachschlagen section; the debug launch argument presents it in
+//  ContentView's shared debug sheet.
 //
 
 import SwiftUI
@@ -93,22 +94,6 @@ struct KasusMnemonicsView: View {
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
-    }
-}
-
-/// The same screen as a sheet.
-struct KasusMnemonicsSheet: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            KasusMnemonicsView()
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { dismiss() }
-                    }
-                }
-        }
     }
 }
 

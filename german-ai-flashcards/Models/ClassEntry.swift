@@ -162,13 +162,7 @@ nonisolated struct ClassWord: Codable, Hashable, Identifiable {
     /// How words are matched against each other and the deck: article stripped, lowercased.
     var key: String { ClassWord.key(trimmedGerman) }
 
-    static func key(_ german: String) -> String {
-        var word = german.trimmingCharacters(in: .whitespacesAndNewlines)
-        for article in ["der ", "die ", "das "] where word.lowercased().hasPrefix(article) {
-            word = String(word.dropFirst(article.count)).trimmingCharacters(in: .whitespaces)
-        }
-        return word.lowercased()
-    }
+    static func key(_ german: String) -> String { CardKind.matchKey(german) }
 
     /// Parse a pasted vocabulary list, one word per line: `der Tisch – table`, `gehen = to go`,
     /// `Buch: book`, `Haus<tab>house`, or a bare German word. Leading bullets and numbers are

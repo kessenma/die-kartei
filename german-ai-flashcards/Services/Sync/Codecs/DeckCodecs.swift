@@ -164,6 +164,7 @@ enum SavedCardCodec: SyncCodec {
         f.set("wordType", c.wordType)
         f.set("article", c.article)
         f.set("exampleSentence", c.exampleSentence)
+        f.set("formsLine", c.formsLine)
         f.set("conjugations", jsonData: c.conjugationsData)
         f.set("sortOrder", c.sortOrder)
         f.set("imageFileName", c.imageFileName)
@@ -225,6 +226,7 @@ enum SavedCardCodec: SyncCodec {
         c.wordType = flat.string("wordType")
         c.article = flat.string("article")
         c.exampleSentence = flat.string("exampleSentence")
+        c.formsLine = flat.string("formsLine")
         c.conjugationsData = flat.jsonData("conjugations")
         if let v = flat.int("sortOrder") { c.sortOrder = v }
         c.imageFileName = flat.string("imageFileName")

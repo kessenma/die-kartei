@@ -42,6 +42,7 @@ enum SyncDocuments {
         ProgressSyncDocument(),
         JourneySyncDocument(),
         PlacementAttemptsSyncDocument(),
+        VoicesSyncDocument(),
         FileSyncDocument(),
         DeviceSyncDocument(),
     ]
@@ -284,6 +285,60 @@ struct PlacementAttemptsSyncDocument: SyncDocumentKind {
     }
 }
 
+// MARK: - Voices (UserDefaults)
+
+/// The pronunciation voice and the four dialogue voices, as one choice: the latest pick on any
+/// device wins all five, "System Default" included. A voice the other device hasn't downloaded
+/// travels anyway. Speech falls back to a basic voice there, and Settings ▸ Voice lists what to
+/// download (`VoiceSetup`).
+struct VoicesSyncDocument: SyncDocumentKind {
+    static let name = SyncRecordName(kind: "Voices", id: SyncNameUUID.make("voices"))
+    /// Payload field ⇄ UserDefaults key ⇄ the `MLXModelManager` property that caches it.
+    static let fields: [(field: String, key: String, property: ReferenceWritableKeyPath<MLXModelManager, String?>)] = [
+        ("pronunciation", "selectedVoiceIdentifier", \.selectedVoiceIdentifier),
+        ("male", "voiceMaleIdentifier", \.voiceMaleIdentifier),
+        ("female", "voiceFemaleIdentifier", \.voiceFemaleIdentifier),
+        ("boy", "voiceBoyIdentifier", \.voiceBoyIdentifier),
+        ("girl", "voiceGirlIdentifier", \.voiceGirlIdentifier),
+    ]
+
+    let spec = SyncKindSpec(
+        kind: "Voices",
+        groups: [SyncFieldGroup(fields: VoicesSyncDocument.fields.map(\.field) + ["setAt"], orderBy: ["setAt"])]
+    )
+
+    private var defaults: UserDefaults { .standard }
+
+    func localRecords() -> [(name: SyncRecordName, known: SyncPayload)] {
+        var setAt = defaults.object(forKey: MLXModelManager.voicesSetAtKey) as? Date
+        if setAt == nil, Self.fields.contains(where: { defaults.string(forKey: $0.key) != nil }) {
+            // Picked before the date was kept: the oldest possible date, so it beats "never picked"
+            // but not any pick made since.
+            setAt = Date(timeIntervalSinceReferenceDate: 1)
+            defaults.set(setAt, forKey: MLXModelManager.voicesSetAtKey)
+        }
+        var f = SyncFields()
+        // Never picked travels as absent, so a fresh install can't replace a real choice.
+        for (field, key, _) in Self.fields {
+            f.set(field, setAt == nil ? nil : defaults.string(forKey: key))
+        }
+        f.set("setAt", setAt)
+        return [(Self.name, f.payload)]
+    }
+
+    func apply(_ flat: SyncPayload, name: SyncRecordName) {
+        guard let setAt = flat.date("setAt") else { return }
+        let manager = SyncManager.shared.modelManager
+        for (field, key, property) in Self.fields {
+            let id = flat.string(field)
+            defaults.set(id, forKey: key)
+            if let manager, manager[keyPath: property] != id { manager[keyPath: property] = id }
+        }
+        // After the setters above: their didSet stamps "now", and the choice was made then.
+        defaults.set(setAt, forKey: MLXModelManager.voicesSetAtKey)
+    }
+}
+
 // MARK: - Files (pictures and handouts)
 
 /// Card pictures, story illustrations, class handouts and saved job-posting PDFs. The rows that
@@ -295,7 +350,8 @@ struct PlacementAttemptsSyncDocument: SyncDocumentKind {
 /// sends it again. A deleted file is deleted everywhere. Card-picture drafts (`draft-*`) never
 /// leave the device.
 struct FileSyncDocument: SyncDocumentKind {
-    static let roots = ["CardImages", "StoryImages", "ClassNotes", "JobPostings"]
+    static let roots = ["CardImages", "StoryImages", "ClassNotes", "JobPostings", WordArtStore.rootName,
+                        JournalInkStore.rootName]
 
     let spec = SyncKindSpec(kind: "File")
     var tracksDeletions: Bool { true }

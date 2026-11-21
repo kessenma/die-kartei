@@ -132,8 +132,14 @@ def check(verbose=True):
     return problems
 
 
-def version_id(version):
-    payload = asc_json("versions", "list", "--app", APP_ID, "--output", "json")
+def version_id(version, platform="IOS"):
+    """The App Store version id for `version` on `platform` (IOS or MAC_OS).
+
+    Filtered by platform because the iOS and macOS versions of this app can carry the
+    same version string; unfiltered, the first match could be the wrong platform's.
+    """
+    payload = asc_json("versions", "list", "--app", APP_ID, "--platform", platform,
+                       "--output", "json")
     return next(
         (
             item["id"]
@@ -144,7 +150,7 @@ def version_id(version):
     )
 
 
-def push(version, dry_run=False):
+def push(version, dry_run=False, platform="IOS"):
     """Write every non-empty field to App Store Connect. Returns True when nothing failed."""
     problems = check(verbose=False)
     if problems:
@@ -152,9 +158,9 @@ def push(version, dry_run=False):
         emit("".join(f"    {p}\n" for p in problems))
         return False
 
-    vid = version_id(version)
+    vid = version_id(version, platform)
     if not vid:
-        log("❌", f"No App Store version {version} in App Store Connect.")
+        log("❌", f"No {platform} App Store version {version} in App Store Connect.")
         return False
 
     ok = True
@@ -246,6 +252,7 @@ def main():
     p_push = sub.add_parser("push", help="write the fields to App Store Connect")
     p_push.add_argument("--version")
     p_push.add_argument("--dry-run", action="store_true")
+    p_push.add_argument("--platform", choices=["IOS", "MAC_OS"], default="IOS")
     p_pull = sub.add_parser("pull", help="overwrite the files from App Store Connect")
     p_pull.add_argument("--version")
     args = parser.parse_args()
@@ -264,7 +271,7 @@ def main():
         log("❌", "Could not determine a marketing version; pass --version.")
         return 1
     if args.command == "push":
-        return 0 if push(version, dry_run=args.dry_run) else 1
+        return 0 if push(version, dry_run=args.dry_run, platform=args.platform) else 1
     return pull(version)
 
 

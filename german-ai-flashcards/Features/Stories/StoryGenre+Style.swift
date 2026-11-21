@@ -17,6 +17,7 @@ extension StoryGenre {
         case .comedy:    "theatermasks.fill"
         case .tagebuch:  "book.closed.fill"
         case .fabel:     "hare.fill"
+        case .nachrichten: "radio.fill"
         }
     }
 
@@ -34,6 +35,7 @@ extension StoryGenre {
         case .comedy:    "A funny mix-up or situation"
         case .tagebuch:  "First-person, dated, personal"
         case .fabel:     "Talking animals with a moral"
+        case .nachrichten: "A short radio report: who, what, when, where"
         }
     }
 
@@ -51,6 +53,7 @@ extension StoryGenre {
         case .comedy:    [Color(hex: 0xFFD54F), Color(hex: 0xFB8C00)]
         case .tagebuch:  [Color(hex: 0xE0B27A), Color(hex: 0xB07B45)]
         case .fabel:     [Color(hex: 0x9CCC65), Color(hex: 0x558B2F)]
+        case .nachrichten: [Color(hex: 0xB0BEC5), Color(hex: 0x546E7A)]
         }
     }
 

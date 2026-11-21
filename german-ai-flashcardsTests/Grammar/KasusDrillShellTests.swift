@@ -119,6 +119,21 @@ struct KasusDrillShellTests {
                 }
             }
         }
+        // Die Tabelle generates its chart, so it composes on any topic; it is launched from the
+        // Artikel room on Alle Fälle, and a round is the whole table whatever the shape.
+        for shape in ArticleTableShape.allCases {
+            for chart in ArticleChart.allCases {
+                var session = GrammarDrillSession(kind: .tabelle, topic: .kasus(.alleFaelle))
+                session.variant = .table(TableConfig(chart: chart, shape: shape))
+                let result = KasusDrillKind.tabelle.debugRound(session: session, wrongEvery: 3, seed: 42)
+                #expect(result?.storyID == "tabelle-alleFaelle" && result?.step == .tabelle)
+                #expect(result?.items.count == ArticleTableRound.cellCount, "\(chart) \(shape)")
+                #expect(result?.items.contains { !$0.firstTry } == true)
+                // Every cell of the chart exactly once, so the four cases are always in play.
+                let cells = Set((result?.items ?? []).map { KasusTableCell(kasus: $0.kasus, genus: $0.genus) })
+                #expect(cells.count == ArticleTableRound.cellCount, "\(chart) \(shape) repeats a cell")
+            }
+        }
         // The reflexive drills compose from the bundled gap-choice items, both cases in a case round.
         for kind in [KasusDrillKind.reflexCase, .reflexPerson] {
             let result = kind.debugRound(topic: .reflexiv, wrongEvery: 3, seed: 42)
@@ -180,5 +195,6 @@ struct KasusDrillShellTests {
         #expect(KasusDebugOpen(argument: "fill:dativ") == nil)
         #expect(KasusDebugOpen(argument: "quick:nirgends") == nil)
         #expect(KasusDebugOpen(argument: "fill") == .story(.fill))
+        #expect(KasusDebugOpen(argument: "tabelle:alleFaelle") == .drill(.tabelle, .kasus(.alleFaelle)))
     }
 }

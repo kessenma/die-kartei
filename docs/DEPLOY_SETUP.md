@@ -294,6 +294,27 @@ asc builds list --app 6770390331 --sort -uploadedDate --limit 3 --output table
 
 If all five are clean, you can ship.
 
+### CloudKit schema
+
+TestFlight and App Store builds sync against CloudKit **Production**, which only gets a schema
+through the CloudKit Console's **Deploy Schema Changes**. Before archiving, `deploy.py` runs
+`xcrun cktool export-schema --environment production` and stops if `KarteiItem` or any field the
+sync transport writes is missing (it reads the names from `CloudKitSyncTransport.swift`). 1.7 (3)
+shipped before the first deploy: every send failed with "Cannot create new type KarteiItem in
+production schema".
+
+cktool needs a **management token**, saved once per Mac (into the login keychain):
+
+1. CloudKit Console ▸ `iCloud.kyle-essenmacher.german-ai-flashcards` ▸ Settings ▸ **Tokens & Keys**
+   ▸ new Management Token.
+2. `xcrun cktool save-token --type management` and paste it at the hidden prompt.
+3. Check: `xcrun cktool export-schema --team-id RHPLRY9X9P --container-id
+   iCloud.kyle-essenmacher.german-ai-flashcards --environment production` prints `RECORD TYPE
+   KarteiItem`.
+
+Without a token the check warns and skips. If it stops a deploy, follow
+[ICLOUD_SYNC.md ▸ Shipping](ICLOUD_SYNC.md#shipping), then run the deploy again.
+
 ---
 
 ## 6. Ship
@@ -337,18 +358,28 @@ stamping and the TestFlight group.
 [`.vscode/tasks.json`](../.vscode/tasks.json) wires the same commands to the GUI —
 no extra tooling, no `package.json`:
 
-- **Cmd+Shift+B** runs *Deploy: TestFlight* (it's the default build task)
-- **Cmd+Shift+R** runs *Deploy: App Store* on the primary dev Mac. VS Code has no
-  per-workspace keybindings, so on a new machine add this to the user
-  `keybindings.json` (Cmd+Shift+P → "Preferences: Open Keyboard Shortcuts (JSON)"):
-  `{ "key": "shift+cmd+r", "command": "workbench.action.tasks.runTask", "args": "Deploy: App Store (upload only, no submit)" }`
-- **Cmd+Shift+M** runs *Deploy: Mac TestFlight*, a user keybinding like Cmd+Shift+R
-  (it replaces VS Code's own Cmd+Shift+M, the Problems panel):
-  `{ "key": "shift+cmd+m", "command": "workbench.action.tasks.runTask", "args": "Deploy: Mac TestFlight" }`
+All four deploy shortcuts are **Cmd+Opt+Shift** + a letter, so none of them shadows a
+VS Code default. VS Code has no per-workspace keybindings, so on a new machine add these to
+the user `keybindings.json` (Cmd+Shift+P → "Preferences: Open Keyboard Shortcuts (JSON)"):
+
+```json
+{ "key": "alt+shift+cmd+b", "command": "workbench.action.tasks.runTask", "args": "Release: TestFlight (iOS + macOS)" },
+{ "key": "alt+shift+cmd+r", "command": "workbench.action.tasks.runTask", "args": "Release: Menu" },
+{ "key": "alt+shift+cmd+d", "command": "workbench.action.tasks.runTask", "args": "Release: Dry run (iOS + macOS)" },
+{ "key": "alt+shift+cmd+m", "command": "workbench.action.tasks.runTask", "args": "Deploy: Mac TestFlight" }
+```
+
+- **Cmd+Opt+Shift+B**: *Release: TestFlight (iOS + macOS)*, `scripts/release_all.py --beta`.
+  It is also the default build task, so plain **Cmd+Shift+B** runs it too.
+- **Cmd+Opt+Shift+R**: *Release: Menu*, `scripts/release_menu.py`: TestFlight, App Store, product page
+  only (description + screenshots, no build), dry run, preflight, latest log; then platforms and
+  whether screenshot sets are replaced. It shows the command and asks before uploading.
+- **Cmd+Opt+Shift+D**: *Release: Dry run (iOS + macOS)*, which uploads nothing.
+- **Cmd+Opt+Shift+M**: *Deploy: Mac TestFlight* (macOS only).
 - **Cmd+Shift+P → "Tasks: Run Task"** lists all of them:
-  *TestFlight*, *App Store (upload only)*, *Mac TestFlight*,
-  *Mac App Store (upload only)*, *Preflight checks*, *Clean build artifacts*,
-  *Open latest log*
+  the three *Release:* tasks above, and the single-platform *Deploy: TestFlight*,
+  *App Store (upload only)*, *Mac TestFlight*, *Mac App Store (upload only)*, plus
+  *Preflight checks*, *Clean build artifacts*, *Open latest log*
 
 Build errors are parsed with the `$swiftc` problem matcher, so failures land in
 the Problems panel and are clickable.
@@ -391,9 +422,12 @@ run `scripts/whats_new.py`'s `stamp` against
 - The top `"version": "unreleased"` entry is renamed to the version being built and
   dated today. If an earlier TestFlight of the same version already claimed the
   entry, the new bullets are merged into it instead (duplicate titles skipped).
-- Any versioned entry above the live App Store version that isn't the one being
-  built never reached anyone (a TestFlight-only 1.5 when 1.6 is what ships) and is
-  folded into the current one.
+- Any versioned entry above the highest version **submitted** to the App Store (in
+  review, waiting for release, or on sale) that isn't the one being built never reached
+  anyone (a TestFlight-only 1.5 when 1.6 is what ships) and is folded into the current
+  one. Submitted, not merely live: on 2026-11-08 1.6 was waiting for review, the live
+  version read 1.4, and the 1.7 TestFlight folded 1.6 into 1.7, so 1.7 repeated every
+  1.6 bullet. If that lookup fails, nothing is folded that run.
 - The rendered entry (`• title — detail`, one per line) becomes the TestFlight
   "What to Test" text.
 - `release` additionally refreshes the entry's date to today, **refuses to archive
@@ -553,6 +587,7 @@ Clean up with `rm -rf .asc/artifacts` when you're done.
 | `TESTFLIGHT_GROUP` | `internal-die-Kartei` | Target beta group (name or ID) |
 | `NOTIFY_TESTERS` | — | `true` notifies testers after distribution |
 | `XCODE_PATH` | — | Pin a toolchain for one run, e.g. `/Applications/Xcode.app` |
+| `SKIP_SCHEMA_CHECK` | — | `1` skips the CloudKit Production schema check for one run |
 | `ASC_KEY_PATH` | `~/.asc/AuthKey_24JDJGBV9T.p8` | Location of the API key used for signing auth |
 
 Logs are written to `build-logs/deploy-{beta,release}/YYYY-MM-DD/`, 10 kept per
@@ -625,9 +660,19 @@ The phase acts on **archives only** (`ACTION=install`). Debug, simulator and
 test builds, including ones made in Xcode-beta for day-to-day work, get a
 one-line note and are otherwise untouched. Archiving *with* a beta Xcode is
 refused outright, since ASC checks `DTXcodeBuild` too and no stamp would save
-it. Note that the seed rule does not hold for SDK builds, which number
-differently (release Xcode 26.6 ships iOS SDK `23F81a`, which ASC accepts). To inspect any build by
-hand:
+it.
+
+That refusal no longer reads the build number: Xcode **27.1 shipped as
+`27A9275`** while its betas were `27A92xx`, so both sit in the seed range and
+the rule that caught `27A5194q` now rejects the release too (it did, on
+2026-10-25). The guard asks the bundle instead — a Mac App Store receipt in
+`Contents/_MASReceipt` means release, an `XcodeBeta` icon or a `beta` in the
+path means beta — and only falls back to the build number when the bundle says
+neither. So keep a beta Xcode in a path that names it (`Xcode-27.1-beta.app`),
+the way 27.1's betas ship without the beta icon. The seed rule still holds for
+the *macOS* build, and never held for SDK builds, which number differently
+(release Xcode 27.1 ships iOS SDK `24A94232`, which ASC accepts). To inspect any
+build by hand:
 
 ```bash
 unzip -p .asc/artifacts/<name>.ipa 'Payload/*.app/Info.plist' > /tmp/i.plist
@@ -681,8 +726,8 @@ asc versions update --version-id <id> --version 1.6
 ```
 
 Its What's New bullets are not lost: `whats_new.stamp` folds any entry above the
-live App Store version into the version actually shipping, so 1.5's highlights
-move to 1.6 on the next deploy.
+highest submitted App Store version into the version actually shipping, so 1.5's
+highlights move to 1.6 on the next deploy.
 
 ---
 

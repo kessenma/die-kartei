@@ -32,7 +32,7 @@ xcrun --sdk macosx swiftc -O -swift-version 5 -target arm64-apple-macos26.2 \
   -enable-upcoming-feature DisableOutwardActorInference \
   -D DEBUG \
   -module-name KasusCLI \
-  "${SOURCES[@]}" "$HERE/Stubs.swift" "$HERE/concepts.swift" "$HERE/gaps.swift" "$HERE/main.swift" \
+  "${SOURCES[@]}" "$HERE/Stubs.swift" "$HERE/concepts.swift" "$HERE/gaps.swift" "$HERE/endings.swift" "$HERE/main.swift" \
   -o "$OUT/kasus-cli"
 
 for resource in wiktionary_de.db a1_vocabulary.json a2_vocabulary.json b1_vocabulary.json \

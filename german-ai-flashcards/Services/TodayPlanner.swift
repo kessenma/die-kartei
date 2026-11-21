@@ -21,6 +21,8 @@ enum TodayIntent: Equatable {
     case wortschatz
     /// The verb-pair review box (Verben mit Präpositionen), studied on its own verb cards.
     case verbReview
+    /// A few lines in the Tagebuch, with today's prompt from the bank when there is one.
+    case write(prompt: String?)
 }
 
 /// One ordered item in the Today plan.
@@ -41,6 +43,7 @@ struct TodayRecommendation: Identifiable {
         case .resumePausedDeck: return "resume"
         case .wortschatz:       return "wortschatz"
         case .verbReview:       return "verbs"
+        case .write:            return "write"
         }
     }
 }
@@ -67,6 +70,16 @@ struct TodaySnapshot {
     /// Verb pairs that have come due in their review box. Only scheduled ones: the plan never
     /// offers the 42 new pairs to someone who hasn't opened the box.
     var verbDue: Int = 0
+    /// The Schreiben room's state. Nil when the view did not look.
+    var writing: WritingInfo? = nil
+
+    struct WritingInfo {
+        var wroteToday: Bool
+        /// Days since the newest entry; nil when the learner has never written.
+        var daysSinceLastEntry: Int?
+        /// Today's Tagebuch prompt from the bank, at the learner's level.
+        var prompt: String?
+    }
 
     struct ResumeInfo: Equatable {
         var topic: String
@@ -121,6 +134,12 @@ enum TodayPlanner {
             recs.append(grammar(focus))
         }
 
+        // 2b. A few lines in the journal: every day once the habit has lapsed three days, else
+        //     every third day as a nudge. Never when today's page already exists.
+        if let w = s.writing, !w.wroteToday, (w.daysSinceLastEntry ?? 99) >= 3 || s.dayIndex % 3 == 0 {
+            recs.append(write(w))
+        }
+
         // 3. Keep (or kindle) the streak with a short chat — always on the plan.
         recs.append(chat(streak: s.streak, studiedToday: s.studiedToday))
 
@@ -168,6 +187,16 @@ enum TodayPlanner {
             subtitle: "Goethe A1–B1 · ~\(minutes) min",
             systemImage: "archivebox.fill",
             accent: .indigo
+        )
+    }
+
+    private static func write(_ w: TodaySnapshot.WritingInfo) -> TodayRecommendation {
+        TodayRecommendation(
+            intent: .write(prompt: w.prompt),
+            title: (w.daysSinceLastEntry ?? 0) >= 3 ? "Schreib wieder ein paar Zeilen" : "Schreib ein paar Zeilen",
+            subtitle: w.prompt ?? "Tagebuch · ~5 min, German, English or both",
+            systemImage: SchreibenTile.systemImage,
+            accent: SchreibenTile.tint
         )
     }
 

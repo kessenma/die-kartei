@@ -30,6 +30,7 @@ Docs accumulated by round, not by topic. When two disagree, the one lower in thi
 | **Kasus story slice** — teaching the tutor to write to a plan; `kasus_cli/` (the app's planner + check as a Mac tool); the Kolibri-1 vs gemma-31B bake-offs | [`KASUS_STORY_DATA.md`](KASUS_STORY_DATA.md) |
 | **Kolibri-1 bake-off results** — stories + correction tail vs gemma-31B, hand reads, the check's blind spots it exposed | [`KOLIBRI_BAKEOFF.md`](KOLIBRI_BAKEOFF.md) |
 | **Verstehen-item probe** — can the 4 tutors write one-sentence case exercises around app-planned phrases; the gate, pass rates, hand read, options incl. a training slice | [`KASUS_CONCEPT_PROBE.md`](KASUS_CONCEPT_PROBE.md) |
+| **Gist judge probe** — can the tutors (and Apple Intelligence) say whether a learner's English summary has each key point; `hoeren_cli/` compiles the app's prompt + parser; fixtures with gold labels | [`GIST_PROBE.md`](GIST_PROBE.md) |
 | Long-form writeup for publication | [`ARTICLE.md`](ARTICLE.md) |
 
 `german-tutor-cactus-retrain-plan.md` and `DATA_V2_DISTILL_PLAN.md` are historical — superseded by

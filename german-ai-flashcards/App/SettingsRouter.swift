@@ -14,6 +14,8 @@ enum SettingsRoute: Hashable {
     case memory
     /// Settings ▸ Account ▸ iCloud Sync.
     case sync
+    /// Settings ▸ App ▸ Voice — the Mac's "Show Me How" when a chosen voice isn't downloaded.
+    case voice
 }
 
 /// Lets any screen ask to be taken to a Settings destination.

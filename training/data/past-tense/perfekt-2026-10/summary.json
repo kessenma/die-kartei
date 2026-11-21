@@ -1,0 +1,21 @@
+{
+  "seed": 7,
+  "verbs": 374,
+  "with_candidates": 348,
+  "with_five_plus": 277,
+  "strata": {
+    "A:auxiliary-fixed": 4,
+    "A:modal": 6,
+    "A:no-evidence": 20,
+    "A:participle-fixed": 13,
+    "A:thin": 38,
+    "B:bulk": 231,
+    "C:incumbent": 62
+  },
+  "to_read": 181,
+  "corrections": {
+    "participle": 15,
+    "auxiliary": 6,
+    "infinitive": 1
+  }
+}

@@ -263,9 +263,12 @@ def stamp(doc: dict, version: str, live: Optional[str] = None,
     - `unreleased` + no entry for `version`  -> rename it, date = today.
     - `unreleased` + an entry for `version`  -> merge new bullets into it (an earlier TestFlight
       of the same version already claimed the entry), drop `unreleased`.
-    - Entries above `live` (the highest version on the App Store) other than `version` never
-      reached anyone: a TestFlight-only 1.5 when 1.6 is what ships. They are folded into
-      `version` rather than left as phantom releases.
+    - Entries above `live` other than `version` never reached anyone: a TestFlight-only 1.5
+      when 1.6 is what ships. They are folded into `version` rather than left as phantom
+      releases. `live` must be the highest version SUBMITTED to the App Store (in review,
+      waiting for release, or on sale), not just the one on sale: a version in review already
+      has its notes, and folding it makes the next version repeat them. deploy.py passes
+      `submitted_app_store_version()`; `None` folds nothing.
     - `refresh_date` moves the entry's date to today (release mode: the ship date).
 
     Idempotent: with nothing pending, nothing changes. Assumes `check()` passed.
@@ -407,7 +410,7 @@ def main(argv=None) -> int:
 
     p = sub.add_parser("stamp", help="turn 'unreleased' into a version (what deploy.py does)")
     p.add_argument("version")
-    p.add_argument("--live", help="highest version on the App Store; folds never-released entries above it")
+    p.add_argument("--live", help="highest version submitted to the App Store (in review or later); folds the entries above it")
     p.add_argument("--refresh-date", action="store_true", help="set the entry's date to today (release)")
     p.add_argument("--require", action="store_true", help="exit 1 if the version ends up with no entry")
     p.add_argument("--dry-run", action="store_true", help="print the diff instead of writing")

@@ -10,7 +10,7 @@
 //    Der · Die · Das  the article game (`ArticleRound`): score and count
 //    Präpositionen    the Kasus drill (`PrepositionRound`): score and count
 //
-//  Filter pills on top (Alle · Fälle · Der · Die · Das · Präpositionen), then an all-time strip
+//  Filter pills on top (Alle · Fälle · Der · Die · Das · Präpositionen · Reflexiv), then an all-time strip
 //  with the first-try share per case. A unit screen's "Alle anzeigen" opens it for that unit only,
 //  without the pills. The hub's Verlauf row and the unit screen's "Deine Runden" reuse the rows.
 //
@@ -117,17 +117,6 @@ struct GrammarHistoryEntry: Identifiable {
 }
 
 extension KasusRound {
-    /// False for a read lesson (nothing answered; the unit screen's ✓ is where it shows) and, in
-    /// DEBUG, for the synthetic rounds `-kasus.debugVerifyRecord keep` leaves behind.
-    var isListed: Bool {
-        if isLessonRound { return false }
-        #if DEBUG
-        return storyID != KasusService.debugVerifyStoryID
-        #else
-        return true
-        #endif
-    }
-
     /// „Der verlorene Schlüssel“, or Schnellrunde (· Dativ). The title is looked up from the id,
     /// so a retitled story reads right on old rounds. A tutor-written story's comes from the store
     /// when a context is given, while the story is kept; after it's deleted, the unit's name.
@@ -329,17 +318,7 @@ struct KasusHistoryView: View {
             }
         }
         return Section {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .top, spacing: 0) {
-                    stat("\(entries.count)", entries.count == 1 ? "round" : "rounds")
-                    stat("\(asked)", "answers")
-                    stat("\(KasusHistoryFormat.percent(firstTry, of: asked))%", "right first try")
-                }
-                if !perCase.isEmpty {
-                    CaseTallyBars(perCase: perCase)
-                }
-            }
-            .padding(.vertical, 6)
+            GrammarCaseSummary(rounds: entries.count, answers: asked, firstTry: firstTry, perCase: perCase)
         } header: {
             Text("Insgesamt · All time")
                 .themedSectionHeader()
@@ -348,19 +327,6 @@ struct KasusHistoryView: View {
                 Text("The bars count first tries per case, over every story and Schnellrunde in this list.")
             }
         }
-    }
-
-    private func stat(_ value: String, _ label: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(value)
-                .themedLabel(.title2.weight(.bold), size: 24)
-                .monospacedDigit()
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
     }
 
     // MARK: Days
@@ -393,25 +359,28 @@ struct KasusHistoryView: View {
                 KasusRoundRow(round: round, showsUnit: topic == nil, groupedByDay: true)
             }
         case .article(let round):
-            DrillRoundRow(
-                title: "Der · Die · Das",
-                detail: round.topic,
-                counts: drillCounts(round.questionCount, noun: "nouns", seconds: round.durationSeconds),
-                symbol: "textformat.abc",
-                firstTry: round.firstTryCount, asked: round.questionCount
-            )
+            drillRow(.article, detail: round.topic, asked: round.questionCount,
+                     firstTry: round.firstTryCount, seconds: round.durationSeconds)
         case .preposition(let round):
-            DrillRoundRow(
-                title: "Präpositionen",
-                detail: round.topic,
-                counts: drillCounts(round.questionCount, noun: "prepositions", seconds: round.durationSeconds),
-                symbol: "arrow.triangle.branch",
-                firstTry: round.firstTryCount, asked: round.questionCount
-            )
+            drillRow(.preposition, detail: round.topic, asked: round.questionCount,
+                     firstTry: round.firstTryCount, seconds: round.durationSeconds)
         }
     }
 
     /// 10 nouns · 1m 1s
+    /// A round of one of the two drills that keep their own model. The name and symbol come from
+    /// `GrammarDrillFamily`, so Verlauf and the Fortschritt pane never name the same drill twice.
+    private func drillRow(_ family: GrammarDrillFamily, detail: String, asked: Int,
+                          firstTry: Int, seconds: Int) -> some View {
+        DrillRoundRow(
+            title: family.germanTitle,
+            detail: detail,
+            counts: drillCounts(asked, noun: family.countNoun, seconds: seconds),
+            symbol: family.symbol,
+            firstTry: firstTry, asked: asked
+        )
+    }
+
     private func drillCounts(_ count: Int, noun: String, seconds: Int) -> String {
         seconds > 0 ? "\(count) \(noun) · \(KasusHistoryFormat.duration(seconds))" : "\(count) \(noun)"
     }

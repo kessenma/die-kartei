@@ -40,9 +40,21 @@ enum LearnerMemoryService {
     /// correction is a separate pass. Returns "" when there's nothing worth injecting.
     static func briefing(in context: ModelContext) -> String {
         let p = profile(in: context)
-        guard p.sessionCount > 0 else { return "" }
+        // A learner who has never chatted but told their journal what they find hard still gets
+        // that steer in their first conversation.
+        let selfReports = p.selfReports
+        guard p.sessionCount > 0 || !selfReports.isEmpty else { return "" }
 
         var lines: [String] = []
+
+        // In their own words, at most one line: pinned first, then the newest.
+        let said = selfReports
+            .sorted { ($0.pinned ? 1 : 0, $0.notedAt) > ($1.pinned ? 1 : 0, $1.notedAt) }
+            .prefix(2)
+            .map { "\"" + ($0.text.count > 40 ? String($0.text.prefix(39)) + "…" : $0.text) + "\"" }
+        if !said.isEmpty {
+            lines.append("- They say they find hard: \(said.joined(separator: "; ")).")
+        }
 
         let shaky = sortedGrammar(p, minStruggle: briefingThreshold).prefix(3).map(\.label)
         if !shaky.isEmpty {
@@ -64,8 +76,10 @@ enum LearnerMemoryService {
         }
 
         guard !lines.isEmpty else { return "" }
-        let header = "COACH MEMORY about this specific learner (you've practiced with them "
-            + "\(p.sessionCount) time\(p.sessionCount == 1 ? "" : "s") before). Use it to steer the "
+        let history = p.sessionCount > 0
+            ? "you've practiced with them \(p.sessionCount) time\(p.sessionCount == 1 ? "" : "s") before"
+            : "this is your first conversation, but they have told the app about their German"
+        let header = "COACH MEMORY about this specific learner (\(history)). Use it to steer the "
             + "conversation naturally — but keep it a normal chat and do NOT correct, translate, or "
             + "mention any of this:"
         return header + "\n" + lines.joined(separator: "\n")
@@ -89,6 +103,15 @@ enum LearnerMemoryService {
             .prefix(3)
             .map(\.wrong)
         if !slipForms.isEmpty { bits.append("has repeatedly slipped on \(slipForms.joined(separator: ", "))") }
+
+        // What they said themselves, but only the structures named, to keep the hint short.
+        let saidFocuses = p.selfReports
+            .sorted { $0.notedAt > $1.notedAt }
+            .compactMap(\.grammarFocus)
+            .reduce(into: [GrammarFocus]()) { if !$0.contains($1) { $0.append($1) } }
+            .prefix(2)
+            .map(\.germanLabel)
+        if !saidFocuses.isEmpty { bits.append("says they find \(saidFocuses.joined(separator: " and ")) hard") }
 
         guard !bits.isEmpty else { return "" }
         return "For context, this learner " + bits.joined(separator: "; ") + " — pay extra attention to these, but only flag what's actually wrong in this sentence."
@@ -378,6 +401,61 @@ enum LearnerMemoryService {
         p.slips = list
     }
 
+    // MARK: - In their own words (journal hand-off)
+
+    /// Merge what the learner said they find hard. The same thought written twice (same words,
+    /// letters only) becomes one note seen twice; a focus fills in when the old note had none.
+    /// No `sessionCount` bump and nothing written to `grammar`: a note is a steer, not evidence.
+    static func noteSelfReports(_ notes: [SelfReportNote], in context: ModelContext) {
+        guard !notes.isEmpty else { return }
+        let p = profile(in: context)
+        let now = Date()
+        var list = p.selfReports
+
+        for note in notes {
+            var fresh = note
+            fresh.text = String(fresh.text.prefix(SelfReportNote.maxLength))
+            fresh.notedAt = now
+            if let i = list.firstIndex(where: { $0.id == fresh.id }) {
+                list[i].notedAt = now
+                list[i].timesNoted += 1
+                if list[i].focus == nil { list[i].focus = fresh.focus }
+                if list[i].entryID == nil { list[i].entryID = fresh.entryID }
+            } else {
+                list.append(fresh)
+            }
+        }
+
+        list = evict(list, cap: LearnerProfile.selfReportCap, in: context) { dropped in
+            archivedSelfReport(dropped, reason: .replacedByLRU)
+        }
+        p.selfReports = list
+    }
+
+    private static func archivedSelfReport(_ note: SelfReportNote, reason: ArchiveReason) -> ArchivedMemoryItem {
+        ArchivedMemoryItem(
+            kind: .selfReport, reason: reason,
+            title: note.text, subtitle: note.grammarFocus?.germanLabel ?? "",
+            payload: try? JSONEncoder().encode(note)
+        )
+    }
+
+    /// Manually move a note into the archive (the learner removed it).
+    static func archiveSelfReport(id: String, in context: ModelContext) {
+        let p = profile(in: context)
+        var list = p.selfReports
+        guard let idx = list.firstIndex(where: { $0.id == id }) else { return }
+        let item = list.remove(at: idx)
+        context.insert(archivedSelfReport(item, reason: .removedByUser))
+        p.selfReports = list
+    }
+
+    static func setSelfReportPinned(_ id: String, pinned: Bool, in context: ModelContext) {
+        let p = profile(in: context)
+        var list = p.selfReports
+        if let i = list.firstIndex(where: { $0.id == id }) { list[i].pinned = pinned; p.selfReports = list }
+    }
+
     // MARK: - Pre-built slips (placement hand-off)
 
     /// Merge already-formed slips into the profile.
@@ -488,6 +566,13 @@ enum LearnerMemoryService {
                 if !list.contains(where: { $0.id == s.id }) { list.append(s) }
                 p.slips = list
             }
+        case .selfReport:
+            if let data = item.payload, var n = try? JSONDecoder().decode(SelfReportNote.self, from: data) {
+                n.pinned = true
+                var list = p.selfReports
+                if !list.contains(where: { $0.id == n.id }) { list.append(n) }
+                p.selfReports = list
+            }
         }
         context.delete(item)
     }
@@ -544,6 +629,7 @@ enum LearnerMemoryService {
         p.grammar = [:]
         p.vocab = []
         p.slips = []
+        p.selfReports = []
         if let archived = try? context.fetch(FetchDescriptor<ArchivedMemoryItem>()) {
             for item in archived { context.delete(item) }
         }
@@ -630,5 +716,9 @@ extension VocabTouch: Timestamped, Pinnable {
 }
 extension LexicalSlip: Timestamped, Pinnable {
     var seenAt: Date { lastSeen }
+    var isPinned: Bool { pinned }
+}
+extension SelfReportNote: Timestamped, Pinnable {
+    var seenAt: Date { notedAt }
     var isPinned: Bool { pinned }
 }

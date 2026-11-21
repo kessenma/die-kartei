@@ -8,6 +8,15 @@ struct StoryDetailView: View {
     @Bindable var modelManager: MLXModelManager
     var mlxService: MLXGenerationService
 
+    /// `initialMode: .listen` opens straight into Hören (the Hören room's Worum geht's? does).
+    init(story: StudyStory, modelManager: MLXModelManager, mlxService: MLXGenerationService,
+         initialMode: StudyMode = .read) {
+        self.story = story
+        self.modelManager = modelManager
+        self.mlxService = mlxService
+        _mode = State(initialValue: initialMode)
+    }
+
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.appTheme) private var appTheme
@@ -29,6 +38,9 @@ struct StoryDetailView: View {
     @State private var showHelp = false
     @State private var showQuiz = false
     @State private var mode: StudyMode = .read
+    /// Listen mode's predict → listen → summary → compare flow (Hören ▸ Worum geht's?).
+    @State private var gist = StoryGistSession()
+    @State private var makingKeyPoints = false
     @State private var language: StoryLanguage = .german
     @State private var translationFailed = false
 
@@ -88,8 +100,7 @@ struct StoryDetailView: View {
                 readSection.themedListRow()
                 glossarySection
             } else {
-                listenSection.themedListRow()
-                transcriptSection.themedListRow()
+                listenModeSections
             }
             // Below both modes: words can be looked up from the transcript too.
             lookupSection
@@ -143,7 +154,10 @@ struct StoryDetailView: View {
                 mlxService: mlxService,
                 anchorScenario: nil,
                 phrase: nil,
-                initialGerman: draft.german
+                initialGerman: draft.german,
+                deckTarget: PhraseDeckTarget(label: "this story's deck") { german, english in
+                    StoryDeckStore.saveWord(german: german, english: english, story: story, context: modelContext)
+                }
             )
         }
         .sheet(isPresented: $showVoicesInfo) {
@@ -336,6 +350,8 @@ struct StoryDetailView: View {
     /// Opens the full-screen read-aloud player (follow-along highlight, auto-scroll, controls).
     private var readAloudButton: some View {
         Button {
+            // Following along shows the text: in listen mode that is revealing it early.
+            if mode == .listen, !gist.transcriptVisible { gist.revealedEarly = true }
             showReadAloud = true
         } label: {
             Label("Vorlesen & mitlesen", systemImage: "play.circle.fill")
@@ -575,6 +591,89 @@ struct StoryDetailView: View {
 
     // MARK: - Listen mode
 
+    /// Hören, as DLI teaches it: predict, listen with the text hidden, say the gist, compare.
+    /// The transcript appears once the summary is written or skipped (or on "Text zeigen").
+    @ViewBuilder
+    private var listenModeSections: some View {
+        if gist.phase == .predict {
+            Section {
+                GistPredictCard(story: story, session: gist) {
+                    if !isPlaying { togglePlay() }
+                }
+            }
+            .themedListRow()
+        }
+        listenSection.themedListRow()
+        if gist.phase == .summary {
+            Section {
+                GistSummaryCard(session: gist) {
+                    gist.compare(points: story.keyPoints.count)
+                    if !story.hasKeyPoints { ensureTranslation() }
+                }
+            }
+            .themedListRow()
+        }
+        if gist.phase == .compare || gist.phase == .done {
+            Section {
+                compareCard
+            } header: {
+                Text("Vergleichen · Compare").themedSectionHeader()
+            }
+            .themedListRow()
+        }
+        if gist.transcriptVisible {
+            transcriptSection.themedListRow()
+        } else {
+            Section {
+                GistHiddenTranscript(session: gist) {
+                    if isPlaying {
+                        manualStop = true
+                        SpeechService.shared.stop()
+                    }
+                    gist.finishListening(story: story)
+                }
+            } header: {
+                Text("Zum Text").themedSectionHeader()
+            }
+            .themedListRow()
+        }
+    }
+
+    private var compareCard: some View {
+        #if DEBUG
+        GistCompareCard(
+            story: story, session: gist, makingPoints: makingKeyPoints,
+            canMakePoints: service != nil && storyModel.isDownloaded,
+            onMakePoints: makeKeyPoints, onFinish: finishGist,
+            onJudge: {
+                guard let service else { return }
+                Task { gist.judged = await service.judgeSummary(gist.summary, points: story.keyPoints) }
+            }
+        )
+        #else
+        GistCompareCard(
+            story: story, session: gist, makingPoints: makingKeyPoints,
+            canMakePoints: service != nil && storyModel.isDownloaded,
+            onMakePoints: makeKeyPoints, onFinish: finishGist
+        )
+        #endif
+    }
+
+    private func makeKeyPoints() {
+        guard let service, !makingKeyPoints else { return }
+        makingKeyPoints = true
+        Task {
+            await service.makeKeyPoints(for: story)
+            makingKeyPoints = false
+            gist.ticks = Array(repeating: nil, count: story.keyPoints.count)
+        }
+    }
+
+    private func finishGist() {
+        gist.save(story: story, points: story.keyPoints, context: modelContext)
+        gist.phase = .done
+    }
+
     private var listenSection: some View {
         Section {
             VStack(spacing: 14) {
@@ -640,14 +739,21 @@ struct StoryDetailView: View {
             isPlaying = true
             manualStop = false
             spokenRange = nil
+            if mode == .listen {
+                gist.plays += 1
+                if gist.phase == .predict { gist.startListening() }
+            }
             SpeechService.shared.speak(
                 segments: buildSegments(),
                 slow: playSlow,
                 onWord: { range in spokenRange = range },
                 onFinish: {
+                    let stopped = manualStop
                     manualStop = false
                     isPlaying = false
                     spokenRange = nil
+                    // Heard to the end: on to the summary (never on a stop or a mode switch).
+                    if !stopped, mode == .listen { gist.finishListening(story: story) }
                 }
             )
         }

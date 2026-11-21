@@ -83,7 +83,7 @@ nonisolated enum KasusConfusion {
     /// The drill for a pair: ten sentences over the cases the two forms can show, on the nouns
     /// whose gender both forms fit, with only the two forms as buttons. Nil when the forms aren't
     /// one article family the endings drill knows, or can't span two cases.
-    static func drill(for pair: KasusConfusionPair) -> GrammarDrillSession? {
+    @MainActor static func drill(for pair: KasusConfusionPair) -> GrammarDrillSession? {
         guard let a = KasusForms.parseDeterminer(pair.a), let b = KasusForms.parseDeterminer(pair.b),
               a.family == b.family, a.stem == b.stem, let determiner = endingsDeterminer(a) else { return nil }
         let fitting = Set(Gender.allCases.filter {

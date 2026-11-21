@@ -112,7 +112,7 @@
     "article": null,
     "wordType": "adj",
     "translation": "other",
-    "example": "WiIlst du diese Jacke? – Nein, ich möchte die andere."
+    "example": "Willst du diese Jacke? – Nein, ich möchte die andere."
   },
   {
     "word": "anfangen",
@@ -186,7 +186,7 @@
     "article": "der",
     "wordType": "noun",
     "translation": "phone call",
-    "example": "Sie bekommt viele Anrufe auf ihrem Handy. beantworter den Anrufbeantworter.",
+    "example": "Sie bekommt viele Anrufe auf ihrem Handy.",
     "plural": "-e"
   },
   {
@@ -209,7 +209,7 @@
     "article": null,
     "wordType": "adv",
     "translation": "at, on, to",
-    "example": "sein Heute Nacht war das Licht an."
+    "example": "Heute Nacht war das Licht an."
   },
   {
     "word": "antworten",
@@ -312,7 +312,7 @@
     "article": null,
     "wordType": "adj",
     "translation": "open",
-    "example": "sein Du brauchst den Schlüssel nicht. Die Wohnung ist auf."
+    "example": "Du brauchst den Schlüssel nicht. Die Wohnung ist auf."
   },
   {
     "word": "aufstehen",
@@ -366,7 +366,7 @@
     "article": "das",
     "wordType": "noun",
     "translation": "foreign countries (collectively)",
-    "example": "Fahren Sie ins Ausland? ausländisch Leider habe ich nur ausländisches Geld.",
+    "example": "Fahren Sie ins Ausland?",
     "plural": "only sg."
   },
   {
@@ -395,7 +395,7 @@
     "article": null,
     "wordType": "adv",
     "translation": "out",
-    "example": "sein Das Licht ist aus. Die Schule ist aus."
+    "example": "Das Licht ist aus. Die Schule ist aus."
   },
   {
     "word": "aussteigen",
@@ -431,7 +431,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "motorway, highway",
-    "example": "Wo geht‘s hier bitte zur Autobahn?"
+    "example": "Wo geht’s hier bitte zur Autobahn?"
   },
   {
     "word": "Automat",
@@ -532,7 +532,7 @@
     "article": null,
     "wordType": "adj",
     "translation": "cash",
-    "example": "Muss ich bar zahlen oder geht‘s auch mit Karte?"
+    "example": "Muss ich bar zahlen oder geht’s auch mit Karte?"
   },
   {
     "word": "Bauch",
@@ -590,7 +590,7 @@
     "article": "das",
     "wordType": "noun",
     "translation": "example",
-    "example": "Kannst du mir ein Beispiel sagen? zum Beispiel/z. B. Viele meiner Verwandten, z. B. meine beiden Brüder, arbeiten auch hier."
+    "example": "Kannst du mir ein Beispiel sagen?"
   },
   {
     "word": "bekannt",
@@ -604,7 +604,7 @@
     "article": null,
     "wordType": null,
     "translation": "the (article)",
-    "example": "Bekannte, -n Ein Bekannter von mir heißt Klaus."
+    "example": "Ein Bekannter von mir heißt Klaus."
   },
   {
     "word": "bekommen",
@@ -739,7 +739,7 @@
     "article": null,
     "wordType": "adv",
     "translation": "please, if you please",
-    "example": "Eine Tasse Kaffee, bitte! Sprechen Sie bitte leise! bitten Darf ich Sie um etwas bitten?"
+    "example": "Eine Tasse Kaffee, bitte! Sprechen Sie bitte leise!"
   },
   {
     "word": "bitter",
@@ -911,7 +911,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "lady (woman of good breeding and manners)",
-    "example": "Damen (an der Toilette) Sehr geehrte Damen und Herren!"
+    "example": "Sehr geehrte Damen und Herren!"
   },
   {
     "word": "daneben",
@@ -925,7 +925,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to thank",
-    "example": "Ich danke Ihnen für die Einladung. Herzlichen Dank! danke Soll ich Ihnen helfen? - Nein, danke!"
+    "example": "Ich danke Ihnen für die Einladung. Herzlichen Dank!"
   },
   {
     "word": "dann",
@@ -967,7 +967,7 @@
     "article": null,
     "wordType": null,
     "translation": "the (masculine)",
-    "example": "die, das Ich nehme das da. Hier ist der Brief, den du suchst. Die Fahrkarte bekommst du am Bahnhof."
+    "example": "Ich nehme das da. Hier ist der Brief, den du suchst. Die Fahrkarte bekommst du am Bahnhof."
   },
   {
     "word": "dich",
@@ -995,7 +995,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "discotheque, nightclub",
-    "example": "Heute abend gehen wir in die Disco tanzen."
+    "example": "Heute Abend gehen wir in die Disco tanzen."
   },
   {
     "word": "Doktor",
@@ -1016,7 +1016,7 @@
     "article": null,
     "wordType": "adv",
     "translation": "there, yonder",
-    "example": "-her, -hin Deine Tasche kannst du dorthin stellen. Dort ist unser Haus."
+    "example": "Deine Tasche kannst du dorthin stellen. Dort ist unser Haus."
   },
   {
     "word": "draußen",
@@ -1169,7 +1169,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "parents",
-    "example": "(pl.) Meine Eltern leben in Spanien.",
+    "example": "Meine Eltern leben in Spanien.",
     "plural": "only pl."
   },
   {
@@ -1319,7 +1319,7 @@
     "article": null,
     "wordType": "noun",
     "translation": "celebration",
-    "example": "z. B. Feierabend, Feiertag Am Montag ist Feiertag.",
+    "example": "",
     "plural": "-n"
   },
   {
@@ -1417,7 +1417,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to fly",
-    "example": "Ich fliege nicht gern. Deshalb fahre ich mit dem Zug. abfliegen Wann fliegst du ab?",
+    "example": "Ich fliege nicht gern. Deshalb fahre ich mit dem Zug.",
     "verbForms": "ist geflogen"
   },
   {
@@ -1602,7 +1602,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to go, to walk",
-    "example": "Ich weiß nicht, wie das geht. Wie geht‘s? Jetzt muss ich (aber) leider gehen. Ich muss zum Arzt gehen. Das geht nicht!",
+    "example": "Ich weiß nicht, wie das geht. Wie geht’s? Jetzt muss ich (aber) leider gehen. Ich muss zum Arzt gehen. Das geht nicht!",
     "verbForms": "ist gegangen"
   },
   {
@@ -1678,7 +1678,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "siblings",
-    "example": "(pl.) Ich habe leider keine Geschwister.",
+    "example": "Ich habe leider keine Geschwister.",
     "plural": "only pl."
   },
   {
@@ -1773,7 +1773,7 @@
     "article": null,
     "wordType": "adv",
     "translation": "degree",
-    "example": "(Celsius) Heute haben wir dreißig Grad."
+    "example": "Heute haben wir dreißig Grad."
   },
   {
     "word": "gratulieren",
@@ -1801,7 +1801,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "grandparents",
-    "example": "(pl.) Meine Großeltern leben in Japan."
+    "example": "Meine Großeltern leben in Japan."
   },
   {
     "word": "Gruppe",
@@ -1857,7 +1857,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "hall",
-    "example": "Wir treffen uns in Halle B"
+    "example": ""
   },
   {
     "word": "hallo",
@@ -2003,7 +2003,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "wedding, marriage",
-    "example": "Zur dieser Hochzeit kommen mehr als fünfzig Gäste."
+    "example": "Zu dieser Hochzeit kommen mehr als fünfzig Gäste."
   },
   {
     "word": "holen",
@@ -2171,7 +2171,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "card",
-    "example": "Ich schreibe meinen Bekannten eine Karte aus dem Urlaub. Wollen wir Karten spielen? Ich möchte auch etwas essen. Bringen Sie mir die Karte, bitte. (Kredit)-Karte, -n Kann ich auch mit Karte (be-) zahlen?"
+    "example": "Ich schreibe meinen Bekannten eine Karte aus dem Urlaub. Wollen wir Karten spielen? Bringen Sie mir die Karte, bitte."
   },
   {
     "word": "Kartoffel",
@@ -2209,7 +2209,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to know",
-    "example": "Kennen Sie diese Frau? – Nein, leider nicht. kennenlernen Wir sind neu hier. Wir möchten Sie kennenlernen.",
+    "example": "Kennen Sie diese Frau? – Nein, leider nicht.",
     "verbForms": "hat gekannt"
   },
   {
@@ -2382,7 +2382,7 @@
     "article": null,
     "wordType": null,
     "translation": "oneself, himself, herself, themselves",
-    "example": "kümmern Jede Mutter kümmert sich um ihre kleinen Kinder."
+    "example": "Jede Mutter kümmert sich um ihre kleinen Kinder."
   },
   {
     "word": "Kunde",
@@ -2461,7 +2461,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to live, to be alive",
-    "example": "Sie lebt bei ihrer Schwester. Ihre Eltern leben nicht mehr. mittel (pl.) Lebensmittel bekommen Sie im Supermarkt.",
+    "example": "Sie lebt bei ihrer Schwester. Ihre Eltern leben nicht mehr.",
     "verbForms": "hat gelebt"
   },
   {
@@ -2527,7 +2527,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "people",
-    "example": "(pl.) In der Disko sind viele Leute.",
+    "example": "In der Disko sind viele Leute.",
     "plural": "only pl."
   },
   {
@@ -2542,7 +2542,7 @@
     "article": null,
     "wordType": "adj",
     "translation": "lovable",
-    "example": "Liebe Susanne, lieber Hans, lieben Ich liebe dich! lieber Sie fährt lieber mit der Bahn."
+    "example": ""
   },
   {
     "word": "Lieblings",
@@ -2722,7 +2722,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "furniture",
-    "example": "(pl.) Sind die Möbel neu?",
+    "example": "Sind die Möbel neu?",
     "plural": "only pl."
   },
   {
@@ -2910,7 +2910,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to open",
-    "example": "Ich öffne die Tür. geöffnet Der Laden ist samstags bis 16.00 Uhr geöffnet.",
+    "example": "Ich öffne die Tür.",
     "verbForms": "hat geöffnet"
   },
   {
@@ -2975,7 +2975,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "papers",
-    "example": "(pl.) Haben Sie Ihre Papiere dabei?"
+    "example": "Haben Sie Ihre Papiere dabei?"
   },
   {
     "word": "Partnerin",
@@ -3077,7 +3077,7 @@
     "article": null,
     "wordType": "noun",
     "translation": "wheel",
-    "example": "fahren Das Kind kann schon Rad fahren."
+    "example": "Das Kind kann schon Rad fahren."
   },
   {
     "word": "rauchen",
@@ -3204,7 +3204,7 @@
     "article": null,
     "wordType": "noun",
     "translation": "sentence",
-    "example": "-ä, e Dieser Satz ist sehr einfach."
+    "example": "Dieser Satz ist sehr einfach."
   },
   {
     "word": "S-Bahn",
@@ -3262,7 +3262,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "to shut",
-    "example": "Bitte, schließen Sie die Tür. geschlossen Die Bank hat am Samstag geschlossen.",
+    "example": "Bitte, schließen Sie die Tür.",
     "verbForms": "hat geschlossen"
   },
   {
@@ -3376,7 +3376,7 @@
     "article": null,
     "wordType": "verb",
     "translation": "forms the present perfect and past perfect tenses of certain verbs",
-    "example": "Herr Müller ist in seinem Zimmer. Mir ist kalt. Ich bin dreiundzwanzig. an sein Das Licht ist noch an. auf sein Das Fenster ist noch auf. weg sein Herr Meier ist schon weg. zu sein Die Tür ist zu."
+    "example": "Herr Müller ist in seinem Zimmer. Mir ist kalt. Ich bin dreiundzwanzig."
   },
   {
     "word": "seit",
@@ -3425,7 +3425,7 @@
     "article": null,
     "wordType": "adv",
     "translation": "so, such, that",
-    "example": "Sie müssen das so machen! Fahren Sie bitte nicht so schnell! Meine Frau ist so groß wie ich. So, das war‘s/wär‘s!"
+    "example": "Sie müssen das so machen! Fahren Sie bitte nicht so schnell! Meine Frau ist so groß wie ich. So, das war’s/wär’s!"
   },
   {
     "word": "Sofa",
@@ -4010,7 +4010,7 @@
     "article": null,
     "wordType": "adv",
     "translation": "what",
-    "example": "für ein Was für eine Farbe möchten Sie?"
+    "example": "Was für eine Farbe möchten Sie?"
   },
   {
     "word": "waschen",
@@ -4032,7 +4032,7 @@
     "article": null,
     "wordType": "adj",
     "translation": "sore, painful",
-    "example": "tun Ich muss zum Arzt. Mein Bein tut weh."
+    "example": "Ich muss zum Arzt. Mein Bein tut weh."
   },
   {
     "word": "weiblich",
@@ -4147,7 +4147,7 @@
     "article": null,
     "wordType": "adv",
     "translation": "how",
-    "example": "viel Wie viel Milch nehmen Sie?"
+    "example": "Wie viel Milch nehmen Sie?"
   },
   {
     "word": "willkommen",
@@ -4234,7 +4234,7 @@
     "article": "die",
     "wordType": "noun",
     "translation": "time (as a concept)",
-    "example": "Ich habe heute keine Zeit. zurzeit Zurzeit habe ich sehr viel zu tun.",
+    "example": "Ich habe heute keine Zeit.",
     "plural": "-en"
   },
   {

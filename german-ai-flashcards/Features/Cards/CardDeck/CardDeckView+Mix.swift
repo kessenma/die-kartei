@@ -17,7 +17,10 @@ extension CardDeckView {
         var decks: [UUID: SavedDeck] = [:]
         var indicesByDeck: [UUID: [Int]] = [:]
         for index in studied.sorted() where savedCards.indices.contains(index) {
-            guard let deck = savedCards[index].deck else { continue }
+            // A mix only ever holds content decks. A practice set (a Schreibblatt's words) can hold
+            // a word from the Goethe box or another SRS holder, whose results are its own sessions'
+            // clock; those cards are studied, and their deck left as it was.
+            guard let deck = savedCards[index].deck, deck.isBrowsableContent else { continue }
             decks[deck.id] = deck
             indicesByDeck[deck.id, default: []].append(index)
         }

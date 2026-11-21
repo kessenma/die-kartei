@@ -4,7 +4,8 @@
 //
 //  One handout, read the way a tutor reads it with you: word by word, translating what you don't
 //  know. The same text surface and inspector as a job posting; the words go into the course's
-//  deck. The original file opens in Quick Look when there is one.
+//  deck. The original file opens in Quick Look when there is one. A PDF's exercises can be set up
+//  as homework here (docs/WORKSHEETS.md), and its noun lists go to the deck in one step.
 //
 
 import SwiftUI
@@ -33,6 +34,9 @@ struct ClassMaterialDetailView: View {
     @State private var inspector: WordInspectorModel?
     @State private var showHelp = false
     @State private var showDeckBuilder = false
+    @State private var showWorksheetSetup = false
+    @State private var showLessonWords = false
+    @State private var openWorksheet = false
     @State private var previewURL: URL?
     /// Briefly the count after "Add all to deck", to confirm.
     @State private var addedCount: Int?
@@ -72,6 +76,9 @@ struct ClassMaterialDetailView: View {
     var body: some View {
         List {
             headerSection
+            if material.sourceKind == .pdf, material.hasSnapshot {
+                homeworkSection
+            }
             if !glossaryOptions.isEmpty {
                 vocabSection
             }
@@ -121,6 +128,27 @@ struct ClassMaterialDetailView: View {
                     router.launch(.cardDeck(DeckStore(modelContext: modelContext).session(for: deck, style: modelManager.flashcardStyle)))
                 }
             }
+        }
+        .navigationDestination(isPresented: $openWorksheet) {
+            WorksheetView(material: material, modelManager: modelManager, mlxService: mlxService)
+        }
+        .sheet(isPresented: $showWorksheetSetup) {
+            NavigationStack {
+                WorksheetSetupView(material: material) { made in
+                    showWorksheetSetup = false
+                    if made {
+                        DispatchQueue.main.async { openWorksheet = true }
+                    }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { showWorksheetSetup = false }
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showLessonWords) {
+            WorksheetWordsSheet(material: material, modelManager: modelManager, mlxService: mlxService)
         }
         .onAppear(perform: setUp)
         .task(id: material.glossaryDeckIDRaw) { rebuildGlossary() }
@@ -174,6 +202,54 @@ struct ClassMaterialDetailView: View {
                     systemImage: "text.book.closed"
                 )
             }
+        }
+        .themedListRow()
+    }
+
+    /// The PDF's exercises as homework: set them up, work them, send them back.
+    private var homeworkSection: some View {
+        Section {
+            if let worksheet = material.worksheet {
+                Button {
+                    openWorksheet = true
+                } label: {
+                    JobPrepHeroRow(
+                        title: worksheet.status == .sent ? "Sent to your teacher" : "Continue the homework",
+                        subtitle: worksheet.pages.map(\.title).joined(separator: " · "),
+                        systemImage: worksheet.status == .sent ? "paperplane.fill" : "pencil.and.list.clipboard",
+                        accent: ClassNotesTile.tint
+                    )
+                }
+                .buttonStyle(.plain)
+                Button {
+                    showWorksheetSetup = true
+                } label: {
+                    Label("Change the pages", systemImage: "rectangle.stack.badge.plus")
+                }
+            } else {
+                Button {
+                    showWorksheetSetup = true
+                } label: {
+                    JobPrepHeroRow(
+                        title: "Do the exercises here",
+                        subtitle: "Pick the ones that are homework, answer them in the app or write on the slides, and send them back as a PDF.",
+                        systemImage: "pencil.and.list.clipboard",
+                        accent: ClassNotesTile.tint
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            Button {
+                showLessonWords = true
+            } label: {
+                Label("Add the lesson's nouns to the deck", systemImage: "rectangle.stack.badge.plus")
+            }
+            .disabled(course == nil)
+        } header: {
+            Text("Hausaufgabe · Homework").themedSectionHeader()
+        } footer: {
+            Text("The teacher gets her own slides back with your answers written in.")
+                .font(.caption2)
         }
         .themedListRow()
     }

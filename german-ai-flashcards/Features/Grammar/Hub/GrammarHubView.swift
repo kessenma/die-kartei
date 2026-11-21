@@ -2,19 +2,31 @@
 //  GrammarHubView.swift
 //  german-ai-flashcards
 //
-//  Grammatik · Grammar: one path through the four cases, then the tools. Home's Grammar tile
-//  and the Pyramid's Grammatik-Kern layer both push this screen.
+//  Grammatik · Grammar: the case path as the spine, every other domain a room. The Grammatik tab
+//  is this screen's root; Home's Grammar tile brings that tab forward, and the Pyramid's
+//  Grammatik-Kern layer still pushes its own copy.
 //
+//  Two modes, switched by the picker at the top (`grammar.showProgress`), the way Home switches
+//  For You and All Activities.
+//
+//  Üben · Practice — where to go:
 //    Weiter · Up next              one row: where to pick up (`KasusPath.next`, never stored)
-//    Die vier Fälle · The cases    Nominativ → Akkusativ → Dativ → Genitiv → Alle Fälle
-//    Verlauf · Your rounds         every scored grammar round, with the last one's score
-//    Verstehen & Nachschlagen     guided explainers, with tables and memory aids nested inside
-//    Weitere Übungen              Präpositionen (the 3D scenes), der/die/das, the Endungs-Werkstatt
-//                                  (articles as 3D blocks, the ending in its case color)
+//    Dein Verwechslungs-Paar       one card, only while one mix-up stands out (`KasusConfusion`)
+//    Die vier Fälle · The cases    ① Nominativ → ⑤ Alle Fälle, dots + flame + level per row
+//    Weitere Bereiche · Areas      one row per `GrammarArea`: Präpositionen (its own hub),
+//                                  Artikel & Endungen and Verben (`GrammarBereichView`) — a new
+//                                  area is one enum case, never a hub edit
+//    Nachschlagen · Look it up     the endings table direct, then the library (explainers,
+//                                  Merkhilfen, Kasus-Check, Endungs-Werkstatt, rule sheets)
+//
+//  Fortschritt · Progress — what the rounds add up to: `GrammarProgressPane`, which owns the
+//  grammar day strip, time per exercise, the per-case bars and the Verlauf row (that row used to
+//  live here). Its queries are its own, so Üben never fetches them.
 //
 //  The toolbar's question mark opens Der Kasus-Check, the decision order every case explanation
 //  in the app follows. Flames come from the coach's profile (`LearnerMemoryService.shakyFocuses`),
-//  so "needs work" means the same thing here as on Today.
+//  so "needs work" means the same thing here as on Today; an area row's flame is any of its
+//  structures shaky.
 //
 
 import SwiftUI
@@ -27,13 +39,13 @@ struct GrammarHubView: View {
     @Query private var profiles: [LearnerProfile]
     /// Story and Schnellrunde history: the hero's pick and the unit rows' dots.
     @Query private var rounds: [KasusRound]
-    /// The newest der/die/das and preposition drill rounds, for Verlauf's "last round" line.
-    @Query(GrammarHubView.newestArticleRound) private var latestArticleRounds: [ArticleRound]
-    @Query(GrammarHubView.newestPrepositionRound) private var latestPrepositionRounds: [PrepositionRound]
     /// The hero row launches its story or Schnellrunde through the router.
     @Environment(ActivityRouter.self) private var router
-    @Environment(\.appTheme) private var appTheme
     @Environment(\.modelContext) private var modelContext
+
+    /// Off = „Üben“ (the path and the rooms), on = „Fortschritt“ (what the rounds add up to).
+    /// Namespaced and device-local, the way Home's own mode flag is.
+    @AppStorage("grammar.showProgress") private var showsProgress = false
 
     @State private var showKasusCheck = false
     /// The hero's „Lektion“: a sheet, since the lesson isn't an activity.
@@ -43,13 +55,20 @@ struct GrammarHubView: View {
 
     var body: some View {
         List {
-            heroSection.themedListRow()
-            confusionSection.themedListRow()
-            explainersSection.themedListRow()
-            unitsSection.themedListRow()
-            topicsSection.themedListRow()
-            historySection.themedListRow()
-            toolsSection.themedListRow()
+            Section {
+                modePicker
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+            }
+            if showsProgress {
+                GrammarProgressPane()
+            } else {
+                heroSection.themedListRow()
+                confusionSection.themedListRow()
+                unitsSection.themedListRow()
+                bereicheSection.themedListRow()
+                nachschlagenSection.themedListRow()
+            }
         }
         .themedListScreen()
         .navigationTitle("Grammatik · Grammar")
@@ -83,6 +102,16 @@ struct GrammarHubView: View {
         guard let session = pendingConcept else { return }
         pendingConcept = nil
         router.launch(.grammarDrill(session))
+    }
+
+    /// Mounted as its own clear row so the grouped list's card inset doesn't double up on it —
+    /// the same treatment `HomeHubView` gives its For You / All Activities picker.
+    private var modePicker: some View {
+        Picker("Grammar mode", selection: $showsProgress) {
+            Text("Üben").tag(false)
+            Text("Fortschritt").tag(true)
+        }
+        .pickerStyle(.segmented)
     }
 
     // MARK: - Learner profile inputs
@@ -120,11 +149,11 @@ struct GrammarHubView: View {
                 }
             } label: {
                 HStack(spacing: 12) {
-                    Image(systemName: heroSymbol(hero))
-                        .font(.title2)
-                        .foregroundStyle(hero.unit.color)
-                        .frame(width: 44, height: 44)
-                        .background(hero.unit.color.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(10), style: .continuous))
+                    if let art = heroArt(hero) {
+                        GrammarTaskArtView(art: art, tint: hero.unit.color)
+                    } else {
+                        GrammarRowChip(symbol: heroSymbol(hero), tint: hero.unit.color, size: 44)
+                    }
                     VStack(alignment: .leading, spacing: 2) {
                         Text(heroTitle(hero))
                             .font(.headline)
@@ -154,12 +183,24 @@ struct GrammarHubView: View {
         }
     }
 
-    /// The unit's symbol, or the lesson's and an exercise's own.
+    /// The unit's symbol, or the lesson's and an exercise's own. Only a story still reaches this:
+    /// every other hero action has a task drawing (`heroArt`).
     private func heroSymbol(_ hero: KasusHero) -> String {
         switch hero.action {
-        case .lesson:                  "lightbulb.fill"
+        case .lesson:                  KasusRoundStep.lesson.meta.symbol
         case .concept(let exercise):   exercise.symbol
         case .story, .quickRound:      hero.unit.symbol
+        }
+    }
+
+    /// The hero's task drawing, where the row is one task: the lesson, a Verstehen exercise, the
+    /// Schnellrunde. A story is three steps rather than one shape, so it keeps the unit's chip.
+    private func heroArt(_ hero: KasusHero) -> GrammarTaskArt? {
+        switch hero.action {
+        case .lesson:                 KasusRoundStep.lesson.meta.art
+        case .concept(let exercise):  exercise.art
+        case .quickRound:             KasusRoundStep.quick.meta.art
+        case .story:                  nil
         }
     }
 
@@ -196,18 +237,28 @@ struct GrammarHubView: View {
         return hero.reason == .review ? "Wiederholen · \(line)" : line
     }
 
-    private var explainersSection: some View {
+    /// Reference below study, history last: the endings table directly (the one time-critical
+    /// lookup), then the library that indexes everything else. Both paths reach the same screens.
+    private var nachschlagenSection: some View {
         Section {
+            NavigationLink {
+                CaseEndingsView()
+            } label: {
+                GrammarShelfRow(title: "Die Endungstabelle · The endings table",
+                                subtitle: "Formen · Sinn · Takt, every cell in 3D") {
+                    GrammarRowChip(symbol: "tablecells")
+                }
+            }
             NavigationLink {
                 KasusExplainerLibraryView()
             } label: {
-                toolRow("Warum dieser Fall? · Why this case?",
-                        "Guided explanations, article tables & memory aids", shaky: false) {
-                    toolChip("text.magnifyingglass")
+                GrammarShelfRow(title: "Warum dieser Fall? · Why this case?",
+                                subtitle: "Explainers, memory aids, the Kasus-Check & rule sheets") {
+                    GrammarRowChip(symbol: "text.magnifyingglass")
                 }
             }
         } header: {
-            Text("Verstehen & Nachschlagen · Understand & reference").themedSectionHeader()
+            Text("Nachschlagen · Look it up").themedSectionHeader()
         }
     }
 
@@ -230,33 +281,21 @@ struct GrammarHubView: View {
         }
     }
 
+    /// ①–⑤: the path reads as a path, even entered mid-way through a deep link.
+    private func waypoint(_ unit: KasusUnit) -> String {
+        let marks = ["①", "②", "③", "④", "⑤"]
+        guard let index = KasusUnit.allCases.firstIndex(of: unit), index < marks.count else { return "" }
+        return marks[index]
+    }
+
     private func unitRow(_ unit: KasusUnit) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: unit.symbol)
-                .font(.title3)
-                .foregroundStyle(unit.color)
-                .frame(width: 34, height: 34)
-                .background(unit.color.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(unit.germanTitle) · \(unit.englishRole)")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
-                if let forms = unit.exampleForms {
-                    Text(forms)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            Spacer(minLength: 8)
+        GrammarShelfRow(title: "\(waypoint(unit)) \(unit.germanTitle) · \(unit.englishRole)",
+                        subtitle: unit.exampleForms,
+                        shaky: isShaky(unit.focus), level: unit.levelLabel) {
+            GrammarRowChip(symbol: unit.symbol, tint: unit.color)
+        } trailing: {
             progressDots(unit)
-            if isShaky(unit.focus) { flame }
-            Text(unit.levelLabel)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .accessibilityLabel("Level \(unit.levelLabel)")
         }
-        .padding(.vertical, 4)
     }
 
     /// One dot for Verstehen (the lesson read and every offered drill played), one per story
@@ -298,161 +337,35 @@ struct GrammarHubView: View {
         }
     }
 
-    // MARK: - Themen
+    // MARK: - Weitere Bereiche
 
-    /// The topics that aren't a case, once their lesson or items are bundled.
-    private var topics: [GrammarTopic] {
-        GrammarTopic.allCases.filter { $0.unit == nil && $0.isAvailable }
-    }
-
-    @ViewBuilder
-    private var topicsSection: some View {
-        let topics = self.topics
-        if !topics.isEmpty {
-            Section {
-                ForEach(topics) { topic in
-                    NavigationLink {
-                        ReflexivTopicView(topic: topic)
-                    } label: {
-                        topicRow(topic)
-                    }
-                }
-            } header: {
-                Text("Themen · Topics")
-                    .themedSectionHeader()
-            } footer: {
-                Text("Structures that run across the cases.")
-            }
-        }
-    }
-
-    private func topicRow(_ topic: GrammarTopic) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: topic.symbol)
-                .font(.title3)
-                .foregroundStyle(topic.color)
-                .frame(width: 34, height: 34)
-                .background(topic.color.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(topic.germanTitle) · \(topic.englishRole)")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
-                Text("mich / mir · dich / dir · sich")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 8)
-            topicDots(topic)
-            if isShaky(topic.focus) { flame }
-            Text(topic.levelLabel)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .accessibilityLabel("Level \(topic.levelLabel)")
-        }
-        .padding(.vertical, 4)
-    }
-
-    /// One dot for the lesson, one per drill the topic offers. Keyed on (storyID, topic, step).
-    private func topicDots(_ topic: GrammarTopic) -> some View {
-        let progress = KasusProgress(rounds: rounds)
-        let done = [progress.lessonRead(topicKey: topic.key)]
-            + topic.exercises().map { progress.drillDone($0.step, topicKey: topic.key) }
-        return HStack(spacing: 3) {
-            ForEach(Array(done.enumerated()), id: \.offset) { _, filled in
-                Circle()
-                    .strokeBorder(topic.color, lineWidth: 1.2)
-                    .background(Circle().fill(filled ? topic.color : .clear))
-                    .frame(width: 7, height: 7)
-            }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(done.filter { $0 }.count) of \(done.count) done")
-    }
-
-    // MARK: - Verlauf
-
-    /// One-row `@Query`s: the newest round of each drill.
-    private static var newestArticleRound: FetchDescriptor<ArticleRound> {
-        var descriptor = FetchDescriptor<ArticleRound>(sortBy: [SortDescriptor(\.date, order: .reverse)])
-        descriptor.fetchLimit = 1
-        return descriptor
-    }
-
-    private static var newestPrepositionRound: FetchDescriptor<PrepositionRound> {
-        var descriptor = FetchDescriptor<PrepositionRound>(sortBy: [SortDescriptor(\.date, order: .reverse)])
-        descriptor.fetchLimit = 1
-        return descriptor
-    }
-
-    private var historySection: some View {
-        let latest = GrammarHistoryEntry.all(kasus: rounds, articles: latestArticleRounds,
-                                             prepositions: latestPrepositionRounds).first
-        return Section {
-            NavigationLink {
-                KasusHistoryView()
-            } label: {
-                HStack(spacing: 12) {
-                    toolChip("clock.arrow.circlepath")
-                        .frame(width: 44, height: 44)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Verlauf · Your rounds")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.primary)
-                        Text(latest.map(lastRoundLine) ?? "Every scored round, day by day")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                    Spacer(minLength: 8)
-                    if let latest {
-                        HistoryScore(firstTry: latest.firstTry, asked: latest.asked)
-                    }
-                }
-                .padding(.vertical, 2)
-            }
-        }
-    }
-
-    /// Last: Dativ · Endungen · today
-    private func lastRoundLine(_ entry: GrammarHistoryEntry) -> String {
-        "Last: \(entry.shortLabel) · \(KasusHistoryFormat.relativeDay(entry.date))"
-    }
-
-    // MARK: - Werkzeuge
-
-    private var toolsSection: some View {
+    /// One row per room (`GrammarArea`). Präpositionen keeps its grown hub; the rest share
+    /// `GrammarBereichView`. A new area lands here without a hub edit.
+    private var bereicheSection: some View {
         Section {
-            NavigationLink {
-                PrepositionHubView(modelManager: modelManager, mlxService: mlxService)
-            } label: {
-                toolRow(
-                    "Präpositionen", "Which case each one takes",
-                    shaky: isShaky(.praepositionen) || isShaky(.wechselpraepositionen)
-                        || isShaky(.verbenPraepositionen)
-                ) {
-                    prepositionStill
+            ForEach(GrammarArea.allCases) { area in
+                NavigationLink {
+                    if area.hasOwnHub {
+                        PrepositionHubView(modelManager: modelManager, mlxService: mlxService)
+                    } else {
+                        GrammarBereichView(area: area, modelManager: modelManager, mlxService: mlxService)
+                    }
+                } label: {
+                    GrammarShelfRow(title: area.germanTitle, subtitle: area.englishRole,
+                                     shaky: area.isShaky(shaky), level: area.levelLabel) {
+                        if area.hasOwnHub {
+                            prepositionStill
+                        } else {
+                            GrammarRowChip(symbol: area.symbol)
+                        }
+                    }
                 }
             }
-            NavigationLink {
-                ArticleGameSetupView(modelManager: modelManager, mlxService: mlxService)
-            } label: {
-                toolRow("Der · Die · Das", "Every noun's gender", shaky: isShaky(.artikel)) {
-                    toolChip("textformat.abc")
-                }
-            }
-            NavigationLink {
-                EndungsWerkstattView()
-            } label: {
-                toolRow("Endungs-Werkstatt · Ending workshop", "Watch der turn into dem, in 3D", shaky: false) {
-                    toolChip("cube.fill")
-                }
-            }
-
         } header: {
-            Text("Weitere Übungen · More practice")
+            Text("Weitere Bereiche · More areas")
                 .themedSectionHeader()
+        } footer: {
+            Text("Each area: learn, practice, look up.")
         }
     }
 
@@ -466,49 +379,10 @@ struct GrammarHubView: View {
                 .scaledToFit()
                 .accessibilityHidden(true)
         } else {
-            toolChip("arrow.triangle.branch")
+            GrammarRowChip(symbol: "arrow.triangle.branch")
         }
     }
 
-    private func toolChip(_ systemImage: String) -> some View {
-        Image(systemName: systemImage)
-            .font(.title3)
-            .foregroundStyle(.tint)
-            .frame(width: 34, height: 34)
-            .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
-    }
-
-    /// The leading slot is 44 wide so the bare 3D still and the symbol chips line their titles up.
-    private func toolRow<Icon: View>(
-        _ title: String, _ subtitle: String, shaky: Bool, @ViewBuilder icon: () -> Icon
-    ) -> some View {
-        HStack(spacing: 12) {
-            icon()
-                .frame(width: 44, height: 44)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 8)
-            if shaky { flame }
-        }
-        .padding(.vertical, 2)
-    }
-
-    // MARK: - Shared bits
-
-    /// The coach's "needs work" mark, the same flame Today and the Pyramid use.
-    private var flame: some View {
-        Image(systemName: "flame.fill")
-            .font(.caption)
-            .foregroundStyle(.orange)
-            .accessibilityLabel("Needs work")
-    }
 }
 
 // MARK: - Previews

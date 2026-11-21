@@ -1,19 +1,59 @@
 {
   // Deploy pipeline for Die Kartei.
-  //   Run:  Cmd+Shift+B            -> TestFlight (default build task)
-  //         Cmd+Shift+R            -> App Store (a user keybinding; see docs/DEPLOY_SETUP.md)
-  //         Cmd+Shift+M            -> TestFlight, macOS build (a user keybinding, same doc)
+  //   Run:  Cmd+Opt+Shift+B        -> TestFlight, iOS + macOS
+  //         Cmd+Opt+Shift+R        -> Release menu: every option (scripts/release_menu.py)
+  //         Cmd+Opt+Shift+D        -> Release dry run, both platforms (uploads nothing)
+  //         Cmd+Opt+Shift+M        -> TestFlight, macOS build only
+  //         (all four are user keybindings; see docs/DEPLOY_SETUP.md. Plain Cmd+Shift+B
+  //          still runs the default build task, the iOS + macOS TestFlight release.)
   //         Cmd+Shift+P > "Run Task" -> pick any of the below
   // Setup for a new machine: docs/DEPLOY_SETUP.md
   "version": "2.0.0",
   "tasks": [
+    {
+      "label": "Release: Menu",
+      "detail": "scripts/release_menu.py: pick TestFlight / App Store / product page only / dry run, platforms and screenshot replace",
+      "type": "shell",
+      "command": "python3 scripts/release_menu.py",
+      "options": { "cwd": "${workspaceFolder}", "env": { "PATH": "${env:HOME}/.local/bin:${env:PATH}" } },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true, "clear": true }
+    },
+    {
+      "label": "Release: TestFlight (iOS + macOS)",
+      "detail": "scripts/release_all.py --beta: iOS then macOS TestFlight builds on one version",
+      "type": "shell",
+      "command": "python3 scripts/release_all.py --beta",
+      "options": { "cwd": "${workspaceFolder}", "env": { "PATH": "${env:HOME}/.local/bin:${env:PATH}" } },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$swiftc"],
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true, "clear": true }
+    },
+    {
+      "label": "Release: App Store (iOS + macOS, upload only)",
+      "detail": "scripts/release_all.py: builds, What's New, description and every screenshot set. Does NOT submit.",
+      "type": "shell",
+      "command": "python3 scripts/release_all.py",
+      "options": { "cwd": "${workspaceFolder}", "env": { "PATH": "${env:HOME}/.local/bin:${env:PATH}" } },
+      "problemMatcher": ["$swiftc"],
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true, "clear": true }
+    },
+    {
+      "label": "Release: Dry run (iOS + macOS)",
+      "detail": "scripts/release_all.py --dry-run: checks notes, metadata, screenshots and shows the upload plan. Uploads nothing.",
+      "type": "shell",
+      "command": "python3 scripts/release_all.py --dry-run",
+      "options": { "cwd": "${workspaceFolder}", "env": { "PATH": "${env:HOME}/.local/bin:${env:PATH}" } },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true, "clear": true }
+    },
     {
       "label": "Deploy: TestFlight",
       "detail": "Archive, upload, wait for processing, distribute to internal-die-Kartei",
       "type": "shell",
       "command": "python3 scripts/deploy.py",
       "options": { "cwd": "${workspaceFolder}" },
-      "group": { "kind": "build", "isDefault": true },
+      "group": "build",
       "problemMatcher": ["$swiftc"],
       "presentation": {
         "reveal": "always",

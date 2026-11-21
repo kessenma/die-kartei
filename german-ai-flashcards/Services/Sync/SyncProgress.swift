@@ -117,7 +117,7 @@ extension SyncCoordinator {
     static let storageCategories: [SyncStorageLine] = [
         SyncStorageLine(id: "cards", title: "Flashcards and Wortschatz", symbol: "rectangle.stack"),
         SyncStorageLine(id: "log", title: "Study days, rounds and stats", symbol: "flame"),
-        SyncStorageLine(id: "stories", title: "Stories and papers", symbol: "book.pages"),
+        SyncStorageLine(id: "stories", title: "Stories, papers and journal", symbol: "book.pages"),
         SyncStorageLine(id: "chats", title: "Conversations and coaching memory", symbol: "bubble.left.and.bubble.right"),
         SyncStorageLine(id: "class", title: "Deutschkurs and job postings", symbol: "graduationcap"),
         SyncStorageLine(id: "files", title: "Pictures and PDFs", symbol: "photo.on.rectangle"),
@@ -128,8 +128,9 @@ extension SyncCoordinator {
         let id: String? = switch kind {
         case "SavedDeck", "SavedCard", "QuizResult": "cards"
         case "StudyDay", "MatchingPairStat", "MatchingRound", "ArticleWordStat", "ArticleRound",
-             "PrepositionStat", "PrepositionRound", "KasusRound": "log"
-        case "StudyStory", "StoryReadingSession", "StoryQuizAttempt", "StudyPaper", "GeneratedKasusStory": "stories"
+             "PrepositionStat", "PrepositionRound", "KasusRound", "HoerenRound": "log"
+        case "StudyStory", "StoryReadingSession", "StoryQuizAttempt", "StudyPaper", "GeneratedKasusStory",
+             "JournalEntry": "stories"
         case "ChatConversation", "ChatMessage", "LearnerProfile", "ArchivedMemoryItem", "LearnedPhrase": "chats"
         case "ClassCourse", "ClassEntry", "ClassMaterial", "JobPosting": "class"
         case "File": "files"

@@ -21,6 +21,7 @@ extension CardDeckView {
                 let isSelected = ankiRatings[currentIndex] == rating
 
                 Button {
+                    if rating == .again, ankiRatings[currentIndex] != .again { askToWrite(currentIndex) }
                     ankiRatings[currentIndex] = rating
                     if localAutoAdvance { ankiAdvance() }
                 } label: {
@@ -150,8 +151,12 @@ extension CardDeckView {
         let total = sessionDueCount
         let missed = sessionLapses.sorted()
         let correct = max(0, total - missed.count)
-        onQuizComplete?(correct, total, missed, elapsedSeconds, .anki, ankiFirstRatings)
-        creditDeckMix(mode: .anki)
+        if isReviewingMissed {
+            recordMissedReview(cards: total)
+        } else {
+            onQuizComplete?(correct, total, missed, elapsedSeconds, .anki, ankiFirstRatings)
+            creditDeckMix(mode: .anki)
+        }
         clearPauseProgress()
         showQuizSummary = true
     }

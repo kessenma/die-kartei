@@ -19,6 +19,10 @@ enum AppSchema {
         BatchJob.self,
         JobPosting.self,
         ClassCourse.self, ClassEntry.self, ClassMaterial.self,
+        SchreibblattSheet.self,
+        WordArtwork.self, WordDrawingStat.self, QuickDrawSet.self,
+        JournalEntry.self,
+        HoerenRound.self,
         // Local-only iCloud Sync bookkeeping (never synced itself).
         SyncRecordState.self, SyncMeta.self,
     ]

@@ -104,6 +104,8 @@ struct german_ai_flashcardsApp: App {
     /// learner to confirm. Held here rather than in the Library because a deck can arrive while
     /// any tab is open, and the file is gone from the inbox by the time this is set.
     @State private var pendingDeckImport: DeckImportRequest?
+    /// A PDF opened in the app from outside, on its way to becoming a class handout.
+    @State private var incomingHandout: IncomingHandoutPDF?
     @State private var deckImportError: String?
     #if os(macOS)
     /// The Mac window's sidebar selection and menu-driven flags, shared with the menu bar.
@@ -153,6 +155,7 @@ struct german_ai_flashcardsApp: App {
             }
         }
         SyncManager.shared.modelManager = mm
+        VoiceSetup.shared.modelManager = mm
         SyncManager.shared.configure(container: container)
         // MAC-PICTURES: the Mac draws decks other devices ask for; a phone hears when they land.
         #if os(macOS)
@@ -183,6 +186,9 @@ struct german_ai_flashcardsApp: App {
                             await BackgroundDownloadResumer.stop()
                             coordinator.mlxService.resumeInterruptedDownloadIfNeeded()
                         }
+                        // The OpenRouter key syncs through iCloud Keychain, which doesn't say
+                        // when another device signed in or out.
+                        OpenRouterAccount.shared.reconcile()
                         #if os(macOS)
                         MacPictureInbox.shared.refresh()   // MAC-PICTURES
                         #endif
@@ -216,7 +222,22 @@ struct german_ai_flashcardsApp: App {
                         }
                     }
                 }
-                .onOpenURL { url in importDeck(from: url) }
+                // A PDF ("Open in Die Kartei" from Files, Mail or a tutor's platform) becomes a
+                // class handout; anything else is a shared deck, as before.
+                .onOpenURL { url in
+                    if url.isFileURL, url.pathExtension.lowercased() == "pdf" {
+                        if let pdf = IncomingHandoutPDF(url: url) {
+                            incomingHandout = pdf
+                        } else {
+                            deckImportError = "Couldn't read that PDF."
+                        }
+                    } else {
+                        importDeck(from: url)
+                    }
+                }
+                .sheet(item: $incomingHandout) { pdf in
+                    IncomingHandoutSheet(incoming: pdf)
+                }
                 #if os(macOS)
                 // File ▸ Import Deck… (⌘O): the same path as a .kartei opened from Finder.
                 .fileImporter(isPresented: $navigator.showsDeckImporter,

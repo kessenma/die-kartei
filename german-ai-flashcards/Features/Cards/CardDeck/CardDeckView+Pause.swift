@@ -50,7 +50,9 @@ extension CardDeckView {
     }
 
     func savePauseProgress() {
-        guard let deckID, let deck = fetchDeck(for: deckID) else { return }
+        // A review of the missed cards comes after the session was recorded; resuming it later
+        // would replay it as a full session and score it again.
+        guard !isReviewingMissed, let deckID, let deck = fetchDeck(for: deckID) else { return }
         let progress = DeckSessionProgress(
             cardIndex: currentIndex,
             elapsedSeconds: elapsedSeconds,
@@ -80,6 +82,7 @@ extension CardDeckView {
     }
 
     func resumeFromSavedProgress(_ progress: DeckSessionProgress) {
+        isReviewingMissed = false
         currentIndex = progress.cardIndex
         elapsedSeconds = progress.elapsedSeconds
         if let style = FlashcardStyle(rawValue: progress.studyModeRaw) { localStyle = style }

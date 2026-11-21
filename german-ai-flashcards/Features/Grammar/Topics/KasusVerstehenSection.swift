@@ -7,6 +7,11 @@
 //  Probe), each with ✓ once played. Rows that start a round end in a play glyph, like the
 //  Schnellrunde's.
 //
+//  Every row here is a task, so each wears its task drawing (`GrammarTaskArt`, through
+//  `GrammarTaskRow`) rather than a symbol chip — including the Lektion, whose title, blurb and
+//  minutes all come from the registry instead of being spelled out here. „Warum dieser Fall?“ is
+//  reading, not a task, so it keeps a chip (`GrammarShelfRow`).
+//
 
 import SwiftUI
 
@@ -20,40 +25,45 @@ struct KasusVerstehenSection: View {
     let onExercise: (KasusConceptExercise) -> Void
     var onDrill: (KasusDrillKind) -> Void = { _ in }
 
-    @Environment(\.appTheme) private var appTheme
+    /// The Lektion's row, read off the registry like every other row in the section.
+    private var lesson: KasusDrillMeta { KasusRoundStep.lesson.meta }
 
     var body: some View {
         Section {
-            row(symbol: "lightbulb.fill", title: "Lektion · The idea",
-                caption: "What this case is, in English and German · about 2 min",
-                done: progress.lessonRead(unit), isLesson: true, action: onLesson)
+            Button(action: onLesson) {
+                GrammarTaskRow(icon: .art(lesson.art),
+                               title: "\(lesson.germanTitle) · \(lesson.englishTitle)",
+                               subtitle: "\(lesson.blurb) · about \(lesson.minutes) min",
+                               done: progress.lessonRead(unit), tail: .read, tint: unit.color)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(lesson.germanTitle). \(progress.lessonRead(unit) ? "Done" : "Not yet")")
             NavigationLink {
                 KasusExplainerLibraryView(unit: unit)
             } label: {
-                Label {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Warum dieser Fall? · Why this case?").font(.subheadline.weight(.medium))
-                        Text("Worked contrasts, common traps, and the reason behind the form")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                } icon: {
-                    Image(systemName: "text.magnifyingglass").foregroundStyle(unit.color)
+                GrammarShelfRow(title: "Warum dieser Fall? · Why this case?",
+                                subtitle: "Worked contrasts, common traps, and the reason behind the form") {
+                    GrammarRowChip(symbol: "text.magnifyingglass", tint: unit.color)
                 }
-                .padding(.vertical, 4)
             }
             ForEach(offered) { exercise in
-                row(symbol: exercise.symbol, title: "\(exercise.germanTitle) · \(exercise.englishTitle)",
-                    caption: "\(exercise.blurb) · about \(exercise.minutes) min",
-                    done: progress.conceptDone(unit, exercise), isLesson: false) {
-                    onExercise(exercise)
+                Button { onExercise(exercise) } label: {
+                    GrammarTaskRow(icon: .art(exercise.art),
+                                   title: "\(exercise.germanTitle) · \(exercise.englishTitle)",
+                                   subtitle: "\(exercise.blurb) · about \(exercise.minutes) min",
+                                   done: progress.conceptDone(unit, exercise), tint: unit.color)
                 }
+                .buttonStyle(.plain)
             }
             ForEach(extra) { kind in
-                row(symbol: kind.meta.symbol, title: "\(kind.meta.germanTitle) · \(kind.meta.englishTitle)",
-                    caption: "\(kind.meta.blurb) · about \(kind.meta.minutes) min",
-                    done: progress.drillDone(kind.step, topicKey: unit.rawValue), isLesson: false) {
-                    onDrill(kind)
+                Button { onDrill(kind) } label: {
+                    GrammarTaskRow(icon: .art(kind.meta.art),
+                                   title: "\(kind.meta.germanTitle) · \(kind.meta.englishTitle)",
+                                   subtitle: "\(kind.meta.blurb) · about \(kind.meta.minutes) min",
+                                   done: progress.drillDone(kind.step, topicKey: unit.rawValue),
+                                   tint: unit.color)
                 }
+                .buttonStyle(.plain)
             }
         } header: {
             Text("Verstehen · Understand")
@@ -63,40 +73,6 @@ struct KasusVerstehenSection: View {
                  ? "The idea first, then name each phrase's job. The other drills start with the Akkusativ."
                  : "The idea first, then the roles, then reading who does what by the ending alone. Nothing here moves the coach except Die Probe.")
         }
-    }
-
-    private func row(symbol: String, title: String, caption: String, done: Bool, isLesson: Bool,
-                     action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: symbol)
-                    .font(.title3)
-                    .foregroundStyle(unit.color)
-                    .frame(width: 34, height: 34)
-                    .background(unit.color.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.primary)
-                    HStack(spacing: 4) {
-                        Image(systemName: done ? "checkmark.circle.fill" : "circle")
-                        Text(caption)
-                            .lineLimit(2)
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Image(systemName: isLesson ? "book.pages" : "play.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(.tint)
-            }
-            .padding(.vertical, 4)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(title). \(done ? "Done" : "Not yet")")
     }
 }
 

@@ -107,7 +107,7 @@ struct UnifiedLibraryView: View {
                 // A Mac list row doesn't stretch its content; without this the message sits left.
                 .frame(maxWidth: .infinity)
             } else {
-                let links = DeckLinks(courses: courses, stories: stories, papers: papers, handouts: handouts)
+                let links = DeckLinks(courses: courses, stories: stories, papers: papers, handouts: handouts, decks: browsableDecks)
                 if mixableDecks.count >= 2 {
                     Button {
                         showingDeckMix = true
@@ -297,7 +297,8 @@ private struct DeckLinks {
     private let courseOwnDecks: Set<UUID>
     private let sources: [UUID: DeckSource]
 
-    init(courses: [ClassCourse], stories: [StudyStory], papers: [StudyPaper], handouts: [ClassMaterial]) {
+    init(courses: [ClassCourse], stories: [StudyStory], papers: [StudyPaper], handouts: [ClassMaterial],
+         decks: [SavedDeck]) {
         courseNames = Dictionary(courses.map { ($0.id, $0.name) }, uniquingKeysWith: { first, _ in first })
         courseOwnDecks = Set(courses.compactMap(\.deckID))
         var sources: [UUID: DeckSource] = [:]
@@ -317,6 +318,16 @@ private struct DeckLinks {
             if let id = story.deckID {
                 sources[id] = DeckSource(text: "From the story \u{201C}\(story.title)\u{201D}", symbol: "book.pages")
             }
+        }
+        // A document deck names its own origin, since nothing else in the Library points at it.
+        // Last, and only where nothing more specific was found: a deck read with a handout is
+        // better described by that handout than by the file it happens to keep.
+        for deck in decks where deck.kind == .document && deck.hasSourceFile && sources[deck.id] == nil {
+            let kind = ClassMaterial.SourceKind.forFile(deck.sourceFile)
+            sources[deck.id] = DeckSource(
+                text: kind == .photo ? "From a photo" : "From a PDF",
+                symbol: kind.systemImage
+            )
         }
         self.sources = sources
     }
@@ -389,6 +400,23 @@ private struct SavedDeckRow: View {
             }
             .font(.caption)
             .foregroundStyle(.secondary)
+
+            // This deck's pictures are being drawn (`DeckPicturesPill` shows the same run).
+            let illustration = DeckIllustrationService.shared
+            if illustration.illustratingDeckUUID == deck.id, illustration.isDeckRun {
+                HStack(spacing: 6) {
+                    ProgressView(value: illustration.progress)
+                        .frame(width: 60)
+                    Label(illustration.totalCount > 0
+                          ? "Drawing pictures · \(min(illustration.completedCount + 1, illustration.totalCount)) of \(illustration.totalCount)"
+                          : "Drawing pictures…",
+                          systemImage: "photo")
+                        .labelStyle(.titleAndIcon)
+                        .monospacedDigit()
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
 
             if let latest = latestResult {
                 HStack(spacing: 4) {

@@ -211,6 +211,10 @@ enum ClassEntryCodec: SyncCodec {
 ///   at once, the later save wins whole; translating again fills in the sentences it lacks.
 /// - `snapshotFile` travels as the file name; the PDF or photo itself syncs separately under the
 ///   same name in `ClassMaterialStore`.
+/// - The worksheet's answers merge answer by answer (keyed by answer key), the later edit of each
+///   winning, so a gap filled on the iPad and another on the Mac are both kept. The setup (which
+///   pages, sent or not) is last-writer-wins whole. The ink syncs as files beside the PDF
+///   (`WorksheetInkStore`).
 /// - Everything else is last-writer-wins per field.
 /// A handout stays on this device when its entry does (no entry, or an entry without a course):
 /// no other device could file it. Nothing else is left out.
@@ -219,7 +223,10 @@ enum ClassMaterialCodec: SyncCodec {
 
     static let spec = SyncKindSpec(
         kind: "ClassMaterial",
-        rules: ["lookups": .set(idField: "german", lowercasedID: true)],
+        rules: [
+            "lookups": .set(idField: "german", lowercasedID: true),
+            "worksheetAnswers": .keyed(item: .lwwBy("at")),
+        ],
         groups: [SyncFieldGroup(fields: ["translation", "translationModelRaw"], orderBy: [])]
     )
 
@@ -247,6 +254,8 @@ enum ClassMaterialCodec: SyncCodec {
         f.set("translation", jsonData: m.translationData)
         f.set("translationModelRaw", m.translationModelRaw)
         f.set("originIDRaw", m.originIDRaw)
+        f.set("worksheet", jsonData: m.worksheetData)
+        f.set("worksheetAnswers", jsonData: m.worksheetAnswersData)
         return f.payload
     }
 
@@ -286,6 +295,8 @@ enum ClassMaterialCodec: SyncCodec {
         m.translationData = flat.jsonData("translation")
         m.translationModelRaw = flat.string("translationModelRaw")
         m.originIDRaw = flat.string("originIDRaw")
+        m.worksheetData = flat.jsonData("worksheet")
+        m.worksheetAnswersData = flat.jsonData("worksheetAnswers")
     }
 }
 
@@ -343,5 +354,8 @@ enum ClassMaterialCodec: SyncCodec {
 //                           translationModelRaw
 //   translationModelRaw  -> "translationModelRaw" .lww, group with translation
 //   originIDRaw          -> "originIDRaw" .lww (the story, paper or deck it came from)
+//   worksheetData        -> "worksheet" (JSON WorksheetSetup) .lww
+//   worksheetAnswersData -> "worksheetAnswers" (JSON [String: WorksheetAnswer])
+//                           .keyed(item: .lwwBy("at"))
 //   entry                -> "entry" (ClassEntry id) .lww; parent, linked on insert only (the app
 //                           never moves a handout to another entry)

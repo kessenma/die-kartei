@@ -40,7 +40,10 @@ Status legend: ✅ done · 🚧 in progress · ⬜ not started
 ## Phase 1 — XP, level & daily goal  ✅
 
 - ✅ `Services/ExperienceService.swift` — XP weights (1/card, 2/grammar item, 5/story question,
-  10/conversation, 1/study minute), all summed from `StudyDay`. Daily-goal helpers.
+  10/conversation, 1 per ten words written in the Schreiben room, 1 per word on a Schreibblatt sheet
+  marked Fertig (`sheetWordsWritten`, credited once per sheet), 1 per Hören item (a number,
+  a dictated sentence or a story summary, right or wrong: `hoerenItems`, docs/HOEREN.md),
+  1/study minute), all summed from `StudyDay`. Daily-goal helpers.
 - ✅ `Models/LearnerLevel.swift` — quadratic curve (level n threshold `50·(n−1)·n`: L2 = 100,
   L3 = 300, L5 = 1 000, L10 = 4 500) + nine German ranks (Neuling → Großmeister) with per-rank
   tint.
@@ -418,6 +421,14 @@ The comeback loop: see where you started and where you are now. (2026-08-19)
 
 ## Decisions log
 
+- **One streak, and the grammar heatmap is not it (2026-10-22).** Grammatik ▸ Fortschritt has a
+  „Grammatik-Tage" heat grid, and it deliberately shows no streak number. The streak counts every
+  kind of study (`StudyLogService.currentStreak`, gated on `StudyDay.hasActivity`); a grammar-only
+  count would sit beside it disagreeing by design. The grid is days and minutes only. It also
+  reuses Home's `StreakGrid` and `StreakShade`, so the two heat ramps cannot drift — but it is
+  untappable and has no range picker, so it can never move Home's `streak.calendarRange` choice.
+  Its minutes come from the grammar rounds, not `StudyDay.grammarSeconds`, and can therefore
+  differ slightly from Home's grammar time (docs/KASUS.md § Counting grammar time).
 - **Derived, not stored.** XP/level/badges/pyramid all read existing records; only prefs,
   celebration dedupe keys, and badge earned-dates live in UserDefaults. No schema change → the
   destructive-reset store stays safe.

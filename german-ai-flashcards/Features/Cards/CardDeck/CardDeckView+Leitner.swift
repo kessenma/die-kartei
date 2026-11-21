@@ -76,6 +76,7 @@ extension CardDeckView {
 
         HStack(spacing: 20) {
             Button {
+                if leitnerResults[currentIndex] != false { askToWrite(currentIndex) }
                 leitnerResults[currentIndex] = false
                 if localAutoAdvance { leitnerAdvance() }
             } label: {
@@ -186,8 +187,12 @@ extension CardDeckView {
         let total = sessionDueCount
         let missed = sessionLapses.sorted()
         let correct = max(0, total - missed.count)
-        onQuizComplete?(correct, total, missed, elapsedSeconds, .leitner, nil)
-        creditDeckMix(mode: .leitner)
+        if isReviewingMissed {
+            recordMissedReview(cards: total)
+        } else {
+            onQuizComplete?(correct, total, missed, elapsedSeconds, .leitner, nil)
+            creditDeckMix(mode: .leitner)
+        }
         clearPauseProgress()
         showQuizSummary = true
     }

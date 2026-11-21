@@ -599,7 +599,7 @@ nonisolated enum KasusLesson {
             title: "Merkhilfen",
             english: "Memory aids",
             lines: [
-                "Two to keep: the model sentence, and the Check as a routine. The rest are under Werkzeuge ▸ Merkhilfen.",
+                "Two to keep: the model sentence, and the Check as a routine. The rest are under Nachschlagen ▸ Warum dieser Fall? ▸ Merkhilfen.",
             ],
             mnemonic: KasusMnemonics.modelSentence
         ),

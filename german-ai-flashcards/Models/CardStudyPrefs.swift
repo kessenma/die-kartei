@@ -19,6 +19,15 @@ enum CardStudyPrefs {
     static let repeatMissedKey = "cards.repeatMissed"
     /// Deal the cards in a fresh random order every time a session starts (off: the deck's order).
     static let shuffleKey = "cards.shuffle"
+    /// A phrase card shows with one word missing and four choices (`PhraseGapCardView`) instead of
+    /// flipping. On by default.
+    static let phraseGapsKey = "cards.phraseGaps"
+    /// A missed card asks to be written out with the Apple Pencil (`WriteItSheet`). On by default,
+    /// iPad only: the iPhone and the Mac never show the switch or the sheet.
+    static let writeAfterMissKey = "cards.writeAfterMiss"
+
+    /// Whether this device can offer the write-it sheet at all: an iPad, for the Pencil.
+    static var writeAfterMissAvailable: Bool { ThisDevice.kind == .iPad }
 
     static func germanFirst(_ defaults: UserDefaults = .standard) -> Bool {
         defaults.object(forKey: germanFirstKey) == nil ? true : defaults.bool(forKey: germanFirstKey)

@@ -3,8 +3,8 @@
 //  german-ai-flashcards
 //
 //  A 30-second explanation for a grammar structure — the just-in-time mini-lesson.
-//  Presented from the Today plan and the Grammar hub for weak spots that have no
-//  ready-made drill; reuses `GrammarFocus.explanation`.
+//  Presented from Today, the coach surfaces and the hub's rooms for structures that
+//  have no ready-made drill; reuses `GrammarFocus.explanation`.
 //
 
 import SwiftUI

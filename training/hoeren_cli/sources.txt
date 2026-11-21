@@ -1,0 +1,4 @@
+# App sources compiled into hoeren-cli, relative to german-ai-flashcards/ (the app target).
+# The prompts and the parser are the app's own code, never copies (GIST_PROBE.md).
+Services/Hoeren/GistPrompts.swift
+Services/Schreiben/WritingSentences.swift

@@ -3,6 +3,12 @@ import SwiftUI
 struct KasusExplainerLibraryView: View {
     var unit: KasusUnit? = nil
 
+    /// The reference rows' sheets. The Kasus-Check here is the same `KasusCheckSheet` the hub's
+    /// toolbar shows — a twin, never a fork.
+    @State private var showKasusCheck = false
+    @State private var showArticleRules = false
+    @State private var showPrepositionRules = false
+
     private var explainers: [KasusExplainer] { KasusExplainer.forUnit(unit) }
 
     var body: some View {
@@ -41,14 +47,44 @@ struct KasusExplainerLibraryView: View {
                 NavigationLink { KasusMnemonicsView() } label: {
                     Label("Merkhilfen · Memory aids", systemImage: "lightbulb")
                 }
+                Button { showKasusCheck = true } label: {
+                    Label("Der Kasus-Check · The six steps", systemImage: "questionmark.circle")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                NavigationLink { EndungsWerkstattView() } label: {
+                    Label("Endungs-Werkstatt · Ending workshop", systemImage: "cube.fill")
+                }
             } header: {
                 Text("Nachschlagen · Reference").themedSectionHeader()
+            }
+            .themedListRow()
+            // An index may list what lives elsewhere: order, not duplication.
+            Section {
+                Button { showArticleRules = true } label: {
+                    Label("Die 18 Regeln · The gender patterns", systemImage: "textformat.abc")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                Button { showPrepositionRules = true } label: {
+                    Label("Präpositionen-Spickzettel · The cheat sheet", systemImage: "arrow.triangle.branch")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            } header: {
+                Text("Regeln · Rule sheets").themedSectionHeader()
             }
             .themedListRow()
         }
         .themedListScreen()
         .navigationTitle("Warum dieser Fall? · Why this case?")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showKasusCheck) { KasusCheckSheet() }
+        .sheet(isPresented: $showArticleRules) { ArticleRulesSheet() }
+        .sheet(isPresented: $showPrepositionRules) { PrepositionRulesSheet() }
     }
 }
 

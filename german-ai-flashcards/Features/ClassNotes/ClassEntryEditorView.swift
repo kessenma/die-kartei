@@ -25,6 +25,7 @@ struct ClassEntryEditorView: View {
 
     @State private var selectedCourseID: UUID?
     @State private var newCourseName = "Deutschkurs"
+    @State private var newCourseKind: ClassCourse.Kind = .course
     @State private var date = Date()
     @State private var title = ""
     @State private var foci: Set<GrammarFocus> = []
@@ -108,6 +109,12 @@ struct ClassEntryEditorView: View {
             } else if courses.isEmpty {
                 TextField("Course name", text: $newCourseName)
                     .focused($focused, equals: .courseName)
+                Picker("Kind", selection: $newCourseKind) {
+                    ForEach(ClassCourse.Kind.allCases) { kind in
+                        Text(kind.label).tag(kind)
+                    }
+                }
+                .pickerStyle(.segmented)
             } else {
                 Picker("Course", selection: $selectedCourseID) {
                     ForEach(courses) { course in
@@ -119,7 +126,7 @@ struct ClassEntryEditorView: View {
             Text("Kurs · Course").themedSectionHeader()
         } footer: {
             if isNew && courses.isEmpty {
-                Text("Your first course is created with this entry. Teacher, level, and dates can be added later from its page.")
+                Text("Your first course is created with this entry. \(newCourseKind.blurb) Teacher, level, and dates (or the number of weeks) can be added later from its page.")
                     .font(.caption2)
             }
         }
@@ -375,7 +382,7 @@ struct ClassEntryEditorView: View {
         }
         if let first = courses.first { return first }
         let name = newCourseName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let created = ClassCourse(name: name.isEmpty ? "Deutschkurs" : String(name.prefix(80)))
+        let created = ClassCourse(name: name.isEmpty ? "Deutschkurs" : String(name.prefix(80)), kind: newCourseKind)
         created.sortOrder = (allCourses.map(\.sortOrder).max() ?? -1) + 1
         modelContext.insert(created)
         return created

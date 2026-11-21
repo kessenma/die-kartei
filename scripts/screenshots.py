@@ -7,7 +7,8 @@ Screenshots live under `AppStore/screenshots/<locale>/<DISPLAY_TYPE>/NN-name.jpg
       en-US/
         APP_IPHONE_67/           1320x2868  (6.9" — what Apple wants now)
         APP_IPHONE_65/           1284x2778  (6.5" — the older set, still served)
-        APP_IPAD_PRO_3GEN_129/   2048x2732  (13" iPad)
+        APP_IPAD_PRO_3GEN_129/   2732x2048  (13" iPad, landscape)
+        APP_DESKTOP/             2880x1800  (Mac)
 
 The folder name is the App Store display type, so nothing has to be inferred from
 a file name. Order on the product page follows the sorted file name, which is why
@@ -15,6 +16,7 @@ they are zero-padded: `10-…` must not sort between `01-…` and `02-…`.
 
 CLI:
   python3 scripts/screenshots.py check              # validate sizes, show the plan
+  python3 scripts/screenshots.py push --platform MAC_OS --dry-run   # the Mac set
   python3 scripts/screenshots.py push [--version 1.6] [--force]
   python3 scripts/screenshots.py pull [--version 1.6]   # download what ASC has
 
@@ -40,16 +42,26 @@ SHOTS_DIR = ROOT / "AppStore" / "screenshots"
 APP_ID = "6770390331"
 MAX_PER_SET = 10  # App Store Connect's cap per display type
 
-# Accepted pixel sizes per display type, portrait only — we never ship landscape.
+# Accepted pixel sizes per display type. iPhone is portrait only; the iPad set is
+# landscape (portrait sizes kept so either works); Mac is 16:10 landscape.
 # Straight from `asc screenshots sizes --all`; a file that is not exactly one of
 # these is rejected by App Store Connect on upload.
 EXPECTED = {
     "APP_IPHONE_67": [(1320, 2868), (1290, 2796), (1260, 2736)],
     "APP_IPHONE_65": [(1284, 2778), (1242, 2688)],
-    "APP_IPAD_PRO_3GEN_129": [(2064, 2752), (2048, 2732)],
+    "APP_IPAD_PRO_3GEN_129": [(2064, 2752), (2048, 2732), (2752, 2064), (2732, 2048)],
+    "APP_DESKTOP": [(2880, 1800), (2560, 1600), (1440, 900), (1280, 800)],
 }
 
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png"}
+
+# Which App Store platform each set belongs to. iOS and macOS are separate App Store
+# versions under one app record, so a set must go to its own platform's version.
+PLATFORM_OF = {"APP_DESKTOP": "MAC_OS"}  # everything else is IOS
+
+
+def platform_of(display_type):
+    return PLATFORM_OF.get(display_type, "IOS")
 
 
 def emit(text):
@@ -140,8 +152,12 @@ def check(verbose=True):
     return problems
 
 
-def push(version, force=False, dry_run=False, fatal=False):
-    """Upload every non-empty set for `version`. Returns True when nothing failed.
+def push(version, force=False, dry_run=False, fatal=False, platform="IOS", replace=None):
+    """Upload every non-empty set of `platform` for `version`. Returns True when nothing failed.
+
+    `platform` is "IOS" (iPhone + iPad sets) or "MAC_OS" (APP_DESKTOP). The Mac sets
+    are uploaded per version localization ID, because a version string alone can name
+    both the iOS and the macOS version of this app.
 
     Additive: `--skip-existing` compares MD5 against what the set already holds, so
     an unchanged image is a no-op and a re-run after a partial failure is safe.
@@ -160,15 +176,21 @@ def push(version, force=False, dry_run=False, fatal=False):
     # children ARE the locales. Point it at a locale folder and that folder's
     # children are read as locale codes ("no matching ... localizations found for
     # locales: APP-IPHONE-67").
+    if replace is None:
+        replace = os.environ.get("REPLACE_SCREENSHOTS") == "1"
+    sets = [s for s in sets_on_disk() if platform_of(s[1]) == platform]
     by_type = {}
-    for locale, display_type, images in sets_on_disk():
+    for locale, display_type, images in sets:
         if images:
             by_type.setdefault(display_type, []).append((locale, images))
 
     ok = True
-    for locale, display_type, images in sets_on_disk():
+    for locale, display_type, images in sets:
         if not images:
             log("⏭", f"{locale}/{display_type}: empty, skipped")
+
+    if platform != "IOS":
+        return _push_by_localization(version, by_type, platform, force, dry_run, fatal, replace)
 
     for display_type, entries in sorted(by_type.items()):
         where = ", ".join(f"{loc} ({len(imgs)})" for loc, imgs in entries)
@@ -180,7 +202,10 @@ def push(version, force=False, dry_run=False, fatal=False):
             "--device-type", display_type,
             "--output", "json",
         ]
-        if not force:
+        if replace:
+            # asc refuses to delete without --confirm (a dry run doesn't need it).
+            args += ["--replace"] if dry_run else ["--replace", "--confirm"]
+        elif not force:
             args.append("--skip-existing")
         if dry_run:
             args.append("--dry-run")
@@ -188,6 +213,47 @@ def push(version, force=False, dry_run=False, fatal=False):
         if asc(*args, check=False) != 0:
             ok = False
             log("⚠️", f"{display_type} did not upload cleanly.")
+    if not ok and fatal:
+        raise RuntimeError("screenshot upload failed")
+    return ok
+
+
+def _push_by_localization(version, by_type, platform, force, dry_run, fatal, replace=False):
+    """Upload each set to its locale's version localization on `platform`'s version."""
+    if not by_type:
+        log("⏭", f"No {platform} screenshot sets on disk.")
+        return True
+    loc_ids = dict(localizations(version, platform))
+    if not loc_ids:
+        log("❌", f"No {platform} App Store version {version} with localizations found.")
+        if fatal:
+            raise RuntimeError("screenshot upload failed")
+        return False
+    ok = True
+    for display_type, entries in sorted(by_type.items()):
+        for locale, imgs in entries:
+            loc_id = loc_ids.get(locale)
+            if not loc_id:
+                ok = False
+                log("⚠️", f"{locale}: no {platform} localization on {version}; skipped {display_type}.")
+                continue
+            args = [
+                "screenshots", "upload",
+                "--version-localization", loc_id,
+                "--path", str((SHOTS_DIR / locale / display_type).relative_to(ROOT)),
+                "--device-type", display_type,
+                "--output", "json",
+            ]
+            if replace:
+                args += ["--replace"] if dry_run else ["--replace", "--confirm"]
+            elif not force:
+                args.append("--skip-existing")
+            if dry_run:
+                args.append("--dry-run")
+            log("⬆️", f"{display_type}: {locale} ({len(imgs)}) -> {platform} {version}")
+            if asc(*args, check=False) != 0:
+                ok = False
+                log("⚠️", f"{locale}/{display_type} did not upload cleanly.")
     if not ok and fatal:
         raise RuntimeError("screenshot upload failed")
     return ok
@@ -204,14 +270,15 @@ def asc_json(*args):
         return None
 
 
-def localizations(version):
+def localizations(version, platform=None):
     """[(locale, version_localization_id)] for a marketing version, or [] if unknown.
 
     `asc screenshots download` takes neither an app nor a version — only a
     localization ID — so the two lookups that `upload` does internally have to be
     done by hand here.
     """
-    payload = asc_json("versions", "list", "--app", APP_ID, "--output", "json")
+    extra = ["--platform", platform] if platform else []
+    payload = asc_json("versions", "list", "--app", APP_ID, *extra, "--output", "json")
     version_id = next(
         (
             item["id"]
@@ -284,6 +351,10 @@ def main():
     p_push.add_argument("--force", action="store_true",
                         help="re-upload images even when an identical one is already there")
     p_push.add_argument("--dry-run", action="store_true", help="show the plan, change nothing")
+    p_push.add_argument("--replace", action="store_true",
+                        help="replace each set on the store with this folder's images (deletes the old ones)")
+    p_push.add_argument("--platform", choices=["IOS", "MAC_OS"], default="IOS",
+                        help="IOS = iPhone + iPad sets, MAC_OS = APP_DESKTOP (default IOS)")
 
     p_pull = sub.add_parser("pull", help="download the version's screenshots from ASC")
     p_pull.add_argument("--version", help="marketing version (default: the project's)")
@@ -306,7 +377,8 @@ def main():
         return 1
 
     if args.command == "push":
-        return 0 if push(version, force=args.force, dry_run=args.dry_run) else 1
+        return 0 if push(version, force=args.force, dry_run=args.dry_run,
+                         platform=args.platform, replace=args.replace or None) else 1
     if args.command == "pull":
         return pull(version, args.output_dir)
     return 1

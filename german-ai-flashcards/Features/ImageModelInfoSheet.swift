@@ -100,6 +100,7 @@ struct ImageModelInfoSheet: View {
             .background {
                 ModelSheetBackground(theme: model.theme)
             }
+            .macSheetSize()
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

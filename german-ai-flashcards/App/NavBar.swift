@@ -6,7 +6,7 @@
 import SwiftUI
 
 enum MenuTab: String {
-    case home, library, settings
+    case home, grammar, library, settings
 }
 
 // MARK: - Badge shapes
@@ -110,6 +110,10 @@ struct NavBar: View {
                     GeneratingBadge()
                 }
             }
+
+            // Grammatik is the app's spine, so it sits beside Home. Settings stays last: its
+            // download badge is where people have learned to look for load progress.
+            navButton(tab: .grammar, icon: "checklist", selectedIcon: "checklist.checked", label: "Grammar")
 
             navButton(tab: .library, icon: "brain.head.profile", selectedIcon: "brain.head.profile.fill", label: "Library")
 
@@ -223,6 +227,10 @@ struct NavBar: View {
                     .textCase(theme.uppercaseSectionHeaders ? .uppercase : nil)
                     .tracking(theme.uppercaseSectionHeaders ? 0.8 : 0)
                     .fontWeight(isSelected ? .semibold : .regular)
+                    // Four tabs share the width three used to, and Grundform sets its labels in
+                    // condensed caps. Shrink rather than wrap or clip at large type sizes.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
             }
             .foregroundStyle(isSelected ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
             .frame(maxWidth: .infinity)

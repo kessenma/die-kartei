@@ -122,6 +122,12 @@ final class SyncCoordinator {
     /// Repair Sync: rescan every row against its state, then refetch the whole zone. Merges are
     /// idempotent, so this is safe at any time.
     func repair() async {
+        // First: give every record that gave up a fresh set of tries. Without this a repair can't
+        // fix anything that is stuck — `reconcileAll` only clears the count when a record's payload
+        // changes, so a record stuck on an error that has long since cleared stayed stuck forever,
+        // and the screen's own remedy did nothing.
+        let revived = clearSendFailures()
+        if revived > 0 { note("repair: \(revived) record(s) that had given up get another try") }
         do {
             let outcome = try tracker.reconcileAll()
             transport.enqueue(saves: outcome.saves, deletes: outcome.deletes)
@@ -230,6 +236,24 @@ final class SyncCoordinator {
     /// Counts before a send starts, so the progress bar knows what's waiting.
     func refreshCountsForProgress() { refreshCounts() }
 
+    /// Clear the give-up count on every record that has one, so they are sent again. Returns how
+    /// many. Safe at any time: a send that fails again just counts up from zero.
+    @discardableResult
+    func clearSendFailures() -> Int {
+        let failed = (try? context.fetch(FetchDescriptor<SyncRecordState>(
+            predicate: #Predicate { $0.failureCount > 0 }
+        ))) ?? []
+        guard !failed.isEmpty else { return 0 }
+        _ = try? SyncWriter.write(context) {
+            for state in failed {
+                state.failureCount = 0
+                state.lastError = nil
+            }
+        }
+        refreshCounts()
+        return failed.count
+    }
+
     private func refreshCounts() {
         let device = Self.heartbeatKind, meta = Self.metaKind
         pendingCount = count(#Predicate { $0.needsUpload || $0.pendingDelete })
@@ -289,14 +313,16 @@ extension SyncCoordinator: SyncTransportDelegate {
         }
     }
 
-    func transportConflict(_ name: String, server: SyncIncoming) {
-        let records = interceptZoneFingerprint([server], fromConflict: true)
+    func transportConflicts(_ servers: [SyncIncoming]) {
+        let records = interceptZoneFingerprint(servers, fromConflict: true)
         guard !records.isEmpty else { return }
+        serverCopiesVersion += 1
         do {
             let outcome = try applier.apply(records, deleted: [])
             if !outcome.changedKinds.isEmpty { didApplyRemoteChanges?(outcome.changedKinds) }
+            note("merged \(records.count) conflict(s)")
         } catch {
-            note("conflict merge failed for \(name): \(error.localizedDescription)")
+            note("conflict merge failed for \(records.count) record(s): \(error.localizedDescription)")
         }
     }
 
@@ -385,12 +411,37 @@ extension SyncCoordinator: SyncTransportDelegate {
         transportFetched([], deleted: names)
     }
 
-    func transportFailed(_ name: String, error: String) {
-        _ = try? SyncWriter.write(context) {
-            guard let state = SyncStoreMeta.states(named: [name], in: context)[name] else { return }
+    func transportFailed(_ names: [String], error: String) {
+        guard !names.isEmpty else { return }
+        forEachState(named: names) { state in
             state.failureCount += 1
             state.lastError = error
         }
-        note("send failed for \(name): \(error)")
+        note("send failed for \(names.count) record(s): \(error)")
+        refreshCounts()
+    }
+
+    /// Not these records' fault: another record in the same atomic batch failed, or the server's
+    /// copy has to be fetched first. They keep their tries — the reason is recorded only so the
+    /// sync report can say why nothing is moving.
+    func transportDeferred(_ names: [String], reason: String) {
+        guard !names.isEmpty else { return }
+        // Only the rows whose reason actually changed: a batch that keeps coming back shouldn't
+        // rewrite hundreds of rows on every pass to say the same thing.
+        forEachState(named: names) { if $0.lastError != reason { $0.lastError = reason } }
+        note("deferred \(names.count) record(s): \(reason)")
+        refreshCounts()
+    }
+
+    /// One write for the whole batch. A failing send brings back hundreds of records at a time, and
+    /// a save each would cost more than the send.
+    private func forEachState(named names: [String], _ body: (SyncRecordState) -> Void) {
+        _ = try? SyncWriter.write(context) {
+            for chunk in stride(from: 0, to: names.count, by: 400).map({
+                Array(names[$0..<min($0 + 400, names.count)])
+            }) {
+                for state in SyncStoreMeta.states(named: chunk, in: context).values { body(state) }
+            }
+        }
     }
 }

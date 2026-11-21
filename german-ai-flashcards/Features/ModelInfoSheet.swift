@@ -94,6 +94,7 @@ struct ModelInfoSheet: View {
             .background {
                 ModelSheetBackground(model: model)
             }
+            .macSheetSize()
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

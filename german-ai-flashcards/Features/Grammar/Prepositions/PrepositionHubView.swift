@@ -47,6 +47,11 @@ struct PrepositionHubView: View {
     /// back to them.
     @AppStorage("prepositions.track") private var track: Track = .ort
 
+    /// A deep link's track (the Verben room, a verbenPraepositionen route). Seeds the remembered
+    /// track once on arrival; nil leaves the learner where they last were.
+    var initialTrack: Track? = nil
+    @State private var seededTrack = false
+
     enum Track: String, CaseIterable, Identifiable {
         case ort, verb
         var id: String { rawValue }
@@ -126,6 +131,13 @@ struct PrepositionHubView: View {
         .themedListScreen()
         .navigationTitle("Präpositionen")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            // Once per arrival, so popping back from a drill doesn't yank the learner's pick.
+            if let initialTrack, !seededTrack {
+                seededTrack = true
+                track = initialTrack
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -285,7 +297,7 @@ struct PrepositionHubView: View {
                 sourceRow(
                     "All Prepositions",
                     "\(poolCount(Set(PrepositionCase.allCases))) prepositions across all four groups",
-                    "square.stack.3d.up"
+                    "square.stack.3d.up", art: .labelOneWord
                 )
             }
             .buttonStyle(.plain)
@@ -302,7 +314,7 @@ struct PrepositionHubView: View {
                 sourceRow(
                     "Akkusativ or Dativ?",
                     "Just the fixed-case ones — the everyday confusion",
-                    "arrow.left.arrow.right"
+                    "arrow.left.arrow.right", art: .labelOneWord
                 )
             }
             .buttonStyle(.plain)
@@ -319,7 +331,7 @@ struct PrepositionHubView: View {
                 sourceRow(
                     "Fixed or Two-Way?",
                     "Spot the ten that switch between Akkusativ and Dativ",
-                    "arrow.triangle.branch"
+                    "arrow.triangle.branch", art: .labelOneWord, tint: CasePalette.wechsel
                 )
             }
             .buttonStyle(.plain)
@@ -345,7 +357,7 @@ struct PrepositionHubView: View {
                     sourceRow(
                         category.title,
                         "\(category.subtitle) · \(category.exercises.count) exercises",
-                        "text.insert"
+                        "text.insert", art: .wordGap
                     )
                 }
                 .buttonStyle(.plain)
@@ -368,7 +380,7 @@ struct PrepositionHubView: View {
                     "Preposition Cards",
                     "Flip through meanings, cases, contractions and examples",
                     "rectangle.stack",
-                    isLauncher: false
+                    isLauncher: false, art: .cardStack
                 )
             }
 
@@ -378,7 +390,7 @@ struct PrepositionHubView: View {
                 sourceRow(
                     "Match the Meanings",
                     matchColorCoded ? "All groups mixed, colored by case" : "All groups mixed",
-                    "square.grid.2x2.fill"
+                    "square.grid.2x2.fill", art: .matchPairs
                 )
             }
             .buttonStyle(.plain)
@@ -405,27 +417,10 @@ struct PrepositionHubView: View {
 
     /// A single-group matching row, in that group's color.
     private func matchGroupRow(_ group: PrepositionCase, count: Int) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "square.grid.2x2")
-                .font(.title3)
-                .foregroundStyle(group.color)
-                .frame(width: 34, height: 34)
-                .background(group.color.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Match: \(group.germanLabel) only")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
-                Text("\(count) prepositions · \(group.englishLabel)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Image(systemName: "play.circle.fill")
-                .font(.title3)
-                .foregroundStyle(group.color)
-        }
-        .padding(.vertical, 4)
+        GrammarTaskRow(icon: .art(.matchPairs),
+                       title: "Match: \(group.germanLabel) only",
+                       subtitle: "\(count) prepositions · \(group.englishLabel)",
+                       tint: group.color)
         .contentShape(Rectangle())
     }
 
@@ -453,14 +448,15 @@ struct PrepositionHubView: View {
                     "Verb-Karten",
                     "\(verbCount) pairs, each with its scene. Flip for the preposition and case",
                     "rectangle.stack",
-                    isLauncher: false
+                    isLauncher: false, art: .cardStack
                 )
             }
 
             NavigationLink {
                 VerbPrepositionReviewView()
             } label: {
-                sourceRow("Wiederholen", reviewSubtitle, "arrow.triangle.2.circlepath", isLauncher: false)
+                sourceRow("Wiederholen", reviewSubtitle, "arrow.triangle.2.circlepath",
+                          isLauncher: false, art: .reviewQueue)
             }
 
             Button {
@@ -474,7 +470,7 @@ struct PrepositionHubView: View {
                 sourceRow(
                     "Paare finden",
                     matchColorCoded ? "Match each pair to its meaning, colored by case" : "Match each pair to its meaning",
-                    "square.grid.2x2.fill"
+                    "square.grid.2x2.fill", art: .matchPairs
                 )
             }
             .buttonStyle(.plain)
@@ -500,7 +496,7 @@ struct PrepositionHubView: View {
                 sourceRow(
                     "Akkusativ oder Dativ?",
                     "The pair and its scene, one tap for the case",
-                    "arrow.left.arrow.right"
+                    "arrow.left.arrow.right", art: .labelOneWord
                 )
             }
             .buttonStyle(.plain)
@@ -513,7 +509,7 @@ struct PrepositionHubView: View {
                 sourceRow(
                     "Lückentext",
                     "Fill in the preposition and the article: „wartet ___ Bus“",
-                    "text.insert"
+                    "text.insert", art: .wordGap
                 )
             }
             .buttonStyle(.plain)
@@ -526,7 +522,7 @@ struct PrepositionHubView: View {
                 sourceRow(
                     "Die Falle",
                     "Same preposition, place or verb pair? „auf dem Tisch“ vs „auf den Bus“",
-                    "exclamationmark.triangle"
+                    "exclamationmark.triangle", art: .pickOfTwo, tint: CasePalette.wechsel
                 )
             }
             .buttonStyle(.plain)
@@ -563,14 +559,15 @@ struct PrepositionHubView: View {
                     "Verb-Karten",
                     "\(verbCount) verb pairs from class, each with its scene",
                     "rectangle.stack",
-                    isLauncher: false
+                    isLauncher: false, art: .cardStack
                 )
             }
 
             NavigationLink {
                 VerbPrepositionReviewView()
             } label: {
-                sourceRow("Wiederholen", reviewSubtitle, "arrow.triangle.2.circlepath", isLauncher: false)
+                sourceRow("Wiederholen", reviewSubtitle, "arrow.triangle.2.circlepath",
+                          isLauncher: false, art: .reviewQueue)
             }
 
             #if DEBUG
@@ -671,34 +668,17 @@ struct PrepositionHubView: View {
 
     /// `isLauncher` rows start a round on tap, so they end in a play glyph rather than a chevron —
     /// the hub mixes them with plain navigation rows, and the two shouldn't look alike.
-    @ViewBuilder
+    ///
+    /// `art` gives the row its task drawing. These exercises have no `KasusDrillMeta` to read, so
+    /// the drawing is named here; the ones with no honest task shape (the scene galleries, the
+    /// tuning surfaces) pass none and keep the `icon` chip.
     private func sourceRow(
-        _ title: String, _ subtitle: String, _ icon: String, isLauncher: Bool = true
+        _ title: String, _ subtitle: String, _ icon: String, isLauncher: Bool = true,
+        art: GrammarTaskArt? = nil, tint: Color? = nil
     ) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundStyle(.tint)
-                .frame(width: 34, height: 34)
-                .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            if isLauncher {
-                Image(systemName: "play.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(.tint)
-            }
-        }
-        .padding(.vertical, 4)
-        .contentShape(Rectangle())
+        GrammarTaskRow(icon: art.map(GrammarTaskRow.Icon.art) ?? .symbol(icon),
+                       title: title, subtitle: subtitle,
+                       tail: isLauncher ? .play : .none, tint: tint)
     }
 }
 

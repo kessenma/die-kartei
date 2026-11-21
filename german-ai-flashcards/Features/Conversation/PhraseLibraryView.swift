@@ -212,6 +212,8 @@ struct AddEditPhraseSheet: View {
     var anchorScenario: ConversationScenario?
     /// nil = adding; non-nil = editing.
     var phrase: LearnedPhrase?
+    /// Where a new phrase also goes as a flashcard: the story's, job ad's or chats' deck.
+    var deckTarget: PhraseDeckTarget?
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -222,6 +224,8 @@ struct AddEditPhraseSheet: View {
     @State private var selectedScenarios: Set<ConversationScenario>
     @State private var selectedFocus: Set<GrammarFocus>
     @State private var isActive: Bool
+    /// "Also add to …": on by default whenever there is a deck to add to.
+    @State private var addToDeck = true
 
     /// When on, the phrase check also asks the AI which scenario(s) you'd hear this in
     /// and auto-selects them below.
@@ -272,12 +276,14 @@ struct AddEditPhraseSheet: View {
         mlxService: MLXGenerationService,
         anchorScenario: ConversationScenario?,
         phrase: LearnedPhrase?,
-        initialGerman: String? = nil
+        initialGerman: String? = nil,
+        deckTarget: PhraseDeckTarget? = nil
     ) {
         self.modelManager = modelManager
         self.mlxService = mlxService
         self.anchorScenario = anchorScenario
         self.phrase = phrase
+        self.deckTarget = deckTarget
         if let phrase {
             _inputIsGerman = State(initialValue: true)
             _inputText = State(initialValue: phrase.german)
@@ -313,6 +319,7 @@ struct AddEditPhraseSheet: View {
                     .themedListRow()
                     inputSection.themedListRow()
                     if let result = checkResult { resultSection(result).themedListRow() }
+                    if phrase == nil, let deckTarget { deckSection(deckTarget).themedListRow() }
                     scenarioSection
                         .id(Self.scenarioAnchorID)
                         .themedListRow()
@@ -523,6 +530,19 @@ struct AddEditPhraseSheet: View {
         (needsScenarioHint || aiCouldNotCategorize) && selectedScenarios.isEmpty
     }
 
+    private func deckSection(_ target: PhraseDeckTarget) -> some View {
+        Section {
+            Toggle("Also add to \(target.label)", isOn: $addToDeck)
+        } footer: {
+            Text("A flashcard to study it with: the card hides the verb or the preposition and asks you to pick it. With this on, a scenario is optional.")
+                .font(.caption2)
+        }
+    }
+
+    /// A scenario is needed to put a phrase into chats; a phrase that also becomes a card can do
+    /// without one.
+    private var needsScenario: Bool { !(phrase == nil && deckTarget != nil && addToDeck) }
+
     private var activeSection: some View {
         Section {
             Toggle("Active — quiz me on this", isOn: $isActive)
@@ -663,7 +683,7 @@ struct AddEditPhraseSheet: View {
     /// silently failing. The Save button stays enabled so this guidance can fire.
     private func attemptSave() {
         guard checkResult != nil else { return }
-        if selectedScenarios.isEmpty {
+        if selectedScenarios.isEmpty && needsScenario {
             inputFocused = false
             withAnimation { needsScenarioHint = true }
             scrollTarget = Self.scenarioAnchorID
@@ -696,6 +716,7 @@ struct AddEditPhraseSheet: View {
                 note: result.note
             )
             modelContext.insert(new)
+            if addToDeck, let deckTarget { deckTarget.save(result.german, result.english) }
         }
         try? modelContext.save()
         dismiss()

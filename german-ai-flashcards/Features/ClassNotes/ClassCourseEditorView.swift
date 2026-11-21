@@ -3,8 +3,9 @@
 //  german-ai-flashcards
 //
 //  Create or edit a course: what it is, who teaches it or what it is for, its level, and its
-//  dates when it has them. An existing course can also be archived (finished, kept) or deleted
-//  (with its entries and handouts; the deck stays in the Library).
+//  dates when it has them (a start plus a length in weeks, or an end date; the two stay in step).
+//  An existing course can also be archived (finished, kept) or deleted (with its entries and
+//  handouts; the deck stays in the Library).
 //
 
 import SwiftUI
@@ -18,6 +19,11 @@ struct ClassCourseEditorView: View {
     var onSaved: (ClassCourse) -> Void = { _ in }
     /// Called after a delete, so the screen that showed the course can leave.
     var onDeleted: () -> Void = {}
+    /// The kind a new course starts on.
+    var initialKind: ClassCourse.Kind = .course
+    /// Set when the editor stands between the learner and something they asked for (adding a
+    /// handout with no course yet): a "Skip for now" row then lets them go on without setting up.
+    var onSkip: (() -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -34,6 +40,9 @@ struct ClassCourseEditorView: View {
     @State private var hasDates = false
     @State private var startDate = Date()
     @State private var endDate = Date()
+    @State private var weeks = 14
+    /// Once the learner flips the dates toggle themselves, changing the kind stops flipping it.
+    @State private var datesTouched = false
     @State private var isArchived = false
     @State private var showDeleteConfirm = false
     @State private var loaded = false
@@ -53,6 +62,9 @@ struct ClassCourseEditorView: View {
                 datesSection
                 if course != nil {
                     statusSection
+                }
+                if course == nil, onSkip != nil {
+                    skipSection
                 }
             }
             .themedListScreen()
@@ -83,6 +95,12 @@ struct ClassCourseEditorView: View {
                 Text("Every entry and handout goes with it. The flashcard deck stays in the Library.")
             }
             .onAppear(perform: load)
+            .onChange(of: kind) { _, newKind in
+                // A new course's dates follow its kind until the learner decides: a term course
+                // has weeks, a tutor usually doesn't.
+                guard course == nil, !datesTouched else { return }
+                withAnimation { hasDates = newKind == .course }
+            }
         }
     }
 
@@ -173,17 +191,88 @@ struct ClassCourseEditorView: View {
 
     private var datesSection: some View {
         Section {
-            Toggle("Has dates", isOn: $hasDates.animation())
+            Toggle("Has dates", isOn: Binding(
+                get: { hasDates },
+                set: { newValue in
+                    datesTouched = true
+                    withAnimation { hasDates = newValue }
+                }
+            ))
             if hasDates {
-                DatePicker("Starts", selection: $startDate, displayedComponents: .date)
-                DatePicker("Ends", selection: $endDate, in: startDate..., displayedComponents: .date)
+                DatePicker("Starts", selection: startBinding, displayedComponents: .date)
+                Stepper(value: weeksBinding, in: 1...60) {
+                    LabeledContent("Length", value: weeks == 1 ? "1 week" : "\(weeks) weeks")
+                }
+                HStack(spacing: 8) {
+                    ForEach(Self.termPresets, id: \.weeks) { preset in
+                        Button {
+                            weeksBinding.wrappedValue = preset.weeks
+                        } label: {
+                            Text("\(preset.label) · \(preset.weeks)")
+                                .font(.caption.weight(.semibold))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(weeks == preset.weeks ? .accentColor : .secondary)
+                    }
+                }
+                DatePicker("Ends", selection: endBinding, in: startDate..., displayedComponents: .date)
             }
         } header: {
             Text("Dates").themedSectionHeader()
         } footer: {
             Text(hasDates
-                 ? "Entries are labelled by week of the course (\"Woche 5\")."
-                 : "A semester has dates; a tutor usually doesn't. With dates, entries are labelled by week.")
+                 ? "Entries are labelled by week of the course (\"Woche 5\"). Set the length or the end date; the other follows."
+                 : "A semester or quarter has dates; a tutor usually doesn't. With dates, entries are labelled by week.")
+                .font(.caption2)
+        }
+        .themedListRow()
+    }
+
+    // The start, the length and the end stay in step through these setters rather than
+    // `onChange`, so only the learner's own edits move the others: loading a course whose end
+    // falls mid-week must not "tidy" it to the end of that week.
+
+    /// Moving the start keeps the length; the end moves with it.
+    private var startBinding: Binding<Date> {
+        Binding(get: { startDate }, set: { newStart in
+            startDate = newStart
+            endDate = ClassCourse.endDate(start: newStart, weeks: weeks, calendar: .current)
+        })
+    }
+
+    private var weeksBinding: Binding<Int> {
+        Binding(get: { weeks }, set: { newWeeks in
+            weeks = newWeeks
+            endDate = ClassCourse.endDate(start: startDate, weeks: newWeeks, calendar: .current)
+        })
+    }
+
+    private var endBinding: Binding<Date> {
+        Binding(get: { endDate }, set: { newEnd in
+            endDate = newEnd
+            weeks = ClassCourse.weeks(start: startDate, end: newEnd, calendar: .current)
+        })
+    }
+
+    /// Typical term lengths, one tap each. A quarter is about ten teaching weeks, a semester
+    /// about fourteen; the stepper covers everything else.
+    private static let termPresets: [(label: String, weeks: Int)] = [
+        ("Quarter", 10),
+        ("Semester", 14),
+    ]
+
+    private var skipSection: some View {
+        Section {
+            Button {
+                dismiss()
+                onSkip?()
+            } label: {
+                Label("Skip for now", systemImage: "arrow.forward.circle")
+            }
+        } footer: {
+            Text("A plain \"Deutschkurs\" is set up for you; name it and pick its kind later from its page.")
                 .font(.caption2)
         }
         .themedListRow()
@@ -220,12 +309,20 @@ struct ClassCourseEditorView: View {
             goal = course.goal ?? ""
             levelRaw = course.levelRaw ?? ""
             hasDates = course.startDate != nil
+            datesTouched = true
             startDate = course.startDate ?? Date()
-            endDate = course.endDate ?? (Calendar.current.date(byAdding: .month, value: 4, to: startDate) ?? startDate)
+            if let end = course.endDate {
+                endDate = end
+                weeks = ClassCourse.weeks(start: startDate, end: end, calendar: .current)
+            } else {
+                endDate = ClassCourse.endDate(start: startDate, weeks: weeks, calendar: .current)
+            }
             isArchived = course.isArchived
         } else {
             levelRaw = defaultLevel.rawValue
-            endDate = Calendar.current.date(byAdding: .month, value: 4, to: startDate) ?? startDate
+            kind = initialKind
+            hasDates = initialKind == .course
+            endDate = ClassCourse.endDate(start: startDate, weeks: weeks, calendar: .current)
             focused = .name
         }
     }

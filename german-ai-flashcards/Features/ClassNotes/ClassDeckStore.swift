@@ -29,13 +29,13 @@ enum ClassDeckStore {
     /// Lowercased German words already in the course's deck, article stripped.
     static func savedWords(for course: ClassCourse, context: ModelContext) -> Set<String> {
         guard let deck = deck(for: course, context: context) else { return [] }
-        return Set(deck.cards.map { $0.germanWord.lowercased() })
+        return Set(deck.cards.map { CardKind.matchKey($0.germanWord) })
     }
 
     static func isWordSaved(_ word: String, course: ClassCourse, context: ModelContext) -> Bool {
         guard let deck = deck(for: course, context: context) else { return false }
         let key = ClassWord.key(word)
-        return deck.cards.contains { $0.germanWord.lowercased() == key }
+        return deck.cards.contains { CardKind.matchKey($0.germanWord) == key }
     }
 
     /// Save a word (or phrase) into the course's deck, and unless the learner turned the hand-off
@@ -50,12 +50,13 @@ enum ClassDeckStore {
     ) -> Bool {
         guard !isWordSaved(german, course: course, context: context) else { return false }
         let target = orCreateDeck(for: course, context: context)
-        let (word, article) = splitArticle(german)
+        let split = CardKind.split(german)
+        let word = split.word
         target.cards.append(SavedCard(
             germanWord: word,
             englishTranslation: english ?? "",
-            wordType: article != nil ? "noun" : nil,
-            article: article,
+            wordType: split.wordType,
+            article: split.article,
             exampleSentence: nil,
             conjugations: nil,
             sortOrder: target.cards.count
@@ -100,12 +101,5 @@ enum ClassDeckStore {
             }
         }
         return added
-    }
-
-    private static func splitArticle(_ word: String) -> (String, String?) {
-        for article in ["der ", "die ", "das "] where word.lowercased().hasPrefix(article) {
-            return (String(word.dropFirst(article.count)).trimmingCharacters(in: .whitespaces), String(article.dropLast()))
-        }
-        return (word, nil)
     }
 }

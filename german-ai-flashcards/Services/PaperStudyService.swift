@@ -243,12 +243,12 @@ final class PaperStudyService {
     private func saveDeck(for paper: StudyPaper, pairs: [(german: String, english: String)]) -> SavedDeck? {
         guard !pairs.isEmpty else { return nil }
         let vocab = pairs.map { pair -> VocabCard in
-            let (german, article) = splitArticle(pair.german)
+            let split = CardKind.split(pair.german)
             return VocabCard(
-                germanWord: german,
+                germanWord: split.word,
                 englishTranslation: pair.english,
-                wordType: article != nil ? "noun" : nil,
-                article: article,
+                wordType: split.wordType,
+                article: split.article,
                 exampleSentence: nil,
                 conjugations: nil
             )
@@ -354,12 +354,5 @@ final class PaperStudyService {
         var t = s
         for p in ["- ", "• ", "* ", "– "] where t.hasPrefix(p) { t = String(t.dropFirst(p.count)); break }
         return t.trimmingCharacters(in: .whitespaces)
-    }
-
-    private func splitArticle(_ word: String) -> (String, String?) {
-        for article in ["der ", "die ", "das "] where word.lowercased().hasPrefix(article) {
-            return (String(word.dropFirst(article.count)).trimmingCharacters(in: .whitespaces), String(article.dropLast()))
-        }
-        return (word, nil)
     }
 }

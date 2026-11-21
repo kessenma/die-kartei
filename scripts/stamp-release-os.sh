@@ -30,7 +30,8 @@ note() { echo "note: stamp-release-os: $*"; }
 # with a letter suffix: 26A5421a, 27A5194q. A trailing letter alone proves
 # nothing: release Xcode 27.0 is 27A266a, 16.0 was 16A242d. Releases and RCs
 # have shorter numbers (25G83, 26A335); security updates use 1xxx-4xxx or
-# 6+ digits, so neither trips this.
+# 6+ digits, so neither trips this. True for macOS builds; Xcode outgrew it with
+# 27.1 (27A9275 is the release), which step 3 handles on its own.
 is_seed() { [[ "$1" =~ ^[0-9]+[A-Z][5-9][0-9]{3}[a-z]?$ ]]; }
 
 # 1. Only archives matter. `xcodebuild archive` runs the "install" action;
@@ -48,16 +49,38 @@ if ! is_seed "$host_build"; then
 fi
 
 # 3. A beta Xcode can't produce a submittable archive anyway (DTXcodeBuild is
-#    checked too), so don't pretend otherwise. Xcode build numbers follow the
-#    same seed convention (27A5194q vs 27A266a).
+#    checked too), so don't pretend otherwise. Its build number no longer tells
+#    us which it is: Xcode 27.1 SHIPPED as 27A9275 and its betas were 27A92xx,
+#    both inside the seed range, so ask the bundle instead. A Mac App Store
+#    receipt only ever lands in a public release; the XcodeBeta icon and a
+#    "beta" in the path mark a beta (27.1's betas carry only the latter). Fall
+#    back to the build number when the bundle says nothing either way, which is
+#    what pre-27.1 numbering still answers correctly.
 xcode_build="${XCODE_PRODUCT_BUILD_VERSION:-}"
 if [[ -z "$xcode_build" ]]; then
   xcode_build="$(xcodebuild -version 2>/dev/null | awk '/Build version/ {print $3}')"
 fi
-if is_seed "$xcode_build"; then
-  echo "error: archiving with a beta Xcode (${xcode_build}). App Store Connect will reject this archive regardless of BuildMachineOSBuild. Archive with the release Xcode instead (scripts/deploy.py does)." >&2
+
+xcode_app="${DEVELOPER_DIR:-$(xcode-select -p 2>/dev/null || true)}"
+xcode_app="${xcode_app%/Contents/Developer}"
+
+# "release", "beta" or "unknown" — keep in step with _xcode_channel() in scripts/deploy.py.
+xcode_channel() {
+  local app="$1" icon=""
+  [[ -n "$app" && -d "$app/Contents/_MASReceipt" ]] && { echo release; return; }
+  if [[ -n "$app" ]]; then
+    icon="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$app/Contents/Info.plist" 2>/dev/null || true)"
+  fi
+  if [[ "$icon" == *Beta* || "$app" == *[Bb]eta* ]]; then echo beta; return; fi
+  echo unknown
+}
+
+channel="$(xcode_channel "$xcode_app")"
+if [[ "$channel" == beta ]] || { [[ "$channel" == unknown ]] && is_seed "$xcode_build"; }; then
+  echo "error: archiving with a beta Xcode (${xcode_build}, ${xcode_app:-unknown path}). App Store Connect will reject this archive regardless of BuildMachineOSBuild. Archive with the release Xcode instead (scripts/deploy.py does)." >&2
   exit 1
 fi
+note "Xcode ${xcode_build} looks like a ${channel} build (${xcode_app:-unknown path})"
 
 # 4. Pick the stamp. Prefer the macOS build that shipped with this (release)
 #    Xcode's own macOS SDK, so it tracks Xcode updates by itself. Fall back to a

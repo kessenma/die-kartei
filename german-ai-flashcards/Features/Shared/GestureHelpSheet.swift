@@ -66,7 +66,7 @@ struct GestureHelpSheet: View {
 
 // MARK: - Card chrome
 
-private struct GestureDemoCard<Content: View>: View {
+struct GestureDemoCard<Content: View>: View {
     let icon: String
     let title: String
     let caption: String

@@ -20,6 +20,8 @@ import SwiftData
 ///   that deck before either syncs, the later link wins and the other deck keeps its words, unlinked.
 /// - A story still being written stays on this device: every list hides it, and a stopped or
 ///   failed generation deletes it. It syncs from the moment it completes.
+/// - `keyPoints` (Hören ▸ Worum geht's?) is content like the questions: last writer wins. A copy
+///   without it never clears it; key points are written once and never removed.
 /// - The `@Transient` decode caches never travel.
 enum StudyStoryCodec: SyncCodec {
     typealias Model = StudyStory
@@ -61,6 +63,7 @@ enum StudyStoryCodec: SyncCodec {
         f.set("generationComplete", s.generationComplete)
         f.set("bestScore", s.bestScore)
         f.set("lastStudiedAsListening", s.lastStudiedAsListening)
+        f.set("keyPoints", jsonData: s.keyPointsData)
         return f.payload
     }
 
@@ -103,6 +106,7 @@ enum StudyStoryCodec: SyncCodec {
         if let v = flat.bool("generationComplete") { s.generationComplete = v }
         s.bestScore = flat.int("bestScore")
         if let v = flat.bool("lastStudiedAsListening") { s.lastStudiedAsListening = v }
+        if let v = flat.jsonData("keyPoints") { s.keyPointsData = v }
     }
 }
 

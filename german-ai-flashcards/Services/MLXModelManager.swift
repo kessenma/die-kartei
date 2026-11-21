@@ -36,22 +36,30 @@ class MLXModelManager {
     var selectedVoiceIdentifier: String? {
         didSet {
             UserDefaults.standard.set(selectedVoiceIdentifier, forKey: "selectedVoiceIdentifier")
+            Self.stampVoiceChoice()
         }
     }
 
     /// Per-role German voices used to give each speaker of a dialogue/e-mail story its own voice
     /// in listening mode. Each nil = fall back to `selectedVoiceIdentifier`, then the system de-DE.
     var voiceMaleIdentifier: String? {
-        didSet { UserDefaults.standard.set(voiceMaleIdentifier, forKey: "voiceMaleIdentifier") }
+        didSet { UserDefaults.standard.set(voiceMaleIdentifier, forKey: "voiceMaleIdentifier"); Self.stampVoiceChoice() }
     }
     var voiceFemaleIdentifier: String? {
-        didSet { UserDefaults.standard.set(voiceFemaleIdentifier, forKey: "voiceFemaleIdentifier") }
+        didSet { UserDefaults.standard.set(voiceFemaleIdentifier, forKey: "voiceFemaleIdentifier"); Self.stampVoiceChoice() }
     }
     var voiceBoyIdentifier: String? {
-        didSet { UserDefaults.standard.set(voiceBoyIdentifier, forKey: "voiceBoyIdentifier") }
+        didSet { UserDefaults.standard.set(voiceBoyIdentifier, forKey: "voiceBoyIdentifier"); Self.stampVoiceChoice() }
     }
     var voiceGirlIdentifier: String? {
-        didSet { UserDefaults.standard.set(voiceGirlIdentifier, forKey: "voiceGirlIdentifier") }
+        didSet { UserDefaults.standard.set(voiceGirlIdentifier, forKey: "voiceGirlIdentifier"); Self.stampVoiceChoice() }
+    }
+
+    /// When the learner last picked any of the five voices. iCloud Sync carries the five as one
+    /// choice ordered by it (`VoicesSyncDocument`). Never written by init: only a pick travels.
+    static let voicesSetAtKey = "voices.setAt"
+    private static func stampVoiceChoice() {
+        UserDefaults.standard.set(Date.now, forKey: voicesSetAtKey)
     }
 
     /// The downloaded voice a speaker role maps to, falling back to the single selected voice.
@@ -406,6 +414,11 @@ class MLXModelManager {
         self.flashcardIllustrationsEnabled = UserDefaults.standard.bool(forKey: "flashcardIllustrationsEnabled")
 
         self.selectedVoiceIdentifier = UserDefaults.standard.string(forKey: "selectedVoiceIdentifier")
+        // The dialogue voices were saved but never read back, so they reset on every launch.
+        self.voiceMaleIdentifier = UserDefaults.standard.string(forKey: "voiceMaleIdentifier")
+        self.voiceFemaleIdentifier = UserDefaults.standard.string(forKey: "voiceFemaleIdentifier")
+        self.voiceBoyIdentifier = UserDefaults.standard.string(forKey: "voiceBoyIdentifier")
+        self.voiceGirlIdentifier = UserDefaults.standard.string(forKey: "voiceGirlIdentifier")
         self.autoAdvance = UserDefaults.standard.bool(forKey: "autoAdvance")
 
         let lastRaw = UserDefaults.standard.string(forKey: "lastLoadedModel") ?? ""

@@ -3,6 +3,7 @@ import Foundation
 import SwiftData
 import SwiftUI
 import NaturalLanguage
+import CoreText
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -14,8 +15,9 @@ import UIKit
 /// goal), so both course shapes are on screen at once.
 ///
 /// `-classNotes.debugSeed 1` creates them, `-classNotes.debugOpen <screen>` creates them (if needed)
-/// and opens a screen (`hub` or `1`, `course`, `entry`, `editor`, `handout`; see
-/// `ClassNotesDebugScreen`), `-classNotes.debugRemove 1` removes them and their files.
+/// and opens a screen (`hub` or `1`, `course`, `entry`, `editor`, `handout`, `worksheet-setup`,
+/// `worksheet`, `worksheet-pencil`; see `ClassNotesDebugScreen`), `-classNotes.debugRemove 1`
+/// removes them and their files. The worksheet screens use `WorksheetSamplePDF`, reset each time.
 enum ClassNotesDebugSeeder {
     static let uniMarker = "[debug] Deutsch A2 an der Uni"
     static let tutorMarker = "[debug] HR-Deutsch mit Anna"
@@ -96,9 +98,9 @@ enum ClassNotesDebugSeeder {
         // The Grimm story with the teacher's vocab sheet as a deck: the reader's glossary case.
         let sheetRows = VocabListParser.parse(vocabSheetText).rows.filter(\.isComplete)
         let sheetCards: [VocabCard] = sheetRows.map { row in
-            let (word, article) = DocumentDeckService.splitArticle(row.german)
-            return VocabCard(germanWord: word, englishTranslation: row.english,
-                             wordType: article != nil ? "noun" : nil, article: article,
+            let split = CardKind.split(row.german)
+            return VocabCard(germanWord: split.word, englishTranslation: row.english,
+                             wordType: split.wordType, article: split.article,
                              exampleSentence: nil, conjugations: nil)
         }
         let sheetDeck = SavedDeck(topic: "Hänsel und Gretel Vokabelliste", wordCount: sheetCards.count,
@@ -206,11 +208,60 @@ enum ClassNotesDebugSeeder {
             return uni?.materials.first { $0.title == storyTitle }.map { .handout($0) }
         case "translation":
             return uni?.materials.first { $0.title == storyTitle }.map { .translation($0) }
+        case "worksheet-setup":
+            return tutor.flatMap { worksheetMaterial(in: $0, plan: nil, context: context) }.map { .worksheetSetup($0) }
+        case "worksheet":
+            let pages = [2, 3, 4, 5, 6].map { WorksheetPagePlan(page: $0, mode: .answer, title: "Seite \($0)") }
+            return tutor.flatMap { worksheetMaterial(in: $0, plan: pages, context: context) }.map { .worksheet($0) }
+        case "worksheet-pencil":
+            let pages = [WorksheetPagePlan(page: 5, mode: .pencil, title: "Seite 5")]
+            return tutor.flatMap { worksheetMaterial(in: $0, plan: pages, context: context) }.map { .worksheet($0) }
+        case "wordlist":
+            // The seeded vocab-sheet deck's Wortliste, as the course page's table button opens it,
+            // with some flashcard answers and one finished writing sheet so its progress columns
+            // and the export's have something to show.
+            let uniID = uni?.id
+            let decks = (try? context.fetch(FetchDescriptor<SavedDeck>())) ?? []
+            guard let deck = decks.first(where: { $0.courseID == uniID && !$0.cards.isEmpty }) else { return nil }
+            seedWordListProgress(deck, in: context)
+            return .wordList(deck)
         case "builder":
             return .builder(DocumentDeckDraft(title: "Hänsel und Gretel Vokabelliste", text: vocabSheetText, sourceLabel: "PDF"))
+        case "slides":
+            // With bytes, so the builder's page strip shows real page pictures rather than falling
+            // back to the numbered pills. This simulator has no file to import.
+            return .builder(DocumentDeckDraft(title: "Vokabeltraining · Modul 01", text: slideDeckText,
+                                              sourceLabel: "PDF", fileData: slideDeckPDF(),
+                                              keepsSource: true))
         default:
             return nil
         }
+    }
+
+    /// Answers on a few of the deck's cards (missed, known, forgotten) and a finished 5× writing
+    /// sheet over two of them. Only once: a deck whose cards already have answers is left alone.
+    @MainActor
+    private static func seedWordListProgress(_ deck: SavedDeck, in context: ModelContext) {
+        let cards = deck.cards.sorted { $0.sortOrder < $1.sortOrder }
+        guard cards.count >= 8, !cards.contains(where: { $0.lastReviewWasCorrect != nil }) else { return }
+        cards[1].noteReview(correct: false)
+        cards[1].lapses = 2
+        cards[2].noteReview(correct: true)
+        cards[5].noteReview(correct: true)
+        cards[5].lapses = 1
+        cards[7].noteReview(correct: false)
+        let title = "[debug] Wortliste"
+        let existing = (try? context.fetch(FetchDescriptor<SchreibblattSheet>())) ?? []
+        if !existing.contains(where: { $0.title == title }) {
+            let words = [cards[0], cards[1]].map {
+                SchreibblattWord(id: $0.id, german: $0.germanWord.withArticle($0.article), english: $0.englishTranslation)
+            }
+            let sheet = SchreibblattSheet(title: title, words: words, repetitions: 5, prefillEnglish: true,
+                                          sourceDeckIDs: [deck.id])
+            sheet.finishedAt = .now
+            context.insert(sheet)
+        }
+        try? context.save()
     }
 
     /// Remove the seeded courses with everything under them, files first.
@@ -224,6 +275,31 @@ enum ClassNotesDebugSeeder {
         }
         try? context.save()
         return true
+    }
+
+    /// The tutor course's sample exercise sheet (`WorksheetSamplePDF`, the app's own words: a real
+    /// lesson PDF never ships), with the worksheet set to `plan` (nil: none yet, for the setup).
+    @MainActor
+    private static func worksheetMaterial(in course: ClassCourse, plan: [WorksheetPagePlan]?,
+                                          context: ModelContext) -> ClassMaterial? {
+        let title = "Beispielblatt · Übungen"
+        let material: ClassMaterial
+        if let found = course.materials.first(where: { $0.title == title }) {
+            material = found
+        } else {
+            guard let entry = course.sortedEntries.first else { return nil }
+            let data = WorksheetSamplePDF.data()
+            material = ClassMaterial(title: title,
+                                     text: PDFTextExtractor.extract(from: data)?.text ?? "",
+                                     sourceKind: .pdf)
+            material.snapshotFile = ClassMaterialStore.save(data, ext: "pdf")
+            context.insert(material)
+            material.entry = entry
+        }
+        material.worksheet = plan.map { WorksheetSetup(parserVersion: WorksheetParser.version, pages: $0) }
+        material.worksheetAnswers = [:]
+        try? context.save()
+        return material
     }
 
     // MARK: - Text
@@ -277,6 +353,98 @@ enum ClassNotesDebugSeeder {
         "When day broke, before the sun had even risen, the wife came and woke the two children: \"Get up, you lazybones, we are going into the forest to fetch wood.\" Then she gave each of them a little piece of bread and said: \"There is something for your midday meal, but don't eat it before then, you will get nothing more.\" Gretel took the bread under her apron, because Hansel had the stones in his pocket. Then they all set out together on the way to the forest.",
         "When they had come to the middle of the forest, the father said: \"Now gather wood, children, I will make a fire so that you don't freeze.\" Hansel and Gretel gathered brushwood, a small mountain of it. The brushwood was lit, and when the flames were burning high, the wife said: \"Now lie down by the fire, children, and rest, we are going into the forest to cut wood. When we are done, we will come back and fetch you.\" Hansel and Gretel sat by the fire, and when midday came, each ate their little piece of bread. And when they had sat there so long, their eyes closed with tiredness and they fell fast asleep. When at last they woke, it was already dark night. Gretel began to cry, but Hansel comforted her: \"Just wait a little while until the moon has risen, then we will surely find the way.\""
     ]
+
+    /// `slideDeckText` drawn as a real PDF, one page per `[Seite N]`, so the page thumbnails have
+    /// something to render. CoreGraphics rather than `UIGraphicsPDFRenderer`, which has no stand-in
+    /// on the Mac (`App/MacCompat.swift`).
+    static func slideDeckPDF() -> Data? {
+        let pageTexts = slideDeckText
+            .replacingOccurrences(of: #"\[Seite \d+\]"#, with: "\u{1}", options: .regularExpression)
+            .components(separatedBy: "\u{1}")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard !pageTexts.isEmpty else { return nil }
+
+        let out = NSMutableData()
+        guard let consumer = CGDataConsumer(data: out) else { return nil }
+        var box = CGRect(x: 0, y: 0, width: 612, height: 792)
+        guard let context = CGContext(consumer: consumer, mediaBox: &box, nil) else { return nil }
+
+        let font = CTFontCreateWithName("Helvetica" as CFString, 11, nil)
+        for text in pageTexts {
+            context.beginPDFPage(nil)
+            context.setFillColor(gray: 1, alpha: 1)
+            context.fill(box)
+            var y = box.height - 48
+            for line in text.components(separatedBy: "\n") {
+                let drawn = line.replacingOccurrences(of: "\t", with: "    ")
+                let attributed = NSAttributedString(string: drawn, attributes: [
+                    .font: font,
+                    .foregroundColor: CGColor(gray: 0, alpha: 1)
+                ])
+                let ctLine = CTLineCreateWithAttributedString(attributed)
+                context.textPosition = CGPoint(x: 40, y: y)
+                CTLineDraw(ctLine, context)
+                y -= 16
+                if y < 40 { break }
+            }
+            context.endPDFPage()
+        }
+        context.closePDF()
+        return out as Data
+    }
+
+    /// A slide-export vocabulary module as `OCRTableLayout` rebuilds it: several pages, three
+    /// columns (`Wort und Plural | Meaning | Beispiel`) with the plural wrapped into the first
+    /// cell, an exercise page and a two-block Wortliste among them — the case the page pills and
+    /// the example/plural captions exist for. Our own words, the tutor's shape.
+    static let slideDeckText = """
+    [Seite 1]
+    Vokabeltraining · Modul 01
+    Modul 01 · Lektion 01
+
+    [Seite 2]
+    Geräte und Zubehör
+    Lektion 01 · Wortfeld 01
+    Wort und Plural\tMeaning\tBeispiel
+    der Computer die Computer\tcomputer\tDer Computer ist neu.
+    der Laptop die Laptops\tlaptop\tMein Laptop ist hier.
+    der Bildschirm die Bildschirme\tscreen / monitor\tDer Bildschirm ist groß.
+    die Tastatur die Tastaturen\tkeyboard\tDie Tastatur ist schwarz.
+    die Maus die Mäuse\tmouse\tDie Maus ist klein.
+    Lerne das Nomen zusammen mit dem Artikel.
+    Musterschule Deutsch\tLearn. Practice. Succeed.\tITKursStudentM01L01V01Q4/2026
+    kurs@example.com\t© Musterschule – All rights reserved
+
+    [Seite 3]
+    Aktionen am Computer
+    Lektion 01 · Wortfeld 03
+    Wort\tMeaning\tBeispiel
+    öffnen\tto open\tIch öffne die Datei.
+    schließen\tto close\tIch schließe das Programm.
+    speichern\tto save\tIch speichere die Datei.
+    löschen\tto delete\tIch lösche die Datei.
+    kopieren\tto copy\tIch kopiere den Link.
+    Lerne das Wort zusammen mit dem Beispielsatz.
+
+    [Seite 4]
+    Übung 01 · Geräte zuordnen
+    Ordne zu. Schreibe den Buchstaben.
+    1 der Bildschirm ____\tA keyboard
+    2 die Maus ____\tB laptop
+    3 die Tastatur ____\tC screen / monitor
+    4 der Computer ____\tD mouse
+    5 der Laptop ____\tE computer
+
+    [Seite 5]
+    Wortliste · Nomen
+    Deutsch\tEnglish\tDeutsch\tEnglish
+    der Computer\tcomputer\tdie Datei\tfile
+    der Laptop\tlaptop\tder Ordner\tfolder
+    der Bildschirm\tscreen / monitor\tdas Programm\tprogram
+    die Tastatur\tkeyboard\tder Browser\tweb browser
+    die Maus\tmouse\tdie Webseite\tweb page
+    """
 
     /// A teacher's vocabulary sheet exactly as PDFKit extracts it (one row per line, the columns
     /// separated by a space, wrapped cells, ✓ on the quiz words), for the flashcard builder.
@@ -358,6 +526,9 @@ enum ClassNotesDebugScreen: Identifiable {
     case handout(ClassMaterial)
     case builder(DocumentDeckDraft)
     case translation(ClassMaterial)
+    case worksheetSetup(ClassMaterial)
+    case worksheet(ClassMaterial)
+    case wordList(SavedDeck)
 
     var id: String {
         switch self {
@@ -368,6 +539,9 @@ enum ClassNotesDebugScreen: Identifiable {
         case .handout(let material): "handout-\(material.id)"
         case .builder(let draft): "builder-\(draft.id)"
         case .translation(let material): "translation-\(material.id)"
+        case .worksheetSetup(let material): "worksheet-setup-\(material.id)"
+        case .worksheet(let material): "worksheet-\(material.id)"
+        case .wordList(let deck): "wordlist-\(deck.id)"
         }
     }
 }
@@ -393,6 +567,12 @@ struct ClassNotesDebugScreenView: View {
             DocumentDeckBuilderView(draft: draft, modelManager: modelManager, mlxService: mlxService) { _ in }
         case .translation(let material):
             HandoutTranslationReaderView(material: material, modelManager: modelManager, mlxService: mlxService)
+        case .worksheetSetup(let material):
+            WorksheetSetupView(material: material)
+        case .worksheet(let material):
+            WorksheetView(material: material, modelManager: modelManager, mlxService: mlxService)
+        case .wordList(let deck):
+            DeckWordTableView(deck: deck)
         }
     }
 }

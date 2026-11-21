@@ -109,6 +109,7 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
         case .cards: self = .flashcards
         case .memory: self = .memory
         case .sync: self = .sync
+        case .voice: self = .voice
         }
     }
 
@@ -149,7 +150,11 @@ enum SettingsPane: String, CaseIterable, Identifiable, Hashable {
             return WhatsNew.current.map { $0.isUnreleased ? "In progress" : "v\($0.version)" }
         case .developer:
             return ScreenshotDataSeeder.seededAt == nil ? nil : "Seeded"
-        case .voice, .writingHelper, .flashcards, .conversation, .stories, .model, .sources, .feedback:
+        case .voice:
+            // Chosen voices this device hasn't downloaded, usually picked on another device.
+            let missing = VoiceSetup.shared.missing.count
+            return missing == 0 ? nil : "\(missing) to download"
+        case .writingHelper, .flashcards, .conversation, .stories, .model, .sources, .feedback:
             return nil
         }
     }

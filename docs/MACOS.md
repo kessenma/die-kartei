@@ -58,6 +58,12 @@ Settings window.
 - **Readable width:** `themedScreen()` / `themedListScreen()` centre scrolling content in a column
   of at most 760 pt (`\.macReadableWidth`, off in the Settings window), using safe-area padding
   (a Mac `List` ignores `contentMargins`).
+- **Sheet size:** a Mac sheet (and popover) opens at its content's ideal size, and a `List` has
+  none: it measures 0×0, so a `List` sheet opened as a bare title bar and Cancel button with
+  nothing under it. `macSheetSize()` gives it an ideal 560×660, which is only read when nothing
+  proposes a size, so the main window, cover windows and split views are untouched.
+  `themedListScreen()` applies it. **A new `List` sheet without `themedListScreen()` needs
+  `.macSheetSize()` on its `List`.** A `Form` or `ScrollView` sizes to its content and needs nothing.
 
 ## Device words
 

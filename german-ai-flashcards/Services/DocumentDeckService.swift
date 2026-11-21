@@ -113,9 +113,7 @@ final class DocumentDeckService {
                 model: model,
                 maxTokens: 40 + batch.count * 22
             ) {
-                for (german, english) in Self.parsePairs(raw) {
-                    translations[Self.key(german)] = english
-                }
+                Self.assign(Self.parsePairs(raw), to: batch, into: &translations)
             }
             progress = 0.2 + 0.7 * Double(index + 1) / Double(batches.count)
         }
@@ -132,33 +130,18 @@ final class DocumentDeckService {
 
     // MARK: - Saving
 
-    /// The deck, from the rows that have both sides. Nil when none do. A document brought in from
-    /// outside is kept with the deck (`keeping`), so it can join a course as a handout later.
+    /// The deck, from the rows that make a card (`makesCard`). Nil when none do. A document brought
+    /// in from outside is kept with the deck (`keeping`), so it can join a course as a handout later.
     @discardableResult
     func save(title: String, rows: [VocabListRow], course: ClassCourse?, sourceLabel: String?,
               keeping source: DocumentDeckDraft? = nil) -> SavedDeck? {
-        var seen = Set<String>()
-        let vocab: [VocabCard] = rows.compactMap { row in
-            guard row.isComplete else { return nil }
-            let key = Self.key(row.german)
-            guard !seen.contains(key) else { return nil }
-            seen.insert(key)
-            let (word, article) = Self.splitArticle(row.german.trimmingCharacters(in: .whitespaces))
-            return VocabCard(
-                germanWord: word,
-                englishTranslation: row.english.trimmingCharacters(in: .whitespaces),
-                wordType: article != nil ? "noun" : nil,
-                article: article,
-                exampleSentence: nil,
-                conjugations: nil
-            )
-        }
+        let vocab = Self.merge(rows)
         guard !vocab.isEmpty else { return nil }
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let deck = SavedDeck(
             topic: cleanTitle.isEmpty ? (sourceLabel ?? "Document") : String(cleanTitle.prefix(90)),
             wordCount: vocab.count,
-            includeExamples: false,
+            includeExamples: vocab.contains { $0.exampleSentence != nil },
             includeGender: vocab.contains { $0.article != nil },
             vocabCards: vocab
         )
@@ -172,6 +155,74 @@ final class DocumentDeckService {
         course?.updatedAt = .now
         try? modelContext.save()
         return deck
+    }
+
+    /// The rows as cards. A word the sheet lists twice — a Wortliste repeating what the lesson
+    /// pages taught — is one card that gathers what each mention had. Keeping the first and
+    /// dropping the rest would be right only as long as the richer mention happened to come first.
+    ///
+    /// Word class: **an article always wins.** `der Tisch` is a noun because the sheet says so, and
+    /// no inference can argue; a row with no article takes whatever `WordClassInference` worked out,
+    /// and an article arriving on a later mention upgrades a card the first mention only guessed at.
+    /// Inference only ever speaks where there is no article.
+    ///
+    /// Its own function, and not `nonisolated`, because `VocabCard`'s memberwise init is main-actor
+    /// isolated like everything else in this target.
+    static func merge(_ rows: [VocabListRow]) -> [VocabCard] {
+        var vocab: [VocabCard] = []
+        var index: [String: Int] = [:]
+        for row in rows where makesCard(row) {
+            let key = Self.key(row.german)
+            let split = CardKind.split(row.german)
+            let (word, article) = (split.word, split.article)
+            if let existing = index[key] {
+                if vocab[existing].exampleSentence == nil { vocab[existing].exampleSentence = row.example }
+                if vocab[existing].forms == nil { vocab[existing].forms = row.forms }
+                // A phrase stays a phrase: no word class or article from a later mention.
+                if vocab[existing].wordType == CardKind.phrase || split.isPhrase { continue }
+                if vocab[existing].wordType == nil, let inferred = row.wordClass?.rawValue {
+                    vocab[existing].wordType = inferred
+                }
+                if vocab[existing].article == nil, let article {
+                    vocab[existing].article = article
+                    vocab[existing].wordType = "noun"
+                }
+                continue
+            }
+            index[key] = vocab.count
+            vocab.append(VocabCard(
+                germanWord: word,
+                englishTranslation: row.english.trimmingCharacters(in: .whitespaces),
+                wordType: split.isPhrase ? CardKind.phrase : (article != nil ? "noun" : row.wordClass?.rawValue),
+                article: article,
+                exampleSentence: row.example,
+                conjugations: nil,
+                forms: row.forms
+            ))
+        }
+        return vocab
+    }
+
+    // MARK: - What makes a card
+
+    /// Whether a row becomes a card: German, and English of its own. Not a blank, not a dash or a
+    /// "?" (no letter), not German ("in diesem Lernkontext ohne Plural.", or the tutor answering in
+    /// German), and not the German word again with nothing to learn: "Python" → "Python" is left
+    /// out, while "der Server" → "server" stays, since its article is the point. The one rule every
+    /// way into a document deck goes through (`merge`), so no card is ever saved half empty.
+    nonisolated static func makesCard(_ row: VocabListRow) -> Bool {
+        let english = row.english.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !row.german.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              english.contains(where: \.isLetter),
+              !VocabListParser.readsGerman(english) else { return false }
+        return !repeatsGerman(row)
+    }
+
+    /// The English is the German again ("SQL" → "SQL") and the German has no article to teach.
+    nonisolated static func repeatsGerman(_ row: VocabListRow) -> Bool {
+        guard CardKind.split(row.german).article == nil else { return false }
+        func letters(_ text: String) -> String { String(text.lowercased().filter { $0.isLetter || $0.isNumber }) }
+        return letters(row.german) == letters(row.english)
     }
 
     // MARK: - Helpers
@@ -191,15 +242,18 @@ final class DocumentDeckService {
     }
 
     /// Lowercased, article stripped: how a German entry is matched against the tutor's answer.
-    static func key(_ german: String) -> String {
-        splitArticle(german.trimmingCharacters(in: .whitespaces)).0.lowercased()
-    }
+    static func key(_ german: String) -> String { CardKind.matchKey(german) }
 
-    static func splitArticle(_ word: String) -> (String, String?) {
-        for article in ["der ", "die ", "das "] where word.lowercased().hasPrefix(article) {
-            return (String(word.dropFirst(article.count)).trimmingCharacters(in: .whitespaces), String(article.dropLast()))
+    /// One batch's answers into `translations`, by German. A tutor that rewords a phrase
+    /// ("Störungen beheben" → "eine Störung beheben") still answers it, under a German the key
+    /// can't find, and the row used to be dropped for having no English. When the tutor answered
+    /// every line of the batch, the misses fall back to position.
+    static func assign(_ pairs: [(String, String)], to batch: [String], into translations: inout [String: String]) {
+        for (german, english) in pairs { translations[key(german)] = english }
+        guard pairs.count == batch.count else { return }
+        for (german, pair) in zip(batch, pairs) where translations[key(german)] == nil {
+            translations[key(german)] = pair.1
         }
-        return (word, nil)
     }
 
     /// `deutsch = english` lines, bullets and numbering stripped.

@@ -101,7 +101,7 @@ struct PyramidCoachSection: View {
 
         enum Route {
             case articleGame
-            case prepositionHub
+            case prepositionHub(verbTrack: Bool)
             case grammarHub
             /// A focus's exercise or quick lesson, opened on tap (`GrammarRoute`). The preposition
             /// hub is a push, so it goes through `.prepositionHub` instead.
@@ -130,8 +130,8 @@ struct PyramidCoachSection: View {
             NavigationLink { ArticleGameSetupView(modelManager: modelManager, mlxService: mlxService) } label: {
                 areaLabel(row)
             }
-        case .prepositionHub:
-            NavigationLink { PrepositionHubView(modelManager: modelManager) } label: {
+        case .prepositionHub(let verbTrack):
+            NavigationLink { PrepositionHubView(modelManager: modelManager, initialTrack: verbTrack ? .verb : nil) } label: {
                 areaLabel(row)
             }
         case .grammarHub:
@@ -229,7 +229,8 @@ struct PyramidCoachSection: View {
     /// A focus's practice as a row route: the preposition hub is a push, the rest a tap.
     private func areaRoute(for focus: GrammarFocus) -> AreaRow.Route {
         let route = GrammarRoute(focus)
-        return route.presentation == .push ? .prepositionHub : .grammar(route)
+        if case .prepositionHub(let verbTrack) = route { return .prepositionHub(verbTrack: verbTrack) }
+        return .grammar(route)
     }
 
     /// A launch route's tap. The hub and the lesson have their own row views (`areaRow`).
@@ -313,7 +314,7 @@ struct PyramidCoachSection: View {
             text = "Needs work: \(worst.germanLabel)" + (trickyPreps > 0 ? " · \(trickyPreps) tricky prepositions" : "")
             route = areaRoute(for: worst)
         } else {
-            route = trickyPreps > 0 ? .prepositionHub : .grammarHub
+            route = trickyPreps > 0 ? .prepositionHub(verbTrack: false) : .grammarHub
         }
         return AreaRow(
             id: "faelle", systemImage: "arrow.triangle.branch", tint: .orange,

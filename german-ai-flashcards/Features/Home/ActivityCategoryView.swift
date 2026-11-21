@@ -28,7 +28,7 @@ import SwiftData
 /// uses for its timeline), so a category reads the same wherever the learner meets it. They're
 /// *content*, not chrome: the theme reshapes a tile without recoloring it.
 enum ActivityCategory: String, CaseIterable, Identifiable {
-    case vocabulary, grammar, reading, speaking, listening, batch
+    case vocabulary, grammar, reading, speaking, listening, spiele, batch
 
     var id: String { rawValue }
 
@@ -38,7 +38,10 @@ enum ActivityCategory: String, CaseIterable, Identifiable {
         case .grammar:    "Grammar"
         case .reading:    "Reading"
         case .speaking:   "Speaking"
-        case .listening:  "Listening"
+        // The phrase library. It was "Listening" before the Hören room existed; the case name stays
+        // so nothing stored or routed changes.
+        case .listening:  "Phrasen"
+        case .spiele:     "Spiele"
         case .batch:      "Batch"
         }
     }
@@ -51,7 +54,8 @@ enum ActivityCategory: String, CaseIterable, Identifiable {
         case .grammar:    "Die vier Fälle · der · die · das · Präpositionen"
         case .reading:    "Stories, papers, scans"
         case .speaking:   "Conversation practice"
-        case .listening:  "Your phrase library"
+        case .listening:  "Your phrase library: hear and save useful phrases"
+        case .spiele:     "Galgenmännchen · Wortsuche · Kreuzworträtsel"
         case .batch:      "Queue jobs, run together"
         }
     }
@@ -63,12 +67,13 @@ enum ActivityCategory: String, CaseIterable, Identifiable {
         case .reading:    "book.pages"
         case .speaking:   "bubble.left.and.bubble.right.fill"
         case .listening:  "ear.badge.waveform"
+        case .spiele:     "gamecontroller.fill"
         case .batch:      "moon.stars.fill"
         }
     }
 
     /// Grundform states each category as a geometric mark instead of a symbol — square, triangle,
-    /// circle, half-circle, quarter-circle, diamond. The Bauhaus vocabulary, and the one place the
+    /// circle, half-circle, quarter-circle, half-filled square, diamond. The Bauhaus vocabulary, and the one place the
     /// theme changes *what* is drawn rather than how.
     var glyph: String {
         switch self {
@@ -77,6 +82,7 @@ enum ActivityCategory: String, CaseIterable, Identifiable {
         case .reading:    "●"
         case .speaking:   "◐"
         case .listening:  "◔"
+        case .spiele:     "◧"
         case .batch:      "◆"
         }
     }
@@ -88,6 +94,7 @@ enum ActivityCategory: String, CaseIterable, Identifiable {
         case .reading:    .pink
         case .speaking:   .green
         case .listening:  .orange
+        case .spiele:     .teal
         case .batch:      .indigo
         }
     }
@@ -102,6 +109,11 @@ enum ActivityCategory: String, CaseIterable, Identifiable {
 /// push that tool straight away rather than a page offering a single row. Grammar pushes its hub
 /// directly for the same reason: the hub is already the page of grammar tools. Keeping the choice
 /// here means `HomeHubView` builds every tile the same way.
+///
+/// The `.grammar` arm looks unused on iPhone and is not: Grammatik has a tab of its own there, so
+/// `HomeHubView`'s tile raises that tab instead of pushing. This arm is how the **Mac sidebar**
+/// reaches the hub (`MacSidebarShell.destinationView` resolves `MacDestination.grammar` through
+/// `destination.category`), so deleting it breaks the Mac.
 struct ActivityCategoryDestination: View {
     let category: ActivityCategory
     @Bindable var coordinator: GenerationCoordinator
@@ -110,7 +122,7 @@ struct ActivityCategoryDestination: View {
 
     var body: some View {
         switch category {
-        case .vocabulary, .reading:
+        case .vocabulary, .reading, .spiele:
             ActivityCategoryView(
                 category: category,
                 coordinator: coordinator,
@@ -218,6 +230,26 @@ struct ActivityCategoryView: View {
                 PhotoScanListView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
             } label: {
                 ActivityRow("Scan a Photo", "Extract German text from an image", "camera.viewfinder")
+            }
+
+        case .spiele:
+            NavigationLink {
+                HangmanSetupView(modelManager: coordinator.modelManager)
+            } label: {
+                ActivityRow("Galgenmännchen", "Guess the word letter by letter", "figure.stand")
+            }
+            // Matching and Der · Die · Das keep their homes under Vocabulary and in the Grammatik
+            // hub; the room links them so "Spiele" is the whole set rather than only the new ones.
+            NavigationLink {
+                MatchingDeckPickerView(modelManager: coordinator.modelManager)
+            } label: {
+                ActivityRow("Card Matching", "Fast form ↔ meaning warm-up", "square.grid.2x2.fill")
+            }
+            NavigationLink {
+                ArticleGameSetupView(modelManager: coordinator.modelManager,
+                                     mlxService: coordinator.mlxService)
+            } label: {
+                ActivityRow("Der · Die · Das", "Every noun's gender, against the clock", "textformat.abc")
             }
 
         // One tool apiece (Grammar: its own hub), so their tiles push it directly

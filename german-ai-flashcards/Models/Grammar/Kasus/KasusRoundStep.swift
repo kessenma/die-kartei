@@ -63,6 +63,16 @@ nonisolated enum KasusRoundStep: String, Codable, CaseIterable {
     case reflexPerson = "reflexperson"
     /// Pronomen-Brücke: he/him → er/ihn → der/den on the same frames.
     case bridge
+    /// Welche Frage?: which of wer/wen/wem/wessen the ringed part of an English sentence answers.
+    /// Recognition on a translation, so it never moves the coach.
+    case frage
+    /// Die englische Falle: the same question where the English reading points at the wrong case
+    /// (a Dativ verb, an inverter, a preposition that doesn't transfer).
+    case englischeFalle = "englischefalle"
+    /// Finde den Fall: the question is given, the learner taps the phrase that answers it.
+    case findeFall = "findefall"
+    /// Die Tabelle: the article chart as a board, its forms dragged into their cells.
+    case tabelle
 
     var germanLabel: String { meta.germanTitle }
 
@@ -116,7 +126,8 @@ nonisolated struct KasusDrillMeta: Hashable {
         case verstehen
         /// Üben · Practice (the Schnellrunde's section).
         case ueben
-        /// Werkzeuge / Weitere Übungen on the hub.
+        /// Unused since the Weitere-Bereiche reorg: hub rows come from `GrammarArea.rows`, not a
+        /// placement. Kept for a future registry-driven room mapping.
         case tool
         /// Not offered anywhere yet (a kind whose module isn't built).
         case hidden
@@ -143,8 +154,13 @@ nonisolated struct KasusDrillMeta: Hashable {
     var legacyGermanTitle: String? = nil
     /// One line for a unit screen's row.
     let blurb: String
-    /// An SF Symbol.
+    /// An SF Symbol. For the dense, retrospective surfaces: Verlauf, the calendar, a round's
+    /// detail, the drill shell's empty state. A launcher row shows `art` instead.
     let symbol: String
+    /// The drawing a launcher row announces the exercise with (`GrammarTaskArt`). No default: a new
+    /// step must choose a task shape, and choosing one another step already uses is a statement
+    /// that the two ask the same thing (`GrammarTaskArtTests` pins which shares are intended).
+    let art: GrammarTaskArt
     /// About how long a round takes.
     let minutes: Int
     /// Items per round; 0 where the round sizes itself (a story's words, a timed round).
@@ -201,30 +217,35 @@ extension KasusRoundStep {
         switch self {
         case .find:
             KasusDrillMeta(germanTitle: "Markieren", englishTitle: "Mark the case", legacyGermanTitle: "Finden",
-                           blurb: "Tap every word in the case", symbol: "highlighter", minutes: 6, roundSize: 0,
+                           blurb: "Tap every word in the case", symbol: "highlighter",
+                           art: .markWords, minutes: 6, roundSize: 0,
                            countNoun: .init(de: "Wörter", en: "words"), filing: .story, coachPolicy: .never,
                            placement: .story, pickIsForm: false,
                            coachNote: "is for spotting cases, so it never moves the coach.")
         case .fill:
             KasusDrillMeta(germanTitle: "Endungen", englishTitle: "Endings", legacyGermanTitle: "Einsetzen",
-                           blurb: "Fill in the article endings", symbol: "character.cursor.ibeam", minutes: 4, roundSize: 0,
+                           blurb: "Fill in the article endings", symbol: "character.cursor.ibeam",
+                           art: .endingGap, minutes: 4, roundSize: 0,
                            countNoun: .init(de: "Endungen", en: "endings"), filing: .story, coachPolicy: .hintLadder,
                            placement: .story)
         case .quick:
             KasusDrillMeta(germanTitle: "Schnellrunde", englishTitle: "Quick round",
                            blurb: "Pick the article that fits the sentence", symbol: "character.cursor.ibeam",
+                           art: .wordGap,
                            minutes: 3, roundSize: 10, countNoun: .init(de: "Sätze", en: "sentences"),
                            filing: .topicDrill, coachPolicy: .productionUnlessGenderShown, placement: .ueben,
                            marksUnitDone: true, summaryShowsCodeWord: true)
         case .build:
             KasusDrillMeta(germanTitle: "Bau das Wort", englishTitle: "Build the word",
                            blurb: "The same sentences, the ending snapped onto the stem in 3D", symbol: "cube.fill",
+                           art: .snapEnding,
                            minutes: 3, roundSize: 10, countNoun: .init(de: "Wörter", en: "words"),
                            filing: .topicDrill, coachPolicy: .productionUnlessGenderShown, placement: .ueben,
                            summaryShowsCodeWord: true)
         case .roles:
             KasusDrillMeta(germanTitle: "Rollen", englishTitle: "Who does what?",
                            blurb: "Name each phrase's job: the doer, the done-to, the receiver …", symbol: "tag.fill",
+                           art: .tagPhrases,
                            minutes: 4, roundSize: 8, countNoun: .init(de: "Rollen", en: "roles"),
                            filing: .concept, coachPolicy: .never, placement: .verstehen, pickIsForm: false,
                            coachNote: "is for understanding the roles, so it never moves the coach.",
@@ -232,6 +253,7 @@ extension KasusRoundStep {
         case .wer:
             KasusDrillMeta(germanTitle: "Wer macht was?", englishTitle: "Only the ending tells",
                            blurb: "Read who does what when the word order doesn't say", symbol: "person.2.fill",
+                           art: .twoReadings,
                            minutes: 3, roundSize: 10, countNoun: .init(de: "Sätze", en: "sentences"),
                            filing: .concept, coachPolicy: .never, placement: .verstehen, pickIsForm: false,
                            coachNote: "is for understanding the roles, so it never moves the coach.",
@@ -239,33 +261,38 @@ extension KasusRoundStep {
         case .probe:
             KasusDrillMeta(germanTitle: "Die Probe", englishTitle: "Swap in der Mann",
                            blurb: "Read an article that could be two cases", symbol: "arrow.2.squarepath",
+                           art: .swapInPlace,
                            minutes: 3, roundSize: 8, countNoun: .init(de: "Formen", en: "swaps"),
                            filing: .concept, coachPolicy: .production, placement: .verstehen)
         case .lesson:
             KasusDrillMeta(germanTitle: "Lektion", englishTitle: "The idea",
                            blurb: "What this case is, in English and German", symbol: "lightbulb.fill",
+                           art: .ideaCard,
                            minutes: 2, roundSize: 0, countNoun: .init(de: "gelesen", en: "cards"),
                            filing: .lesson, coachPolicy: .never, placement: .verstehen, pickIsForm: false)
         case .blitz:
             KasusDrillMeta(germanTitle: "Blitzrunde", englishTitle: "Speed round",
                            blurb: "Sixty seconds, as many sentences as you can; the misses wait for the end",
-                           symbol: "bolt.fill", minutes: 1, roundSize: 0, countNoun: .init(de: "Sätze", en: "sentences"),
+                           symbol: "bolt.fill",
+                           art: .beatTheClock, minutes: 1, roundSize: 0, countNoun: .init(de: "Sätze", en: "sentences"),
                            filing: .topicDrill, coachPolicy: .never, placement: .ueben,
                            coachNote: "is a speed round, so it never moves the coach", allowsReference: false)
         case .pair:
             KasusDrillMeta(germanTitle: "Verwechslungs-Paar", englishTitle: "Confusion pair",
                            blurb: "The two forms you mix up, ten sentences", symbol: "arrow.left.arrow.right",
+                           art: .pickOfTwo,
                            minutes: 2, roundSize: 10, countNoun: .init(de: "Sätze", en: "sentences"),
                            filing: .topicDrill, coachPolicy: .never, placement: .hidden)
         case .dativVerbs:
             KasusDrillMeta(germanTitle: "Dativ-Verben", englishTitle: "The verb decides",
                            blurb: "helfen, danken, gefallen … and the verbs that only feel like them",
-                           symbol: "hand.raised.fill", minutes: 3, roundSize: 10,
+                           symbol: "hand.raised.fill", art: .verbDecides, minutes: 3, roundSize: 10,
                            countNoun: .init(de: "Sätze", en: "sentences"), filing: .topicDrill,
                            coachPolicy: .productionUnlessGenderShown, placement: .ueben, summaryShowsCodeWord: true)
         case .fehler:
             KasusDrillMeta(germanTitle: "Finde den Fehler", englishTitle: "Find the mistake",
                            blurb: "One ending is wrong: tap it, then fix it", symbol: "exclamationmark.magnifyingglass",
+                           art: .spotTheOddOne,
                            minutes: 3, roundSize: 8, countNoun: .init(de: "Sätze", en: "sentences"),
                            filing: .topicDrill, coachPolicy: .productionUnlessGenderShown, placement: .ueben,
                            coachNote: "moves the coach only for a mistake you found yourself",
@@ -273,7 +300,8 @@ extension KasusRoundStep {
         case .reflexCase:
             KasusDrillMeta(germanTitle: "Akkusativ oder Dativ?", englishTitle: "mich or mir?",
                            blurb: "Which reflexive pronoun fits: the person, and whether a second object follows",
-                           symbol: "arrow.uturn.backward.circle.fill", minutes: 3, roundSize: 10,
+                           symbol: "arrow.uturn.backward.circle.fill",
+                           art: .pickOfTwo, minutes: 3, roundSize: 10,
                            countNoun: .init(de: "Sätze", en: "sentences"), filing: .topicDrill,
                            coachPolicy: .production, placement: .hidden,
                            outcomeLabels: [.wrongPick: .init(de: "Andere Person", en: "Another person"),
@@ -282,7 +310,7 @@ extension KasusRoundStep {
         case .reflexPerson:
             KasusDrillMeta(germanTitle: "Die richtige Person", englishTitle: "The right person",
                            blurb: "sich, dich or uns: the pronoun follows the subject",
-                           symbol: "person.fill.checkmark", minutes: 2, roundSize: 10,
+                           symbol: "person.fill.checkmark", art: .followTheSubject, minutes: 2, roundSize: 10,
                            countNoun: .init(de: "Sätze", en: "sentences"), filing: .topicDrill,
                            coachPolicy: .production, placement: .hidden,
                            outcomeLabels: [.wrongPick: .init(de: "Andere Person", en: "Another person"),
@@ -291,10 +319,48 @@ extension KasusRoundStep {
         case .bridge:
             KasusDrillMeta(germanTitle: "Pronomen-Brücke", englishTitle: "Pronoun bridge",
                            blurb: "You already say him, not he: German does the same to every noun",
-                           symbol: "point.topleft.down.to.point.bottomright.curvepath", minutes: 3, roundSize: 8,
+                           symbol: "point.topleft.down.to.point.bottomright.curvepath",
+                           art: .threeStepChain, minutes: 3, roundSize: 8,
                            countNoun: .init(de: "Sätze", en: "sentences"), filing: .topicDrill,
                            coachPolicy: .never, placement: .verstehen,
                            coachNote: "is recognition of a job you already feel in English, so it never moves the coach")
+        case .frage:
+            KasusDrillMeta(germanTitle: "Welche Frage?", englishTitle: "Which question?",
+                           blurb: "Which of the four questions the marked part answers",
+                           symbol: "questionmark.bubble",
+                           art: .ringOneSpan, minutes: 4, roundSize: 10,
+                           countNoun: .init(de: "Sätze", en: "sentences"), filing: .topicDrill,
+                           coachPolicy: .never, placement: .tool, pickIsForm: false,
+                           coachNote: "is recognition on an English sentence, so it never moves the coach",
+                           outcomeLabels: [.wrongPick: .init(de: "Andere Frage", en: "Another question")])
+        case .englischeFalle:
+            KasusDrillMeta(germanTitle: "Die englische Falle", englishTitle: "Where English lies",
+                           blurb: "Where your English points at the wrong case",
+                           symbol: "exclamationmark.triangle.fill",
+                           art: .forkedPath, minutes: 3, roundSize: 8,
+                           countNoun: .init(de: "Sätze", en: "sentences"), filing: .topicDrill,
+                           coachPolicy: .never, placement: .tool, pickIsForm: false,
+                           coachNote: "is recognition on an English sentence, so it never moves the coach",
+                           outcomeLabels: [.wrongPick: .init(de: "Andere Frage", en: "Another question")])
+        case .tabelle:
+            KasusDrillMeta(germanTitle: "Die Tabelle", englishTitle: "Fill the table",
+                           blurb: "Drag every article into its cell of the chart",
+                           symbol: "tablecells.badge.ellipsis",
+                           art: .fillTheGrid, minutes: 4, roundSize: ArticleTableRound.cellCount,
+                           countNoun: .init(de: "Felder", en: "cells"),
+                           filing: .topicDrill, coachPolicy: .never, placement: .tool,
+                           coachNote: "is built from a closed set of tiles, so it never moves the coach",
+                           outcomeLabels: [.wrongPick: .init(de: "Falsches Feld", en: "Another cell")],
+                           summaryShowsCodeWord: true, allowsReference: false)
+        case .findeFall:
+            KasusDrillMeta(germanTitle: "Finde den Fall", englishTitle: "Find the case",
+                           blurb: "The question is given: tap the part that answers it",
+                           symbol: "hand.tap.fill",
+                           art: .pickThePhrase, minutes: 3, roundSize: 8,
+                           countNoun: .init(de: "Sätze", en: "sentences"), filing: .topicDrill,
+                           coachPolicy: .never, placement: .tool, pickIsForm: false,
+                           coachNote: "is recognition on an English sentence, so it never moves the coach",
+                           outcomeLabels: [.wrongPick: .init(de: "Anderer Teil", en: "Another part")])
         }
     }
 
@@ -309,6 +375,8 @@ extension KasusRoundStep {
 nonisolated enum KasusDrillKind: CaseIterable, Hashable, Identifiable {
     case quick, build, roles, wer, probe
     case blitz, pair, dativVerbs, fehler, reflexCase, reflexPerson, bridge
+    case frage, englischeFalle, findeFall
+    case tabelle
 
     /// The step a round of this kind records as.
     var step: KasusRoundStep {
@@ -325,6 +393,10 @@ nonisolated enum KasusDrillKind: CaseIterable, Hashable, Identifiable {
         case .reflexCase:   .reflexCase
         case .reflexPerson: .reflexPerson
         case .bridge:       .bridge
+        case .frage:          .frage
+        case .englischeFalle: .englischeFalle
+        case .findeFall:      .findeFall
+        case .tabelle:        .tabelle
         }
     }
 

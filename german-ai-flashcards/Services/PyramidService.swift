@@ -79,11 +79,11 @@ enum PyramidService {
     /// The grammar structures the Kern layer is built from.
     static let coreGrammar: [GrammarFocus] = [.akkusativ, .dativ, .artikel, .praepositionen]
     /// Anki's classic maturity bar — three weeks of spacing means a word survived real forgetting.
-    static let matureIntervalDays = 21
+    nonisolated static let matureIntervalDays = 21
     /// The fast path to the same conclusion: consecutive correct reviews. `SavedCard.repetitions`
     /// resets on a lapse, so this already means "right three times running, right now" — no extra
     /// `lapses == 0` test, which would wrongly exclude a word forgotten once and then relearned.
-    static let provenRepetitions = 3
+    nonisolated static let provenRepetitions = 3
 
     // MARK: Gather
 

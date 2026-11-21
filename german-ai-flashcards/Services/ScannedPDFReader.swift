@@ -18,12 +18,17 @@ enum ScannedPDFReader {
         ocr: PhotoOCRService,
         progress: ((_ page: Int, _ of: Int) -> Void)? = nil
     ) async -> String? {
-        let pages = PDFTextExtractor.pageImages(from: data, limit: pageLimit)
-        guard !pages.isEmpty else { return nil }
+        // One page rendered at a time, off the main actor. Rendering the whole run up front was
+        // twelve 1400-point bitmaps resident at once (~130 MB) and all of it on the main thread.
+        let total = min(PDFTextExtractor.pageCount(of: data), pageLimit)
+        guard total > 0 else { return nil }
         var out = ""
-        for (index, image) in pages.enumerated() {
-            progress?(index + 1, pages.count)
-            guard let jpeg = image.jpegData(compressionQuality: 0.85) else { continue }
+        for index in 0..<total {
+            progress?(index + 1, total)
+            let jpeg = await Task.detached(priority: .userInitiated) {
+                PDFTextExtractor.pageImage(from: data, page: index + 1)?.jpegData(compressionQuality: 0.85)
+            }.value
+            guard let jpeg else { continue }
             if case .success(let text) = await ocr.extractText(from: jpeg) {
                 out += "\n\n[Seite \(index + 1)]\n" + text + "\n"
             }

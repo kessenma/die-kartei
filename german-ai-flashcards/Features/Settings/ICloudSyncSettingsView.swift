@@ -65,9 +65,17 @@ struct ICloudSyncSettingsView: View {
                     if coordinator.pendingCount > 0 {
                         LabeledContent("Waiting to upload", value: "\(coordinator.pendingCount)")
                     }
-                    if coordinator.stuckCount > 0 {
-                        LabeledContent("Can't sync", value: "\(coordinator.stuckCount)")
-                            .foregroundStyle(.orange)
+                    // Always reachable, not just when something is wrong: "it says waiting and
+                    // nothing happens" is the case with no error to show for itself.
+                    NavigationLink {
+                        SyncReportView()
+                    } label: {
+                        if coordinator.stuckCount > 0 {
+                            LabeledContent("Can't sync", value: "\(coordinator.stuckCount)")
+                                .foregroundStyle(.orange)
+                        } else {
+                            Label("Sync report", systemImage: "stethoscope")
+                        }
                     }
                     if !coordinator.disagreement.isEmpty {
                         Label("Your devices still disagree after a repair. Try Repair Sync on each.",
@@ -162,6 +170,13 @@ struct ICloudSyncSettingsView: View {
         }
         if let notice = sync.notice {
             Text(notice).font(.footnote).foregroundStyle(.secondary)
+        }
+        // The last thing that actually went wrong. It was recorded from the first build and shown
+        // by none of them, which is how a sync that had stopped could still read "On".
+        if let error = sync.coordinator?.lastError {
+            Label(error, systemImage: "exclamationmark.triangle")
+                .font(.footnote)
+                .foregroundStyle(.orange)
         }
     }
 
@@ -275,12 +290,20 @@ struct ICloudSyncSettingsView: View {
                             Image(systemName: symbol(for: peer.model))
                         }
                         Spacer()
-                        if !peer.isThisDevice, let mine, peer.appVersion != mine {
+                        // This device's own numbers come from the coordinator, not from the
+                        // heartbeat it last managed to write: a device that can't upload can't
+                        // upload its heartbeat either, so its own row was the stalest of the lot.
+                        let stuck = peer.isThisDevice ? coordinator.stuckCount : peer.stuck
+                        let pending = peer.isThisDevice ? coordinator.pendingCount > 0 : peer.hasPending
+                        if stuck > 0 {
+                            Text("\(stuck) can't sync").font(.caption).foregroundStyle(.orange)
+                        } else if !peer.isThisDevice, let mine, peer.appVersion != mine {
                             Text("Different version").font(.caption).foregroundStyle(.orange)
-                        } else if peer.stuck > 0 {
-                            Text("\(peer.stuck) stuck").font(.caption).foregroundStyle(.orange)
-                        } else if peer.hasPending {
-                            Text("Sending…").font(.caption).foregroundStyle(.secondary)
+                        } else if pending {
+                            // "Sending…" next to a queue that hasn't moved in days is a lie the
+                            // learner can't check.
+                            Text(peer.isThisDevice && isBusy ? "Sending…" : "Waiting to send")
+                                .font(.caption).foregroundStyle(.secondary)
                         }
                     }
                 }

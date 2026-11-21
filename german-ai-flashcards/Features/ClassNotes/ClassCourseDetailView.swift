@@ -25,9 +25,13 @@ struct ClassCourseDetailView: View {
     @State private var showEntryEditor = false
     @State private var importTarget: ClassHandoutTarget?
     @State private var openedEntry: ClassEntry?
+    /// A handout's homework, opened from the Homework list.
+    @State private var openedWorksheet: ClassMaterial?
     @State private var showAddDeckChoice = false
     @State private var showDocumentDeck = false
     @State private var showDeckLink = false
+    /// A deck's Wortliste, pushed from the table button on its row.
+    @State private var wordTableDeck: SavedDeck?
     @AppStorage("classNotes.lastCourseID") private var lastCourseID = ""
 
     /// Every deck on this course: its own word deck, decks built from its handouts, linked ones.
@@ -81,6 +85,12 @@ struct ClassCourseDetailView: View {
         }
         .navigationDestination(item: $openedEntry) { entry in
             ClassEntryDetailView(entry: entry, modelManager: modelManager, mlxService: mlxService)
+        }
+        .navigationDestination(item: $openedWorksheet) { material in
+            WorksheetView(material: material, modelManager: modelManager, mlxService: mlxService)
+        }
+        .navigationDestination(item: $wordTableDeck) { deck in
+            DeckWordTableView(deck: deck)
         }
         .sheet(isPresented: $showEditor) {
             ClassCourseEditorView(course: course, defaultLevel: modelManager.germanLevel, onDeleted: { dismiss() })
@@ -204,31 +214,54 @@ struct ClassCourseDetailView: View {
                     .foregroundStyle(.secondary)
             }
             ForEach(courseDecks) { deck in
-                Button {
-                    router.launch(.cardDeck(DeckStore(modelContext: modelContext).session(for: deck, style: modelManager.flashcardStyle)))
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: deck.kindSymbol ?? "rectangle.stack.fill")
-                            .font(.title3)
-                            .foregroundStyle(.tint)
-                            .frame(width: 32, height: 32)
-                            .background(Color.accentColor.opacity(0.12))
-                            .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(deck.topic.replacingOccurrences(of: "Class: ", with: ""))
-                                .font(.body)
-                                .lineLimit(1)
-                            Text(deck.cards.isEmpty ? "No cards yet" : "\(deck.cards.count) cards")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    Button {
+                        router.launch(.cardDeck(DeckStore(modelContext: modelContext).session(for: deck, style: modelManager.flashcardStyle)))
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: deck.kindSymbol ?? "rectangle.stack.fill")
+                                .font(.title3)
+                                .foregroundStyle(.tint)
+                                .frame(width: 32, height: 32)
+                                .background(Color.accentColor.opacity(0.12))
+                                .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(deck.topic.replacingOccurrences(of: "Class: ", with: ""))
+                                    .font(.body)
+                                    .lineLimit(1)
+                                Text(deck.cards.isEmpty ? "No cards yet" : "\(deck.cards.count) cards")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
                         }
-                        Spacer()
-                        Image(systemName: "play.circle.fill")
-                            .foregroundStyle(.tint)
+                        .contentShape(Rectangle())
                     }
-                    .contentShape(Rectangle())
+                    .buttonStyle(.plain)
+
+                    // Beside the play button, not inside it: the word list without starting a session.
+                    Button {
+                        wordTableDeck = deck
+                    } label: {
+                        Image(systemName: "tablecells")
+                            .font(.title3)
+                            .frame(width: 40, height: 40)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("See all words")
+
+                    Button {
+                        router.launch(.cardDeck(DeckStore(modelContext: modelContext).session(for: deck, style: modelManager.flashcardStyle)))
+                    } label: {
+                        Image(systemName: "play.circle.fill")
+                            .font(.title3)
+                            .frame(width: 40, height: 40)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Study")
                 }
-                .buttonStyle(.plain)
                 .disabled(deck.cards.isEmpty)
                 .swipeActions(edge: .trailing) {
                     if deck.id != course.deckID {
@@ -255,7 +288,9 @@ struct ClassCourseDetailView: View {
     private var homeworkSection: some View {
         Section {
             ForEach(course.openHomework) { entry in
-                ClassHomeworkRow(entry: entry)
+                ClassHomeworkRow(entry: entry) { material in
+                    openedWorksheet = material
+                }
             }
         } header: {
             Text("Hausaufgaben · Homework").themedSectionHeader()

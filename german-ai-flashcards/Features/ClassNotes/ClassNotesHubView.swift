@@ -24,12 +24,18 @@ struct ClassNotesHubView: View {
     @Environment(ActivityRouter.self) private var router
 
     @State private var showCourseEditor = false
+    /// "Add a handout" with no course yet: the course editor first, then the import.
+    @State private var showFirstCourseEditor = false
+    /// The course that editor produced (or Skip created), picked up once it has dismissed.
+    @State private var courseAwaitingHandout: ClassCourse?
     @State private var showEntryEditor = false
     @State private var showHelp = false
     @State private var showHandoutCoursePicker = false
     @State private var importTarget: ClassHandoutTarget?
     /// An entry just created, pushed straight into its detail.
     @State private var openedEntry: ClassEntry?
+    /// A handout's homework, opened from the Homework list.
+    @State private var openedWorksheet: ClassMaterial?
     /// The course the learner logged for last; the editor and the handout door start from it.
     @AppStorage("classNotes.lastCourseID") private var lastCourseID = ""
 
@@ -91,6 +97,9 @@ struct ClassNotesHubView: View {
         .navigationDestination(item: $openedEntry) { entry in
             ClassEntryDetailView(entry: entry, modelManager: modelManager, mlxService: mlxService)
         }
+        .navigationDestination(item: $openedWorksheet) { material in
+            WorksheetView(material: material, modelManager: modelManager, mlxService: mlxService)
+        }
         .sheet(isPresented: $showEntryEditor) {
             ClassEntryEditorView(entry: nil, course: preferredCourse) { entry in
                 // Let the editor finish dismissing before the push.
@@ -99,6 +108,20 @@ struct ClassNotesHubView: View {
         }
         .sheet(isPresented: $showCourseEditor) {
             ClassCourseEditorView(course: nil, defaultLevel: modelManager.germanLevel)
+        }
+        .sheet(isPresented: $showFirstCourseEditor, onDismiss: {
+            // The import sheet waits for the editor to be fully gone; presenting it from the
+            // editor's save would race the dismissal.
+            guard let course = courseAwaitingHandout else { return }
+            courseAwaitingHandout = nil
+            startHandout(in: course)
+        }) {
+            ClassCourseEditorView(
+                course: nil,
+                defaultLevel: modelManager.germanLevel,
+                onSaved: { course in courseAwaitingHandout = course },
+                onSkip: { courseAwaitingHandout = makeDefaultCourse() }
+            )
         }
         .sheet(item: $importTarget) { target in
             ClassMaterialImportView(course: target.course, entry: target.entry) { _ in
@@ -210,17 +233,23 @@ struct ClassNotesHubView: View {
     }
 
     /// "Add a handout" needs a course and an entry for today. One course: straight in; several:
-    /// ask which; none: create the default course on the way.
+    /// ask which; none: set one up first (what kind of class, how many weeks), or skip to a
+    /// plain default.
     private func startHandout() {
         if courses.count > 1 {
             showHandoutCoursePicker = true
         } else if let course = courses.first {
             startHandout(in: course)
         } else {
-            let course = ClassCourse(name: "Deutschkurs")
-            modelContext.insert(course)
-            startHandout(in: course)
+            showFirstCourseEditor = true
         }
+    }
+
+    private func makeDefaultCourse() -> ClassCourse {
+        let course = ClassCourse(name: "Deutschkurs")
+        course.sortOrder = (allCourses.map(\.sortOrder).max() ?? -1) + 1
+        modelContext.insert(course)
+        return course
     }
 
     private func startHandout(in course: ClassCourse) {
@@ -233,7 +262,9 @@ struct ClassNotesHubView: View {
     private var homeworkSection: some View {
         Section {
             ForEach(openHomework) { entry in
-                ClassHomeworkRow(entry: entry, showsCourse: courses.count > 1)
+                ClassHomeworkRow(entry: entry, showsCourse: courses.count > 1) { material in
+                    openedWorksheet = material
+                }
             }
         } header: {
             Text("Hausaufgaben · Homework").themedSectionHeader()
@@ -353,6 +384,7 @@ enum ClassEntryStore {
     static func delete(_ entry: ClassEntry, context: ModelContext) {
         for material in entry.materials {
             ClassMaterialStore.delete(material.snapshotFile)
+            WorksheetInkStore.deleteAll(for: material.id)
         }
         context.delete(entry)
     }
@@ -361,6 +393,7 @@ enum ClassEntryStore {
     @MainActor
     static func delete(_ material: ClassMaterial, context: ModelContext) {
         ClassMaterialStore.delete(material.snapshotFile)
+        WorksheetInkStore.deleteAll(for: material.id)
         context.delete(material)
     }
 
@@ -369,6 +402,7 @@ enum ClassEntryStore {
     static func delete(_ course: ClassCourse, context: ModelContext) {
         for material in course.materials {
             ClassMaterialStore.delete(material.snapshotFile)
+            WorksheetInkStore.deleteAll(for: material.id)
         }
         context.delete(course)
     }
@@ -469,38 +503,104 @@ struct ClassEntryRow: View {
 struct ClassHomeworkRow: View {
     @Bindable var entry: ClassEntry
     var showsCourse = false
+    /// Opens a handout's worksheet. With it, the row opens the exercises and only the circle
+    /// ticks them off; without it the whole row is the checkbox, as for written-down homework.
+    var onOpenWorksheet: ((ClassMaterial) -> Void)? = nil
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var appTheme
+
+    private var worksheet: ClassMaterial? {
+        entry.materials.first { $0.worksheetData != nil }
+    }
 
     var body: some View {
+        if let onOpenWorksheet, let worksheet {
+            worksheetRow(worksheet, open: onOpenWorksheet)
+        } else {
+            toggle
+        }
+    }
+
+    // MARK: - With exercises
+
+    private func worksheetRow(_ material: ClassMaterial, open: @escaping (ClassMaterial) -> Void) -> some View {
+        let setup = material.worksheet
+        let sent = setup?.status == .sent
+        let started = material.worksheetAnswersData != nil || !WorksheetInkStore.pagesWithInk(material.id).isEmpty
+        return HStack(alignment: .top, spacing: 12) {
+            Button {
+                setDone(!entry.homeworkDone)
+            } label: {
+                Image(systemName: entry.homeworkDone ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(entry.homeworkDone ? ClassNotesTile.tint : .secondary)
+                    .padding(.top, 1)
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel(entry.homeworkDone ? "Done. Mark as not done" : "Mark as done")
+
+            Button {
+                open(material)
+            } label: {
+                VStack(alignment: .leading, spacing: 8) {
+                    details
+                    Label(sent ? "Open the sent homework" : (started ? "Continue the exercises" : "Start the exercises"),
+                          systemImage: sent ? "paperplane.fill" : (started ? "arrow.forward.circle.fill" : "play.circle.fill"))
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .foregroundStyle(.white)
+                        .background(ClassNotesTile.tint, in: appTheme.pillShape)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless)
+            .tint(.primary)
+            .accessibilityHint("Opens the exercises")
+        }
+    }
+
+    // MARK: - Written-down homework
+
+    private var toggle: some View {
         Toggle(isOn: Binding(
             get: { entry.homeworkDone },
-            set: { done in
-                entry.homeworkDone = done
-                entry.updatedAt = .now
-                try? modelContext.save()
-            }
+            set: { setDone($0) }
         )) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(entry.homework.trimmingCharacters(in: .whitespacesAndNewlines))
-                    .font(.body)
-                    .lineLimit(3)
-                HStack(spacing: 6) {
-                    if showsCourse, let course = entry.course {
-                        Text(course.name)
-                    }
-                    if let due = entry.homeworkDue {
-                        Text("Due \(due.formatted(date: .abbreviated, time: .omitted))")
-                            .foregroundStyle(entry.homeworkIsOverdue ? .red : .secondary)
-                    } else {
-                        Text("From \(entry.dateLine)")
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
+            details
         }
         .toggleStyle(ClassCheckboxToggleStyle())
+    }
+
+    private var details: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(entry.homework.trimmingCharacters(in: .whitespacesAndNewlines))
+                .font(.body)
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.leading)
+                .lineLimit(3)
+            HStack(spacing: 6) {
+                if showsCourse, let course = entry.course {
+                    Text(course.name)
+                }
+                if let due = entry.homeworkDue {
+                    Text("Due \(due.formatted(date: .abbreviated, time: .omitted))")
+                        .foregroundStyle(entry.homeworkIsOverdue ? .red : .secondary)
+                } else {
+                    Text("From \(entry.dateLine)")
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    private func setDone(_ done: Bool) {
+        entry.homeworkDone = done
+        entry.updatedAt = .now
+        try? modelContext.save()
     }
 }
 

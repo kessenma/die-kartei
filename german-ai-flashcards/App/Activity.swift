@@ -26,6 +26,8 @@ enum Activity: Identifiable {
     /// Any grammar drill on the shell (the Schnellrunde, Bau das Wort, Rollen, Wer macht was?,
     /// Die Probe, and the kinds to come), configured by a `GrammarDrillSession`.
     case grammarDrill(GrammarDrillSession)
+    /// Galgenmännchen, the letter-by-letter word game, configured by a `HangmanSession`.
+    case hangman(HangmanSession)
 
     var id: String {
         switch self {
@@ -45,6 +47,8 @@ enum Activity: Identifiable {
             return "kasusStory-\(session.id.uuidString)"
         case .grammarDrill(let session):
             return "grammarDrill-\(session.id.uuidString)"
+        case .hangman(let session):
+            return "hangman-\(session.id.uuidString)"
         }
     }
 }

@@ -68,11 +68,44 @@ struct LexicalSlip: Codable, Identifiable, Hashable {
     var isClozeReady: Bool { sentence != nil && blankIndex != nil }
 }
 
+/// Something the learner said, in their own words, that they find hard about German: "mixing up
+/// dem and den after mit". Handed over from a journal entry on the learner's explicit button, read
+/// by the tutor from what they wrote (never inferred from a mistake) and edited by them before it
+/// is saved. Steers the coach's briefing; never touches the grammar bars (docs/SCHREIBEN.md).
+struct SelfReportNote: Codable, Identifiable, Hashable {
+    /// At most `maxLength` characters, the learner's own words.
+    var text: String
+    /// `GrammarFocus` raw value when the note is about one structure.
+    var focus: String? = nil
+    var notedAt: Date
+    var timesNoted: Int = 1
+    /// Pinned items are exempt from automatic cleaning.
+    var pinned: Bool = false
+    var source: String? = MemorySource.journal
+    /// The entry it came from, for a "from your journal" caption.
+    var entryID: UUID? = nil
+
+    static let maxLength = 80
+
+    /// The words of the note, lowercased, letters only: the same thought written twice merges.
+    var id: String {
+        String(text.lowercased().filter { $0.isLetter || $0 == " " }
+            .split(separator: " ").joined(separator: " ").prefix(60))
+    }
+
+    var grammarFocus: GrammarFocus? { focus.flatMap(GrammarFocus.init(rawValue:)) }
+}
+
 /// Where a memory came from, when it wasn't the learner's own conversation. Absent means the
 /// ordinary path — a chat turn, a saved word, a story lookup.
 enum MemorySource {
     /// Handed over from the placement check by the explicit button on the review screen.
     static let placement = "placement"
+    /// Handed over from a journal entry by the explicit button on the entry.
+    static let journal = "journal"
+    /// A Hören ▸ Diktat miss: an ending the learner did not hear, or a headword they missed.
+    /// Kept out of the coach's correction hint like every sourced slip: it was heard, not said.
+    static let diktat = "diktat"
 }
 
 // MARK: - Active profile (bounded; the only thing ever shown to the model)
@@ -95,6 +128,9 @@ final class LearnerProfile {
     var vocabData: Data?
     /// Encoded `[LexicalSlip]` — LRU-capped at `slipCap`, self-heals on correct use.
     var slipsData: Data?
+    /// Encoded `[SelfReportNote]` — LRU-capped at `selfReportCap`. Defaulted so profiles stored
+    /// before the journal existed migrate unchanged.
+    var selfReportsData: Data? = nil
 
     init() {
         self.id = UUID()
@@ -105,6 +141,7 @@ final class LearnerProfile {
     // Bounds
     static let vocabCap = 60
     static let slipCap = 20
+    static let selfReportCap = 10
     static let sampleCap = 2
 
     var grammar: [String: GrammarSkill] {
@@ -119,6 +156,10 @@ final class LearnerProfile {
         get { decode([LexicalSlip].self, from: slipsData) ?? [] }
         set { slipsData = try? JSONEncoder().encode(newValue) }
     }
+    var selfReports: [SelfReportNote] {
+        get { decode([SelfReportNote].self, from: selfReportsData) ?? [] }
+        set { selfReportsData = newValue.isEmpty ? nil : try? JSONEncoder().encode(newValue) }
+    }
 
     private func decode<T: Decodable>(_ type: T.Type, from data: Data?) -> T? {
         guard let data else { return nil }
@@ -131,6 +172,9 @@ final class LearnerProfile {
 enum MemoryKind: String, Codable {
     case vocab
     case slip
+    /// A `SelfReportNote`. A build from before the journal decodes it as `.vocab` and cannot
+    /// restore it; harmless, and the row still reads.
+    case selfReport
 }
 
 /// Why an item left the active profile — shown on the archive screen.

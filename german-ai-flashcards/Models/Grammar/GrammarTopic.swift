@@ -90,6 +90,15 @@ nonisolated enum GrammarTopic: Hashable, Identifiable {
         }
     }
 
+    /// The hub-row caption under the title. Display only, so a new topic brings its own line
+    /// instead of a screen hard-coding one.
+    var rowSubtitle: String? {
+        switch self {
+        case .kasus(let unit): unit.exampleForms
+        case .reflexiv:        "mich / mir · dich / dir · sich"
+        }
+    }
+
     /// Every case the topic's exercises can ask about, in table order.
     var casesInPlay: [GrammarCase] {
         switch self {
@@ -190,8 +199,9 @@ nonisolated enum GrammarTopic: Hashable, Identifiable {
         }
     }
 
-    /// Something to show: a lesson or an exercise. A topic whose content isn't bundled yet stays
-    /// off the hub.
+    /// Something to show: a lesson or an exercise. Since the rooms reorg nothing gates a hub row
+    /// on this (a topic's `.struktur` row upgrades the moment its enum case exists), so shipping
+    /// the case IS the ship act: land the lesson and the bundled items in the same change.
     @MainActor
     var isAvailable: Bool { !lessonCards.isEmpty || !exercises().isEmpty }
 }

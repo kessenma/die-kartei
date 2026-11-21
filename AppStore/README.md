@@ -72,3 +72,10 @@ removing a file here does not remove it from the product page.
 
 Scratch space for `screenshots.py pull` (gitignored). Apple's re-encoded renditions, not
 the originals — for looking at, never for re-uploading.
+
+## Releasing every platform at once
+
+`python3 scripts/release_all.py --dry-run` checks What's New, the metadata limits and every
+screenshot set, then shows the upload plan for iOS and macOS without changing anything.
+`python3 scripts/release_all.py` runs `deploy.py release` for iOS and then `deploy.py release
+--mac` on the same version (uploaded, not submitted). `--beta` does the same for TestFlight.

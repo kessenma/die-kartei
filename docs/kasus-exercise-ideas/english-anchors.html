@@ -1,0 +1,525 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Die vier Fragen auf Englisch</title>
+<style>:root{--nom:#4A5260;--akk:#E2701A;--dat:#0E8794;--gen:#8A5A2B;--der:#2F6FBF;--die:#C9333B;--das:#2E8B57;--plural:#B8860B;--bg:#F2F2F5;--ink:#1C1C1E;--sub:#6B6B70;--line:#E2E2E6}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,Helvetica,Arial,sans-serif}
+body{background:var(--bg);color:var(--ink);padding:32px 20px 80px}
+header,.grid,.divider{max-width:1100px;margin-left:auto;margin-right:auto}
+header{margin-bottom:28px}h1{font-size:28px;letter-spacing:-.5px}
+header p{color:var(--sub);margin-top:6px;max-width:760px;font-size:14px;line-height:1.55}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:var(--sub)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:36px}
+.idea h2{font-size:17px;margin-bottom:2px}
+.tag{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--sub);margin-bottom:10px;display:block}
+.phone{background:#fff;border:1px solid var(--line);border-radius:36px;padding:18px 14px 22px;box-shadow:0 8px 24px rgba(0,0,0,.07)}
+.notch{width:110px;height:22px;background:#fff;border:1px solid var(--line);border-top:none;border-radius:0 0 14px 14px;margin:-19px auto 12px}
+.navbar{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--sub);padding:0 4px 10px;border-bottom:1px solid var(--line)}
+.navbar b{color:var(--ink);font-size:13px}
+.strip{display:flex;gap:5px;justify-content:center;padding:12px 0 4px}
+.strip i{width:8px;height:8px;border-radius:50%;border:1.5px solid #C7C7CC;display:block}
+.strip i.fn{background:var(--nom);border-color:var(--nom)}.strip i.fa{background:var(--akk);border-color:var(--akk)}
+.strip i.fd{background:var(--dat);border-color:var(--dat)}.strip i.fg{background:var(--gen);border-color:var(--gen)}
+.strip i.cur{border-color:var(--ink)}
+.hero{padding:18px 6px;text-align:center}
+.sentence{font-size:19px;font-weight:600;line-height:1.5}
+.small{font-size:12px;color:var(--sub)}
+.nomc{color:var(--nom)}.akkc{color:var(--akk)}.datc{color:var(--dat)}.genc{color:var(--gen)}
+.derc{color:var(--der);font-weight:700}.diec{color:var(--die);font-weight:700}.dasc{color:var(--das);font-weight:700}
+.strike{color:#9A9AA0;text-decoration:line-through;font-weight:400}
+.btn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 0;text-align:center;font-size:15px;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.cta{background:#0A84FF;color:#fff;border-radius:14px;text-align:center;padding:13px 0;font-weight:600;font-size:15px;margin-top:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.card h4{font-size:13px;margin-bottom:4px}.card p{font-size:12px;color:var(--sub);line-height:1.55}
+.card p+p{margin-top:6px}
+.verdict{font-size:13px;font-weight:700}.ok{color:var(--das)}.no{color:var(--die)}
+.note{font-size:11px;color:var(--sub);margin-top:8px;line-height:1.5}
+.annot{margin-top:12px;font-size:12.5px;color:var(--sub);line-height:1.6}.annot b{color:var(--ink)}
+.reuse{color:#0A84FF;font-weight:600}
+.divider{margin:48px auto 24px;border-top:1px solid var(--line);padding-top:20px}.divider h2{font-size:20px}
+/* this page's own bits */
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 4px 0}
+.qgrid .btn{font-size:13.5px;padding:13px 4px}
+.qgrid .wide{grid-column:span 2;font-size:12.5px;font-weight:600;color:var(--sub);border-style:dashed}
+.qgrid .btn .en{display:block;font-size:10.5px;font-weight:500;color:var(--sub);margin-top:3px}
+.kname{display:block;font-size:9.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;margin-bottom:5px}
+.q-nom{border-color:rgba(74,82,96,.55)}.q-nom .kname{color:var(--nom)}
+.q-akk{border-color:rgba(226,112,26,.55)}.q-akk .kname{color:var(--akk)}
+.q-dat{border-color:rgba(14,135,148,.55)}.q-dat .kname{color:var(--dat)}
+.q-gen{border-color:rgba(138,90,43,.55)}.q-gen .kname{color:var(--gen)}
+.q-none .kname{color:var(--sub)}
+.qgrid .btn .sym{font-size:10.5px;margin-right:4px;opacity:.7}
+.counter{font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.4px;text-transform:uppercase}
+.dial{display:flex;gap:6px;margin-top:10px}
+.dial div{flex:1;border:1px solid var(--line);border-radius:10px;padding:8px 4px;text-align:center;font-size:11.5px;font-weight:700;background:#fff;color:var(--sub)}
+.dial div.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.switches{margin-top:4px;font-size:12px}
+.switches .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.switches .row span{color:var(--ink);font-weight:600}
+.switches .row em{display:block;font-style:normal;font-size:10.5px;color:var(--sub);font-weight:400;margin-top:2px}
+.sw{width:34px;height:20px;border-radius:11px;background:#D8D8DC;position:relative;flex:none}
+.sw.on{background:var(--das)}
+.sw i{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;display:block}
+.sw.on i{left:16px}
+.eye{font-size:10.5px;color:var(--sub);font-weight:600}
+.list{background:#F2F2F5;border-radius:16px;padding:10px 8px 12px;margin-top:10px}
+.lhead{font-size:10px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--sub);padding:10px 8px 6px}
+.lsec{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.lrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 11px;border-top:1px solid var(--line);font-size:13px}
+.lsec .lrow:first-child{border-top:none}
+.lrow .lbl2{font-weight:600}
+.lrow em{display:block;font-style:normal;font-size:10.5px;color:var(--sub);font-weight:400;margin-top:2px}
+.lrow .val{color:var(--sub);font-size:12.5px;font-weight:600;flex:none}
+.lfoot{font-size:10.5px;color:var(--sub);line-height:1.5;padding:7px 9px 0}
+.seg{display:flex;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;margin:8px}
+.seg div{flex:1;text-align:center;font-size:12px;font-weight:700;padding:8px 2px;color:var(--sub);border-left:1px solid var(--line)}
+.seg div:first-child{border-left:none}
+.seg div.on{background:var(--ink);color:#fff}
+.vrow{display:flex;align-items:center;gap:9px;padding:9px 2px;border-top:1px solid var(--line);font-size:12.5px}
+.vrow:first-child{border-top:none}
+.vrow .sc{margin-left:auto;font-weight:800;font-size:13px;font-variant-numeric:tabular-nums}
+.sf{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.chip{width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex:none;background:rgba(10,132,255,.12);color:#0A84FF}
+.chip .sf{width:16px;height:16px}
+.chip.c-dat{background:rgba(14,135,148,.12);color:var(--dat)}
+.chip.c-ink{background:rgba(28,28,30,.08);color:var(--ink)}
+.rowicon{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.switches .row .rowicon .sf{color:var(--sub)}
+.art{width:46px;height:46px;flex:none}
+.art .sf{width:46px;height:46px;stroke-width:1.4}
+.symtab{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;line-height:1.9;color:var(--ink)}
+.symtab b{font-family:-apple-system,Helvetica,Arial,sans-serif;font-weight:700}
+.pick-nom{border-color:var(--nom);color:var(--nom);background:rgba(74,82,96,.07)}
+.pick-akk{border-color:var(--akk);color:var(--akk);background:rgba(226,112,26,.07)}
+.pick-dat{border-color:var(--dat);color:var(--dat);background:rgba(14,135,148,.07)}
+.pick-gen{border-color:var(--gen);color:var(--gen);background:rgba(138,90,43,.07)}
+.pick-wrong{border-color:var(--die);color:var(--die);background:rgba(201,51,59,.06)}
+.ring{border:1.6px solid var(--ink);border-radius:9px;padding:1px 6px;display:inline-block}
+.ring.dash{border-style:dashed;border-color:var(--sub)}
+.lang{font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--sub);font-weight:700}
+.twin{border-top:1px dashed var(--line);margin-top:14px;padding-top:12px}
+.stagebar{display:flex;gap:6px;justify-content:center;margin-top:10px;font-size:10.5px;font-weight:700;letter-spacing:.3px}
+.stagebar span{padding:4px 9px;border-radius:8px;background:#F2F2F5;color:var(--sub)}
+.stagebar span.on{background:var(--ink);color:#fff}
+.stagebar span.done{background:#fff;border:1px solid var(--line);color:var(--sub)}
+.trapcard{border-color:var(--die);background:rgba(201,51,59,.04)}
+.verbchips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.verbchips div{border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:11.5px;font-weight:600;background:#fff}
+.bar-row{display:flex;align-items:center;gap:8px;font-size:11px;margin-top:7px}
+.bar-row .lbl{width:112px;color:var(--sub)}
+.bar{flex:1;height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%}
+.bar-row .n{width:30px;text-align:right;font-variant-numeric:tabular-nums}
+.klass{font-size:12px;line-height:1.6;color:var(--sub);margin-top:6px}
+.klass b{color:var(--ink)}
+.klass li{margin-left:16px;margin-top:5px}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="sf-slider" viewBox="0 0 24 24"><path d="M3 7h12M19 7h2M3 12h4M11 12h10M3 17h9M16 17h5"/><circle cx="17" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="14" cy="17" r="2"/></symbol>
+<symbol id="sf-play" viewBox="0 0 24 24"><path d="M7 4.5 19 12 7 19.5Z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="sf-highlighter" viewBox="0 0 24 24"><path d="m5 16 7.5-9.5a2 2 0 0 1 3 0l2 2.5a2 2 0 0 1 0 2.6L8.5 21H4.5L5 16Z"/><path d="M4 23h16"/></symbol>
+<symbol id="sf-tag" viewBox="0 0 24 24"><path d="M3.5 10.5V4.5h6l10 10-6 6-10-10Z"/><circle cx="7.5" cy="8" r="1.4" fill="currentColor" stroke="none"/></symbol>
+<symbol id="sf-split" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M3 12h18"/></symbol>
+<symbol id="sf-book" viewBox="0 0 24 24"><path d="M5 4.5h11a3 3 0 0 1 3 3v12H8a3 3 0 0 1-3-3v-12Z"/><path d="M5 16.5h14"/><path d="M9.5 8.5h5"/></symbol>
+<symbol id="sf-filter" viewBox="0 0 24 24"><path d="M3.5 6.5h17M6 12h12M9.5 17.5h5"/></symbol>
+<symbol id="sf-list" viewBox="0 0 24 24"><path d="M9.5 6.5h11M9.5 12h11M9.5 17.5h11"/><path d="M4 5.5h1.4v3M3.6 15.5h2.6M3.6 18.5h2.6M3.6 15.5v3"/></symbol>
+<symbol id="sf-walk" viewBox="0 0 24 24"><circle cx="13" cy="4.6" r="1.8"/><path d="M13 8.2 10.4 12l2.6 2.4.8 5.4M10.4 12 7 13.5M13.8 14.4 17 17.6"/></symbol>
+<symbol id="sf-art-frage" viewBox="0 0 48 48"><rect x="5" y="17" width="22" height="13" rx="4"/><path d="M31 23.5h11M31 30h7" opacity=".45"/><path d="M34.5 10.5a3.6 3.6 0 1 1 4.3 4.3c-1 .3-1.6 1.2-1.6 2.3v.9"/><circle cx="37.2" cy="21.4" r="1.1" fill="currentColor" stroke="none"/></symbol>
+</defs></svg>
+
+<header>
+<h1>Die vier Fragen auf Englisch</h1>
+<p>An English sentence, one part of it ringed, and the four German case questions as the answer buttons. Then the same job in German. Drawn in the app's existing visual language (progress strip, option grid, feedback card, case colors) so it sits next to Rollen and the Pronomen-Brücke without looking foreign. Every sentence on this page is a shipped item with its own English twin, from <b>Resources/kasus_concepts.json</b> (and one from <b>verb_prepositions.json</b>). Three scaffolding presets are drawn further down, under <b>Stufen</b>. The write-up, the measured pool sizes and the limits are in <b>ENGLISH_ANCHORS.md</b> next to this file.</p>
+<div class="legend"><span><i class="dot" style="background:var(--nom)"></i>Nominativ</span><span><i class="dot" style="background:var(--akk)"></i>Akkusativ</span><span><i class="dot" style="background:var(--dat)"></i>Dativ</span><span><i class="dot" style="background:var(--gen)"></i>Genitiv</span><span><i class="dot" style="background:var(--der)"></i>der</span><span><i class="dot" style="background:var(--die)"></i>die</span><span><i class="dot" style="background:var(--das)"></i>das</span></div>
+</header>
+
+<div class="grid">
+
+<!-- 1 -->
+<div class="idea"><h2>A1 · „Welche Frage?“ · asking</h2><span class="tag">English stimulus · the four questions as the options</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>✕</span><b>Welche Frage?</b><span>?</span></div>
+<div class="strip"><i class="fn"></i><i class="fa"></i><i class="cur"></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="stagebar"><span class="on">Englisch</span><span>Beide</span><span>Deutsch</span></div>
+<div class="hero">
+<p class="lang">Englisch</p>
+<p class="counter" style="margin-top:6px">Satz 3 · Fall 2 von 3</p>
+<p class="sentence" style="margin-top:8px"><span class="nomc">The mother</span> gives <span class="ring">the child</span> <span class="ring dash">the apple</span>.</p>
+<p class="small" style="margin-top:14px">Which question does the ringed part answer?</p>
+</div>
+<div class="qgrid">
+<div class="btn q-nom"><span class="kname">Nominativ</span>Wer oder was?<span class="en">who or what</span></div>
+<div class="btn q-akk"><span class="kname">Akkusativ</span>Wen oder was?<span class="en">whom or what</span></div>
+<div class="btn q-dat"><span class="kname">Dativ</span>Wem?<span class="en">to whom, for whom</span></div>
+<div class="btn q-gen"><span class="kname">Genitiv</span>Wessen?<span class="en">whose</span></div>
+<div class="btn wide q-none"><span class="kname">Kein Fall zu erfragen</span>Keine Frage · a preposition decided it</div>
+</div>
+<div class="note" style="text-align:center">No German on screen yet. The point is the role, not the ending.<br>Solid ring = asked now · dashed = still to come in this sentence.</div>
+</div>
+<div class="annot"><b>The hook:</b> the questions arrive in the one language where the roles are already intuitive. „She gives the child the apple“ and „she gives the apple <i>to the child</i>“ are the same sentence, and that <i>to</i> is the whole Dativ. The lesson's „Englisch zuerst“ card says this in prose today; here the learner does it.<br><span class="reuse">Reuses:</span> KasusConceptItem.englishLine, KasusRoleGrid (question chips in place of role chips), KasusProgressStrip, KasusFeedback.</div></div>
+
+<!-- 2 -->
+<div class="idea"><h2>A2 · the reveal</h2><span class="tag">German slides in under the English, spans aligned</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>✕</span><b>Welche Frage?</b><span>?</span></div>
+<div class="strip"><i class="fn"></i><i class="fa"></i><i class="fd"></i><i class="cur"></i><i></i><i></i><i></i><i></i></div>
+<div class="stagebar"><span class="on">Englisch</span><span>Beide</span><span>Deutsch</span></div>
+<div class="hero" style="padding-bottom:6px">
+<p class="lang">Englisch</p>
+<p class="sentence" style="margin-top:8px">The mother gives <span class="datc">the child</span> the apple.</p>
+<div class="twin"><p class="lang">Deutsch</p>
+<p class="sentence" style="margin-top:8px"><span class="nomc">Die Mutter</span> gibt <span class="datc"><b class="dasc">dem</b> Kind</span> <span class="akkc">den Apfel</span>.</p></div>
+</div>
+<div class="qgrid"><div class="btn pick-dat q-dat" style="grid-column:span 2"><span class="kname">Dativ</span>Wem? ✓<span class="en">to whom, for whom</span></div></div>
+<div class="card"><h4><span class="verdict ok">Richtig · Dativ</span></h4>
+<p><b>Empfänger</b> (the receiver) → <span class="datc">Dativ</span>. The apple goes <i>to</i> the child, so „to“ fits in front of it in English. That is Kasus-Check question five.</p>
+<p><span class="dasc">das</span> Kind → <span class="dasc">dem</span> Kind. The code word for the Dativ is <span class="datc">mrmn</span>.</p></div>
+<div class="cta">Weiter</div>
+</div>
+<div class="annot"><b>What the reveal is made of:</b> nothing new. The German line, its targets and the case colors are the item; the explanation is the target's own <b>KasusExplanation</b> with its role line in front, exactly as Rollen prints it. The English span and the German phrase wear the same color, which is the only new idea on the screen.<br><span class="reuse">Reuses:</span> KasusExplanation, KasusRichText markup, GrammarPalette case colors, CasePalette code words.</div></div>
+
+<!-- 3 -->
+<div class="idea"><h2>A3 · Wessen? and the flip</h2><span class="tag">The one English case that survived</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>✕</span><b>Welche Frage?</b><span>?</span></div>
+<div class="strip"><i class="fg"></i><i class="fn"></i><i class="cur"></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="stagebar"><span class="done">Englisch</span><span class="on">Beide</span><span>Deutsch</span></div>
+<div class="hero" style="padding-bottom:6px">
+<p class="lang">Englisch</p>
+<p class="sentence" style="margin-top:8px">The student takes <span class="genc">the friend's</span> jacket after school.</p>
+<div class="twin"><p class="lang">Deutsch</p>
+<p class="sentence" style="margin-top:8px"><span class="nomc">Der Schüler</span> nimmt <span class="akkc">die Jacke</span> <span class="genc"><b class="derc">des</b> Freundes</span> nach <span class="datc">der Schule</span>.</p></div>
+</div>
+<div class="qgrid"><div class="btn pick-gen q-gen" style="grid-column:span 2"><span class="kname">Genitiv</span>Wessen? ✓<span class="en">whose</span></div></div>
+<div class="card"><h4><span class="verdict ok">Richtig · Genitiv</span></h4>
+<p><b>Gehört zu</b> (hangs on another noun) → <span class="genc">Genitiv</span>. Whose jacket? The friend's. <i>Whose</i> is the one English question word that still carries a case ending.</p>
+<p>English puts the owner <b>first</b> („the friend's jacket“), German puts it <b>second</b> („die Jacke des Freundes“). Same case, opposite order.</p></div>
+<div class="cta">Weiter</div>
+</div>
+<div class="annot"><b>The hook:</b> the Genitiv is the one case an English speaker owns already, twice over („the man's car“ and „the car of the man“). Showing the two lines together makes the word-order flip the lesson, instead of a surprise in the stories later. <b>Careful:</b> English „of“ is not reliably a Genitiv („a friend of mine“ → <i>von mir</i>, Dativ), so of-phrases only get asked when the item's target really is a Genitiv attribute.<br><span class="reuse">Reuses:</span> KasusConceptFacts (the role is read off the target's reason), the Merkhilfe „Genitiv = in the genes“.</div></div>
+
+<!-- 4 -->
+<div class="idea"><h2>A4 · „Keine Frage“</h2><span class="tag">Kasus-Check step 1 · the question test doesn't run</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>✕</span><b>Welche Frage?</b><span>?</span></div>
+<div class="strip"><i class="fg"></i><i class="fn"></i><i class="fg"></i><i class="cur"></i><i></i><i></i><i></i><i></i></div>
+<div class="stagebar"><span class="on">Englisch</span><span>Beide</span><span>Deutsch</span></div>
+<div class="hero" style="padding-bottom:6px">
+<p class="lang">Englisch</p>
+<p class="sentence" style="margin-top:8px">The driver stays in bed <span class="genc">because of the cold</span>.</p>
+<div class="twin"><p class="lang">Deutsch</p>
+<p class="sentence" style="margin-top:8px"><span class="nomc">Der Fahrer</span> bleibt <b class="genc">wegen</b> <span class="genc"><b class="diec">der</b> Erkältung</span> im Bett.</p></div>
+</div>
+<div class="qgrid"><div class="btn wide pick-gen" style="border-style:solid"><span class="kname" style="color:var(--gen)">wegen → Genitiv</span>Keine Frage · a preposition decided it ✓</div></div>
+<div class="card"><h4><span class="verdict ok">Genau</span></h4>
+<p><b>Präposition</b> → the preposition picks the case, and no question gets asked. <i>wegen</i> always takes the <span class="genc">Genitiv</span>. That is Kasus-Check question <b>one</b>, before any of the four.</p>
+<p>„Because of the cold“ answers <i>why</i>, not who, whom or whose.</p></div>
+<div class="cta">Weiter</div>
+</div>
+<div class="annot"><b>Why this button has to exist:</b> 22% of the shipped targets (416 of 1924) are governed by a preposition and answer none of the four questions. An exercise that never shows one teaches a false rule. With it, the exercise teaches the Kasus-Check's order: look for a preposition first, ask questions second.<br><b>Invariant:</b> every round contains at least one <i>Keine Frage</i> span.<br><span class="reuse">Reuses:</span> KasusCheckSheet step order, the target's preposition trigger.</div></div>
+
+</div>
+
+<div class="divider"><h2>„Die englische Falle“ · where your English lies</h2>
+<p class="small" style="margin-top:4px">The same screen, stocked from the cases where the English question gives the <b>wrong</b> answer. 194 shipped spans, all on Dativ, Genitiv and Alle Fälle. Separate exercise on purpose: one place where the questions always work, one where they don't.</p></div>
+
+<div class="grid">
+
+<!-- 5 -->
+<div class="idea"><h2>B1 · the Dativ verbs</h2><span class="tag">English direct object, German Dativ · 206 spans</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>✕</span><b>Die englische Falle</b><span>?</span></div>
+<div class="strip"><i class="fd"></i><i class="cur"></i><i></i><i></i><i></i><i></i></div>
+<div class="hero" style="padding-bottom:6px">
+<p class="lang">Englisch</p>
+<p class="sentence" style="margin-top:8px">The father followed <span class="ring">the woman</span> through the city.</p>
+<div class="twin"><p class="lang">Deutsch</p>
+<p class="sentence" style="margin-top:8px"><span class="nomc">Der Vater</span> folgte <span class="datc"><b class="diec">der</b> Frau</span> <span class="akkc">durch die Stadt</span>.</p></div>
+</div>
+<div class="qgrid">
+<div class="btn pick-wrong" style="text-decoration:line-through"><span class="kname" style="color:var(--die)">Akkusativ</span>Wen oder was?</div>
+<div class="btn pick-dat q-dat"><span class="kname">Dativ</span>Wem? ✓</div>
+</div>
+<div class="card trapcard"><h4><span class="verdict no">Die Falle</span> <span class="small">· and your English is why</span></h4>
+<p>„Followed <b>the woman</b>“ is a plain direct object in English, so <i>whom?</i> feels right and points at the <span class="akkc">Akkusativ</span>. German hands <i>folgen</i>'s one partner the <span class="datc">Dativ</span> anyway.</p>
+<p>No question test can see this. These verbs are a <b>list</b>:</p></div>
+<div class="verbchips"><div class="datc">helfen</div><div class="datc">danken</div><div class="datc">folgen</div><div class="datc">antworten</div><div class="datc">gratulieren</div></div>
+<div class="cta">Weiter</div>
+</div>
+<div class="annot"><b>The hook:</b> 11% of the shipped targets are this. The learner's English is not a neutral tool here, it is actively wrong, and naming that is worth more than hiding the items. The feedback names the <b>class</b>, not just the case, and ends with the list, because the list is the only thing that works.<br><span class="reuse">Reuses:</span> the Dativ lesson's Falle card copy, the Dativ-Verben drill's verb set, KasusFeedback's wrong state.</div></div>
+
+<!-- 6 -->
+<div class="idea"><h2>B2 · the role inverters</h2><span class="tag">gefallen · gehören · schmecken · the subject swaps sides</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>✕</span><b>Die englische Falle</b><span>?</span></div>
+<div class="strip"><i class="fd"></i><i class="fd"></i><i class="cur"></i><i></i><i></i><i></i></div>
+<div class="hero">
+<p class="lang">Englisch</p>
+<p class="sentence" style="margin-top:8px"><span class="ring dash">My mother</span> likes the film.</p>
+<p class="small" style="margin-top:14px">In the German sentence, which part is the <b>subject</b>?</p>
+</div>
+<div class="qgrid">
+<div class="btn pick-wrong" style="text-decoration:line-through">My mother</div>
+<div class="btn pick-nom">the film ✓</div>
+</div>
+<div class="card trapcard"><h4><span class="verdict no">Umgedreht · flipped</span></h4>
+<p class="sentence" style="font-size:16px;color:var(--ink)"><span class="nomc">Der Film</span> gefällt <span class="datc">meiner Mutter</span>.</p>
+<p style="margin-top:8px">The film does the pleasing, so the <b>film</b> is the <span class="nomc">Nominativ</span> and the person is <span class="datc">Dativ</span>. English says „my mother likes the film“ and hides the whole structure.</p>
+<p>Same flip: <i>gehören</i> (the book belongs to her), <i>schmecken</i> (the soup tastes good to him), <i>fehlen</i> (I miss you).</p></div>
+<div class="cta">Weiter</div>
+</div>
+<div class="annot"><b>Why this is the hardest item on the page:</b> it breaks „find the English doer → Nominativ“ at the root, not at the edge. So it asks a different question (<i>which part is the subject?</i>) rather than pretending the four anchors apply. Four verbs, high frequency, worth their own round.<br><span class="reuse">Reuses:</span> the Dativ lesson card „Die Dativ-Verben“ (it already teaches this flip), EndingsFrame's gefallen/gehören frames.</div></div>
+
+<!-- 7 -->
+<div class="idea"><h2>B3 · the preposition doesn't transfer</h2><span class="tag">14 of 42 verb pairs are already flagged „trap“</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>✕</span><b>Die englische Falle</b><span>?</span></div>
+<div class="strip"><i class="fd"></i><i class="fa"></i><i class="cur"></i><i></i><i></i><i></i></div>
+<div class="hero" style="padding-bottom:6px">
+<p class="lang">Englisch</p>
+<p class="sentence" style="margin-top:8px">The man is waiting <span class="ring">for the bus</span>.</p>
+<div class="twin"><p class="lang">Deutsch</p>
+<p class="sentence" style="margin-top:8px"><span class="nomc">Der Mann</span> wartet <b class="akkc">auf</b> <span class="akkc"><b class="derc">den</b> Bus</span>.</p></div>
+</div>
+<div class="qgrid">
+<div class="btn pick-wrong" style="text-decoration:line-through">für den Bus</div>
+<div class="btn pick-akk">auf den Bus ✓</div>
+</div>
+<div class="card trapcard"><h4><span class="verdict no">Nicht übersetzen · don't translate it</span></h4>
+<p>English „wait <b>for</b>“ does not become German <i>für</i>. <i>warten</i> comes with <b class="akkc">auf</b> + <span class="akkc">Akkusativ</span> and the pair has to be learned whole.</p>
+<p>Same shape: answer <b>the letter</b> → <i>antworten <b class="akkc">auf</b> den Brief</i>, look forward <b>to</b> it → <i>sich freuen <b class="akkc">auf</b></i>, think <b>about</b> it → <i>nachdenken <b class="akkc">über</b></i>.</p></div>
+<div class="note" style="text-align:center">→ Weiter üben: Verben mit Präpositionen</div>
+</div>
+<div class="annot"><b>Already half built:</b> <b>verb_prepositions.json</b> classifies 14 of its 42 pairs as <code>fit: "trap"</code> for exactly this reason, and the preposition hub's own <b>Die Falle</b> drills one preposition's two lives. This screen is the English-first door into that track rather than a new content set.<br><span class="reuse">Reuses:</span> VerbPreposition data (<code>english</code> + <code>fit</code> fields), the preposition hub's Falle, GrammarRoute to hand off.</div></div>
+
+<!-- 8 -->
+<div class="idea"><h2>C · the ramp off English</h2><span class="tag">Englisch → Beide → Deutsch, one item</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>✕</span><b>Welche Frage?</b><span>?</span></div>
+<div class="stagebar"><span class="done">Englisch</span><span class="done">Beide</span><span class="on">Deutsch</span></div>
+<div class="hero">
+<p class="lang">Deutsch</p>
+<p class="sentence" style="margin-top:8px">Mein Bruder zeigt <span class="ring">dem Gast</span> die Wohnung.</p>
+<p class="small" style="margin-top:14px">Welche Frage beantwortet der markierte Teil?</p>
+</div>
+<div class="qgrid">
+<div class="btn q-nom">Wer oder was?</div>
+<div class="btn q-akk">Wen oder was?</div>
+<div class="btn q-dat">Wem?</div>
+<div class="btn q-gen">Wessen?</div>
+<div class="btn wide q-none">Keine Frage · eine Präposition hat entschieden</div>
+</div>
+<div class="note" style="text-align:center">The English line is gone, the case names are gone, the glosses are gone. The colors stay, because they are the app’s.</div>
+</div>
+<div class="annot"><b>The ramp</b> is the Pronomen-Brücke's, one stage further out: the English stage builds the handle, <b>Beide</b> aligns the two lines span for span, <b>Deutsch</b> takes the handle away. <b>Open question:</b> stage three is Rollen's <i>Direkt</i> mode with question chips instead of role chips. The honest answer may be that this exercise ends at <b>Beide</b> and hands off to Rollen, which already owns the German side.<br><span class="reuse">Reuses:</span> BridgeQuestion's stage pattern, KasusRolesHero, DrillVariant for the stage.</div></div>
+
+</div>
+
+<div class="divider"><h2>Stufen · how much help</h2>
+<p class="small" style="margin-top:4px">One dial, three presets, and the same five options at every setting. What changes is how many crutches are on screen, not how many answers are plausible, so a score still means the same thing from one round to the next. The dial lives on a pre-screen (<b>P1</b>), the way the deck and story launchers already work.</p></div>
+
+<div class="grid">
+
+<!-- S1 -->
+<div class="idea"><h2>S1 · Leicht</h2><span class="tag">Every scaffold on · the unit's cases only</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>✕</span><b>Welche Frage?</b><span class="eye">Leicht</span></div>
+<div class="strip"><i class="fn"></i><i class="cur"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<div class="hero" style="padding-bottom:8px">
+<p class="counter">Satz 1 · Fall 2 von 3</p>
+<p class="lang" style="margin-top:8px">Englisch</p>
+<p class="sentence" style="margin-top:6px"><span class="nomc">The mother</span> gives <span class="ring">the child</span> <span class="ring dash">the apple</span>.</p>
+<div class="twin" style="margin-top:12px"><p class="lang">Deutsch</p>
+<p class="sentence" style="margin-top:6px"><span class="nomc">Die Mutter</span> gibt <span class="ring">dem Kind</span> <span class="ring dash">den Apfel</span>.</p></div>
+</div>
+<div class="qgrid">
+<div class="btn q-nom"><span class="kname">⚡ Nominativ</span>Wer oder was?<span class="en">who or what</span></div>
+<div class="btn q-akk"><span class="kname">🎯 Akkusativ</span>Wen oder was?<span class="en">whom or what</span></div>
+<div class="btn q-dat" style="grid-column:span 2"><span class="kname">🎁 Dativ</span>Wem?<span class="en">to whom, for whom</span></div>
+</div>
+<div class="note" style="text-align:center">Dativ-Einheit: three cases in play, so three buttons. Genitiv and „Keine Frage“ arrive with their units.</div>
+</div>
+<div class="annot"><b>Four scaffolds at once:</b> the German line stays visible, every asked phrase is ringed (solid = now, dashed = later in this sentence), the counter says how much of the sentence is left, and the options are cut to the <b>unit's</b> cases in play. The first answered phrase keeps its case color, which is a free hint by elimination at this setting.<br><span class="reuse">Reuses:</span> KasusUnit.casesInPlay (the path is already the ramp), Rollen's ringed-phrase convention, KasusEnglishToggle.</div></div>
+
+<!-- S2 -->
+<div class="idea"><h2>S2 · Frei</h2><span class="tag">No crutches · one ask per sentence</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>✕</span><b>Welche Frage?</b><span class="eye">Frei</span></div>
+<div class="strip"><i class="fg"></i><i class="fa"></i><i class="fn"></i><i class="cur"></i><i></i><i></i><i></i><i></i></div>
+<div class="hero">
+<p class="lang">Deutsch</p>
+<p class="sentence" style="margin-top:8px">Der Schüler nimmt die Jacke <span class="ring">des Freundes</span> nach der Schule.</p>
+<p class="small" style="margin-top:14px">Welche Frage beantwortet der markierte Teil?</p>
+</div>
+<div class="qgrid">
+<div class="btn q-nom">Wer oder was?</div>
+<div class="btn q-akk">Wen oder was?</div>
+<div class="btn q-dat">Wem?</div>
+<div class="btn q-gen">Wessen?</div>
+<div class="btn wide q-none">Keine Frage</div>
+</div>
+<div class="note" style="text-align:center">Four cases plus „Keine Frage“, whatever the sentence holds. One phrase asked, the other three never named.</div>
+</div>
+<div class="annot"><b>Harder by subtraction, not by fewer options.</b> English gone, case names gone, glosses gone, no counter, and only one phrase per sentence so nothing is answerable by elimination. The item pool tightens too: three or four askable spans, at least one of them preposition-governed.<br><b>Why the options never shrink:</b> if the option count moved with the setting, first-try share would stop being comparable round to round, and the coach reads exactly that.</div></div>
+
+<!-- P1 -->
+<div class="idea"><h2>P1 · „Übung einstellen“</h2><span class="tag">One control and a Start button · everything else is already decided</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>‹</span><b>Welche Frage?</b><span>?</span></div>
+<div class="hero" style="padding:16px 6px 6px">
+<div class="art" style="margin:0 auto 10px;color:var(--dat)"><svg class="sf"><use href="#sf-art-frage"/></svg></div>
+<p class="counter">Dativ · 10 Sätze · etwa 4 Min</p>
+<p class="small" style="margin-top:8px">The English sentence, one part ringed, and the four questions. Nominativ, Akkusativ and Dativ are in play.</p>
+</div>
+<div class="list" style="margin-top:4px">
+<div class="lhead">Wie viel Hilfe?</div>
+<div class="lsec">
+<div class="seg"><div>Leicht</div><div class="on">Normal</div><div>Frei</div></div>
+<div class="lfoot" style="padding-bottom:9px">German line on, phrases ringed, case names on the buttons. English gloss off, all five questions, every phrase asked.</div>
+<div class="lrow"><span class="rowicon"><span class="chip"><svg class="sf"><use href="#sf-slider"/></svg></span><span class="lbl2">Hilfen einzeln…<em>six switches, set by the preset</em></span></span><span class="val">›</span></div>
+</div>
+<div class="lfoot">Dein Level <b>A2</b> hat das gewählt. Ändern ändert dein Level nicht.</div>
+</div>
+<div class="cta"><svg class="sf" style="vertical-align:-3px;margin-right:6px;color:#fff"><use href="#sf-play"/></svg> Starten</div>
+</div>
+<div class="annot"><b>Four sections became one.</b> The unit comes from the row you tapped, the round length is already in the registry (KasusDrillMeta.roundSize, the way Rollen fixes 8 and the Schnellrunde fixes 10), and „classify a phrase“ versus „find the phrase“ are two kinds in the registry, so they are <b>two launcher rows on the unit screen</b>, not a picker in here. What is left is the one thing only the learner can answer.<br><b>And most launches skip even this:</b> the hub's Weiter row and the coach's „Üben“ button start the round with the seeded preset and put „Hilfen“ in the drill's toolbar, the way Rollen's mode lives there today.<br><b>The icons follow your own rule:</b> „Art marks a task you can play. A tinted chip marks a place you can enter or read“ (GrammarLauncherRow). So the header wears the exercise's <b>GrammarTaskArt</b> drawing, because this screen announces one task; <b>Hilfen einzeln…</b> wears a tinted chip, because it is a place; and the segmented control wears nothing, because a chip marks a place, not a value.<br><span class="reuse">Reuses:</span> CardDeckView+Setup's one-row „Card settings…“ habit, KasusDrillMeta.roundSize, GrammarLauncherRow.</div></div>
+
+<!-- P2 -->
+<div class="idea"><h2>P2 · the „Hilfen“ sheet</h2><span class="tag">Presets write the switches · one place for every exercise</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>Abbrechen</span><b>Hilfen</b><span style="color:#0A84FF;font-weight:700">Fertig</span></div>
+<div class="card" style="margin-top:14px">
+<h4>Wie viel Hilfe?</h4>
+<div class="dial"><div>Leicht</div><div class="on">Normal</div><div>Frei</div></div>
+<div class="switches">
+<div class="row"><span class="rowicon"><svg class="sf"><use href="#sf-split"/></svg><span>Deutsch mitzeigen<em>the German line under the English</em></span></span><div class="sw on"><i></i></div></div>
+<div class="row"><span class="rowicon"><svg class="sf"><use href="#sf-highlighter"/></svg><span>Teile markieren<em>ring every phrase that gets asked</em></span></span><div class="sw on"><i></i></div></div>
+<div class="row"><span class="rowicon"><svg class="sf"><use href="#sf-tag"/></svg><span>Fall über der Frage<em>the case name on the button</em></span></span><div class="sw on"><i></i></div></div>
+<div class="row"><span class="rowicon"><svg class="sf"><use href="#sf-book"/></svg><span>Englische Frage<em>„who or what“ under the German</em></span></span><div class="sw"><i></i></div></div>
+<div class="row"><span class="rowicon"><svg class="sf"><use href="#sf-filter"/></svg><span>Nur die Fälle der Einheit<em>fewer buttons, set by the unit</em></span></span><div class="sw"><i></i></div></div>
+<div class="row"><span class="rowicon"><svg class="sf"><use href="#sf-list"/></svg><span>Ganzer Satz<em>ask every phrase, not just one</em></span></span><div class="sw on"><i></i></div></div>
+</div>
+<div class="switches" style="margin-top:0"><div class="row"><span class="rowicon"><svg class="sf"><use href="#sf-walk"/></svg><span>Schritt für Schritt<em>only for Rollen · the Check one question at a time</em></span></span><div class="sw on"><i></i></div></div></div>
+<p class="note">Touch a switch and the preset reads <b>Eigene</b>. Nothing locks until the first answer is in.</p>
+</div>
+<div class="card"><h4>Gilt für alle Verstehen-Übungen</h4>
+<p>Rollen, Wer macht was?, Die Probe and Welche Frage? all want these six. One shared preset (<code>kasus.hilfe</code>), read by the drill shell, beats four private toggles. „Schritt für Schritt“ moves in here from Rollen's toolbar, as the seventh switch, shown only for the kinds that have it.</p></div>
+</div>
+<div class="card"><h4>Die Symbole · the names to implement</h4>
+<p class="symtab">
+<b>Kopfzeile</b>&nbsp;&nbsp;GrammarTaskArt (a drawing, not a symbol)<br>
+<b>Hilfen…</b>&nbsp;&nbsp;slider.horizontal.3<br>
+<b>Starten</b>&nbsp;&nbsp;play.fill<br>
+Deutsch mitzeigen&nbsp;&nbsp;rectangle.split.1x2<br>
+Teile markieren&nbsp;&nbsp;highlighter<br>
+Fall über der Frage&nbsp;&nbsp;tag.fill<br>
+Englische Frage&nbsp;&nbsp;character.book.closed<br>
+Nur die Fälle der Einheit&nbsp;&nbsp;line.3.horizontal.decrease<br>
+Ganzer Satz&nbsp;&nbsp;list.number<br>
+Schritt für Schritt&nbsp;&nbsp;figure.walk</p>
+<p><b>highlighter</b> and <b>tag.fill</b> are not new: they are Markieren's and Rollen's own symbols from the registry, so a switch wears the glyph of the thing it turns on. <b>slider.horizontal.3</b> and <b>play.fill</b> are the deck launcher's. The glyphs drawn here are SVG stand-ins; check every name in SF Symbols before it ships, the way a What's New symbol gets checked.</p></div>
+<div class="annot"><b>Presets, not a matrix.</b> Six switches is 64 states to reason about and to pin with golden numbers; three named presets is three, and the switches stay for whoever wants them. Same shape as KasusRolesMode, which also <b>locks once an answer is in</b>, so a setting can't be changed mid-item to rescue a guess.<br><b>Why the sheet's rows get a bare glyph and not a chip:</b> a settings row is neither a task nor a place, and a 34pt tinted chip on six rows in a row reads as six doors. A 17pt glyph in the secondary colour is list adornment, which is what iOS does in Settings and what these rows are.<br><b>Per kind, not per screen:</b> which switches a kind shows is a row in KasusDrillMeta, so the next exercise inherits the sheet instead of growing its own.</div></div>
+
+<!-- P4 -->
+<div class="idea"><h2>P4 · where the preset comes from</h2><span class="tag">Seeded from your level, pinned the moment you touch it</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>‹</span><b>Hilfen</b><span style="color:#0A84FF;font-weight:700">Fertig</span></div>
+<div class="list" style="margin-top:12px">
+<div class="lhead">Stufe</div>
+<div class="lsec">
+<div class="lrow"><span class="lbl2">Normal<em>Dein Level A2 hat das gewählt</em></span><span class="val" style="color:var(--das)">automatisch</span></div>
+</div>
+<div class="lfoot">Change your level in Settings and this follows. Pick a preset here and it stops following, until you tap „Wieder automatisch“.</div>
+</div>
+<div class="card"><h4>Was dein Level vorschlägt</h4>
+<p style="font-family:ui-monospace,Menlo,monospace;font-size:11.5px;line-height:2;color:var(--ink)">
+A1&nbsp;→&nbsp;Leicht&nbsp;&nbsp;&nbsp;&nbsp;A2&nbsp;→&nbsp;Leicht<br>
+B1&nbsp;→&nbsp;Normal&nbsp;&nbsp;&nbsp;B2&nbsp;·&nbsp;C1&nbsp;→&nbsp;Frei</p>
+<p>A first guess, not a finding. CEFR level says what you can <i>say</i>; it does not say whether anyone ever taught you what a direct object is, which is the whole reason Verstehen exists. A B2 who never met the terms turns the help back on, and that has to be one tap, not a hunt.</p></div>
+<div class="card"><h4>Nach der ersten Runde</h4>
+<p>The round itself is the better signal. After a Leicht round that comes out near-perfect, the next launch offers <b>Normal</b> once as a row the learner can ignore. The number that counts as „near-perfect“ is not in this note on purpose: it gets measured on real rounds first, the way the coach's shaky threshold was.</p></div>
+</div>
+<div class="annot"><b>Three states, one of them silent:</b> <b>automatisch</b> (derived from germanLevel on every render, nothing stored, so changing your level in Settings moves it), <b>von dir gewählt</b> (stored the moment a switch or a preset is touched, and level changes no longer reach it), and „Wieder automatisch“ to go back. Exactly the contract germanLevel already has: „exercises <b>seed</b> from it and never write back, so running one story at B2 doesn't quietly make you a B2 learner everywhere“ (MLXModelManager).<br><b>So the first run of every exercise is already configured</b> and the setup screen is something a learner can go their whole time without opening.</div></div>
+
+<!-- S4 -->
+<div class="idea"><h2>S4 · Umgekehrt · the other direction</h2><span class="tag">A second difficulty axis, not a setting</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>✕</span><b>Finde den Fall</b><span>?</span></div>
+<div class="strip"><i class="fd"></i><i class="fa"></i><i class="cur"></i><i></i><i></i><i></i></div>
+<div class="hero">
+<p class="small">Tap the part that answers</p>
+<p class="sentence" style="margin-top:6px"><span class="datc" style="font-size:22px">Wem?</span></p>
+<p class="small" style="margin-top:4px">to whom, for whom</p>
+<div class="twin" style="margin-top:14px"><p class="lang">Englisch</p>
+<p class="sentence" style="margin-top:6px">The waitress sends <span class="ring dash">the man</span> <span class="ring dash">a mirror</span> for <span class="ring dash">the uncle</span>.</p></div>
+</div>
+<div class="card"><h4>Drei Kandidaten · one answer</h4>
+<p>„The man“ receives, „a mirror“ is the thing sent, „for the uncle“ hangs on a preposition. Only the first answers <span class="datc">Wem?</span></p></div>
+<div class="cta">Weiter</div>
+</div>
+<div class="annot"><b>My addition:</b> flip the task instead of removing help. Classifying a ringed phrase and <i>locating</i> the phrase that fits a question are different skills, and the second is the one reading actually needs. Harder at every setting, same data, and the interaction already exists: Markieren taps phrases in a sentence.<br><span class="reuse">Reuses:</span> KasusMarking word chips and its marking round, the same items, no new content.</div></div>
+
+<!-- P3 -->
+<div class="idea"><h2>P3 · what an eased round records</h2><span class="tag">Leicht marks the round, the way „Lösung angezeigt“ does</span>
+<div class="phone"><div class="notch"></div>
+<div class="navbar"><span>‹</span><b>Verlauf</b><span></span></div>
+<p class="lhead" style="padding-left:2px">Heute</p>
+<div class="vrow"><span>👁</span><span>Welche Frage? · Dativ<em class="small" style="display:block">Leicht · Hilfen an</em></span><span class="sc" style="color:var(--sub)">9 / 10</span></div>
+<div class="vrow"><span>🎁</span><span>Welche Frage? · Dativ<em class="small" style="display:block">Normal</em></span><span class="sc" style="color:var(--dat)">7 / 10</span></div>
+<div class="vrow"><span>🔑</span><span>Rollen · Genitiv<em class="small" style="display:block">Schritt für Schritt</em></span><span class="sc" style="color:var(--gen)">11 / 14</span></div>
+<div class="card" style="margin-top:12px"><h4>Was die Stufe nicht ändert</h4>
+<p>The five questions, the item's own explanation, and what a right answer is worth. What it does change: a <b>Leicht</b> round carries its eye here and on each answer, and stays out of the coach's shaky-case maths, so help can never inflate the pyramid.</p>
+<p>The 9/10 above is the honest kind of 9/10: visibly easier, and it says so.</p></div>
+</div>
+<div class="annot"><b>Why this panel exists:</b> scaffolding and measurement pull against each other, and the app already settled that fight once. A round that showed its answers wears an eye in Verlauf and on every answer it revealed; an eased round gets the same mark for the same reason. Without it, Leicht quietly becomes the way to farm a green pyramid.<br><span class="reuse">Reuses:</span> the „Lösung angezeigt“ convention, KasusRound's existing fields (the preset is one more raw-value string, no new synced field), countsTowardSkill.</div></div>
+
+</div>
+
+<div class="divider"><h2>What the shipped content can actually fill</h2>
+<p class="small" style="margin-top:4px">Measured over all 1924 targets in Resources/kasus_concepts.json on 2026-10-16. 1595 of them carry an English span, and every one of those is a verbatim substring of its English line, so nothing needs aligning.</p></div>
+
+<div class="grid">
+
+<div class="idea"><h2>Coverage</h2><span class="tag">Where the four questions land</span>
+<div class="card" style="margin-top:0">
+<h4>What the English span answers</h4>
+<div class="bar-row"><span class="lbl">Wer oder was?</span><div class="bar"><i style="width:100%;background:var(--nom)"></i></div><span class="n">727</span></div>
+<div class="bar-row"><span class="lbl">Wen oder was?</span><div class="bar"><i style="width:50%;background:var(--akk)"></i></div><span class="n">364</span></div>
+<div class="bar-row"><span class="lbl">Wessen?</span><div class="bar"><i style="width:16%;background:var(--gen)"></i></div><span class="n">119</span></div>
+<div class="bar-row"><span class="lbl">Wem?</span><div class="bar"><i style="width:11%;background:var(--dat)"></i></div><span class="n">82</span></div>
+<div class="bar-row"><span class="lbl" style="color:var(--ink)"><b>Keine Frage</b></span><div class="bar"><i style="width:57%;background:#9A9AA0"></i></div><span class="n">416</span></div>
+<div class="bar-row"><span class="lbl" style="color:var(--die)"><b>Falle</b> (Dativ-Verb)</span><div class="bar"><i style="width:28%;background:var(--die)"></i></div><span class="n">206</span></div>
+<p class="note">1224 spans are cleanly askable, 77% of the English-spanned ones. The two bottom bars are not noise: one is Kasus-Check step one, the other is Die englische Falle.</p>
+</div>
+<div class="card"><h4>Pool per unit · items that hold at least one askable span</h4>
+<p style="font-family:ui-monospace,Menlo,monospace;font-size:11px;line-height:1.9;color:var(--ink)">
+Nominativ&nbsp;&nbsp;&nbsp;50 clean&nbsp;&nbsp;·&nbsp;&nbsp;0 Falle&nbsp;&nbsp;·&nbsp;&nbsp;&nbsp;1 Keine<br>
+Akkusativ&nbsp;&nbsp;151 clean&nbsp;&nbsp;·&nbsp;&nbsp;0 Falle&nbsp;&nbsp;·&nbsp;&nbsp;23 Keine<br>
+Dativ&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;149 clean&nbsp;&nbsp;·&nbsp;123 Falle&nbsp;&nbsp;·&nbsp;&nbsp;10 Keine<br>
+Genitiv&nbsp;&nbsp;&nbsp;&nbsp;197 clean&nbsp;&nbsp;·&nbsp;&nbsp;33 Falle&nbsp;&nbsp;·&nbsp;&nbsp;67 Keine<br>
+Alle Fälle&nbsp;151 clean&nbsp;&nbsp;·&nbsp;&nbsp;38 Falle&nbsp;&nbsp;·&nbsp;&nbsp;66 Keine</p>
+<p class="note"><b>Welche Frage?</b> clears minimumItems on every unit from day one. <b>Die englische Falle</b> has a pool only where the trap lives, and KasusConceptBank.offered already hides an exercise a unit can't fill.</p></div>
+<div class="card"><h4>Why the buttons follow the unit, not the sentence</h4>
+<p>Askable spans per item: <b>2</b> on 457 items, 3 on 148, 4 on 44. Distinct cases per item: <b>exactly two on 483</b> of the 700, one on 52, three or more on 165.</p>
+<p>So „show only the cases this sentence contains“ turns 69% of the pool into a coin flip, and hands the answer over outright on the 52 single-case items. Cutting the buttons to the <b>unit's</b> cases in play does the same job honestly: Nominativ shows one, Akkusativ two, Dativ three, Genitiv and Alle Fälle the lot. The path is already the difficulty curve.</p>
+<p>It also sets the ceiling on „ganzer Satz“: a 2-span sentence is one real ask plus one elimination, which is why <b>Frei</b> asks a single phrase.</p></div>
+<div class="annot"><b>The one data gap:</b> <i>Keine Frage</i> is thin on Nominativ (1) and Dativ (10), because 249 of the 416 preposition-governed targets have no <code>en</code> span. The English text already contains the phrase („in the forest“, „for the man“); only the span is unmarked. A one-off script can propose them by locating the phrase in the English line, then a hand read. No LLM round, no new sentences.</div></div>
+
+<div class="idea"><h2>Where it cannot work</h2><span class="tag">The answer to „can this do all English sentences?“</span>
+<div class="card" style="margin-top:0">
+<h4>No. Five systematic classes, not edge cases</h4>
+<ul class="klass">
+<li><b>Dativ verbs.</b> „helps the brother“ reads as a direct object. 206 spans.</li>
+<li><b>Role inverters.</b> <i>gefallen, gehören, schmecken, fehlen</i>: the English subject becomes the German Dativ.</li>
+<li><b>Prepositions.</b> „wait for“ → <i>auf</i> + Akk; „a friend of mine“ → <i>von mir</i>, Dativ, not Genitiv.</li>
+<li><b>English has no form to ask with.</b> <i>him/her/them</i> covers Akkusativ and Dativ both; <i>whom</i> is dead in speech; „It's <b>me</b>“ is accusative where German is nominative.</li>
+<li><b>No counterpart at all.</b> „every day“ → <i>jeden Tag</i> (bare Akkusativ); „He was given a book“ → <i>Ihm wurde ein Buch gegeben</i>.</li>
+</ul>
+</div>
+<div class="card"><h4>And the deeper reason</h4>
+<p>The case is a property of the <b>German</b> sentence. KasusValidator needs German text with located targets to prove anything, so for a sentence the learner types in English there is nothing to validate until a German twin exists. The tutor seam could write one (KasusConceptBank.merging, unused today), but the documented harvest is about a third of planned phrases, and a wrongly highlighted span teaches a wrong case.</p>
+<p><b>So: authored pairs only.</b> Which is fine, because 1224 of them already ship.</p></div>
+<div class="annot"><b>The design that survives this:</b> don't aim at „any English sentence“. Aim at two bounded pools. Exercise A only ever asks spans where the question has an answer, and its fifth button teaches that sometimes it doesn't. Exercise B is stocked from precisely the spans A refuses, and its whole lesson is <i>your English is lying to you here, use the list</i>. The 23% that breaks the idea becomes the second exercise instead of a bug report.</div></div>
+
+</div>
+
+</body></html>

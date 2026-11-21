@@ -132,6 +132,9 @@ Comparison notes (fill in after device testing):
 
 ## Later
 
+- **Lebenslauf.** The learner's résumé in interview practice, as an edited ~500-character
+  Kurzprofil plus one matching fact per turn, so it fits beside the posting. Planned as item 18
+  of `FSI_DLI_ROADMAP.md`.
 - Group Past interviews by posting once most chats carry `jobPostingIDRaw`.
 - Streak: `StudyDay.jobSeconds` + a `StudyTimeBucket` / `StudyActivity` case, a teal slice on the
   calendar, backfill from `readingSeconds`.

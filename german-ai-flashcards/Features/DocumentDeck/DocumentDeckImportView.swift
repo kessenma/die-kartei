@@ -48,6 +48,7 @@ struct DocumentDeckImportView: View {
 
     @State private var showFileImporter = false
     @State private var showPaste = false
+    @State private var showLink = false
     @State private var showCamera = false
     @State private var photoPickerItem: PhotosPickerItem?
     @State private var draft: DocumentDeckDraft?
@@ -69,6 +70,12 @@ struct DocumentDeckImportView: View {
             }
             .navigationDestination(item: $draft) { item in
                 builder(item, isRoot: false)
+            }
+            .navigationDestination(isPresented: $showLink) {
+                DocumentLinkImportView(accent: accent) { fetched in
+                    showLink = false
+                    draft = fetched
+                }
             }
             .navigationDestination(isPresented: $showPaste) {
                 DocumentTextPasteView(accent: accent) { pasted in
@@ -157,7 +164,7 @@ struct DocumentDeckImportView: View {
                 errorMessage = nil
                 showFileImporter = true
             } label: {
-                ActivityRow("PDF file", "A vocab sheet, a handout, a story. Scans are read on-device.", "doc.richtext")
+                ActivityRow("PDF file", "A vocab sheet, slides, a handout, a story. Scans are read on-device.", "doc.richtext")
             }
             .buttonStyle(.plain)
 
@@ -176,6 +183,14 @@ struct DocumentDeckImportView: View {
 
             Button {
                 errorMessage = nil
+                showLink = true
+            } label: {
+                ActivityRow("From a link", "A PDF your teacher put online, or a page of words", "link")
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                errorMessage = nil
                 showPaste = true
             } label: {
                 ActivityRow("Paste text", "A list or a text copied from anywhere", "doc.on.clipboard")
@@ -184,7 +199,7 @@ struct DocumentDeckImportView: View {
         } header: {
             Text("Bring one in").themedSectionHeader()
         } footer: {
-            Text("A two-column word list (German · English) is paired for you. Anything else you pick from by highlighting; the tutor translates what you picked.")
+            Text("A word list (German · English) is paired for you, with the teacher's example sentence and plural where the sheet gives them. Anything else you pick from by highlighting; the tutor translates what you picked.")
                 .font(.caption2)
         }
         .disabled(isWorking)
@@ -236,6 +251,10 @@ struct DocumentDeckImportView: View {
 
     // MARK: - Handlers
 
+    /// The bytes are read here, inside the importer's callback, because that is where the
+    /// security-scoped URL is safe to hold — and only once: the parse takes the `Data` overload
+    /// rather than re-opening the URL. Reading the *text* is a different matter and goes off the
+    /// main actor (`readPDF`); a 37-page slide export used to freeze the screen for the whole parse.
     private func handleFile(_ result: Result<URL, Error>) {
         errorMessage = nil
         switch result {
@@ -246,29 +265,43 @@ struct DocumentDeckImportView: View {
             let needsAccess = url.startAccessingSecurityScopedResource()
             let data = try? Data(contentsOf: url)
             if needsAccess { url.stopAccessingSecurityScopedResource() }
-            guard let data, let extracted = PDFTextExtractor.extract(from: url, rebuildingTables: true) else {
+            guard let data else {
                 errorMessage = "Couldn't read that PDF."
                 return
             }
-            if extracted.looksScanned {
-                progressText = "Reading the scan…"
-                Task {
-                    let text = await ScannedPDFReader.extract(data: data, ocr: ocr) { page, total in
-                        progressText = "Reading page \(page) of \(total)…"
-                    }
-                    progressText = nil
-                    if let text {
-                        draft = DocumentDeckDraft(title: title, text: text, sourceLabel: "PDF",
-                                                  fileData: data, keepsSource: true)
-                    } else {
-                        errorMessage = "No readable text found in that PDF."
-                    }
-                }
-            } else {
-                // Page markers stay: the parser drops them per line, and the text picker reads past them.
-                draft = DocumentDeckDraft(title: title, text: extracted.text, sourceLabel: "PDF",
-                                          fileData: data, keepsSource: true)
+            Task { await readPDF(title: title, data: data) }
+        }
+    }
+
+    /// The text layer first, off the main actor; a PDF with none goes to OCR, which reports its own
+    /// per-page progress.
+    private func readPDF(title: String, data: Data) async {
+        progressText = "Reading the PDF…"
+        let extracted = await Task.detached(priority: .userInitiated) {
+            PDFTextExtractor.extract(from: data, rebuildingTables: true)
+        }.value
+        guard let extracted else {
+            progressText = nil
+            errorMessage = "Couldn't read that PDF."
+            return
+        }
+        if extracted.looksScanned {
+            progressText = "Reading the scan…"
+            let text = await ScannedPDFReader.extract(data: data, ocr: ocr) { page, total in
+                progressText = "Reading page \(page) of \(total)…"
             }
+            progressText = nil
+            if let text {
+                draft = DocumentDeckDraft(title: title, text: text, sourceLabel: "PDF",
+                                          fileData: data, keepsSource: true)
+            } else {
+                errorMessage = "No readable text found in that PDF."
+            }
+        } else {
+            progressText = nil
+            // Page markers stay: the parser drops them per line, and the text picker reads past them.
+            draft = DocumentDeckDraft(title: title, text: extracted.text, sourceLabel: "PDF",
+                                      fileData: data, keepsSource: true)
         }
     }
 
@@ -312,6 +345,135 @@ struct DocumentDeckImportView: View {
 }
 
 // MARK: - Paste
+
+/// A document fetched from a link. A PDF comes down as bytes and is read exactly as a picked file
+/// is, so page pills and the sheet's extra columns work the same; a link that turns out to be an
+/// ordinary web page falls back to its text, which the builder picks from by highlighting.
+///
+/// A share link, a cloud drive or anything behind a login answers a plain GET with an HTML page and
+/// a 200, so the error says to save it as a PDF in Safari and bring that in instead.
+struct DocumentLinkImportView: View {
+    let accent: Color
+    let onFetched: (DocumentDeckDraft) -> Void
+
+    @State private var link = ""
+    @State private var loading = false
+    @State private var errorMessage: String?
+    @State private var clipboard: String?
+    @FocusState private var focused: Bool
+
+    private var trimmed: String { link.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    var body: some View {
+        Form {
+            Section {
+                TextField("https://…", text: $link)
+                    .keyboardType(.URL)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .submitLabel(.go)
+                    .focused($focused)
+                    .onSubmit(fetch)
+                if let clipboard, trimmed.isEmpty {
+                    Button {
+                        link = clipboard
+                    } label: {
+                        Label(clipboard, systemImage: "doc.on.clipboard")
+                            .lineLimit(1)
+                            .font(.caption)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(accent)
+                }
+            } header: {
+                Text("Link").themedSectionHeader()
+            } footer: {
+                Text("A link straight to a PDF works best. A link that needs a login, or a share link from a cloud drive, gives back a web page instead — open it in Safari, save it as a PDF, and bring that in with PDF file.")
+                    .font(.caption2)
+            }
+            .themedListRow()
+
+            if loading {
+                Section {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("Fetching…").font(.subheadline).foregroundStyle(.secondary)
+                    }
+                }
+                .themedListRow()
+            }
+
+            if let errorMessage {
+                Section {
+                    Label(errorMessage, systemImage: "exclamationmark.triangle")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+                .themedListRow()
+            }
+        }
+        .themedListScreen()
+        .navigationTitle("From a link")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            focused = true
+            clipboard = ClipboardLink.suggestion()
+        }
+        .safeAreaInset(edge: .bottom) {
+            Button(action: fetch) {
+                Text("Fetch")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(accent)
+            .controlSize(.large)
+            .disabled(trimmed.count < 4 || loading)
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            .background(.bar)
+        }
+    }
+
+    private func fetch() {
+        let input = trimmed
+        guard input.count >= 4, !loading else { return }
+        focused = false
+        loading = true
+        errorMessage = nil
+        Task {
+            let name = URL(string: input)?.deletingPathExtension().lastPathComponent ?? ""
+            switch await WebTextExtractor.downloadPDF(input) {
+            case .success(let data):
+                let parsed = await Task.detached(priority: .userInitiated) {
+                    PDFTextExtractor.extract(from: data, rebuildingTables: true)
+                }.value
+                loading = false
+                guard let extracted = parsed, !extracted.looksScanned else {
+                    errorMessage = "That PDF has no text layer. Download it and bring it in with PDF file, which reads a scan on-device."
+                    return
+                }
+                onFetched(DocumentDeckDraft(title: name, text: extracted.text, sourceLabel: "Link",
+                                            fileData: data, keepsSource: true))
+            case .failure(let error):
+                // Not a PDF: it may still be a page of words worth picking from.
+                guard case .notAPDF = error else {
+                    loading = false
+                    errorMessage = error.errorDescription
+                    return
+                }
+                let page = await WebTextExtractor.fetch(input)
+                loading = false
+                switch page {
+                case .success(let extracted):
+                    onFetched(DocumentDeckDraft(title: extracted.title, text: extracted.text,
+                                                sourceLabel: "Link", keepsSource: true))
+                case .failure:
+                    errorMessage = error.errorDescription
+                }
+            }
+        }
+    }
+}
 
 /// A list or a text pasted in, straight to the builder.
 struct DocumentTextPasteView: View {

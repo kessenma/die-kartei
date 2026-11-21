@@ -39,6 +39,8 @@ enum DrillVariant: Hashable {
     case endings(EndingsConfig)
     case concept(ConceptConfig)
     case gap(GapConfig)
+    case english(EnglishConfig)
+    case table(TableConfig)
 
     /// The configuration a kind plays with when nothing else is asked: the topic's cases, the
     /// kind's round size, the remembered Rollen mode.
@@ -63,10 +65,37 @@ enum DrillVariant: Hashable {
             return .gap(GapConfig(focus: .case, count: kind.meta.roundSize))
         case .reflexPerson:
             return .gap(GapConfig(focus: .person, count: kind.meta.roundSize))
+        case .frage, .englischeFalle, .findeFall:
+            // Nothing stored means the preset follows the declared level, which is mirrored in
+            // UserDefaults by MLXModelManager. Touching the dial pins it; it is never written back.
+            let stored = UserDefaults.standard.string(forKey: KasusHelp.storageKey)
+            let level = CEFRLevel(rawValue: UserDefaults.standard.string(forKey: KasusHelp.levelKey) ?? "") ?? .a2
+            return .english(EnglishConfig(help: KasusHelp.resolve(stored: stored, level: level)))
+        case .tabelle:
+            // Nothing stored means the chart and the shape the setup screen last left behind; the
+            // defaults are the whole definite table, which is what the exercise is named after.
+            return .table(TableConfig.stored())
         case .quick, .pair, .fehler, .bridge:
             return .endings(EndingsConfig(style: .article, cases: topic.casesInPlay, emphasis: topic.emphasis,
                                           count: max(1, kind.meta.roundSize)))
         }
+    }
+}
+
+/// Die Tabelle: which chart is on the board and how much of it is blank. Both are the learner's
+/// pick on the setup screen and are remembered; nothing else about the round is configurable,
+/// because a round is always the whole table (`ArticleTableRound.cellCount`).
+struct TableConfig: Hashable {
+    var chart: ArticleChart = .definite
+    var shape: ArticleTableShape = .whole
+
+    static let chartKey = "kasus.tabelle.chart"
+    static let shapeKey = "kasus.tabelle.shape"
+
+    /// The last pick, or the whole definite table.
+    static func stored(_ defaults: UserDefaults = .standard) -> TableConfig {
+        TableConfig(chart: defaults.string(forKey: chartKey).flatMap(ArticleChart.init(rawValue:)) ?? .definite,
+                    shape: defaults.string(forKey: shapeKey).flatMap(ArticleTableShape.init(rawValue:)) ?? .whole)
     }
 }
 
@@ -105,6 +134,12 @@ struct EndingsConfig: Hashable {
 struct GapConfig: Hashable {
     var focus: GapChoiceFocus
     var count: Int = 10
+}
+
+/// „Englisch & Fälle“: how much help the round shows. The pool comes from the kind, the unit from
+/// the topic, so this carries the one thing the learner chose.
+struct EnglishConfig: Hashable {
+    var help: KasusHelp = .normal
 }
 
 /// The Verstehen exercises on the concept bank.

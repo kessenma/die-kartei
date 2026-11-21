@@ -233,7 +233,8 @@ struct ConversationView: View {
                 mlxService: mlxService,
                 anchorScenario: config.scenario,
                 phrase: nil,
-                initialGerman: draft.german
+                initialGerman: draft.german,
+                deckTarget: PhraseDeckStore.target(context: modelContext)
             )
         }
         .onChange(of: scenePhase) { _, phase in
@@ -1444,6 +1445,7 @@ private struct SavedWordsSheet: View {
                     }
                 }
             }
+            .macSheetSize()
             .navigationTitle("Saved words")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -1339,6 +1339,8 @@ enum KasusService {
              round(.fehler, .dativ, nil, (0..<4).map { _ in var row = item(.dativ, .der, true); row.scaffolded = true; return row }), []),
             ("Pronomen-Brücke · 8 Akk m wrong (recognition, never counts)",
              round(.bridge, .akkusativ, nil, Array(repeating: item(.akkusativ, .der, false), count: 8)), []),
+            ("Die Tabelle · 8 Dat m wrong (a closed set of tiles, never counts)",
+             round(.tabelle, .alleFaelle, nil, Array(repeating: item(.dativ, .der, false), count: 8)), []),
         ]
 
         var lines: [String] = []

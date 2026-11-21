@@ -121,9 +121,9 @@ struct StreakCalendarSection: View {
             let key = studyCalendar.startOfDay(for: day.dayStart)
             // Every signal the streak counts, summed into one "how much" number. Story reading
             // joins as one unit per minute, which puts a ten-minute read in the same band as ten
-            // cards.
+            // cards; a word copied out on a Schreibblatt counts like a card.
             items[key, default: 0] += day.cardsReviewed + day.grammarExercises + day.conversations
-                + day.storyQuestions + day.storyMinutes
+                + day.storyQuestions + day.storyMinutes + day.sheetWordsWritten + day.hoerenItems
             seconds[key, default: 0] += day.totalSeconds
         }
         return DayMetrics(items: items, seconds: seconds, byTime: shadeByTime)
@@ -579,7 +579,12 @@ private struct CalendarDay: Identifiable {
 /// The GitHub-style contribution grid: columns are weeks (oldest left), rows are Mon…Sun. Cell
 /// size, week span, and tappability are all set by the caller so it can serve both the medium
 /// 3-Month view and the tiny Year overview.
-private struct StreakGrid: View {
+/// Internal, not private: the Grammatik hub's Fortschritt pane draws a grammar-only copy of this
+/// grid (`weeks: 13, tappable: false`) from its own `DayMetrics`, so both heat grids read off one
+/// `StreakShade` ramp and can never drift apart. `WeekStrip` and `MonthGrid` stay private — they
+/// need the section's pager binding and their tap opens `DayDetailSheet`, which shows every kind
+/// of activity for a day and would be a lie on a grammar-only screen.
+struct StreakGrid: View {
     let weeks: Int
     var cell: CGFloat = 14
     var tappable: Bool = true
@@ -923,6 +928,14 @@ struct DayDetailSheet: View {
                       seconds: day.storySeconds),
             TimeSlice(label: "Story questions", icon: "text.badge.checkmark", tint: .orange,
                       seconds: day.storyQuizSeconds),
+            TimeSlice(label: "Spiele", icon: "gamecontroller.fill", tint: .teal,
+                      seconds: day.gameSeconds),
+            TimeSlice(label: "Zeichnen", icon: "pencil.and.scribble", tint: .indigo,
+                      seconds: day.drawingSeconds),
+            TimeSlice(label: "Schreiben", icon: "square.and.pencil", tint: .mint,
+                      seconds: day.writingSeconds),
+            TimeSlice(label: "Hören", icon: "headphones", tint: .brown,
+                      seconds: day.hoerenSeconds),
         ]
         return (day.totalSeconds, candidates.filter { $0.seconds > 0 }.sorted { $0.seconds > $1.seconds })
     }
@@ -1010,6 +1023,23 @@ struct DayDetailSheet: View {
                 tint: .purple,
                 title: r.topic.isEmpty ? "Präpositionen" : "Präpositionen · \(r.topic)",
                 subtitle: parts.joined(separator: " · ")
+            ))
+        }
+
+        // Hören: a Zahlen-Diktat or Diktat set, or one story's Worum geht's?.
+        let hoerenRounds = (try? context.fetch(FetchDescriptor<HoerenRound>(
+            predicate: #Predicate<HoerenRound> { $0.date >= dayStart && $0.date < end }
+        ))) ?? []
+        for r in hoerenRounds {
+            guard let kind = r.kind else { continue }
+            var subtitle = r.summaryLine
+            if r.durationSeconds > 0 { subtitle += " · \(r.durationSeconds / 60 > 0 ? "\(r.durationSeconds / 60) min" : "\(r.durationSeconds)s")" }
+            out.append(DayExercise(
+                time: r.date,
+                icon: kind.systemImage,
+                tint: .brown,
+                title: "Hören · \(kind.germanLabel)",
+                subtitle: subtitle
             ))
         }
 
@@ -1141,6 +1171,40 @@ struct DayDetailSheet: View {
                     ))
                 }
             }
+        }
+
+        // Schreibblatt sheets, on the day their words went into the log (their first Fertig).
+        // Sheets stay on the device that made them, so another device's (or a deleted one) are only
+        // in the day's total: one row from it below. After the fallback, which only runs on an
+        // otherwise empty day.
+        let sheets = (try? context.fetch(FetchDescriptor<SchreibblattSheet>(
+            predicate: #Predicate<SchreibblattSheet> { sheet in
+                sheet.loggedAt.flatMap { $0 >= dayStart && $0 < end } ?? false
+            }
+        ))) ?? []
+        var sheetWordsHere = 0
+        for sheet in sheets {
+            guard let loggedAt = sheet.loggedAt else { continue }
+            let count = sheet.writtenWords.count
+            sheetWordsHere += count
+            out.append(DayExercise(
+                time: loggedAt,
+                icon: "hand.draw",
+                tint: SchreibblattTile.tint,
+                title: "Schreibblatt · \(sheet.title)",
+                subtitle: "\(count) \(count == 1 ? "word" : "words") by hand, each \(sheet.repetitions)×"
+            ))
+        }
+        let dayRow = (try? context.fetch(FetchDescriptor<StudyDay>(
+            predicate: #Predicate<StudyDay> { $0.dayStart == dayStart }
+        )))?.first
+        if let dayRow, dayRow.sheetWordsWritten > sheetWordsHere {
+            let more = dayRow.sheetWordsWritten - sheetWordsHere
+            out.append(DayExercise(
+                time: dayRow.lastActivityAt, icon: "hand.draw", tint: SchreibblattTile.tint,
+                title: sheets.isEmpty ? "Schreibblatt" : "Schreibblatt · other sheets",
+                subtitle: "\(more) \(sheets.isEmpty ? "" : "more ")\(more == 1 ? "word" : "words") written by hand"
+            ))
         }
 
         return out.sorted { $0.time < $1.time }

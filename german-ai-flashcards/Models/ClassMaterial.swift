@@ -39,6 +39,12 @@ final class ClassMaterial {
     /// document deck's id. Nil for one imported from outside. Lets the picker mark what a course
     /// already has, and the Library say which course a story or paper went to.
     var originIDRaw: String? = nil
+    /// Encoded `WorksheetSetup`: the homework picked from this handout's exercise pages. Nil until
+    /// the learner sets it up. See docs/WORKSHEETS.md.
+    var worksheetData: Data? = nil
+    /// Encoded `[String: WorksheetAnswer]`, by answer key. Separate from the setup so it can merge
+    /// answer by answer across devices.
+    var worksheetAnswersData: Data? = nil
 
     var entry: ClassEntry? = nil
 
@@ -104,6 +110,16 @@ final class ClassMaterial {
     func setTranslation(_ translation: HandoutTranslation?) {
         translationData = translation.flatMap { try? JSONEncoder().encode($0) }
         if translation == nil { translationModelRaw = nil }
+    }
+
+    var worksheet: WorksheetSetup? {
+        get { WorksheetCoding.decode(WorksheetSetup.self, from: worksheetData) }
+        set { worksheetData = WorksheetCoding.encode(newValue) }
+    }
+
+    var worksheetAnswers: [String: WorksheetAnswer] {
+        get { WorksheetCoding.decode([String: WorksheetAnswer].self, from: worksheetAnswersData) ?? [:] }
+        set { worksheetAnswersData = newValue.isEmpty ? nil : WorksheetCoding.encode(newValue) }
     }
 
     /// The original is on disk (a failed write can leave a name behind with no file).

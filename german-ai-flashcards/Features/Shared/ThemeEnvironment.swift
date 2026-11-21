@@ -192,6 +192,7 @@ private struct ThemedListBackground: ViewModifier {
             .scrollContentBackground(theme == .klar ? .visible : .hidden)
             #endif
             .themedScreen()
+            .macSheetSize()
     }
 }
 
@@ -264,6 +265,19 @@ extension View {
     /// *is* the ground) and paints the themed one behind it. Use in place of `.themedScreen()` on
     /// grouped screens.
     func themedListScreen() -> some View { modifier(ThemedListBackground()) }
+
+    /// The size a sheet or popover opens at on the Mac. A Mac sheet takes its content's ideal size,
+    /// and a `List` has none (it measures 0×0), so a `List` sheet opened as a bare title bar with
+    /// nothing under it. An ideal size is only read when nothing proposes one: in the main window,
+    /// a cover window or a split view the screen fills what it's given, as before. A no-op on iOS.
+    /// `.themedListScreen()` applies it; a `List` sheet without that modifier needs it directly.
+    func macSheetSize() -> some View {
+        #if os(macOS)
+        frame(idealWidth: 560, idealHeight: 660)
+        #else
+        self
+        #endif
+    }
 
     /// Section-header type: the theme's title face, uppercased with tracking on Grundform.
     func themedSectionHeader() -> some View { modifier(ThemedSectionHeader()) }

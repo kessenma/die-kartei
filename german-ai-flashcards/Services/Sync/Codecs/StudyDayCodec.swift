@@ -37,6 +37,11 @@ enum StudyDayCodec: SyncCodec {
         "cardsReviewed", "grammarExercises", "conversations", "storySeconds", "storyQuestions",
         "cardSeconds", "grammarSeconds", "conversationSeconds", "storyQuizSeconds",
         "newWordsIntroduced", "newWordsBonus",
+        "gameSeconds", "gameWordsSolved",
+        "wordsDrawn", "drawingSeconds",
+        "wordsWritten", "writingSeconds",
+        "sheetWordsWritten",
+        "hoerenItems", "hoerenSeconds",
     ]
 
     static let spec: SyncKindSpec = {
@@ -65,6 +70,15 @@ enum StudyDayCodec: SyncCodec {
         f.set("storyQuizSeconds", d.storyQuizSeconds)
         f.set("newWordsIntroduced", d.newWordsIntroduced)
         f.set("newWordsBonus", d.newWordsBonus)
+        f.set("gameSeconds", d.gameSeconds)
+        f.set("gameWordsSolved", d.gameWordsSolved)
+        f.set("wordsDrawn", d.wordsDrawn)
+        f.set("drawingSeconds", d.drawingSeconds)
+        f.set("wordsWritten", d.wordsWritten)
+        f.set("writingSeconds", d.writingSeconds)
+        f.set("sheetWordsWritten", d.sheetWordsWritten)
+        f.set("hoerenItems", d.hoerenItems)
+        f.set("hoerenSeconds", d.hoerenSeconds)
         f.set("lastActivityAt", d.lastActivityAt)
         return f.payload
     }
@@ -98,6 +112,15 @@ enum StudyDayCodec: SyncCodec {
         d.storyQuizSeconds = flat.int("storyQuizSeconds") ?? 0
         d.newWordsIntroduced = flat.int("newWordsIntroduced") ?? 0
         d.newWordsBonus = flat.int("newWordsBonus") ?? 0
+        d.gameSeconds = flat.int("gameSeconds") ?? 0
+        d.gameWordsSolved = flat.int("gameWordsSolved") ?? 0
+        d.wordsDrawn = flat.int("wordsDrawn") ?? 0
+        d.drawingSeconds = flat.int("drawingSeconds") ?? 0
+        d.wordsWritten = flat.int("wordsWritten") ?? 0
+        d.writingSeconds = flat.int("writingSeconds") ?? 0
+        d.sheetWordsWritten = flat.int("sheetWordsWritten") ?? 0
+        d.hoerenItems = flat.int("hoerenItems") ?? 0
+        d.hoerenSeconds = flat.int("hoerenSeconds") ?? 0
         if let t = flat.date("lastActivityAt") { d.lastActivityAt = t }
     }
 }

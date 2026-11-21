@@ -48,8 +48,11 @@ extension CardDeckView {
                     showExamplesOnGermanSide: $showExamplesOnGermanSide,
                     autoAdvance: $localAutoAdvance,
                     shuffle: $shuffleCards,
+                    phraseGaps: cards.contains { CardKind.isPhrase($0) } ? $phraseGaps : nil,
+                    writeAfterMiss: CardStudyPrefs.writeAfterMissAvailable ? $writeAfterMiss : nil,
                     hasExamples: hasExamples,
-                    cards: cards
+                    cards: cards,
+                    onShowWords: { showWordTable = true }
                 )
 
                 if modelManager != nil {
@@ -64,6 +67,8 @@ extension CardDeckView {
                 illustrateDeckRow
 
                 if let savedDeck { MacPictureHandoffRow(deck: savedDeck) }   // MAC-PICTURES
+
+                if let savedDeck { DeckSourceDocumentRow(deck: savedDeck) }
 
                 if isAnkiMode {
                     let dueCount = savedCards.filter { card in
@@ -97,6 +102,13 @@ extension CardDeckView {
             .padding(.top, 20)
             .padding(.bottom, 120)
             .padding(.horizontal)
+        }
+        .navigationDestination(isPresented: $showWordTable) {
+            DeckWordTableView(
+                title: topic.isEmpty ? "Flashcards" : topic,
+                cards: localCards.isEmpty ? cards : localCards,
+                savedCards: savedCards
+            )
         }
         .sheet(isPresented: $showValidationInfo) {
             ValidationInfoSheet()
@@ -143,6 +155,13 @@ extension CardDeckView {
                         Button("Stop") { service.stop() }
                             .font(.caption)
                     }
+                    // The run is the app's, not this screen's: say so, since staying put is what
+                    // a progress bar on the screen you started it from suggests.
+                    Label("Keeps drawing in the background. Start studying, close this deck or switch apps; the pictures land on their cards as they finish, and a note says when they're done.",
+                          systemImage: "info.circle")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
                 } else {
                     if missingCount > 0 {
                         Button {
@@ -154,7 +173,7 @@ extension CardDeckView {
                         .buttonStyle(.bordered)
                         .disabled(service.isRunning)
 
-                        Text("Draws a picture for each of the \(missingCount) cards without one, \(PictureEngine.drawnWherePhrase)\(PictureEngine.costPhrase(pictures: missingCount)). You can start studying right away.")
+                        Text("Draws a picture for each of the \(missingCount) cards without one, \(PictureEngine.drawnWherePhrase)\(PictureEngine.costPhrase(pictures: missingCount)). It draws in the background, so you can start studying or leave this screen.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -237,6 +256,7 @@ extension CardDeckView {
     func beginSession() {
         sessionStartTime = .now
         elapsedSeconds = 0
+        isReviewingMissed = false
         cardOrder = shuffleCards ? Array(cards.indices).shuffled() : Array(cards.indices)
         cardPosition = 0
         currentIndex = cardOrder.first ?? 0
@@ -265,6 +285,7 @@ extension CardDeckView {
             ankiDuePosition = 0
         }
         resetSessionTally()
+        prepareGapQuestions()
         hasStarted = true
     }
 

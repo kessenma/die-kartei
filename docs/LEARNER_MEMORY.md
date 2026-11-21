@@ -342,6 +342,31 @@ and the only one that is **explicitly opt-in** rather than a settings-gated auto
 
 ---
 
+## Phase 12 — The journal hands over the learner's own words (opt-in)  ✅
+
+`Services/Schreiben/JournalCoachExport.swift`, reached from an entry's "Mit dem Coach teilen"
+(docs/SCHREIBEN.md). The fifth non-conversation writer (2026-11-08), opt-in like the placement
+hand-off, and the first to add a bucket to the profile.
+
+- ✅ **Self-report notes** (`SelfReportNote`, `LearnerProfile.selfReportsData`, cap 10, LRU to the
+  archive as `MemoryKind.selfReport`, pinnable): what the learner *says* they find hard, in their
+  own words (≤ 80 characters, optional `GrammarFocus`). Read out of the entry by the tutor with a
+  prompt that may list only stated struggles (never inferred from mistakes; a copied sentence is
+  dropped), then edited or unticked by the learner before `noteSelfReports` merges them by their
+  words. Shown in Coach's Notes under "Selbstbericht · In your own words".
+- ✅ **Briefing:** at most one line, two notes, ≤ 40 characters each; the `sessionCount > 0` guard
+  is relaxed to notes-or-sessions, so a journal-only learner's words steer the first chat.
+  `correctionHint` adds only the focus labels the notes name.
+- ✅ One-word fixes from the check → `noteWrittenCorrections` (cloze-ready slips); words looked up →
+  `noteVocabEncounters(source: "journal")`. **Never `profile.grammar`, no `sessionCount` bump**, and
+  `JournalEntry.sharedWithCoachAt` as the high-water mark.
+- ✅ `LearnerProfileCodec` `selfReports`: `.set(idField: "id", item: .lwwBy("notedAt"))`, id written
+  in like a slip's; an older build's payload without the field keeps the notes (tested).
+- ⬜ Verify on device: the briefing line in a real chat's system prompt, and that a note the tutor
+  extracted reads as a paraphrase, not a quote.
+
+---
+
 ## Feature complete (Phases 1–3)
 
 The loop is closed: conversation mistakes → structured, self-cleaning memory → (a) personalized

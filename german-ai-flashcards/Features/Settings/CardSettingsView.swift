@@ -16,6 +16,7 @@ struct CardSettingsView: View {
     @AppStorage(CardStudyPrefs.germanFirstKey) private var germanFirst = true
     @AppStorage(CardStudyPrefs.articleQuizKey) private var articleQuiz = true
     @AppStorage(CardStudyPrefs.repeatMissedKey) private var repeatMissed = true
+    @AppStorage(CardStudyPrefs.writeAfterMissKey) private var writeAfterMiss = true
     @AppStorage(WortschatzPrefs.styleKey) private var wortschatzStyleRaw = FlashcardStyle.anki.rawValue
     @AppStorage(WortschatzPrefs.newPerDayKey) private var newPerDay = WortschatzPrefs.newPerDayDefault
     @AppStorage(WortschatzPrefs.sessionCapKey) private var sessionCap = WortschatzPrefs.sessionCapDefault
@@ -61,6 +62,14 @@ struct CardSettingsView: View {
                 Text("A card you mark Didn't know comes back a few cards later in the same session.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                // The Pencil is an iPad's: the iPhone and the Mac never see this switch.
+                if CardStudyPrefs.writeAfterMissAvailable {
+                    Toggle("Write it after a miss", isOn: $writeAfterMiss)
+                    Text("Get a card wrong and it asks you to write the word with your Apple Pencil: once looking, once from memory. Nothing is graded.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
 
                 // Mirrors the toggle in the deck-creation options; hidden until pictures can be
                 // drawn: the image model downloaded, or OpenRouter connected (Settings ▸ Model).

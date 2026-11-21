@@ -140,15 +140,15 @@ struct PhraseToDeckSheet: View {
         guard !chosen.isEmpty else { return }
 
         if let deckID = selectedDeckID, let deck = existingDecks.first(where: { $0.id == deckID }) {
-            let existing = Set(deck.cards.map { $0.germanWord.lowercased() })
+            let existing = Set(deck.cards.map { CardKind.matchKey($0.germanWord) })
             var order = (deck.cards.map(\.sortOrder).max() ?? -1) + 1
             var added = 0
             for phrase in chosen {
-                guard !existing.contains(phrase.german.lowercased()) else { continue }
+                guard !existing.contains(CardKind.matchKey(phrase.german)) else { continue }
                 let card = SavedCard(
                     germanWord: phrase.german,
                     englishTranslation: phrase.english,
-                    wordType: nil,
+                    wordType: CardKind.isPhrase(phrase.german) ? CardKind.phrase : nil,
                     article: nil,
                     sortOrder: order
                 )
@@ -169,7 +169,7 @@ struct PhraseToDeckSheet: View {
                 VocabCard(
                     germanWord: phrase.german,
                     englishTranslation: phrase.english,
-                    wordType: nil,
+                    wordType: CardKind.isPhrase(phrase.german) ? CardKind.phrase : nil,
                     article: nil,
                     exampleSentence: nil,
                     conjugations: nil

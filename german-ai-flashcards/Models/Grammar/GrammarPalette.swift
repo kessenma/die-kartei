@@ -11,6 +11,11 @@
 //
 //  Anything that shows a gender or a case takes its color and symbol from here.
 //
+//  A third kind of imagery lives next door: the task-preview drawings each exercise is announced by
+//  on a launcher row (`GrammarTaskArt`, drawn by Features/Grammar/Shared/GrammarTaskArtView.swift).
+//  They carry no coding of their own — a row passes its own tint, so neither palette above gains a
+//  meaning there.
+//
 
 import SwiftUI
 

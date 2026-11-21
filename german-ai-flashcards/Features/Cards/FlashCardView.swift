@@ -17,6 +17,37 @@ enum FlashcardImageStyle: String, CaseIterable, Identifiable {
     var systemImage: String { self == .immersive ? "photo.fill" : "rectangle.bottomthird.inset.filled" }
 }
 
+/// Which side of a card its picture takes over. Persisted (shared with the deck's toolbar picker)
+/// via `FlashcardPictureSide.defaultsKey`.
+///
+/// Both sides is the default: the picture is what the card looks like, and seeing it again with the
+/// answer closes the loop. German only is the stricter setting — with English first, a picture on
+/// the question side is a hint toward the German the learner is being asked for.
+enum FlashcardPictureSide: String, CaseIterable, Identifiable {
+    case german
+    case english
+    case both
+
+    var id: String { rawValue }
+    static let defaultsKey = "flashcardPictureSide"
+
+    var label: String {
+        switch self {
+        case .german: "Pictures on German side"
+        case .english: "Pictures on English side"
+        case .both: "Pictures on both sides"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .german: "d.circle"
+        case .english: "e.circle"
+        case .both: "square.on.square"
+        }
+    }
+}
+
 struct FlashCardView: View {
     @Binding var isFlipped: Bool
     var germanWord: String = "Haus"
@@ -47,10 +78,18 @@ struct FlashCardView: View {
     /// A noun's plural or a verb's forms, shown under the German word once it is revealed.
     var forms: String? = nil
 
+    /// Handed the decoded picture when the learner taps expand, for a screen that wants to present
+    /// the full-screen viewer itself — a deck keeps its grading and its prev/next over the picture
+    /// that way, which a cover owned by the card cannot: the card is rebuilt per index, and that
+    /// tears its own cover down on the first tap of next. `nil` keeps the card's plain viewer.
+    var onExpandPicture: ((UIImage) -> Void)? = nil
+
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     /// Named `appTheme` because `theme` is already this view's `ModelTheme` (the two coexist by design).
     @Environment(\.appTheme) private var appTheme
     @AppStorage(FlashcardImageStyle.defaultsKey) private var imageStyle: FlashcardImageStyle = .immersive
+    @AppStorage(FlashcardPictureSide.defaultsKey) private var pictureSide: FlashcardPictureSide = .both
 
     /// Loaded from disk by the card itself, so a picture that finishes generating mid-session
     /// appears as soon as SwiftData hands down the new file name.
@@ -166,13 +205,60 @@ struct FlashCardView: View {
         (showGermanFirst && !isFlipped) || (!showGermanFirst && isFlipped)
     }
 
-    /// The picture is a memory hook for the German word, so it only takes over the card on the
-    /// German side; showing it on the answer side would hand over the answer.
-    private var showsImageFace: Bool { isShowingGerman && cardImage != nil }
+    /// The picture is a memory hook for the German word, and `pictureSide` decides which faces it
+    /// takes over: both (the default), the German side only, or the English side only.
+    ///
+    /// A verb's answer side is the one face it never takes, whatever the setting: the Perfekt panel
+    /// there (auxiliary, participle, trennbar) is grammar that can't be floated over a picture.
+    private var showsImageFace: Bool {
+        guard cardImage != nil else { return false }
+        if isFlipped && auxiliaryVerb != nil { return false }
+        switch pictureSide {
+        case .both: return true
+        case .german: return isShowingGerman
+        case .english: return !isShowingGerman
+        }
+    }
 
-    /// Keyed off whether the card *has* a picture (not whether it's currently visible) so the card
-    /// doesn't resize halfway through the flip.
-    private var cardHeight: CGFloat { cardImage != nil ? 360 : 280 }
+    /// The English side is the answer on a German-first card, so repeating the German over the
+    /// picture there is a check — and with the der/die/das quiz on, it is *the* answer. With
+    /// English first that side is the question, and nothing German may appear on it.
+    private var showsGermanUnderEnglish: Bool { showGermanFirst && !isShowingGerman }
+
+    /// Whether this card has a picture at all — not whether one is showing. Every size below is
+    /// keyed off this, so the card doesn't resize halfway through the flip.
+    private var hasPicture: Bool { cardImage != nil }
+
+    /// An iPad (or a wide Mac window) is not a bigger phone here: a generated picture is square
+    /// (512², `ImageGenModel.outputResolution`) and the picture face *is* the card, so a card
+    /// stretched to the window at 360 pt tall became a ~1340×360 letterbox that cropped three
+    /// quarters of the picture away. Regular width caps the card's width and spends the room on
+    /// height instead, keeping the card close to the picture's own proportions.
+    private var isWideLayout: Bool {
+        #if os(macOS)
+        // The Mac has no size classes (`horizontalSizeClass` is always nil there), and its window
+        // is never phone-narrow, so it takes the wide layout unconditionally.
+        return true
+        #else
+        return horizontalSizeClass == .regular
+        #endif
+    }
+
+    /// Nil on the phone, where the card has always filled the width it is given.
+    private var cardMaxWidth: CGFloat? {
+        guard isWideLayout else { return nil }
+        return hasPicture ? 560 : 520
+    }
+
+    /// Deliberately a fixed height rather than a flexible range: the deck screens stack the card
+    /// with fixed chrome (badges, rating buttons, prev/next) in a plain `VStack`, and a card that
+    /// grew to fill the screen would squeeze that chrome off the bottom on a short window
+    /// (iPad mini in landscape has about 520 pt to give). 500 fits there and leaves the picture
+    /// nearly uncropped.
+    private var cardHeight: CGFloat {
+        if isWideLayout { return hasPicture ? 500 : 300 }
+        return hasPicture ? 360 : 280
+    }
 
     @ViewBuilder
     private var verbBackContent: some View {
@@ -310,6 +396,7 @@ struct FlashCardView: View {
                 }
             }
         }
+        .frame(maxWidth: cardMaxWidth)
         .frame(height: cardHeight)
         .task(id: "\(imageFileName ?? "")#\(imageLandings)") {
             guard let imageFileName, let imageDeckID else {
@@ -378,34 +465,55 @@ struct FlashCardView: View {
                 // here too — only the noun takes the white the photo needs.
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                     VStack(alignment: .leading, spacing: 4) {
-                        if articleHidden {
-                            articlePrompt
-                                .environment(\.colorScheme, .dark)
-                        }
-                        germanText
-                            .font(.system(size: 32, weight: .bold, design: .serif))
-                            .foregroundStyle(.white)
-                            .shadow(color: .black.opacity(0.55), radius: 4, x: 0, y: 1)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.6)
-                        if showsForms, let forms {
-                            Text(forms)
-                                .font(.caption)
-                                .foregroundStyle(.white.opacity(0.85))
-                                .shadow(color: .black.opacity(0.5), radius: 3)
-                                .lineLimit(1)
+                        if isShowingGerman {
+                            if articleHidden {
+                                articlePrompt
+                                    .environment(\.colorScheme, .dark)
+                            }
+                            germanText
+                                .font(.system(size: 32, weight: .bold, design: .serif))
+                                .foregroundStyle(.white)
+                                .shadow(color: .black.opacity(0.55), radius: 4, x: 0, y: 1)
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.6)
+                            if showsForms, let forms {
+                                Text(forms)
+                                    .font(.caption)
+                                    .foregroundStyle(.white.opacity(0.85))
+                                    .shadow(color: .black.opacity(0.5), radius: 3)
+                                    .lineLimit(1)
+                            }
+                        } else {
+                            // The English side, when the picture carries it too: the answer leads,
+                            // with the German under it where that side is the answer side.
+                            Text(englishWord)
+                                .font(.system(size: 32, weight: .bold, design: .serif))
+                                .foregroundStyle(.white)
+                                .shadow(color: .black.opacity(0.55), radius: 4, x: 0, y: 1)
+                                .lineLimit(2)
+                                .minimumScaleFactor(0.6)
+                            if showsGermanUnderEnglish {
+                                Text.gendered(germanWord, article: article)
+                                    .font(.system(size: 19, weight: .semibold, design: .serif))
+                                    .foregroundStyle(.white.opacity(0.9))
+                                    .shadow(color: .black.opacity(0.5), radius: 3)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                            }
                         }
                     }
 
-                    Button {
-                        SpeechService.shared.speak(spokenGerman)
-                    } label: {
-                        Image(systemName: "speaker.wave.2.fill")
-                            .font(.title3)
-                            .foregroundStyle(.white)
-                            .shadow(color: .black.opacity(0.5), radius: 3)
+                    if isShowingGerman || showsGermanUnderEnglish {
+                        Button {
+                            SpeechService.shared.speak(spokenGerman)
+                        } label: {
+                            Image(systemName: "speaker.wave.2.fill")
+                                .font(.title3)
+                                .foregroundStyle(.white)
+                                .shadow(color: .black.opacity(0.5), radius: 3)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
 
                     Spacer(minLength: 0)
 
@@ -423,7 +531,11 @@ struct FlashCardView: View {
                 VStack {
                     HStack {
                         Button {
-                            showingFullScreenImage = true
+                            if let onExpandPicture {
+                                onExpandPicture(cardImage)
+                            } else {
+                                showingFullScreenImage = true
+                            }
                         } label: {
                             Image(systemName: "arrow.up.left.and.arrow.down.right")
                                 .font(.footnote.weight(.semibold))

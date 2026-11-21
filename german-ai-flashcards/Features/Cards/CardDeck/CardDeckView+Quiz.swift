@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 extension CardDeckView {
 
@@ -6,6 +7,7 @@ extension CardDeckView {
     var quizButtons: some View {
         HStack(spacing: 40) {
             Button {
+                if cardResults[currentIndex] != false { askToWrite(currentIndex) }
                 cardResults[currentIndex] = false
                 if localAutoAdvance { advanceOrFinish() }
             } label: {
@@ -39,7 +41,7 @@ extension CardDeckView {
         } else {
             let correct = cardResults.values.filter { $0 }.count
             let missed = cardResults.filter { !$0.value }.map { $0.key }.sorted()
-            return (correct, cards.count, missed)
+            return (correct, playOrder.count, missed)
         }
     }
 
@@ -59,7 +61,7 @@ extension CardDeckView {
                     .font(.system(size: 48))
                     .foregroundStyle(percentage >= 80 ? .yellow : percentage >= 50 ? .blue : .orange)
 
-                Text(isAnkiMode ? "Session Complete!" : "Quiz Complete!")
+                Text(isReviewingMissed ? "Review Complete!" : isAnkiMode ? "Session Complete!" : "Quiz Complete!")
                     .font(.title)
                     .fontWeight(.bold)
 
@@ -93,22 +95,34 @@ extension CardDeckView {
                     .foregroundStyle(.secondary)
 
                 if !missed.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(spacing: 8) {
                         Text(isAnkiMode ? "Didn't Know" : "Missed Words")
                             .font(.headline)
                             .padding(.bottom, 4)
 
-                        ForEach(missed, id: \.self) { index in
-                            if index < cards.count {
-                                HStack {
-                                    Text(cards[index].germanWord)
-                                        .fontWeight(.medium)
-                                    Spacer()
-                                    Text(cards[index].englishTranslation)
-                                        .foregroundStyle(.secondary)
+                        // Two columns meeting at a center line: German set against it from the
+                        // left, English from the right, so each pair reads across the line.
+                        VStack(spacing: 8) {
+                            ForEach(missed, id: \.self) { index in
+                                if index < cards.count {
+                                    HStack(spacing: 28) {
+                                        Text(cards[index].germanWord)
+                                            .fontWeight(.medium)
+                                            .multilineTextAlignment(.trailing)
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                        Text(cards[index].englishTranslation)
+                                            .foregroundStyle(.secondary)
+                                            .multilineTextAlignment(.leading)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .padding(.vertical, 4)
                                 }
-                                .padding(.vertical, 4)
                             }
+                        }
+                        .background {
+                            Rectangle()
+                                .fill(Color.secondary.opacity(0.3))
+                                .frame(width: 1)
                         }
                     }
                     .padding()
@@ -118,7 +132,7 @@ extension CardDeckView {
 
                 VStack(spacing: 12) {
                     Button {
-                        // Skeleton: review missed cards
+                        reviewMissed()
                     } label: {
                         Label("Review Missed Cards", systemImage: "arrow.counterclockwise")
                             .frame(maxWidth: 260)
@@ -136,6 +150,7 @@ extension CardDeckView {
 
                     Button {
                         hasStarted = false
+                        isReviewingMissed = false
                         showQuizSummary = false
                         cardResults = [:]
                         currentIndex = 0
@@ -154,9 +169,11 @@ extension CardDeckView {
     }
 
     /// The order the plain (non-SRS) deck is played in, falling back to deck order whenever the
-    /// stored order is stale (deck swapped out from under us).
+    /// stored order is stale (deck swapped out from under us). A review of the missed cards plays
+    /// only those, so its order is shorter than the deck on purpose.
     var playOrder: [Int] {
-        cardOrder.count == cards.count ? cardOrder : Array(cards.indices)
+        if isReviewingMissed { return cardOrder.filter(cards.indices.contains) }
+        return cardOrder.count == cards.count ? cardOrder : Array(cards.indices)
     }
 
     func advanceOrFinish() {
@@ -172,18 +189,81 @@ extension CardDeckView {
 
     func finishQuiz() {
         let correct = cardResults.values.filter { $0 }.count
-        let total = cards.count
+        let total = playOrder.count
         let missed = cardResults.filter { !$0.value }.map { $0.key }.sorted()
-        onQuizComplete?(correct, total, missed, elapsedSeconds, localStyle, nil)
-        creditDeckMix(mode: localStyle)
+        stampDefaultModeAnswers()
+        if isReviewingMissed {
+            recordMissedReview(cards: total)
+        } else {
+            onQuizComplete?(correct, total, missed, elapsedSeconds, localStyle, nil)
+            creditDeckMix(mode: localStyle)
+        }
         clearPauseProgress()
         showQuizSummary = true
+    }
+
+    /// Default mode has no scheduler, but its ✓ and ✗ are still answers: stamp each on its saved
+    /// card (`SavedCard.noteReview`, "in any mode"), so the Wortliste and the Schreibblatt and
+    /// Zeichnen pickers can say "missed last time" for a learner who never uses Anki or Leitner.
+    /// Only the last-answer stamps move; SM-2 and Leitner fields (reviews, lapses, boxes) stay
+    /// theirs. Anki and Leitner stamp through their own services, so they are skipped here.
+    func stampDefaultModeAnswers() {
+        guard localStyle == .default, !cardResults.isEmpty else { return }
+        var stamped = false
+        for (index, correct) in cardResults where savedCards.indices.contains(index) {
+            savedCards[index].noteReview(correct: correct)
+            stamped = true
+        }
+        if stamped { try? modelContext.save() }
+    }
+
+    /// "Review Missed Cards": a short round over just the cards the summary lists as missed, in
+    /// the same mode, shuffled. SRS ratings still apply, as they do when a missed card is
+    /// re-queued mid-session; the round's score is not saved (see `isReviewingMissed`). Its own
+    /// summary lists what is still missed, so the learner can go again until nothing is.
+    func reviewMissed() {
+        let missed = quizSummaryTally.missed.filter(cards.indices.contains)
+        guard !missed.isEmpty else { return }
+        if isSRSMode, !isReviewingMissed {
+            var seen: Set<Int> = []
+            fullSessionDueIndices = ankiDueIndices.filter { seen.insert($0).inserted }
+        }
+        isReviewingMissed = true
+        cardResults = [:]
+        ankiRatings = [:]
+        leitnerResults = [:]
+        isFlipped = false
+        sessionStartTime = .now
+        elapsedSeconds = 0
+
+        let order = missed.shuffled()
+        if isSRSMode {
+            ankiDueIndices = order
+            ankiDuePosition = 0
+            resetSessionTally()
+        } else {
+            cardOrder = order
+            cardPosition = 0
+        }
+        currentIndex = order[0]
+        showQuizSummary = false
+    }
+
+    /// A review round counts toward today's streak and study time, the part of a finished session
+    /// it shares; the scored result stays the session's own.
+    func recordMissedReview(cards count: Int) {
+        StudyLogService.record(.cards(count), seconds: elapsedSeconds, in: modelContext)
     }
 
     /// "Try Again": replay the whole session from the top in a fresh random order. Every mode's
     /// results *and* its position have to be cleared — leaving `ankiDuePosition` parked at the end
     /// used to drop you on the last card and finish the session on the first answer.
     func resetQuiz() {
+        // From a review's summary, Try Again means the whole session again, not the review.
+        if isReviewingMissed {
+            isReviewingMissed = false
+            if isSRSMode { ankiDueIndices = fullSessionDueIndices }
+        }
         cardResults = [:]
         ankiRatings = [:]
         leitnerResults = [:]

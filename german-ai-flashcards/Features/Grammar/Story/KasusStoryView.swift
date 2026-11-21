@@ -727,9 +727,9 @@ struct KasusStoryView: View {
 // MARK: - DEBUG launch argument
 
 #if DEBUG
-/// `-kasus.debugOpen hub|unit:<unit>|quick:<unit>|read|mark|mark-checked|mark-revealed|fill|
-/// fill-checked|result`: the Grammatik screens sit several taps deep and this simulator can't
-/// tap. The player screens open the bundled Dativ story (or `-kasus.debugStory <id>`),
+/// `-kasus.debugOpen hub|unit:<unit>|verben|artikel|quick:<unit>|read|mark|mark-checked|
+/// mark-revealed|fill|fill-checked|result`: the Grammatik screens sit several taps deep and this
+/// simulator can't tap. The player screens open the bundled Dativ story (or `-kasus.debugStory <id>`),
 /// prefilled from `-kasus.debugAnswers right|mixed`, `-kasus.debugHint lern|viel|genus|ohne` and
 /// `-kasus.debugFeedback sofort|amEnde` (mark-checked, mark-revealed, fill-checked and result
 /// fall back to mixed answers, since they need some; fill-checked always runs Am Ende).
@@ -744,6 +744,8 @@ enum KasusDebugOpen: Identifiable, Hashable {
     case lesson(GrammarTopic)
     /// A topic that isn't a case, in a sheet: `topic:reflexiv`.
     case topic(GrammarTopic)
+    /// A hub room by its area's raw value: `verben`, `artikel` (`GrammarBereichView`).
+    case bereich(GrammarArea)
     case mnemonics
     /// Any drill on the shell, `<kind>:<topic>` by the registry's raw values: `quick:dativ`,
     /// `build:dativ`, `roles:dativ` · `wer:akkusativ` · `probe:genitiv`, prefilled from
@@ -761,6 +763,7 @@ enum KasusDebugOpen: Identifiable, Hashable {
         case .story(let screen):  screen.rawValue
         case .lesson(let topic):  "lesson:\(topic.key)"
         case .topic(let topic):   "topic:\(topic.key)"
+        case .bereich(let area):  area.rawValue
         case .mnemonics:          "merkhilfen"
         case .werkstatt:          "werkstatt"
         case .table:              "table"
@@ -785,6 +788,8 @@ enum KasusDebugOpen: Identifiable, Hashable {
         } else if value.lowercased().hasPrefix("topic:") {
             guard let topic = GrammarTopic(key: String(value.dropFirst("topic:".count))), topic.unit == nil else { return nil }
             self = .topic(topic)
+        } else if let area = GrammarArea(rawValue: value.lowercased()), !area.hasOwnHub {
+            self = .bereich(area)
         } else if value.lowercased() == "merkhilfen" {
             self = .mnemonics
         } else if value.lowercased() == "werkstatt" {

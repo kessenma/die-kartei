@@ -234,6 +234,11 @@ final class StoryStudyService {
         story.setQuestions(questions)
         try? modelContext.save()
 
+        // 2b. Key points for Hören ▸ Worum geht's? (non-fatal; the compare step can make them later).
+        guard !stopRequested else { phase = .idle; return }
+        statusText = "Kernpunkte werden erstellt…"
+        _ = await makeKeyPoints(for: story)
+
         // 3. Glossary (non-fatal if it fails).
         guard !stopRequested else { phase = .idle; return }
         phase = .glossary
@@ -752,6 +757,48 @@ final class StoryStudyService {
         }
         return result
     }
+
+    // MARK: - Key points (Hören ▸ Worum geht's?)
+
+    /// Three or four English key points a listener's summary is compared with. Written once; a
+    /// story that has them is left alone. Returns whether the story has points afterwards. Safe to
+    /// call on demand for stories made before key points existed (it loads the model if needed).
+    @discardableResult
+    func makeKeyPoints(for story: StudyStory) async -> Bool {
+        if story.hasKeyPoints { return true }
+        guard await ensureModelReady() else { return false }
+        do {
+            let raw = try await mlxService.generateText(
+                system: GistPrompts.keyPointsSystem,
+                user: GistPrompts.keyPointsUser(title: story.title, text: story.storyText),
+                model: model, maxTokens: 200
+            )
+            let points = GistPrompts.parseKeyPoints(raw)
+            guard !points.isEmpty else { return false }
+            story.keyPoints = points
+            try? modelContext.save()
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    #if DEBUG
+    /// The tutor's yes/no per key point. DEBUG only until the probe (training/GIST_PROBE.md) has
+    /// been read: Release ships the learner's own ticks.
+    func judgeSummary(_ summary: String, points: [String]) async -> [GistVerdict?] {
+        guard GistPrompts.isJudgeable(summary), !points.isEmpty else { return points.map { _ in nil } }
+        if UserDefaults.standard.bool(forKey: "hoeren.debugCannedJudge") {
+            return points.indices.map { [GistVerdict.ja, .teilweise, .nein][$0 % 3] }
+        }
+        guard await ensureModelReady() else { return points.map { _ in nil } }
+        let raw = (try? await mlxService.generateText(
+            system: GistPrompts.judgeSystem, user: GistPrompts.judgeUser(summary: summary, points: points),
+            model: model, maxTokens: 160
+        )) ?? ""
+        return GistPrompts.parseJudge(raw, count: points.count)
+    }
+    #endif
 
     // MARK: - On-demand translation
 

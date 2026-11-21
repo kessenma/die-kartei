@@ -43,13 +43,18 @@ Status legend: ✅ done · ⬜ open
 | Verstehen screens: the lesson sheet, the Merkhilfen list, the activity and its panels, the unit section | `Features/Grammar/Topics/KasusLessonView.swift`, `KasusMnemonicsView.swift`, `KasusConceptView.swift`, `KasusConceptPanels.swift`, `KasusVerstehenSection.swift` |
 | Day detail in the calendar | `Features/Home/StreakCalendarView.swift` |
 | Verlauf (every round by day) and a round's answers | `Features/Grammar/History/KasusHistoryView.swift`, `KasusRoundDetailView.swift` |
+| Fortschritt (days, time per exercise, per case) | `Features/Grammar/Progress/GrammarProgressPane.swift`, `GrammarDayStrip.swift` |
+| The counting behind it | `Services/Grammar/GrammarProgress.swift` |
+| Rounds · answers · first-try + the case bars, shared by Verlauf and Fortschritt | `Features/Grammar/History/GrammarCaseSummary.swift` |
 | Sample rounds for the simulator (DEBUG) | `Services/Grammar/Content/KasusDebugSeeder.swift` |
 | Where a grammar focus goes from Today, Coach's Notes, the pyramid and a class entry | `Services/Grammar/GrammarRoute.swift` |
 | Tutor-written stories: plan model, planner, verb frames and noun pools | `Models/Grammar/Kasus/KasusStoryPlan.swift`, `Services/Grammar/Tutor/KasusStoryPlanner.swift`, `Resources/kasus_triggers.json` |
 | Tutor-written stories: prompt, generator, check, harvest, sentence checks, store | `Services/Grammar/Tutor/KasusStoryPrompt.swift` (prompt, request/result; no MLX, so `training/kasus_cli` compiles it), `KasusStoryGenerator.swift`, `KasusStoryCheck.swift`, `KasusHarvest.swift`, `KasusSentenceCheck.swift`, `KasusStoryStore.swift`, `Models/Grammar/Kasus/GeneratedKasusStory.swift` |
 | Kasus Lab numbers and canned fixtures (DEBUG) | `Services/Grammar/Tutor/KasusLab.swift`, `Services/Grammar/Content/KasusGenerationFixtures.swift` |
 | Unit row, generation sheet, Lab screen | `Features/Grammar/Story/Tutor/KasusAIStorySection.swift`, `KasusGenerationSheet.swift`, `KasusLabView.swift` |
+| „Englisch & Fälle“: the four anchor questions on the English sentence (the room, the pool, the two exercises, the help presets; `docs/GRAMMAR_EXERCISES.md` § Englisch & Fälle) | `Models/Grammar/Kasus/KasusQuestion.swift`, `KasusHelp.swift`, `Services/Grammar/Kasus/EnglishAnchors.swift`, `Features/Grammar/Drill/EnglishAnchorModules.swift`, `EnglishAnchorPanels.swift`, `Features/Grammar/Topics/EnglischSetupView.swift` |
 | The exercise framework: registry (`KasusRoundStep` + meta + `KasusDrillKind`), one shell and its modules, `GrammarTopic`, content packs (`docs/GRAMMAR_EXERCISES.md`) | `Models/Grammar/Kasus/KasusRoundStep.swift`, `Features/Grammar/Drill/`, `Models/Grammar/GrammarTopic.swift` |
+| The task drawing each exercise is announced by, and the two rows every launcher is built from (art marks a task, a chip marks a place) | `Models/Grammar/GrammarTaskArt.swift`, `Features/Grammar/Shared/GrammarTaskArtView.swift`, `Features/Grammar/Shared/GrammarLauncherRow.swift` |
 | Reflexive Verben: the gap-choice format, tables, gate, bank, planner, lesson, topic screen | `Models/Grammar/Kasus/GapChoiceItem.swift`, `ReflexivForms.swift`, `ReflexivLesson.swift`, `Services/Grammar/Check/GapChoiceCheck.swift`, `Services/Grammar/Content/GapChoiceBank.swift`, `GapChoiceFixtures.swift`, `GapChoicePlanner.swift`, `Features/Grammar/Topics/ReflexivTopicView.swift`, `Resources/gap_choice_items.json` |
 | Finde den Fehler (planted mistakes on Rollen sentences), die Pronomen-Brücke (derived from the frames), Verwechslungs-Paare | `Services/Grammar/Kasus/FehlerQuestion.swift`, `Models/Grammar/Kasus/BridgeQuestion.swift`, `Services/Grammar/Kasus/KasusConfusion.swift`, `Features/Grammar/Hub/KasusConfusionCard.swift` |
 | Swift Testing target (engine, validator, explanations, service, recording, the framework, the packs) | `german-ai-flashcardsTests/Grammar/` |
@@ -64,12 +69,37 @@ Status legend: ✅ done · ⬜ open
 | Genitiv | all | gen, dat, akk, nom | B1 |
 | Alle Fälle | all | nom, akk, dat, gen | B1 |
 
-**Entry.** Home ▸ Grammar pushes the hub directly, and so does the pyramid's Grammatik-Kern
-layer. The hub has four sections: **Weiter** (one hero row), **Die vier Fälle** (a row per unit,
-with a dot for Verstehen (the lesson read and every offered drill played), a dot per story,
-filled once its Markieren and Endungen are both played, one for the Schnellrunde, and a flame on
-a case the coach has as shaky), **Verlauf** (one row with the last round's score) and
-**Werkzeuge** (Präpositionen, Der · Die · Das, Die Endungen, Merkhilfen). A unit screen
+**Entry.** The **Grammatik tab** is the hub's root — the fourth tab, between Home and Library.
+Home ▸ All Activities still has its Grammar tile, which raises that tab rather than pushing a
+second copy, so one instance owns the scroll position and the mode. The pyramid's Grammatik-Kern
+layer still pushes its own copy, deliberately: switching tabs there would throw away the
+learner's place in the pyramid. On the Mac the sidebar's „Üben · Practice ▸ Grammar" entry
+resolves the hub through `ActivityCategoryDestination`, which is why that `.grammar` arm stays
+even though the iPhone tile no longer uses it.
+
+The hub has **two modes**, switched by a segmented picker at the top
+(`@AppStorage("grammar.showProgress")`, device-local, the way Home's own mode flag is). The mode
+is shared by every surface that shows this screen.
+
+**Üben · Practice** is the case path as the spine, every other domain a room (`GrammarArea`,
+docs/GRAMMAR_EXERCISES.md § The hub's rooms), five sections in order: **Weiter** (one hero row),
+**Dein Verwechslungs-Paar** (one card, only while a mix-up stands out), **Die vier Fälle** (a row
+per unit, ①–⑤, with a dot for Verstehen (the lesson read and every offered drill played), a dot
+per story, filled once its Markieren and Endungen are both played, one for the Schnellrunde, and
+a flame on a case the coach has as shaky), **Weitere Bereiche** (one row per room: Präpositionen
+pushes its own hub, Artikel & Endungen and Verben push `GrammarBereichView`; a room's flame is
+any of its structures shaky), **Nachschlagen** (the endings table directly, then the explainer
+library, which also indexes the Merkhilfen, the Kasus-Check, the Endungs-Werkstatt and the rule
+sheets).
+
+**Fortschritt · Progress** (`Features/Grammar/Progress/GrammarProgressPane.swift`) is what the
+rounds add up to: **Grammatik-Tage** (13 weeks of grammar days, shaded by time),
+**Zeit pro Übung** (one row per exercise — time, rounds, right first try), **Pro Fall**
+(`GrammarCaseSummary`, shared with Verlauf's all-time strip) and the **Verlauf** row, which used
+to live on the Üben side. The pane owns its own `@Query`s, so Üben never fetches them.
+
+Everything on it is derived from the three round models and nothing from `StudyDay` — see
+[Counting grammar time](#counting-grammar-time). A unit screen
 has **Die Regel** (open until the unit's first round; with a link to the Lektion and the
 Kasus-Check), **Verstehen** ([below](#verstehen--understand)), **Geschichten** (one row per
 story: level, Markieren ✓/○, Endungen ✓/○), the **Schnellrunde**, the endings drill limited to
@@ -106,6 +136,42 @@ every render and never stored. First rule that fits:
 The start unit comes from `germanLevel` (A1 → Nominativ, A2 → Akkusativ, B1+ → Dativ) and is never
 written back.
 
+### Counting grammar time
+
+Fortschritt counts from the three round models (`KasusRound`, `ArticleRound`, `PrepositionRound`),
+never from `StudyDay.grammarSeconds`, because that field is incomplete in two ways that cannot be
+repaired after the fact:
+
+- `VerbPrepositionReviewView` logs its time as `.cards`, so verb-preposition review lands in
+  `cardSeconds`.
+- `StudyTimeBackfillService` only ever backfilled `QuizResult` and `ArticleRound` — never
+  `KasusRound` or `PrepositionRound` — so days before time tracking shipped read zero for exactly
+  the exercises this pane is about. It also writes `max(existing, backfilled)`, so it can never
+  correct an over-count either.
+
+`durationSeconds` is on all three round models, and a read lesson persists a `KasusRound` carrying
+its seconds, so the rounds are complete where the day log is not. **The consequence is accepted and
+stated on the pane itself:** these totals can differ slightly from the grammar time on Home.
+
+Two predicates on `KasusRound` keep that honest, and they are not the same one:
+
+| | what it means | who uses it |
+|---|---|---|
+| `countsAsStudy` | the round really happened — not a `-kasus.debugVerifyRecord keep` row. A read lesson **is** study. | every aggregation over time, days or cases |
+| `isListed` | `countsAsStudy && !isLessonRound` — a round with answers, worth a row | Verlauf, a topic's „Deine Runden“ |
+
+Rows in Zeit pro Übung are keyed on **(step, topic)**, never on the step alone and never on the
+storyID: `unitRaw` holds a `GrammarTopic.key` and the step enum carries no topic, so keying on
+`stepRaw` would fold all five units' Schnellrunden into one row, and `roundID(topicKey:)` returns
+`""` for the two story steps. The two drills that keep their own model have no exercise identity
+at all — only a free-text `topic` — so each is one `GrammarDrillFamily` row; splitting them by
+that string would fork a row whenever a level label is renamed.
+
+The day strip is Home's own `StreakGrid` handed a grammar-only `DayMetrics`, so both heat grids
+read off one `StreakShade` ramp. It is untappable (Home's tap opens `DayDetailSheet`, which lists
+every kind of activity and would be a lie here) and has no range picker (Home's lives behind the
+unnamespaced `streak.calendarRange` default, which a second picker would move).
+
 **Der Kasus-Check** (the "?" in the hub and the player) is the decision order every explanation
 follows: preposition in front → hangs on another noun (Genitiv) → grammatical subject → what a
 main-verb sein/werden/bleiben/heißen equates with the subject → receiver or Dativ verb →
@@ -136,7 +202,7 @@ Every unit screen has a **Verstehen** section between Die Regel and Geschichten,
 
 The Nominativ unit offers Lektion and Rollen only; which rows a unit offers comes from the data
 (`KasusConceptBank.offered`: an exercise needs `minimumItems`, 4 / 6 / 4). **Merkhilfen** (the
-hub's Werkzeuge, `KasusMnemonicsView`; `KasusMnemonics.all`) lists the memory aids one line
+explainer library's Nachschlagen section, `KasusMnemonicsView`; `KasusMnemonics.all`) lists the memory aids one line
 each: the role hooks (Name · Accused · Donation · Genes), the model sentence, the Check, the
 masculine chain, the code words, „nur der wird den“, DOGFU, the Blue Danube, the two-way tune,
 the Genitiv four beats, the noun endings, the „to“ test. Never a chart.
@@ -1115,6 +1181,7 @@ its way there, and prints `[kasus.debugOpen] open <screen>`:
 | `result` | Ergebnis |
 | `lesson:<topic>` | a Lektion in a sheet, by a unit's raw value or a topic's key (`lesson:dativ`, `lesson:reflexiv`); its Üben launches the topic's practice drill (Rollen, or Akkusativ oder Dativ?) |
 | `topic:<key>` | a topic that isn't a case, in a sheet: `topic:reflexiv` (Reflexive Verben: rule, pronoun table, lesson row, drills, rounds) |
+| `verben` · `artikel` | a hub room (`GrammarBereichView`) in a sheet: the Verben shelf (Reflexiv beside the tense/mood Lektion rows) or Artikel & Endungen (Der·Die·Das, the 18 Regeln, Adjektivendungen) |
 | `merkhilfen` | the Merkhilfen list, in a sheet |
 | `werkstatt` | the Endungs-Werkstatt, in a sheet; `-kasus.debugWerkstatt dieser:dat:m` opens on that word, a fourth field `:flip` starts Durchblättern |
 | `table` | the endings table, in a sheet; `-kasus.debugCell dat:m` builds that cell in 3D |

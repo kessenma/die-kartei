@@ -12,7 +12,7 @@
 #if DEBUG
 import Foundation
 
-enum GapChoiceFixtures {
+nonisolated enum GapChoiceFixtures {
 
     /// What a topic's items of one focus must come out as.
     struct Golden: Hashable {

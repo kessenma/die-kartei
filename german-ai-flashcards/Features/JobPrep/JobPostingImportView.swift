@@ -37,6 +37,8 @@ struct JobPostingImportView: View {
     @State private var pending: PendingPosting?
     @State private var duplicate: DuplicatePrompt?
     @State private var errorMessage: String?
+    /// A long PDF's text layer is read off the main actor, so the list says so instead of freezing.
+    @State private var isReadingPDF = false
     @FocusState private var urlFocused: Bool
 
     private var accent: Color { appTheme.accent(model: modelTheme) }
@@ -54,6 +56,15 @@ struct JobPostingImportView: View {
             List {
                 linkSection.themedListRow()
                 otherSourcesSection.themedListRow()
+                if isReadingPDF {
+                    Section {
+                        HStack(spacing: 10) {
+                            ProgressView()
+                            Text("Reading the PDF…").font(.subheadline).foregroundStyle(.secondary)
+                        }
+                    }
+                    .themedListRow()
+                }
                 if let errorMessage {
                     Section {
                         Label(errorMessage, systemImage: "exclamationmark.triangle")
@@ -277,26 +288,38 @@ struct JobPostingImportView: View {
         case .failure(let error):
             errorMessage = "Couldn’t open the file: \(error.localizedDescription)"
         case .success(let url):
-            guard let extracted = PDFTextExtractor.extract(from: url) else {
-                errorMessage = "Couldn’t read that PDF."
-                return
-            }
-            guard !extracted.looksScanned else {
-                errorMessage = "This PDF appears to be scanned (no selectable text). Reading needs a PDF with a real text layer."
-                return
-            }
+            let title = url.deletingPathExtension().lastPathComponent
             let needsAccess = url.startAccessingSecurityScopedResource()
             let data = try? Data(contentsOf: url)
             if needsAccess { url.stopAccessingSecurityScopedResource() }
-            pending = PendingPosting(
-                title: url.deletingPathExtension().lastPathComponent,
-                company: "",
-                location: "",
-                url: "",
-                text: JobPosting.cleanedText(extracted.text),
-                sourceKind: .pdf,
-                snapshotPDF: data
-            )
+            guard let data else {
+                errorMessage = "Couldn’t read that PDF."
+                return
+            }
+            isReadingPDF = true
+            Task {
+                let extracted = await Task.detached(priority: .userInitiated) {
+                    PDFTextExtractor.extract(from: data)
+                }.value
+                isReadingPDF = false
+                guard let extracted else {
+                    errorMessage = "Couldn’t read that PDF."
+                    return
+                }
+                guard !extracted.looksScanned else {
+                    errorMessage = "This PDF appears to be scanned (no selectable text). Reading needs a PDF with a real text layer."
+                    return
+                }
+                pending = PendingPosting(
+                    title: title,
+                    company: "",
+                    location: "",
+                    url: "",
+                    text: JobPosting.cleanedText(extracted.text),
+                    sourceKind: .pdf,
+                    snapshotPDF: data
+                )
+            }
         }
     }
 

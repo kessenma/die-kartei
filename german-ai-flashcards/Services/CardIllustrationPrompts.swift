@@ -118,6 +118,40 @@ extension CardIllustrationPrompts {
     }
 }
 
+// MARK: - Zeichnen gallery pictures
+
+extension CardIllustrationPrompts {
+    /// The instruction for one gallery picture of a word in a `WordArtStyle`. The same subject as
+    /// a card picture; the framing leaves the background to the style (Kontur is black, Theater is
+    /// a stage), so it never says "plain background".
+    static func artPrompt(englishTranslation: String, wordType: String?, style: WordArtStyle) -> String {
+        let subject = subject(englishTranslation: englishTranslation, wordType: wordType, detail: .justTheWord)
+        let purpose = switch style {
+        case .skizze:     "A drawing reference for a German vocabulary word, to copy by hand in under a minute"
+        case .malvorlage: "A picture for a German vocabulary word, to be turned into a paint-by-number template"
+        default:          "A picture for a German vocabulary word, to study and draw from"
+        }
+        return [
+            "\(purpose): \(subject).",
+            "Style: \(style.promptFragment).",
+            "One clear main subject, centered, nothing cluttering the frame.",
+            "Square.",
+            noTextClause,
+        ].joined(separator: " ")
+    }
+
+    /// A gallery picture as a `PictureRequest`, at the reference size.
+    static func artRequest(englishTranslation: String, wordType: String?, style: WordArtStyle) -> PictureRequest {
+        PictureRequest(
+            sdPrompt: [subject(englishTranslation: englishTranslation, wordType: wordType, detail: .justTheWord),
+                       style.promptFragment].joined(separator: ", "),
+            sdNegative: [ImageGenConstants.negativePrompt, baseNegative, style.negativeFragment].joined(separator: ", "),
+            cloudPrompt: artPrompt(englishTranslation: englishTranslation, wordType: wordType, style: style),
+            maxPixel: WordArtStore.artMaxPixel
+        )
+    }
+}
+
 extension CardIllustrationPrompts {
     /// One card's picture, described for whichever source draws it.
     static func request(

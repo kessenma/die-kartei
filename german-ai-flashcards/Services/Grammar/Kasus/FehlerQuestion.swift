@@ -15,7 +15,7 @@
 
 import Foundation
 
-nonisolated struct FehlerQuestion: Identifiable {
+struct FehlerQuestion: Identifiable {
     let playable: KasusConceptPlayable
     /// The phrase whose article was swapped.
     let target: KasusLocatedTarget

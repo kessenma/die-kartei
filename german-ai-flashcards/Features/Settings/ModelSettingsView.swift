@@ -1260,6 +1260,7 @@ struct ClearAllModelsSheet: View {
                     }
                 }
             }
+            .macSheetSize()
             .navigationTitle("Delete every model?")
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -1364,6 +1365,7 @@ struct MemoryCheckSheet: View {
                         .font(.caption2)
                 }
             }
+            .macSheetSize()
             .navigationTitle("Memory Check")
             .navigationBarTitleDisplayMode(.inline)
         }

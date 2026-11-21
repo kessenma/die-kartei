@@ -22,6 +22,11 @@ enum ExperienceService {
     static let xpPerGrammar = 2         // grammar exercise / der-die-das / Kasus item
     static let xpPerStoryQuestion = 5   // comprehension question answered
     static let xpPerConversation = 10   // chat finished
+    static let xpPerGameWord = 1        // a word solved in a Spiele round
+    static let xpPerDrawnWord = 1       // a word drawn in the Zeichnen room
+    static let xpPerTenWrittenWords = 1 // ten words written in the Schreiben room
+    static let xpPerSheetWord = 1       // a word on a Schreibblatt sheet marked Fertig
+    static let xpPerHoerenItem = 1      // a number, sentence or summary in the Hören room
     static let xpPerMinute = 1          // any study minute (reading, listening, reviewing…)
 
     // MARK: Read
@@ -32,6 +37,11 @@ enum ExperienceService {
             + day.grammarExercises * xpPerGrammar
             + day.storyQuestions * xpPerStoryQuestion
             + day.conversations * xpPerConversation
+            + day.gameWordsSolved * xpPerGameWord
+            + day.wordsDrawn * xpPerDrawnWord
+            + (day.wordsWritten / 10) * xpPerTenWrittenWords
+            + day.sheetWordsWritten * xpPerSheetWord
+            + day.hoerenItems * xpPerHoerenItem
             + (day.totalSeconds / 60) * xpPerMinute
     }
 

@@ -10,10 +10,15 @@ struct VoiceSettingsView: View {
 
     @State private var germanVoices: [AVSpeechSynthesisVoice] = []
     @State private var showVoiceGuide = false
+    private var voiceSetup: VoiceSetup { .shared }
 
     var body: some View {
         Form {
             SettingsHeader(icon: "waveform", title: "Voice")
+
+            if !voiceSetup.missing.isEmpty {
+                missingVoicesSection
+            }
 
             Section("Pronunciation") {
                 Picker("German Voice", selection: Binding(
@@ -24,6 +29,7 @@ struct VoiceSettingsView: View {
                     ForEach(germanVoices, id: \.identifier) { voice in
                         Text(GermanVoiceCatalog.name(for: voice)).tag(voice.identifier)
                     }
+                    GermanVoiceCatalog.missingRow(for: modelManager.selectedVoiceIdentifier, among: germanVoices)
                 }
 
                 Button {
@@ -67,10 +73,48 @@ struct VoiceSettingsView: View {
             DialogueVoicePickerSection(modelManager: modelManager)
         }
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { germanVoices = GermanVoiceCatalog.sorted() }
+        .onAppear {
+            voiceSetup.refresh()
+            germanVoices = GermanVoiceCatalog.sorted()
+        }
+        // A voice downloaded while this screen is open: the list gains it and the notice drops it.
+        .onChange(of: voiceSetup.installed) { germanVoices = GermanVoiceCatalog.sorted() }
         .sheet(isPresented: $showVoiceGuide) {
             VoiceGuideSheet()
         }
+    }
+
+    /// The chosen voices this device doesn't have, usually picked on another device and carried
+    /// here by iCloud Sync. Apps can't download system voices, so this says which to get and how.
+    private var missingVoicesSection: some View {
+        Section {
+            Label {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Download your voices")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    Text("You chose these voices, but this \(VoiceSetup.deviceName) doesn't have them yet. A basic voice reads in their place until you download them in \(ThisDevice.settingsApp).")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    ForEach(voiceSetup.missing) { voice in
+                        Text("•  \(voice.name): \(voice.uses.joined(separator: ", "))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } icon: {
+                Image(systemName: "arrow.down.circle")
+                    .foregroundStyle(.orange)
+            }
+
+            Button {
+                showVoiceGuide = true
+            } label: {
+                Label("Show me how", systemImage: "info.circle")
+            }
+        }
+        .themedListRow()
     }
 
     /// German voices the user downloaded (Enhanced/Premium) — anything above compact quality.

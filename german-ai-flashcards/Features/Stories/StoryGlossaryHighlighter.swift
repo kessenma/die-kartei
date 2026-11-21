@@ -59,6 +59,21 @@ enum StoryGlossaryHighlighter {
         return GlossaryHighlight(words: surfaceForms(matching: targets, in: text), phrases: phrases, phraseEntries: phraseEntries)
     }
 
+    /// Hören ▸ Erst raten, dann hören: which of the learner's predicted words the story used, each
+    /// with the forms it appeared in ("Katze" → ["Katzen"]). Same three passes as the glossary, so
+    /// "ging" counts for "gehen" and "Haus" never claims "Hausaufgabe". Guesses with no hit are
+    /// absent. A separable verb split in the sentence ("ruft … an") is not found.
+    static func hits(for guesses: [String], in text: String) -> [String: [String]] {
+        let entries = guesses.map { GlossaryEntry(german: $0, english: "") }
+        let found = highlight(for: entries, in: text)
+        var out: [String: [String]] = [:]
+        for (form, entry) in found.words { out[entry.german, default: []].append(form) }
+        for phrase in found.phrases {
+            if let entry = found.phraseEntries[phrase.lowercased()] { out[entry.german, default: []].append(phrase) }
+        }
+        return out.mapValues { $0.sorted() }
+    }
+
     // MARK: - Headwords
 
     /// Strip a glossary entry down to the word to look for: no article, no "(sich)", no plural hint

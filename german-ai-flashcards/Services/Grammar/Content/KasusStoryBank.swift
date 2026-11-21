@@ -115,6 +115,9 @@ struct KasusStoryBank {
 /// never contradicts Wiktionary's singular (die Möbel · das Möbel).
 struct AppKasusLexicon: KasusLexicon {
 
+    /// Nonisolated so it can stand as a default argument (`lexicon: some KasusLexicon = AppKasusLexicon()`).
+    nonisolated init() {}
+
     func gender(forLemma lemma: String) -> KasusLexiconVerdict {
         if KasusForms.isPluraleTantum(lemma) { return .verified(.plural) }
         if let dual = KasusForms.dualGenders(of: lemma) {

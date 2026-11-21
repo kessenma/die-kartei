@@ -93,6 +93,15 @@ enum SyncCanonicalizer {
                 keeper.storyQuizSeconds += twin.storyQuizSeconds
                 keeper.newWordsIntroduced += twin.newWordsIntroduced
                 keeper.newWordsBonus += twin.newWordsBonus
+                keeper.gameSeconds += twin.gameSeconds
+                keeper.gameWordsSolved += twin.gameWordsSolved
+                keeper.wordsDrawn += twin.wordsDrawn
+                keeper.drawingSeconds += twin.drawingSeconds
+                keeper.wordsWritten += twin.wordsWritten
+                keeper.writingSeconds += twin.writingSeconds
+                keeper.sheetWordsWritten += twin.sheetWordsWritten
+                keeper.hoerenItems += twin.hoerenItems
+                keeper.hoerenSeconds += twin.hoerenSeconds
                 keeper.lastActivityAt = max(keeper.lastActivityAt, twin.lastActivityAt)
                 context.delete(twin)
                 changes += 1

@@ -92,7 +92,11 @@ struct StoryReadAloudView: View {
                     mlxService: mlxService,
                     anchorScenario: nil,
                     phrase: nil,
-                    initialGerman: draft.german
+                    initialGerman: draft.german,
+                    deckTarget: PhraseDeckTarget(label: "this story's deck") { german, english in
+                        StoryDeckStore.saveWord(german: german, english: english, story: story, context: modelContext)
+                        savedWords = StoryDeckStore.savedWords(for: story, context: modelContext)
+                    }
                 )
             }
         }

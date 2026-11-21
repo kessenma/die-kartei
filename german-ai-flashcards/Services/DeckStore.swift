@@ -19,6 +19,9 @@ struct DeckStore {
     /// `style` is the app default (`modelManager.flashcardStyle`); the user can still
     /// re-pick on the deck's setup screen.
     func session(for deck: SavedDeck, style: FlashcardStyle) -> StudySession {
+        // Phrases saved before the phrase rule get their article back first, so the check below
+        // skips them instead of correcting a gender they never had.
+        if PhraseRepair.apply(to: deck) > 0 { try? modelContext.save() }
         let sortedCards = deck.cards.sorted { $0.sortOrder < $1.sortOrder }
         let outcome = WiktionaryValidator.shared.validateAndCorrect(deck.vocabCards)
 
@@ -79,6 +82,61 @@ struct DeckStore {
     static func mixTitle(_ topics: [String]) -> String {
         let names = topics.formatted(.list(type: .and))
         return names.count <= 36 ? names : "\(topics.count) decks mixed"
+    }
+
+    // MARK: Practice a set of cards
+
+    /// Which of these ids still have a card, for what `practiceSession` can offer.
+    func existingCardIDs(_ cardIDs: [UUID]) -> Set<UUID> {
+        let wanted = Set(cardIDs)
+        guard !wanted.isEmpty else { return [] }
+        var descriptor = FetchDescriptor<SavedCard>(predicate: #Predicate { wanted.contains($0.id) })
+        descriptor.propertiesToFetch = [\.id]
+        return Set(((try? modelContext.fetch(descriptor)) ?? []).map(\.id))
+    }
+
+    /// The cards with these ids, in the order given, as one session: a Schreibblatt's words, just
+    /// written out, practised as flashcards. Ids with no card any more (deleted since) are
+    /// skipped; nil when none is left.
+    ///
+    /// Studied like a deck mix (no pause; each deck that holds content is credited its share), in
+    /// the plain flip-and-mark style whatever the app default is: an SRS style deals only the cards
+    /// that are due, and the point here is these words, now. The setup screen can still switch.
+    /// Each card gets the dictionary check `session(for:)` gives a deck, on these cards only.
+    func practiceSession(cardIDs: [UUID], topic: String, label: String) -> StudySession? {
+        let wanted = Set(cardIDs)
+        guard !wanted.isEmpty else { return nil }
+        let fetched = (try? modelContext.fetch(
+            FetchDescriptor<SavedCard>(predicate: #Predicate { wanted.contains($0.id) })
+        )) ?? []
+        let byID = Dictionary(fetched.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var seen = Set<UUID>()
+        let chosen = cardIDs.compactMap { id in seen.insert(id).inserted ? byID[id] : nil }
+        guard !chosen.isEmpty else { return nil }
+
+        let decks = Dictionary(chosen.compactMap(\.deck).map { ($0.id, $0) },
+                               uniquingKeysWith: { first, _ in first })
+        var repaired = 0
+        for deck in decks.values { repaired += PhraseRepair.apply(to: deck) }
+
+        let outcome = WiktionaryValidator.shared.validateAndCorrect(chosen.map(\.vocabCard))
+        for correction in outcome.corrections where chosen.indices.contains(correction.index) {
+            chosen[correction.index].article = correction.to
+        }
+        if repaired > 0 || !outcome.corrections.isEmpty { try? modelContext.save() }
+
+        let generators = Set(decks.values.map(\.generatorRaw))
+        return StudySession(
+            cards: outcome.cards,
+            topic: topic,
+            deckID: nil,
+            validationResults: outcome.results,
+            savedCards: chosen,
+            flashcardStyle: .default,
+            generatorRaw: generators.count == 1 ? generators.first ?? "" : "",
+            subDeckLabel: label,
+            isDeckMix: true
+        )
     }
 
     /// A deck mix's result, split by deck: each deck that had cards in the session gets a
@@ -202,6 +260,7 @@ struct DeckStore {
         guard let data = deck.pausedProgressData,
               let progress = try? JSONDecoder().decode(DeckSessionProgress.self, from: data)
         else { return nil }
+        if PhraseRepair.apply(to: deck) > 0 { try? modelContext.save() }
         let style = FlashcardStyle(rawValue: progress.studyModeRaw) ?? .default
 
         let cards: [VocabCard]

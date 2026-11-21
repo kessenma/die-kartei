@@ -164,6 +164,71 @@ final class CloudKitSyncTransport: SyncTransport {
         return inline + size(record["payloadAsset"] as? CKAsset) + size(record["file"] as? CKAsset)
     }
 
+    /// "serverRecordChanged: <what CloudKit said>". The code is kept because the message alone
+    /// doesn't say which error it was, and the sync report turns the code into plain English.
+    /// Interpolating `error.code` gives "CKErrorCode(rawValue: 12)", which no explanation matched,
+    /// so the code goes by name. The record's id is cut out of the message: the report groups by
+    /// this string, and with the id in it every record was a group of one.
+    static func describe(_ error: CKError) -> String {
+        if isMissingSchema(error) { return "schemaNotDeployed: \(serverMessage(error))" }
+        return "\(codeName(error.code)): \(serverMessage(error))"
+    }
+
+    /// "Cannot create new type KarteiItem in production schema" (or a field of it): the container's
+    /// schema was never deployed from Development. Not any record's fault, and it never clears
+    /// by itself, so it neither counts towards stuck nor retries in a loop.
+    static func isMissingSchema(_ error: CKError) -> Bool {
+        error.localizedDescription.localizedCaseInsensitiveContains("production schema")
+    }
+
+    /// "Error saving record <CKRecordID: …; recordName=…> to server: <message>" → "<message>".
+    static func serverMessage(_ error: CKError) -> String {
+        let text = error.localizedDescription
+        for marker in [" to server: ", " from server: "] {
+            if let range = text.range(of: marker) { return String(text[range.upperBound...]) }
+        }
+        return text
+    }
+
+    /// The names `SyncDiagnostics.explain` matches on.
+    static func codeName(_ code: CKError.Code) -> String {
+        switch code {
+        case .internalError: "internalError"
+        case .partialFailure: "partialFailure"
+        case .networkUnavailable: "networkUnavailable"
+        case .networkFailure: "networkFailure"
+        case .badContainer: "badContainer"
+        case .serviceUnavailable: "serviceUnavailable"
+        case .requestRateLimited: "requestRateLimited"
+        case .missingEntitlement: "missingEntitlement"
+        case .notAuthenticated: "notAuthenticated"
+        case .permissionFailure: "permissionFailure"
+        case .unknownItem: "unknownItem"
+        case .invalidArguments: "invalidArguments"
+        case .serverRecordChanged: "serverRecordChanged"
+        case .serverRejectedRequest: "serverRejectedRequest"
+        case .assetFileNotFound: "assetFileNotFound"
+        case .assetFileModified: "assetFileModified"
+        case .incompatibleVersion: "incompatibleVersion"
+        case .constraintViolation: "constraintViolation"
+        case .operationCancelled: "operationCancelled"
+        case .changeTokenExpired: "changeTokenExpired"
+        case .batchRequestFailed: "batchRequestFailed"
+        case .zoneBusy: "zoneBusy"
+        case .badDatabase: "badDatabase"
+        case .quotaExceeded: "quotaExceeded"
+        case .zoneNotFound: "zoneNotFound"
+        case .limitExceeded: "limitExceeded"
+        case .userDeletedZone: "userDeletedZone"
+        case .referenceViolation: "referenceViolation"
+        case .managedAccountRestricted: "managedAccountRestricted"
+        case .serverResponseLost: "serverResponseLost"
+        case .assetNotAvailable: "assetNotAvailable"
+        case .accountTemporarilyUnavailable: "accountTemporarilyUnavailable"
+        default: "ckError\(code.rawValue)"
+        }
+    }
+
     static func encodeSystemFields(_ record: CKRecord) -> Data {
         let coder = NSKeyedArchiver(requiringSecureCoding: true)
         record.encodeSystemFields(with: coder)
@@ -247,6 +312,11 @@ extension CloudKitSyncTransport: CKSyncEngineDelegate {
             var retry: [CKSyncEngine.PendingRecordZoneChange] = []
             var needZone = false
             var zoneGone = false
+            // Grouped, not one call per record: a failing batch brings back hundreds at a time, and
+            // a SwiftData write (and a log line) each would cost more than the send did.
+            var failed: [String: [String]] = [:]     // error text → record names, counts towards stuck
+            var deferred: [String: [String]] = [:]   // reason → record names, never counts
+            var conflicts: [SyncIncoming] = []
             for failure in sent.failedRecordSaves {
                 let name = failure.record.recordID.recordName
                 switch failure.error.code {
@@ -254,9 +324,19 @@ extension CloudKitSyncTransport: CKSyncEngineDelegate {
                     // Retry only after a merge. A big record's server copy can arrive without its
                     // payload asset; then the next fetch brings it and re-queues the merge.
                     if let server = failure.error.serverRecord, let incoming = Self.incoming(server) {
-                        delegate?.transportConflict(name, server: incoming)
+                        conflicts.append(incoming)
                         retry.append(.saveRecord(failure.record.recordID))
+                    } else {
+                        // Still owed, and visibly so: before this it was dropped in silence and the
+                        // screen just kept counting it as waiting.
+                        deferred[Self.describe(failure.error), default: []].append(name)
                     }
+                case .batchRequestFailed:
+                    // A zone save is atomic: this record was fine, another one in its batch wasn't.
+                    // Counting it as a failure of its own is what turned one bad record into a
+                    // whole queue of stuck ones.
+                    deferred[Self.describe(failure.error), default: []].append(name)
+                    retry.append(.saveRecord(failure.record.recordID))
                 case .userDeletedZone:
                     zoneGone = true
                 case .zoneNotFound:
@@ -275,12 +355,23 @@ extension CloudKitSyncTransport: CKSyncEngineDelegate {
                     onQuotaExceeded?()
                 case .networkFailure, .networkUnavailable, .zoneBusy, .serviceUnavailable,
                      .notAuthenticated, .requestRateLimited, .accountTemporarilyUnavailable,
-                     .operationCancelled, .serverResponseLost:
-                    break  // the engine retries these itself
+                     .operationCancelled, .serverResponseLost, .changeTokenExpired:
+                    // The engine retries these itself, but the screen should still be able to say
+                    // why nothing is moving.
+                    deferred[Self.describe(failure.error), default: []].append(name)
                 default:
-                    delegate?.transportFailed(name, error: failure.error.localizedDescription)
+                    if Self.isMissingSchema(failure.error) {
+                        // Owed and visible, but not retried here: nothing changes until the schema
+                        // is deployed. The next launch or Repair Sync sends it again.
+                        deferred[Self.describe(failure.error), default: []].append(name)
+                    } else {
+                        failed[Self.describe(failure.error), default: []].append(name)
+                    }
                 }
             }
+            if !conflicts.isEmpty { delegate?.transportConflicts(conflicts) }
+            for (reason, names) in deferred { delegate?.transportDeferred(names, reason: reason) }
+            for (error, names) in failed { delegate?.transportFailed(names, error: error) }
             for (id, error) in sent.failedRecordDeletes where error.code == .unknownItem {
                 delegate?.transportDidDelete(id.recordName)  // already gone
             }

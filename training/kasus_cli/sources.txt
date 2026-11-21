@@ -28,6 +28,7 @@ Models/Grammar/Kasus/KasusRoundItem.swift
 Models/Grammar/Kasus/EndingsQuestion.swift
 Models/Grammar/Kasus/KasusUnit.swift
 Models/Grammar/GrammarPalette.swift
+Models/Grammar/GrammarTaskArt.swift
 Models/Grammar/GrammarFocus.swift
 
 # Gap-choice items: the format, the reflexive tables, the gate, the bank and its golden numbers

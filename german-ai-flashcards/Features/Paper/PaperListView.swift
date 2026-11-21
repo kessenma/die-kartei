@@ -19,6 +19,8 @@ struct PaperListView: View {
     @State private var showImporter = false
     @State private var showURLImport = false
     @State private var importError: String?
+    /// A long PDF's text layer is read off the main actor, so the list says so instead of freezing.
+    @State private var isReadingPDF = false
     @State private var generatingPaper: StudyPaper?
     @State private var service: PaperStudyService?
     @State private var cacheRefreshID = UUID()
@@ -58,6 +60,16 @@ struct PaperListView: View {
                 emphasizeHero: false
             )
             .themedListRow()
+
+            if isReadingPDF {
+                Section {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("Reading the PDF…").font(.subheadline).foregroundStyle(.secondary)
+                    }
+                }
+                .themedListRow()
+            }
 
             if let importError {
                 Section {
@@ -184,16 +196,30 @@ struct PaperListView: View {
         case .failure(let error):
             importError = "Couldn’t open the file: \(error.localizedDescription)"
         case .success(let url):
-            guard let extracted = PDFTextExtractor.extract(from: url) else {
+            let title = url.deletingPathExtension().lastPathComponent
+            let needsAccess = url.startAccessingSecurityScopedResource()
+            let data = try? Data(contentsOf: url)
+            if needsAccess { url.stopAccessingSecurityScopedResource() }
+            guard let data else {
                 importError = "Couldn’t read that PDF."
                 return
             }
-            guard !extracted.looksScanned else {
-                importError = "This PDF appears to be scanned (no selectable text). Text extraction needs a PDF with a real text layer."
-                return
+            isReadingPDF = true
+            Task {
+                let extracted = await Task.detached(priority: .userInitiated) {
+                    PDFTextExtractor.extract(from: data)
+                }.value
+                isReadingPDF = false
+                guard let extracted else {
+                    importError = "Couldn’t read that PDF."
+                    return
+                }
+                guard !extracted.looksScanned else {
+                    importError = "This PDF appears to be scanned (no selectable text). Text extraction needs a PDF with a real text layer."
+                    return
+                }
+                tryImport(title: title, text: extracted.text, sourceURL: nil)
             }
-            let title = url.deletingPathExtension().lastPathComponent
-            tryImport(title: title, text: extracted.text, sourceURL: nil)
         }
     }
 

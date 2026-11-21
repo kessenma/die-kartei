@@ -39,6 +39,16 @@ final class SavedDeck {
     var sourceText: String? = nil
     var sourceFile: String? = nil
 
+    /// The document this deck was built from is still on disk. A failed write leaves a name behind
+    /// with no file, and a deck synced from another device arrives before its bytes do.
+    var hasSourceFile: Bool { ClassMaterialStore.exists(sourceFile) }
+
+    /// Where to open it from, when it is there.
+    var sourceFileURL: URL? {
+        guard let sourceFile, hasSourceFile else { return nil }
+        return ClassMaterialStore.url(for: sourceFile)
+    }
+
     /// MAC-PICTURES: "Draw on my Mac". The phone's request and the Mac's answer, as JSON
     /// (`MacPictureOrder`). Each is written by one side only; defaulted, so an additive migration.
     var macPictureRequestData: Data? = nil
@@ -202,7 +212,8 @@ final class SavedDeck {
                 article: card.article,
                 exampleSentence: card.exampleSentence,
                 conjugations: card.conjugations,
-                sortOrder: index
+                sortOrder: index,
+                formsLine: card.forms
             )
         }
     }
@@ -218,7 +229,8 @@ final class SavedDeck {
                     wordType: savedCard.wordType,
                     article: savedCard.article,
                     exampleSentence: savedCard.exampleSentence,
-                    conjugations: savedCard.conjugations
+                    conjugations: savedCard.conjugations,
+                    forms: savedCard.formsLine
                 )
             }
     }

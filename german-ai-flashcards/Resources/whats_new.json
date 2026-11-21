@@ -1,42 +1,78 @@
 {
   "releases": [
     {
-      "version": "unreleased",
+      "version": "1.7",
+      "date": "2026-11-08",
       "highlights": [
         {
-          "title": "Fälle verstehen · Understand cases",
-          "detail": "Eight case explainers, a pinnable article table, and the Endungs-Werkstatt: watch der become dem in 3D, then build words yourself.",
-          "symbol": "text.magnifyingglass"
+          "title": "Wortgruppen · Phrases",
+          "detail": "Phrases like „eine Störung beheben“ become cards that hide the verb or preposition for you to pick, added from Save phrase, a card's example sentence or a lesson's answers.",
+          "symbol": "text.word.spacing"
         },
         {
-          "title": "Reflexive Verben · Reflexive verbs",
-          "detail": "A new Grammatik topic: a lesson, the pronoun table and two drills on mich or mir, sich or dich.",
-          "symbol": "arrow.uturn.backward.circle.fill"
+          "title": "Zeichnen · Draw your words",
+          "detail": "Sketch words against the clock, draw over a picture in the Atelier, or paint by number, with pictures of each word in styles you pick.",
+          "symbol": "paintpalette"
         },
         {
-          "title": "Neue Übungen · New drills",
-          "detail": "Finde den Fehler (tap the wrong ending, then fix it), a 60-second Blitzrunde with a personal best, Dativ-Verben with their false friends, and the Pronomen-Brücke from he/him to er/ihn to der/den.",
-          "symbol": "exclamationmark.magnifyingglass"
+          "title": "Schreiben · Writing",
+          "detail": "Keep a German journal or write an essay to a prompt, by keyboard or Pencil, have the tutor check it sentence by sentence, and share what you find hard with your coach.",
+          "symbol": "square.and.pencil"
         },
         {
-          "title": "Verwechslungs-Paar · Your mix-up",
-          "detail": "Once two forms stand out in your misses (dem and den, say), Grammatik and Coach's Notes show the pair with a two-button drill on exactly those forms.",
-          "symbol": "arrow.left.arrow.right"
+          "title": "Übungen prüfen · Check your homework",
+          "detail": "Check a lesson's exercises against your teacher's own answer key, or show her answers right on the slide.",
+          "symbol": "pencil.and.list.clipboard"
+        },
+        {
+          "title": "Der Stift · Pencil",
+          "detail": "Pencil pages gain a highlighter, and notes paper beside a slide.",
+          "symbol": "applepencil.tip"
+        },
+        {
+          "title": "Bilder · Pictures",
+          "detail": "Sign in to OpenRouter once for all your devices, and a deck's pictures keep drawing while you use the rest of the app.",
+          "symbol": "cloud"
+        },
+        {
+          "title": "Schreibblatt · Writing sheet",
+          "detail": "Write a big deck in parts with flashcard checkpoints, keep your words floating beside the sheet, and see handwriting on your day tracker. Missed cards can ask to be written out.",
+          "symbol": "applepencil.and.scribble"
+        },
+        {
+          "title": "Wortliste · Word list",
+          "detail": "See a deck as one table with the words you missed and how often you wrote each by hand, test yourself, and send it to a tutor as a PDF, spreadsheet or text.",
+          "symbol": "tablecells"
+        },
+        {
+          "title": "Hören · Listening room",
+          "detail": "A new room on Home: type numbers you hear once, write down sentences from dictation and see which endings you missed, and track what your ear catches.",
+          "symbol": "headphones"
+        },
+        {
+          "title": "Worum geht's? · The gist of a story",
+          "detail": "In a story's Hören mode, guess the words first, listen with the text hidden, sum it up in English, then tick it against the story's key points.",
+          "symbol": "text.bubble"
         }
       ]
     },
     {
       "version": "1.6",
-      "date": "2026-09-30",
+      "date": "2026-11-03",
       "highlights": [
         {
           "title": "Die vier Fälle · The four cases",
-          "detail": "Grammar is one path through Nominativ, Akkusativ, Dativ and Genitiv: a lesson with die Figur, seven worksheet stories, three drills with over 700 sentences, a quick round, and every round kept per case.",
-          "symbol": "square.grid.2x2"
+          "detail": "Grammatik is a path through Nominativ, Akkusativ, Dativ and Genitiv, in rooms: a lesson with die Figur, seven worksheet stories, eight explainers, the Endungs-Werkstatt, and a room that starts from the English sentence. Every exercise shows a small drawing of what it asks.",
+          "symbol": "text.magnifyingglass"
+        },
+        {
+          "title": "Grammatik-Übungen · Grammar drills",
+          "detail": "Over 700 drill sentences plus Finde den Fehler, a 60-second Blitzrunde, Dativ-Verben, the Pronomen-Brücke, reflexive pronouns, the article chart as a drag-and-drop board, and a drill on the forms you mix up most.",
+          "symbol": "exclamationmark.magnifyingglass"
         },
         {
           "title": "iCloud-Sync · iCloud Sync",
-          "detail": "Cards, progress, streak, stories and conversations stay the same on your iPhone and iPad, through your own iCloud.",
+          "detail": "Cards, progress, streak, stories and conversations stay the same on your devices through your own iCloud, and a sync report says in plain words what iCloud is waiting on.",
           "symbol": "icloud"
         },
         {
@@ -56,8 +92,8 @@
         },
         {
           "title": "Karteikarten · Flashcards",
-          "detail": "Nouns hide their article until you flip, cards show plural and Perfekt forms, missed cards come back soon, and a deck can be shared with its progress.",
-          "symbol": "rectangle.on.rectangle"
+          "detail": "Nouns hide their article until you flip, cards show plural and Perfekt forms with real native sentences, a picture can fill the whole card, missed cards come back soon, several decks can be studied as one session, and a deck can be shared with its progress.",
+          "symbol": "rectangle.stack.fill"
         },
         {
           "title": "Dein Weg · Your journey",
@@ -90,14 +126,39 @@
           "symbol": "macbook"
         },
         {
-          "title": "Stapel mischen · Mix decks",
-          "detail": "Study several decks as one session; each keeps its own progress.",
-          "symbol": "square.stack.3d.up.fill"
+          "title": "Vokabelfolien · Vocabulary slides",
+          "detail": "A teacher's vocabulary PDF becomes a deck, from a file or a link: pick the pages by looking at them, see which words the sheet lists twice, and each card keeps the example sentence, the plural and its word class.",
+          "symbol": "rectangle.stack.badge.plus"
         },
         {
           "title": "Stabiler · More stable",
           "detail": "Runs more reliably on devices with less memory; Settings ▸ Speicher shows what's using it.",
           "symbol": "checkmark.shield"
+        },
+        {
+          "title": "Schreibblatt · Writing sheet",
+          "detail": "Write your words out by hand with the Apple Pencil, or share the tables as a PDF to print.",
+          "symbol": "pencil.and.outline"
+        },
+        {
+          "title": "Grammatik · Grammar tab",
+          "detail": "Grammar has a tab of its own, with a progress screen for the days you practised and how often each case comes out right first try.",
+          "symbol": "checklist"
+        },
+        {
+          "title": "Spiele · Games",
+          "detail": "A new Spiele room on Home. Galgenmännchen hides a word from any deck or Goethe list and gives you six tries, with die Figur on a tower, a balloon or a scaffold.",
+          "symbol": "gamecontroller"
+        },
+        {
+          "title": "Übungen · Homework from a lesson PDF",
+          "detail": "Pick the exercises left over from class, answer them here or on the slides with the Pencil, and send your teacher her own slides filled in.",
+          "symbol": "pencil.and.list.clipboard"
+        },
+        {
+          "title": "Der Stift · Pencil",
+          "detail": "Writing pages fill the screen with a slim Pencil bar instead of the system palette: double-tap to undo, circle a word to erase it. Schreibblatt sheets can go landscape, two by two, and be marked Fertig.",
+          "symbol": "applepencil.tip"
         }
       ]
     },

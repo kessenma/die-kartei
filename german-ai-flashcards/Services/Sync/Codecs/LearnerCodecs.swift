@@ -38,6 +38,10 @@ enum LearnerProfileCodec: SyncCodec {
             "grammar": .keyed(item: .lwwBy("lastSeen")),
             "vocab": .set(idField: "german", lowercasedID: true, item: .lwwBy("lastSeen"), sortBy: "lastSeen"),
             "slips": .set(idField: "id", item: .lwwBy("lastSeen"), sortBy: "lastSeen"),
+            // What the learner said they find hard (the journal hand-off). Matched on the
+            // computed `SelfReportNote.id`, written in like a slip's. A payload from a build
+            // without the field merges as an empty set, so the notes on the other side survive.
+            "selfReports": .set(idField: "id", item: .lwwBy("notedAt"), sortBy: "notedAt"),
         ],
         normalize: LearnerProfileCodec.normalize
     )
@@ -76,6 +80,11 @@ enum LearnerProfileCodec: SyncCodec {
         } else {
             f.set("slips", jsonData: p.slipsData)
         }
+        if let notes = taggedSelfReports(p.selfReportsData) {
+            f.set("selfReports", json: notes)
+        } else {
+            f.set("selfReports", jsonData: p.selfReportsData)
+        }
         return f.payload
     }
 
@@ -96,6 +105,7 @@ enum LearnerProfileCodec: SyncCodec {
         p.grammarData = flat.jsonData("grammar")
         p.vocabData = flat.jsonData("vocab")
         p.slipsData = flat.jsonData("slips")
+        p.selfReportsData = flat.jsonData("selfReports")
     }
 
     /// The profile row sync reads and writes: the smallest id, so the choice never depends on
@@ -114,6 +124,18 @@ enum LearnerProfileCodec: SyncCodec {
                   let slip = try? JSONDecoder().decode(LexicalSlip.self, from: item.canonicalData)
             else { return item }
             object["id"] = .string(slip.id)
+            return .object(object)
+        })
+    }
+
+    /// `selfReportsData` as JSON with each note's computed id written in, the same way.
+    static func taggedSelfReports(_ data: Data?) -> SyncJSON? {
+        guard let data, let items = (try? SyncJSON(data: data))?.arrayValue else { return nil }
+        return .array(items.map { (item: SyncJSON) -> SyncJSON in
+            guard var object = item.objectValue,
+                  let note = try? JSONDecoder().decode(SelfReportNote.self, from: item.canonicalData)
+            else { return item }
+            object["id"] = .string(note.id)
             return .object(object)
         })
     }
@@ -198,6 +220,7 @@ enum ArchivedMemoryItemCodec: SyncCodec {
         switch MemoryKind(rawValue: kindRaw) {
         case .vocab: return (try? JSONDecoder().decode(VocabTouch.self, from: payload))?.id
         case .slip: return (try? JSONDecoder().decode(LexicalSlip.self, from: payload))?.id
+        case .selfReport: return (try? JSONDecoder().decode(SelfReportNote.self, from: payload))?.id
         case nil: return nil
         }
     }
@@ -238,6 +261,9 @@ enum ArchivedMemoryItemCodec: SyncCodec {
 //   slipsData      "slips"          .set(idField: "id", item: .lwwBy("lastSeen"), sortBy: "lastSeen")
 //                                   [LexicalSlip]: wrong, right, note, lastSeen, timesSeen, pinned, sentence?,
 //                                   blankIndex?, source?, plus "id" written in by the codec (id is computed)
+//   selfReportsData "selfReports"   .set(idField: "id", item: .lwwBy("notedAt"), sortBy: "notedAt")
+//                                   [SelfReportNote]: text, focus?, notedAt, timesNoted, pinned, source?, entryID?,
+//                                   plus "id" written in by the codec (id is computed)
 //
 // ArchivedMemoryItem
 //   id             "id"             .lww (names the record only when the payload won't decode)

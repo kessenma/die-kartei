@@ -26,6 +26,13 @@ struct FullscreenCardView: View {
     @State private var showCorrectionSheet = false
     /// The current card has been flipped at least once here; the example may show again.
     @State private var revealedCurrent = false
+    /// The expanded picture lives here, not in the card: the card view is rebuilt per index, so a
+    /// cover it owned would close itself the moment the learner pressed next inside it.
+    @State private var expandedPicture: UIImage?
+    @State private var showingPicture = false
+    /// iPad: a card marked wrong asks to be written out with the Pencil (`WriteItSheet`).
+    @AppStorage(CardStudyPrefs.writeAfterMissKey) private var writeAfterMiss = true
+    @State private var writeItWord: WriteItWord?
 
     private var isShowingGermanSide: Bool {
         (showGermanFirst && !isFlipped) || (!showGermanFirst && isFlipped)
@@ -45,6 +52,24 @@ struct FullscreenCardView: View {
     /// Daily Review holds cards from many decks.
     private var currentImageDeckID: UUID? {
         savedCards.indices.contains(currentIndex) ? savedCards[currentIndex].deck?.id ?? deckUUID : deckUUID
+    }
+
+    /// What the picture viewer captions with. The picture is the German side, so the article quiz's
+    /// rule holds there too: while the article is withheld, the caption may not carry it.
+    private var viewerCaption: String {
+        let card = cards[currentIndex]
+        // Same four conditions as the card's own `articleHidden`, `showGermanFirst` included: the
+        // quiz only withholds anything when the German side is the question.
+        let withheld = hidesArticleUntilFlipped && showGermanFirst
+            && !isFlipped && !revealedCurrent && card.article != nil
+        return withheld
+            ? ArticleGameService.bareNoun(card.germanWord)
+            : card.germanWord.withArticle(card.article)
+    }
+
+    /// The answer, once the learner has turned the card over in the viewer.
+    private var viewerSubcaption: String? {
+        isFlipped ? cards[currentIndex].englishTranslation : nil
     }
 
     var body: some View {
@@ -141,12 +166,85 @@ struct FullscreenCardView: View {
                 )
             }
         }
+        .fullScreenCover(isPresented: $showingPicture) {
+            Group {
+                if let expandedPicture {
+                    FullScreenImageView(
+                        image: expandedPicture,
+                        caption: viewerCaption,
+                        subcaption: viewerSubcaption,
+                        controls: { AnyView(pictureViewerControls) }
+                    )
+                } else {
+                    Color.black.ignoresSafeArea()
+                }
+            }
+            // Keyed on the index so stepping through the deck from inside the viewer swaps the
+            // picture instead of leaving the first card's one up.
+            .task(id: currentIndex) { await loadExpandedPicture() }
+        }
+        .writeItSheet($writeItWord, accent: model?.theme.accent ?? .accentColor)
         .statusBarHidden()
         .onChange(of: isFlipped) { _, flipped in
             if flipped { revealedCurrent = true }
         }
         .onChange(of: currentIndex) {
             revealedCurrent = false
+        }
+    }
+
+    /// Decodes the current card's picture at full size for the viewer. The card underneath holds
+    /// its own 512 pt copy; a second bitmap is about 1 MB and only lives while the viewer is up.
+    /// A card without a picture closes the viewer rather than leaving a black screen.
+    private func loadExpandedPicture() async {
+        guard let fileName = currentImageFileName, let deckID = currentImageDeckID else {
+            expandedPicture = nil
+            showingPicture = false
+            return
+        }
+        let decoded = await Task.detached(priority: .userInitiated) {
+            CardImageStore.loadImage(fileName: fileName, deckID: deckID, maxPixelSize: 1024)
+        }.value
+        guard !Task.isCancelled else { return }
+        expandedPicture = decoded
+        if decoded == nil { showingPicture = false }
+    }
+
+    /// The session's controls, carried into the picture viewer: turn the card over, grade it, move
+    /// on. Prev/next step `currentIndex`, which the cover survives because it belongs to this
+    /// screen rather than to the card.
+    @ViewBuilder
+    private var pictureViewerControls: some View {
+        VStack(spacing: 14) {
+            if isQuizMode && isFlipped {
+                quizButtons
+            }
+
+            HStack(spacing: 28) {
+                Button(action: goPrevious) {
+                    Image(systemName: "chevron.left.circle.fill")
+                        .font(.system(size: 40))
+                }
+                .disabled(currentIndex == 0)
+
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { isFlipped.toggle() }
+                } label: {
+                    Text(isFlipped ? "Question" : "Answer")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(.white.opacity(0.18), in: Capsule())
+                }
+                .buttonStyle(.plain)
+
+                Button(action: goNext) {
+                    Image(systemName: "chevron.right.circle.fill")
+                        .font(.system(size: 40))
+                }
+                .disabled(currentIndex >= cards.count - 1)
+            }
         }
     }
 
@@ -179,7 +277,11 @@ struct FullscreenCardView: View {
                 imageFileName: currentImageFileName,
                 imageDeckID: currentImageDeckID,
                 hidesArticleUntilFlipped: hidesArticleUntilFlipped,
-                forms: cards[currentIndex].forms
+                forms: cards[currentIndex].forms,
+                onExpandPicture: { picture in
+                    expandedPicture = picture
+                    showingPicture = true
+                }
             )
             .id("fs-\(currentIndex)-\(showGermanFirst)")
             .frame(maxWidth: visibleHeight - 32) // constrain card width to fit rotated bounds
@@ -223,7 +325,11 @@ struct FullscreenCardView: View {
                 imageFileName: currentImageFileName,
                 imageDeckID: currentImageDeckID,
                 hidesArticleUntilFlipped: hidesArticleUntilFlipped,
-                forms: cards[currentIndex].forms
+                forms: cards[currentIndex].forms,
+                onExpandPicture: { picture in
+                    expandedPicture = picture
+                    showingPicture = true
+                }
             )
             .id("fs-\(currentIndex)-\(showGermanFirst)")
             .offset(x: dragOffset * 0.3)
@@ -293,6 +399,11 @@ struct FullscreenCardView: View {
     private var quizButtons: some View {
         HStack(spacing: 40) {
             Button {
+                if cardResults[currentIndex] != false, writeAfterMiss, CardStudyPrefs.writeAfterMissAvailable {
+                    let card = cards[currentIndex]
+                    writeItWord = WriteItWord(german: card.germanWord.withArticle(card.article),
+                                              english: card.englishTranslation)
+                }
                 cardResults[currentIndex] = false
             } label: {
                 Image(systemName: cardResults[currentIndex] == false ? "xmark.circle.fill" : "xmark.circle")
@@ -321,13 +432,7 @@ struct FullscreenCardView: View {
             .background(wordTypeColor(type), in: Capsule())
     }
 
-    private func wordTypeColor(_ type: String) -> Color {
-        switch type.lowercased() {
-        case "verb": return .blue
-        case "adjective": return .purple
-        default: return .green
-        }
-    }
+    private func wordTypeColor(_ type: String) -> Color { WordClassPalette.color(for: type) }
 
     @ViewBuilder
     private func conjugationGrid(_ conjugations: [Conjugation]) -> some View {

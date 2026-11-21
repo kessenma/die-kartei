@@ -1,0 +1,13 @@
+{
+  "a1_vocabulary.json": {
+    "lt:ERSTE_PERSON_SIN_OHNE_E": 1,
+    "lt:GERMAN_SPELLER_RULE": 3,
+    "lt:GERMAN_WORD_REPEAT_BEGINNING_RULE": 4
+  },
+  "past_tense_verbs.json": {
+    "lt:GERMAN_SPELLER_RULE": 1
+  },
+  "prepositions.json": {
+    "lt:PRAEP_GEN": 1
+  }
+}

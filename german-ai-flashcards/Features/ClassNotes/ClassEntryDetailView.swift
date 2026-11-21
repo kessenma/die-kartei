@@ -24,6 +24,8 @@ struct ClassEntryDetailView: View {
     @State private var importTarget: ClassHandoutTarget?
     /// Briefly the count after "Add to deck", to confirm.
     @State private var addedCount: Int?
+    /// A handout's homework, opened from the Homework row.
+    @State private var openedWorksheet: ClassMaterial?
 
     private var course: ClassCourse? { entry.course }
     private var deck: SavedDeck? {
@@ -46,6 +48,9 @@ struct ClassEntryDetailView: View {
         }
         .themedListScreen()
         .navigationTitle(entry.displayTitle)
+        .navigationDestination(item: $openedWorksheet) { material in
+            WorksheetView(material: material, modelManager: modelManager, mlxService: mlxService)
+        }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -134,9 +139,13 @@ struct ClassEntryDetailView: View {
                                 "a round of nouns at your level", systemImage: "textformat.abc")
                 }
             }
-            if foci.contains(where: { GrammarRoute($0) == .prepositionHub }) {
+            if foci.contains(where: { if case .prepositionHub = GrammarRoute($0) { true } else { false } }) {
                 NavigationLink {
-                    PrepositionHubView(modelManager: modelManager, mlxService: mlxService)
+                    // Verb pairs alone land on the verb track; any place/time focus keeps the pick.
+                    PrepositionHubView(modelManager: modelManager, mlxService: mlxService,
+                                       initialTrack: foci.contains(.verbenPraepositionen)
+                                           && !foci.contains(.praepositionen)
+                                           && !foci.contains(.wechselpraepositionen) ? .verb : nil)
                 } label: {
                     practiceRow("Präpositionen · Prepositions",
                                 "which case each one takes", systemImage: "arrow.triangle.branch")
@@ -246,7 +255,9 @@ struct ClassEntryDetailView: View {
 
     private var homeworkSection: some View {
         Section {
-            ClassHomeworkRow(entry: entry)
+            ClassHomeworkRow(entry: entry) { material in
+                openedWorksheet = material
+            }
         } header: {
             Text("Hausaufgabe · Homework").themedSectionHeader()
         }

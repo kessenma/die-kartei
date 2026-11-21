@@ -150,7 +150,7 @@ final class PictureSession {
             model.hasDrawnBefore = false
             throw OpenRouterError.needsAgeConfirmation
         } catch OpenRouterError.unauthorized {
-            OpenRouterAccount.shared.handleUnauthorized()
+            OpenRouterAccount.shared.handleUnauthorized(failedKey: apiKey)
             throw OpenRouterError.unauthorized
         }
     }
@@ -178,5 +178,18 @@ extension StoryImageService {
             loadError = nil
             return PictureSession(service: self, backend: .cloud(model: .current, apiKey: key))
         }
+    }
+
+    /// Zeichnen: a cloud run whatever the picture-source setting says. Gallery styles are written
+    /// for the cloud models (the on-device model can't hold a Bauhaus poster or an engraving), and
+    /// nothing loads or unloads, so a deck run on the device's own model can carry on beside it.
+    /// Nil, with `loadError` set, when no OpenRouter key is stored.
+    func beginCloudSession(model: CloudImageModel = .current) -> PictureSession? {
+        guard let key = OpenRouterAccount.apiKey() else {
+            loadError = OpenRouterError.notConnected.errorDescription
+            return nil
+        }
+        loadError = nil
+        return PictureSession(service: self, backend: .cloud(model: model, apiKey: key))
     }
 }

@@ -81,6 +81,8 @@ nonisolated enum KasusConceptExercise: String, CaseIterable, Identifiable, Hasha
     /// One line for the unit screen's row.
     var blurb: String { kind.meta.blurb }
     var symbol: String { kind.meta.symbol }
+    /// The drawing a launcher row announces the exercise with.
+    var art: GrammarTaskArt { kind.meta.art }
     /// Items per round. Rollen asks every phrase of its items, so eight sentences are about
     /// eighteen roles.
     var roundSize: Int { kind.meta.roundSize }

@@ -110,10 +110,11 @@ struct CloudPicturesRows: View {
             Label("Disconnect", systemImage: "xmark.circle")
         }
         .alert("Disconnect OpenRouter?", isPresented: $confirmingDisconnect) {
+            Button("This device only", role: .destructive) { account.disconnect(everywhere: false) }
+            Button("All my devices", role: .destructive) { account.disconnect(everywhere: true) }
             Button("Cancel", role: .cancel) {}
-            Button("Disconnect", role: .destructive) { account.disconnect() }
         } message: {
-            Text("This phone forgets the key. It still works on OpenRouter until you delete it at openrouter.ai/keys. Pictures you already have stay.")
+            Text("Your devices share this key through iCloud Keychain. This device only: the others keep drawing with it. All my devices: every one of them forgets it. The key still works on OpenRouter until you delete it at openrouter.ai/keys, and pictures you already have stay.")
         }
     }
 
@@ -126,6 +127,25 @@ struct CloudPicturesRows: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 2)
+
+        // This device was disconnected on its own; the key the other devices use is still here.
+        if let saved = account.savedKeyMask {
+            Button {
+                Task { await account.useSavedKey() }
+            } label: {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Use the saved key")
+                        Text(saved)
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "key.icloud")
+                }
+            }
+            .disabled(account.isWorking)
+        }
 
         Button {
             Task {
@@ -185,7 +205,7 @@ private struct PasteOpenRouterKeySheet: View {
                         .autocorrectionDisabled()
                         .font(.body.monospaced())
                 } footer: {
-                    Text("Create a key at openrouter.ai/keys, copy it, and paste it here. It's kept in this phone's Keychain and only ever sent to OpenRouter.")
+                    Text("Create a key at openrouter.ai/keys, copy it, and paste it here. It's kept in your Keychain, reaches your other devices if iCloud Keychain is on, and is only ever sent to OpenRouter.")
                 }
 
                 Section {
@@ -291,6 +311,7 @@ struct CloudPicturesConsentSheet: View {
                 }
             }
             .font(.subheadline)
+            .macSheetSize()
             .navigationTitle("Draw pictures in the cloud?")
             .navigationBarTitleDisplayMode(.inline)
         }

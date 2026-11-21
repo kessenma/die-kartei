@@ -214,18 +214,17 @@ struct DrillDeckView: View {
         guard !chosen.isEmpty else { return }
 
         if let deckID = selectedDeckID, let deck = existingDecks.first(where: { $0.id == deckID }) {
-            let existingWords = Set(deck.cards.map { $0.germanWord.lowercased() })
+            let existingWords = Set(deck.cards.map { CardKind.matchKey($0.germanWord) })
             var order = (deck.cards.map(\.sortOrder).max() ?? -1) + 1
             var added = 0
             for word in chosen {
-                let (german, article) = splitArticle(word.german)
-                guard !existingWords.contains(german.lowercased()),
-                      !existingWords.contains(word.german.lowercased()) else { continue }
+                let split = CardKind.split(word.german)
+                guard !existingWords.contains(CardKind.matchKey(word.german)) else { continue }
                 let card = SavedCard(
-                    germanWord: german,
+                    germanWord: split.word,
                     englishTranslation: word.english,
-                    wordType: article != nil ? "noun" : nil,
-                    article: article,
+                    wordType: split.wordType,
+                    article: split.article,
                     sortOrder: order
                 )
                 card.deck = deck
@@ -242,12 +241,12 @@ struct DrillDeckView: View {
         } else {
             let name = newDeckName.trimmingCharacters(in: .whitespaces)
             let vocab = chosen.map { word -> VocabCard in
-                let (german, article) = splitArticle(word.german)
+                let split = CardKind.split(word.german)
                 return VocabCard(
-                    germanWord: german,
+                    germanWord: split.word,
                     englishTranslation: word.english,
-                    wordType: article != nil ? "noun" : nil,
-                    article: article,
+                    wordType: split.wordType,
+                    article: split.article,
                     exampleSentence: nil,
                     conjugations: nil
                 )
@@ -264,13 +263,5 @@ struct DrillDeckView: View {
             try? modelContext.save()
             savedSummary = "Created “\(deck.topic)” with \(vocab.count) card\(vocab.count == 1 ? "" : "s")."
         }
-    }
-
-    /// Split a leading article ("der Tisch" -> ("Tisch", "der")).
-    private func splitArticle(_ word: String) -> (String, String?) {
-        for article in ["der ", "die ", "das "] where word.lowercased().hasPrefix(article) {
-            return (String(word.dropFirst(article.count)).trimmingCharacters(in: .whitespaces), String(article.dropLast()))
-        }
-        return (word, nil)
     }
 }

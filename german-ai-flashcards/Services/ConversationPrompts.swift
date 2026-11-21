@@ -308,8 +308,9 @@ enum ConversationPrompts {
     /// Folds the differences that don't amount to a correction — surrounding quotes, whitespace,
     /// case, and ALL punctuation — so a fix that only inserts a comma or a period is recognised as
     /// an echo. The student's line is a speech transcript, so punctuation is never their mistake.
-    /// Umlauts and ß are preserved: fixing those *is* the lesson.
-    private static func echoNormalized(_ s: String) -> String {
+    /// Umlauts and ß are preserved: fixing those *is* the lesson. Internal because the Schreiben
+    /// room's check (`WritingTutorCheck`) applies the same rule to a written sentence.
+    static func echoNormalized(_ s: String) -> String {
         let unquoted = stripWrappingQuotes(s.trimmingCharacters(in: .whitespacesAndNewlines))
         let letters = unquoted.unicodeScalars.map { scalar -> Character in
             CharacterSet.punctuationCharacters.contains(scalar) ? " " : Character(scalar)
@@ -617,18 +618,37 @@ enum ConversationPrompts {
         let haystack = " " + normalize(text) + " "
         var found: [String] = []
         for word in targetWords {
-            // Strip a leading article ("der Tisch" -> "tisch") so spoken forms match.
-            let core = word.split(separator: " ").last.map(String.init) ?? word
-            let needle = normalize(core)
-            guard needle.count >= 3 else { continue }
-            if haystack.contains(" " + needle + " ")
-                || haystack.contains(" " + needle)
-                || haystack.contains(needle + " ") {
-                found.append(word)
+            let tokens = word.split(separator: " ").map(String.init)
+            let content: [String]
+            if CardKind.isPhrase(word) {
+                // A phrase counts only when every one of its content words was used. Matching its
+                // last word alone credited "fundierte Kenntnisse in Python" for saying "Python".
+                content = tokens.filter { !phraseFillers.contains($0.lowercased()) }
+            } else {
+                // Strip a leading article ("der Tisch" -> "tisch") so spoken forms match.
+                content = [tokens.last ?? word]
             }
+            let needles = content
+                .map { normalize($0).trimmingCharacters(in: .whitespaces) }
+                .filter { $0.count >= 3 }
+            guard !needles.isEmpty else { continue }
+            let used = needles.allSatisfy { needle in
+                haystack.contains(" " + needle + " ")
+                    || haystack.contains(" " + needle)
+                    || haystack.contains(needle + " ")
+            }
+            if used { found.append(word) }
         }
         return found
     }
+
+    /// Words a phrase can leave out or change when it is used in a sentence: articles, pronouns,
+    /// and dictionary placeholders ("jdm. helfen").
+    private static let phraseFillers: Set<String> = [
+        "der", "die", "das", "den", "dem", "des", "ein", "eine", "einen", "einem", "einer", "eines",
+        "sich", "ich", "du", "er", "sie", "es", "wir", "ihr", "mich", "dich", "mir", "dir", "uns", "euch",
+        "etw.", "etwas", "jdn.", "jdm.", "jds.", "jemand", "jemanden", "jemandem",
+    ]
 
     // MARK: - Helpers
 

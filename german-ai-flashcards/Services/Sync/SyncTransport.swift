@@ -40,8 +40,10 @@ protocol SyncTransportDelegate: AnyObject {
     /// What to send for a queued record, or nil if nothing is pending.
     func outgoing(_ name: String) -> SyncOutgoing?
     func transportDidSave(_ name: String, sent: SyncPayload, stamp: Data, tag: String)
-    /// The save was based on a stale copy; `server` is the current one.
-    func transportConflict(_ name: String, server: SyncIncoming)
+    /// These saves were based on stale copies; the current ones come back. A batch, not one call
+    /// per record: a device that forgot its server copies conflicts on everything it owns at once,
+    /// and a merge-and-save each is minutes of main-actor work that looks like a hung "Sending…".
+    func transportConflicts(_ servers: [SyncIncoming])
     /// The server no longer has the record the save was based on.
     func transportUnknownItem(_ name: String)
     func transportDidDelete(_ name: String)
@@ -50,8 +52,14 @@ protocol SyncTransportDelegate: AnyObject {
     /// zone (how a new or different database is told apart from an unchanged one).
     func transportDidFinishFetch(wasFullFetch: Bool)
     func transportProgress(_ progress: SyncTransportProgress)
-    /// A save failed for a reason that isn't a conflict or transient (too large, invalid).
-    func transportFailed(_ name: String, error: String)
+    /// Saves failed for a reason that is the records' own and won't clear by itself (too large,
+    /// rejected). Enough of these in a row and a record counts as stuck.
+    func transportFailed(_ names: [String], error: String)
+    /// Saves came back for a reason that isn't the records' fault: another record in the same
+    /// atomic batch failed, or the server's copy has to be fetched before this one can merge.
+    /// They stay owed and are tried again; they must never count towards stuck, or one bad record
+    /// drags the whole queue down with it.
+    func transportDeferred(_ names: [String], reason: String)
 }
 
 /// The in-memory transport: `FakeSyncServer` with CloudKit's conflict rules. For
@@ -92,9 +100,9 @@ final class FakeSyncTransport: SyncTransport {
                     delegate.transportDidSave(name, sent: payload, stamp: Data(String(newTag).utf8), tag: String(newTag))
                     delegate.transportProgress(.sent(records: 1, bytes: Int64(SyncJSON.object(payload).canonicalData.count)))
                 case let .conflict(serverPayload, serverTag):
-                    delegate.transportConflict(name, server: SyncIncoming(
+                    delegate.transportConflicts([SyncIncoming(
                         name: name, payload: serverPayload,
-                        stamp: Data(String(serverTag).utf8), tag: String(serverTag)))
+                        stamp: Data(String(serverTag).utf8), tag: String(serverTag))])
                     continue
                 case .unknownItem:
                     delegate.transportUnknownItem(name)

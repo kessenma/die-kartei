@@ -45,12 +45,22 @@ struct CardDeckView: View {
     /// A card rated Again comes back a few cards later in the same session.
     @AppStorage(CardStudyPrefs.repeatMissedKey) var repeatMissed = true
     @AppStorage(CardStudyPrefs.shuffleKey) var shuffleCards = false
+    @AppStorage(CardStudyPrefs.phraseGapsKey) var phraseGaps = true
+    /// iPad: a missed card asks to be written out with the Pencil (`WriteItSheet`).
+    @AppStorage(CardStudyPrefs.writeAfterMissKey) var writeAfterMiss = true
+    /// The missed card's word while its write-it sheet is up.
+    @State var writeItWord: WriteItWord?
+    /// The gap each phrase card shows, by card index (`PhraseGapPlanner`), dealt once a session.
+    @State var gapQuestions: [Int: PhraseGapQuestion] = [:]
+    /// "Make this sentence a card": the inspector translating an example sentence for this deck.
+    @State var sentenceInspector: WordInspectorModel?
     @State var hasStarted = false
     @State var isFlipped = false
     @State var showExamplesOnGermanSide = true
     /// How AI pictures present on the German side (immersive gradient vs high-contrast bar).
     /// Persisted so the choice sticks across sessions; `FlashCardView` reads the same key.
     @AppStorage(FlashcardImageStyle.defaultsKey) var flashcardImageStyle: FlashcardImageStyle = .immersive
+    @AppStorage(FlashcardPictureSide.defaultsKey) var flashcardPictureSide: FlashcardPictureSide = .both
     @State var isFullscreen = false
     @State var cardResults: [Int: Bool] = [:]
     @State var showQuizSummary = false
@@ -71,6 +81,13 @@ struct CardDeckView: View {
     @State var requeueCounts: [Int: Int] = [:]
     /// How many cards later a missed card comes back.
     let requeueGap = 3
+    /// The summary's "Review Missed Cards" round is running: the play order (`cardOrder`, or
+    /// `ankiDueIndices` in SRS modes) holds only the missed cards. The session itself was recorded
+    /// when it finished, so this round is practice — it banks time on the study log, not a score.
+    @State var isReviewingMissed = false
+    /// The SRS session's distinct due cards, kept while a review borrows `ankiDueIndices`, so
+    /// "Try Again" from a review's summary still replays the whole session.
+    @State var fullSessionDueIndices: [Int] = []
     @State var showCardSettings = false
     /// The current card has been flipped at least once, so its article is no longer withheld and
     /// the example sentence may show again. Mirrors `FlashCardView.revealed`; resets per card.
@@ -86,6 +103,10 @@ struct CardDeckView: View {
     @State var isPaused: Bool = false
     @State var savedProgress: DeckSessionProgress? = nil
     @State var showValidationInfo = false
+    /// The expanded card picture, held here rather than in the card: the card view is rebuilt per
+    /// index, so a cover it owned would close itself the moment the learner pressed next inside it.
+    @State var expandedPicture: UIImage?
+    @State var showingPicture = false
     @State var showCorrectionSheet = false
     @State var showSingleCardCorrection = false
     /// Guards the redraw-every-picture button on the setup screen.
@@ -95,6 +116,8 @@ struct CardDeckView: View {
     @State var localValidationResults: [ValidationResult] = []
     /// The decks registered with `SyncInUse` on appear, so disappear ends exactly those.
     @State var openDeckUUIDs: [UUID] = []
+    /// The setup screen's "See all words" push to the Wortliste table.
+    @State var showWordTable = false
 
     var isQuizMode: Bool { deckID != nil || isDeckMix }
     var isAnkiMode: Bool { localStyle == .anki && !savedCards.isEmpty }
@@ -113,6 +136,27 @@ struct CardDeckView: View {
 
     /// Studying the Goethe word box: first ratings count against today's new-word budget.
     var isWortschatzSession: Bool { savedDeck?.kind == .goetheSRS }
+
+    /// A miss, on an iPad with "Write it after a miss" on: open the write-it sheet for that card.
+    /// Called once per miss as it is marked, before any auto-advance, so the sheet names the card
+    /// that was missed even when the next one is already showing. `delay` lets a gap card show
+    /// its right answer first.
+    func askToWrite(_ index: Int, delay: Duration = .zero) {
+        guard writeAfterMiss, CardStudyPrefs.writeAfterMissAvailable else { return }
+        let source = localCards.indices.contains(index) ? localCards : cards
+        guard source.indices.contains(index) else { return }
+        let card = source[index]
+        let word = WriteItWord(german: card.germanWord.withArticle(card.article),
+                               english: card.englishTranslation)
+        guard delay > .zero else {
+            writeItWord = word
+            return
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: delay)
+            writeItWord = word
+        }
+    }
 
     /// Puts a missed card back into the queue a few cards ahead, at most twice per card, and
     /// records the lapse either way. Returns whether the card was actually re-queued.
@@ -218,6 +262,22 @@ struct CardDeckView: View {
                         cardContent
                         if isPaused { pauseOverlay }
                     }
+                    // A resumed or auto-started session skips `beginSession`, where gaps are dealt.
+                    .onAppear { if gapQuestions.isEmpty { prepareGapQuestions() } }
+                    .onChange(of: phraseGaps) { prepareGapQuestions() }
+                    .onDisappear { sentenceInspector?.tearDown() }
+                    .sheet(isPresented: Binding(
+                        get: { sentenceInspector?.inspectedWord != nil },
+                        set: { if !$0 { sentenceInspector?.dismissInspector() } }
+                    )) {
+                        if let sentenceInspector {
+                            WordInspectorSheet(
+                                source: sentenceInspector,
+                                footer: "Saved, the sentence becomes a phrase card in this deck, studied with a gap."
+                            )
+                        }
+                    }
+                    .writeItSheet($writeItWord, accent: brandAccent)
                 }
             }
             .navigationTitle(hasStarted ? "" : "Flashcards")
@@ -263,6 +323,10 @@ struct CardDeckView: View {
 
                             Toggle("Ask der / die / das first", systemImage: "questionmark.circle", isOn: $articleQuiz)
 
+                            if CardStudyPrefs.writeAfterMissAvailable {
+                                Toggle("Write it after a miss", systemImage: "pencil.and.scribble", isOn: $writeAfterMiss)
+                            }
+
                             Divider()
 
                             Picker("Show examples on", selection: $showExamplesOnGermanSide) {
@@ -277,6 +341,12 @@ struct CardDeckView: View {
                             Picker("Picture style", selection: $flashcardImageStyle) {
                                 ForEach(FlashcardImageStyle.allCases) { style in
                                     Label(style.label, systemImage: style.systemImage).tag(style)
+                                }
+                            }
+
+                            Picker("Pictures on", selection: $flashcardPictureSide) {
+                                ForEach(FlashcardPictureSide.allCases) { side in
+                                    Label(side.label, systemImage: side.systemImage).tag(side)
                                 }
                             }
 
@@ -325,6 +395,9 @@ struct CardDeckView: View {
                     deckUUID: deckUUID,
                     onApplyCorrection: { index, article in applyCorrection(at: index, newArticle: article) }
                 )
+            }
+            .fullScreenCover(isPresented: $showingPicture) {
+                pictureViewer
             }
             .sheet(isPresented: $showSingleCardCorrection) {
                 if localValidationResults.indices.contains(currentIndex) {
@@ -382,6 +455,7 @@ struct CardDeckView: View {
             sessionDueCount = 0
             sessionLapses = []
             requeueCounts = [:]
+            isReviewingMissed = false
             hasStarted = false
             isPaused = false
             cardResults = [:]

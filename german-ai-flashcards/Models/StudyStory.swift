@@ -75,6 +75,9 @@ enum StoryGenre: String, CaseIterable, Codable, Identifiable {
     case comedy = "Comedy"
     case tagebuch = "Tagebuch"
     case fabel = "Fabel"
+    /// A short radio news report: with Dialog, the two text types DLI tests listening on
+    /// (a conversation and a broadcast). Appended last so stored raw values never shift.
+    case nachrichten = "Nachrichten"
 
     var id: String { rawValue }
 
@@ -91,6 +94,7 @@ enum StoryGenre: String, CaseIterable, Codable, Identifiable {
         case .comedy: "Comedy"
         case .tagebuch: "Diary entry"
         case .fabel: "Fable"
+        case .nachrichten: "News report"
         }
     }
 
@@ -124,6 +128,8 @@ enum StoryGenre: String, CaseIterable, Codable, Identifiable {
             "Schreibe die Geschichte als persönlichen Tagebucheintrag in der Ich-Form, mit Datum und ehrlichen Gedanken."
         case .fabel:
             "Schreibe eine kurze Fabel mit sprechenden Tieren und einer klaren Moral am Ende."
+        case .nachrichten:
+            "Schreibe die Geschichte als kurze Radiomeldung: sachlich, in der dritten Person, ohne wörtliche Rede. Sag, wer was wann und wo getan hat, und am Ende, wie es weitergeht."
         }
     }
 }
@@ -205,6 +211,10 @@ final class StudyStory {
     var bestScore: Int?
     /// True when the last study session used listening mode (labels results/rows).
     var lastStudiedAsListening: Bool
+    /// Encoded `[String]`: three or four key points in English, written with the story, that a
+    /// listener's own summary is compared with (Hören ▸ Worum geht's?). Nil on stories made before
+    /// they existed; the compare step can make them on demand.
+    var keyPointsData: Data? = nil
 
     init(topic: String, level: CEFRLevel, genre: StoryGenre, createdAt: Date = .now) {
         self.id = UUID()
@@ -229,6 +239,12 @@ final class StudyStory {
 
     var level: CEFRLevel { CEFRLevel(rawValue: levelRaw) ?? .a2 }
     var genre: StoryGenre { genreRaw.flatMap { StoryGenre(rawValue: $0) } ?? .alltag }
+
+    var keyPoints: [String] {
+        get { keyPointsData.flatMap { try? JSONDecoder().decode([String].self, from: $0) } ?? [] }
+        set { keyPointsData = newValue.isEmpty ? nil : try? JSONEncoder().encode(newValue) }
+    }
+    var hasKeyPoints: Bool { !keyPoints.isEmpty }
     var model: MLXModel? { modelRaw.flatMap { MLXModel(rawValue: $0) } }
 
     // MARK: Decoded blobs

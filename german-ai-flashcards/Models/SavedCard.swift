@@ -50,6 +50,12 @@ final class SavedCard {
     /// "has no picture yet" is the natural query for the illustrate-the-rest pass.
     var imageFileName: String?
 
+    /// A one-line caption under the German word — a noun's plural as the sheet wrote it
+    /// ("Plural: die Computer"), kept from the document the deck was built from. Bundled Goethe
+    /// words look theirs up in the index instead (see `vocabCard`); nil for every other card.
+    /// Defaulted so the column is an additive migration.
+    var formsLine: String? = nil
+
     // MARK: - Spaced Repetition (Anki-style) Fields
 
     /// SM-2 ease factor — starts at 2.5, minimum 1.3.
@@ -88,7 +94,8 @@ final class SavedCard {
         article: String? = nil,
         exampleSentence: String? = nil,
         conjugations: [Conjugation]? = nil,
-        sortOrder: Int = 0
+        sortOrder: Int = 0,
+        formsLine: String? = nil
     ) {
         self.id = UUID()
         self.germanWord = germanWord
@@ -97,6 +104,7 @@ final class SavedCard {
         self.article = article
         self.exampleSentence = exampleSentence
         self.sortOrder = sortOrder
+        self.formsLine = formsLine
         self.imageFileName = nil
 
         // SRS defaults
@@ -133,9 +141,9 @@ final class SavedCard {
         if firstReviewedAt == nil { firstReviewedAt = now }
     }
 
-    /// The value-type card the player studies, built from this row. Cards of the Wortschatz deck
-    /// also carry their plural / Perfekt forms line, looked up in the bundled index rather than
-    /// stored — the lists own that data, the store only owns progress.
+    /// The value-type card the player studies, built from this row. A card that kept its sheet's
+    /// plural carries it; cards of the Wortschatz deck look theirs up in the bundled index rather
+    /// than storing it — the lists own that data, the store only owns progress.
     var vocabCard: VocabCard {
         VocabCard(
             germanWord: germanWord,
@@ -144,7 +152,7 @@ final class SavedCard {
             article: article,
             exampleSentence: exampleSentence,
             conjugations: conjugations,
-            forms: deck?.kind == .goetheSRS ? GoetheVocabService.index[germanWord]?.formsLine : nil
+            forms: formsLine ?? (deck?.kind == .goetheSRS ? GoetheVocabService.index[germanWord]?.formsLine : nil)
         )
     }
 }

@@ -28,8 +28,9 @@ enum GrammarRoute: Hashable {
     case kasus(KasusUnit)
     /// A der/die/das round.
     case articleGame
-    /// `PrepositionHubView`, pushed.
-    case prepositionHub
+    /// `PrepositionHubView`, pushed. `verbTrack` lands a verb-pair focus on the hub's
+    /// Verb + Präposition track (seeding the remembered pick once); false leaves the learner's.
+    case prepositionHub(verbTrack: Bool)
     /// A topic that isn't a case (Reflexive Verben): its lesson's practice drill.
     case topic(GrammarTopic)
     /// `GrammarLessonSheet`, the 30-second explanation. Structures with no exercise of their own.
@@ -47,8 +48,10 @@ enum GrammarRoute: Hashable {
         switch focus {
         case .artikel:
             self = .articleGame
-        case .praepositionen, .wechselpraepositionen, .verbenPraepositionen:
-            self = .prepositionHub
+        case .praepositionen, .wechselpraepositionen:
+            self = .prepositionHub(verbTrack: false)
+        case .verbenPraepositionen:
+            self = .prepositionHub(verbTrack: true)
         default:
             self = .lesson(focus)
         }
@@ -78,8 +81,8 @@ enum GrammarRoute: Hashable {
     enum Destination {
         /// Hand to `ActivityRouter.launch`.
         case launch(Activity)
-        /// Push `PrepositionHubView`.
-        case prepositionHub
+        /// Push `PrepositionHubView`, on its verb track when the focus is a verb pair.
+        case prepositionHub(verbTrack: Bool)
         /// Present `GrammarLessonSheet`.
         case lesson(GrammarFocus)
     }
@@ -94,8 +97,8 @@ enum GrammarRoute: Hashable {
             // The Goethe lists always hold enough nouns; the lesson is only a safety net.
             guard let activity = Self.articleActivity(level: level, in: context) else { return .lesson(.artikel) }
             return .launch(activity)
-        case .prepositionHub:
-            return .prepositionHub
+        case .prepositionHub(let verbTrack):
+            return .prepositionHub(verbTrack: verbTrack)
         case .topic(let topic):
             return .launch(.grammarDrill(GrammarDrillSession(kind: topic.lessonPractice ?? .reflexCase, topic: topic)))
         case .lesson(let focus):
@@ -235,8 +238,8 @@ enum GrammarRoute: Hashable {
             default:
                 return "activity \(activity.id)"
             }
-        case .prepositionHub:
-            return "Präpositionen hub"
+        case .prepositionHub(let verbTrack):
+            return verbTrack ? "Präpositionen hub · Verb-Track" : "Präpositionen hub"
         case .lesson(let focus):
             return "quick lesson (\(focus.germanLabel))"
         }

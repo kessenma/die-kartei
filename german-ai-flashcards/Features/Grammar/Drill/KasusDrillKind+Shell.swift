@@ -29,6 +29,13 @@ extension KasusDrillKind {
             shell(session, hapticMode, onComplete, onDismiss, make: FehlerModule.init(session:))
         case .bridge:
             shell(session, hapticMode, onComplete, onDismiss, make: BridgeModule.init(session:))
+        // One module, two pools: the trap is the same question asked where English misleads.
+        case .frage, .englischeFalle:
+            shell(session, hapticMode, onComplete, onDismiss, make: FrageModule.init(session:))
+        case .tabelle:
+            shell(session, hapticMode, onComplete, onDismiss, make: ArticleTableModule.init(session:))
+        case .findeFall:
+            shell(session, hapticMode, onComplete, onDismiss, make: UnbuiltModule.init(session:))
         }
     }
 
@@ -69,6 +76,12 @@ extension KasusDrillKind {
             return play(FehlerModule(session: session), session, wrongEvery: wrongEvery, seed: seed)
         case .bridge:
             return play(BridgeModule(session: session), session, wrongEvery: wrongEvery, seed: seed)
+        case .frage, .englischeFalle:
+            return play(FrageModule(session: session), session, wrongEvery: wrongEvery, seed: seed)
+        case .tabelle:
+            return play(ArticleTableModule(session: session), session, wrongEvery: wrongEvery, seed: seed)
+        case .findeFall:
+            return play(UnbuiltModule(session: session), session, wrongEvery: wrongEvery, seed: seed)
         }
     }
 

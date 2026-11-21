@@ -5,7 +5,7 @@ import Foundation
 /// A grammar structure the conversation should emphasize. Used to steer the AI's
 /// questions and to focus the correction pass. Each case carries an English label
 /// and explanation for the picker's subheader and info modal.
-enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
+nonisolated enum GrammarFocus: String, CaseIterable, Codable, Identifiable {
     case perfekt
     case praeteritum
     case futur

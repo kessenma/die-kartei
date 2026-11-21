@@ -115,7 +115,10 @@ struct JobPostingDetailView: View {
                 mlxService: mlxService,
                 anchorScenario: .jobInterview,
                 phrase: nil,
-                initialGerman: draft.german
+                initialGerman: draft.german,
+                deckTarget: PhraseDeckTarget(label: "this job ad's deck") { german, english in
+                    JobDeckStore.saveWord(german: german, english: english, posting: posting, context: modelContext)
+                }
             )
         }
         .sheet(isPresented: $showWords) {
@@ -600,13 +603,7 @@ struct JobPostingDetailView: View {
 /// How a lookup entry is matched against the deck: article stripped, lowercased, the same key
 /// `JobDeckStore` stores cards under.
 private enum JobDeckStoreKey {
-    static func key(_ german: String) -> String {
-        var word = german.trimmingCharacters(in: .whitespacesAndNewlines)
-        for article in ["der ", "die ", "das "] where word.lowercased().hasPrefix(article) {
-            word = String(word.dropFirst(article.count)).trimmingCharacters(in: .whitespaces)
-        }
-        return word.lowercased()
-    }
+    static func key(_ german: String) -> String { CardKind.matchKey(german) }
 }
 
 // MARK: - Preview

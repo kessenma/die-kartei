@@ -17,13 +17,13 @@ enum JobDeckStore {
     /// Lowercased German words already saved to this posting's deck — marked in the text.
     static func savedWords(for posting: JobPosting, context: ModelContext) -> Set<String> {
         guard let deck = deck(for: posting, context: context) else { return [] }
-        return Set(deck.cards.map { $0.germanWord.lowercased() })
+        return Set(deck.cards.map { CardKind.matchKey($0.germanWord) })
     }
 
     static func isWordSaved(_ word: String, posting: JobPosting, context: ModelContext) -> Bool {
         guard let deck = deck(for: posting, context: context) else { return false }
-        let key = splitArticle(word).0.lowercased()
-        return deck.cards.contains { $0.germanWord.lowercased() == key }
+        let key = CardKind.matchKey(word)
+        return deck.cards.contains { CardKind.matchKey($0.germanWord) == key }
     }
 
     /// Save a tapped word (or phrase) into the posting's deck, created on first save, and unless
@@ -50,12 +50,13 @@ enum JobDeckStore {
             target = created
         }
 
-        let (word, article) = splitArticle(german)
+        let split = CardKind.split(german)
+        let word = split.word
         target.cards.append(SavedCard(
             germanWord: word,
             englishTranslation: english ?? "",
-            wordType: article != nil ? "noun" : nil,
-            article: article,
+            wordType: split.wordType,
+            article: split.article,
             exampleSentence: nil,
             conjugations: nil,
             sortOrder: target.cards.count
@@ -80,12 +81,5 @@ enum JobDeckStore {
             }
         }
         return added
-    }
-
-    private static func splitArticle(_ word: String) -> (String, String?) {
-        for article in ["der ", "die ", "das "] where word.lowercased().hasPrefix(article) {
-            return (String(word.dropFirst(article.count)).trimmingCharacters(in: .whitespaces), String(article.dropLast()))
-        }
-        return (word, nil)
     }
 }

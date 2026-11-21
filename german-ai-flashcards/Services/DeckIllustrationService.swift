@@ -34,6 +34,27 @@ final class DeckIllustrationService {
     private(set) var illustratingDeckUUID: UUID?
     private(set) var completedCount = 0
     private(set) var totalCount = 0
+    /// A saved deck's run, not the create flow's draft run (which has its own overlay on Home).
+    /// What the app-wide picture pill (`DeckPicturesPill`) shows itself for.
+    private(set) var isDeckRun = false
+    /// The deck's name while a deck run is going, for the pill.
+    private(set) var runTitle: String?
+
+    /// How a deck run ended, for the pill's "done" note; nil once the learner has seen it.
+    struct FinishedRun: Equatable, Identifiable {
+        let id = UUID()
+        let deckUUID: UUID
+        let title: String
+        let drawn: Int
+        let total: Int
+        /// The learner pressed Stop.
+        let stopped: Bool
+        /// Why it stopped on its own, when it did (`PictureRunReport.stopReason`).
+        let problem: String?
+    }
+    private(set) var lastFinished: FinishedRun?
+
+    func dismissFinished() { lastFinished = nil }
     /// Whether the run that just ended was ended by the learner rather than by finishing. The
     /// create-time flow checks this so a stopped run isn't immediately started again for the
     /// cards it didn't get to.
@@ -94,7 +115,7 @@ final class DeckIllustrationService {
             .sorted { $0.sortOrder < $1.sortOrder }
         guard !pending.isEmpty else { return 0 }
 
-        beginRun(id: deckUUID, total: pending.count)
+        beginRun(id: deckUUID, total: pending.count, title: deck.topic)
         defer { endRun() }
 
         // On-device, the session unloads the ~5 GB language model first: it and the diffusion
@@ -103,6 +124,7 @@ final class DeckIllustrationService {
         guard let session = await StoryImageService.shared.beginSession(unloading: mlxService) else {
             noteSessionFailure()
             fileReport(drawn: 0, total: pending.count, for: deckUUID)
+            noteFinished(deckUUID: deckUUID, title: deck.topic, drawn: 0)
             return 0
         }
         defer { session.end() }
@@ -132,7 +154,15 @@ final class DeckIllustrationService {
             drawn += 1
         })
         fileReport(drawn: drawn, total: pending.count, for: deckUUID)
+        // Not for a deck deleted mid-run: there is nothing left to tell the learner about.
+        if !deck.isDeleted { noteFinished(deckUUID: deckUUID, title: deck.topic, drawn: drawn) }
         return drawn
+    }
+
+    /// The deck run's ending, for the pill.
+    private func noteFinished(deckUUID: UUID, title: String, drawn: Int) {
+        lastFinished = FinishedRun(deckUUID: deckUUID, title: title, drawn: drawn, total: totalCount,
+                                   stopped: wasStopped, problem: lastReport?.stopReason)
     }
 
     // MARK: - Draft run (pictures before the deck exists)
@@ -153,7 +183,7 @@ final class DeckIllustrationService {
     ) async -> [String: String] {
         guard !isRunning, !cards.isEmpty else { return [:] }
 
-        beginRun(id: draftID, total: cards.count)
+        beginRun(id: draftID, total: cards.count, title: nil)
         defer { endRun() }
 
         guard let session = await StoryImageService.shared.beginSession(unloading: mlxService) else {
@@ -198,8 +228,12 @@ final class DeckIllustrationService {
         case stop(OpenRouterError?)
     }
 
-    private func beginRun(id: UUID, total: Int) {
+    /// `title` is the deck's name for a deck run, nil for the create flow's draft run.
+    private func beginRun(id: UUID, total: Int, title: String?) {
         isRunning = true
+        isDeckRun = title != nil
+        runTitle = title
+        lastFinished = nil
         stopRequested = false
         wasStopped = false
         lastReport = nil
@@ -234,6 +268,8 @@ final class DeckIllustrationService {
 
     private func endRun() {
         isRunning = false
+        isDeckRun = false
+        runTitle = nil
         illustratingDeckUUID = nil
         completedCount = 0
         totalCount = 0

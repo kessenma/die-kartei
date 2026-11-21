@@ -1,0 +1,2438 @@
+{
+  "abbiegen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "abfahren": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "abgeben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 396552
+  },
+  "abheben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 940124
+  },
+  "abholen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "abhängen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 12606072
+  },
+  "ablehnen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "abnehmen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2741399
+  },
+  "absagen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 3375963
+  },
+  "abschließen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 455734
+  },
+  "abstimmen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 846848
+  },
+  "abwaschen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2488916
+  },
+  "akzeptieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2228176
+  },
+  "anbieten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 4260018
+  },
+  "anerkennen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 13541482
+  },
+  "anfangen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "angeben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 8564781
+  },
+  "anhaben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 12187178
+  },
+  "ankommen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 341062
+  },
+  "ankündigen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 8290877
+  },
+  "anmachen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 5341510
+  },
+  "anmelden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 9548927
+  },
+  "annehmen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 351104
+  },
+  "anrufen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 341116
+  },
+  "anschaffen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 11717939
+  },
+  "anschließen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "anschnallen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 0,
+    "source": "tatoeba",
+    "tatoeba_id": 1512054
+  },
+  "ansehen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 5994052
+  },
+  "ansprechen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1514586
+  },
+  "anstellen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 1345429
+  },
+  "antworten": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "anwenden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 726014
+  },
+  "anzeigen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 13458970
+  },
+  "anziehen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 604571
+  },
+  "arbeiten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 379226
+  },
+  "auffallen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2664164
+  },
+  "auffordern": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 12544442
+  },
+  "aufführen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 1539231
+  },
+  "aufgeben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 399312
+  },
+  "aufhalten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 13677960
+  },
+  "aufheben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2798470
+  },
+  "aufhören": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 15773
+  },
+  "aufladen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 12586027
+  },
+  "auflösen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 13152735
+  },
+  "aufmachen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 4844910
+  },
+  "aufnehmen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1427600
+  },
+  "aufpassen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 3890559
+  },
+  "aufregen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 722900
+  },
+  "aufräumen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "aufstehen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "auftreten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 721132
+  },
+  "aufwachen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "aufwachsen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 408398
+  },
+  "ausdrucken": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 5,
+    "source": "tatoeba",
+    "tatoeba_id": 12785223
+  },
+  "ausdrücken": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "ausfallen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1511511
+  },
+  "ausfüllen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2404513
+  },
+  "ausgeben": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "ausgehen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "ausmachen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "auspacken": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 6863764
+  },
+  "ausrichten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 357140
+  },
+  "ausruhen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 1070792
+  },
+  "ausschließen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2954097
+  },
+  "aussehen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 4040823
+  },
+  "aussprechen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 6140334
+  },
+  "aussteigen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "ausstellen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 722903
+  },
+  "auswählen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1416323
+  },
+  "ausziehen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1542965
+  },
+  "backen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 688290
+  },
+  "baden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 10548122
+  },
+  "basteln": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 6,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "bauen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "beantworten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 577520
+  },
+  "bedeuten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 7255048
+  },
+  "beenden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 359654
+  },
+  "beginnen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "begründen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 1767675
+  },
+  "behalten": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "bekommen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "benutzen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1545247
+  },
+  "beraten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 5102154
+  },
+  "berichten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 7,
+    "source": "tatoeba",
+    "tatoeba_id": 372591
+  },
+  "beschreiben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 407484
+  },
+  "besichtigen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 5287102
+  },
+  "bestehen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 341153
+  },
+  "bestellen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 446134
+  },
+  "besuchen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "bewerben": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 7,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "bezahlen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 366502
+  },
+  "bitten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 494271
+  },
+  "bleiben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 421648
+  },
+  "braten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 3352053
+  },
+  "brauchen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 359668
+  },
+  "bringen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 452602
+  },
+  "buchen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1343583
+  },
+  "buchstabieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 9219141
+  },
+  "danken": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 909924
+  },
+  "dauern": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 943038
+  },
+  "denken": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 626752
+  },
+  "drücken": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 5102272
+  },
+  "duschen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 398897
+  },
+  "einbrechen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 7681121
+  },
+  "einfallen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1288221
+  },
+  "einfügen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 0,
+    "source": "tatoeba",
+    "tatoeba_id": 9048174
+  },
+  "einführen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 5,
+    "source": "tatoeba",
+    "tatoeba_id": 722901
+  },
+  "einkaufen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 8846419
+  },
+  "einladen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "einnehmen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 13011716
+  },
+  "einpacken": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 7528656
+  },
+  "einrichten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 2404405
+  },
+  "einschalten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 406782
+  },
+  "einschlafen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "einsetzen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 722892
+  },
+  "einsteigen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 521745
+  },
+  "einstellen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1795967
+  },
+  "eintragen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 5,
+    "source": "tatoeba",
+    "tatoeba_id": 540268
+  },
+  "eintreten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1795985
+  },
+  "einzahlen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 7372496
+  },
+  "einziehen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "empfehlen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "enden": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "entscheiden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 1401424
+  },
+  "entschuldigen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 3428716
+  },
+  "entstehen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 7455116
+  },
+  "erfinden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1105870
+  },
+  "erhalten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 361083
+  },
+  "erklären": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "erlauben": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "erreichen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 342035
+  },
+  "erscheinen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 351808
+  },
+  "erwarten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1148
+  },
+  "erzählen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "essen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 350678
+  },
+  "fahren": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "fallen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 700
+  },
+  "fehlen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 518762
+  },
+  "feiern": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1453333
+  },
+  "fernsehen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 340763
+  },
+  "festlegen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "festsetzen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 2232220
+  },
+  "feststellen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1521420
+  },
+  "finden": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "fliegen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 684233
+  },
+  "fortsetzen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 5102287
+  },
+  "fotografieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2118319
+  },
+  "fragen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "freuen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 569212
+  },
+  "frühstücken": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 700036
+  },
+  "funktionieren": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "geben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 331896
+  },
+  "gefallen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1155
+  },
+  "gehen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "gehören": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 341236
+  },
+  "gewinnen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 448686
+  },
+  "glauben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 352570
+  },
+  "gratulieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 358253
+  },
+  "grillen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 7,
+    "source": "tatoeba",
+    "tatoeba_id": 2461846
+  },
+  "haben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 342192
+  },
+  "halten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 343448
+  },
+  "heiraten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 345556
+  },
+  "heißen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 1,
+    "source": "tatoeba",
+    "tatoeba_id": 2666878
+  },
+  "helfen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 331895
+  },
+  "herstellen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 370174
+  },
+  "herunterladen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2630811
+  },
+  "hinweisen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 5,
+    "source": "tatoeba",
+    "tatoeba_id": 7528202
+  },
+  "hochladen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 8242394
+  },
+  "hoffen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 3,
+    "source": "tatoeba",
+    "tatoeba_id": 13618386
+  },
+  "holen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 627288
+  },
+  "husten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 2,
+    "source": "tatoeba",
+    "tatoeba_id": 6619339
+  },
+  "hören": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 341236
+  },
+  "kaufen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "kennen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "kennenlernen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 662210
+  },
+  "klappen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2650559
+  },
+  "klettern": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "kochen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 604173
+  },
+  "kommen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "kontrollieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 5,
+    "source": "tatoeba",
+    "tatoeba_id": 11810933
+  },
+  "kosten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 341990
+  },
+  "kriegen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1105442
+  },
+  "kündigen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 3164590
+  },
+  "lachen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 467705
+  },
+  "lassen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 344432
+  },
+  "laufen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "leben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 414291
+  },
+  "legen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 362639
+  },
+  "leihen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 361837
+  },
+  "lernen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 874
+  },
+  "lesen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 693
+  },
+  "lieben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 644485
+  },
+  "liefern": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 5,
+    "source": "tatoeba",
+    "tatoeba_id": 11129937
+  },
+  "liegen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 643589
+  },
+  "losfahren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1881414
+  },
+  "lügen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1341997
+  },
+  "machen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1184
+  },
+  "malen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1107162
+  },
+  "meinen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1705151
+  },
+  "merken": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1276778
+  },
+  "mieten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 647756
+  },
+  "mitbringen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 627291
+  },
+  "mitkommen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 3756690
+  },
+  "mitmachen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 5,
+    "source": "tatoeba",
+    "tatoeba_id": 3394806
+  },
+  "mitnehmen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 909916
+  },
+  "mitteilen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2138670
+  },
+  "möchten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 457375
+  },
+  "nachdenken": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 639933
+  },
+  "nehmen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "nennen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1386687
+  },
+  "notieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 1391252
+  },
+  "organisieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 13146119
+  },
+  "packen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 463861
+  },
+  "parken": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 3033667
+  },
+  "passen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 5,
+    "source": "tatoeba",
+    "tatoeba_id": 2982976
+  },
+  "passieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 6157
+  },
+  "planen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "probieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1708006
+  },
+  "prüfen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 8142227
+  },
+  "putzen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 349836
+  },
+  "rasieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 8864949
+  },
+  "rauchen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 400457
+  },
+  "rechnen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 759190
+  },
+  "reden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 766478
+  },
+  "regnen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1311066
+  },
+  "reisen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2863636
+  },
+  "reiten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 2130934
+  },
+  "renovieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 387151
+  },
+  "reparieren": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "reservieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 343076
+  },
+  "riechen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 1892399
+  },
+  "rufen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 413881
+  },
+  "sagen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 821
+  },
+  "sammeln": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 5037688
+  },
+  "schaffen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1455869
+  },
+  "scheinen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 13001008
+  },
+  "scheitern": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 12567630
+  },
+  "schenken": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 406891
+  },
+  "schicken": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "schimpfen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 6854838
+  },
+  "schlafen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 406376
+  },
+  "schließen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 560950
+  },
+  "schmecken": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "schneiden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 622858
+  },
+  "schneien": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 6061
+  },
+  "schreiben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 330596
+  },
+  "schwimmen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "sehen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 496
+  },
+  "sein": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "setzen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "singen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 139445
+  },
+  "sitzen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 3895522
+  },
+  "sparen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 612042
+  },
+  "speichern": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 11826693
+  },
+  "spielen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "sprechen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "stattfinden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 5306970
+  },
+  "stehen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 362260
+  },
+  "steigen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 739274
+  },
+  "stellen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 368266
+  },
+  "sterben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 135992
+  },
+  "stoßen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 5503952
+  },
+  "streiten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 386264
+  },
+  "studieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1018473
+  },
+  "stören": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 5102275
+  },
+  "suchen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 342046
+  },
+  "tanzen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 910985
+  },
+  "teilen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 591932
+  },
+  "teilnehmen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 513725
+  },
+  "telefonieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 712295
+  },
+  "tragen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "trainieren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 7464212
+  },
+  "treffen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 591
+  },
+  "trennen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 6,
+    "source": "tatoeba",
+    "tatoeba_id": 569142
+  },
+  "trinken": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "träumen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 644403
+  },
+  "tun": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 352099
+  },
+  "umdrehen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 951584
+  },
+  "umgehen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2650595
+  },
+  "umsteigen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 6,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "umziehen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1153135
+  },
+  "unterhalten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 3974689
+  },
+  "unternehmen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1402177
+  },
+  "unterschreiben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 5313369
+  },
+  "untersuchen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 369748
+  },
+  "verabreden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2113537
+  },
+  "verabschieden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1340860
+  },
+  "verbessern": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 650280
+  },
+  "verbinden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1039022
+  },
+  "verbrennen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2634004
+  },
+  "verbringen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "verdienen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "vereinbaren": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 2,
+    "source": "tatoeba",
+    "tatoeba_id": 1401400
+  },
+  "vergessen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 351787
+  },
+  "vergleichen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 894528
+  },
+  "verkaufen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 662729
+  },
+  "verlassen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "verletzen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 361950
+  },
+  "verlieren": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "vermieten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 13737897
+  },
+  "verpassen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 344472
+  },
+  "verreisen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 11690961
+  },
+  "verschieben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 8105354
+  },
+  "verschwinden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 781378
+  },
+  "verstecken": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1545908
+  },
+  "verstehen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 401435
+  },
+  "versuchen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 356569
+  },
+  "verändern": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 353317
+  },
+  "vorbereiten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 825718
+  },
+  "vorhaben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 5,
+    "source": "tatoeba",
+    "tatoeba_id": 9979005
+  },
+  "vorkommen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 7418898
+  },
+  "vorlesen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1186251
+  },
+  "vorschlagen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "vorstellen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1390692
+  },
+  "wachsen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "wandern": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 10219643
+  },
+  "warten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 362210
+  },
+  "waschen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "wechseln": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "wecken": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 550237
+  },
+  "wehtun": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1097467
+  },
+  "weinen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 352523
+  },
+  "werden": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 367777
+  },
+  "werfen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "wiederholen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1003423
+  },
+  "wissen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 915230
+  },
+  "wohnen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1359231
+  },
+  "wählen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1828208
+  },
+  "wünschen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 555822
+  },
+  "zahlen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "zeichnen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 2326084
+  },
+  "zeigen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "zubereiten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 922029
+  },
+  "zuhören": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1555359
+  },
+  "zumachen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1552722
+  },
+  "zunehmen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 8493070
+  },
+  "zusagen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1079152
+  },
+  "zustimmen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1556069
+  },
+  "zwingen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 7777172
+  },
+  "ändern": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 494290
+  },
+  "ärgern": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 5102276
+  },
+  "öffnen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "üben": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 582190
+  },
+  "übernachten": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1511066
+  },
+  "übernehmen": {
+    "incumbent": true,
+    "rank": 1,
+    "score": 9,
+    "source": "incumbent",
+    "tatoeba_id": 0
+  },
+  "übersetzen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 446042
+  },
+  "überweisen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 982088
+  },
+  "überzeugen": {
+    "incumbent": false,
+    "rank": 1,
+    "score": 8,
+    "source": "tatoeba",
+    "tatoeba_id": 1423455
+  }
+}

@@ -118,6 +118,21 @@ final class KasusRound {
     /// Recorded before Markieren and Endungen replaced Finden and Einsetzen.
     var isLegacyStoryRound: Bool { (step == .find || step == .fill) && feedbackModeRaw.isEmpty }
 
+    /// This round really happened: not one of the synthetic rows `-kasus.debugVerifyRecord keep`
+    /// leaves behind. The one predicate every aggregation over time, days or cases applies — a
+    /// read lesson *is* study (reading a lesson is grammar time), it just isn't a listed row.
+    var countsAsStudy: Bool {
+        #if DEBUG
+        storyID != KasusService.debugVerifyStoryID
+        #else
+        true
+        #endif
+    }
+
+    /// A row in Verlauf and in a topic's „Deine Runden“: a round that really happened and asked
+    /// something. A read lesson answers nothing; the unit screen's ✓ is where it shows.
+    var isListed: Bool { countsAsStudy && !isLessonRound }
+
     /// „Markieren · Dativ“, „Endungen“, „Schnellrunde“, or the old „Finden“ / „Einsetzen“ for a
     /// round recorded before those two exercises.
     var stepLabel: String {

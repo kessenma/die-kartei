@@ -47,6 +47,13 @@ struct MacSidebarShell: View {
             }
             // MAC-PICTURES: decks another device asked this Mac to illustrate.
             .safeAreaInset(edge: .top, spacing: 0) { MacPictureInboxBanner() }
+            // A deck's pictures being drawn, wherever the window is. The inbox banner above shows
+            // its own runs.
+            .overlay(alignment: .bottom) {
+                if !MacPictureInbox.shared.isDrawing {
+                    DeckPicturesPill().padding(.bottom, 16)
+                }
+            }
             // On the content's side of the toolbar: an item over the sidebar would hold the
             // sidebar at least as wide as the item plus the traffic lights, and compact never
             // gets narrow.
@@ -204,6 +211,14 @@ struct MacSidebarShell: View {
         case .jobPrep:
             NavigationStack {
                 JobPrepHubView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+            }
+        case .schreiben:
+            NavigationStack {
+                SchreibenHubView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+            }
+        case .hoeren:
+            NavigationStack {
+                HoerenHubView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
             }
         default:
             if let category = destination.category {

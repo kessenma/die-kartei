@@ -120,11 +120,16 @@ final class SpeechService: NSObject, AVSpeechSynthesizerDelegate {
         guard queueIndex < queue.count else { finish(); return }
         let segment = queue[queueIndex]
         let utterance = AVSpeechUtterance(string: segment.text)
-        let storedID = segment.voiceIdentifier ?? UserDefaults.standard.string(forKey: "selectedVoiceIdentifier")
+        let selectedID = UserDefaults.standard.string(forKey: "selectedVoiceIdentifier")
+        let storedID = segment.voiceIdentifier ?? selectedID
         if let id = storedID, let voice = AVSpeechSynthesisVoice(identifier: id) {
             utterance.voice = voice
         } else {
-            utterance.voice = AVSpeechSynthesisVoice(language: "de-DE")
+            // Chosen but not on this device: picked on another device (iCloud Sync) or deleted in
+            // Settings. A missing dialogue voice tries the main voice before the system one.
+            if let id = storedID { VoiceSetup.shared.speechFellBack(wanted: id) }
+            utterance.voice = selectedID.flatMap(AVSpeechSynthesisVoice.init(identifier:))
+                ?? AVSpeechSynthesisVoice(language: "de-DE")
         }
         let base = AVSpeechUtteranceDefaultSpeechRate
         utterance.rate = slowRate ? base * 0.5 : base * 0.85

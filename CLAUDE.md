@@ -14,10 +14,29 @@ German for identity words and headings, plain English for explanation.
 - `docs/LEARNER_MEMORY.md` — the persistent learner profile and coaching memory.
 - `docs/SHORT_STORIES.md` — story mode and on-device illustrations.
 - `docs/CLOUD_PICTURES.md` — cloud pictures on the learner's own OpenRouter account (Muse Image,
-  Nano Banana): sign-in, the picture-source seam, error policy, invariants, the probe, debug args.
+  Nano Banana): sign-in, the picture-source seam, error policy, invariants, a deck run in the
+  background (the app-wide picture pill), the probe, debug args.
 - `docs/JOB_PREP.md` — job-posting capture and interview prep.
 - `docs/CLASS_NOTES.md` — Deutschkurs: courses, class entries, handouts, homework, the per-course deck.
-- `docs/DOCUMENT_DECKS.md` — flashcards from a document: the vocab-sheet pairer, phrase picking, decks on a course.
+- `docs/WORKSHEETS.md` — Übungen: a lesson PDF's exercises as homework. The parser (and what iOS
+  PDFKit does differently), answering in the app or on the slide with the Pencil, the export of her
+  slides filled in, the optional check (key → article rules → tutor; handwriting confirmed first),
+  her Lösungen pages read as that key (samples never grade) and shown on the slide on request, words to the deck, "Open in Die
+  Kartei" for a PDF. Never commit a teacher's PDF.
+- `docs/DOCUMENT_DECKS.md` — flashcards from a document: the vocab-sheet pairer (two, three or four
+  columns, page by page), picking the pages, phrase picking, a document from a link, the kept
+  original, decks on a course.
+- `docs/PHRASES.md` — phrases as flashcards: the one-word-or-phrase rule (`CardKind`) every save
+  path uses, `wordType "phrase"`, why a phrase never gets an article or a dictionary check, the
+  gap face (which word hides, the four choices, grading per mode), where phrase cards come from
+  (Save phrase → deck, the answer key's Wortgruppen, German-explanation tables, sentence cards).
+- `docs/SCHREIBBLATT.md` — Schreibblatt: the handwriting sheet (Vorlage + writing tables), the one
+  renderer behind the Pencil canvas and the printable PDF, the four-lens word picker, the
+  PencilKit traps, formats (Hochformat, Querformat 2×2, endless grids), paper styles, the shared
+  Pencil controls (the dock in place of the system tool picker, pens and colours, the wrist
+  guard, circle to erase), the Spickzettel (the words floating over the sheet, following the pen),
+  Schreib es (write a missed flashcard by hand, iPad only), and the reusable Pencil surface every drawing screen runs on
+  (`PencilPaper`/`PencilSurface`/`PencilPad`, full-screen hand-off, drawing mode hiding the tab bar).
 - `docs/WORTSCHATZ.md` — the Goethe word box: merged index, one SRS deck, sessions, status, debug args.
 - `docs/KASUS.md` — the Grammatik case path: units, story format and targets, validator, exercises and right/wrong feedback, rich-text markup, the 3D ending blocks (Endungs-Werkstatt, Bau das Wort), Verlauf, GrammarRoute, coach rules, adding a story, tutor-written stories (planner, gate, fallback, Kasus Lab, Mac probe), tests, debug args.
 - `docs/GRAMMAR_EXERCISES.md` — the exercise framework every grammar drill shares: the registry
@@ -41,6 +60,29 @@ German for identity words and headings, plain English for explanation.
 - `docs/MAC_PICTURES.md` — Mac-only picture models (Z-Image Turbo, FLUX.2 klein via the vendored
   `KarteiDiffusion` package; keep mlx-swift on the tutors' 0.31 pin) and "Draw on my Mac" (a phone
   orders pictures through iCloud sync, the Mac draws them). Has the merge map for cloud pictures.
+- `docs/SPIELE.md` — the Spiele room: Galgenmännchen, Wortsuche and the Einsetz-Kreuzworträtsel,
+  the shared word layer and setup screen, the umlaut/ß rule, the two grid generators, scoring,
+  the three motifs, debug args.
+- `docs/ZEICHNEN.md` — the Zeichnen room: pictures per word (Bildermappe, `WordArtwork` keyed by
+  word, not card), styled cloud pictures (`WordArtStyle`), Schnellskizze (timed recall/copy runs,
+  keep-or-let-go review, sets, coach-picked weak words), Atelier (PencilKit studio brush, tracing
+  layer, halftone finishes; the Metal brush engine is phase 2), Malen nach Zahlen (the on-device
+  numbering), drawing stats, sync, debug args.
+- `docs/SCHREIBEN.md` — the Schreiben room: Tagebuch (any language, opt-in coach hand-off) and
+  Aufsatz (prompt bank, tutor check sentence by sentence with its gates, app-computed score), the
+  keyboard editor and the Pencil page with "Read my handwriting", self-report notes on the profile,
+  lookups to the writing deck, the Today nudge, debug args.
+- `docs/HOEREN.md` — the Hören room: Zahlen-Diktat (the hand-written German number speller, never
+  `.spellOut`; the answer parser; confusion classes), Diktat (bundled or course sentences only, the
+  word-by-word scorer with ending vs word misses, slips via `noteSlips` and never `applyDrillResult`),
+  Stories ▸ Hören as predict → listen with the text hidden → summary → compare with key points
+  (self-ticked; the tutor judge is DEBUG-only until `training/GIST_PROBE.md` is read), `HoerenRound`
+  + sync, the day counter, debug args.
+- `docs/FSI_DLI_ROADMAP.md` — the checklist of features borrowed from the US government language
+  schools (Hören room: Zahlen-Diktat, Diktat, gist; answer time; Stammtisch; Förderplan; the
+  loop around a class or tutor session), plus the queue of sources still to read. Every item
+  has a source mark; a shipped item is ticked there and adds its clause and citation to
+  Settings ▸ Sources.
 - `docs/FUTURE_FEATURES.md` — ideas not yet built.
 
 ## What's New maintenance

@@ -29,6 +29,8 @@ struct DialogueVoicePickerSection: View {
         }
         .themedListRow()
         .onAppear { voices = GermanVoiceCatalog.sorted() }
+        // A voice downloaded while this screen is open.
+        .onChange(of: VoiceSetup.shared.installed) { voices = GermanVoiceCatalog.sorted() }
     }
 
     private func picker(_ title: String, selection: Binding<String?>) -> some View {
@@ -40,6 +42,7 @@ struct DialogueVoicePickerSection: View {
             ForEach(voices, id: \.identifier) { voice in
                 Text(GermanVoiceCatalog.name(for: voice)).tag(voice.identifier)
             }
+            GermanVoiceCatalog.missingRow(for: selection.wrappedValue, among: voices)
         }
     }
 }
@@ -61,6 +64,28 @@ enum GermanVoiceCatalog {
         case .premium:  return "\(voice.name) (Premium)"
         case .enhanced: return "\(voice.name) (Enhanced)"
         default:        return "\(voice.name) (Basic)"
+        }
+    }
+
+    /// The same name for a voice that may not be installed (one chosen on another device), read
+    /// from its identifier: `com.apple.voice.premium.de-DE.Anna` is "Anna (Premium)".
+    static func name(forIdentifier id: String) -> String {
+        if let voice = AVSpeechSynthesisVoice(identifier: id) { return name(for: voice) }
+        let parts = id.split(separator: ".").map(String.init)
+        let qualities = ["premium": "Premium", "enhanced": "Enhanced", "compact": "Basic"]
+        let quality = parts.lazy.compactMap { qualities[$0.lowercased()] }.first
+        // Older Mac identifiers end in the quality: `com.apple.speech.synthesis.voice.anna.premium`.
+        let base = parts.last { qualities[$0.lowercased()] == nil } ?? id
+        let voiceName = base.prefix(1).uppercased() + base.dropFirst()
+        return quality.map { "\(voiceName) (\($0))" } ?? voiceName
+    }
+
+    /// A picker row for a chosen voice that isn't on this device, so the picker still shows the
+    /// choice instead of going blank. Nil when the choice is installed or there is none.
+    @ViewBuilder
+    static func missingRow(for id: String?, among voices: [AVSpeechSynthesisVoice]) -> some View {
+        if let id, !voices.contains(where: { $0.identifier == id }) {
+            Text("\(name(forIdentifier: id)), not downloaded").tag(id)
         }
     }
 }

@@ -19,6 +19,8 @@ struct CoachNotesView: View {
     @State private var showResetConfirm = false
     /// "Practice this" on a preposition focus pushes the hub from here, outside the List.
     @State private var showPrepositionHub = false
+    /// The track a "Practice this" tap asked for (verb pairs land on the verb track).
+    @State private var prepositionTrack: PrepositionHubView.Track?
 
     private var profile: LearnerProfile? { profiles.first }
 
@@ -40,6 +42,7 @@ struct CoachNotesView: View {
 
     private var isEmpty: Bool {
         (profile?.sessionCount ?? 0) == 0 && grammarRows.isEmpty && vocab.isEmpty && slips.isEmpty && archived.isEmpty
+            && (profile?.selfReports ?? []).isEmpty
     }
 
     var body: some View {
@@ -56,6 +59,7 @@ struct CoachNotesView: View {
                     drillSection.themedListRow()
                     clozeSection.themedListRow()
                     grammarSection.themedListRow()
+                    selfReportSection.themedListRow()
                     vocabSection.themedListRow()
                     slipsSection.themedListRow()
                     archiveSection.themedListRow()
@@ -67,7 +71,7 @@ struct CoachNotesView: View {
         .navigationTitle("Coach's Notes")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showPrepositionHub) {
-            PrepositionHubView(modelManager: modelManager)
+            PrepositionHubView(modelManager: modelManager, initialTrack: prepositionTrack)
         }
         .alert("Reset coaching memory?", isPresented: $showResetConfirm) {
             Button("Reset everything", role: .destructive) {
@@ -147,6 +151,60 @@ struct CoachNotesView: View {
         }
     }
 
+    /// What the learner told the app, in their own words, from the journal's hand-off.
+    @ViewBuilder private var selfReportSection: some View {
+        let notes = (profile?.selfReports ?? []).sorted { ($0.pinned ? 1 : 0, $0.notedAt) > ($1.pinned ? 1 : 0, $1.notedAt) }
+        if !notes.isEmpty {
+            Section {
+                ForEach(notes) { note in
+                    HStack(alignment: .top, spacing: 8) {
+                        if note.pinned {
+                            Image(systemName: "pin.fill").font(.caption2).foregroundStyle(.orange).padding(.top, 3)
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("„\(note.text)“").font(.callout)
+                            HStack(spacing: 6) {
+                                if let focus = note.grammarFocus {
+                                    Text(focus.germanLabel)
+                                        .font(.caption2.weight(.medium))
+                                        .padding(.horizontal, 6).padding(.vertical, 2)
+                                        .background(Color.accentColor.opacity(0.12), in: Capsule())
+                                }
+                                Text("you wrote this in your journal · \(note.notedAt.formatted(.dateTime.day().month(.abbreviated)))")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            }
+                        }
+                        Spacer()
+                        if note.timesNoted > 1 {
+                            Text("×\(note.timesNoted)").font(.caption2).foregroundStyle(.tertiary)
+                        }
+                    }
+                    .swipeActions(edge: .leading) {
+                        Button {
+                            LearnerMemoryService.setSelfReportPinned(note.id, pinned: !note.pinned, in: modelContext); save()
+                        } label: {
+                            Label(note.pinned ? "Unpin" : "Pin", systemImage: note.pinned ? "pin.slash" : "pin")
+                        }
+                        .tint(.orange)
+                    }
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            LearnerMemoryService.archiveSelfReport(id: note.id, in: modelContext); save()
+                        } label: {
+                            Label("Remove", systemImage: "archivebox")
+                        }
+                    }
+                }
+            } header: {
+                Text("Selbstbericht · In your own words").themedSectionHeader()
+            } footer: {
+                Text("What you told the coach yourself, from your journal. It steers conversations; it never changes your grammar confidence. The newest \(LearnerProfile.selfReportCap) stay unless pinned.")
+                    .font(.caption2)
+            }
+        }
+    }
+
     @ViewBuilder private var vocabSection: some View {
         if !vocab.isEmpty {
             Section {
@@ -159,6 +217,10 @@ struct CoachNotesView: View {
                             Text(item.german).font(.callout)
                             if item.source == MemorySource.placement {
                                 Text("from your placement check")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            } else if item.source == MemorySource.diktat {
+                                Text("missed in a Diktat")
                                     .font(.caption2)
                                     .foregroundStyle(.tertiary)
                             }
@@ -216,6 +278,10 @@ struct CoachNotesView: View {
                             // happened — and these never reach the coach's correction prompt.
                             if slip.source == MemorySource.placement {
                                 Text("you picked this in your placement check")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            } else if slip.source == MemorySource.diktat {
+                                Text("you wrote this in a Diktat: the ending you heard")
                                     .font(.caption2)
                                     .foregroundStyle(.tertiary)
                             }
@@ -301,7 +367,8 @@ struct CoachNotesView: View {
         switch route.resolve(in: modelContext, level: modelManager.germanLevel) {
         case .launch(let activity):
             router.launch(activity)
-        case .prepositionHub:
+        case .prepositionHub(let verbTrack):
+            prepositionTrack = verbTrack ? .verb : nil
             showPrepositionHub = true
         case .lesson:
             break // The row's own lesson is already open.

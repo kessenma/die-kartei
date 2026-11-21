@@ -498,7 +498,7 @@ struct KasusConceptRound {
 
 /// The lines a target's own explanation doesn't give: the role reveal, the walk's Ja/Nein lines,
 /// the Wer reading and the Probe's swap. All in the `KasusRich` markup, Foundation only.
-nonisolated enum KasusConceptExplanation {
+enum KasusConceptExplanation {
 
     /// „**Empfänger** (the receiver) → {dat:Dativ}. “ + the target's explanation; after a wrong
     /// pick, that pick first.

@@ -149,6 +149,22 @@ final class WiktionaryValidator {
         return (article, english.map(Self.cleanTranslation))
     }
 
+    /// The dictionary's English for a word of any part of speech (a noun's entry first), with the
+    /// article when the word is a noun of one gender. Accepts display forms ("die Gabel"); nil
+    /// when the word isn't there. The Schreiben room's "Nachschlagen" uses it.
+    func translation(for word: String) -> (english: String, article: GermanArticle?)? {
+        guard isAvailable else { return nil }
+        let normalized = normalizeWord(word)
+        let entries = lookupWithFallbacks(normalized)
+        let english = entries.first { $0.pos == "noun" && $0.translation?.isEmpty == false }?.translation
+            ?? entries.first { $0.translation?.isEmpty == false }?.translation
+        guard let english else { return nil }
+        let article = unambiguousGender(of: normalized)
+            .flatMap(GermanGenderInference.article(for:))
+            .flatMap(GermanArticle.init(rawValue:))
+        return (Self.cleanTranslation(english), article)
+    }
+
     /// Every part of speech the dictionary files a word under, looked up lowercased („noun“,
     /// „verb“, „adj“, „adv“). Empty when it doesn't know the word; nil when the database isn't
     /// there. The Kasus sentence checks on a tutor's story use it.
@@ -227,6 +243,14 @@ final class WiktionaryValidator {
     }
 
     private func evaluate(_ card: VocabCard) -> Verdict {
+        // A phrase is never in the dictionary as a whole, and guessing a gender from its last
+        // word ("das Ziel der Ausbildung" → die, from -ung) rewrote phrase cards. Not checked.
+        if CardKind.isPhrase(card) {
+            return Verdict(
+                result: ValidationResult(germanWord: card.germanWord, status: .unchecked, dictionaryTranslation: nil),
+                correctedArticle: nil
+            )
+        }
         let normalized = normalizeWord(card.germanWord)
         let entries = lookupWithFallbacks(normalized)
 

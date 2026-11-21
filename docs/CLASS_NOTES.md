@@ -156,6 +156,45 @@ A course can hold any number of decks; `SavedDeck.courseIDRaw` links them (addit
   `DeckLinks` in `UnifiedLibraryView`).
 The course page lists them all; the hub lists every course-linked deck with its course.
 
+**Wortliste (the word table).** Each deck row on the course page has a table button beside Study
+(and a context-menu item) that pushes `DeckWordTableView` (`Features/Cards/`): every card as one
+row, German with its article in gender colour, English, and on wide screens (≥640 pt: iPad, Mac,
+phone landscape) the position, word type, example and "Last time" columns. Search, sort by a
+column (tap the header; again reverses), examples on/off, and "Test yourself" hides the German or
+the English column until a row is tapped. The deck's setup screen opens the same table from its
+"See all N words" link (it replaced the old `WordListSheet`), with the session's corrected
+articles and the saved cards' progress. Rows are snapshotted on appear, never read from the deck
+in `body`. The progress column shows only once any card has been reviewed.
+
+**Progress in the Wortliste.** A saved card's flashcard record and its handwriting show as two
+columns once any card has some (wide: "Flashcards" with Missed last time / Knew it / New and
+"forgotten N×", "Written" with N×; phone: an icon and N×), plus a summary line ("2 missed last
+time · 2 written by hand"). *Missed last time* is `SavedCard.lastReviewWasCorrect == false`, in any
+mode: Anki and Leitner stamp it through their services, and Default mode now stamps its ✓/✗ when a
+round finishes (`CardDeckView.stampDefaultModeAnswers`, last-answer stamps only; reviews, lapses
+and boxes stay the schedulers'). *Forgotten N×* is `lapses` (Again in Anki, back to box 1 in
+Leitner). *Written N×* is `DeckWordRow.handwriting(in:)`: every finished Schreibblatt sheet adds
+its `repetitions` to each word on its pages (`writtenWords`, once per sheet), the same rule as the
+Schreibblatt picker's pencil count. Sheets don't sync, so it counts this device's sheets. Schreib
+es (write a missed card) keeps no record and doesn't count. Sort "Missed first" or "Most written".
+
+**Sharing the Wortliste.** The table's Share menu sends every word (never just the search hits)
+in the order on screen, with examples when "Show examples" is on: a **PDF table** (A4, the
+der/die/das colours, plural lines, the header repeated on each page, "1 / 3" footers), a
+**CSV** (UTF-8 with a BOM so Excel keeps the umlauts; the article stays on the noun), or **text**
+for a chat ("der Holzhacker = lumberjack" per line, shared as a string so Messages pastes it
+inline). "Include my progress" (on by default, remembered) adds the progress to each: PDF columns
+FLASHCARDS (Missed / Knew it / New, forgotten N×) and WRITTEN (N×, sheets), a pale red wash on the
+rows missed last time with a legend under the title; CSV columns Flashcards, Times forgotten,
+Times written (numbers, so a spreadsheet can sort them); "(missed last time, forgotten 2×, written
+10×)" after a word in the text. A column with nothing in it is left out. `-classNotes.debugOpen
+wordlist` seeds some answers and a finished 5× sheet on the sample deck so these show.
+`Services/DeckTableExport.swift` draws the PDF with Core Graphics + Core Text, no
+UIKit, so it runs on the Mac too; `DeckTableDocument` is the `Transferable`, and builds the bytes
+only when someone shares. To check the PDF without the simulator, compile `DeckTableExport.swift`
+with a stub `DeckWordRow`/`Gender` and rasterize it with `CGPDFDocument` (`xcrun swiftc`; the
+swiftly toolchain on PATH can't build against the SDK).
+
 ## Debug launch arguments (DEBUG)
 
 - `-classNotes.debugSeed 1` — two courses: "[debug] Deutsch A2 an der Uni" (dated, 6 weeks in,
@@ -163,8 +202,10 @@ The course page lists them all; the hub lists every course-linked deck with its 
   Anna" (tutor, goal, 2 entries, a "photo" handout with a drawn page as its original).
 - `-classNotes.debugOpen <screen>` — seeds if needed and opens `hub` (or `1`), `course`, `entry`,
   `editor`, `handout`, `story` (the Grimm story with its vocab deck linked), `translation` (that
-  story's side-by-side reader; the opening is seeded in English), or `builder` (the flashcard
-  builder over the real Hänsel vocab sheet) in a sheet.
+  story's side-by-side reader; the opening is seeded in English), `builder` (the flashcard
+  builder over the real Hänsel vocab sheet), `slides` (the same builder over a five-page
+  three-column slide module, for the page pills and the example/plural captions), or `wordlist`
+  (the Hänsel vocab deck's Wortliste) in a sheet.
 - `-classNotes.debugRemove 1` — removes both courses and their files.
 
 Only one presenting argument per launch (see `WhatsNewService`).
@@ -181,6 +222,14 @@ Only one presenting argument per launch (see `WhatsNewService`).
   PDF, then a scan: progress, then text); photo from the library; Open the original → Quick Look;
   homework checkbox on hub, course, and entry; swipe-delete an entry removes its handouts' files;
   Delete course from its editor pops to the hub, deck stays.
+
+## Homework from a lesson PDF
+
+A PDF handout's exercise pages can be set up as homework, worked in the app or on the slide with
+the Pencil, checked if the learner wants, and shared back as the teacher's own slides filled in.
+The handout page's **Hausaufgabe** section, the import's review step and the hub's Homework row
+lead there. Its own doc: `docs/WORKSHEETS.md`. A course's setup asks what kind it is (course,
+private tutor, on my own) and, for a course, its length in weeks.
 
 ## Later
 

@@ -52,6 +52,7 @@ CloudKitSyncTransport = CKSyncEngine (zone "Kartei", one record type "KarteiItem
 | On/off, account, zone deletion, lifecycle | `SyncManager.swift` |
 | Singleton ids | `SyncCanonicalizer.swift`, `SyncSingletonDecks` in `Codecs/DeckCodecs.swift` |
 | Screen | `Features/Settings/ICloudSyncSettingsView.swift` |
+| Sync report (why it isn't finishing) | `Services/Sync/SyncDiagnostics.swift`, `Features/Settings/SyncReportView.swift` |
 
 - **One generic record type** `KarteiItem` with fields `kind`, `payload` (JSON bytes),
   `payloadAsset` (payloads over 512 KB) and `file` (a picture or handout). Model changes only
@@ -105,6 +106,30 @@ CloudKitSyncTransport = CKSyncEngine (zone "Kartei", one record type "KarteiItem
 | File | path + size + modified date; the bytes go as a CKAsset. Applying one posts `.syncedFileLanded`, so a card or story picture that lands after its record reloads on screen |
 | Picture orders (`macPictureRequest` / `macPictureResult` on decks and stories) | plain LWW JSON, each written by one side only; pending = the result doesn't name the request's id. See [MAC_PICTURES.md](MAC_PICTURES.md) |
 | Device heartbeat | `macPictureModels`: the MLX picture models a Mac has downloaded (absent on phones) |
+| WordArtwork | one record per picture (random id), plain LWW; pictures from two devices are two records, a delete is a record delete. Bytes are files under `WordArt/` (see [ZEICHNEN.md](ZEICHNEN.md)) |
+| WordDrawingStat | one record per `WordArtKey`; quick/studio/painted/recall counts are counters; last-drawn dates max |
+| QuickDrawSet | plain LWW (a merged word list would bring back removed words) |
+| Voices (UserDefaults) | the pronunciation voice and the four dialogue voices as one group, the later `voices.setAt` wins (see below) |
+
+### Voices
+
+`VoicesSyncDocument` carries the five voice identifiers. The voices themselves can't travel, and
+no app can download one or open Settings ▸ Accessibility (only private `App-prefs:` URLs, which
+App Review rejects). So a choice can land on a device that doesn't have the voice:
+
+- Speech stands in the main voice, then the system de-DE (`SpeechService.speakCurrent`), and calls
+  `VoiceSetup.speechFellBack`. That shows an alert at most once per launch ("Show Me How" opens
+  Settings ▸ Voice as a sheet over whatever is up; UIKit, because a root SwiftUI alert can't
+  present over covers). "Don't Ask Again" holds for that set of missing voices on that device.
+- Settings ▸ Voice lists the missing voices under "Download your voices", the root row says
+  "N to download", and the pickers show the choice as "Anna (Premium), not downloaded" instead
+  of going blank. `availableVoicesDidChangeNotification` refreshes all three.
+- **Invariant: only a pick in a picker writes a voice.** The stand-in is never written back, or a
+  device without the voice would replace every other device's choice with "System Default".
+- Simulator: launch with `-selectedVoiceIdentifier com.apple.voice.premium.de-DE.Anna` (any id the
+  sim lacks; `-voiceFemaleIdentifier …` and friends work the same way). The argument domain
+  overrides the stored pick for one launch without saving it. Add `-voices.debugSpeak 1` to speak
+  a line at launch (raises the alert) or `-voices.debugSheet 1` to open the "Show Me How" sheet.
 
 Field rules live in `Core/SyncMerge.swift` (`SyncFieldRule`). Every codec file ends with a
 `// Field coverage:` block listing each stored property and where it goes. **Adding a stored
@@ -142,11 +167,57 @@ Before the **first** TestFlight build with sync:
 2. On that device (signed in to iCloud), launch once with `-sync.debugSeedSchema 1`. It saves one
    record that sets every `KarteiItem` field (`payloadAsset` and `file` otherwise exist only after a
    big payload or a picture was saved), then deletes it; the fields stay in the schema.
-3. CloudKit Console ▸ the container ▸ Schema ▸ **Deploy Schema Changes** to Production (or
-   `xcrun cktool`). TestFlight uses Production; without this, sync fails there.
+3. CloudKit Console ▸ the container ▸ Schema ▸ **Deploy Schema Changes** to Production.
+   TestFlight uses Production; without this, sync fails there. (cktool can read Production but
+   the deploy is a Console button.)
+
+**Done 2026-11-19.** Production has `KarteiItem` with `kind` STRING, `payload` BYTES,
+`payloadAsset` ASSET and `file` ASSET (`payloadAsset` was added by hand in Development; the seed
+had never run). 1.7 (3) and earlier TestFlight builds had shipped without it. `scripts/deploy.py`
+now checks the Production schema before archiving (DEPLOY_SETUP.md ▸ CloudKit schema). A new
+top-level field on the record means repeating steps 2–3, and the deploy stops until you do.
+Learners never need to do anything: the schema belongs to the container, so one deploy fixes it
+for everyone.
 
 The Mac ("Designed for iPad") and visionOS builds share the container, so they become sync devices
 too.
+
+## When a send fails
+
+A failed save is one of three things, and telling them apart is the difference between a queue that
+drains and one that never moves again:
+
+- **The record's own fault** (`invalidArguments`, `limitExceeded`, anything unrecognised):
+  `transportFailed`. Five in a row and the record is **stuck** — `outgoing` skips it, so one bad
+  record can't block the rest.
+- **Not its fault** (`batchRequestFailed` — a zone save is atomic, so every innocent record in a
+  failed batch comes back too; a conflict whose server copy arrived without its payload; the
+  transient codes the engine retries itself): `transportDeferred`. The reason is recorded, the
+  tries are not. **Never count these towards stuck**, or one bad record drags the whole queue down
+  with it and nothing ever sends again.
+- **A conflict with a readable server copy**: merge, then retry.
+- **"Cannot create new type KarteiItem in production schema"** (or a field of it): the Shipping
+  steps below were skipped, so Production has no schema. Recorded as `schemaNotDeployed`, deferred
+  and **not** retried in the send loop (it never clears by itself); the next launch or Repair Sync
+  sends it again once the schema is deployed.
+
+Reasons are stored as `<codeName>: <server message>` with the record id cut out, so the report
+groups them. (`"\(error.code)"` interpolates as `CKErrorCode(rawValue: 12)`, which no explanation
+matches, so `CloudKitSyncTransport.codeName` spells the name out.)
+
+Both delegate calls take an **array**: a failing batch brings back hundreds of records at once, and
+a SwiftData write each costs more than the send did.
+
+**A stuck record must have a way back.** `reconcileAll` only clears the count when a record's
+payload changes, so Repair Sync calls `clearSendFailures()` first — otherwise a record stuck on an
+error that cleared months ago stays stuck forever, and the screen's own remedy does nothing.
+
+**Settings ▸ iCloud Sync ▸ Sync report** (`SyncReportView`, every build, not just DEBUG) reads
+`SyncRecordState.lastError` back out: what's waiting, by kind; what iCloud said, grouped, with the
+code turned into plain English (`SyncDiagnostics.explain`); records owed with no payload to send
+(a stall with no error behind it — a bug if it isn't zero); the engine's recent lines; and Copy for
+the lot. A sync that won't finish is exactly what can't be reproduced on a Debug build, so the
+report has to exist in the shipped one.
 
 ## Drift and database switches
 
@@ -192,7 +263,7 @@ reports, saved words, stories and pictures are plain synced data. Only new AI wo
 
 ## Not yet
 
-- Learner preferences (theme, reminders, chat settings) don't sync. The plan is
+- Learner preferences (theme, reminders, chat settings) don't sync, except the voices (above). The plan is
   NSUbiquitousKeyValueStore with an allowlist, plus a reload path in `MLXModelManager`, which caches
   its settings at launch.
 - The same word saved to a story/job/class deck on two devices while both are offline gives two

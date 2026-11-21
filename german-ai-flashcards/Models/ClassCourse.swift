@@ -62,7 +62,7 @@ final class ClassCourse {
 
         var label: String {
             switch self {
-            case .course:    "Group course"
+            case .course:    "Course"
             case .tutor:     "Private tutor"
             case .selfStudy: "On my own"
             }
@@ -79,7 +79,7 @@ final class ClassCourse {
         /// One line under the picker in the course editor.
         var blurb: String {
             switch self {
-            case .course:    "A class with a teacher and a schedule: university, Volkshochschule, Goethe-Institut."
+            case .course:    "A class with a term: a university semester or quarter, a Volkshochschule or Goethe-Institut course."
             case .tutor:     "One-to-one sessions, usually built around a goal rather than a syllabus."
             case .selfStudy: "A textbook or a plan you follow yourself."
             }
@@ -127,18 +127,38 @@ final class ClassCourse {
     /// holds `startDate`. Nil for an undated course, or for a date before it began.
     func weekNumber(for date: Date) -> Int? {
         guard let startDate else { return nil }
-        let calendar = Calendar.current
-        let firstWeek = calendar.dateInterval(of: .weekOfYear, for: startDate)?.start
-            ?? calendar.startOfDay(for: startDate)
+        return Self.weekNumber(of: date, start: startDate, calendar: .current)
+    }
+
+    /// How many weeks the course runs, when both dates are set.
+    var totalWeeks: Int? {
+        guard let endDate, let start = startDate, endDate >= start else { return nil }
+        return weekNumber(for: endDate)
+    }
+
+    /// The week of a course starting on `start` that `date` falls in, counted from the start of the
+    /// calendar week that holds `start`. Nil before the course began.
+    nonisolated static func weekNumber(of date: Date, start: Date, calendar: Calendar) -> Int? {
+        let firstWeek = calendar.dateInterval(of: .weekOfYear, for: start)?.start
+            ?? calendar.startOfDay(for: start)
         let days = calendar.dateComponents([.day], from: firstWeek, to: calendar.startOfDay(for: date)).day ?? 0
         guard days >= 0 else { return nil }
         return days / 7 + 1
     }
 
-    /// How many weeks the course runs, when both dates are set.
-    var totalWeeks: Int? {
-        guard let endDate, let start = startDate, endDate > start else { return nil }
-        return weekNumber(for: endDate)
+    /// The end date that makes a course starting on `start` run `weeks` weeks: the last day of its
+    /// `weeks`-th calendar week. The exact inverse of `weeks(start:end:calendar:)`; counting from
+    /// `start` itself instead would make a course that starts mid-week one week too long.
+    nonisolated static func endDate(start: Date, weeks: Int, calendar: Calendar) -> Date {
+        let firstWeek = calendar.dateInterval(of: .weekOfYear, for: start)?.start
+            ?? calendar.startOfDay(for: start)
+        let lastDay = calendar.date(byAdding: .day, value: max(1, weeks) * 7 - 1, to: firstWeek) ?? start
+        return max(calendar.startOfDay(for: lastDay), calendar.startOfDay(for: start))
+    }
+
+    /// How many weeks a course from `start` to `end` runs, by the same count as `totalWeeks`.
+    nonisolated static func weeks(start: Date, end: Date, calendar: Calendar) -> Int {
+        max(1, weekNumber(of: max(end, start), start: start, calendar: calendar) ?? 1)
     }
 
     /// "Woche 7 von 20" for a dated course that is running, "Woche 7" without an end date,

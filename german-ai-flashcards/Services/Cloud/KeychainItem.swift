@@ -3,18 +3,25 @@ import Security
 
 /// One generic-password item in this app's Keychain, read and written as a UTF-8 string.
 ///
-/// `AfterFirstUnlockThisDeviceOnly` on purpose: a background illustration run must be able to
-/// read it with the phone locked, and a key the learner pasted on this phone has no business
-/// travelling to their other devices through iCloud Keychain.
+/// `synchronizable` items travel to the learner's other devices through iCloud Keychain (end to
+/// end encrypted, and only when they have it turned on) and are stored `AfterFirstUnlock`. Local
+/// items are `AfterFirstUnlockThisDeviceOnly`. Either way a background illustration run can read
+/// it with the phone locked.
+///
+/// The two kinds are separate items even under the same service and account: a query only ever
+/// matches its own kind, so a local item from an older build stays invisible to a synced one
+/// until it's moved across.
 nonisolated struct KeychainItem: Sendable {
     let service: String
     let account: String
+    var synchronizable = false
 
     private var baseQuery: [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
+            kSecAttrSynchronizable as String: synchronizable,
         ]
     }
 
@@ -39,7 +46,9 @@ nonisolated struct KeychainItem: Sendable {
         guard status == errSecItemNotFound else { return false }
         var add = baseQuery
         add[kSecValueData as String] = data
-        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        add[kSecAttrAccessible as String] = synchronizable
+            ? kSecAttrAccessibleAfterFirstUnlock
+            : kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         return SecItemAdd(add as CFDictionary, nil) == errSecSuccess
     }
 

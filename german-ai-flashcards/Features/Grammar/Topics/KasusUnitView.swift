@@ -18,6 +18,10 @@
 //  Rows that start a round end in a play glyph; rows that navigate get the list's chevron (the
 //  same rule as `PrepositionHubView.sourceRow`).
 //
+//  An exercise row wears its task drawing (`GrammarTaskArt` through `GrammarTaskRow`), so Üben
+//  reads as five different jobs rather than five tinted glyphs. A story row, the screen header and
+//  „Mehr dazu“'s 3D stills are not one task shape, so they keep what they had.
+//
 
 import SwiftUI
 import SwiftData
@@ -348,33 +352,13 @@ struct KasusUnitView: View {
         router.launch(.kasusStory(session))
     }
 
-    private func quickRoundRow(_ kind: KasusDrillKind, symbol: String, title: String,
-                               detail: String) -> some View {
+    private func quickRoundRow(_ kind: KasusDrillKind) -> some View {
         Button {
             router.launch(.grammarDrill(drillSession(kind)))
         } label: {
-            HStack(spacing: 12) {
-                Image(systemName: symbol)
-                    .font(.title3)
-                    .foregroundStyle(.tint)
-                    .frame(width: 34, height: 34)
-                    .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: appTheme.innerRadius(8), style: .continuous))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.primary)
-                    Text(detail)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Image(systemName: "play.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(.tint)
-            }
-            .padding(.vertical, 4)
-            .contentShape(Rectangle())
+            GrammarTaskRow(icon: .art(kind.meta.art),
+                           title: "\(kind.meta.germanTitle) · \(kind.meta.englishTitle)",
+                           subtitle: rowDetail(kind))
         }
         .buttonStyle(.plain)
     }
@@ -390,8 +374,7 @@ struct KasusUnitView: View {
     private var quickRoundSection: some View {
         Section {
             ForEach(uebenKinds) { kind in
-                quickRoundRow(kind, symbol: kind.meta.symbol, title: "\(kind.meta.germanTitle) · \(kind.meta.englishTitle)",
-                              detail: rowDetail(kind))
+                quickRoundRow(kind)
             }
         } header: {
             Text("Üben · Practice")

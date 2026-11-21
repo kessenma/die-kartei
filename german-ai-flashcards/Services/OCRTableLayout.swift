@@ -33,10 +33,14 @@ nonisolated enum OCRTableLayout {
 
     /// The rebuilt rows when the page is a German | English table that reads at least as well as
     /// `readingOrder` (the text in the order its source gave it), else nil.
-    static func tableRows(from lines: [Line], readingOrder: String, wrapGap: CGFloat = 0.55) -> String? {
-        guard let rows = rowText(from: lines, wrapGap: wrapGap) else { return nil }
+    static func tableRows(from lines: [Line], readingOrder: String,
+                          wrapGap: CGFloat = 0.55, touchGap: CGFloat = -.infinity) -> String? {
+        guard let rows = rowText(from: lines, wrapGap: wrapGap, touchGap: touchGap) else { return nil }
         let table = VocabListParser.parse(rows)
-        guard table.looksLikeList, englishShare(of: table.rows) >= 0.5 else { return nil }
+        // A German | German gloss table ("In der Anzeige | Einfach erklärt") is a table too.
+        guard table.looksLikeList,
+              VocabListParser.englishShare(of: table.rows) >= 0.5 || VocabListParser.isGlossTable(rows)
+        else { return nil }
         return table.listConfidence >= VocabListParser.parse(readingOrder).listConfidence ? rows : nil
     }
 
@@ -56,8 +60,25 @@ nonisolated enum OCRTableLayout {
     /// The lines regrouped into rows, one per line of text, columns separated by a tab. Nil when
     /// the page has no two columns of at least three lines each. `wrapGap`, in line heights, is how
     /// close under the line above a line must sit to be that cell's second line on a padded table.
-    static func rowText(from lines: [Line], wrapGap: CGFloat = 0.55) -> String? {
-        let lines = lines.filter { !$0.text.trimmingCharacters(in: .whitespaces).isEmpty && $0.box.height > 0 }
+    ///
+    /// `touchGap` is the second way into a cell, and it ignores `padded`: lines whose boxes touch or
+    /// overlap are one wrapped cell whatever the page's spacing says. A slide puts its title, its
+    /// footnote and its brand strip in the first column, which drags the median gap under the
+    /// `padded` threshold and leaves a noun's "der Computer / die Computer" as two cells that the
+    /// column beside then picks between on a fraction of a point. Only a text-layer PDF opts in
+    /// (`PDFTextExtractor.pdfTouchGap`), because only there are the boxes exact enough to trust a
+    /// sub-tenth-of-a-line gap; Vision's are not, and would start merging separate rows.
+    static func rowText(from lines: [Line], wrapGap: CGFloat = 0.55, touchGap: CGFloat = -.infinity) -> String? {
+        let lines = lines.compactMap { line -> Line? in
+            // A PDF reports a picture as a line holding U+FFFC and nothing else, and a slide's
+            // background graphic is one box over the whole table: left in, it is the first
+            // column's tallest cell and every real cell on the page joins its row.
+            let text = line.text.replacingOccurrences(of: "\u{FFFC}", with: " ")
+                .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespaces)
+            guard !text.isEmpty, line.box.height > 0 else { return nil }
+            return Line(text: text, box: line.box)
+        }
         guard lines.count >= 6 else { return nil }
         let lineHeight = median(lines.map(\.box.height))
 
@@ -94,7 +115,8 @@ nonisolated enum OCRTableLayout {
         for (columnIndex, entries) in columns {
             for entry in entries {
                 let line = (text: entry.line.text, extent: (top: 1 - entry.line.box.maxY, bottom: 1 - entry.line.box.minY))
-                if padded, entry.gap < wrapGap, let last = merged.indices.last, merged[last].column == columnIndex {
+                if entry.gap < touchGap || (padded && entry.gap < wrapGap),
+                   let last = merged.indices.last, merged[last].column == columnIndex {
                     merged[last].lines.append(line)
                 } else {
                     merged.append(Cell(column: columnIndex, lines: [line]))
@@ -151,13 +173,6 @@ nonisolated enum OCRTableLayout {
 
     private static func overlap(_ a: Cell.Extent, _ b: Cell.Extent) -> CGFloat {
         min(a.bottom, b.bottom) - max(a.top, b.top)
-    }
-
-    /// Of the rows with both sides, how many have an English side that reads as English.
-    private static func englishShare(of rows: [VocabListRow]) -> Double {
-        let complete = rows.filter(\.isComplete)
-        guard !complete.isEmpty else { return 0 }
-        return Double(complete.filter { VocabListParser.looksEnglish($0.english) }.count) / Double(complete.count)
     }
 
     private static func median(_ values: [CGFloat]) -> CGFloat {

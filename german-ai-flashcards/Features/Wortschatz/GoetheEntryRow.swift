@@ -70,12 +70,5 @@ struct GoetheEntryRow: View {
         Gender(article: article)?.color ?? .secondary
     }
 
-    private func wordTypeColor(_ type: String) -> Color {
-        switch type {
-        case "verb": .blue
-        case "adj": .purple
-        case "noun": .green
-        default: .gray
-        }
-    }
+    private func wordTypeColor(_ type: String) -> Color { WordClassPalette.color(for: type) }
 }

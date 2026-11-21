@@ -22,6 +22,10 @@ struct HomeHubView: View {
     /// False on the Mac's sidebar, which lists the activity categories itself: Home is then For
     /// You only, with no mode picker.
     var showsModePicker: Bool = true
+    /// Brings the Grammatik tab forward instead of pushing a second copy of the hub, so one
+    /// instance owns the scroll position and the Üben/Fortschritt choice. Nil where there is no
+    /// tab bar — the Mac's sidebar, and the previews.
+    var onOpenGrammar: (() -> Void)? = nil
 
     /// Off = "For You" (one picked next exercise), on = the six-tile activity hub.
     @AppStorage("home.showAllActivities") private var showAllActivities = false
@@ -101,8 +105,8 @@ struct HomeHubView: View {
     // MARK: - All Activities — the six-tile hub
 
     /// Six categories, one screenful, instead of the thirteen-row scroll this replaces, plus the
-    /// wide Job prep and Deutschkurs cards beneath them (goals, not a seventh skill — see
-    /// `JobPrepTile` and `ClassNotesTile`). A
+    /// wide Job prep, Deutschkurs and Schreibblatt cards beneath them (goals and habits, not a
+    /// seventh skill — see `JobPrepTile`, `ClassNotesTile` and `SchreibblattTile`). A
     /// `ScrollView` rather than a `List` on purpose: the grid is the point, and stepping outside
     /// grouped chrome is also what lets Grundform's tiles keep genuinely square corners (a grouped
     /// section clips its rows to a rounded rect we don't control — see docs/theme-upgrade.md §3).
@@ -116,16 +120,26 @@ struct HomeHubView: View {
                 VStack(spacing: 14) {
                     LazyVGrid(columns: tileColumns, spacing: 14) {
                         ForEach(ActivityCategory.allCases) { category in
-                            NavigationLink {
-                                ActivityCategoryDestination(
-                                    category: category,
-                                    coordinator: coordinator,
-                                    onGenerationComplete: onGenerationComplete
-                                )
-                            } label: {
-                                ActivityCategoryTile(category: category)
+                            // Grammar has a tab of its own, so its tile raises that tab rather
+                            // than pushing a second hub inside Home's stack. A Button, not a
+                            // NavigationLink to nowhere, so VoiceOver announces it honestly.
+                            if category == .grammar, let onOpenGrammar {
+                                Button(action: onOpenGrammar) {
+                                    ActivityCategoryTile(category: category)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                NavigationLink {
+                                    ActivityCategoryDestination(
+                                        category: category,
+                                        coordinator: coordinator,
+                                        onGenerationComplete: onGenerationComplete
+                                    )
+                                } label: {
+                                    ActivityCategoryTile(category: category)
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
 
@@ -146,6 +160,40 @@ struct HomeHubView: View {
                         )
                     } label: {
                         ClassNotesTile()
+                    }
+                    .buttonStyle(.plain)
+
+                    NavigationLink {
+                        SchreibblattHubView()
+                    } label: {
+                        SchreibblattTile()
+                    }
+                    .buttonStyle(.plain)
+
+                    NavigationLink {
+                        ZeichnenHubView()
+                    } label: {
+                        ZeichnenTile()
+                    }
+                    .buttonStyle(.plain)
+
+                    NavigationLink {
+                        SchreibenHubView(
+                            modelManager: coordinator.modelManager,
+                            mlxService: coordinator.mlxService
+                        )
+                    } label: {
+                        SchreibenTile()
+                    }
+                    .buttonStyle(.plain)
+
+                    NavigationLink {
+                        HoerenHubView(
+                            modelManager: coordinator.modelManager,
+                            mlxService: coordinator.mlxService
+                        )
+                    } label: {
+                        HoerenTile()
                     }
                     .buttonStyle(.plain)
                 }

@@ -221,13 +221,16 @@ enum DeckTransfer {
     }
 
     /// A file name that survives a topic with slashes, colons or emoji in it.
-    private static func fileStem(_ topic: String) -> String {
+    ///
+    /// `nonisolated` and shared rather than private: `SchreibblattPDF` names its exports the same
+    /// way and has no reason to own a second copy of this. Pure string work, so it needs no actor.
+    nonisolated static func fileStem(_ topic: String, fallback: String = "deck") -> String {
         let allowed = topic.unicodeScalars.map { scalar -> Character in
             CharacterSet.alphanumerics.contains(scalar) ? Character(scalar) : "-"
         }
         let collapsed = String(allowed)
             .split(separator: "-", omittingEmptySubsequences: true)
             .joined(separator: "-")
-        return collapsed.isEmpty ? "deck" : String(collapsed.prefix(40))
+        return collapsed.isEmpty ? fallback : String(collapsed.prefix(40))
     }
 }

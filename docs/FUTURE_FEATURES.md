@@ -313,7 +313,7 @@ You already have `SpeechService` (TTS) and `SpeechRecognitionService`. Two compl
 - **Pronunciation feedback:** compare what was recognized vs. intended and flag mispronunciations;
   track recurring ones in the profile as a new slip category. `SayItView` is the seed.
 - **Dictation / listening:** the coach speaks a sentence, the learner types or repeats it — trains the
-  ear, which conversation-by-text under-exercises.
+  ear, which conversation-by-text under-exercises. Tracked as items 1–4 of `FSI_DLI_ROADMAP.md`.
 
 ### 11. CEFR "can-do" goal spine  🔨 M  — ✅ Shipped (as die Lernpyramide)
 A light curriculum of "I can…" statements ("order food", "describe my weekend", "handle a phone

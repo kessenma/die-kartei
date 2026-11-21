@@ -40,9 +40,24 @@ shows the instructions until Muse has drawn once on this phone (`CloudImageModel
   spend and limit from `GET /key`.
 - **Paste a key** is the fallback (openrouter.ai/keys). Both paths check the key with
   `GET /api/v1/key` before saving it.
-- **Storage:** the key lives in the Keychain (`KeychainItem`,
-  `AfterFirstUnlockThisDeviceOnly`), mirrored as `openrouter.hasKey` in UserDefaults for the
-  nonisolated readiness gate, reconciled at launch.
+- **Storage:** the key lives in one synchronizable Keychain item (`KeychainItem`,
+  `synchronizable: true`, `AfterFirstUnlock`), so iCloud Keychain carries it to the learner's
+  other iPhones, iPads and Macs (same bundle ID, same default access group) and one sign-in covers
+  them all. Without iCloud Keychain it simply stays on the device. It's mirrored as
+  `openrouter.hasKey` in UserDefaults for the nonisolated readiness gate, reconciled at launch
+  and on every return to the foreground (the Keychain doesn't announce a key arriving or leaving).
+  Builds before 1.7 kept a device-only item under the same service and account; `reconcile()`
+  moves it into the synced one, and a synced key already there wins.
+- **Signing in** saves into the synced item, so it replaces the key on every device (the old key
+  stays valid on OpenRouter, as before).
+- **Disconnect** asks *This device only* or *All my devices*. All deletes the synced item. This
+  device only sets `openrouter.signedOutHere` (UserDefaults, never synced): `apiKey()` returns nil
+  here while the key stays for the others, and Settings offers *Use the saved key* to undo it
+  without a sign-in. A 401 deletes the synced item (a revoked key is dead everywhere), unless the
+  stored key is no longer the one that failed (`handleUnauthorized(failedKey:)`): another device
+  signed in again meanwhile.
+- **Consent stays per device.** A synced key never switches a device to the cloud; the source and
+  `CloudPicturesConsentSheet` are still per device.
 - **Consent:** the first switch to the cloud shows `CloudPicturesConsentSheet` (what's sent, where
   it goes, who pays: App Store rule 5.1.2(i)). Nothing is sent before it's accepted.
 
@@ -76,7 +91,10 @@ downloaded files (Settings download/delete, storage, orphan sweep).
    (`DeckIllustrationService.lastError`, `StoryStudyService.illustrationError` → Settings). A
    refused prompt, no image or a provider hiccup skips that one picture.
 4. **Pictures land at display size.** Card and story folders sync to iCloud file by file; a
-   1.9 MB original per card would make an illustrated deck hundreds of MB.
+   1.9 MB original per card would make an illustrated deck hundreds of MB. The one exception is
+   the Zeichnen room's gallery pictures (`WordArtStore.artMaxPixel`, 1024): they are traced and
+   painted over full-canvas. They are drawn one at a time on the learner's request, always in the
+   cloud (`StoryImageService.beginCloudSession`), in `WordArtStyle`s. See [ZEICHNEN.md](ZEICHNEN.md).
 5. **Square.** Both models get `aspect_ratio: "1:1"`; left alone, Muse drew a story scene at
    1920×1280, and the reader's placeholder reserves a square.
 6. **Parallel only in the cloud.** One request per picture (each card has its own prompt), but
@@ -84,8 +102,28 @@ downloaded files (Settings download/delete, storage, orphan sweep).
    picture 1 alone (it's the reference), then the rest at once. 429/5xx retry up to twice,
    honoring `Retry-After`, so a burst that outruns a model's per-minute limit backs off instead of
    dropping pictures.
-7. **The key never leaves the phone except to OpenRouter.** Never log it, never put it in launch
-   arguments, never copy it into fixtures.
+7. **The key goes only to OpenRouter and to the learner's own iCloud Keychain.** Never log it,
+   never put it in launch arguments, never copy it into fixtures, never put it in a CloudKit
+   record or anything else `SyncManager` sends.
+
+## A deck run in the background
+
+"Illustrate this deck" (and the create flow's kept-cards run) goes through
+`DeckIllustrationService.launch`: the run belongs to the app-wide singleton and, on iOS, a
+continued-processing task, not to the screen it was started from. Closing the deck, switching tabs
+or leaving the app does not stop it. Because a progress row on the start screen suggests staying
+put, the run also shows outside it:
+
+- **`DeckPicturesPill`** floats above the tab bar on every tab (on the Mac at the bottom of the
+  window, unless the picture inbox banner is already showing that run): deck name, picture n of
+  N, a progress ring, Stop (asks first). Only for a saved deck's run (`isDeckRun`); the create
+  flow's draft run has its own overlay on Home. Inside the deck player, a cover, the pill is
+  underneath. It steps aside in Pencil drawing mode with the tab bar.
+- **When the run ends** the pill turns into a note from `DeckIllustrationService.lastFinished`:
+  "Bilder fertig · Pictures ready" (gone after 6 s) or "Bilder gestoppt" with how many were drawn,
+  or the stop reason, which stays until closed. Not for a deck deleted mid-run.
+- **The Library row** of that deck shows "Drawing pictures · n of N" with a small bar.
+- **The start screen** says the run keeps going in the background while it shows its own progress.
 
 ## When a run comes up short
 
@@ -123,6 +161,11 @@ the on-device models always got wrong.
 ## Debug launch arguments (DEBUG)
 
 - `-pictures.debugSource cloud|onDevice`: pick the source without the picker or the consent sheet.
+- `-cards.debugSeedPictures 1` / `-cards.debugRemovePictures 1`: an illustrated deck
+  („[debug] Bilderdeck", in the Library) without drawing anything — six cards, five with a
+  512² stand-in through `CardImageStore`, one without, so the picture face and the ruled face can
+  be checked on a simulator that can't generate. The stand-ins carry a band of text at the top and
+  bottom edge of the square, which is how you see what a card's frame crops off.
 - `-openrouter.debugOpen 1`: open Settings ▸ Model.
 - `-pictures.debugReport addCredit|raiseKeyLimit|confirmAge|reconnect|skipped`: file a sample
   report on every deck and story, to see the banners without running an account dry.

@@ -39,6 +39,13 @@ enum SyncRegistry {
         SyncHandler<ClassCourseCodec>(),
         SyncHandler<ClassEntryCodec>(),
         SyncHandler<ClassMaterialCodec>(),
+        // Zeichnen: a word's pictures, its drawing history, saved Quick Draw sets.
+        SyncHandler<WordArtworkCodec>(),
+        SyncHandler<WordDrawingStatCodec>(),
+        SyncHandler<QuickDrawSetCodec>(),
+
+        SyncHandler<JournalEntryCodec>(),
+        SyncHandler<HoerenRoundCodec>(),
     ]
 
     static let byKind: [String: any SyncKindHandling] =

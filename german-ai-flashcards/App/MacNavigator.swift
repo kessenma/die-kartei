@@ -8,11 +8,15 @@ enum MacNavigationStyle: String {
     static let defaultsKey = "mac.navigationStyle"
 }
 
-/// One place the Mac sidebar goes. Home's six activity categories and its two goal cards sit in the
+/// One place the Mac sidebar goes. Home's seven activity categories and its two goal cards sit in the
 /// sidebar directly, so everything is one click away and Home itself is just For You.
 enum MacDestination: String, CaseIterable, Identifiable, Hashable {
     case home
-    case vocabulary, grammar, reading, speaking, listening, batch
+    case vocabulary, grammar, reading, speaking, listening, spiele, batch
+    /// The Schreiben room: a Home wide tile on iOS, a practice item here.
+    case schreiben
+    /// The Hören room: a Home wide tile on iOS, a practice item here.
+    case hoeren
     case deutschkurs, jobPrep
     case library
 
@@ -35,13 +39,13 @@ enum MacDestination: String, CaseIterable, Identifiable, Hashable {
     var section: Section {
         switch self {
         case .home: .start
-        case .vocabulary, .grammar, .reading, .speaking, .listening, .batch: .practice
+        case .vocabulary, .grammar, .reading, .speaking, .listening, .spiele, .batch, .schreiben, .hoeren: .practice
         case .deutschkurs, .jobPrep: .goals
         case .library: .collection
         }
     }
 
-    /// The Home category this destination shows, for the six practice items.
+    /// The Home category this destination shows, for the seven practice items.
     var category: ActivityCategory? {
         switch self {
         case .vocabulary: .vocabulary
@@ -49,14 +53,17 @@ enum MacDestination: String, CaseIterable, Identifiable, Hashable {
         case .reading: .reading
         case .speaking: .speaking
         case .listening: .listening
+        case .spiele: .spiele
         case .batch: .batch
-        case .home, .deutschkurs, .jobPrep, .library: nil
+        case .home, .schreiben, .hoeren, .deutschkurs, .jobPrep, .library: nil
         }
     }
 
     var title: String {
         switch self {
         case .home: "Home"
+        case .schreiben: SchreibenTile.title
+        case .hoeren: HoerenTile.title
         case .deutschkurs: "Deutschkurs"
         case .jobPrep: "Job Prep"
         case .library: "Library"
@@ -67,6 +74,8 @@ enum MacDestination: String, CaseIterable, Identifiable, Hashable {
     var systemImage: String {
         switch self {
         case .home: "house"
+        case .schreiben: SchreibenTile.systemImage
+        case .hoeren: HoerenTile.systemImage
         case .deutschkurs: "graduationcap"
         case .jobPrep: "briefcase"
         case .library: "brain.head.profile"

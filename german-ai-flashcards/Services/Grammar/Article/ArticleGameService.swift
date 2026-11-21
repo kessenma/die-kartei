@@ -27,7 +27,8 @@ enum ArticleGameService {
     /// A round needs at least this many nouns to be worth playing.
     static let minQuestions = 4
 
-    static func key(for noun: String) -> String {
+    /// `nonisolated`: pure string work, and `SchreibblattPractice` joins on it off the actor.
+    nonisolated static func key(for noun: String) -> String {
         noun.lowercased(with: Locale(identifier: "de_DE")).trimmingCharacters(in: .whitespaces)
     }
 
@@ -56,7 +57,8 @@ enum ArticleGameService {
     static func deckQuestions(from deck: SavedDeck) -> [ArticleQuestion] {
         var seen = Set<String>()
         return deck.vocabCards.compactMap { card in
-            guard let article = GermanArticle(text: card.article) else { return nil }
+            // A phrase has no article to guess, even one an older save split off it.
+            guard !CardKind.isPhrase(card), let article = GermanArticle(text: card.article) else { return nil }
             // Strip a baked-in article ("die Gabel" stored as the word on older cards).
             let noun = bareNoun(card.germanWord)
             guard !noun.isEmpty, !card.englishTranslation.isEmpty,
@@ -260,7 +262,7 @@ enum ArticleGameService {
     // MARK: - Helpers
 
     /// "die Gabel" → "Gabel"; leaves bare nouns untouched.
-    static func bareNoun(_ word: String) -> String {
+    nonisolated static func bareNoun(_ word: String) -> String {
         var trimmed = word.trimmingCharacters(in: .whitespacesAndNewlines)
         for article in GermanArticle.allCases {
             let prefix = article.rawValue + " "

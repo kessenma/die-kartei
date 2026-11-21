@@ -21,8 +21,9 @@ struct KasusDrillMetaTests {
         #expect(KasusRoundStep.allCases.map(\.rawValue) == [
             "find", "fill", "quick", "build", "roles", "wer", "probe", "lesson",
             "blitz", "pair", "dativverben", "fehler", "reflexcase", "reflexperson", "bridge",
+            "frage", "englischefalle", "findefall", "tabelle",
         ])
-        #expect(KasusRoundStep.allCases.count == 15)
+        #expect(KasusRoundStep.allCases.count == 19)
     }
 
     @Test("A kind's raw value is its step's; the story steps and the lesson are no kinds")
@@ -45,6 +46,9 @@ struct KasusDrillMetaTests {
         for step in KasusRoundStep.allCases {
             let meta = step.meta
             #expect(!meta.germanTitle.isEmpty && !meta.englishTitle.isEmpty && !meta.symbol.isEmpty)
+            // A launcher row shows the drawing instead of the symbol; its slug names a
+            // would-be asset, so it stays well-formed even before any still exists.
+            #expect(meta.art.assetName.hasPrefix("task-art-"))
             #expect(!meta.countNoun.de.isEmpty && !meta.countNoun.en.isEmpty)
             #expect(meta.minItemsPerFocus >= KasusService.minItemsPerCase)
             switch meta.filing {
@@ -76,6 +80,7 @@ struct KasusDrillMetaTests {
         #expect(KasusRoundStep.lesson.roundID(topicKey: "dativ") == "concept-dativ-lesson")
         #expect(KasusRoundStep.blitz.roundID(topicKey: "dativ") == "blitz-dativ")
         #expect(KasusRoundStep.reflexCase.roundID(topicKey: "reflexiv") == "reflexcase-reflexiv")
+        #expect(KasusRoundStep.tabelle.roundID(topicKey: "alleFaelle") == "tabelle-alleFaelle")
         #expect(KasusService.quickRoundID(for: .dativ) == "quick-dativ")
         #expect(KasusService.buildRoundID(for: .alleFaelle) == "build-alleFaelle")
         #expect(KasusService.conceptRoundID(.dativ, .roles) == "concept-dativ-roles")
@@ -114,6 +119,7 @@ struct KasusDrillMetaTests {
         for exercise in KasusConceptExercise.allCases {
             #expect(exercise.roundStep == exercise.kind.step)
             #expect(KasusConceptExercise(step: exercise.roundStep) == exercise)
+            #expect(exercise.art == exercise.kind.meta.art)
         }
         #expect(KasusRoundStep.quick.germanLabel == "Schnellrunde" && KasusRoundStep.build.germanLabel == "Bau das Wort")
         #expect(KasusRoundStep.find.legacyGermanLabel == "Finden" && KasusRoundStep.fill.legacyGermanLabel == "Einsetzen")
@@ -200,6 +206,11 @@ struct KasusDrillMetaTests {
         #expect(counts(.dativ, .der, .reflexCase) && counts(.akkusativ, .die, .reflexPerson))
         #expect(counts(.dativ, .der, .dativVerbs) && !counts(.akkusativ, .die, .dativVerbs))
         #expect(counts(.dativ, .der, .fehler) && !counts(.akkusativ, .das, .fehler))
+        // Englisch & Fälle is recognition on a translation: never evidence, whatever the case.
+        #expect(!counts(.dativ, .der, .frage) && !counts(.akkusativ, .der, .englischeFalle)
+                && !counts(.genitiv, .der, .findeFall))
+        // Die Tabelle hands the learner every form it asks for, so it is practice too.
+        #expect(!counts(.dativ, .der, .tabelle) && !counts(.genitiv, .die, .tabelle))
     }
 
     @Test("A topic keys on the unit's raw value and offers the unit's exercises")

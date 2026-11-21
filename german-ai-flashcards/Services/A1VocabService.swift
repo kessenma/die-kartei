@@ -24,7 +24,7 @@ struct A1Entry: Decodable {
     }
 }
 
-enum GoetheLevel: String, CaseIterable, Identifiable {
+enum GoetheLevel: String, CaseIterable, Identifiable, Codable {
     case a1 = "A1"
     case a2 = "A2"
     case b1 = "B1"
