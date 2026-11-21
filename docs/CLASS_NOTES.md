@@ -231,13 +231,28 @@ The handout page's **Hausaufgabe** section, the import's review step and the hub
 lead there. Its own doc: `docs/WORKSHEETS.md`. A course's setup asks what kind it is (course,
 private tutor, on my own) and, for a course, its length in weeks.
 
-## Later
+## Tutors read the class (built 2026-11-20)
 
-- **Tutors read the class.** `ConversationConfig.classContext` built from the last fortnight's
-  `ClassEntry.tutorContext` (and a line in `LearnerMemoryService.briefing`), gated by a
-  `classFeedsCoach` setting like `storyFeedsCoach`.
-- **Today plan.** "Review this week's class words" (the course deck's due cards) and "practise
-  <grammar covered in class>" through `GrammarRoute` (the entry screen's case rows already use it).
+`ConversationEngine` fills `ConversationConfig.classContext` at session start from
+`ClassTutorContext.text`: the last fortnight's `ClassEntry.tutorContext`, newest first, whole
+entries up to 1,200 characters, active courses only. `ConversationPrompts` adds it as a steering
+section ("use its words and grammar where it fits; don't quiz, don't mention the class unless they
+do"). Every mode but interview and paper, which carry their own documents. Gated by
+`MLXModelManager.classFeedsCoach` (Settings ▸ Conversation ▸ "Use my class notes", on by default).
+Never stored on the chat: a resumed conversation reads the class as it is now. The coach's
+briefing is unchanged; the class section sits next to it.
+
+## Today plans from the class (built 2026-11-20)
+
+- **Class words**: due cards on the decks of courses with a class in the last fortnight get their
+  own step ("Kurs · 4 class words due"), and leave the general review so they aren't counted twice.
+- **Class grammar** replaces the weak-spot step when there is one: checked worksheet mistakes from
+  the last fortnight first (`WorksheetReviewPlan.mistakeFoci`: the article-rule checks name the case,
+  and a preposition in the reason points at Präpositionen), else the grammar an entry in the last
+  week covered, rotating day to day. Launched through `GrammarRoute` like any grammar step.
+- **Her review plan**: see docs/WORKSHEETS.md ▸ Wiederholen.
+
+## Later
 - **Weekly recap** conversation seeded from the course's entries (`FUTURE_FEATURES.md` #7).
 - **Tutor course ↔ Job prep.** A tutor course with a job-search goal feeds interview practice
   (`course.goal` + the class words).

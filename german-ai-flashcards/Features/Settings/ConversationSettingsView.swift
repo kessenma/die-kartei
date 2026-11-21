@@ -159,6 +159,7 @@ struct ConversationSettingsView: View {
 
         Section {
             Toggle("Personalized coaching", isOn: $modelManager.chatPersonalizedCoaching)
+            Toggle("Use my class notes", isOn: $modelManager.classFeedsCoach)
             NavigationLink {
                 CoachNotesView(modelManager: modelManager)
             } label: {
@@ -167,7 +168,7 @@ struct ConversationSettingsView: View {
         } header: {
             Text("Coaching").themedSectionHeader()
         } footer: {
-            Text("The coach quietly remembers what you struggle with and the words you're learning, and uses that to steer and sharpen future conversations. Everything it remembers stays on your device.")
+            Text("The coach quietly remembers what you struggle with and the words you're learning, and uses that to steer and sharpen future conversations. With class notes on, it also reads what your Deutschkurs covered in the last two weeks and works those words and grammar in. Everything stays on your device.")
                 .font(.caption2)
         }
         .themedListRow()

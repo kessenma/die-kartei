@@ -566,6 +566,10 @@ struct ConversationConfig {
     /// conversation prompt so the coach steers the learner toward re-using them. Empty when spaced
     /// review is off or nothing is currently due. Advancement is handled by `ConversationReviewTracker`.
     var dueReviewWords: [String] = []
+    /// What the learner's class covered in the last fortnight (`ClassTutorContext`), filled in by
+    /// the engine at session start when `classFeedsCoach` is on. Never stored: a resumed chat reads
+    /// the class as it is now.
+    var classContext: String? = nil
     var level: CEFRLevel = .a2
     var formality: Formality = .du
     var correctionsEnabled: Bool = true

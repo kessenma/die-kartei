@@ -26,6 +26,10 @@ enum TodayIntent: Equatable {
     /// A quick round of cards the learner already knows well (roadmap item 6, FSI lesson 7: vary
     /// the pace, give some tasks that are easy). Never touches the SRS schedule.
     case easyRound(count: Int)
+    /// The course deck's due cards: this fortnight's class words (docs/CLASS_NOTES.md ▸ Today).
+    case classWords(count: Int)
+    /// Her review plan: a sent worksheet again, answers hidden (docs/WORKSHEETS.md ▸ Wiederholen).
+    case worksheetRedo(materialID: UUID)
 }
 
 /// One ordered item in the Today plan.
@@ -48,6 +52,8 @@ struct TodayRecommendation: Identifiable {
         case .verbReview:       return "verbs"
         case .write:            return "write"
         case .easyRound:        return "easy"
+        case .classWords:       return "class-words"
+        case .worksheetRedo(let id): return "redo-\(id.uuidString)"
         }
     }
 }
@@ -80,6 +86,26 @@ struct TodaySnapshot {
     var knownCardCount: Int = 0
     /// Today's last scored session went badly (under 60% right first time).
     var hardSessionToday: Bool = false
+
+    /// Due cards on the deck of a course with a class in the last fortnight.
+    var classWordsDue: Int = 0
+    var classCourseName: String? = nil
+    /// Grammar the class pointed at: checked worksheet mistakes first, then what an entry covered.
+    var classFocus: ClassFocusInfo? = nil
+    /// A sent worksheet her review plan brings back today.
+    var worksheetRedo: WorksheetRedoInfo? = nil
+
+    struct ClassFocusInfo: Equatable {
+        var focus: GrammarFocus
+        var reason: String
+    }
+
+    struct WorksheetRedoInfo: Equatable {
+        var materialID: UUID
+        var title: String
+        /// 0 = the next day, 1 = a week later.
+        var step: Int
+    }
 
     /// The minimum pool for an easy round.
     static let easyRoundMinimum = 8
@@ -122,6 +148,11 @@ enum TodayPlanner {
             recs.append(resumeRec(resume))
         }
 
+        // 0b. Her review plan: a sent worksheet again, on the day it's due.
+        if let redo = s.worksheetRedo {
+            recs.append(worksheetRedo(redo))
+        }
+
         // 1. Clear the spaced-repetition backlog first — it's time-sensitive by design. The
         //    Goethe box keeps its own step: its due words are not in `dueCardCount`.
         if let w = s.wortschatz, w.todo > 0 {
@@ -132,6 +163,10 @@ enum TodayPlanner {
         if s.verbDue > 0 {
             recs.append(verbReview(count: s.verbDue))
         }
+        // This fortnight's class words, apart from the general review so the class reads as its own.
+        if s.classWordsDue > 0 {
+            recs.append(classWords(count: s.classWordsDue, course: s.classCourseName))
+        }
         if s.dueCardCount > 0 {
             recs.append(review(count: s.dueCardCount))
         } else if s.hasCoachContent, s.wortschatz?.todo ?? 0 == 0 {
@@ -140,7 +175,10 @@ enum TodayPlanner {
         }
 
         // 2. Target a weak spot, rotating through the shaky ones for interleaving.
-        if !s.weaknesses.isEmpty {
+        //    The class's grammar comes first: what she just taught, or what her worksheet caught.
+        if let fromClass = s.classFocus {
+            recs.append(classGrammar(fromClass))
+        } else if !s.weaknesses.isEmpty {
             let focus = s.weaknesses[s.dayIndex % s.weaknesses.count]
             recs.append(grammar(focus))
         }
@@ -178,6 +216,36 @@ enum TodayPlanner {
             subtitle: "Spaced repetition · ~\(minutes) min",
             systemImage: "rectangle.stack.badge.play.fill",
             accent: .blue
+        )
+    }
+
+    private static func worksheetRedo(_ r: TodaySnapshot.WorksheetRedoInfo) -> TodayRecommendation {
+        TodayRecommendation(
+            intent: .worksheetRedo(materialID: r.materialID),
+            title: "Wiederholen · \(r.title)",
+            subtitle: r.step == 0 ? "Her review plan: again the next day, answers hidden" : "Her review plan: again a week later, answers hidden",
+            systemImage: "arrow.counterclockwise.circle.fill",
+            accent: .brown
+        )
+    }
+
+    private static func classWords(count: Int, course: String?) -> TodayRecommendation {
+        TodayRecommendation(
+            intent: .classWords(count: count),
+            title: "Kurs · \(count) class word\(count == 1 ? "" : "s") due",
+            subtitle: (course.map { "\($0) · " } ?? "") + "Spaced repetition",
+            systemImage: "graduationcap.fill",
+            accent: .brown
+        )
+    }
+
+    private static func classGrammar(_ c: TodaySnapshot.ClassFocusInfo) -> TodayRecommendation {
+        TodayRecommendation(
+            intent: .grammar(c.focus),
+            title: "\(c.focus.germanLabel) practice",
+            subtitle: c.reason,
+            systemImage: "graduationcap",
+            accent: .brown
         )
     }
 

@@ -162,6 +162,10 @@ final class ConversationEngine: WordInspecting {
             cfg.learnerBriefing = LearnerMemoryService.briefing(in: modelContext)
             cfg.correctionMemoryHint = LearnerMemoryService.correctionHint(in: modelContext)
         }
+        // The class, for every chat but the ones that carry their own document.
+        if modelManager.classFeedsCoach, cfg.mode != .interview, cfg.mode != .paper {
+            cfg.classContext = ClassTutorContext.text(in: modelContext)
+        }
 
         // Spaced re-encounter: surface any SRS-due words and steer the conversation toward them.
         // The tracker holds live SavedCard references so a correct re-use advances the real schedule.

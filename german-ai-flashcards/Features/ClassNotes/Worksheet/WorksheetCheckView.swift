@@ -50,7 +50,8 @@ struct WorksheetCheckView: View {
     /// Pages with ink at blanks that have no typed answer yet.
     private var inkPages: [WorksheetPagePlan] {
         plans.filter { plan in
-            session.parts[plan.page]?.exercise.verdict == .interactive
+            !session.isRedo
+                && session.parts[plan.page]?.exercise.verdict == .interactive
                 && WorksheetInkStore.read(session.material.id, page: plan.page) != nil
         }
     }

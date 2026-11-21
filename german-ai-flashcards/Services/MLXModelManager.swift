@@ -241,6 +241,11 @@ class MLXModelManager {
     var chatPersonalizedCoaching: Bool {
         didSet { UserDefaults.standard.set(chatPersonalizedCoaching, forKey: "chatPersonalizedCoaching") }
     }
+    /// When on, conversation tutors read what the learner's class covered in the last fortnight
+    /// (`ClassTutorContext`). On-device only, like the rest of the coach's memory.
+    var classFeedsCoach: Bool {
+        didSet { UserDefaults.standard.set(classFeedsCoach, forKey: "classFeedsCoach") }
+    }
     /// When on, conversations resurface SRS-due flashcards ("spaced re-encounter") and advance a
     /// card's real review schedule when the learner uses the word correctly. See `ConversationReviewTracker`.
     var chatSpacedReview: Bool {
@@ -471,6 +476,7 @@ class MLXModelManager {
         self.chatBestUnaidedStreak = UserDefaults.standard.integer(forKey: "chatBestUnaidedStreak")
         self.chatPersonalizedCoaching = (UserDefaults.standard.object(forKey: "chatPersonalizedCoaching") as? Bool) ?? true
         self.chatSpacedReview = (UserDefaults.standard.object(forKey: "chatSpacedReview") as? Bool) ?? true
+        self.classFeedsCoach = (UserDefaults.standard.object(forKey: "classFeedsCoach") as? Bool) ?? true
         self.chatSpacedReviewScopeRaw = UserDefaults.standard.string(forKey: "chatSpacedReviewScopeRaw") ?? SpacedReviewScope.everywhere.rawValue
         let paperModelRaw = UserDefaults.standard.string(forKey: "selectedPaperModel") ?? ""
         self.selectedPaperModel = MLXModel(rawValue: paperModelRaw) ?? PaperStudyService.requiredModel

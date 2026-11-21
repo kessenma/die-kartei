@@ -256,6 +256,7 @@ enum ClassMaterialCodec: SyncCodec {
         f.set("originIDRaw", m.originIDRaw)
         f.set("worksheet", jsonData: m.worksheetData)
         f.set("worksheetAnswers", jsonData: m.worksheetAnswersData)
+        f.set("redoDates", jsonData: m.redoDatesData)
         return f.payload
     }
 
@@ -297,6 +298,7 @@ enum ClassMaterialCodec: SyncCodec {
         m.originIDRaw = flat.string("originIDRaw")
         m.worksheetData = flat.jsonData("worksheet")
         m.worksheetAnswersData = flat.jsonData("worksheetAnswers")
+        if let v = flat.jsonData("redoDates") { m.redoDatesData = v }
     }
 }
 

@@ -7,6 +7,11 @@
           "title": "Leicht · Easy practice",
           "detail": "After a hard session, Today offers a quick round of cards you already know, and stories can be written in Leicht lesen: a level below yours, longer, with few new words.",
           "symbol": "leaf"
+        },
+        {
+          "title": "Deutschkurs · Your class, everywhere",
+          "detail": "Conversations work in what your class covered, Today offers your class words and grammar, and a sent worksheet comes back a day and a week later, answers hidden.",
+          "symbol": "graduationcap"
         }
       ]
     },

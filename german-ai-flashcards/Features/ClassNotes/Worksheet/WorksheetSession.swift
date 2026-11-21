@@ -43,8 +43,12 @@ final class WorksheetSession {
     private var saveTask: Task<Void, Never>?
     private var previewTask: Task<Void, Never>?
 
+    /// Her review plan's redo (docs/WORKSHEETS.md ▸ Wiederholen): the answers start empty, nothing
+    /// is saved to the handout, and the Pencil ink is left alone. Typed answers only.
+    let isRedo: Bool
+
     /// Nil when the handout has no worksheet or its PDF is gone.
-    init?(material: ClassMaterial, context: ModelContext) {
+    init?(material: ClassMaterial, context: ModelContext, redo: Bool = false) {
         guard let setup = material.worksheet, !setup.pages.isEmpty,
               let url = material.snapshotURL, let data = try? Data(contentsOf: url) else { return nil }
         self.material = material
@@ -52,7 +56,8 @@ final class WorksheetSession {
         self.pdfData = data
         self.document = WorksheetDocumentActor(data: data)
         self.setup = setup
-        self.answers = material.worksheetAnswers
+        self.isRedo = redo
+        self.answers = redo ? [:] : material.worksheetAnswers
     }
 
     // MARK: - Loading
@@ -61,7 +66,7 @@ final class WorksheetSession {
         for plan in setup.pages {
             if let part = await document.page(plan.page) { parts[plan.page] = part }
         }
-        if setup.parserVersion != WorksheetParser.version {
+        if setup.parserVersion != WorksheetParser.version, !isRedo {
             answers = WorksheetRekey.rekey(answers, plans: setup.pages, parts: parts)
             setup.parserVersion = WorksheetParser.version
             setup.pages = setup.pages.map { WorksheetRekey.refreshAnchors($0, part: parts[$0.page]) }
@@ -109,7 +114,7 @@ final class WorksheetSession {
     /// "3 of 8": answerable parts with an answer, on one page.
     func progress(page: Int) -> (done: Int, total: Int) {
         guard let exercise = parts[page]?.exercise, exercise.verdict == .interactive else {
-            let inked = WorksheetInkStore.read(material.id, page: page) != nil
+            let inked = !isRedo && WorksheetInkStore.read(material.id, page: page) != nil
             return (inked ? 1 : 0, 1)
         }
         let keys = exercise.answerKeys
@@ -182,6 +187,8 @@ final class WorksheetSession {
 
     func flush() {
         saveTask?.cancel()
+        // A redo is practice: the handout keeps the answers she will see.
+        guard !isRedo else { return }
         material.worksheetAnswers = answers
         material.entry?.updatedAt = .now
         try? context.save()
@@ -239,7 +246,7 @@ final class WorksheetSession {
         previewTask?.cancel()
         guard let plan else { preview = nil; return }
         let answers = answers
-        let ink = WorksheetInkStore.read(material.id, page: plan.page)
+        let ink = isRedo ? nil : WorksheetInkStore.read(material.id, page: plan.page)
         let outlines = WorksheetDebug.outlinesGaps
         previewTask = Task { [document] in
             try? await Task.sleep(for: .milliseconds(150))

@@ -351,13 +351,24 @@ blanks, the two-column writing pages).
 drop of chips, Scribble into blanks, the tutor's actual replies, handwriting recognition quality,
 sharing into the tutoring platform, and the memory log afterwards.
 
+## Wiederholen (her review plan, built 2026-11-20)
+
+A worksheet marked sent comes back on Today the next day and again a week later
+(`WorksheetReviewPlan.offsets`), as `WorksheetRedoView`: the same item views with the answers
+empty, typed only, checked by the same check (her key, the article rules, the tutor). The redo
+session (`WorksheetSession(redo: true)`) never writes the handout's answers and never reads or
+writes its ink, so what she sees is unchanged. "Fertig" stores the step in
+`ClassMaterial.redoDates` (synced); a redo older than the latest send doesn't count.
+`-today.debugRedo 1` treats every sent worksheet as a day old.
+
+Wrong answers the article rules checked also steer Today's class grammar step
+(docs/CLASS_NOTES.md ▸ Today plans from the class).
+
 ## Later
 
 - The parser layouts her IT workbook showed it can't read yet: R/F checkboxes in table cells
   (Übung 11), a lettered meanings column (Übung 06 glues it onto items 1 and 5), a word bank in the
   note line (Übung 14), a four-column English/Deutsch table (Übung 16), the last word of a bank
   dropped (Übungen 04, 10). Their keys stay samples until then.
-- Mistakes into the matching drill (Dativ unit, preposition hub).
-- Her review plan ("M1 again in 24 hours, M2 in 7 days") as a redo with answers hidden, on Today.
 - Read finished sentences aloud; role-play a dialog exercise with a tutor.
 - An opt-in export of the app's check, for learners without a teacher.

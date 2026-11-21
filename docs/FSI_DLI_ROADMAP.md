@@ -216,9 +216,10 @@ exercise slides as homework, her slides filled in and sent back. What is missing
 around each session: prepare, review the same day, and tell the teacher what the app saw.
 
 **Do first, already planned elsewhere:**
-- [ ] Tutors read the class, and Today plans from it (`docs/CLASS_NOTES.md` ▸ Later). Items 13
+- [x] Tutors read the class, and Today plans from it (2026-11-20, `docs/CLASS_NOTES.md`). Items 13
       and 16 below need both.
-- [ ] Mistakes into the matching drill, and her review plan on Today (`docs/WORKSHEETS.md` ▸ Later).
+- [x] Mistakes into the matching drill, and her review plan on Today (2026-11-20, `docs/WORKSHEETS.md`
+      ▸ Wiederholen).
 
 ### 12. Vor der Stunde (prepare the next session) · effort S–M
 - [ ] **Shipped**

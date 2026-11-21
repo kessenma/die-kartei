@@ -45,6 +45,9 @@ final class ClassMaterial {
     /// Encoded `[String: WorksheetAnswer]`, by answer key. Separate from the setup so it can merge
     /// answer by answer across devices.
     var worksheetAnswersData: Data? = nil
+    /// Encoded `[Date]`: when the learner redid this worksheet with the answers hidden, her review
+    /// plan's steps (`WorksheetReviewPlan`). Nil until the first redo.
+    var redoDatesData: Data? = nil
 
     var entry: ClassEntry? = nil
 
@@ -115,6 +118,11 @@ final class ClassMaterial {
     var worksheet: WorksheetSetup? {
         get { WorksheetCoding.decode(WorksheetSetup.self, from: worksheetData) }
         set { worksheetData = WorksheetCoding.encode(newValue) }
+    }
+
+    var redoDates: [Date] {
+        get { WorksheetCoding.decode([Date].self, from: redoDatesData) ?? [] }
+        set { redoDatesData = newValue.isEmpty ? nil : WorksheetCoding.encode(newValue) }
     }
 
     var worksheetAnswers: [String: WorksheetAnswer] {

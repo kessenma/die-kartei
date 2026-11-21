@@ -151,6 +151,18 @@ struct TodaySection: View {
         case .easyRound:
             Button { launchEasyRound() } label: { rowLabel(rec, hero: hero, chevron: true) }
                 .buttonStyle(.plain)
+        case .classWords:
+            Button { launchClassWords() } label: { rowLabel(rec, hero: hero, chevron: true) }
+                .buttonStyle(.plain)
+        case .worksheetRedo(let id):
+            if let material = material(id) {
+                NavigationLink {
+                    WorksheetRedoView(material: material, modelManager: coordinator.modelManager,
+                                      mlxService: coordinator.mlxService)
+                } label: {
+                    rowLabel(rec, hero: hero)
+                }
+            }
         case .write(let prompt):
             NavigationLink {
                 JournalTodayWriteView(prompt: prompt, modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
@@ -186,7 +198,11 @@ struct TodaySection: View {
                 verbDue: verbDueCount,
                 writing: writingInfo,
                 knownCardCount: knownCards.count,
-                hardSessionToday: hardSessionToday
+                hardSessionToday: hardSessionToday,
+                classWordsDue: classDueCards.count,
+                classCourseName: classCourses.first?.name,
+                classFocus: classFocus,
+                worksheetRedo: worksheetRedo
             )
         )
     }
@@ -245,14 +261,91 @@ struct TodaySection: View {
     /// on a generic card would carry its own answer).
     private var dueCards: [SavedCard] {
         let now = Date()
+        let classDecks = classDeckIDs
         return decks
-            .filter { $0.kind != .goetheSRS && $0.kind != .verbPrepositionSRS }
+            .filter { $0.kind != .goetheSRS && $0.kind != .verbPrepositionSRS && !classDecks.contains($0.id) }
             .flatMap(\.cards)
             .filter { card in
                 guard let next = card.nextReviewDate else { return false }
                 return next <= now
             }
             .sorted { ($0.nextReviewDate ?? now) < ($1.nextReviewDate ?? now) }
+    }
+
+    // MARK: - Class (docs/CLASS_NOTES.md ▸ Today, docs/WORKSHEETS.md ▸ Wiederholen)
+
+    /// Courses with a class in the last fortnight, most recent class first.
+    private var classCourses: [ClassCourse] {
+        var seen = Set<UUID>()
+        return ClassTutorContext.recentEntries(in: modelContext).compactMap(\.course).filter { seen.insert($0.id).inserted }
+    }
+
+    private var classDeckIDs: Set<UUID> { Set(classCourses.compactMap(\.deckID)) }
+
+    /// Due cards on those courses' decks: this fortnight's class words.
+    private var classDueCards: [SavedCard] {
+        let now = Date()
+        let ids = classDeckIDs
+        guard !ids.isEmpty else { return [] }
+        return decks.filter { ids.contains($0.id) }.flatMap(\.cards)
+            .filter { card in card.nextReviewDate.map { $0 <= now } ?? false }
+            .sorted { ($0.nextReviewDate ?? now) < ($1.nextReviewDate ?? now) }
+    }
+
+    /// Worksheet mistakes from the last fortnight first (the app's rule checks name the case), then
+    /// the grammar a class in the last week covered, rotating day to day.
+    private var classFocus: TodaySnapshot.ClassFocusInfo? {
+        let entries = ClassTutorContext.recentEntries(in: modelContext)
+        let answers = entries.flatMap(\.materials).flatMap { $0.worksheetAnswers.values }
+        if let top = WorksheetReviewPlan.mistakeFoci(Array(answers)).first {
+            return .init(focus: top.focus,
+                         reason: "\(top.count) \(top.focus.germanLabel) slip\(top.count == 1 ? "" : "s") in your worksheets")
+        }
+        let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: .now) ?? .distantPast
+        let covered = entries.filter { $0.date >= weekAgo }.flatMap(\.grammarFoci)
+        var seen = Set<GrammarFocus>()
+        let foci = covered.filter { seen.insert($0).inserted }
+        guard !foci.isEmpty else { return nil }
+        let focus = foci[dayIndex % foci.count]
+        return .init(focus: focus, reason: "Covered in class this week")
+    }
+
+    /// A sent worksheet her review plan brings back today.
+    private var worksheetRedo: TodaySnapshot.WorksheetRedoInfo? {
+        let descriptor = FetchDescriptor<ClassMaterial>(predicate: #Predicate { $0.worksheetData != nil })
+        for material in (try? modelContext.fetch(descriptor)) ?? [] {
+            var sentAt = material.worksheet?.sentAt
+            #if DEBUG
+            // `-today.debugRedo 1`: every sent worksheet is a day old.
+            if UserDefaults.standard.bool(forKey: "today.debugRedo"), sentAt != nil {
+                sentAt = Date().addingTimeInterval(-WorksheetReviewPlan.offsets[0] - 60)
+            }
+            #endif
+            if let step = WorksheetReviewPlan.dueStep(sentAt: sentAt, redone: material.redoDates) {
+                return .init(materialID: material.id, title: material.title.isEmpty ? "Übung" : material.title, step: step)
+            }
+        }
+        return nil
+    }
+
+    private func material(_ id: UUID) -> ClassMaterial? {
+        var descriptor = FetchDescriptor<ClassMaterial>(predicate: #Predicate { $0.id == id })
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    private func launchClassWords() {
+        let cards = Array(classDueCards.prefix(60))
+        guard !cards.isEmpty else { return }
+        let session = StudySession(
+            cards: cards.map(\.vocabCard),
+            topic: classCourses.first?.name ?? "Kurs",
+            deckID: nil,
+            savedCards: cards,
+            flashcardStyle: .anki,
+            subDeckLabel: "Class words · \(cards.count) due"
+        )
+        router.launch(.cardDeck(session))
     }
 
     /// Cards the learner knows well and that aren't due: Leitner box 4+ or an Anki interval of

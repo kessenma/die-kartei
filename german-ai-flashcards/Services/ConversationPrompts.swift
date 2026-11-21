@@ -111,6 +111,11 @@ enum ConversationPrompts {
             parts.append("These specific words are due for the learner's spaced review right now: \(list). Make a natural, unforced effort to steer toward topics where the learner would want to say each one, and gently invite them to use it — but only where it fits the conversation. Never list these words, translate them, or mention that they're being reviewed.")
         }
 
+        // The learner's class (docs/CLASS_NOTES.md ▸ Tutors read the class). Steering only.
+        if let classContext = config.classContext, !classContext.isEmpty {
+            parts.append(ClassTutorContext.promptSection(classContext))
+        }
+
         // Persistent coach memory (steering-only — correction happens in a separate pass).
         if !config.learnerBriefing.isEmpty {
             parts.append(config.learnerBriefing)
