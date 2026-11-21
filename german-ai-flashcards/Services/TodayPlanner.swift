@@ -23,6 +23,9 @@ enum TodayIntent: Equatable {
     case verbReview
     /// A few lines in the Tagebuch, with today's prompt from the bank when there is one.
     case write(prompt: String?)
+    /// A quick round of cards the learner already knows well (roadmap item 6, FSI lesson 7: vary
+    /// the pace, give some tasks that are easy). Never touches the SRS schedule.
+    case easyRound(count: Int)
 }
 
 /// One ordered item in the Today plan.
@@ -44,6 +47,7 @@ struct TodayRecommendation: Identifiable {
         case .wortschatz:       return "wortschatz"
         case .verbReview:       return "verbs"
         case .write:            return "write"
+        case .easyRound:        return "easy"
         }
     }
 }
@@ -72,6 +76,13 @@ struct TodaySnapshot {
     var verbDue: Int = 0
     /// The Schreiben room's state. Nil when the view did not look.
     var writing: WritingInfo? = nil
+    /// Cards known well (a high Leitner box or a long interval) and not due: an easy round's pool.
+    var knownCardCount: Int = 0
+    /// Today's last scored session went badly (under 60% right first time).
+    var hardSessionToday: Bool = false
+
+    /// The minimum pool for an easy round.
+    static let easyRoundMinimum = 8
 
     struct WritingInfo {
         var wroteToday: Bool
@@ -134,6 +145,12 @@ enum TodayPlanner {
             recs.append(grammar(focus))
         }
 
+        // 2a. An easy round after a hard session, or when the plan would be all weak spots: some
+        //     tasks should be easy (FSI lesson 7). Only with enough well-known cards to fill one.
+        if s.knownCardCount >= TodaySnapshot.easyRoundMinimum, s.hardSessionToday || s.weaknesses.count >= 2 {
+            recs.append(easyRound(count: min(10, s.knownCardCount), afterHard: s.hardSessionToday))
+        }
+
         // 2b. A few lines in the journal: every day once the habit has lapsed three days, else
         //     every third day as a nudge. Never when today's page already exists.
         if let w = s.writing, !w.wroteToday, (w.daysSinceLastEntry ?? 99) >= 3 || s.dayIndex % 3 == 0 {
@@ -161,6 +178,16 @@ enum TodayPlanner {
             subtitle: "Spaced repetition · ~\(minutes) min",
             systemImage: "rectangle.stack.badge.play.fill",
             accent: .blue
+        )
+    }
+
+    private static func easyRound(count: Int, afterHard: Bool) -> TodayRecommendation {
+        TodayRecommendation(
+            intent: .easyRound(count: count),
+            title: "Leichte Runde · \(count) cards you know",
+            subtitle: afterHard ? "After a hard session · ~2 min, nothing rescheduled" : "A quick, easy round · ~2 min",
+            systemImage: "leaf.fill",
+            accent: .green
         )
     }
 

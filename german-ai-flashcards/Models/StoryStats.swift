@@ -36,6 +36,10 @@ final class StoryReadingSession {
     var lookups: Int
     /// Words saved into the story's deck during the stretch.
     var wordsSaved: Int
+    /// About how many words were read or heard (roadmap item 7, FSI lesson 4: time with easy text
+    /// tracks what a learner can do). The story's length, capped by the stretch at 150 words a
+    /// minute, so a glance or a re-read in one sitting is not counted as more. 0 on older rows.
+    var wordsRead: Int = 0
 
     init(
         storyID: UUID,

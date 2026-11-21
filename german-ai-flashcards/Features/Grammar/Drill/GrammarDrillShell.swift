@@ -40,6 +40,9 @@ struct GrammarDrillShell<Module: KasusDrillModule>: View {
     @State private var partialLine: PartialLine?
     @State private var showEnglish = false
     @State private var startedAt = Date()
+    /// When the current step appeared: the answer-time clock (roadmap item 5). A multi-tap step
+    /// keeps it running until its graded pick.
+    @State private var stepShownAt = Date()
     /// DEBUG prefill: the answers weren't the learner's, so the round is never recorded.
     @State private var prefilled = false
     @State private var recorded = false
@@ -254,6 +257,11 @@ struct GrammarDrillShell<Module: KasusDrillModule>: View {
         switch outcome {
         case .graded(let graded):
             if referencePinned { round.markLastScaffolded() }
+            let ms = Int(Date().timeIntervalSince(stepShownAt) * 1000)
+            round.markLastTimed(ms)
+            if !prefilled {
+                AnswerTimeLog.record(.drill, ms: ms, correct: graded.isRight, detail: String(describing: module.kind))
+            }
             self.round = round
             picked = pick
             answer = graded
@@ -287,6 +295,7 @@ struct GrammarDrillShell<Module: KasusDrillModule>: View {
         answer = nil
         picked = nil
         partialLine = nil
+        stepShownAt = Date()
         if round.isFinished { record() }
     }
 
@@ -308,6 +317,7 @@ struct GrammarDrillShell<Module: KasusDrillModule>: View {
         module = make(session)
         self.round = KasusDrillRound(items: round.items)
         picked = nil
+        stepShownAt = Date()
     }
 
     /// „Noch eine Runde“: a new round, composed again.
@@ -318,6 +328,7 @@ struct GrammarDrillShell<Module: KasusDrillModule>: View {
         picked = nil
         partialLine = nil
         startedAt = Date()
+        stepShownAt = Date()
         prefilled = false
         recorded = false
     }
@@ -404,6 +415,7 @@ struct GrammarDrillShell<Module: KasusDrillModule>: View {
         didSetUp = true
         var rng = KasusSeededRandom(seed: session.prefill?.seed ?? UInt64.random(in: 0...UInt64.max))
         round = module.compose(session, rng: &rng).map { KasusDrillRound(items: $0) }
+        stepShownAt = Date()
         #if DEBUG
         applyDebugPrefill()
         #endif

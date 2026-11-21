@@ -501,21 +501,24 @@ final class StoryStudyService {
 
     private func writeStory(for story: StudyStory, weaveWords: [String] = []) async -> Bool {
         let level = story.level
-        let prompt = Self.storyPrompt(topic: story.topic, level: level, genre: story.genre, weaveWords: weaveWords)
+        // Leicht lesen: the language of `level`, the length of the level above.
+        let lengthLevel = story.easyReading ? level.oneAbove : level
+        let prompt = Self.storyPrompt(topic: story.topic, level: level, genre: story.genre, weaveWords: weaveWords,
+                                      easyLength: story.easyReading ? lengthLevel : nil)
         do {
             var raw = try await mlxService.generateStreamedText(
                 system: prompt.system, user: prompt.user, model: model,
-                maxTokens: level.storyMaxTokens, temperature: 0.75
+                maxTokens: lengthLevel.storyMaxTokens, temperature: 0.75
             )
             if stopRequested { phase = .idle; return false }
 
             var parsed = Self.parseStory(raw)
             // One retry if the model came back far short of the level's target.
-            if Self.wordCount(of: parsed.text) < level.storyWordRange.lowerBound / 2 {
+            if Self.wordCount(of: parsed.text) < lengthLevel.storyWordRange.lowerBound / 2 {
                 statusText = "Die Geschichte war zu kurz — zweiter Versuch…"
                 raw = try await mlxService.generateStreamedText(
                     system: prompt.system, user: prompt.user, model: model,
-                    maxTokens: level.storyMaxTokens, temperature: 0.75
+                    maxTokens: lengthLevel.storyMaxTokens, temperature: 0.75
                 )
                 if stopRequested { phase = .idle; return false }
                 let second = Self.parseStory(raw)

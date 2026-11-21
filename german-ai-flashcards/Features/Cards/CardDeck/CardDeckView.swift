@@ -56,6 +56,8 @@ struct CardDeckView: View {
     @State var sentenceInspector: WordInspectorModel?
     @State var hasStarted = false
     @State var isFlipped = false
+    /// When the current card came up: the recall clock (roadmap item 5, `AnswerTimeLog`).
+    @State var cardShownAt = Date()
     @State var showExamplesOnGermanSide = true
     /// How AI pictures present on the German side (immersive gradient vs high-contrast bar).
     /// Persisted so the choice sticks across sessions; `FlashCardView` reads the same key.
@@ -470,10 +472,19 @@ struct CardDeckView: View {
             loadSavedProgress()
         }
         .onChange(of: isFlipped) { _, flipped in
+            // The first flip of a card is its recall time; a flip back and forth is not.
+            if flipped, !revealedCurrent, hasStarted, !isPaused {
+                AnswerTimeLog.record(.cardFlip, ms: Int(Date().timeIntervalSince(cardShownAt) * 1000),
+                                     detail: localStyle.rawValue)
+            }
             if flipped { revealedCurrent = true }
         }
         .onChange(of: currentIndex) {
             revealedCurrent = false
+            cardShownAt = Date()
+        }
+        .onChange(of: hasStarted) { _, started in
+            if started { cardShownAt = Date() }
         }
         .onChange(of: scenePhase) { _, phase in
             // Leaving the app mid-session persists position so it survives a hard kill.

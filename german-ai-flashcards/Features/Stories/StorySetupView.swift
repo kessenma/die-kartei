@@ -25,6 +25,8 @@ struct StorySetupView: View {
     /// the stored setting used to do.
     @State private var level: CEFRLevel = .a2
     @State private var didLoadLevel = false
+    /// Leicht lesen (roadmap item 7): one level below the learner's, at their level's length.
+    @State private var easyReading = false
     /// Set when generation finishes; drives the push to the finished story.
     @State private var finishedStory: StudyStory?
     @State private var showStarters = false
@@ -265,8 +267,20 @@ struct StorySetupView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .disabled(easyReading)
             }
             .padding(.vertical, 4)
+
+            Toggle(isOn: $easyReading) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Leicht lesen · Easy reading")
+                    Text("A level below yours, longer, with few new words")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            .onChange(of: easyReading) { _, on in
+                level = on ? modelManager.germanLevel.oneBelow : modelManager.germanLevel
+            }
         } header: {
             Text("Story").themedSectionHeader()
         } footer: {
@@ -483,6 +497,10 @@ struct StorySetupView: View {
     /// Length guidance, plus — only when the learner has moved this story off their own level — a
     /// note that the change is local. Saying it unconditionally would nag on every visit.
     private var levelFooter: String {
+        if easyReading {
+            let range = level.oneAbove.storyWordRange
+            return "Leicht lesen: \(level.rawValue) language at about \(range.lowerBound)–\(range.upperBound) words, few new words. Plenty of easy text is how reading gets fast. Write now only; the queue makes regular stories."
+        }
         let base = "\(level.rawValue) · \(level.englishLabel) — about \(level.storyWordRange.lowerBound)–\(level.storyWordRange.upperBound) words."
         guard level != modelManager.germanLevel else { return base }
         return base + " Just for this story — your level stays \(modelManager.germanLevel.rawValue)."
@@ -532,6 +550,7 @@ struct StorySetupView: View {
             level: level,
             genre: modelManager.storyGenre
         )
+        story.easyReading = easyReading
         modelContext.insert(story)
         try? modelContext.save()
 

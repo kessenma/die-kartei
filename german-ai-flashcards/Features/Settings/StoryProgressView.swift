@@ -51,6 +51,10 @@ struct StoryProgressView: View {
         return Section {
             statRow("Time with stories", StoryProgressService.formatShort(s.totalSeconds), icon: "timer")
             statRow("Stories read", "\(s.storiesRead)", icon: "book.pages")
+            if s.wordsRead > 0 {
+                statRow("Words read or heard", "about \(s.wordsRead.formatted()) · \(s.wordsReadThisWeek.formatted()) this week",
+                        icon: "text.alignleft")
+            }
             statRow("Sessions", "\(s.sessionCount)", icon: "clock.arrow.circlepath")
             statRow("Longest sitting", StoryProgressService.formatShort(s.longestSessionSeconds), icon: "hourglass")
             if s.totalSeconds > 0 {

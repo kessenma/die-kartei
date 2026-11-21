@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "unreleased",
+      "highlights": [
+        {
+          "title": "Leicht · Easy practice",
+          "detail": "After a hard session, Today offers a quick round of cards you already know, and stories can be written in Leicht lesen: a level below yours, longer, with few new words.",
+          "symbol": "leaf"
+        }
+      ]
+    },
+    {
       "version": "1.7",
       "date": "2026-11-08",
       "highlights": [

@@ -54,6 +54,15 @@ struct KasusDrillRound<Module: KasusDrillModule> {
         answers.append(last)
     }
 
+    /// Stamps the last answer with how long it took, from the step appearing to the pick.
+    mutating func markLastTimed(_ ms: Int) {
+        guard var last = answers.popLast() else { return }
+        var graded = last.graded
+        graded.result.record?.answerMs = ms
+        last = KasusDrillAnswer(pick: last.pick, graded: graded)
+        answers.append(last)
+    }
+
     /// Ends the round early: the steps answered so far are the round (a timer ran out).
     mutating func truncate() {
         items = Array(items.prefix(cursor))

@@ -308,6 +308,17 @@ Same story, same questions — presentation-layer only, so it costs no extra gen
 - Store `lastStudiedAsListening` so quiz results can be labeled ("Hören · B1") in stats, and the
   learner profile can distinguish the two skills eventually.
 
+## Leicht lesen (easy reading)
+
+Roadmap item 7 (FSI lessons 4 and 7: adults need plenty of easy text). The setup's "Leicht lesen"
+toggle writes the story one level below the learner's (`CEFRLevel.oneBelow`) at the length of the
+level above that (`StudyStory.easyReading`, `storyPrompt(easyLength:)`), and asks for few new words
+with key words repeated. Write now only; a queued story is a regular one.
+
+Every reading or listening stretch also stores `StoryReadingSession.wordsRead`: the story's length,
+capped at 150 words a minute of the stretch, so a glance or a re-read in one sitting does not
+count extra. Settings ▸ Story progress shows the total and the last seven days.
+
 ## Reading toolkit — gestures & English translation
 
 **Gestures.** The story text gets the exact conversation interactions, because the component is

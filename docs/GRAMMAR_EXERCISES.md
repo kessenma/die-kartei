@@ -106,6 +106,14 @@ of forms has six misses and twice the runner-up's, the hub and Coach's Notes sho
 its two-button drill on the gender the misses were on (`KasusDrillKind.pair`), which never moves
 the coach.
 
+### Answer time
+
+The shell times each step from the moment it appears to its graded pick (a multi-tap step keeps the
+clock running) and stamps it on the answer: `KasusDrillRound.markLastTimed` →
+`KasusRoundItem.answerMs`, synced with the round. It also goes to `AnswerTimeLog` (per device, with
+card flips) for Settings ▸ Developer ▸ Messungen. Nothing reads it as a rule yet (roadmap item 5:
+measure first). Prefilled DEBUG rounds are never timed into the log.
+
 ## Topics
 
 `GrammarTopic` answers for a topic what `KasusUnit` answers for a unit: titles, symbol, colour

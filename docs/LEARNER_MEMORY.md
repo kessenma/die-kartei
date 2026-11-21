@@ -126,6 +126,10 @@ of the named follow-ons (`FUTURE_FEATURES.md` #1) — turns the profile into a c
   (Akkusativ/Dativ), else a `GrammarFocus.explanation` mini-lesson sheet (seeds #4); chat pushes
   `ConversationListView`
 - ✅ Weak-spot rotation (`dayIndex % weaknesses.count`) for day-to-day interleaving
+- ✅ **Leichte Runde** (roadmap item 6, 2026-11-20): `TodayIntent.easyRound` after a hard session
+  (today's last quiz or grammar round under 60% first try) or when two or more weak spots are on,
+  from ten cards known well (Leitner box 4+ or a 3-week interval, last answered right, not due).
+  Plain flip cards: nothing is rescheduled. `-today.debugEasyRound 1` forces it.
 - ✅ **Streak backing (#6 prereq):** new `StudyDay` `@Model` + `StudyLogService`; one row/day,
   incremented from `DeckStore.saveQuizResult` / `saveGrammarQuizResult` and
   `LearnerMemoryService.applySession`. Streak = run of consecutive days, "alive" from yesterday

@@ -29,6 +29,12 @@ enum StoryProgressService {
     /// setting — when it's off, the session is still kept for the progress screen, it just doesn't
     /// tint the calendar or keep the streak alive.
     @discardableResult
+    /// The words a stretch with a story counts as read: the story's length, capped at 150 words a
+    /// minute of the stretch.
+    nonisolated static func estimatedWordsRead(storyWords: Int, seconds: Int) -> Int {
+        min(storyWords, seconds * 150 / 60)
+    }
+
     static func recordReading(
         story: StudyStory,
         seconds: Int,
@@ -48,6 +54,7 @@ enum StoryProgressService {
             lookups: lookups,
             wordsSaved: wordsSaved
         )
+        session.wordsRead = estimatedWordsRead(storyWords: story.wordCount, seconds: seconds)
         context.insert(session)
         if countsTowardStreak {
             StudyLogService.record(.storyReading(seconds), in: context)
@@ -105,6 +112,9 @@ enum StoryProgressService {
         var listeningSeconds = 0
         var lookups = 0
         var wordsSaved = 0
+        /// About how many words read or heard, all time and in the last seven days.
+        var wordsRead = 0
+        var wordsReadThisWeek = 0
         var longestSessionSeconds = 0
         var lastReadAt: Date?
 
@@ -161,6 +171,8 @@ enum StoryProgressService {
             s.totalSeconds += session.seconds
             s.lookups += session.lookups
             s.wordsSaved += session.wordsSaved
+            s.wordsRead += session.wordsRead
+            if session.date >= Date().addingTimeInterval(-7 * 86_400) { s.wordsReadThisWeek += session.wordsRead }
             s.longestSessionSeconds = max(s.longestSessionSeconds, session.seconds)
             if session.wasListening { s.listeningSeconds += session.seconds }
             stories.insert(session.storyID)

@@ -123,34 +123,40 @@ many of the words you predict are actually used".
 ## B. Automaticity: right and fast
 
 ### 5. Answer time · effort M
-- [ ] **Shipped**
+- [ ] **Shipped**. Measurement shipped 2026-11-20; the "sicher" mark waits for the numbers.
 
 Source: `FSI-7`: automaticity "is more important than has been recognized". A practised routine
 needs less effort, which frees attention for the rest. The app records right or wrong today, not
 how long an answer took.
 
-- [ ] Record time to answer on drill items (`GrammarDrillShell`) and on card reviews.
-- [ ] Measure first: a debug view of the spread. No thresholds until the numbers have been looked at.
+- [x] Record time to answer on drill items (`GrammarDrillShell` → `KasusRoundItem.answerMs`) and on
+      card flips (`AnswerTimeLog`, per device).
+- [x] Measure first: Settings ▸ Developer ▸ Messungen shows the spread. No thresholds until the
+      numbers have been looked at.
 - [ ] A "sicher" mark for right and fast, shown in stats. Keep it out of SRS scheduling at first.
-- [ ] Sync: a new field on a synced model needs its codec (`docs/ICLOUD_SYNC.md`). A per-day
-      total on the day log is cheaper.
+- [x] Sync: drill times travel inside `KasusRound`'s items blob; card flip times stay on the device
+      (a measurement, not progress).
 
 ### 6. Easy rounds in Today · effort S, after item 5
-- [ ] **Shipped**
+- [x] **Shipped** 2026-11-20. "Known" is the SRS's verdict (Leitner box 4+ or a 3-week interval,
+      last answered right) until item 5's "sicher" exists.
 
 Source: `FSI-7`: vary the pace and give learners "some tasks that they can perform easily".
 
-- [ ] A `TodayIntent` case for a quick round on material the learner already knows.
-- [ ] Offer it after a hard session, or when the day's plan is all weak spots.
+- [x] A `TodayIntent` case for a quick round on material the learner already knows (plain cards,
+      nothing rescheduled). `-today.debugEasyRound 1` forces the hard-session trigger.
+- [x] Offer it after a hard session (under 60% right first time), or when the day's plan is all
+      weak spots (two or more).
 
 ### 7. Leicht lesen (easy reading in volume) · effort S–M
-- [ ] **Shipped**
+- [x] **Shipped** 2026-11-20 (`docs/SHORT_STORIES.md` ▸ Leicht lesen)
 
 Source: `FSI-7`: adults need "considerable amounts of 'easy' material" to build stamina.
 `FSI-4`: time spent reading and listening tracks closely with what a learner can do.
 
-- [ ] A story option one level below the declared level: longer, with few new words.
-- [ ] Count words read next to the reading time already logged (`StoryReadingSession`).
+- [x] A story option one level below the declared level: longer, with few new words.
+- [x] Count words read next to the reading time already logged (`StoryReadingSession.wordsRead`,
+      an estimate capped at 150 words a minute).
 
 ## C. Conversation under pressure
 
@@ -180,6 +186,7 @@ Source: `DLI-TI`: a weak skill gets a written list of "deficiencies" and "specif
 followed by "a minimum of 10 days of tailored instruction". `FSI-9`: frequent formative feedback.
 
 - [ ] Trigger: a grammar tag that stays weak across sessions. Measure first, then set the rule.
+      (History started 2026-11-20: `ProgressSnapshot.grammarStruggle`, shown in Messungen.)
 - [ ] The plan names the weak spot in plain words and sets ten short daily tasks from existing
       drills, shown in Today.
 - [ ] A short re-check at the end, with the outcome written to the profile. It never fills the

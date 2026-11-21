@@ -11,7 +11,12 @@ import Foundation
 
 extension StoryStudyService {
 
-    static func storyPrompt(topic: String, level: CEFRLevel, genre: StoryGenre, weaveWords: [String] = []) -> (system: String, user: String) {
+    /// `easyLength`: Leicht lesen (roadmap item 7). The language stays at `level`, the length is
+    /// that of the level above, and the prompt asks for few new words, so an easy text is long
+    /// enough to build reading stamina (FSI lesson 7).
+    static func storyPrompt(topic: String, level: CEFRLevel, genre: StoryGenre, weaveWords: [String] = [],
+                            easyLength: CEFRLevel? = nil) -> (system: String, user: String) {
+        let range = (easyLength ?? level).storyWordRange
         let system = """
         Du bist Autor von Lerngeschichten für Deutschlernende (Niveau \(level.rawValue)). \
         Schreibe eine kurze, in sich geschlossene Geschichte AUF DEUTSCH. \
@@ -23,9 +28,12 @@ extension StoryStudyService {
         var user = """
         Thema: \(topic)
         \(genre.promptInstruction)
-        Länge: \(level.storyWordRange.lowerBound)–\(level.storyWordRange.upperBound) Wörter.
+        Länge: \(range.lowerBound)–\(range.upperBound) Wörter.
         \(level.storyConstraints)
         """
+        if easyLength != nil {
+            user += "\nLeicht zu lesen: fast nur häufige Wörter, die auf diesem Niveau bekannt sind; wichtige Wörter dürfen sich wiederholen. Lieber eine längere, ruhige Handlung als viele neue Wörter."
+        }
         if !weaveWords.isEmpty {
             user += "\nBaue einige dieser Wörter natürlich in die Geschichte ein: \(weaveWords.joined(separator: ", "))."
         }

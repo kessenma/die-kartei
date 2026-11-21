@@ -148,6 +148,9 @@ struct TodaySection: View {
                 .buttonStyle(.plain)
         case .verbReview:
             NavigationLink { VerbPrepositionReviewView() } label: { rowLabel(rec, hero: hero) }
+        case .easyRound:
+            Button { launchEasyRound() } label: { rowLabel(rec, hero: hero, chevron: true) }
+                .buttonStyle(.plain)
         case .write(let prompt):
             NavigationLink {
                 JournalTodayWriteView(prompt: prompt, modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
@@ -181,7 +184,9 @@ struct TodaySection: View {
                 resume: resumeInfo,
                 wortschatz: wortschatzInfo,
                 verbDue: verbDueCount,
-                writing: writingInfo
+                writing: writingInfo,
+                knownCardCount: knownCards.count,
+                hardSessionToday: hardSessionToday
             )
         )
     }
@@ -248,6 +253,60 @@ struct TodaySection: View {
                 return next <= now
             }
             .sorted { ($0.nextReviewDate ?? now) < ($1.nextReviewDate ?? now) }
+    }
+
+    /// Cards the learner knows well and that aren't due: Leitner box 4+ or an Anki interval of
+    /// three weeks or more, last answered right. The pool for an easy round (roadmap item 6).
+    private var knownCards: [SavedCard] {
+        let now = Date()
+        return decks
+            .filter { $0.kind != .verbPrepositionSRS }
+            .flatMap(\.cards)
+            .filter { card in
+                guard card.lastReviewWasCorrect == true else { return false }
+                if let next = card.nextReviewDate, next <= now { return false }
+                return card.leitnerBox >= 4 || card.interval >= 21
+            }
+    }
+
+    /// Today's most recent scored session was under 60% right first time: a flashcard quiz or a
+    /// grammar round.
+    private var hardSessionToday: Bool {
+        #if DEBUG
+        // `-today.debugEasyRound 1`: treat today as having had a hard session.
+        if UserDefaults.standard.bool(forKey: "today.debugEasyRound") { return true }
+        #endif
+        let start = Calendar.current.startOfDay(for: .now)
+        let quiz = decks.flatMap(\.quizResults).filter { $0.date >= start }.max { $0.date < $1.date }
+        var descriptor = FetchDescriptor<KasusRound>(predicate: #Predicate { $0.date >= start },
+                                                     sortBy: [SortDescriptor(\.date, order: .reverse)])
+        descriptor.fetchLimit = 1
+        let kasus = (try? modelContext.fetch(descriptor))?.first
+        switch (quiz, kasus) {
+        case let (q?, k?) where k.date > q.date:
+            return k.askedCount > 0 && Double(k.firstTryCount) / Double(k.askedCount) < 0.6
+        case let (q?, _):
+            return q.scorePercentage < 60
+        case let (nil, k?):
+            return k.askedCount > 0 && Double(k.firstTryCount) / Double(k.askedCount) < 0.6
+        default:
+            return false
+        }
+    }
+
+    private func launchEasyRound() {
+        let cards = Array(knownCards.shuffled().prefix(10))
+        guard !cards.isEmpty else { return }
+        // Plain flip cards with no SRS style: an easy round never reschedules anything.
+        var session = StudySession(
+            cards: cards.map(\.vocabCard),
+            topic: "Leichte Runde",
+            deckID: nil,
+            flashcardStyle: .default,
+            subDeckLabel: "Easy round · \(cards.count) cards you know"
+        )
+        session.autoStart = true
+        router.launch(.cardDeck(session))
     }
 
     /// Shaky grammar structures, worst-first (mirrors the coach's grammar sort).

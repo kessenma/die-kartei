@@ -64,6 +64,7 @@ enum StudyStoryCodec: SyncCodec {
         f.set("bestScore", s.bestScore)
         f.set("lastStudiedAsListening", s.lastStudiedAsListening)
         f.set("keyPoints", jsonData: s.keyPointsData)
+        f.set("easyReading", s.easyReading)
         return f.payload
     }
 
@@ -107,6 +108,7 @@ enum StudyStoryCodec: SyncCodec {
         s.bestScore = flat.int("bestScore")
         if let v = flat.bool("lastStudiedAsListening") { s.lastStudiedAsListening = v }
         if let v = flat.jsonData("keyPoints") { s.keyPointsData = v }
+        if let v = flat.bool("easyReading") { s.easyReading = v }
     }
 }
 
@@ -135,6 +137,7 @@ enum StoryReadingSessionCodec: SyncCodec {
         f.set("wasListening", r.wasListening)
         f.set("lookups", r.lookups)
         f.set("wordsSaved", r.wordsSaved)
+        f.set("wordsRead", r.wordsRead)
         return f.payload
     }
 
@@ -171,6 +174,7 @@ enum StoryReadingSessionCodec: SyncCodec {
         if let v = flat.bool("wasListening") { r.wasListening = v }
         if let v = flat.int("lookups") { r.lookups = v }
         if let v = flat.int("wordsSaved") { r.wordsSaved = v }
+        if let v = flat.int("wordsRead") { r.wordsRead = v }
     }
 }
 

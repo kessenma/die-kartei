@@ -90,6 +90,18 @@ struct DeveloperSettingsView: View {
             .themedListRow()
 
             Section {
+                NavigationLink {
+                    MeasurementsView()
+                } label: {
+                    Label("Messungen · Measurements", systemImage: "ruler")
+                }
+            } footer: {
+                Text("Answer times and how weak spots move week to week: the numbers to read before \"right and fast\" or \"stays weak\" becomes a rule.")
+                    .font(.caption2)
+            }
+            .themedListRow()
+
+            Section {
                 Toggle(isOn: $kasusAIStories) {
                     Label("KI-Geschichten im Kasus-Pfad", systemImage: "wand.and.sparkles")
                 }

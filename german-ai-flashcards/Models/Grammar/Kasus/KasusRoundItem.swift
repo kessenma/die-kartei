@@ -132,6 +132,9 @@ nonisolated struct KasusRoundItem: Codable, Hashable {
     /// Markieren: how many of the phrase's words were marked, and how many it has. Nil elsewhere.
     var markedWords: Int? = nil
     var wordCount: Int? = nil
+    /// Milliseconds from the step appearing to the first graded pick (roadmap item 5, answer time).
+    /// Nil on items from before it was measured and on Markieren, which is not one pick.
+    var answerMs: Int? = nil
 
     init(sentence: String, phraseStart: Int?, phrase: String, answer: String, pick: String?,
          kasus: GrammarCase, genus: Gender, outcome: KasusItemOutcome, explanation: String,

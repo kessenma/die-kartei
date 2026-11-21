@@ -215,6 +215,9 @@ final class StudyStory {
     /// listener's own summary is compared with (Hören ▸ Worum geht's?). Nil on stories made before
     /// they existed; the compare step can make them on demand.
     var keyPointsData: Data? = nil
+    /// Leicht lesen (roadmap item 7): written one level below the learner's, at the length of
+    /// their own level, with few new words. Set at creation; read by `writeStory`.
+    var easyReading: Bool = false
 
     init(topic: String, level: CEFRLevel, genre: StoryGenre, createdAt: Date = .now) {
         self.id = UUID()
@@ -356,6 +359,26 @@ final class StudyStory {
 // MARK: - Per-level story shape
 
 extension CEFRLevel {
+    /// The level below, or A1 itself. Leicht lesen writes at this.
+    nonisolated var oneBelow: CEFRLevel {
+        switch self {
+        case .a1, .a2: .a1
+        case .b1: .a2
+        case .b2: .b1
+        case .c1: .b2
+        }
+    }
+
+    /// The level above, or C1 itself. Leicht lesen takes its length from it.
+    nonisolated var oneAbove: CEFRLevel {
+        switch self {
+        case .a1: .a2
+        case .a2: .b1
+        case .b1: .b2
+        case .b2, .c1: .c1
+        }
+    }
+
     /// Target story length in words — roughly the reading-text lengths of the level's exam.
     var storyWordRange: ClosedRange<Int> {
         switch self {

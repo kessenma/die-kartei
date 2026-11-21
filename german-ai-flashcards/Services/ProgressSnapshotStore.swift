@@ -55,6 +55,10 @@ struct ProgressSnapshot: Codable {
     var streak: Int
     var level: Int
     var totalXP: Int
+    /// `GrammarFocus.rawValue` → the coach's struggle score that week (0 solid … 1 shaky). The
+    /// history the Förderplan's "stays weak across sessions" will be read from (roadmap item 9).
+    /// Nil on snapshots from before it was kept.
+    var grammarStruggle: [String: Double]? = nil
 }
 
 /// A dated journey event no existing record could date — recorded once, at detection time.
@@ -216,7 +220,8 @@ enum ProgressSnapshotService {
             ),
             streak: StudyLogService.currentStreak(studyDays),
             level: level.level,
-            totalXP: level.totalXP
+            totalXP: level.totalXP,
+            grammarStruggle: profile.map { $0.grammar.mapValues(\.struggle) }
         ))
 
         // Newly complete layers → dated milestones (silently seeded on the first run).
@@ -246,5 +251,34 @@ enum ProgressSnapshotService {
         }
 
         ProgressSnapshotStore.save(doc)
+    }
+}
+
+/// Each grammar point's struggle score across the weekly snapshots, oldest first: the measurement
+/// behind the Förderplan's "stays weak" (roadmap item 9). Read by Settings ▸ Developer ▸ Messungen
+/// and by `FoerderplanService` when it suggests a weak spot.
+@MainActor
+enum WeakSpotHistory {
+    struct Line: Identifiable {
+        let focus: GrammarFocus
+        let values: [Double]
+        var id: String { focus.rawValue }
+        /// Weeks at or above the shaky threshold.
+        var weeksShaky: Int { values.filter { $0 >= GrammarSkill.shakyThreshold }.count }
+        /// Shaky in each of the last `n` weeks that have a score.
+        func shakyInLast(_ n: Int) -> Bool {
+            let recent = values.suffix(n)
+            return recent.count == n && recent.allSatisfy { $0 >= GrammarSkill.shakyThreshold }
+        }
+    }
+
+    static func lines(from snapshots: [ProgressSnapshot] = ProgressSnapshotStore.document().snapshots) -> [Line] {
+        let scored = snapshots.sorted { $0.takenAt < $1.takenAt }.compactMap(\.grammarStruggle)
+        guard !scored.isEmpty else { return [] }
+        return GrammarFocus.allCases.compactMap { focus in
+            let values = scored.compactMap { $0[focus.rawValue] }
+            return values.isEmpty ? nil : Line(focus: focus, values: values)
+        }
+        .sorted { $0.weeksShaky > $1.weeksShaky }
     }
 }
