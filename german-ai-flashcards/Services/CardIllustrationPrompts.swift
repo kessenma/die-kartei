@@ -1,0 +1,170 @@
+import Foundation
+
+/// Builds the Stable Diffusion prompts for one flashcard picture.
+///
+/// Unlike story illustrations — where an LLM has to read the German prose and pick scenes — a
+/// flashcard already carries its own English gloss, so the prompt is built deterministically from
+/// `englishTranslation` and `wordType`. No model call, which is what makes illustrating an existing
+/// deck cheap: the language model never has to load at all.
+///
+/// The look isn't fixed: `CardImageStyle` and `CardImageDetail` are the learner's two knobs, and
+/// both contribute to the positive *and* negative prompt. The negative half does most of the work
+/// on a small model, so it's built here rather than left to `ImageGenConstants`.
+enum CardIllustrationPrompts {
+
+    /// True of every card picture whatever the style: a flashcard is glanced at for a second, so
+    /// one clear subject beats an atmospheric scene.
+    static let baseSuffix = "illustration for a vocabulary flashcard"
+
+    /// Card-specific negatives on top of `ImageGenConstants.negativePrompt`. Small models love to
+    /// answer an abstract noun with a poster or an infographic, both of which are unreadable at
+    /// flashcard size.
+    static let baseNegative = "caption, label, title, typography, handwriting, poster, infographic, diagram, chart, logo"
+
+    /// Shape the English gloss into something drawable, by word type. Verbs and adjectives are the
+    /// two that fail as bare nouns — "to run" or "beautiful" alone give the model nothing to
+    /// center on.
+    static func subject(
+        englishTranslation: String,
+        wordType: String?,
+        detail: CardImageDetail = .current
+    ) -> String {
+        let word = englishTranslation
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "\"'.,;:"))
+
+        switch (wordType ?? "").lowercased() {
+        case "verb":
+            // "to run" → "a person performing the action: run"
+            let bare = word.hasPrefix("to ") ? String(word.dropFirst(3)) : word
+            return "a person performing the action: \(bare)"
+        case "adjective", "adverb":
+            return detail == .justTheWord
+                ? "something that looks very \(word)"
+                : "a scene that looks very \(word), expressive mood"
+        case "noun":
+            let bare = stripArticle(word)
+            return detail == .justTheWord ? "a single \(bare)" : bare
+        default:
+            return detail == .justTheWord ? "a simple picture of \(word)" : "a simple scene depicting \(word)"
+        }
+    }
+
+    /// The full positive prompt for one card.
+    static func positivePrompt(
+        englishTranslation: String,
+        wordType: String?,
+        style: CardImageStyle = .current,
+        detail: CardImageDetail = .current
+    ) -> String {
+        [
+            subject(englishTranslation: englishTranslation, wordType: wordType, detail: detail),
+            style.promptFragment,
+            detail.promptFragment,
+            baseSuffix,
+        ].joined(separator: ", ")
+    }
+
+    /// The full negative prompt for one card: the shared list, plus what a flashcard never wants,
+    /// plus what this particular style and detail level must avoid.
+    static func negativePrompt(
+        style: CardImageStyle = .current,
+        detail: CardImageDetail = .current
+    ) -> String {
+        [
+            ImageGenConstants.negativePrompt,
+            baseNegative,
+            style.negativeFragment,
+            detail.negativeFragment,
+        ].joined(separator: ", ")
+    }
+
+    /// Drop a leading English article — the picture is of the thing, not of "a thing".
+    private static func stripArticle(_ word: String) -> String {
+        for article in ["the ", "a ", "an "] where word.lowercased().hasPrefix(article) {
+            return String(word.dropFirst(article.count))
+        }
+        return word
+    }
+}
+
+// MARK: - Cloud models
+
+extension CardIllustrationPrompts {
+    /// Said to every cloud model. They follow instructions rather than reading a keyword list, so
+    /// what the negative prompt does on-device is one plain sentence here.
+    static let noTextClause = "No text, letters, numbers, labels or captions anywhere in the picture."
+
+    /// The instruction a cloud model gets for one card: the same subject and the same two knobs as
+    /// the on-device prompt, written as sentences instead of CLIP keywords.
+    static func cloudPrompt(
+        englishTranslation: String,
+        wordType: String?,
+        style: CardImageStyle = .current,
+        detail: CardImageDetail = .current
+    ) -> String {
+        let subject = subject(englishTranslation: englishTranslation, wordType: wordType, detail: detail)
+        let framing = switch detail {
+        case .justTheWord: "Show one single subject, centered on a plain empty background, with nothing else in the frame."
+        case .littleScene: "Show one clear main subject with a simple, uncluttered hint of its setting."
+        }
+        return [
+            "A picture for a German vocabulary flashcard: \(subject).",
+            "Style: \(style.promptFragment).",
+            framing,
+            "Square.",
+            noTextClause,
+        ].joined(separator: " ")
+    }
+}
+
+// MARK: - Zeichnen gallery pictures
+
+extension CardIllustrationPrompts {
+    /// The instruction for one gallery picture of a word in a `WordArtStyle`. The same subject as
+    /// a card picture; the framing leaves the background to the style (Kontur is black, Theater is
+    /// a stage), so it never says "plain background".
+    static func artPrompt(englishTranslation: String, wordType: String?, style: WordArtStyle) -> String {
+        let subject = subject(englishTranslation: englishTranslation, wordType: wordType, detail: .justTheWord)
+        let purpose = switch style {
+        case .skizze:     "A drawing reference for a German vocabulary word, to copy by hand in under a minute"
+        case .malvorlage: "A picture for a German vocabulary word, to be turned into a paint-by-number template"
+        default:          "A picture for a German vocabulary word, to study and draw from"
+        }
+        return [
+            "\(purpose): \(subject).",
+            "Style: \(style.promptFragment).",
+            "One clear main subject, centered, nothing cluttering the frame.",
+            "Square.",
+            noTextClause,
+        ].joined(separator: " ")
+    }
+
+    /// A gallery picture as a `PictureRequest`, at the reference size.
+    static func artRequest(englishTranslation: String, wordType: String?, style: WordArtStyle) -> PictureRequest {
+        PictureRequest(
+            sdPrompt: [subject(englishTranslation: englishTranslation, wordType: wordType, detail: .justTheWord),
+                       style.promptFragment].joined(separator: ", "),
+            sdNegative: [ImageGenConstants.negativePrompt, baseNegative, style.negativeFragment].joined(separator: ", "),
+            cloudPrompt: artPrompt(englishTranslation: englishTranslation, wordType: wordType, style: style),
+            maxPixel: WordArtStore.artMaxPixel
+        )
+    }
+}
+
+extension CardIllustrationPrompts {
+    /// One card's picture, described for whichever source draws it.
+    static func request(
+        englishTranslation: String,
+        wordType: String?,
+        style: CardImageStyle = .current,
+        detail: CardImageDetail = .current
+    ) -> PictureRequest {
+        PictureRequest(
+            sdPrompt: positivePrompt(englishTranslation: englishTranslation, wordType: wordType, style: style, detail: detail),
+            sdNegative: negativePrompt(style: style, detail: detail),
+            cloudPrompt: cloudPrompt(englishTranslation: englishTranslation, wordType: wordType, style: style, detail: detail),
+            maxPixel: CloudPictureWriter.cardMaxPixel
+        )
+    }
+}

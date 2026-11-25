@@ -14,17 +14,75 @@
 		8AB6603F2FB717690052F4F4 /* HuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB6603E2FB717690052F4F4 /* HuggingFace */; };
 		8AB660422FB717B00052F4F4 /* Transformers in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660412FB717B00052F4F4 /* Transformers */; };
 		8AB660452FB7199D0052F4F4 /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660442FB7199D0052F4F4 /* MLXHuggingFace */; };
-		D1ECA00000000000000000A3 /* DieKarteiCore in Frameworks */ = {isa = PBXBuildFile; productRef = D1ECA00000000000000000A2 /* DieKarteiCore */; };
+		8AB660532FB720000052F4F4 /* StableDiffusion in Frameworks */ = {isa = PBXBuildFile; productRef = 8AB660522FB720000052F4F4 /* StableDiffusion */; };
+		8ABE00012FC000000000000C /* Die Kartei Keyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8ABE00012FC0000000000003 /* Die Kartei Keyboard.appex */; platformFilter = ios; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8AD1F0012FE0000000000001 /* KarteiDiffusion in Frameworks */ = {isa = PBXBuildFile; platformFilters = (macos, ); productRef = 8AD1F0012FE0000000000003 /* KarteiDiffusion */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8ABE00012FC000000000000E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8AB65FE02FB65EFD0052F4F4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8ABE00012FC0000000000002;
+			remoteInfo = "Die Kartei Keyboard";
+		};
+		8AC100012FD0000000000007 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8AB65FE02FB65EFD0052F4F4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8AB65FE72FB65EFD0052F4F4;
+			remoteInfo = "Die Kartei";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8ABE00012FC000000000000B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8ABE00012FC000000000000C /* Die Kartei Keyboard.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		8AB65FE82FB65EFD0052F4F4 /* Die Kartei.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Die Kartei.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8ABE00012FC0000000000003 /* Die Kartei Keyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Die Kartei Keyboard.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8AC100012FD0000000000003 /* german-ai-flashcardsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "german-ai-flashcardsTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		8AE5C0012FF0000000000001 /* Exceptions for "german-ai-flashcards" folder in "Die Kartei Keyboard" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Services/GermanWriter.swift,
+			);
+			target = 8ABE00012FC0000000000002 /* Die Kartei Keyboard */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8AB65FEA2FB65EFD0052F4F4 /* german-ai-flashcards */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8AE5C0012FF0000000000001 /* Exceptions for "german-ai-flashcards" folder in "Die Kartei Keyboard" target */,
+			);
 			path = "german-ai-flashcards";
+			sourceTree = "<group>";
+		};
+		8ABE00012FC0000000000001 /* KeyboardExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = KeyboardExtension;
+			sourceTree = "<group>";
+		};
+		8AC100012FD0000000000001 /* german-ai-flashcardsTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "german-ai-flashcardsTests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -41,7 +99,22 @@
 				8AB660452FB7199D0052F4F4 /* MLXHuggingFace in Frameworks */,
 				8AB6603C2FB717370052F4F4 /* MLXLMCommon in Frameworks */,
 				8AB660372FB716E90052F4F4 /* MLXRandom in Frameworks */,
-				D1ECA00000000000000000A3 /* DieKarteiCore in Frameworks */,
+				8AB660532FB720000052F4F4 /* StableDiffusion in Frameworks */,
+				8AD1F0012FE0000000000001 /* KarteiDiffusion in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8ABE00012FC0000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8AC100012FD0000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -52,6 +125,8 @@
 			isa = PBXGroup;
 			children = (
 				8AB65FEA2FB65EFD0052F4F4 /* german-ai-flashcards */,
+				8ABE00012FC0000000000001 /* KeyboardExtension */,
+				8AC100012FD0000000000001 /* german-ai-flashcardsTests */,
 				8AB660432FB719410052F4F4 /* Frameworks */,
 				8AB65FE92FB65EFD0052F4F4 /* Products */,
 			);
@@ -61,6 +136,8 @@
 			isa = PBXGroup;
 			children = (
 				8AB65FE82FB65EFD0052F4F4 /* Die Kartei.app */,
+				8ABE00012FC0000000000003 /* Die Kartei Keyboard.appex */,
+				8AC100012FD0000000000003 /* german-ai-flashcardsTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -82,10 +159,13 @@
 				8AB65FE42FB65EFD0052F4F4 /* Sources */,
 				8AB65FE52FB65EFD0052F4F4 /* Frameworks */,
 				8AB65FE62FB65EFD0052F4F4 /* Resources */,
+				8ABE00012FC000000000000B /* Embed Foundation Extensions */,
+				8AB660602FB7A0000052F4F4 /* Stamp release macOS build */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				8ABE00012FC000000000000D /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				8AB65FEA2FB65EFD0052F4F4 /* german-ai-flashcards */,
@@ -99,11 +179,58 @@
 				8AB6603E2FB717690052F4F4 /* HuggingFace */,
 				8AB660412FB717B00052F4F4 /* Transformers */,
 				8AB660442FB7199D0052F4F4 /* MLXHuggingFace */,
-				D1ECA00000000000000000A2 /* DieKarteiCore */,
+				8AB660522FB720000052F4F4 /* StableDiffusion */,
+				8AD1F0012FE0000000000003 /* KarteiDiffusion */,
 			);
 			productName = "german-ai-flashcards";
 			productReference = 8AB65FE82FB65EFD0052F4F4 /* Die Kartei.app */;
 			productType = "com.apple.product-type.application";
+		};
+		8ABE00012FC0000000000002 /* Die Kartei Keyboard */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8ABE00012FC0000000000008 /* Build configuration list for PBXNativeTarget "Die Kartei Keyboard" */;
+			buildPhases = (
+				8ABE00012FC0000000000004 /* Sources */,
+				8ABE00012FC0000000000005 /* Frameworks */,
+				8ABE00012FC0000000000006 /* Resources */,
+				8ABE00012FC0000000000007 /* Stamp release macOS build */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				8ABE00012FC0000000000001 /* KeyboardExtension */,
+			);
+			name = "Die Kartei Keyboard";
+			packageProductDependencies = (
+			);
+			productName = "Die Kartei Keyboard";
+			productReference = 8ABE00012FC0000000000003 /* Die Kartei Keyboard.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		8AC100012FD0000000000002 /* german-ai-flashcardsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8AC100012FD0000000000009 /* Build configuration list for PBXNativeTarget "german-ai-flashcardsTests" */;
+			buildPhases = (
+				8AC100012FD0000000000004 /* Sources */,
+				8AC100012FD0000000000005 /* Frameworks */,
+				8AC100012FD0000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8AC100012FD0000000000008 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				8AC100012FD0000000000001 /* german-ai-flashcardsTests */,
+			);
+			name = "german-ai-flashcardsTests";
+			packageProductDependencies = (
+			);
+			productName = "german-ai-flashcardsTests";
+			productReference = 8AC100012FD0000000000003 /* german-ai-flashcardsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -113,10 +240,17 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2630;
-				LastUpgradeCheck = 2630;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					8AB65FE72FB65EFD0052F4F4 = {
 						CreatedOnToolsVersion = 26.3;
+					};
+					8ABE00012FC0000000000002 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					8AC100012FD0000000000002 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 8AB65FE72FB65EFD0052F4F4;
 					};
 				};
 			};
@@ -130,11 +264,12 @@
 			mainGroup = 8AB65FDF2FB65EFD0052F4F4;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				D1ECA00000000000000000A1 /* XCLocalSwiftPackageReference "DieKarteiCore" */,
 				8AB660332FB716E90052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift" */,
 				8AB660382FB717370052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */,
 				8AB6603D2FB717690052F4F4 /* XCRemoteSwiftPackageReference "swift-huggingface" */,
 				8AB660402FB717B00052F4F4 /* XCRemoteSwiftPackageReference "swift-transformers" */,
+				8AB660512FB720000052F4F4 /* XCRemoteSwiftPackageReference "ml-stable-diffusion" */,
+				8AD1F0012FE0000000000002 /* XCLocalSwiftPackageReference "KarteiDiffusion" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8AB65FE92FB65EFD0052F4F4 /* Products */;
@@ -142,6 +277,8 @@
 			projectRoot = "";
 			targets = (
 				8AB65FE72FB65EFD0052F4F4 /* Die Kartei */,
+				8ABE00012FC0000000000002 /* Die Kartei Keyboard */,
+				8AC100012FD0000000000002 /* german-ai-flashcardsTests */,
 			);
 		};
 /* End PBXProject section */
@@ -154,7 +291,62 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8ABE00012FC0000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8AC100012FD0000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		8AB660602FB7A0000052F4F4 /* Stamp release macOS build */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Stamp release macOS build";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Rewrites BuildMachineOSBuild when archiving on a beta macOS, so App Store Connect\n# doesn't reject the build with ITMS-90111. Must stay the LAST phase (runs before code signing).\n# See scripts/stamp-release-os.sh and docs/DEPLOY_SETUP.md.\n/bin/bash \"${SRCROOT}/scripts/stamp-release-os.sh\"\n";
+		};
+		8ABE00012FC0000000000007 /* Stamp release macOS build */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Stamp release macOS build";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# The extension's own copy of the app target's stamp phase. It must run HERE, as this\n# target's last phase, because the appex is signed by this target and then embedded: a\n# rewrite after that point would invalidate its signature. The app target's pass prunes\n# nested .appex bundles for exactly this reason.\n# See scripts/stamp-release-os.sh and docs/DEPLOY_SETUP.md.\n/bin/bash \"${SRCROOT}/scripts/stamp-release-os.sh\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		8AB65FE42FB65EFD0052F4F4 /* Sources */ = {
@@ -164,7 +356,35 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8ABE00012FC0000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8AC100012FD0000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		8ABE00012FC000000000000D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = 8ABE00012FC0000000000002 /* Die Kartei Keyboard */;
+			targetProxy = 8ABE00012FC000000000000E /* PBXContainerItemProxy */;
+		};
+		8AC100012FD0000000000008 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8AB65FE72FB65EFD0052F4F4 /* Die Kartei */;
+			targetProxy = 8AC100012FD0000000000007 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		8AB65FF12FB65EFF0052F4F4 /* Debug */ = {
@@ -201,11 +421,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -224,6 +445,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -263,11 +485,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -279,6 +502,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
@@ -286,17 +510,25 @@
 		8AB65FF42FB65EFF0052F4F4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				"ARCHS[sdk=macosx*]" = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "german-ai-flashcards/german-ai-flashcards.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "german-ai-flashcards/german-ai-flashcards-macOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				"INFOPLIST_FILE[sdk=macosx*]" = "Info-macOS.plist";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Die Kartei uses the camera to scan photos of German vocabulary and text for study.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Die Kartei uses the microphone so you can speak German out loud in AI voice conversations.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Die Kartei uses your photo library to import photos of German text for vocabulary study.";
@@ -315,7 +547,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "kyle-essenmacher.german-ai-flashcards";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -325,6 +557,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "german-ai-flashcards/Interop/german-ai-flashcards-Bridging-Header.h";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
@@ -333,51 +566,168 @@
 			name = Debug;
 		};
 		8AB65FF52FB65EFF0052F4F4 /* Release */ = {
+	buildSettings = {
+		"ARCHS[sdk=macosx*]" = arm64;
+		"ASSETCATALOG_COMPILER_APPICON_NAME" = AppIcon;
+		"ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME" = AccentColor;
+		"CODE_SIGN_ENTITLEMENTS" = "german-ai-flashcards/german-ai-flashcards.entitlements";
+		"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "german-ai-flashcards/german-ai-flashcards-macOS.entitlements";
+		"CODE_SIGN_STYLE" = Automatic;
+		"CURRENT_PROJECT_VERSION" = 24;
+		"DEAD_CODE_STRIPPING" = YES;
+		"DEVELOPMENT_TEAM" = RHPLRY9X9P;
+		"ENABLE_APP_SANDBOX" = YES;
+		"ENABLE_HARDENED_RUNTIME" = YES;
+		"ENABLE_OUTGOING_NETWORK_CONNECTIONS" = YES;
+		"ENABLE_PREVIEWS" = YES;
+		"ENABLE_RESOURCE_ACCESS_AUDIO_INPUT" = YES;
+		"ENABLE_USER_SELECTED_FILES" = readwrite;
+		"GENERATE_INFOPLIST_FILE" = YES;
+		"INFOPLIST_FILE" = "Info.plist";
+		"INFOPLIST_FILE[sdk=macosx*]" = "Info-macOS.plist";
+		"INFOPLIST_KEY_LSApplicationCategoryType" = "public.app-category.education";
+		"INFOPLIST_KEY_NSCameraUsageDescription" = "Die Kartei uses the camera to scan photos of German vocabulary and text for study.";
+		"INFOPLIST_KEY_NSMicrophoneUsageDescription" = "Die Kartei uses the microphone so you can speak German out loud in AI voice conversations.";
+		"INFOPLIST_KEY_NSPhotoLibraryUsageDescription" = "Die Kartei uses your photo library to import photos of German text for vocabulary study.";
+		"INFOPLIST_KEY_NSSpeechRecognitionUsageDescription" = "Speech recognition turns your spoken German into text so the AI can reply and correct you.";
+		"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+		"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+		"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+		"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+		"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+		"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+		"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+		"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+		"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad" = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+		"INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone" = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+		"IPHONEOS_DEPLOYMENT_TARGET" = "26.2";
+		"LD_RUNPATH_SEARCH_PATHS" = "@executable_path/Frameworks";
+		"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+		"MACOSX_DEPLOYMENT_TARGET" = "26.2";
+		"MARKETING_VERSION" = "1.7";
+		"PRODUCT_BUNDLE_IDENTIFIER" = "kyle-essenmacher.german-ai-flashcards";
+		"PRODUCT_NAME" = "$(TARGET_NAME)";
+		"REGISTER_APP_GROUPS" = YES;
+		SDKROOT = auto;
+		"STRING_CATALOG_GENERATE_SYMBOLS" = YES;
+		"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator macosx xros xrsimulator";
+		"SWIFT_APPROACHABLE_CONCURRENCY" = YES;
+		"SWIFT_DEFAULT_ACTOR_ISOLATION" = MainActor;
+		"SWIFT_EMIT_LOC_STRINGS" = YES;
+		"SWIFT_OBJC_BRIDGING_HEADER" = "german-ai-flashcards/Interop/german-ai-flashcards-Bridging-Header.h";
+		"SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY" = YES;
+		"SWIFT_VERSION" = "5.0";
+		"TARGETED_DEVICE_FAMILY" = "1,2,7";
+		"XROS_DEPLOYMENT_TARGET" = "26.2";
+	};
+	isa = XCBuildConfiguration;
+	name = Release;
+};
+		8ABE00012FC0000000000009 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = "german-ai-flashcards/german-ai-flashcards.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = RHPLRY9X9P;
-				ENABLE_APP_SANDBOX = YES;
-				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Die Kartei uses the camera to scan photos of German vocabulary and text for study.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Die Kartei uses the microphone so you can speak German out loud in AI voice conversations.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Die Kartei uses your photo library to import photos of German text for vocabulary study.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Speech recognition turns your spoken German into text so the AI can reply and correct you.";
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
-				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_FILE = "KeyboardExtension-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Die Kartei";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
-				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 26.2;
-				MARKETING_VERSION = 1.1;
-				PRODUCT_BUNDLE_IDENTIFIER = "kyle-essenmacher.german-ai-flashcards";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.2;
+				PRODUCT_BUNDLE_IDENTIFIER = "kyle-essenmacher.german-ai-flashcards.keyboard";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				REGISTER_APP_GROUPS = YES;
-				SDKROOT = auto;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		8ABE00012FC000000000000A /* Release */ = {
+	buildSettings = {
+		"CODE_SIGN_STYLE" = Automatic;
+		"CURRENT_PROJECT_VERSION" = 24;
+		"DEAD_CODE_STRIPPING" = YES;
+		"DEVELOPMENT_TEAM" = RHPLRY9X9P;
+		"ENABLE_PREVIEWS" = YES;
+		"ENABLE_USER_SCRIPT_SANDBOXING" = NO;
+		"GENERATE_INFOPLIST_FILE" = YES;
+		"INFOPLIST_FILE" = "KeyboardExtension-Info.plist";
+		"INFOPLIST_KEY_CFBundleDisplayName" = "Die Kartei";
+		"IPHONEOS_DEPLOYMENT_TARGET" = "26.2";
+		"LD_RUNPATH_SEARCH_PATHS" = (
+			"@executable_path/Frameworks",
+			"@executable_path/../../Frameworks",
+		);
+		"MARKETING_VERSION" = "1.7";
+		"PRODUCT_BUNDLE_IDENTIFIER" = "kyle-essenmacher.german-ai-flashcards.keyboard";
+		"PRODUCT_NAME" = "$(TARGET_NAME)";
+		SDKROOT = iphoneos;
+		"SKIP_INSTALL" = YES;
+		"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
+		"SWIFT_APPROACHABLE_CONCURRENCY" = YES;
+		"SWIFT_DEFAULT_ACTOR_ISOLATION" = MainActor;
+		"SWIFT_EMIT_LOC_STRINGS" = YES;
+		"SWIFT_VERSION" = "5.0";
+		"TARGETED_DEVICE_FAMILY" = "1,2";
+	};
+	isa = XCBuildConfiguration;
+	name = Release;
+};
+		8AC100012FD000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RHPLRY9X9P;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				PRODUCT_BUNDLE_IDENTIFIER = "kyle-essenmacher.german-ai-flashcardsTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2,7";
-				XROS_DEPLOYMENT_TARGET = 26.2;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Die Kartei.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Die Kartei";
+			};
+			name = Debug;
+		};
+		8AC100012FD000000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = RHPLRY9X9P;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				PRODUCT_BUNDLE_IDENTIFIER = "kyle-essenmacher.german-ai-flashcardsTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Die Kartei.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Die Kartei";
 			};
 			name = Release;
 		};
@@ -402,12 +752,30 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		8ABE00012FC0000000000008 /* Build configuration list for PBXNativeTarget "Die Kartei Keyboard" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8ABE00012FC0000000000009 /* Debug */,
+				8ABE00012FC000000000000A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8AC100012FD0000000000009 /* Build configuration list for PBXNativeTarget "german-ai-flashcardsTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8AC100012FD000000000000A /* Debug */,
+				8AC100012FD000000000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		D1ECA00000000000000000A1 /* XCLocalSwiftPackageReference "DieKarteiCore" */ = {
+		8AD1F0012FE0000000000002 /* XCLocalSwiftPackageReference "KarteiDiffusion" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = DieKarteiCore;
+			relativePath = KarteiDiffusion;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -435,6 +803,8 @@
 				kind = upToNextMajorVersion;
 				minimumVersion = 0.9.0;
 			};
+			traits = (
+			);
 		};
 		8AB660402FB717B00052F4F4 /* XCRemoteSwiftPackageReference "swift-transformers" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -443,14 +813,20 @@
 				kind = upToNextMajorVersion;
 				minimumVersion = 1.3.2;
 			};
+			traits = (
+			);
+		};
+		8AB660512FB720000052F4F4 /* XCRemoteSwiftPackageReference "ml-stable-diffusion" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/ml-stable-diffusion";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.1;
+			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		D1ECA00000000000000000A2 /* DieKarteiCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = DieKarteiCore;
-		};
 		8AB660342FB716E90052F4F4 /* MLX */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8AB660332FB716E90052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift" */;
@@ -485,6 +861,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8AB660382FB717370052F4F4 /* XCRemoteSwiftPackageReference "mlx-swift-lm" */;
 			productName = MLXHuggingFace;
+		};
+		8AB660522FB720000052F4F4 /* StableDiffusion */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8AB660512FB720000052F4F4 /* XCRemoteSwiftPackageReference "ml-stable-diffusion" */;
+			productName = StableDiffusion;
+		};
+		8AD1F0012FE0000000000003 /* KarteiDiffusion */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8AD1F0012FE0000000000002 /* XCLocalSwiftPackageReference "KarteiDiffusion" */;
+			productName = KarteiDiffusion;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

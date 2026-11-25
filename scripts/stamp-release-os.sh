@@ -1,0 +1,123 @@
+#!/bin/bash
+# Rewrite BuildMachineOSBuild in the ARCHIVED app so App Store Connect accepts
+# archives made on a beta macOS.
+#
+# Why: ASC rejects binaries whose Info.plist says they were built ON an
+# unreleased macOS, and reports it as ITMS-90111 ("Unsupported SDK or Xcode
+# version") - the same code it uses for a beta Xcode. Xcode stamps the host OS
+# build into every Info.plist it processes: the app's and the SPM resource
+# bundles' (Cmlx, Crypto, Hub). The Xcode/SDK stamps (DTXcodeBuild, DTSDKBuild)
+# are left alone; those are what the rule is really about.
+#
+# Scope: ARCHIVES ONLY. Xcode runs this phase on every build, but a Debug or
+# simulator build never goes near App Store Connect, and day-to-day work on a
+# beta macOS may well happen in a beta Xcode. Outside an archive this script
+# prints a note and exits 0. It must never fail a dev build.
+#
+# Wired as the LAST build phase of the "Die Kartei" target ("Stamp release
+# macOS build"): after Copy Bundle Resources, before Xcode's code-sign step, so
+# the signature seals the rewritten plists. scripts/deploy.py refuses to
+# archive on a beta host if this phase goes missing, and reads the stamps back
+# out of the exported IPA afterwards.
+#
+# Env knobs (all optional):
+#   RELEASE_MACOS_BUILD  stamp with this exact build instead of auto-picking
+set -euo pipefail
+
+note() { echo "note: stamp-release-os: $*"; }
+
+# Apple seed (beta) builds carry a 4-digit build number from 5000 up, usually
+# with a letter suffix: 26A5421a, 27A5194q. A trailing letter alone proves
+# nothing: release Xcode 27.0 is 27A266a, 16.0 was 16A242d. Releases and RCs
+# have shorter numbers (25G83, 26A335); security updates use 1xxx-4xxx or
+# 6+ digits, so neither trips this. True for macOS builds; Xcode outgrew it with
+# 27.1 (27A9275 is the release), which step 3 handles on its own.
+is_seed() { [[ "$1" =~ ^[0-9]+[A-Z][5-9][0-9]{3}[a-z]?$ ]]; }
+
+# 1. Only archives matter. `xcodebuild archive` runs the "install" action;
+#    everything else (build, test, GUI runs) is "build".
+if [[ "${ACTION:-build}" != "install" ]]; then
+  note "not an archive (ACTION=${ACTION:-build}); nothing to do"
+  exit 0
+fi
+
+# 2. Nothing to do on a release macOS.
+host_build="$(sw_vers -buildVersion)"
+if ! is_seed "$host_build"; then
+  note "host macOS ${host_build} is a release build; nothing to do"
+  exit 0
+fi
+
+# 3. A beta Xcode can't produce a submittable archive anyway (DTXcodeBuild is
+#    checked too), so don't pretend otherwise. Its build number no longer tells
+#    us which it is: Xcode 27.1 SHIPPED as 27A9275 and its betas were 27A92xx,
+#    both inside the seed range, so ask the bundle instead. A Mac App Store
+#    receipt only ever lands in a public release; the XcodeBeta icon and a
+#    "beta" in the path mark a beta (27.1's betas carry only the latter). Fall
+#    back to the build number when the bundle says nothing either way, which is
+#    what pre-27.1 numbering still answers correctly.
+xcode_build="${XCODE_PRODUCT_BUILD_VERSION:-}"
+if [[ -z "$xcode_build" ]]; then
+  xcode_build="$(xcodebuild -version 2>/dev/null | awk '/Build version/ {print $3}')"
+fi
+
+xcode_app="${DEVELOPER_DIR:-$(xcode-select -p 2>/dev/null || true)}"
+xcode_app="${xcode_app%/Contents/Developer}"
+
+# "release", "beta" or "unknown" — keep in step with _xcode_channel() in scripts/deploy.py.
+xcode_channel() {
+  local app="$1" icon=""
+  [[ -n "$app" && -d "$app/Contents/_MASReceipt" ]] && { echo release; return; }
+  if [[ -n "$app" ]]; then
+    icon="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$app/Contents/Info.plist" 2>/dev/null || true)"
+  fi
+  if [[ "$icon" == *Beta* || "$app" == *[Bb]eta* ]]; then echo beta; return; fi
+  echo unknown
+}
+
+channel="$(xcode_channel "$xcode_app")"
+if [[ "$channel" == beta ]] || { [[ "$channel" == unknown ]] && is_seed "$xcode_build"; }; then
+  echo "error: archiving with a beta Xcode (${xcode_build}, ${xcode_app:-unknown path}). App Store Connect will reject this archive regardless of BuildMachineOSBuild. Archive with the release Xcode instead (scripts/deploy.py does)." >&2
+  exit 1
+fi
+note "Xcode ${xcode_build} looks like a ${channel} build (${xcode_app:-unknown path})"
+
+# 4. Pick the stamp. Prefer the macOS build that shipped with this (release)
+#    Xcode's own macOS SDK, so it tracks Xcode updates by itself. Fall back to a
+#    pinned public release if that's missing or itself a seed build.
+release_build="${RELEASE_MACOS_BUILD:-}"
+if [[ -z "$release_build" ]]; then
+  release_build="$(xcrun --sdk macosx --show-sdk-build-version 2>/dev/null || true)"
+fi
+if [[ -z "$release_build" ]] || is_seed "$release_build"; then
+  fallback="25G83"  # macOS 26.6.2, the latest public release as of 2026-09-07
+  note "macOS SDK build '${release_build:-none}' unusable as a stamp; using pinned ${fallback}"
+  release_build="$fallback"
+fi
+
+app="${TARGET_BUILD_DIR}/${WRAPPER_NAME}"
+if [[ ! -d "$app" ]]; then
+  echo "error: built product not found at ${app}" >&2
+  exit 1
+fi
+
+# Nested .appex bundles are stamped by their OWN target's copy of this phase, which runs before
+# that extension is signed. By the time the app target gets here the appex has been signed and
+# embedded, so rewriting its Info.plist would invalidate the signature. Prune them — unless we
+# *are* the extension, in which case the wrapper itself is the .appex and must be walked.
+prune=()
+if [[ "${WRAPPER_NAME}" != *.appex ]]; then
+  prune=(-name '*.appex' -prune -o)
+fi
+
+count=0
+while IFS= read -r -d '' plist; do
+  if /usr/libexec/PlistBuddy -c 'Print :BuildMachineOSBuild' "$plist" >/dev/null 2>&1; then
+    /usr/libexec/PlistBuddy -c "Set :BuildMachineOSBuild ${release_build}" "$plist"
+    count=$((count + 1))
+  fi
+  # `${prune[@]+...}` because /bin/bash on macOS is 3.2, where expanding an empty array
+  # under `set -u` is an error.
+done < <(find "$app" ${prune[@]+"${prune[@]}"} -name Info.plist -print0)
+
+echo "stamped BuildMachineOSBuild ${host_build} -> ${release_build} in ${count} Info.plist(s) under ${WRAPPER_NAME} (Xcode ${xcode_build})"

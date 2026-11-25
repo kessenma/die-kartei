@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!-- The macOS build's partial Info.plist (INFOPLIST_FILE[sdk=macosx*]): Info.plist minus its
+     iOS-only keys. UIBackgroundModes and BGTaskSchedulerPermittedIdentifiers mean nothing on a Mac,
+     and LSSupportsOpeningDocumentsInPlace = NO is a build error there. Keep the document and type
+     declarations in step with Info.plist. -->
+<dict>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Die Kartei Deck</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>kyle-essenmacher.german-ai-flashcards.deck</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>PDF Document</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.adobe.pdf</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.json</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Die Kartei Deck</string>
+			<key>UTTypeIdentifier</key>
+			<string>kyle-essenmacher.german-ai-flashcards.deck</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>kartei</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/vnd.die-kartei.deck+json</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+	<!-- The Schreibhilfe's Services (MacWritingServices): select text in any app, then Services.
+	     Users bind their own shortcuts to these, keyed by the titles and message, so never rename
+	     them. No NSKeyEquivalent on purpose: the free Cmd-Shift letters collide (Mail's is Send).
+	     NSRequiredContext, even empty, is what shows them by default. public.utf8-plain-text, not
+	     public.plain-text: Chrome and Electron apps only offer a service for exactly this type.
+	     NSTimeout (ms) leaves room for a cold launch on top of the provider's own 20 s deadline. -->
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Auf Deutsch (Sie)</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>transform</string>
+			<key>NSUserData</key>
+			<string>translate.sie</string>
+			<key>NSPortName</key>
+			<string>$(PRODUCT_NAME)</string>
+			<key>NSRequiredContext</key>
+			<dict/>
+			<key>NSSendTypes</key>
+			<array>
+				<string>public.utf8-plain-text</string>
+			</array>
+			<key>NSReturnTypes</key>
+			<array>
+				<string>public.utf8-plain-text</string>
+			</array>
+			<key>NSTimeout</key>
+			<string>45000</string>
+		</dict>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Auf Deutsch (du)</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>transform</string>
+			<key>NSUserData</key>
+			<string>translate.du</string>
+			<key>NSPortName</key>
+			<string>$(PRODUCT_NAME)</string>
+			<key>NSRequiredContext</key>
+			<dict/>
+			<key>NSSendTypes</key>
+			<array>
+				<string>public.utf8-plain-text</string>
+			</array>
+			<key>NSReturnTypes</key>
+			<array>
+				<string>public.utf8-plain-text</string>
+			</array>
+			<key>NSTimeout</key>
+			<string>45000</string>
+		</dict>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Deutsch korrigieren</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>transform</string>
+			<key>NSUserData</key>
+			<string>correct</string>
+			<key>NSPortName</key>
+			<string>$(PRODUCT_NAME)</string>
+			<key>NSRequiredContext</key>
+			<dict/>
+			<key>NSSendTypes</key>
+			<array>
+				<string>public.utf8-plain-text</string>
+			</array>
+			<key>NSReturnTypes</key>
+			<array>
+				<string>public.utf8-plain-text</string>
+			</array>
+			<key>NSTimeout</key>
+			<string>45000</string>
+		</dict>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>In der Schreibhilfe öffnen</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>openInWritingHelper</string>
+			<key>NSPortName</key>
+			<string>$(PRODUCT_NAME)</string>
+			<key>NSRequiredContext</key>
+			<dict/>
+			<key>NSSendTypes</key>
+			<array>
+				<string>public.utf8-plain-text</string>
+			</array>
+			<key>NSTimeout</key>
+			<string>45000</string>
+		</dict>
+	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+</dict>
+</plist>

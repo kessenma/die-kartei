@@ -1,0 +1,49 @@
+{
+  "relations": {
+    "kasus3d-jagen-hund": {
+      "asset": "kasus3d-jagen-hund",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "kasus3d-jagen-katze": {
+      "asset": "kasus3d-jagen-katze",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "kasus3d-leine": {
+      "asset": "kasus3d-leine",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "kasus3d-geben": {
+      "asset": "kasus3d-geben",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "kasus3d-helfen": {
+      "asset": "kasus3d-helfen",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    }
+  }
+}

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Partial plist, merged with GENERATE_INFOPLIST_FILE's output — the same hybrid the app
+	     target uses. Only NSExtension lives here, because build settings cannot express it. -->
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict>
+			<key>IsASCIICapable</key>
+			<false/>
+			<key>PrefersRightToLeft</key>
+			<false/>
+			<key>PrimaryLanguage</key>
+			<string>de-DE</string>
+			<!-- Deliberately false. Without open access the keyboard cannot reach the network,
+			     the pasteboard, or an App Group — and it does not need to. Every probe works
+			     through UITextDocumentProxy, and the log leaves the device by being typed into
+			     the focused field. Keeping this false is the privacy claim the product rests on;
+			     retrofitting it later is far harder than starting here. -->
+			<key>RequestsOpenAccess</key>
+			<false/>
+		</dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.keyboard-service</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string>$(PRODUCT_MODULE_NAME).KeyboardViewController</string>
+	</dict>
+</dict>
+</plist>

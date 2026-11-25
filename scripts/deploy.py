@@ -1,0 +1,1465 @@
+#!/usr/bin/env python3
+"""Deploy Die Kartei via the App Store Connect CLI (`asc`), teeing all output to
+a dated, auto-pruned log.
+
+Usage:
+  python3 scripts/deploy.py                  # -> TestFlight
+  python3 scripts/deploy.py release          # -> App Store (uploaded, NOT submitted)
+  python3 scripts/deploy.py --mac            # -> TestFlight, macOS build
+  python3 scripts/deploy.py release --mac    # -> Mac App Store (uploaded, NOT submitted)
+
+Logs are written to:
+  build-logs/<deploy-beta|deploy-release>[-mac]/YYYY-MM-DD/<type>-HH-MM-SS.log
+Only the 10 most recent logs per type are retained (older ones, and any empty
+date folders, are pruned before each run).
+
+Setup (first run on a machine): see docs/DEPLOY_SETUP.md.
+
+Auto-versioning — both deploy modes version themselves against App Store
+Connect so uploads can't collide:
+  - Marketing version is bumped until strictly greater than the highest LIVE
+    App Store version (fixes "train closed" / "version must be higher").
+    Step size via BUMP=patch|minor|major (default: minor).
+  - It is also bumped past any BURNED version: one App Store Connect has already
+    rejected an upload for with ITMS-90186 (train closed) or ITMS-90062 (not
+    above the last approved version). Those rejections are read back from
+    `asc builds uploads list`, which keeps failed attempts that never became
+    builds; nothing in the app's version list reveals a closed train, so the
+    rejection is the only record. Burned is permanent for that version string.
+  - Build number is set from `asc builds next-build-number`, which considers
+    in-flight uploads as well as processed builds — so it is safe even when a
+    previous upload is still processing.
+  - Before archiving, an interactive run asks whether to keep building on the
+    current marketing version or move to a new one (e.g. 1.4 -> 1.5), showing
+    the recent uploads for context. Enter keeps the current version. Set
+    VERSION=x.y to answer non-interactively; without a TTY the current version
+    is kept. Whatever is chosen must still be above the live App Store version.
+
+Toolchain guard: archiving aborts if a BETA Xcode is selected. App Store Connect
+accepts beta-built binaries on upload but rejects them at submission
+("Unsupported SDK or Xcode version"). Override for a run with
+XCODE_PATH=/Applications/Xcode.app.
+
+Host-OS guard: App Store Connect also rejects binaries whose Info.plist says
+they were built ON a beta macOS (BuildMachineOSBuild), under the same
+ITMS-90111 code, even when Xcode and the SDK are release builds. On a beta
+host the "Stamp release macOS build" phase in the Xcode target
+(scripts/stamp-release-os.sh) rewrites that key before code signing. This
+script refuses to archive on a beta host if that phase is missing, and reads
+the stamps back out of the exported IPA afterwards.
+
+CloudKit guard: TestFlight and App Store builds sync against CloudKit PRODUCTION,
+whose schema only changes through a manual "Deploy Schema Changes" in the CloudKit
+Console. Before archiving, `xcrun cktool export-schema` reads the Production schema
+and the run stops if the record type or any field the sync transport writes
+(german-ai-flashcards/Services/Sync/CloudKitSyncTransport.swift) is missing; every
+send would otherwise fail with "Cannot create new type KarteiItem in production
+schema". Needs a CloudKit management token saved once (docs/DEPLOY_SETUP.md);
+without one the check warns and skips.
+
+What's New: release notes live in german-ai-flashcards/Resources/whats_new.json
+(see scripts/whats_new.py and /CLAUDE.md). Once the marketing version is settled,
+both modes rename the file's `unreleased` entry to that version — or merge it into
+the entry an earlier TestFlight of the same version already claimed — and archive
+with the stamped file. The rendered entry is the TestFlight "What to Test" text;
+`release` refuses to ship a version with no entry, refreshes its date to today,
+and after the upload writes the same text into App Store Connect's What's New
+(en-US). Commit the stamped file afterwards.
+
+macOS (--mac): the same target archived for macOS and exported as a signed .pkg
+(ExportOptions-macOS.plist), uploaded with `asc builds upload --pkg`, because asc's
+local-build mode only produces IPAs. Same version, guards and What's New as iOS; the
+Mac is the same app record (universal purchase). One build number never names two
+binaries: every deploy takes the next number above BOTH platforms' builds. `release
+--mac` creates the macOS App Store version if it's missing, attaches the build, and pushes
+the same description and the APP_DESKTOP screenshot set to it.
+
+Product page: everything the App Store shows lives under AppStore/ — the description,
+keywords and URLs as one file per field in AppStore/metadata/<locale>/
+(scripts/metadata.py), and the screenshots in AppStore/screenshots/<locale>/<display
+type>/ (scripts/screenshots.py). `release` pushes both to the version after the build
+lands, skipping any empty file or set. What's New is the exception: it is generated
+from Resources/whats_new.json so the app can ship the same text. TestFlight has none
+of this, so `beta` never touches it.
+
+Environment:
+  VERSION             marketing version to ship as, e.g. 1.5 (skips the prompt)
+  BUMP                patch|minor|major       (default: minor)
+  CHANGELOG           TestFlight "What to Test" text; overrides the notes rendered
+                      from whats_new.json for one run
+  WHATS_NEW_ONLY      1 stops right after whats_new.json is stamped (no archive,
+                      no upload) — a rehearsal of the notes step
+  TESTFLIGHT_GROUP    beta group name or ID   (default: internal-die-Kartei)
+  XCODE_PATH          developer dir or Xcode.app to pin for this run
+  SKIP_METADATA       1 to skip the description/keywords push (release only)
+  SKIP_SCREENSHOTS    1 to skip the App Store screenshot upload (release only)
+  NOTIFY_TESTERS      true to notify testers after distribution
+  SKIP_SCHEMA_CHECK   1 to skip the CloudKit Production schema check for one run
+"""
+
+import json
+import os
+import plistlib
+import re
+import shutil
+import subprocess
+import sys
+import zipfile
+from datetime import datetime
+from pathlib import Path
+
+import metadata  # scripts/ is sys.path[0] when run as `python3 scripts/deploy.py`
+import screenshots
+import whats_new
+
+ROOT = Path(__file__).resolve().parent.parent  # repo root (.xcodeproj lives here)
+MAX_LOGS = 10
+ARTIFACTS = ROOT / ".asc" / "artifacts"  # where `asc publish` leaves the .xcarchive/.ipa
+STAMP_SCRIPT = ROOT / "scripts" / "stamp-release-os.sh"  # run by the target's last build phase
+ASC_INSTALL_DIR = Path.home() / ".local" / "bin"  # where the asc installer drops the binary
+
+# --- App identity ----------------------------------------------------------
+# NOTE: the numeric App Store Connect ID is required. `asc` accepts a bundle ID
+# for some subcommands (builds) but NOT others (versions, testflight groups),
+# so the numeric ID is used everywhere for consistency.
+APP_ID = "6770390331"
+BUNDLE_ID = "kyle-essenmacher.german-ai-flashcards"
+PROJECT = "german-ai-flashcards.xcodeproj"
+SCHEME = "german-ai-flashcards"
+TARGET = "Die Kartei"
+# Embedded app extensions. `asc xcode version edit` is scoped to ONE target, so every nested
+# bundle has to be stamped explicitly: App Store Connect rejects an upload whose .appex carries a
+# different CFBundleShortVersionString / CFBundleVersion than the app containing it.
+EXTENSION_TARGETS = ["Die Kartei Keyboard"]
+TEAM_ID = "RHPLRY9X9P"
+CONFIGURATION = "Release"
+
+DEFAULT_GROUP = "internal-die-Kartei"  # also: external-die-Kartei
+
+# --- Code signing ----------------------------------------------------------
+# AUTOMATIC signing, deliberately. The only App Store profile that exists for
+# this app is "iOS Team Store Provisioning Profile: ...", which is *Xcode
+# managed* — and an Xcode-managed profile cannot be used with manual signing
+# ("is Xcode managed, but signing settings require a manually managed profile").
+# There are no manually-managed profiles in App Store Connect for this app, so
+# manual signing would first require creating one.
+#
+# Equally important: signing settings must NOT be passed as global xcodebuild
+# build settings. They apply to every target, including SPM package targets
+# (encuda, CudaBuild, swift-crypto_Crypto, ...) that don't support provisioning
+# profiles at all, which fails the build. The project's own pbxproj already
+# specifies CODE_SIGN_STYLE=Automatic and DEVELOPMENT_TEAM, so the correct move
+# is to override nothing and let the target settings apply.
+#
+# The archive is signed for development and re-signed for distribution at
+# export; the resulting IPA is authenticated by "Apple Distribution: Kyle
+# Essenmacher (RHPLRY9X9P)" with an App Store profile (no devices).
+EXPORT_OPTIONS = ROOT / "ExportOptions.plist"
+EXPORT_OPTIONS_MAC = ROOT / "ExportOptions-macOS.plist"
+
+# Xcode's automatic signing normally needs a signed-in Apple ID account. The
+# GUI can't be launched on macOS 27 beta, so authenticate with the same App
+# Store Connect API key `asc` uses instead.
+ASC_KEY_PATH = Path(os.environ.get("ASC_KEY_PATH", Path.home() / ".asc" / "AuthKey_24JDJGBV9T.p8"))
+ASC_KEY_ID = "24JDJGBV9T"
+ASC_ISSUER_ID = "5e67a835-18f8-47a8-aa06-e1a43e9c5c44"
+
+MAC = "--mac" in sys.argv[1:]
+_positional = [a for a in sys.argv[1:] if a != "--mac"]
+mode = _positional[0] if _positional else "beta"
+if mode not in ("beta", "release"):
+    sys.exit(f"Unknown mode {mode!r} — expected 'beta' or 'release' (optionally with --mac).")
+PLATFORM = "MAC_OS" if MAC else "IOS"
+log_dir_name = ("deploy-release" if mode == "release" else "deploy-beta") + ("-mac" if MAC else "")
+
+_logf = None      # run log handle, set in main()
+_log_path = None  # run log path, set in main()
+
+
+# --- logging ---------------------------------------------------------------
+
+def emit(text):
+    """Write to console and the run log."""
+    sys.stdout.write(text)
+    sys.stdout.flush()
+    if _logf:
+        _logf.write(text)
+        _logf.flush()
+
+
+def log(emoji, msg):
+    emit(f"{emoji} {msg}\n")
+
+
+def die(msg):
+    log("❌", msg)
+    if _log_path:
+        log("📄", f"Full log: {_log_path}")
+    sys.exit(1)
+
+
+# --- asc plumbing ----------------------------------------------------------
+
+def asc(*args, parse=True, check=True):
+    """Run `asc` capturing stdout (JSON) with stderr teed to the log.
+
+    Returns parsed JSON when parse=True, else the raw stdout string.
+    """
+    cmd = ["asc", *args]
+    emit(f"$ {' '.join(cmd)}\n")
+    proc = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True)
+    if proc.stderr.strip():
+        emit(proc.stderr if proc.stderr.endswith("\n") else proc.stderr + "\n")
+    if check and proc.returncode != 0:
+        emit(proc.stdout)
+        die(f"`{' '.join(cmd)}` failed with exit {proc.returncode}")
+    if not parse:
+        return proc.stdout
+    try:
+        return json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        if check:
+            emit(proc.stdout)
+            die(f"`{' '.join(cmd)}` did not return JSON")
+        return None
+
+
+def asc_stream(*args):
+    """Run a long `asc` command, teeing merged output live. Returns exit code."""
+    return stream(["asc", *args])
+
+
+def stream(cmd):
+    """Run a long command, teeing merged output live. Returns exit code."""
+    emit(f"$ {' '.join(cmd)}\n")
+    proc = subprocess.Popen(
+        cmd,
+        cwd=str(ROOT),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,  # merge so the log preserves ordering
+        bufsize=1,
+        text=True,
+    )
+    for line in proc.stdout:
+        emit(line)
+    return proc.wait()
+
+
+# --- guards ----------------------------------------------------------------
+
+def ensure_asc():
+    """Make `asc` resolvable, or abort before anything else runs.
+
+    The installer puts it in ~/.local/bin, which a shell often adds only in ~/.zshrc. The VS Code
+    tasks run `zsh -l -c`, which never reads .zshrc, so they see `asc` only when VS Code happened
+    to inherit an interactive shell's PATH. Without this check the burned-train and version-ahead
+    guards (best-effort by design) silently skip themselves and the run then dies on the first
+    mandatory call with a bare FileNotFoundError.
+    """
+    if shutil.which("asc"):
+        return
+    if (ASC_INSTALL_DIR / "asc").exists():
+        # Into our own environment, so every subprocess finds it, including the ones
+        # metadata.py and screenshots.py start.
+        os.environ["PATH"] = f"{ASC_INSTALL_DIR}{os.pathsep}{os.environ.get('PATH', '')}"
+        log("🧭", f"asc was not on PATH; using {ASC_INSTALL_DIR / 'asc'}")
+        return
+    die("`asc` is not on PATH or in ~/.local/bin. Install it per docs/DEPLOY_SETUP.md section 3.")
+
+
+SYNC_TRANSPORT = ROOT / "german-ai-flashcards" / "Services" / "Sync" / "CloudKitSyncTransport.swift"
+
+
+def sync_schema_expectation():
+    """(container, record type, fields) as the app writes them, read from the transport's source,
+    so a field added there is checked without anyone remembering to update this script."""
+    src = SYNC_TRANSPORT.read_text()
+    container = re.search(r'static let containerID = "([^"]+)"', src)
+    record_type = re.search(r'static let recordType = "([^"]+)"', src)
+    fields = sorted(set(re.findall(r'record\["(\w+)"\]\s*=', src)))
+    if not (container and record_type and fields):
+        die(f"Couldn't read the container, record type or fields from {SYNC_TRANSPORT.name}; "
+            "update sync_schema_expectation() in scripts/deploy.py.")
+    return container.group(1), record_type.group(1), fields
+
+
+def missing_schema_fields(schema_text, record_type, fields):
+    """None when the record type is absent, else the fields it lacks. `schema_text` is cktool's
+    CKDB export: `RECORD TYPE Name ( "field" TYPE ..., GRANT ... );`."""
+    block = re.search(rf'RECORD TYPE\s+"?{re.escape(record_type)}"?\s*\((.*?)\);', schema_text, re.S)
+    if not block:
+        return None
+    declared = set(re.findall(r'^\s*"?(\w+)"?\s+[A-Z]', block.group(1), re.M))
+    return [f for f in fields if f not in declared]
+
+
+def ensure_cloudkit_schema():
+    """Stop before archiving if CloudKit Production lacks what the sync transport writes.
+
+    TestFlight and App Store builds talk to Production, whose schema changes only through the
+    CloudKit Console's "Deploy Schema Changes". 1.7 (3) shipped without it: every send failed with
+    "Cannot create new type KarteiItem in production schema" and nothing synced. Best-effort like
+    the other guards: no token or no network warns and skips; a missing type or field stops.
+    """
+    if os.environ.get("SKIP_SCHEMA_CHECK") == "1":
+        log("⚠️", "SKIP_SCHEMA_CHECK=1: not checking the CloudKit Production schema.")
+        return
+    container, record_type, fields = sync_schema_expectation()
+    cmd = ["xcrun", "cktool", "export-schema", "--team-id", TEAM_ID,
+           "--container-id", container, "--environment", "production"]
+    emit(f"$ {' '.join(cmd)}\n")
+    try:
+        proc = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        log("⚠️", f"Couldn't run cktool ({e}); skipping the CloudKit schema check.")
+        return
+    if proc.returncode != 0:
+        err = (proc.stderr or proc.stdout).strip().splitlines()
+        reason = err[0] if err else f"exit {proc.returncode}"
+        hint = (" Save a CloudKit management token once: docs/DEPLOY_SETUP.md ▸ CloudKit schema."
+                if "token" in reason.lower() else "")
+        log("⚠️", f"Couldn't read the CloudKit Production schema ({reason}); skipping the check.{hint}")
+        return
+    missing = missing_schema_fields(proc.stdout, record_type, fields)
+    if missing is None:
+        die(f"CloudKit Production has no `{record_type}` record type, so this build couldn't sync. "
+            f"CloudKit Console ▸ {container} ▸ Development ▸ Deploy Schema Changes "
+            "(docs/ICLOUD_SYNC.md ▸ Shipping). SKIP_SCHEMA_CHECK=1 overrides.")
+    if missing:
+        die(f"CloudKit Production's `{record_type}` lacks {', '.join(missing)}; records using them "
+            f"would be refused. Add them in Development (CloudKit Console ▸ {container} ▸ Record "
+            "Types), then Deploy Schema Changes. SKIP_SCHEMA_CHECK=1 overrides.")
+    log("☁️", f"CloudKit Production has {record_type} with {', '.join(fields)}.")
+
+
+def ensure_release_xcode():
+    """Abort if a BETA Xcode is selected.
+
+    App Store Connect accepts beta-built binaries on upload but rejects them at
+    submission. `asc xcode` shells out to whatever `xcode-select -p` returns and
+    performs no toolchain check of its own, so this guard is ours to keep.
+    """
+    dev_dir = os.environ.get("XCODE_PATH", "").strip()
+    if dev_dir:
+        # Accept either an Xcode.app or a full Developer dir.
+        if dev_dir.endswith(".app"):
+            dev_dir = f"{dev_dir}/Contents/Developer"
+        os.environ["DEVELOPER_DIR"] = dev_dir
+    else:
+        dev_dir = os.environ.get("DEVELOPER_DIR", "").strip()
+        if not dev_dir:
+            dev_dir = subprocess.run(
+                ["xcode-select", "-p"], capture_output=True, text=True
+            ).stdout.strip()
+
+    out = subprocess.run(
+        ["xcodebuild", "-version"], capture_output=True, text=True
+    ).stdout.splitlines()
+    version = out[0].strip() if out else "unknown"
+    global TOOLCHAIN_BUILD
+    TOOLCHAIN_BUILD = next(
+        (l.split()[-1] for l in out if l.startswith("Build version")), ""
+    )
+    log("🛠", f"Toolchain: {version} ({dev_dir})")
+
+    if _xcode_channel(dev_dir) == "beta":
+        die(
+            f"A BETA Xcode is selected ({dev_dir}). App Store submissions must be built "
+            "with a released Xcode. Re-run with XCODE_PATH=/Applications/Xcode.app, or "
+            "switch the system default via `sudo xcode-select -s /Applications/Xcode.app`."
+        )
+
+
+# Build version of the Xcode ensure_release_xcode() vetted, e.g. "27A9275". Set there.
+TOOLCHAIN_BUILD = ""
+
+
+def _xcode_channel(dev_dir):
+    """"release", "beta" or "unknown" for the Xcode at dev_dir.
+
+    Build numbers stopped answering this with 27.1, which shipped as 27A9275 while its
+    betas were 27A92xx — both inside the seed range — so ask the bundle. A Mac App Store
+    receipt only ever lands in a public release; the XcodeBeta icon or a "beta" in the
+    path marks a beta (27.1's betas carry only the latter).
+    Keep in step with xcode_channel() in scripts/stamp-release-os.sh.
+    """
+    app = re.sub(r"/Contents/Developer/?$", "", dev_dir or "")
+    if app and (Path(app) / "Contents" / "_MASReceipt").is_dir():
+        return "release"
+    icon = ""
+    if app:
+        try:
+            icon = str(plistlib.loads((Path(app) / "Contents" / "Info.plist").read_bytes())
+                       .get("CFBundleIconName", ""))
+        except Exception:  # noqa: BLE001 - absent or unreadable tells us nothing
+            icon = ""
+    if "Beta" in icon or re.search(r"beta", app, re.IGNORECASE):
+        return "beta"
+    return "unknown"
+
+
+def _is_seed_build(build):
+    """Apple seed (beta) builds carry a 4-digit number from 5000 up: 26A5421a, 27A5194q.
+
+    A trailing letter alone proves nothing: release Xcode 27.0 is 27A266a. Releases and RCs
+    have shorter numbers (25G83, 26A335); security updates use 1xxx-4xxx or 6+ digits.
+    Keep in step with is_seed() in scripts/stamp-release-os.sh.
+    """
+    return bool(re.fullmatch(r"\d+[A-Z][5-9]\d{3}[a-z]?", build or ""))
+
+
+def ensure_release_host_stamp():
+    """Abort if the host macOS is a beta and the target lacks the restamp phase.
+
+    ASC rejects binaries whose BuildMachineOSBuild names an unreleased macOS
+    and reports it as ITMS-90111, exactly like a beta Xcode. The Xcode target's
+    last build phase runs scripts/stamp-release-os.sh to rewrite that key
+    before code signing; without it, a beta host yields an unsubmittable build
+    that still uploads and processes fine, so nothing else would catch it.
+    """
+    host = subprocess.run(["sw_vers", "-buildVersion"], capture_output=True, text=True).stdout.strip()
+    if not _is_seed_build(host):
+        log("🖥", f"Host macOS {host} (release build)")
+        return
+    pbxproj = ROOT / PROJECT / "project.pbxproj"
+    wired = STAMP_SCRIPT.exists() and STAMP_SCRIPT.name in pbxproj.read_text()
+    if not wired:
+        die(
+            f"Host macOS {host} is a beta and the '{STAMP_SCRIPT.name}' build phase is missing from "
+            f"{PROJECT}. App Store Connect rejects binaries built on a beta macOS (ITMS-90111). "
+            "Restore the 'Stamp release macOS build' phase, or archive on a release macOS."
+        )
+    log("🩹", f"Host macOS {host} is a beta; {STAMP_SCRIPT.name} will restamp BuildMachineOSBuild before signing")
+
+
+def report_binary_stamps(version, build):
+    """Read the toolchain stamps back out of the exported IPA and flag any beta.
+
+    This inspects the bytes that were actually uploaded. A beta value here
+    means ASC will reject the build at submission even though the upload and
+    processing succeeded. Diagnostics only; never fails the deploy.
+    """
+    ipas = sorted(ARTIFACTS.glob(f"*-{version}-{build}.ipa"))
+    if not ipas:
+        log("⚠️", f"No IPA for {version} ({build}) under {ARTIFACTS}; skipping stamp check.")
+        return
+    ipa = ipas[-1]
+    # The app's own Info.plist AND every embedded extension's. An .appex is stamped by its own
+    # target's copy of the phase, so it can go wrong independently of the app — checking only the
+    # top-level plist would report green on a build ASC is about to reject.
+    wanted = re.compile(r"Payload/[^/]+\.app/(?:(?:Extensions|PlugIns)/[^/]+\.appex/)?Info\.plist")
+    try:
+        with zipfile.ZipFile(ipa) as z:
+            names = sorted(n for n in z.namelist() if wanted.fullmatch(n))
+            app_name = next(n for n in names if re.fullmatch(r"Payload/[^/]+\.app/Info\.plist", n))
+            infos = {n: plistlib.loads(z.read(n)) for n in names}
+    except Exception as e:  # noqa: BLE001 - diagnostics only
+        log("⚠️", f"Couldn't read Info.plist from {ipa.name} ({e}); skipping stamp check.")
+        return
+
+    _report_stamps(infos, app_name)
+
+
+def report_archive_stamps(archive):
+    """The macOS twin of report_binary_stamps: the same checks, read from the .xcarchive."""
+    apps = sorted((archive / "Products" / "Applications").glob("*.app"))
+    if not apps:
+        log("⚠️", f"No app inside {archive.name}; skipping stamp check.")
+        return
+    app = apps[0]
+    infos = {}
+    for plist in sorted(app.rglob("Info.plist")):
+        try:
+            infos[str(plist.relative_to(app.parent))] = plistlib.loads(plist.read_bytes())
+        except Exception:  # noqa: BLE001 - diagnostics only
+            continue
+    app_name = f"{app.name}/Contents/Info.plist"
+    if app_name not in infos:
+        log("⚠️", f"No Info.plist in {app.name}; skipping stamp check.")
+        return
+    # Only the app and its nested bundles that Xcode stamps (resource bundles carry the key too).
+    infos = {n: i for n, i in infos.items() if "BuildMachineOSBuild" in i or n == app_name}
+    _report_stamps(infos, app_name)
+
+
+def _report_stamps(infos, app_name):
+    """Log each bundle's toolchain stamps and flag a beta one, or a nested version mismatch."""
+    app_info = infos[app_name]
+
+    for name, info in infos.items():
+        # "Die Kartei.app" for the app, "Die Kartei Keyboard.appex" for an extension. A Mac
+        # bundle's plist sits one level deeper, in Contents/.
+        parts = name.split("/")
+        bundle = parts[-3] if len(parts) >= 3 and parts[-2] == "Contents" else parts[-2]
+        stamps = {k: str(info.get(k, "?")) for k in ("DTXcodeBuild", "DTSDKBuild", "BuildMachineOSBuild")}
+        summary = ", ".join(f"{k}={v}" for k, v in stamps.items())
+        # The seed rule holds for macOS builds, but NOT for SDK builds, which number differently
+        # (release Xcode 27.0 ships iOS SDK 24A430, 27.1 beta 24A94403), and no longer for Xcode
+        # either (27.1 shipped as 27A9275). A beta SDK only comes with a beta Xcode, so DTSDKBuild
+        # is shown, not judged; DTXcodeBuild is judged against the toolchain ensure_release_xcode()
+        # vetted, and falls back to the seed rule when it was some other Xcode.
+        beta = [
+            k for k in ("DTXcodeBuild", "BuildMachineOSBuild")
+            if not (k == "DTXcodeBuild" and stamps[k] == TOOLCHAIN_BUILD)
+            and _is_seed_build(stamps[k])
+        ]
+        if beta:
+            log("❌", f"{bundle} carries beta stamp(s) {', '.join(beta)} ({summary}). "
+                      "ASC will reject this build at submission with ITMS-90111.")
+        else:
+            log("✅", f"{bundle} toolchain stamps are all release builds ({summary})")
+
+        # Version parity, checked on the bytes that were actually uploaded — the cheapest place to
+        # catch a sync_extension_versions() that silently missed a target.
+        if bundle.endswith(".appex"):
+            for key in ("CFBundleShortVersionString", "CFBundleVersion"):
+                if str(info.get(key, "?")) != str(app_info.get(key, "?")):
+                    log("❌", f"{bundle} {key}={info.get(key)} does not match the app's "
+                              f"{app_info.get(key)}. ASC rejects mismatched nested bundles — "
+                              "check EXTENSION_TARGETS.")
+
+
+def ensure_signing():
+    """Fail early if a distribution identity or the export options are missing.
+
+    Cheap up-front checks: without them, the problem surfaces only after a full
+    archive, many minutes later.
+    """
+    found = subprocess.run(
+        ["security", "find-identity", "-v", "-p", "codesigning"],
+        capture_output=True, text=True,
+    ).stdout
+    if "Apple Distribution" not in found:
+        die(
+            "No 'Apple Distribution' identity in the keychain — archiving will fail.\n"
+            "   Import the distribution .p12; see docs/DEPLOY_SETUP.md section 4."
+        )
+    options = EXPORT_OPTIONS_MAC if MAC else EXPORT_OPTIONS
+    if not options.exists():
+        die(f"Missing {options.name} — required to stop Xcode rewriting the build number.")
+    if MAC:
+        # The .pkg is signed with an installer identity. Automatic signing can use a cloud-managed
+        # one, so a missing local certificate is a warning, not a stop.
+        installer = subprocess.run(
+            ["security", "find-identity", "-v"], capture_output=True, text=True,
+        ).stdout
+        if not re.search(r"(Mac Installer Distribution|3rd Party Mac Developer Installer)", installer):
+            log("⚠️", "No 'Mac Installer Distribution' identity in the keychain; relying on "
+                      "cloud-managed signing for the .pkg (docs/DEPLOY_SETUP.md).")
+    if not ASC_KEY_PATH.exists():
+        die(f"App Store Connect API key not found at {ASC_KEY_PATH}; see docs/DEPLOY_SETUP.md.")
+    log("🔏", f"Signing: automatic (team {TEAM_ID}), export options {options.name}")
+
+
+def signing_args():
+    """asc flags for archive + export.
+
+    Nothing here overrides the project's own signing settings — see the note by
+    EXPORT_OPTIONS. Both phases are given API-key credentials so automatic
+    signing can refresh profiles without a signed-in Xcode GUI account.
+
+    Export needs them just as much as archive, and for a harsher reason. Archive
+    signs for development, where the team's wildcard profile (RHPLRY9X9P.*)
+    covers a bundle ID that was never registered — so a new app extension
+    archives green. Export signs for distribution, which has no wildcard: it
+    wants an App Store profile for that exact bundle ID, and without credentials
+    it can neither create one nor register the App ID, failing with "No Accounts"
+    and "No profiles for <bundle id> were found" after the full archive.
+    """
+    args = ["--export-options", str(EXPORT_OPTIONS)]
+    for flag in (
+        "-allowProvisioningUpdates",
+        "-authenticationKeyPath", str(ASC_KEY_PATH),
+        "-authenticationKeyID", ASC_KEY_ID,
+        "-authenticationKeyIssuerID", ASC_ISSUER_ID,
+    ):
+        args += ["--archive-xcodebuild-flag", flag]
+        args += ["--export-xcodebuild-flag", flag]
+    return args
+
+
+# --- versioning ------------------------------------------------------------
+
+def _vtuple(v):
+    """'1.10.2' -> (1, 10, 2); non-numeric fragments sort as 0."""
+    parts = []
+    for chunk in str(v).split("."):
+        m = re.match(r"\d+", chunk)
+        parts.append(int(m.group()) if m else 0)
+    return tuple(parts)
+
+
+def local_version():
+    """(marketing_version, build_number) as currently written in the pbxproj."""
+    info = asc(
+        "xcode", "version", "view",
+        "--project", PROJECT,
+        "--target", TARGET,
+        "--configuration", CONFIGURATION,
+        "--output", "json",
+    )
+    return info["version"], info.get("buildNumber")
+
+
+def live_app_store_version():
+    """Highest version string ASC reports as READY_FOR_SALE, or None.
+
+    Several past versions can retain READY_FOR_SALE simultaneously, so this
+    takes the maximum rather than trusting response order. Best-effort: a None
+    result skips the version-ahead guard rather than failing the deploy.
+    """
+    try:
+        payload = asc(
+            "versions", "list",
+            "--app", APP_ID,
+            "--state", "READY_FOR_SALE",
+            "--output", "json",
+            check=False,
+        )
+        versions = [
+            item["attributes"]["versionString"]
+            for item in (payload or {}).get("data", [])
+            if item.get("attributes", {}).get("versionString")
+        ]
+        return max(versions, key=_vtuple) if versions else None
+    except Exception as e:  # noqa: BLE001 - non-fatal by design
+        log("⚠️", f"Couldn't read the live App Store version ({e}); skipping version-ahead guard.")
+        return None
+
+
+# App Store states from submission on: the version's notes are frozen and on their way to, or
+# already with, learners. Left out on purpose: PREPARE_FOR_SUBMISSION, REJECTED,
+# METADATA_REJECTED, DEVELOPER_REJECTED and INVALID_BINARY. When a later version replaces one of
+# those, nobody read its notes, and folding them forward is right.
+SUBMITTED_STATES = (
+    "WAITING_FOR_REVIEW", "IN_REVIEW", "PENDING_CONTRACT", "WAITING_FOR_EXPORT_COMPLIANCE",
+    "PENDING_DEVELOPER_RELEASE", "PENDING_APPLE_RELEASE", "PROCESSING_FOR_APP_STORE",
+    "READY_FOR_SALE", "REPLACED_WITH_NEW_VERSION", "REMOVED_FROM_SALE", "DEVELOPER_REMOVED_FROM_SALE",
+)
+
+
+def submitted_app_store_version():
+    """Highest version submitted to the App Store on any platform (in review, waiting for
+    release, or live), or None if nothing has been. What's New folds only the entries above it.
+
+    READY_FOR_SALE alone is not enough. On 2026-11-08, 1.6 was waiting for review, the live
+    version read 1.4, and the 1.7 TestFlight folded all of 1.6's notes into 1.7, so 1.7 repeated
+    every 1.6 bullet and the in-app history lost 1.6. Raises when the lookup fails, so the
+    caller can skip folding rather than guess.
+    """
+    payload = asc(
+        "versions", "list",
+        "--app", APP_ID,
+        "--state", ",".join(SUBMITTED_STATES),
+        "--paginate",
+        "--output", "json",
+        check=False,
+    )
+    if payload is None:
+        raise RuntimeError("`asc versions list` returned no JSON")
+    versions = [
+        item["attributes"]["versionString"]
+        for item in payload.get("data", [])
+        if item.get("attributes", {}).get("versionString")
+    ]
+    return max(versions, key=_vtuple) if versions else None
+
+
+# Upload-rejection codes that mean "this marketing version can never be used
+# again": the pre-release train is closed, or the version isn't above the last
+# version Apple approved. Both are permanent for that version string — the only
+# cure is a higher CFBundleShortVersionString.
+BURNED_TRAIN_CODES = {"90186", "90062"}
+
+
+def burned_versions():
+    """Marketing versions App Store Connect has permanently rejected uploads for.
+
+    `asc builds uploads list` keeps every upload attempt, including the ones that
+    never became builds. A train can close without anything in the app's version
+    list saying so (a version record deleted after approval, a version approved
+    and then withdrawn), so the rejections themselves are the only reliable
+    record. Best-effort: an empty set on any failure, never a dead deploy.
+    """
+    try:
+        payload = asc(
+            "builds", "uploads", "list",
+            "--app", APP_ID,
+            "--output", "json",
+            check=False,
+        )
+        burned = {}
+        for item in (payload or {}).get("data", []):
+            attrs = item.get("attributes", {})
+            if attrs.get("platform") not in (None, PLATFORM):
+                continue
+            version = attrs.get("cfBundleShortVersionString")
+            state = attrs.get("state") or {}
+            if not version or state.get("state") != "FAILED":
+                continue
+            codes = {str(e.get("code")) for e in state.get("errors", [])}
+            if codes & BURNED_TRAIN_CODES:
+                burned.setdefault(version, sorted(codes & BURNED_TRAIN_CODES))
+        for version, codes in sorted(burned.items(), key=lambda kv: _vtuple(kv[0])):
+            log("🚫", f"Version {version} is burned — App Store Connect rejected an upload with {', '.join(codes)}")
+        return set(burned)
+    except Exception as e:  # noqa: BLE001 - non-fatal by design
+        log("⚠️", f"Couldn't read past build uploads ({e}); skipping the burned-train guard.")
+        return set()
+
+
+def diagnose_upload_failure(version, build):
+    """After a failed publish, say plainly whether the version itself is the problem.
+
+    The upload record carries Apple's error codes; the publish output only shows
+    them once, buried in a long log. Prints the remedy rather than leaving the
+    next run to rediscover it. Best-effort and always silent on success paths.
+    """
+    try:
+        payload = asc("builds", "uploads", "list", "--app", APP_ID, "--output", "json", check=False)
+        for item in (payload or {}).get("data", []):
+            attrs = item.get("attributes", {})
+            state = attrs.get("state") or {}
+            if (
+                attrs.get("cfBundleShortVersionString") != version
+                or str(attrs.get("cfBundleVersion")) != str(build)
+                or state.get("state") != "FAILED"
+            ):
+                continue
+            codes = {str(e.get("code")) for e in state.get("errors", [])}
+            for err in state.get("errors", []):
+                log("📛", f"ITMS-{err.get('code')}: {err.get('description')}")
+            if codes & BURNED_TRAIN_CODES:
+                log(
+                    "🔁",
+                    f"Version {version} can never accept another build. Re-run with a higher "
+                    f"version — e.g. VERSION={_next_minor(version)} python3 scripts/deploy.py {mode} "
+                    f"— or just re-run: the burned-train guard now bumps past it automatically.",
+                )
+            return
+    except Exception:  # noqa: BLE001 - diagnosis must never mask the real failure
+        pass
+
+
+def ensure_version_ahead():
+    """Bump MARKETING_VERSION past the live App Store version and any burned train.
+
+    Returns (live version string or None, burned version set) so the version
+    prompt can validate against both without a second round-trip.
+    """
+    burned = burned_versions()
+    live = live_app_store_version()
+    if live is None:
+        log("⚠️", "No live App Store version found; skipping version-ahead guard.")
+        if not burned:
+            return None, burned
+
+    bump = os.environ.get("BUMP", "minor")
+    local, _ = local_version()
+    log("🔎", f"Local marketing version {local}; live App Store version {live or 'unknown'}")
+
+    def why_blocked(v):
+        if live and _vtuple(v) <= _vtuple(live):
+            return f"not above the live App Store version {live}"
+        if v in burned:
+            return "a closed train — App Store Connect rejects every build on it"
+        return None
+
+    for _ in range(20):  # backstop against a pathological bump loop
+        reason = why_blocked(local)
+        if reason is None:
+            break
+        asc(
+            "xcode", "version", "bump",
+            "--type", bump,
+            "--project", PROJECT,
+            "--target", TARGET,
+            "--configuration", CONFIGURATION,
+            "--output", "json",
+        )
+        previous, local = local, local_version()[0]
+        log("⬆️", f"Marketing version -> {local} ({previous} is {reason})")
+    else:
+        die(
+            f"BUMP={bump} cannot get past {live or 'the burned trains'} (stuck at {local} after 20 bumps). "
+            f"A patch bump can never pass a higher minor — re-run with BUMP=minor or BUMP=major."
+        )
+    return live, burned
+
+
+VERSION_RE = re.compile(r"^\d+(\.\d+){0,2}$")  # 1, 1.5, 1.5.2 — what App Store Connect accepts
+
+
+def _next_minor(v):
+    """'1.4' -> '1.5'; '1.4.2' -> '1.5'; '2' -> '2.1'."""
+    t = _vtuple(v)
+    return f"{t[0]}.{t[1] + 1}" if len(t) >= 2 else f"{t[0]}.1"
+
+
+def recent_uploads(limit=6):
+    """[(marketing_version, build_number), ...] newest first. Best-effort, [] on any failure."""
+    payload = asc(
+        "builds", "list",
+        "--app", APP_ID,
+        "--sort", "-uploadedDate",
+        "--limit", str(limit),
+        "--processing-state", "all",
+        "--output", "json",
+        check=False,
+    )
+    if not payload:
+        return []
+    pre_release = {
+        item["id"]: item.get("attributes", {}).get("version", "?")
+        for item in payload.get("included", [])
+        if item.get("type") == "preReleaseVersions"
+    }
+    uploads = []
+    for build in payload.get("data", []):
+        rel = build.get("relationships", {}).get("preReleaseVersion", {}).get("data") or {}
+        uploads.append((pre_release.get(rel.get("id"), "?"), build.get("attributes", {}).get("version", "?")))
+    return uploads
+
+
+def set_marketing_version(version):
+    asc(
+        "xcode", "version", "edit",
+        "--version", version,
+        "--project", PROJECT,
+        "--target", TARGET,
+        "--configuration", CONFIGURATION,
+        "--output", "json",
+    )
+
+
+def choose_marketing_version(live, burned=frozenset()):
+    """Decide which marketing version this deploy ships as. Returns it.
+
+    Without this, every deploy keeps stacking builds onto the same version
+    (1.4 (2), (3), (4)...) until that version goes live, because the
+    version-ahead guard only ever bumps when forced to.
+
+      VERSION env set -> use it, no questions asked (CI / scripted runs)
+      interactive     -> "Continue on 1.4? [Y/n]", then a new version if not
+      no TTY          -> keep the current version
+
+    Whatever is chosen must still be above the live App Store version.
+    """
+    local, _ = local_version()
+
+    def problem_with(v):
+        if not VERSION_RE.match(v):
+            return f"'{v}' is not a version like 1.5 or 1.5.1"
+        if live and _vtuple(v) <= _vtuple(live):
+            return f"{v} is not above the live App Store version {live}"
+        if v in burned:
+            return f"{v} is a closed train — App Store Connect rejects every build on it"
+        return None
+
+    wanted = os.environ.get("VERSION", "").strip()
+    if wanted:
+        problem = problem_with(wanted)
+        if problem:
+            die(f"VERSION={wanted}: {problem}")
+        log("🏷", f"VERSION={wanted} given; skipping the version prompt")
+    elif sys.stdin.isatty():
+        uploads = recent_uploads()
+        if uploads:
+            by_version = {}
+            for v, b in uploads:
+                by_version.setdefault(v, []).append(b)
+            log("📜", "Recent uploads: " + "; ".join(f"{v} ({', '.join(bs)})" for v, bs in by_version.items()))
+        answer = input(f"Continue building on version {local}? [Y/n]: ").strip().lower()
+        if answer in ("n", "no"):
+            suggested = _next_minor(local)
+            while True:
+                wanted = input(f"New marketing version [{suggested}]: ").strip() or suggested
+                problem = problem_with(wanted)
+                if not problem:
+                    break
+                emit(f"   {problem}\n")
+        else:
+            wanted = local
+        emit(f"   -> {wanted}\n")  # the answers themselves don't reach the log
+    else:
+        log("ℹ️", f"No TTY; keeping marketing version {local} (set VERSION=x.y to override).")
+        wanted = local
+
+    if wanted != local:
+        set_marketing_version(wanted)
+        local, _ = local_version()
+        log("🏷", f"Marketing version -> {local}")
+    else:
+        log("🏷", f"Continuing on marketing version {local}")
+    return local
+
+
+def set_next_build():
+    """Set CFBundleVersion from ASC, counting in-flight uploads as well as processed builds.
+
+    The next number above the builds of BOTH platforms: the Mac and iPhone apps are one app
+    record, and a number that names two different binaries is a trap when reading ASC later.
+    """
+    numbers = []
+    for platform in ("IOS", "MAC_OS"):
+        out = asc(
+            "builds", "next-build-number",
+            "--app", APP_ID,
+            "--platform", platform,
+            "--output", "json",
+        )
+        numbers.append(int((out or {}).get("nextBuildNumber") or 1))
+    asc(
+        "xcode", "version", "edit",
+        "--build-number", str(max(numbers)),
+        "--project", PROJECT,
+        "--target", TARGET,
+        "--configuration", CONFIGURATION,
+        "--output", "json",
+    )
+    version, build = local_version()
+    log("📦", f"Versioned as {version} ({build})")
+    sync_extension_versions(version, build)
+    return version, build
+
+
+def sync_extension_versions(version, build):
+    """Copy the app's version and build onto every embedded extension target.
+
+    `set_marketing_version`, `set_next_build` and the `ensure_version_ahead` bump are all scoped
+    with `--target TARGET`, so they only ever touch the app. An extension left at Xcode's default
+    1.0 (1) inside an app at 1.7 (14) fails ASC validation after a full archive and upload — the
+    slowest possible way to find out. Called from `set_next_build`, the single point every deploy
+    path passes through once the version is final.
+    """
+    for target in EXTENSION_TARGETS:
+        asc(
+            "xcode", "version", "edit",
+            "--version", version,
+            "--build-number", str(build),
+            "--project", PROJECT,
+            "--target", target,
+            "--configuration", CONFIGURATION,
+            "--output", "json",
+        )
+        log("🔗", f"{target} synced to {version} ({build})")
+
+
+# --- what's new --------------------------------------------------------------
+
+def stamp_whats_new(version):
+    """Turn the `unreleased` entry of Resources/whats_new.json into `version`.
+
+    Runs AFTER choose_marketing_version(), so the version can no longer move, and
+    BEFORE the archive, so the stamped file is what ships inside the app. An
+    earlier TestFlight of the same version already claimed the entry? New bullets
+    merge into it. Release refreshes the date (that's the ship date) and refuses
+    to ship a version that has nothing to say.
+
+    Older entries fold into `version` only when they sit above the highest version
+    SUBMITTED to the App Store, not merely the live one: a version in review already
+    has its notes, and folding it repeats them (1.6 into 1.7, 2026-11-08).
+    """
+    release = mode == "release"
+    rel_path = whats_new.DEFAULT_PATH.relative_to(ROOT)
+    try:
+        fold_above = submitted_app_store_version()
+    except Exception as e:  # noqa: BLE001 - a missed fold is harmless, a wrong one is not
+        log("⚠️", f"Couldn't read which versions are submitted ({e}); not folding older What's New entries this run.")
+        fold_above = None
+    else:
+        log("🔎", f"Highest version submitted to the App Store: {fold_above or 'none'}")
+    try:
+        doc = whats_new.load()
+        problems = whats_new.check(doc)
+        if problems:
+            die(f"{rel_path} has problems:\n  " + "\n  ".join(problems))
+        result = whats_new.stamp(doc, version, live=fold_above, refresh_date=release)
+        if result["changed"]:
+            whats_new.save(whats_new.DEFAULT_PATH, doc)
+    except whats_new.WhatsNewError as e:
+        die(f"{rel_path}: {e}")
+
+    if result["folded"]:
+        log("🧲", f"Folded never-released {', '.join(result['folded'])} into {version}")
+    if result["entry"] is None:
+        if release:
+            die(
+                f"No What's New entry for {version}. Add highlights to the 'unreleased' entry in "
+                f"{rel_path} — a release with nothing to say is not a release."
+            )
+        log("⚠️", f"No What's New entry for {version}; TestFlight notes will be prompted for.")
+        return
+
+    text = whats_new.render(doc, version)
+    if len(text) > whats_new.MAX_CHARS:
+        die(f"What's New for {version} is {len(text)} chars; App Store Connect caps it at {whats_new.MAX_CHARS}.")
+    if result["created"]:
+        verb = "created"
+    elif result["merged"]:
+        verb = f"merged {result['merged']} new highlight(s) into"
+    else:
+        verb = "unchanged for"
+    log("📝", f"{rel_path} {verb} {version} — commit it")
+    emit("".join(f"    {line}\n" for line in text.splitlines()))
+
+
+def _stop_if_whats_new_only():
+    if os.environ.get("WHATS_NEW_ONLY") == "1":
+        log("🛑", "WHATS_NEW_ONLY=1: stopping before the archive.")
+        sys.exit(0)
+
+
+def push_app_store_whats_new(version, version_id):
+    """Write the rendered notes into the App Store version's What's New (en-US).
+
+    Non-fatal: the build is uploaded either way, and the field can be pasted by
+    hand in App Store Connect. Fails when the version is no longer editable
+    (already waiting for review), which is exactly when a paste is the answer.
+    """
+    text = whats_new.render(whats_new.load(), version)
+    if not text:
+        return
+    log("📝", f"Setting App Store What's New for {version} (en-US)...")
+    out = asc(
+        "localizations", "update",
+        "--version", version_id,
+        "--locale", "en-US",
+        "--whats-new", text,
+        "--output", "json",
+        check=False,
+    )
+    if out is None:
+        log("⚠️", "Couldn't set What's New; paste it into App Store Connect before submitting:")
+        emit("".join(f"    {line}\n" for line in text.splitlines()))
+
+
+def push_metadata(version, platform="IOS"):
+    """Write AppStore/metadata (description, keywords, URLs, name) to the version.
+
+    Non-fatal, like What's New and screenshots. Never touches What's New itself —
+    that field is owned by whats_new.json and written by push_app_store_whats_new(),
+    and two writers for one field is how they drift.
+
+    Set SKIP_METADATA=1 to leave the product-page text alone for a run.
+    """
+    if os.environ.get("SKIP_METADATA") == "1":
+        log("⏭", "SKIP_METADATA=1: leaving the App Store description and keywords untouched.")
+        return
+    problems = metadata.check(verbose=False)
+    if problems:
+        log("⚠️", "Metadata not pushed:")
+        emit("".join(f"    {p}\n" for p in problems))
+        return
+    metadata.emit = emit  # tee into the run log; see push_screenshots
+    try:
+        if not metadata.push(version, platform=platform):
+            log("⚠️", "Some metadata did not update; check it in App Store Connect.")
+    except Exception as e:  # noqa: BLE001 - never lose an uploaded build to this
+        log("⚠️", f"Metadata push failed ({e}); edit it in App Store Connect.")
+
+
+def push_screenshots(version, platform="IOS"):
+    """Upload AppStore/screenshots to the App Store version.
+
+    Non-fatal, like What's New: the build is already uploaded, and a screenshot can
+    always be dragged into App Store Connect by hand. Additive and MD5-skipping, so
+    an unchanged set costs one API round-trip and nothing on the product page moves.
+    Sets with an empty folder are skipped — the iPad set can stay unfinished without
+    blocking a release, which also means a missing set is never reported as an error
+    here. `asc validate` below is what flags a version Apple won't accept.
+
+    Set SKIP_SCREENSHOTS=1 to leave the product page alone for a run.
+    """
+    if os.environ.get("SKIP_SCREENSHOTS") == "1":
+        log("⏭", "SKIP_SCREENSHOTS=1: leaving App Store screenshots untouched.")
+        return
+    problems = screenshots.check(verbose=False)
+    if problems:
+        log("⚠️", "Screenshots not uploaded:")
+        emit("".join(f"    {p}\n" for p in problems))
+        return
+    log("🖼", f"Uploading App Store screenshots for {platform} {version}...")
+    # Tee the module's own output into the run log; on its own it only writes to
+    # stdout, and a deploy log that stops short of the upload is the one you want
+    # when a screenshot lands in the wrong set.
+    screenshots.emit = emit
+    try:
+        if not screenshots.push(version, platform=platform):
+            log("⚠️", "Some screenshots did not upload; check them in App Store Connect.")
+    except Exception as e:  # noqa: BLE001 - never lose an uploaded build to this
+        log("⚠️", f"Screenshot upload failed ({e}); upload them in App Store Connect.")
+
+
+# --- changelog -------------------------------------------------------------
+
+def testflight_changelog(version):
+    """CHANGELOG env -> rendered whats_new.json entry -> interactive prompt (TTY)."""
+    env_notes = os.environ.get("CHANGELOG", "").strip()
+    if env_notes:
+        return env_notes
+
+    text = whats_new.render(whats_new.load(), version)
+    if text:
+        return text
+
+    if sys.stdin.isatty():
+        return input("TestFlight 'What to Test' notes for this build: ").strip()
+    return ""
+
+
+# --- log housekeeping ------------------------------------------------------
+
+def _rm_empty_date_dirs(base):
+    for d in base.iterdir():
+        if d.is_dir() and not any(d.iterdir()):
+            d.rmdir()
+
+
+def prune_old_logs():
+    """Keep only the MAX_LOGS most recent .log files (by mtime) across all date dirs."""
+    base = ROOT / "build-logs" / log_dir_name
+    if not base.exists():
+        return
+
+    logs = [
+        (f, f.stat().st_mtime)
+        for d in base.iterdir() if d.is_dir()
+        for f in d.iterdir() if f.suffix == ".log"
+    ]
+
+    if len(logs) <= MAX_LOGS:
+        _rm_empty_date_dirs(base)
+        return
+
+    logs.sort(key=lambda t: t[1], reverse=True)  # newest first
+    to_delete = logs[MAX_LOGS:]
+
+    freed = 0
+    for f, _ in to_delete:
+        try:
+            freed += f.stat().st_size
+            f.unlink()
+        except FileNotFoundError:
+            pass
+
+    _rm_empty_date_dirs(base)
+    n = len(to_delete)
+    log("🧹", f"Pruned {n} old log{'' if n == 1 else 's'} (freed {freed / 1024 / 1024:.1f} MB)")
+
+
+def setup_build_log():
+    now = datetime.now()
+    d = ROOT / "build-logs" / log_dir_name / now.strftime("%Y-%m-%d")
+    d.mkdir(parents=True, exist_ok=True)
+    return d / f"{log_dir_name}-{now.strftime('%H-%M-%S')}.log"
+
+
+# --- deploy modes ----------------------------------------------------------
+
+def deploy_beta():
+    ensure_asc()
+    ensure_release_xcode()
+    ensure_release_host_stamp()
+    ensure_cloudkit_schema()
+    ensure_signing()
+    live, burned = ensure_version_ahead()
+    choose_marketing_version(live, burned)
+    version, build = set_next_build()
+    stamp_whats_new(version)
+    notes = testflight_changelog(version)
+    _stop_if_whats_new_only()
+    group = os.environ.get("TESTFLIGHT_GROUP", DEFAULT_GROUP)
+
+    args = [
+        "publish", "testflight",
+        "--app", APP_ID,
+        "--project", PROJECT,
+        "--scheme", SCHEME,
+        "--configuration", CONFIGURATION,
+        "--version", version,
+        "--group", group,
+        *signing_args(),
+        "--clean",
+        "--wait", "--poll-interval", "15s",
+        "--output", "json", "--pretty",
+    ]
+    if notes:
+        args += ["--test-notes", notes, "--locale", "en-US"]
+    if os.environ.get("NOTIFY_TESTERS") == "true":
+        args.append("--notify")
+
+    log("🚀", f"Building {version} ({build}) and publishing to TestFlight group '{group}'...")
+    code = asc_stream(*args)
+    report_binary_stamps(version, build)
+    if code != 0:
+        diagnose_upload_failure(version, build)
+    return code
+
+
+def deploy_release():
+    ensure_asc()
+    ensure_release_xcode()
+    ensure_release_host_stamp()
+    ensure_cloudkit_schema()
+    ensure_signing()
+    live, burned = ensure_version_ahead()
+    choose_marketing_version(live, burned)
+    version, build = set_next_build()
+    stamp_whats_new(version)
+    _stop_if_whats_new_only()
+
+    log("🚀", f"Building {version} ({build}) and uploading to the App Store (no submission)...")
+    code = asc_stream(
+        "publish", "appstore",
+        "--app", APP_ID,
+        "--project", PROJECT,
+        "--scheme", SCHEME,
+        "--configuration", CONFIGURATION,
+        "--version", version,
+        *signing_args(),
+        "--clean",
+        "--wait", "--poll-interval", "15s",
+        "--output", "json", "--pretty",
+    )
+    report_binary_stamps(version, build)
+    if code != 0:
+        diagnose_upload_failure(version, build)
+        return code
+
+    # Readiness check on the version we just populated. Non-fatal: the build is
+    # already uploaded, and submission is a deliberate manual step in ASC. Filtered to iOS:
+    # the Mac app's version can carry the same version string.
+    payload = asc("versions", "list", "--app", APP_ID, "--platform", "IOS", "--output", "json", check=False)
+    version_id = next(
+        (
+            item["id"]
+            for item in (payload or {}).get("data", [])
+            if item.get("attributes", {}).get("versionString") == version
+        ),
+        None,
+    )
+    if version_id:
+        # Notes and screenshots first, so the readiness report below sees them populated.
+        push_app_store_whats_new(version, version_id)
+        push_metadata(version)
+        push_screenshots(version)
+        log("🔍", f"Validating version {version} ({version_id})...")
+        asc_stream("validate", "--app", APP_ID, "--version-id", version_id, "--output", "table")
+    else:
+        log("⚠️", f"Could not resolve a version id for {version}; skipping validation and What's New.")
+
+    log("ℹ️", "Build uploaded but NOT submitted for review — submit from App Store Connect.")
+    return 0
+
+
+# --- macOS ------------------------------------------------------------------
+
+def xcodebuild_auth():
+    """The API-key flags that let automatic signing create profiles without a signed-in Xcode."""
+    return [
+        "-allowProvisioningUpdates",
+        "-authenticationKeyPath", str(ASC_KEY_PATH),
+        "-authenticationKeyID", ASC_KEY_ID,
+        "-authenticationKeyIssuerID", ASC_ISSUER_ID,
+    ]
+
+
+def build_mac_pkg(version, build):
+    """Archive the app for macOS and export a signed App Store .pkg. Returns its path, or None.
+
+    Plain xcodebuild rather than `asc publish`: asc's local-build mode only produces IPAs.
+    """
+    ARTIFACTS.mkdir(parents=True, exist_ok=True)
+    archive = ARTIFACTS / f"DieKartei-mac-{version}-{build}.xcarchive"
+    export_dir = ARTIFACTS / f"DieKartei-mac-{version}-{build}"
+    code = stream([
+        "xcodebuild", "clean", "archive",
+        "-project", PROJECT,
+        "-scheme", SCHEME,
+        "-configuration", CONFIGURATION,
+        "-destination", "generic/platform=macOS",
+        "-archivePath", str(archive),
+        # Apple Silicon only (MLX needs it). The app target already says so, but the Swift
+        # packages would otherwise also be compiled for Intel: minutes of work nobody ships.
+        "ARCHS=arm64",
+        *xcodebuild_auth(),
+    ])
+    if code != 0:
+        log("❌", "macOS archive failed.")
+        return None, archive
+    code = stream([
+        "xcodebuild", "-exportArchive",
+        "-archivePath", str(archive),
+        "-exportOptionsPlist", str(EXPORT_OPTIONS_MAC),
+        "-exportPath", str(export_dir),
+        *xcodebuild_auth(),
+    ])
+    pkgs = sorted(export_dir.glob("*.pkg"))
+    if code != 0 or not pkgs:
+        log("❌", "macOS export failed; no .pkg was written.")
+        return None, archive
+    return pkgs[0], archive
+
+
+def group_gets_every_build(group):
+    """True when `group` (name or ID) is an internal group with automatic distribution on."""
+    payload = asc("testflight", "groups", "list", "--app", APP_ID, "--output", "json", check=False)
+    for g in (payload or {}).get("data", []):
+        attrs = g.get("attributes", {})
+        if group in (g.get("id"), attrs.get("name")):
+            return bool(attrs.get("isInternalGroup") and attrs.get("hasAccessToAllBuilds"))
+    return False
+
+
+def upload_mac_pkg(pkg, version, build, notes=None):
+    """Upload the .pkg and wait for App Store Connect to finish processing it."""
+    args = [
+        "builds", "upload",
+        "--app", APP_ID,
+        "--pkg", str(pkg),
+        "--version", version,
+        "--build-number", str(build),
+        "--wait", "--poll-interval", "15s",
+        "--output", "json", "--pretty",
+    ]
+    if notes:
+        args += ["--test-notes", notes, "--locale", "en-US"]
+    return asc_stream(*args)
+
+
+def deploy_beta_mac():
+    ensure_asc()
+    ensure_release_xcode()
+    ensure_release_host_stamp()
+    ensure_cloudkit_schema()
+    ensure_signing()
+    live, burned = ensure_version_ahead()
+    choose_marketing_version(live, burned)
+    version, build = set_next_build()
+    stamp_whats_new(version)
+    notes = testflight_changelog(version)
+    _stop_if_whats_new_only()
+    group = os.environ.get("TESTFLIGHT_GROUP", DEFAULT_GROUP)
+
+    log("🚀", f"Building {version} ({build}) for macOS and publishing to TestFlight group '{group}'...")
+    pkg, archive = build_mac_pkg(version, build)
+    report_archive_stamps(archive)
+    if pkg is None:
+        return 1
+    code = upload_mac_pkg(pkg, version, build, notes)
+    if code != 0:
+        diagnose_upload_failure(version, build)
+        return code
+
+    if group_gets_every_build(group):
+        # ASC refuses to add a build to an internal group set to automatic distribution
+        # ("Cannot add internal group to a build"); the processed build is already in it.
+        log("✅", f"Build {build} is processed; '{group}' gets every build automatically.")
+        return 0
+
+    args = [
+        "publish", "testflight",
+        "--app", APP_ID,
+        "--platform", "MAC_OS",
+        # No --version: asc 4.2 accepts it only with --ipa. Build numbers are unique
+        # across versions and platforms (set_next_build), so --build-number finds it.
+        "--build-number", str(build),
+        "--group", group,
+        "--wait", "--poll-interval", "15s",
+        "--output", "json", "--pretty",
+    ]
+    if os.environ.get("NOTIFY_TESTERS") == "true":
+        args.append("--notify")
+    return asc_stream(*args)
+
+
+def mac_version_id(version):
+    """The macOS App Store version for `version`, created if it doesn't exist yet. None on failure."""
+    def find():
+        payload = asc("versions", "list", "--app", APP_ID, "--platform", "MAC_OS",
+                      "--version", version, "--output", "json", check=False)
+        return next((item["id"] for item in (payload or {}).get("data", [])), None)
+
+    version_id = find()
+    if version_id is None:
+        log("🆕", f"Creating the macOS App Store version {version}...")
+        asc("versions", "create", "--app", APP_ID, "--platform", "MAC_OS",
+            "--version", version, "--output", "json", check=False)
+        version_id = find()
+    return version_id
+
+
+def deploy_release_mac():
+    ensure_asc()
+    ensure_release_xcode()
+    ensure_release_host_stamp()
+    ensure_cloudkit_schema()
+    ensure_signing()
+    live, burned = ensure_version_ahead()
+    choose_marketing_version(live, burned)
+    version, build = set_next_build()
+    stamp_whats_new(version)
+    _stop_if_whats_new_only()
+
+    log("🚀", f"Building {version} ({build}) for macOS and uploading to the Mac App Store (no submission)...")
+    pkg, archive = build_mac_pkg(version, build)
+    report_archive_stamps(archive)
+    if pkg is None:
+        return 1
+    code = upload_mac_pkg(pkg, version, build)
+    if code != 0:
+        diagnose_upload_failure(version, build)
+        return code
+
+    version_id = mac_version_id(version)
+    processed = asc("builds", "wait", "--app", APP_ID, "--platform", "MAC_OS",
+                    "--build-number", str(build), "--output", "json", check=False)
+    data = (processed or {}).get("data", processed) or {}
+    build_id = data.get("id") if isinstance(data, dict) else None
+    if not (version_id and build_id):
+        log("⚠️", f"Couldn't resolve the macOS version ({version_id}) or build ({build_id}); "
+                  "attach the build in App Store Connect.")
+        return 0
+    asc("versions", "attach-build", "--version-id", version_id, "--build-id", build_id,
+        "--output", "json", check=False)
+    log("📎", f"Attached build {build} to the macOS App Store version {version}")
+    push_app_store_whats_new(version, version_id)
+    push_metadata(version, "MAC_OS")
+    push_screenshots(version, "MAC_OS")
+    log("🔍", f"Validating macOS version {version} ({version_id})...")
+    asc_stream("validate", "--app", APP_ID, "--version-id", version_id, "--output", "table")
+    log("ℹ️", "Build uploaded but NOT submitted for review — submit from App Store Connect.")
+    return 0
+
+
+def main():
+    global _logf, _log_path
+
+    destination = "App Store" if mode == "release" else "TestFlight"
+    if MAC:
+        destination = "Mac App Store" if mode == "release" else "TestFlight (macOS)"
+    print(f"🚀 Deploying Die Kartei to {destination}...", flush=True)
+
+    prune_old_logs()
+    _log_path = setup_build_log()
+    print(f"📄 Log: {_log_path}", flush=True)
+
+    with open(_log_path, "w") as logf:
+        _logf = logf
+        if MAC:
+            code = deploy_release_mac() if mode == "release" else deploy_beta_mac()
+        else:
+            code = deploy_release() if mode == "release" else deploy_beta()
+
+    print("")
+    if code == 0:
+        print("✅ Deploy completed successfully!", flush=True)
+    else:
+        print("❌ Deploy failed!", flush=True)
+    print(f"📄 Full log: {_log_path}", flush=True)
+    sys.exit(0 if code == 0 else 1)
+
+
+if __name__ == "__main__":
+    main()

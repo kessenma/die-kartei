@@ -1,4 +1,3 @@
-import DieKarteiCore
 import Foundation
 import SwiftData
 
@@ -11,12 +10,21 @@ nonisolated struct ConversationSummary: Codable {
     var patternNote: String
     var wordsPracticed: [String]
     var correctionCount: Int
+    /// Optional — corrections the learner repaired themselves after a nudge (elicitation feedback).
+    var selfCorrections: Int?
     /// Optional for backward-compatibility with summaries saved before hint tracking.
     var hintsUsed: Int?
     /// Optional for backward-compatibility — AI replies the learner translated to English.
     var translationsUsed: Int?
     /// Optional — turns produced via the "Say it in German" helper.
     var phraseHelperUsed: Int?
+    /// Optional — SRS-due words the learner re-used correctly, advancing their review schedule.
+    var spacedReviews: [String]?
+    /// Optional — longest run of consecutive unaided user turns this session (no hints,
+    /// no phrase helper, no translation of the reply just before).
+    var bestUnaidedStreak: Int?
+    /// Optional — true when that run beat the stored all-time best at summary time.
+    var unaidedStreakIsRecord: Bool?
     var turnCount: Int
     var generatedAt: Date
     /// Raw model text kept as a fallback when structured parsing was incomplete.
@@ -53,7 +61,14 @@ final class ChatConversation {
     var levelRaw: String
     var formalityRaw: String
     var strictnessRaw: String
+    /// Raw `FeedbackStyle` — how corrections are delivered (tell vs. nudge). Default keeps this an
+    /// additive SwiftData migration for chats saved before elicitation feedback existed.
+    var feedbackStyleRaw: String = FeedbackStyle.tellMe.rawValue
     var correctionsEnabled: Bool
+    /// Raw `ChatInputMode` — whether this chat was last taken by voice or by keyboard. Defaulted so
+    /// chats saved before typing existed migrate additively (a non-defaulted field would trip the
+    /// destructive store reset in the app entry point).
+    var inputModeRaw: String = ChatInputMode.speak.rawValue
     var autoPlay: Bool
     var modelRaw: String
     var deckIDsRaw: [String]
@@ -61,6 +76,28 @@ final class ChatConversation {
     /// For `.paper` mode: the paper's title and reference text (summary) injected into the chat.
     var paperTitle: String?
     var paperContext: String?
+    /// For `.interview` mode: the job title and posting text the recruiter interviews from.
+    /// Defaults keep these an additive SwiftData migration.
+    var jobTitle: String? = nil
+    var jobContext: String? = nil
+    /// Employer, job location, and the posting's URL for `.interview` chats. Defaulted so older
+    /// stores migrate additively (the app has no versioned schema; a non-defaulted field would
+    /// trip the destructive store reset in the app entry point).
+    var jobCompany: String? = nil
+    var jobLocation: String? = nil
+    var jobURL: String? = nil
+    /// Raw `InterviewRound` / `InterviewFormat`; nil for chats from before they existed.
+    var interviewRoundRaw: String? = nil
+    var interviewFormatRaw: String? = nil
+    /// Saved PDF copy of the posting (`JobPostingSnapshotStore` file name). Deleted with the chat.
+    var jobSnapshotFile: String? = nil
+    /// The `JobPosting` this interview was started from (Job prep ▸ a studied posting), so the
+    /// two can be grouped later. Nil for chats started straight from the setup screen.
+    var jobPostingIDRaw: String? = nil
+    /// Encoded `StammtischOptions` when the chat is a Stammtisch (roadmap item 8). Nil otherwise.
+    var stammtischData: Data? = nil
+    /// The interview used the learner's résumé. Only the flag: the résumé itself never leaves the device.
+    var usesResume: Bool = false
 
     /// Encoded `ConversationSummary`, set when the session is ended & analyzed.
     var summaryData: Data?
@@ -84,13 +121,26 @@ final class ChatConversation {
         self.levelRaw = config.level.rawValue
         self.formalityRaw = config.formality.rawValue
         self.strictnessRaw = config.strictness.rawValue
+        self.feedbackStyleRaw = config.feedbackStyle.rawValue
         self.correctionsEnabled = config.correctionsEnabled
+        self.inputModeRaw = config.inputMode.rawValue
         self.autoPlay = config.autoPlay
         self.modelRaw = config.model.rawValue
         self.deckIDsRaw = config.deckIDs.map { $0.uuidString }
         self.deckLabel = config.deckLabel
         self.paperTitle = config.paperTitle
         self.paperContext = config.paperContext
+        self.jobTitle = config.jobTitle
+        self.jobContext = config.jobContext
+        self.jobCompany = config.jobCompany
+        self.jobLocation = config.jobLocation
+        self.jobURL = config.jobURL
+        self.interviewRoundRaw = config.interviewRound?.rawValue
+        self.interviewFormatRaw = config.interviewFormat?.rawValue
+        self.jobSnapshotFile = config.jobSnapshotFile
+        self.jobPostingIDRaw = config.jobPostingID?.uuidString
+        self.stammtischData = config.stammtisch.flatMap { try? JSONEncoder().encode($0) }
+        self.usesResume = config.resumeProfile != nil
         self.summaryData = nil
         self.messages = []
     }
@@ -102,10 +152,15 @@ final class ChatConversation {
     }
 
     var mode: ConversationMode { ConversationMode(rawValue: modeRaw) ?? .freestyle }
+    var interviewRound: InterviewRound? { interviewRoundRaw.flatMap { InterviewRound(rawValue: $0) } }
+    var interviewFormat: InterviewFormat? { interviewFormatRaw.flatMap { InterviewFormat(rawValue: $0) } }
+    var jobPostingID: UUID? { jobPostingIDRaw.flatMap { UUID(uuidString: $0) } }
     var scenario: ConversationScenario? { scenarioRaw.flatMap { ConversationScenario(rawValue: $0) } }
     var level: CEFRLevel { CEFRLevel(rawValue: levelRaw) ?? .a2 }
     var formality: Formality { Formality(rawValue: formalityRaw) ?? .du }
     var strictness: CorrectionStrictness { CorrectionStrictness(rawValue: strictnessRaw) ?? .balanced }
+    var feedbackStyle: FeedbackStyle { FeedbackStyle(rawValue: feedbackStyleRaw) ?? .tellMe }
+    var inputMode: ChatInputMode { ChatInputMode(rawValue: inputModeRaw) ?? .speak }
     var focusAreas: [GrammarFocus] { focusRaw.compactMap { GrammarFocus(rawValue: $0) } }
 
     /// The model used, or nil if the stored model no longer exists.
@@ -179,6 +234,16 @@ final class ChatMessage {
     var correctedText: String?
     /// For user messages: a short English explanation of the mistake.
     var correctionNote: String?
+    /// For user messages in "Nudge me" feedback mode: the German elicitation question that points
+    /// the learner at their error so they can repair it themselves (the fix stays hidden until they
+    /// try or ask to reveal). Default keeps this an additive SwiftData migration.
+    var correctionHint: String?
+    /// For user messages: whether the learner repaired their own error after a nudge (spoke the
+    /// corrected sentence back). Drives the "you fixed this yourself" badge and the session stat.
+    var selfCorrected: Bool = false
+    /// For user messages: cached English translation of the corrected sentence (filled on demand
+    /// when "show English meaning" is on). Default keeps this an additive SwiftData migration.
+    var correctionTranslationText: String?
     /// For user messages: target deck words the learner actually used.
     var targetWordsUsed: [String]
     /// For user messages: whether the learner viewed a hint before this turn.
@@ -186,6 +251,12 @@ final class ChatMessage {
     var usedHint: Bool = false
     /// For user messages: whether this turn came from the "Say it in German" helper.
     var usedPhraseHelper: Bool = false
+    /// For user messages: SRS-due words the learner used correctly this turn, advancing their review
+    /// schedule (spaced re-encounter). Default keeps this a lightweight, additive SwiftData migration.
+    var reviewedWords: [String] = []
+    /// For user messages: the correction pass ran and confirmed the sentence clean ("OK").
+    /// Distinct from a failed or skipped correction call, which leaves this false.
+    var confirmedClean: Bool = false
 
     /// For assistant messages: cached English translation (filled on demand).
     var translationText: String?

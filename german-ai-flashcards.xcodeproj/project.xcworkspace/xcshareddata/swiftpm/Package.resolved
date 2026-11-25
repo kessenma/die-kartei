@@ -1,5 +1,5 @@
 {
-  "originHash" : "1698816313e22c9050bbb6e1d393ecc4e4afc4858e0f4db77caa241b92fc5ae8",
+  "originHash" : "498358348297964edb45333a3933f92c85d3155bb656d68b873b139fcd65de44",
   "pins" : [
     {
       "identity" : "eventsource",
@@ -11,12 +11,21 @@
       }
     },
     {
+      "identity" : "ml-stable-diffusion",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/ml-stable-diffusion",
+      "state" : {
+        "revision" : "5a170d29cf38e674b80541d7ce22929c6a11cdde",
+        "version" : "1.1.1"
+      }
+    },
+    {
       "identity" : "mlx-swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ml-explore/mlx-swift",
       "state" : {
-        "revision" : "61b9e011e09a62b489f6bd647958f1555bdf2896",
-        "version" : "0.31.3"
+        "revision" : "0bb916c67f4b9e5c682cbe02a42c701c93ab5021",
+        "version" : "0.31.6"
       }
     },
     {
@@ -24,8 +33,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ml-explore/mlx-swift-lm.git",
       "state" : {
-        "revision" : "1c05248bb0899e2a7a4962b84d319cf12f4e12aa",
-        "version" : "3.31.3"
+        "revision" : "bd4b7434e6bdb588c7ef55706ff8904cb7fd4c57",
+        "version" : "3.31.4"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser",
+      "state" : {
+        "revision" : "6a52f3251125d74daf04fcbd5e6f08a75d074382",
+        "version" : "1.8.2"
       }
     },
     {
@@ -105,8 +123,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftlang/swift-syntax.git",
       "state" : {
-        "revision" : "0687f71944021d616d34d922343dcef086855920",
-        "version" : "600.0.1"
+        "revision" : "79e4b74a295b6eb74a8b585e3a39d29e70c1dbd1",
+        "version" : "603.0.2"
       }
     },
     {

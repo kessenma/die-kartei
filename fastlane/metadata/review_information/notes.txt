@@ -1,0 +1,1 @@
+Die Kartei runs entirely on-device (Apple MLX) and requires no account or login. To test: create a deck, add cards (or generate them from text/photo/PDF), and review using the spaced-repetition flow. Conversation practice uses on-device speech and a local language model.

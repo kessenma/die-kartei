@@ -1,4 +1,3 @@
-import DieKarteiCore
 import Foundation
 import SwiftData
 
@@ -29,8 +28,54 @@ final class SavedDeck {
     /// Seconds the model took to generate this deck's cards (0 = unknown / pre-existing deck).
     var generationTimeSeconds: Double
 
+    /// The Deutschkurs course this deck belongs to (`ClassCourse.id`), if any: the course's own
+    /// word deck, a deck built from one of its handouts, or a Library deck the learner linked.
+    /// Defaulted so the column is an additive migration.
+    var courseIDRaw: String? = nil
+
+    /// A document deck's document: the text it was built from and the original (a PDF or a photo,
+    /// named in `ClassMaterialStore`), so the vocab sheet can later join a course as a handout.
+    /// Kept only for documents brought in from outside; nil for older decks and every other kind.
+    var sourceText: String? = nil
+    var sourceFile: String? = nil
+
+    /// The document this deck was built from is still on disk. A failed write leaves a name behind
+    /// with no file, and a deck synced from another device arrives before its bytes do.
+    var hasSourceFile: Bool { ClassMaterialStore.exists(sourceFile) }
+
+    /// Where to open it from, when it is there.
+    var sourceFileURL: URL? {
+        guard let sourceFile, hasSourceFile else { return nil }
+        return ClassMaterialStore.url(for: sourceFile)
+    }
+
+    /// MAC-PICTURES: "Draw on my Mac". The phone's request and the Mac's answer, as JSON
+    /// (`MacPictureOrder`). Each is written by one side only; defaulted, so an additive migration.
+    var macPictureRequestData: Data? = nil
+    var macPictureResultData: Data? = nil
+
+    var macPictureRequest: MacPictureOrder.Request? {
+        get { MacPictureOrder.decode(MacPictureOrder.Request.self, from: macPictureRequestData) }
+        set { macPictureRequestData = MacPictureOrder.encode(newValue) }
+    }
+
+    var macPictureResult: MacPictureOrder.Result? {
+        get { MacPictureOrder.decode(MacPictureOrder.Result.self, from: macPictureResultData) }
+        set { macPictureResultData = MacPictureOrder.encode(newValue) }
+    }
+
+    /// A request from another device that the Mac hasn't answered yet.
+    var hasPendingMacPictures: Bool {
+        MacPictureOrder.isPending(macPictureRequest, macPictureResult)
+    }
+
     var wordTypeFilter: WordTypeFilter {
         WordTypeFilter(rawValue: wordTypeFilterRaw) ?? .all
+    }
+
+    var courseID: UUID? {
+        get { courseIDRaw.flatMap { UUID(uuidString: $0) } }
+        set { courseIDRaw = newValue?.uuidString }
     }
 
     init(
@@ -62,17 +107,81 @@ final class SavedDeck {
     }
 
     /// Asset name for the generator logo, or nil if no custom image is available.
+    /// The built-in Apple model has no logo asset, so decks generated with it show no badge.
     var generatorLogoName: String? {
-        if let model = MLXModel(rawValue: generatorRaw) { return model.logoName }
+        if let model = MLXModel(rawValue: generatorRaw) {
+            return model.usesSFSymbolLogo ? nil : model.logoName
+        }
         if generatorRaw == "goethe" { return "logo-goethe" }
         return nil
     }
 
     var isPastTenseDeck: Bool {
-        generatorRaw == "past-tense" || generatorRaw == "past-tense-srs"
+        kind == .pastTense || kind == .pastTenseSRS
     }
 
     var hasPausedSession: Bool { pausedAt != nil }
+
+    /// What sort of deck this is, derived from `generatorRaw`. Replaces scattered string
+    /// comparisons so classification stays consistent across the app.
+    enum Kind {
+        /// User-generated (AI or bundled default) — the real "My Decks" content.
+        case generated
+        case goethe, goetheSRS
+        case pastTense, pastTenseSRS
+        case grammar
+        /// The Verben-mit-Präpositionen review box: one card per verb pair, studied in the
+        /// preposition hub's own review (VerbPrepositionReviewView), not the generic player.
+        case verbPrepositionSRS
+        /// Real saved-word content built from the phrase library / a conversation / a paper / a story
+        /// / a job posting the learner studied / a class the learner is taking / a document (a vocab
+        /// sheet, a handout) the learner turned into cards.
+        case phrase, conversation, paper, story, job, classNotes, document
+    }
+
+    var kind: Kind {
+        switch generatorRaw {
+        case "goethe": .goethe
+        case "goethe-srs": .goetheSRS
+        case "past-tense": .pastTense
+        case "past-tense-srs": .pastTenseSRS
+        case "grammar": .grammar
+        case VerbPrepositionService.deckGenerator: .verbPrepositionSRS
+        case "phrase": .phrase
+        case "conversation": .conversation
+        case "paper": .paper
+        case "story": .story
+        case "job": .job
+        case "class": .classNotes
+        case "document": .document
+        default: .generated // "" or an MLXModel.rawValue
+        }
+    }
+
+    /// An SF Symbol standing for the deck's source when it has no model logo to show — the
+    /// document kinds, which no single model generated.
+    var kindSymbol: String? {
+        switch kind {
+        case .job: "briefcase.fill"
+        case .classNotes: "graduationcap.fill"
+        case .document: "doc.plaintext"
+        case .story: "book.pages"
+        case .paper: "doc.text"
+        case .conversation: "bubble.left.and.bubble.right"
+        case .phrase: "ear.badge.waveform"
+        default: nil
+        }
+    }
+
+    /// Decks that belong in the Library's browsable "Decks" list. Excludes the internal
+    /// stats/SRS holders for Goethe / Past-tense / Grammar (which are activity plumbing,
+    /// not standalone content) — fixing the empty-`grammar`-deck leak the old string filter missed.
+    var isBrowsableContent: Bool {
+        switch kind {
+        case .generated, .phrase, .conversation, .paper, .story, .job, .classNotes, .document: true
+        case .goethe, .goetheSRS, .pastTense, .pastTenseSRS, .grammar, .verbPrepositionSRS: false
+        }
+    }
 
 
     /// Create a SavedDeck from generation parameters and resulting VocabCards.
@@ -103,7 +212,8 @@ final class SavedDeck {
                 article: card.article,
                 exampleSentence: card.exampleSentence,
                 conjugations: card.conjugations,
-                sortOrder: index
+                sortOrder: index,
+                formsLine: card.forms
             )
         }
     }
@@ -119,7 +229,8 @@ final class SavedDeck {
                     wordType: savedCard.wordType,
                     article: savedCard.article,
                     exampleSentence: savedCard.exampleSentence,
-                    conjugations: savedCard.conjugations
+                    conjugations: savedCard.conjugations,
+                    forms: savedCard.formsLine
                 )
             }
     }
@@ -135,4 +246,14 @@ struct DeckSessionProgress: Codable {
     var ankiDueIndices: [Int]?
     var ankiDuePosition: Int?
     var cardGermanWords: [String]?
+    // Added with the Again re-queue and the persisted direction; optional so older blobs decode.
+    /// Distinct cards the SRS session set out to review (`ankiDueIndices` grows with re-queues).
+    var sessionDueCount: Int?
+    /// Card indices missed at least once this session.
+    var sessionLapses: [Int]?
+    /// Position in the plain/quiz play order, so a resume lands on the same card.
+    var cardPosition: Int?
+    var showGermanFirst: Bool?
+    /// The plain/quiz play order itself (a shuffled deal), so a resume keeps the same sequence.
+    var cardOrder: [Int]?
 }

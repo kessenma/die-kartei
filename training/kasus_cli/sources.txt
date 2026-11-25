@@ -1,0 +1,64 @@
+# App sources compiled into kasus-cli, relative to german-ai-flashcards/ (the app target).
+# The planner, the prompt and the check are the app's own code, never copies. When an app change
+# breaks this build, add the file that now defines the missing type, or split the pure part of a
+# heavy file out the way StoryStudyService+Prompt.swift and PrepositionService+Content.swift are.
+
+# Planner, prompt, check (stories, then the one-sentence Verstehen items)
+Models/Grammar/Kasus/KasusStoryPlan.swift
+Services/Grammar/Tutor/KasusConceptPlanner.swift
+Services/Grammar/Tutor/KasusConceptPrompt.swift
+Services/Grammar/Check/KasusConceptCheck.swift
+Services/Grammar/Tutor/KasusStoryPlanner.swift
+Services/Grammar/Tutor/KasusStoryPrompt.swift
+Services/StoryStudyService+Prompt.swift
+Services/Grammar/Check/KasusStoryCheck.swift
+Services/Grammar/Check/KasusHarvest.swift
+Services/Grammar/Check/KasusSentenceCheck.swift
+Services/Grammar/Check/KasusValidator.swift
+Services/Grammar/Kasus/KasusExplanation.swift
+Services/Grammar/Kasus/KasusVerbPairs.swift
+
+# Story format, forms, units
+Models/Grammar/Kasus/KasusStory.swift
+Models/Grammar/Kasus/KasusConcept.swift
+Models/Grammar/Kasus/KasusConceptPlan.swift
+Models/Grammar/Kasus/KasusForms.swift
+Models/Grammar/Kasus/KasusRoundStep.swift
+Models/Grammar/Kasus/KasusRoundItem.swift
+Models/Grammar/Kasus/EndingsQuestion.swift
+Models/Grammar/Kasus/KasusUnit.swift
+Models/Grammar/GrammarPalette.swift
+Models/Grammar/GrammarTaskArt.swift
+Models/Grammar/GrammarFocus.swift
+
+# Gap-choice items: the format, the reflexive tables, the gate, the bank and its golden numbers
+Models/Grammar/Kasus/GapChoiceItem.swift
+Models/Grammar/Kasus/ReflexivForms.swift
+Services/Grammar/Check/GapChoiceCheck.swift
+Services/Grammar/Content/GapChoiceBank.swift
+Services/Grammar/Content/GapChoiceFixtures.swift
+Services/Grammar/Content/GapChoicePlanner.swift
+
+# The lexicon and its data: Wiktionary, Goethe lists, prepositions
+Services/Grammar/Content/KasusStoryBank.swift
+Services/WiktionaryValidator.swift
+Services/GermanGenderInference.swift
+Services/A1VocabService.swift
+Services/Grammar/Prepositions/PrepositionService+Content.swift
+Models/Grammar/Prepositions/Preposition.swift
+Models/Grammar/Prepositions/VerbPreposition.swift
+
+# Pulled in by the above (CEFRLevel, StoryGenre, the think-block stripper, VocabCard)
+Models/ConversationConfig.swift
+Models/StudyStory.swift
+Services/ConversationPrompts.swift
+Models/ChatConversation.swift
+Models/Grammar/Article/ArticleGame.swift
+Models/ValidationResult.swift
+Models/VocabCard.swift
+
+# DEBUG: the Lab's record and summary, the validator fixtures, the Verstehen items' audit
+Services/Grammar/Tutor/KasusLab.swift
+Services/Grammar/Content/KasusFixtures.swift
+Services/Grammar/Content/KasusConceptBank.swift
+Services/Grammar/Content/KasusConceptFixtures.swift

@@ -1,0 +1,85 @@
+2026-10-04T21:53:45Z start
+NVIDIA H200, 143771 MiB, 580.159.04
+vllm 0.29.0 torch 2.13.0+cu130 cuda ok True transformers 5.18.0
+2026-10-04T21:58:49Z install ok
+2026-10-04T22:00:06Z Kolibri downloaded
+2026-10-04T22:02:36Z vLLM exited during startup
+(APIServer pid=1056)     sys.exit(main())
+(APIServer pid=1056)              ^^^^^^
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/entrypoints/cli/main.py", line 97, in main
+(APIServer pid=1056)     args.dispatch_function(args)
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/entrypoints/cli/serve.py", line 153, in cmd
+(APIServer pid=1056)     uvloop.run(run_server(args))
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/uvloop/__init__.py", line 96, in run
+(APIServer pid=1056)     return __asyncio.run(
+(APIServer pid=1056)            ^^^^^^^^^^^^^^
+(APIServer pid=1056)   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+(APIServer pid=1056)     return runner.run(main)
+(APIServer pid=1056)            ^^^^^^^^^^^^^^^^
+(APIServer pid=1056)   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+(APIServer pid=1056)     return self._loop.run_until_complete(task)
+(APIServer pid=1056)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1056)   File "uvloop/loop.pyx", line 1515, in uvloop.loop.Loop.run_until_complete
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/uvloop/__init__.py", line 48, in wrapper
+(APIServer pid=1056)     return await main
+(APIServer pid=1056)            ^^^^^^^^^^
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/entrypoints/launchers/api_server/entry.py", line 176, in run_server
+(APIServer pid=1056)     await run_server_worker(listen_address, sock, args, **uvicorn_kwargs)
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/entrypoints/launchers/api_server/entry.py", line 190, in run_server_worker
+(APIServer pid=1056)     async with build_async_engine_client(
+(APIServer pid=1056)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=1056)     return await anext(self.gen)
+(APIServer pid=1056)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/entrypoints/launchers/api_server/entry.py", line 58, in build_async_engine_client
+(APIServer pid=1056)     async with build_async_engine_client_from_engine_args(
+(APIServer pid=1056)   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+(APIServer pid=1056)     return await anext(self.gen)
+(APIServer pid=1056)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/entrypoints/launchers/api_server/entry.py", line 94, in build_async_engine_client_from_engine_args
+(APIServer pid=1056)     async_llm = AsyncLLM.from_vllm_config(
+(APIServer pid=1056)                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/v1/engine/async_llm.py", line 227, in from_vllm_config
+(APIServer pid=1056)     return cls(
+(APIServer pid=1056)            ^^^^
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/v1/engine/async_llm.py", line 156, in __init__
+(APIServer pid=1056)     self.engine_core = EngineCoreClient.make_async_mp_client(
+(APIServer pid=1056)                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+(APIServer pid=1056)     return func(*args, **kwargs)
+(APIServer pid=1056)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/v1/engine/core_client.py", line 139, in make_async_mp_client
+(APIServer pid=1056)     return AsyncMPClient(*client_args)
+(APIServer pid=1056)            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/tracing/otel.py", line 178, in sync_wrapper
+(APIServer pid=1056)     return func(*args, **kwargs)
+(APIServer pid=1056)            ^^^^^^^^^^^^^^^^^^^^^
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/v1/engine/core_client.py", line 991, in __init__
+(APIServer pid=1056)     super().__init__(
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/v1/engine/core_client.py", line 609, in __init__
+(APIServer pid=1056)     with launch_core_engines(
+(APIServer pid=1056)   File "/usr/lib/python3.12/contextlib.py", line 144, in __exit__
+(APIServer pid=1056)     next(self.gen)
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/v1/engine/utils.py", line 1240, in launch_core_engines
+(APIServer pid=1056)     wait_for_engine_startup(
+(APIServer pid=1056)   File "/workspace/venv/lib/python3.12/site-packages/vllm/v1/engine/utils.py", line 1320, in wait_for_engine_startup
+(APIServer pid=1056)     raise RuntimeError(
+(APIServer pid=1056) RuntimeError: Engine core initialization failed. See root cause above. Failed core proc(s): {}
+2026-10-04T22:02:36Z KOLIBRI PHASE FAILED
+2026-10-04T22:04:06Z relaunch: venv on PATH, VLLM_USE_FLASHINFER_SAMPLER=0
+2026-10-04T22:04:06Z start
+NVIDIA H200, 143771 MiB, 580.159.04
+vllm 0.29.0 torch 2.13.0+cu130 cuda ok True transformers 5.18.0
+2026-10-04T22:04:14Z install ok
+2026-10-04T22:04:15Z Kolibri downloaded
+2026-10-04T22:06:45Z vLLM healthy
+2026-10-04T22:07:12Z kolibri stories (thinking off) exit 0
+2026-10-04T22:18:45Z kolibri stories (reasoning medium) exit 0
+2026-10-04T22:19:03Z kolibri tail exit 0
+2026-10-04T22:19:06Z gemma downloaded
+2026-10-04T22:25:00Z gemma stories exit 0
+2026-10-04T22:29:45Z gemma tail exit 0
+2026-10-04T22:29:48Z done, final upload
+2026-10-04T22:32:38Z vLLM healthy (reasoning rerun)
+2026-10-04T22:38:52Z kolibri reasoning low (32k) exit 0
+2026-10-04T22:45:53Z kolibri reasoning medium (32k) exit 0
+2026-10-04T22:45:53Z reasoning rerun done, final upload

@@ -1,0 +1,59 @@
+{
+  "fix_balance": {
+    "adjend": {
+      "fix": 160,
+      "ok_available": 85,
+      "ok_kept": 40,
+      "fix_share": 0.8
+    },
+    "artikel": {
+      "fix": 155,
+      "ok_available": 102,
+      "ok_kept": 39,
+      "fix_share": 0.799
+    },
+    "dawo": {
+      "fix": 2149,
+      "ok_available": 1579,
+      "ok_kept": 537,
+      "fix_share": 0.8
+    },
+    "aux": {
+      "fix": 159,
+      "ok_available": 47,
+      "ok_kept": 40,
+      "fix_share": 0.799
+    },
+    "refl": {
+      "fix": 814,
+      "ok_available": 320,
+      "ok_kept": 203,
+      "fix_share": 0.8
+    },
+    "sep": {
+      "fix": 689,
+      "ok_available": 399,
+      "ok_kept": 172,
+      "fix_share": 0.8
+    },
+    "vmp": {
+      "fix": 4227,
+      "ok_available": 2715,
+      "ok_kept": 1057,
+      "fix_share": 0.8
+    }
+  },
+  "nudgeMe": 3373,
+  "correction": 10732,
+  "conversation": 11799,
+  "flashcards": 1570,
+  "deduped": 7680,
+  "native_instruction": 2506,
+  "mixin": 14239,
+  "train": 38804,
+  "val": 2042,
+  "total": 40846,
+  "val_families": 1063,
+  "train_families": 14084,
+  "no_mixin": false
+}

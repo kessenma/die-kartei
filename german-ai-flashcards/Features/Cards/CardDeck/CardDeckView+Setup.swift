@@ -1,4 +1,3 @@
-import DieKarteiCore
 import SwiftUI
 
 extension CardDeckView {
@@ -7,6 +6,17 @@ extension CardDeckView {
     var setupScreen: some View {
         ScrollView {
             VStack(spacing: 24) {
+                // Back here from a finished round's Done: the launcher's way on comes first, and
+                // going again is everything below it.
+                if onward != nil, finishedARound {
+                    VStack(spacing: 8) {
+                        onwardButton
+                        Text("Or practice these cards again below.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
                 ZStack {
                     Image(systemName: "rectangle.stack.fill")
                         .font(.system(size: 150))
@@ -25,7 +35,21 @@ extension CardDeckView {
                     }
                 }
 
-                if !validationResults.isEmpty {
+                // Up top rather than beside the Illustrate button: a run that stopped on an empty
+                // OpenRouter account should be the first thing seen, and a revoked key hides the
+                // button's whole row.
+                if let deckUUID,
+                   DeckIllustrationService.shared.illustratingDeckUUID != deckUUID,
+                   let report = PictureRunReports.shared.report(for: deckUUID) {
+                    PictureRunReportBanner(
+                        report: report,
+                        retryHint: "Illustrate this deck",
+                        onDismiss: { PictureRunReports.shared.clear(deckUUID) }
+                    )
+                    .padding(.horizontal)
+                }
+
+                if !localValidationResults.isEmpty {
                     validationSummary
                 }
 
@@ -34,11 +58,28 @@ extension CardDeckView {
                     showGermanFirst: $showGermanFirst,
                     showExamplesOnGermanSide: $showExamplesOnGermanSide,
                     autoAdvance: $localAutoAdvance,
+                    shuffle: $shuffleCards,
+                    phraseGaps: cards.contains { CardKind.isPhrase($0) } ? $phraseGaps : nil,
+                    writeAfterMiss: CardStudyPrefs.writeAfterMissAvailable ? $writeAfterMiss : nil,
                     hasExamples: hasExamples,
-                    validationIssues: localValidationResults,
                     cards: cards,
-                    onFixIssues: { showCorrectionSheet = true }
+                    onShowWords: { showWordTable = true }
                 )
+
+                if modelManager != nil {
+                    Button {
+                        showCardSettings = true
+                    } label: {
+                        Label("Card settings…", systemImage: "slider.horizontal.3")
+                            .font(.subheadline)
+                    }
+                }
+
+                illustrateDeckRow
+
+                if let savedDeck { MacPictureHandoffRow(deck: savedDeck) }   // MAC-PICTURES
+
+                if let savedDeck { DeckSourceDocumentRow(deck: savedDeck) }
 
                 if isAnkiMode {
                     let dueCount = savedCards.filter { card in
@@ -73,17 +114,119 @@ extension CardDeckView {
             .padding(.bottom, 120)
             .padding(.horizontal)
         }
+        .navigationDestination(isPresented: $showWordTable) {
+            DeckWordTableView(
+                title: topic.isEmpty ? "Flashcards" : topic,
+                cards: localCards.isEmpty ? cards : localCards,
+                savedCards: savedCards
+            )
+        }
         .sheet(isPresented: $showValidationInfo) {
             ValidationInfoSheet()
         }
         .sheet(isPresented: $showCorrectionSheet) {
-            AllIssuesCorrectionView(
+            ValidationReviewView(
                 cards: $localCards,
                 validationResults: $localValidationResults,
-                savedCards: savedCards,
                 onApplyCorrection: { index, article in applyCorrection(at: index, newArticle: article) }
             )
         }
+    }
+
+    // MARK: - Illustrate this deck
+
+    /// The picture controls for this deck: the style the next pictures are drawn in, an offer to
+    /// draw the cards that don't have one yet, and a redraw for decks that are already illustrated
+    /// but in a style the learner has since changed their mind about.
+    ///
+    /// Unlike before, this stays on screen once every card has a picture — a style you can't apply
+    /// to a finished deck isn't much of a setting.
+    @ViewBuilder
+    var illustrateDeckRow: some View {
+        let service = DeckIllustrationService.shared
+        if PictureEngine.isReady,
+           let deckUUID,
+           savedDeck?.isBrowsableContent == true,
+           !savedCards.isEmpty {
+
+            let missingCount = savedCards.filter { $0.imageFileName == nil }.count
+            let drawnCount = savedCards.count - missingCount
+
+            VStack(spacing: 12) {
+                CardImageStyleRow(mlxService: mlxService)
+                    .frame(maxWidth: 320)
+
+                if service.illustratingDeckUUID == deckUUID {
+                    ProgressView(value: service.progress)
+                    HStack {
+                        Text("Picture \(min(service.completedCount + 1, service.totalCount)) of \(service.totalCount)…")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Stop") { service.stop() }
+                            .font(.caption)
+                    }
+                    // The run is the app's, not this screen's: say so, since staying put is what
+                    // a progress bar on the screen you started it from suggests.
+                    Label("Keeps drawing in the background. Start studying, close this deck or switch apps; the pictures land on their cards as they finish, and a note says when they're done.",
+                          systemImage: "info.circle")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                } else {
+                    if missingCount > 0 {
+                        Button {
+                            launchIllustration(deckUUID: deckUUID, redrawAll: false)
+                        } label: {
+                            Label("Illustrate this deck", systemImage: "photo.on.rectangle.angled")
+                                .font(.subheadline)
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(service.isRunning)
+
+                        Text("Draws a picture for each of the \(missingCount) cards without one, \(PictureEngine.drawnWherePhrase)\(PictureEngine.costPhrase(pictures: missingCount)). It draws in the background, so you can start studying or leave this screen.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+
+                    if drawnCount > 0 {
+                        Button {
+                            confirmingRedraw = true
+                        } label: {
+                            Label("Redraw in this style", systemImage: "arrow.triangle.2.circlepath")
+                                .font(.subheadline)
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(service.isRunning)
+
+                        Text("Replaces all \(savedCards.count) pictures using the style above.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+            }
+            .padding(.horizontal)
+            .alert("Redraw every picture?", isPresented: $confirmingRedraw) {
+                Button("Cancel", role: .cancel) {}
+                Button("Redraw", role: .destructive) {
+                    launchIllustration(deckUUID: deckUUID, redrawAll: true)
+                }
+            } message: {
+                Text("The \(drawnCount) pictures this deck already has are replaced with new ones in your current style. You can stop partway; whatever has been redrawn stays.")
+            }
+        }
+    }
+
+    private func launchIllustration(deckUUID: UUID, redrawAll: Bool) {
+        DeckIllustrationService.launch(
+            deckUUID: deckUUID,
+            topic: topic,
+            modelContext: modelContext,
+            mlxService: mlxService,
+            redrawAll: redrawAll
+        )
     }
 
     @ViewBuilder
@@ -118,31 +261,49 @@ extension CardDeckView {
         }
     }
 
+    /// Starts a fresh session from the top: deck order for plain/quiz play, the due set for SRS,
+    /// either one dealt at random when Shuffle is on. Shared by the Start button and `autoStart`
+    /// launches.
+    func beginSession() {
+        sessionStartTime = .now
+        elapsedSeconds = 0
+        isReviewingMissed = false
+        cardOrder = shuffleCards ? Array(cards.indices).shuffled() : Array(cards.indices)
+        cardPosition = 0
+        currentIndex = cardOrder.first ?? 0
+        if isAnkiMode {
+            ankiDueIndices = savedCards.enumerated().compactMap { index, card in
+                guard let next = card.nextReviewDate else { return index }
+                return next <= .now ? index : nil
+            }
+            if shuffleCards { ankiDueIndices.shuffle() }
+            ankiDuePosition = 0
+            if !ankiDueIndices.isEmpty {
+                currentIndex = ankiDueIndices[0]
+            }
+        } else if isLeitnerMode {
+            let isDue = leitnerIsDue
+            ankiDueIndices = savedCards.enumerated().compactMap { index, card in
+                isDue(card) ? index : nil
+            }
+            if shuffleCards { ankiDueIndices.shuffle() }
+            ankiDuePosition = 0
+            if !ankiDueIndices.isEmpty {
+                currentIndex = ankiDueIndices[0]
+            }
+        } else {
+            ankiDueIndices = []
+            ankiDuePosition = 0
+        }
+        resetSessionTally()
+        prepareGapQuestions()
+        hasStarted = true
+    }
+
     @ViewBuilder
     private var startButton: some View {
         Button {
-            sessionStartTime = .now
-            elapsedSeconds = 0
-            if isAnkiMode {
-                ankiDueIndices = savedCards.enumerated().compactMap { index, card in
-                    guard let next = card.nextReviewDate else { return index }
-                    return next <= .now ? index : nil
-                }
-                ankiDuePosition = 0
-                if !ankiDueIndices.isEmpty {
-                    currentIndex = ankiDueIndices[0]
-                }
-            } else if isLeitnerMode {
-                let sessionNumber = leitnerSessionNumber
-                ankiDueIndices = savedCards.enumerated().compactMap { index, card in
-                    LeitnerService.isDue(box: card.leitnerBox, sessionNumber: sessionNumber) ? index : nil
-                }
-                ankiDuePosition = 0
-                if !ankiDueIndices.isEmpty {
-                    currentIndex = ankiDueIndices[0]
-                }
-            }
-            hasStarted = true
+            beginSession()
         } label: {
             Label(isSRSMode ? "Start Review" : "Start", systemImage: "play.fill")
                 .font(.headline)

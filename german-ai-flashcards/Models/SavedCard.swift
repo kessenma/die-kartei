@@ -1,4 +1,3 @@
-import DieKarteiCore
 import Foundation
 import SwiftData
 
@@ -46,6 +45,17 @@ final class SavedCard {
     var conjugationsData: Data?
     var sortOrder: Int
 
+    /// File name of this card's AI-generated picture inside `CardImageStore.directory(for:)`,
+    /// or nil if the card has none. Optional so existing stores migrate lightweightly, and so
+    /// "has no picture yet" is the natural query for the illustrate-the-rest pass.
+    var imageFileName: String?
+
+    /// A one-line caption under the German word — a noun's plural as the sheet wrote it
+    /// ("Plural: die Computer"), kept from the document the deck was built from. Bundled Goethe
+    /// words look theirs up in the index instead (see `vocabCard`); nil for every other card.
+    /// Defaulted so the column is an additive migration.
+    var formsLine: String? = nil
+
     // MARK: - Spaced Repetition (Anki-style) Fields
 
     /// SM-2 ease factor — starts at 2.5, minimum 1.3.
@@ -66,6 +76,15 @@ final class SavedCard {
     /// Current Leitner box (0 = new/unseen, 1–5 = active boxes).
     var leitnerBox: Int
 
+    // MARK: - Review history (optional so existing stores migrate lightweightly)
+
+    /// When this card was last rated, in any mode. Lets "today" screens list what was reviewed.
+    var lastReviewedAt: Date?
+    /// How the last rating went: false for Didn't know / wrong, true otherwise.
+    var lastReviewWasCorrect: Bool?
+    /// When this card got its first rating ever — the day the learner met it.
+    var firstReviewedAt: Date?
+
     var deck: SavedDeck?
 
     init(
@@ -75,7 +94,8 @@ final class SavedCard {
         article: String? = nil,
         exampleSentence: String? = nil,
         conjugations: [Conjugation]? = nil,
-        sortOrder: Int = 0
+        sortOrder: Int = 0,
+        formsLine: String? = nil
     ) {
         self.id = UUID()
         self.germanWord = germanWord
@@ -84,6 +104,8 @@ final class SavedCard {
         self.article = article
         self.exampleSentence = exampleSentence
         self.sortOrder = sortOrder
+        self.formsLine = formsLine
+        self.imageFileName = nil
 
         // SRS defaults
         self.easeFactor = 2.5
@@ -96,6 +118,10 @@ final class SavedCard {
         // Leitner default
         self.leitnerBox = 0
 
+        self.lastReviewedAt = nil
+        self.lastReviewWasCorrect = nil
+        self.firstReviewedAt = nil
+
         if let conjugations, !conjugations.isEmpty {
             let stored = conjugations.map { StoredConjugation(from: $0) }
             self.conjugationsData = try? JSONEncoder().encode(stored)
@@ -106,5 +132,27 @@ final class SavedCard {
         guard let data = conjugationsData else { return nil }
         let stored = try? JSONDecoder().decode([StoredConjugation].self, from: data)
         return stored?.map { $0.toConjugation() }
+    }
+
+    /// Stamp a rating: last review time and result, and the first-ever review if this is it.
+    func noteReview(correct: Bool, at now: Date = .now) {
+        lastReviewedAt = now
+        lastReviewWasCorrect = correct
+        if firstReviewedAt == nil { firstReviewedAt = now }
+    }
+
+    /// The value-type card the player studies, built from this row. A card that kept its sheet's
+    /// plural carries it; cards of the Wortschatz deck look theirs up in the bundled index rather
+    /// than storing it — the lists own that data, the store only owns progress.
+    var vocabCard: VocabCard {
+        VocabCard(
+            germanWord: germanWord,
+            englishTranslation: englishTranslation,
+            wordType: wordType,
+            article: article,
+            exampleSentence: exampleSentence,
+            conjugations: conjugations,
+            forms: formsLine ?? (deck?.kind == .goetheSRS ? GoetheVocabService.index[germanWord]?.formsLine : nil)
+        )
     }
 }

@@ -5,10 +5,18 @@ import SwiftUI
 struct ExtractedTextReviewView: View {
     let title: String
     let text: String
+    /// Brand accent of the model that will generate the cards.
+    var accent: Color = .accentColor
+    /// Show the deck-size stepper + word picker. Off at import time (the deck is now built
+    /// on-demand when the learner picks "Make flashcards"), on when this view collects deck options.
+    var collectDeckOptions: Bool = true
+    /// Label for the confirm button (e.g. "Study this text" at import, "Make flashcards" on demand).
+    var confirmTitle: String = "Generate"
     /// Called when the user confirms. `selectedWords` is nil when the AI should pick the words itself.
     var onGenerate: (_ deckCount: Int, _ selectedWords: [String]?) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     @State private var deckCount = 15
     @State private var pickWords = false
@@ -33,10 +41,13 @@ struct ExtractedTextReviewView: View {
     var body: some View {
         NavigationStack {
             Form {
-                deckSizeSection
-                wordPickerSection
-                extractedTextSection
+                if collectDeckOptions {
+                    deckSizeSection.themedListRow()
+                    wordPickerSection.themedListRow()
+                }
+                extractedTextSection.themedListRow()
             }
+            .themedListScreen()
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -44,8 +55,8 @@ struct ExtractedTextReviewView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Generate") {
-                        let chosen = (pickWords && !selectedKeys.isEmpty) ? orderedSelection : nil
+                    Button(confirmTitle) {
+                        let chosen = (collectDeckOptions && pickWords && !selectedKeys.isEmpty) ? orderedSelection : nil
                         onGenerate(deckCount, chosen)
                         dismiss()
                     }
@@ -53,7 +64,7 @@ struct ExtractedTextReviewView: View {
                 }
             }
             .onAppear {
-                if words.isEmpty { words = Self.uniqueWords(in: text) }
+                if collectDeckOptions, words.isEmpty { words = Self.uniqueWords(in: text) }
             }
         }
     }
@@ -73,7 +84,7 @@ struct ExtractedTextReviewView: View {
             }
             .disabled(pickWords && !selectedKeys.isEmpty)
         } header: {
-            Text("Vocabulary deck")
+            Text("Vocabulary deck").themedSectionHeader()
         } footer: {
             if pickWords && !selectedKeys.isEmpty {
                 Text("The deck will contain your \(selectedKeys.count) hand-picked words — the count above is ignored.")
@@ -100,11 +111,14 @@ struct ExtractedTextReviewView: View {
                 .padding(.vertical, 4)
             }
         } header: {
-            if pickWords {
-                Text("Words (\(selectedKeys.count) selected of \(words.count) unique)")
-            } else {
-                Text("Words")
+            Group {
+                if pickWords {
+                    Text("Words (\(selectedKeys.count) selected of \(words.count) unique)")
+                } else {
+                    Text("Words")
+                }
             }
+            .themedSectionHeader()
         } footer: {
             if pickWords {
                 Text("Repeated forms are listed once. Each picked word becomes one card; picking many words takes longer to translate.")
@@ -114,10 +128,12 @@ struct ExtractedTextReviewView: View {
     }
 
     private var extractedTextSection: some View {
-        Section("Extracted text · \(totalWordCount) words") {
+        Section {
             Text(text)
                 .font(.callout)
                 .textSelection(.enabled)
+        } header: {
+            Text("Extracted text · \(totalWordCount) words").themedSectionHeader()
         }
     }
 
@@ -133,7 +149,7 @@ struct ExtractedTextReviewView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .frame(maxWidth: .infinity)
-                .background(isSelected ? Color.accentColor : Color.gray.opacity(0.15), in: Capsule())
+                .background(isSelected ? accent : Color.gray.opacity(0.15), in: appTheme.pillShape)
                 .foregroundStyle(isSelected ? .white : .primary)
         }
         .buttonStyle(.plain)

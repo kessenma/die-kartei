@@ -1,56 +1,62 @@
-import DieKarteiCore
 import SwiftUI
 
 struct ModelGuideSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
+
+    /// Only the two rows that mark a real decision point: the best measured tutor, and the best
+    /// one for a phone that can't hold a Gemma. The middle two need no badge — their size line
+    /// already says where they sit, and badging every row would badge nothing.
+    private func guideBadge(_ model: MLXModel) -> String? {
+        switch model {
+        case .gemma4_E4B_german:   "Best measured"
+        case .granite41_3B_german: "Best under 2 GB"
+        default:                   nil
+        }
+    }
+
+    private func guideBadgeColor(_ model: MLXModel) -> Color? {
+        guideBadge(model) == nil ? nil : model.theme.accent
+    }
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    GuideRow(model: .qwen3_8B, badge: "Best Overall", badgeColor: .purple)
-                    GuideRow(model: .mistral7B, badge: "Best Multilingual", badgeColor: .blue)
+                    ForEach(MLXModel.germanTutors) { model in
+                        GuideRow(
+                            model: model,
+                            badge: guideBadge(model),
+                            badgeColor: guideBadgeColor(model)
+                        )
+                    }
                 } header: {
-                    Text("Premium (6–8 GB RAM)")
+                    Text("The German tutors")
+                        .themedSectionHeader()
                 } footer: {
-                    Text("These 7–8B models produce the most accurate German flashcards — better grammar annotations, more natural sentences, and fewer validation warnings than the 4B models.")
+                    Text("If your \(ThisDevice.name) runs one of these, use it. All four were fine-tuned on the same German material for this app, on the parts learners actually get wrong: verbs with prepositions, separable and reflexive verbs, da-/wo-compounds, relative pronouns, Konjunktiv II. On the app's own 203-item test the E4B tutor scores 90%, the E2B 83%, the Granite 3B 81%, and the Granite 2B 75%. They differ in download size and memory, not in what they were taught, so pick the largest one your \(ThisDevice.name) runs comfortably. They're also trained to correct you without inventing mistakes you didn't make, which is what makes conversation practice worth trusting.")
                 }
+                .themedListRow()
 
                 Section {
-                    GuideRow(model: .gemma4_E4B, badge: "Best Quality", badgeColor: .purple)
-                    GuideRow(model: .gemma3n_E4B, badge: "Recommended", badgeColor: .blue)
+                    GuideRow(model: .appleIntelligence, badge: "No download", badgeColor: .secondary)
                 } header: {
-                    Text("Best for German (6 GB Devices)")
+                    Text("Built in to \(ThisDevice.system)")
+                        .themedSectionHeader()
                 } footer: {
-                    Text("Both 4B-class models are significantly more reliable for grammar annotations, noun genders, and case notes — the best choice for 6 GB devices like iPhone 14 Pro or iPhone 15.")
+                    Text("Apple's on-device model, on phones that support it. Nothing to download and it starts instantly, but it's weaker at German than the tutors: 60% on the same test, 0 of 15 on da-/wo-compounds, and it flags about one already-correct sentence in six as wrong. Good for quick vocabulary work while a tutor downloads; for correction practice, use a tutor.")
                 }
+                .themedListRow()
 
                 Section {
-                    GuideRow(model: .qwen3_4B, badge: nil, badgeColor: nil)
-                    GuideRow(model: .phi4Mini, badge: nil, badgeColor: nil)
-                } header: {
-                    Text("Mid-range")
-                } footer: {
-                    Text("Good choices if your device can't handle the 4 GB+ Gemma models but you still want reliable grammar accuracy beyond what the 1B models offer.")
-                }
-
-                Section {
-                    GuideRow(model: .gemma3_1B, badge: nil, badgeColor: nil)
-                    GuideRow(model: .qwen3_0_6B, badge: "Fastest", badgeColor: .orange)
-                    GuideRow(model: .llama3_2_1B, badge: nil, badgeColor: nil)
-                } header: {
-                    Text("Lightweight (iPhone 12+)")
-                } footer: {
-                    Text("At 1B parameters or fewer, all models struggle with German's complex grammar. Noun genders (der/die/das), grammatical cases, and separable verbs may be unreliable — review output carefully.")
-                }
-
-                Section {
-                    Text("German has one of the more complex grammars among European languages: four grammatical cases, three noun genders, separable verbs, and long compound words. Smaller models are trained on fewer tokens and have less capacity to internalize these patterns reliably.\n\nThe 4B-class models (Gemma 3n and Gemma 4) produce significantly more accurate flashcards — better definitions, natural example sentences, and trustworthy grammar annotations.\n\nThe premium 7–8B models (Mistral 7B, Qwen3 8B) go further still, with richer vocabularies and more nuanced grammar notes. If your device has 6–8 GB RAM, these are worth downloading.")
+                    Text("Not reliably. Parameter count turned out to be a poor predictor of German quality in testing.\n\nThe Granite 2B tutor, at 1.4 GB, scores 75% on this app's grammar test. Several general-purpose models of 7\u{2013}8B parameters were measured on the same test and landed in the 40s and 50s, at roughly four times the download. German is unusually demanding, with four cases, three genders, separable verbs, and long compounds, and a model either picked those patterns up in training or it didn't.\n\nWhat matters more is whether a model was trained for this particular job. The E4B tutor scores 90% where the same model untuned scores 80%, so the fine-tuning alone is worth about ten points. That's why this app ships its own tutors instead of a general-purpose model.\n\nIt's also why the app checks every flashcard against a dictionary instead of trusting the model.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 } header: {
-                    Text("Why does model size matter?")
+                    Text("Does a bigger model mean better German?")
+                        .themedSectionHeader()
                 }
+                .themedListRow()
 
                 Section {
                     HStack(alignment: .top, spacing: 12) {
@@ -58,7 +64,7 @@ struct ModelGuideSheet: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 36, height: 36)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
 
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Every flashcard is validated on-device")
@@ -75,9 +81,11 @@ struct ModelGuideSheet: View {
                     .padding(.vertical, 4)
                 } header: {
                     Text("Built-in validation")
+                        .themedSectionHeader()
                 } footer: {
                     Text("This safety net makes smaller models more usable in practice — gender errors are caught automatically rather than silently ending up on your cards.")
                 }
+                .themedListRow()
 
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
@@ -98,8 +106,11 @@ struct ModelGuideSheet: View {
                     .padding(.vertical, 4)
                 } header: {
                     Text("Try them yourself")
+                        .themedSectionHeader()
                 }
+                .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("Which Model Should I Use?")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -116,6 +127,7 @@ struct ModelGuideSheet: View {
 // MARK: - Subviews
 
 private struct GuideRow: View {
+    @Environment(\.appTheme) private var appTheme
     let model: MLXModel
     let badge: String?
     let badgeColor: Color?
@@ -123,11 +135,11 @@ private struct GuideRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top, spacing: 12) {
-                Image(model.logoName)
+                model.logoImage
                     .resizable()
                     .scaledToFit()
                     .frame(width: 36, height: 36)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
 
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
@@ -141,7 +153,7 @@ private struct GuideRow: View {
                                 .padding(.vertical, 2)
                                 .background(color.opacity(0.15))
                                 .foregroundStyle(color)
-                                .clipShape(Capsule())
+                                .clipShape(appTheme.pillShape)
                         }
                     }
 
@@ -154,10 +166,12 @@ private struct GuideRow: View {
                         .foregroundStyle(.tertiary)
 
                     HStack(spacing: 4) {
-                        Image(systemName: "arrow.down.circle")
-                            .imageScale(.small)
-                        Text("~\(formattedSize(model.approximateSizeMB))")
-                        Text("·")
+                        if !model.isAppleIntelligence {
+                            Image(systemName: "arrow.down.circle")
+                                .imageScale(.small)
+                            Text("~\(formattedSize(model.approximateSizeMB))")
+                            Text("·")
+                        }
                         Text(model.parameterCount)
                         Text("·")
                         Text(model.quantization)
@@ -168,9 +182,11 @@ private struct GuideRow: View {
             }
 
             HStack(spacing: 16) {
-                Link(destination: model.huggingFaceRepoURL) {
-                    Label("HuggingFace", systemImage: "arrow.up.right.square")
-                        .font(.caption)
+                if let repoURL = model.huggingFaceRepoURL {
+                    Link(destination: repoURL) {
+                        Label("HuggingFace", systemImage: "arrow.up.right.square")
+                            .font(.caption)
+                    }
                 }
                 Link(destination: model.promoPageURL) {
                     Label("Learn more", systemImage: "globe")

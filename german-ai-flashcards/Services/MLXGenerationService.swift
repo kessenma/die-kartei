@@ -1,4 +1,3 @@
-import DieKarteiCore
 import Foundation
 import os
 import MLX
@@ -11,68 +10,78 @@ import Tokenizers
 // MARK: - Hub Cache Helpers
 
 extension MLXModel {
-    /// The HuggingFace repo directory name for this model (e.g. "models--Qwen--Qwen3-0.6B-4bit").
-    private var repoDirectoryName: String {
-        "models--" + configuration.name.replacingOccurrences(of: "/", with: "--")
-    }
-
-    /// Whether this model's weights are already downloaded in the HuggingFace Hub cache.
+    /// Whether this model is ready to use. For the built-in Apple model there is nothing to
+    /// download — "ready" means Apple Intelligence is currently available on this device.
     var isDownloaded: Bool {
-        let refsFile = hubCacheDirectory
-            .appendingPathComponent(repoDirectoryName)
-            .appendingPathComponent("refs")
-            .appendingPathComponent("main")
-        return FileManager.default.fileExists(atPath: refsFile.path)
+        if self == .appleIntelligence { return AppleIntelligenceService.currentlyAvailable() }
+        return HubCacheLocation.isDownloaded(repoID: configuration.name)
     }
 
     /// Disk size of the cached model in bytes, or nil if not downloaded.
+    /// The built-in Apple model uses no app-managed storage, so it reports nil (excluded from the
+    /// storage breakdown).
     var cachedSizeBytes: Int64? {
-        let repoDir = hubCacheDirectory.appendingPathComponent(repoDirectoryName)
-        guard FileManager.default.fileExists(atPath: repoDir.path) else { return nil }
-        return directorySize(repoDir)
+        if self == .appleIntelligence { return nil }
+        return HubCacheLocation.cachedSizeBytes(repoID: configuration.name)
     }
 
-    /// Delete the cached model from the HuggingFace Hub cache.
+    /// Delete the cached model from the HuggingFace Hub cache, along with any partially
+    /// downloaded files a resumable download left behind.
     func deleteFromCache() throws {
-        let repoDir = hubCacheDirectory.appendingPathComponent(repoDirectoryName)
-        guard FileManager.default.fileExists(atPath: repoDir.path) else { return }
-        try FileManager.default.removeItem(at: repoDir)
+        if self == .appleIntelligence { return }   // built-in model — nothing to delete
+        try HubCacheLocation.delete(repoID: configuration.name)
     }
 
-    /// The HuggingFace Hub cache root directory.
-    private var hubCacheDirectory: URL {
-        // Matches CacheLocationProvider logic: sandboxed apps use Library/Caches,
-        // non-sandboxed macOS uses ~/.cache
-        #if os(iOS) || os(visionOS) || os(tvOS) || os(watchOS)
-        return URL.cachesDirectory
-            .appendingPathComponent("huggingface")
-            .appendingPathComponent("hub")
-        #else
-        if ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil {
-            return URL.cachesDirectory
-                .appendingPathComponent("huggingface")
-                .appendingPathComponent("hub")
+    /// Bytes an interrupted download of this model already holds safely on disk — completed
+    /// files in the hub cache plus the in-flight file's partial. 0 once fully downloaded (or
+    /// for the built-in model), so non-zero means "there's a download to resume". Walks the
+    /// cache directory; don't call it on every progress tick.
+    var pausedDownloadBytes: Int64 {
+        if self == .appleIntelligence || isDownloaded { return 0 }
+        let cached = HubCacheLocation.cachedSizeBytes(repoID: configuration.name) ?? 0
+        let partials = HubCacheLocation.directorySize(
+            ResumableModelDownloader.partialsDirectory(forRepo: configuration.name)
+        )
+        return cached + partials
+    }
+}
+
+// MARK: - Background download continuation
+
+/// Finishes an interrupted model download while the app is woken in the *background* for
+/// URLSession events: each completed file gets committed and the next file's transfer
+/// enqueued, so the whole model can land — and post its "ready to use offline" notification —
+/// without the user ever reopening the app. Stopped the moment the app becomes active, where
+/// `MLXGenerationService.resumeInterruptedDownloadIfNeeded()` takes over: two drivers on the
+/// same repo would race each other's partials.
+@MainActor
+enum BackgroundDownloadResumer {
+    private static var task: Task<Void, Never>?
+
+    /// Kick from the app delegate's background-session wake. No-op unless a download is on
+    /// record as unfinished.
+    static func kickIfNeeded() {
+        guard task == nil,
+              let raw = UserDefaults.standard.string(forKey: MLXGenerationService.downloadInFlightKey),
+              let model = MLXModel(rawValue: raw),
+              model != .appleIntelligence,
+              !model.isDownloaded
+        else { return }
+        task = Task {
+            defer { task = nil }
+            try? await ResumableModelDownloader().download(repoID: model.configuration.name) { _, _ in }
+            guard !Task.isCancelled, model.isDownloaded else { return }
+            UserDefaults.standard.removeObject(forKey: MLXGenerationService.downloadInFlightKey)
+            await ModelDownloadNotificationService.notifyDownloadFinished(modelName: model.displayName)
         }
-        return FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".cache")
-            .appendingPathComponent("huggingface")
-            .appendingPathComponent("hub")
-        #endif
     }
 
-    /// Recursively compute the size of a directory.
-    private func directorySize(_ url: URL) -> Int64 {
-        let fm = FileManager.default
-        guard let enumerator = fm.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey]) else {
-            return 0
-        }
-        var total: Int64 = 0
-        for case let fileURL as URL in enumerator {
-            guard let values = try? fileURL.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]),
-                  values.isRegularFile == true else { continue }
-            total += Int64(values.fileSize ?? 0)
-        }
-        return total
+    /// Cancel and wait for the driver to fully unwind — its in-flight segment lands as resume
+    /// data first — so a foreground resume can safely start the moment this returns.
+    static func stop() async {
+        task?.cancel()
+        await task?.value
+        task = nil
     }
 }
 
@@ -94,7 +103,7 @@ struct CodableConjugation: Codable {
         )
     }
 
-    /// Remove pronoun prefixes that some models (e.g. Mistral) include in conjugation values.
+    /// Remove pronoun prefixes that a model may include in conjugation values.
     /// e.g. "ich unterrichte" → "unterrichte", "er/sie/es unterrichtet" → "unterrichtet"
     func strippingPronouns() -> CodableConjugation {
         CodableConjugation(
@@ -141,7 +150,7 @@ struct CodableVocabCard: Codable {
         // Handle three conjugation formats models produce:
         // 1. Array:      [{"tense":"Präsens","ich":"lerne",...}]
         // 2. Dict:       {"Präsens":{"ich":"lebe",...}}
-        // 3. Flat obj:   {"tense":"Präsens","ich":"lerne",...}  (Mistral)
+        // 3. Flat obj:   {"tense":"Präsens","ich":"lerne",...}
         if let array = try? container.decodeIfPresent([CodableConjugation].self, forKey: .conjugations) {
             self.conjugations = array.map { $0.strippingPronouns() }
         } else if let dict = try? container.decodeIfPresent([String: ConjugationForms].self, forKey: .conjugations) {
@@ -190,6 +199,7 @@ struct CodableVocabCardResponse: Codable {
 
 enum MLXError: LocalizedError {
     case modelNotLoaded
+    case generationTimedOut
     case jsonExtractionFailed(rawOutput: String)
     case jsonDecodingFailed(extractedJSON: String, decodingError: String)
 
@@ -197,12 +207,36 @@ enum MLXError: LocalizedError {
         switch self {
         case .modelNotLoaded:
             "Model not loaded. Please load the model first in Settings."
+        case .generationTimedOut:
+            "The model stopped responding. It may be busy or stuck."
         case .jsonExtractionFailed(let rawOutput):
             "Could not find JSON in model output. Raw output:\n\(String(rawOutput.prefix(500)))"
         case .jsonDecodingFailed(let json, let decodingError):
             "JSON decode error: \(decodingError)\n\nExtracted JSON:\n\(String(json.prefix(500)))"
         }
     }
+}
+
+// MARK: - Generation stall watchdog
+
+/// Records when a streaming generation last made progress (a token arrived). Main-actor confined,
+/// so the streaming task and the watchdog can share it without a data race — they interleave
+/// cooperatively on the main actor rather than running in parallel.
+@MainActor
+final class GenerationActivity {
+    private(set) var lastProgress = Date()
+    func recordProgress() { lastProgress = Date() }
+    var idleSeconds: TimeInterval { Date().timeIntervalSince(lastProgress) }
+}
+
+/// What a card batch has produced so far, kept *outside* the decode task so a stall that cancels
+/// the task still leaves the partial output for the salvage parse. Main-actor confined for the
+/// same reason as `GenerationActivity`.
+@MainActor
+private final class PartialOutput {
+    var text = ""
+    var tokenCount = 0
+    var exitedEarly = false
 }
 
 // MARK: - MLX Generation Service
@@ -214,6 +248,12 @@ class MLXGenerationService {
     var isLoading = false
     var loadError: String?
     private(set) var currentModel: MLXModel?
+
+    /// The model currently loaded in memory, or `nil` if none is ready. Drives per-model brand
+    /// theming (`MLXModel.theme`) on screens that should pick up the active model's colors —
+    /// the Create screen and the nav bar. `currentModel` can be non-nil mid-load, so gate on
+    /// `isModelLoaded` to only theme once the model is actually ready.
+    var loadedModel: MLXModel? { isModelLoaded ? currentModel : nil }
 
     /// Download progress (0.0–1.0). `nil` means indeterminate (connecting/preparing).
     var downloadProgress: Double?
@@ -234,28 +274,96 @@ class MLXGenerationService {
     var lastBatchEndedEarly: Bool = false
 
     private var modelContainer: ModelContainer?
+    /// Backend for the built-in Apple on-device model (`.appleIntelligence`). The four generation
+    /// methods delegate to this when that model is selected; everything else stays on MLX.
+    let appleService = AppleIntelligenceService()
     private var loadTask: Task<Void, Never>?
-    private var downloadPollingTask: Task<Void, Never>?
-    private var activeProgress: Progress?
+    /// Model whose download was cut off by a network drop or app suspension. Partial files stay
+    /// on disk, so `resumeInterruptedDownloadIfNeeded()` (called when the app returns to the
+    /// foreground) picks up exactly where the transfer stopped.
+    private(set) var interruptedDownloadModel: MLXModel?
+
+    /// Generations in flight right now. Memory eviction waits for zero — freeing weights out from
+    /// under a live decode saves nothing (the running task holds its own reference) and costs the
+    /// learner a reload for a reply that was already on its way.
+    private var activeGenerations = 0
+
+    /// A generation is in flight on the loaded model (a chat reply, a story, the batch queue). A
+    /// second writer checks this before it starts, so two never share one model.
+    var isGenerating: Bool { activeGenerations > 0 }
+
+    /// A model the *app* dropped to stay alive — a background eviction or a memory warning — as
+    /// opposed to one the user unloaded on purpose. Whoever was using it reloads it on return
+    /// rather than leaving the learner tapping Send at a model that isn't there any more.
+    /// Cleared by the next successful load, and by `unloadModel()` (a deliberate unload is not
+    /// something to undo behind the user's back).
+    private(set) var evictedModel: MLXModel?
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "de.germanflashcards", category: "ModelLoad")
     private let genLogger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "de.germanflashcards", category: "Generation")
 
-    /// Physical memory footprint of this process in MB. Uses phys_footprint (what jetsam measures).
-    private func memFootprintMB() -> Int {
-        var info = task_vm_info_data_t()
-        var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
-        let kr = withUnsafeMutablePointer(to: &info) { ptr in
-            ptr.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-                task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
+    init() {
+        // The weights are nearly all of what this app ever holds; name them in the memory
+        // breakdown (Settings ▸ Speicher). MLX's active buffers are the loaded model plus any live
+        // KV cache, and nothing else in the app allocates through MLX.
+        MemoryDiagnostics.register(
+            "tutor",
+            name: { [weak self] in
+                guard let self, let model = self.loadedModel else { return "Tutor" }
+                return "Tutor · \(model.rawValue)"
+            },
+            bytes: { [weak self] in
+                self?.isModelLoaded == true && MemorySaver.mlxRuntimeReady ? Memory.activeMemory : 0
             }
-        }
-        return kr == KERN_SUCCESS ? Int(info.phys_footprint) / 1_048_576 : -1
+        )
+    }
+
+    /// Physical memory footprint of this process in MB — `phys_footprint`, what jetsam measures.
+    private func memFootprintMB() -> Int { MemoryBudget.footprintMB }
+
+    /// How long a card batch may go without a single token before it's declared stuck. Longer
+    /// than the chat watchdog: the prompt carries every word already generated, so prefill on a
+    /// governed device can take a while before the first token lands.
+    private static let cardStallTimeout: Double = 90
+
+    /// Generation parameters with the memory governors applied. Every generation path builds its
+    /// parameters through here, so a model running over this device's budget stays bounded no
+    /// matter which feature started the run. A no-op when Memory Saver isn't active.
+    private func tunedParameters(maxTokens: Int, temperature: Float) -> GenerateParameters {
+        var parameters = GenerateParameters(maxTokens: maxTokens, temperature: temperature)
+        MemorySaver.tune(&parameters, for: currentModel)
+        return parameters
+    }
+
+    /// How often the token loops check headroom. Cheap enough to do often, rare enough not to
+    /// show up in generation speed.
+    private static let memoryCheckInterval = 32
+
+    /// True when the run should stop to stay inside the memory budget. Callers keep whatever text
+    /// they already have — an answer that ends early beats the app being killed mid-sentence.
+    private func shouldStopForMemory(at tokenCount: Int) -> Bool {
+        guard tokenCount > 0, tokenCount % Self.memoryCheckInterval == 0 else { return false }
+        return MemoryPressureMonitor.shared.sample(model: currentModel)
     }
 
     /// Load a model into memory. Downloads from HuggingFace Hub on first use.
     func loadModel(_ model: MLXModel) async {
         guard !isLoading else { return }
+        guard !isModelLoaded || currentModel != model else { return }
+
+        // One heavy resident at a time. A running generation holds its own reference to the
+        // container, so dropping ours below frees nothing — a second model would load on top of
+        // the first, which on an 8 GB device is the app being killed. Same for the drawing model:
+        // every illustrate path unloads the tutor before the pipeline loads, and this is the
+        // matching guard in the other direction.
+        if activeGenerations > 0, currentModel != model {
+            loadError = "The tutor is still answering. Try again in a moment."
+            return
+        }
+        if StoryImageService.shared.isBusy {
+            loadError = "Pictures are being drawn right now. The tutor loads once they finish."
+            return
+        }
 
         // Unload previous model if switching
         if currentModel != model {
@@ -263,7 +371,37 @@ class MLXGenerationService {
             isModelLoaded = false
         }
 
-        guard !isModelLoaded || currentModel != model else { return }
+        // Apple's built-in model: no download and no MLX container — just verify availability.
+        if model == .appleIntelligence {
+            isLoading = true
+            loadError = nil
+            downloadProgress = nil
+            downloadInfo = nil
+            downloadBytesInfo = nil
+            if appleService.isAvailable {
+                currentModel = .appleIntelligence
+                isModelLoaded = true
+                evictedModel = nil
+                lastBatchEndedEarly = false
+            } else {
+                isModelLoaded = false
+                loadError = appleService.unavailableReason ?? "Apple Intelligence isn't available."
+            }
+            isLoading = false
+            return
+        }
+
+        // The live budget, on every path — not just the Settings screen's memory check. Seventeen
+        // call sites auto-load without asking; on a device the model doesn't fit, each of them was
+        // a jetsam waiting to happen. "Use it anyway" in Settings ▸ Model & Downloads is the one
+        // door through, and it stays open.
+        if MemoryBudget.isOverBudget(model), !MemorySaver.allowsOversizedModels {
+            let needs = MemoryBudget.formattedGB(MemoryBudget.requiredMB(for: model) + MemoryBudget.reserveMB)
+            let has = MemoryBudget.formattedGB(MemoryBudget.totalMB)
+            loadError = "\(model.displayName) needs about \(needs) of memory and this device gives the app \(has). Choose it under Settings ▸ Model & Downloads to run it anyway."
+            logger.warning("[\(model.rawValue, privacy: .public)] Load refused — over budget (needs \(needs, privacy: .public), budget \(has, privacy: .public)) and the oversized opt-in is off")
+            return
+        }
 
         isLoading = true
         loadError = nil
@@ -275,166 +413,108 @@ class MLXGenerationService {
 
         let physicalMB = Int(ProcessInfo.processInfo.physicalMemory / 1_048_576)
         let footprintBefore = memFootprintMB()
-        logger.info("[\(model.rawValue, privacy: .public)] Load started — Device RAM: \(physicalMB, privacy: .public) MB, App footprint: \(footprintBefore, privacy: .public) MB, Model size: \(model.approximateSizeMB, privacy: .public) MB, Already cached: \(model.isDownloaded, privacy: .public)")
+        let budgetMB = MemoryBudget.totalMB
+        let neededMB = MemoryBudget.requiredMB(for: model)
+        logger.info("[\(model.rawValue, privacy: .public)] Load started — Device RAM: \(physicalMB, privacy: .public) MB, App budget: \(budgetMB, privacy: .public) MB, App footprint: \(footprintBefore, privacy: .public) MB, Model size: \(model.approximateSizeMB, privacy: .public) MB, Model needs: \(neededMB, privacy: .public) MB, Memory Saver: \(MemorySaver.isActive(for: model), privacy: .public), Already cached: \(model.isDownloaded, privacy: .public)")
+        MemoryDiagnostics.record(
+            .modelLoadStart,
+            title: "Loading \(model.rawValue)",
+            detail: "Needs about \(neededMB) MB of a \(budgetMB) MB budget · Memory Saver \(MemorySaver.isActive(for: model) ? "on" : "off") · \(model.isDownloaded ? "from storage" : "downloading first")"
+        )
 
-        Memory.cacheLimit = 20 * 1024 * 1024
-
-        let expectedBytes = Int64(model.approximateSizeMB) * 1024 * 1024
-
-        // Snapshot existing temp files so we only count growth from THIS download,
-        // not leftover CFNetworkDownload_*.tmp files from previous cancelled sessions.
-        let tmpDir = FileManager.default.temporaryDirectory
-        var initialTempSizes: [String: Int64] = [:]
-        if let e = FileManager.default.enumerator(at: tmpDir, includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey]) {
-            while let url = e.nextObject() as? URL {
-                guard let v = try? url.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]),
-                      v.isRegularFile == true, let sz = v.fileSize else { continue }
-                initialTempSizes[url.path] = Int64(sz)
-            }
-        }
-
-        // Poll temp file growth every 0.5s for byte-level progress.
-        // The Progress callback fires ~5x/sec but completedUnitCount is frozen (known
-        // swift-huggingface bug #48) — so we track CFNetworkDownload_*.tmp growth instead.
-        downloadPollingTask = Task { @MainActor [weak self] in
-            var lastReported: Int64 = -1
-            var sawTempFiles = false
-            var lastTempGrowth: Int64 = -1
-            var staleCount = 0
-            var pollCount = 0
-            // Mutable — expands if the actual download exceeds the static estimate
-            var effectiveExpectedBytes = expectedBytes
-
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 500_000_000)
-                guard let self, self.isLoading, let progress = self.activeProgress else { continue }
-                pollCount += 1
-
-                let cachedBytes = progress.completedUnitCount
-                guard expectedBytes > 0, cachedBytes >= 0 else { continue }
-
-                // Sum only the GROWTH of temp files since download started
-                var tempGrowth: Int64 = 0
-                var tempFileCount = 0
-                var tempFileDetails: [(String, Int64, Int64)] = [] // (name, current, growth)
-                if let enumerator = FileManager.default.enumerator(
-                    at: tmpDir,
-                    includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey]
-                ) {
-                    while let url = enumerator.nextObject() as? URL {
-                        guard let vals = try? url.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]),
-                              vals.isRegularFile == true, let sz = vals.fileSize else { continue }
-                        let initial = initialTempSizes[url.path] ?? 0
-                        let growth = Int64(sz) - initial
-                        tempFileCount += 1
-                        if growth > 0 {
-                            tempGrowth += growth
-                            tempFileDetails.append((url.lastPathComponent, Int64(sz), growth))
-                        }
-                    }
-                }
-
-                // Log every 10 polls (~5s) and whenever stale state changes
-                let shouldLog = (pollCount % 10 == 0) || (staleCount == 1) || (staleCount == 10)
-                if shouldLog {
-                    print("[DLProgress] poll=\(pollCount) sawTempFiles=\(sawTempFiles) tempGrowth=\(tempGrowth) lastTempGrowth=\(lastTempGrowth) staleCount=\(staleCount) cachedBytes=\(cachedBytes) expectedBytes=\(expectedBytes) fileCount=\(tempFileCount)")
-                    for (name, sz, growth) in tempFileDetails {
-                        print("[DLProgress]   file: \(name) size=\(sz) growth=\(growth)")
-                    }
-                }
-
-                if tempGrowth > 0 {
-                    sawTempFiles = true
-
-                    // Track how many consecutive polls show no new bytes.
-                    // When temp files stop growing (download done, files being moved to cache)
-                    // but haven't been deleted yet, we'd otherwise freeze at ~100%.
-                    if tempGrowth == lastTempGrowth {
-                        staleCount += 1
-                    } else {
-                        staleCount = 0
-                        lastTempGrowth = tempGrowth
-                    }
-
-                    // 10 polls × 0.5s = 5 seconds with no new bytes → assume loading phase
-                    if staleCount >= 10 {
-                        print("[DLProgress] stale threshold reached — switching to loading state")
-                        self.downloadProgress = nil
-                        self.downloadInfo = "Loading \(model.displayName) into memory…"
-                        self.downloadBytesInfo = nil
-                        continue
-                    }
-
-                    let totalDownloaded = cachedBytes + tempGrowth
-                    guard totalDownloaded != lastReported else { continue }
-                    lastReported = totalDownloaded
-
-                    // Expand denominator if actual download exceeds our static estimate
-                    if totalDownloaded > effectiveExpectedBytes {
-                        effectiveExpectedBytes = Int64(Double(totalDownloaded) * 1.05)
-                        print("[DLProgress] expanding expectedBytes to \(effectiveExpectedBytes)")
-                    }
-
-                    let fraction = min(Double(totalDownloaded) / Double(effectiveExpectedBytes), 0.99)
-                    let fmt = ByteCountFormatter()
-                    fmt.countStyle = .file
-                    // Always update bytes display; only gate fraction on forward progress
-                    self.downloadInfo = "Downloading \(model.displayName)…"
-                    self.downloadBytesInfo = "\(fmt.string(fromByteCount: totalDownloaded)) / ~\(fmt.string(fromByteCount: effectiveExpectedBytes))"
-                    if fraction > (self.downloadProgress ?? 0) {
-                        self.downloadProgress = fraction
-                    }
-                } else if sawTempFiles {
-                    print("[DLProgress] tempGrowth=0 after sawTempFiles — switching to loading state")
-                    // Temp files deleted — download finished, now loading weights
-                    self.downloadProgress = nil
-                    self.downloadInfo = "Loading \(model.displayName) into memory…"
-                    self.downloadBytesInfo = nil
-                } else if model.isDownloaded {
-                    // Model is cached — loading weights from local storage into RAM
-                    self.downloadInfo = "Loading \(model.displayName) into memory…"
-                    self.downloadBytesInfo = nil
-                } else {
-                    // Pre-download phase — show size hint so the user knows what's coming
-                    self.downloadInfo = "Downloading \(model.displayName)…"
-                    self.downloadBytesInfo = "~\(ByteCountFormatter.string(fromByteCount: expectedBytes, countStyle: .file))"
-                }
-            }
-            print("[DLProgress] polling task exited (cancelled=\(Task.isCancelled))")
+        // Start from as much headroom as we can get: drop MLX's reuse cache before pulling several
+        // GB of weights in, and size the allocator for what this model costs on this device.
+        // This is the process's first MLX call, so the runtime gate opens here (never in the sim).
+        MemorySaver.markRuntimeReady()
+        MemorySaver.releaseCaches()
+        MemorySaver.applyAllocatorLimits(for: model)
+        MemoryPressureMonitor.shared.startMonitoring()
+        MemoryPressureMonitor.shared.onCriticalPressure = { [weak self] in
+            self?.releaseMemory(reason: .pressure)
         }
 
         let task = Task {
             do {
                 try Task.checkCancellation()
+
+                // Not cached yet: fetch with the resumable downloader first, so an interrupted
+                // transfer keeps its bytes on disk and the next attempt continues mid-file.
+                // Progress here is byte-accurate (from the repo's true file sizes).
+                if !model.isDownloaded {
+                    await ModelDownloadNotificationService.requestAuthorizationIfNeeded()
+
+                    // Survives the process: if iOS terminates the app mid-download (switching
+                    // to a heavy app is enough), the next launch — or a background wake —
+                    // resumes from the saved partials instead of starting over.
+                    UserDefaults.standard.set(model.rawValue, forKey: Self.downloadInFlightKey)
+
+                    try await ResumableModelDownloader().download(
+                        repoID: model.configuration.name
+                    ) { [self] downloaded, total in
+                        guard self.isLoading else { return }
+                        self.downloadInfo = "Downloading \(model.displayName)…"
+                        self.downloadBytesInfo = ByteCountFormatter.string(fromByteCount: downloaded, countStyle: .file)
+                            + " / " + ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
+                        if total > 0 {
+                            self.downloadProgress = Double(downloaded) / Double(total)
+                        }
+                    }
+                    UserDefaults.standard.removeObject(forKey: Self.downloadInFlightKey)
+                    await ModelDownloadNotificationService.notifyDownloadFinished(modelName: model.displayName)
+                }
+
+                try Task.checkCancellation()
+                downloadProgress = nil
+                downloadBytesInfo = nil
+                downloadInfo = "Loading \(model.displayName) into memory…"
+
+                // Survives the process, so a load that gets the app killed is visible on the next
+                // launch (see `takeInterruptedLoad()`) instead of silently repeating. Set only for
+                // the in-memory phase: dying during the *download* is a lifecycle event handled by
+                // `downloadInFlightKey` above, not a memory verdict.
+                UserDefaults.standard.set(model.rawValue, forKey: Self.loadInFlightKey)
+
+                // Everything is in the hub cache now, so this resolves without downloading.
                 let container = try await LLMModelFactory.shared.loadContainer(
                     from: #hubDownloader(),
                     using: #huggingFaceTokenizerLoader(),
                     configuration: model.configuration
-                ) { [weak self] progress in
-                    Task { @MainActor [weak self] in
-                        self?.activeProgress = progress
-                    }
-                }
+                ) { _ in }
 
                 try Task.checkCancellation()
                 modelContainer = container
                 currentModel = model
                 isModelLoaded = true
+                evictedModel = nil
+                interruptedDownloadModel = nil
                 let footprintAfter = memFootprintMB()
                 logger.info("[\(model.rawValue, privacy: .public)] Loaded successfully — App footprint: \(footprintAfter, privacy: .public) MB")
+                MemoryDiagnostics.record(.modelLoaded, title: "Loaded \(model.rawValue)")
             } catch is CancellationError {
+                loadError = nil
+                logger.info("[\(model.rawValue, privacy: .public)] Load cancelled by user")
+            } catch let error as URLError where error.code == .cancelled {
                 loadError = nil
                 logger.info("[\(model.rawValue, privacy: .public)] Load cancelled by user")
             } catch {
                 let footprintOnError = memFootprintMB()
                 logger.error("[\(model.rawValue, privacy: .public)] Load FAILED — footprint: \(footprintOnError, privacy: .public) MB, error: \(error.localizedDescription, privacy: .public), raw: \(String(describing: error), privacy: .public)")
-                loadError = "Failed to load model: \(error.localizedDescription)"
+                MemoryDiagnostics.record(.modelLoadFailed, title: "Couldn't load \(model.rawValue)", detail: error.localizedDescription)
+                if Self.isNetworkInterruption(error), !model.isDownloaded {
+                    interruptedDownloadModel = model
+                    loadError = "Download interrupted — progress is saved. It resumes automatically, or select the model again."
+                } else {
+                    // Not resumable (bad repo, HTTP error, disk) — don't let the next launch
+                    // auto-retry a download that will fail the same way.
+                    UserDefaults.standard.removeObject(forKey: Self.downloadInFlightKey)
+                    loadError = "Failed to load model: \(error.localizedDescription)"
+                }
                 isModelLoaded = false
             }
 
-            downloadPollingTask?.cancel()
-            downloadPollingTask = nil
-            activeProgress = nil
+            // Reached on success, failure, and cancellation alike — anything but the app dying.
+            UserDefaults.standard.removeObject(forKey: Self.loadInFlightKey)
+
             downloadProgress = nil
             downloadInfo = nil
             downloadBytesInfo = nil
@@ -446,19 +526,148 @@ class MLXGenerationService {
         await task.value
     }
 
-    /// Cancel an in-progress model load/download.
+    // MARK: - Interrupted loads
+
+    private static let loadInFlightKey = "modelLoadInFlight"
+    /// Set while the resumable downloader is fetching a model; cleared when the download
+    /// completes, the user cancels, or the model is deleted. Unlike `interruptedDownloadModel`
+    /// it survives the process, so a download the app *died* holding resumes on relaunch —
+    /// and can be pushed forward by a background wake (`BackgroundDownloadResumer`).
+    fileprivate static let downloadInFlightKey = "modelDownloadInFlight"
+
+    /// A model whose load was still running when the app last stopped — which, for a model that
+    /// runs over this device's budget, usually means iOS killed the app for memory. Read once at
+    /// launch so the UI can offer something that fits instead of walking into the same wall.
+    /// Reading it clears it.
+    static func takeInterruptedLoad() -> MLXModel? {
+        guard let raw = UserDefaults.standard.string(forKey: loadInFlightKey) else { return nil }
+        UserDefaults.standard.removeObject(forKey: loadInFlightKey)
+        return MLXModel(rawValue: raw)
+    }
+
+    /// True for failures where the transfer stopped but saved partial files can resume it
+    /// (connection drops, timeouts, app suspension killing the socket).
+    private static func isNetworkInterruption(_ error: Error) -> Bool {
+        if error is URLError { return true }
+        if case ModelDownloadError.incompleteTransfer = error { return true }
+        return false
+    }
+
+    /// Call when the app becomes active: if a download was cut off while the user was away —
+    /// including by iOS terminating the app entirely — restart it. Completed files are
+    /// skipped and the interrupted file resumes from its partial (plus any saved resume
+    /// data), so this costs seconds, not gigabytes.
+    func resumeInterruptedDownloadIfNeeded() {
+        guard !isLoading else { return }
+        var candidate = interruptedDownloadModel
+        if candidate == nil, let raw = UserDefaults.standard.string(forKey: Self.downloadInFlightKey) {
+            // The app died mid-download; only the on-disk flag remembers.
+            candidate = MLXModel(rawValue: raw)
+            if candidate == nil {
+                UserDefaults.standard.removeObject(forKey: Self.downloadInFlightKey)
+            }
+        }
+        guard let model = candidate else { return }
+        interruptedDownloadModel = nil
+        if model.isDownloaded {
+            // A background wake finished it while the user was away — nothing to fetch, and
+            // loading multi-GB weights into memory stays the user's call.
+            UserDefaults.standard.removeObject(forKey: Self.downloadInFlightKey)
+            return
+        }
+        Task { await loadModel(model) }
+    }
+
+    /// Cancel an in-progress model load/download. Downloaded bytes stay on disk (completed
+    /// files in the hub cache, the in-flight file as a partial), so selecting the model again
+    /// continues where this left off. Cancelling is explicit, so no auto-resume.
     func cancelLoad() {
         loadTask?.cancel()
         loadTask = nil
-        downloadPollingTask?.cancel()
-        downloadPollingTask = nil
-        activeProgress = nil
+        interruptedDownloadModel = nil
+        UserDefaults.standard.removeObject(forKey: Self.downloadInFlightKey)
         downloadProgress = nil
         downloadInfo = nil
         loadStartTime = nil
         isLoading = false
         loadError = nil
     }
+
+    /// Drop the loaded model from memory but keep its files on disk. Callers that need the
+    /// LLM later (grading, translation, chat) reload lazily through their existing
+    /// ensureModelReady-style guards. Used to make room for the Stable Diffusion pipeline
+    /// during story illustration — the two never fit in memory together on 6 GB devices.
+    func unloadModel() {
+        guard !isLoading else { return }
+        let unloaded = currentModel
+        modelContainer = nil
+        isModelLoaded = false
+        currentModel = nil
+        evictedModel = nil
+        MemorySaver.releaseCaches()
+        // Back to the ungoverned allocator settings — a governed model's tight cache limit has no
+        // business outliving it.
+        MemorySaver.applyAllocatorLimits(for: nil)
+        logger.info("Model unloaded — App footprint: \(self.memFootprintMB(), privacy: .public) MB")
+        if let unloaded {
+            MemoryDiagnostics.record(.modelUnloaded, title: "Unloaded \(unloaded.rawValue)")
+        }
+    }
+
+    // MARK: - Memory eviction
+
+    /// Why the app is giving memory back.
+    enum EvictionReason: String {
+        /// The app left the foreground. iOS ranks a suspended app for termination largely by
+        /// footprint, and an app sitting on multi-GB weights is at the front of that queue — so a
+        /// trip to Settings to add a keyboard is enough to get it killed and take the open
+        /// conversation's in-flight turn with it.
+        case background
+        /// A `didReceiveMemoryWarning`. Freeing caches alone rarely moves the needle when the
+        /// weights are the footprint.
+        case pressure
+    }
+
+    /// Give memory back, dropping the loaded model when holding it is what's putting the app at
+    /// risk. Always safe to call: it no-ops mid-load and mid-generation, and a model with real
+    /// headroom on this device is kept (reloading it costs the learner a wait for nothing).
+    ///
+    /// A model dropped here is remembered in ``evictedModel`` so the screen that was using it can
+    /// bring it straight back, instead of the learner discovering it's gone by tapping Send.
+    func releaseMemory(reason: EvictionReason) {
+        guard !isLoading, activeGenerations == 0 else { return }
+        MemorySaver.releaseCaches()
+
+        guard let model = currentModel, isModelLoaded, !model.isAppleIntelligence else { return }
+        // A pressure warning means it's already going wrong, so the model goes regardless of fit.
+        // Backgrounding only sheds a model this device has no room to spare for — on a device with
+        // headroom, coming back to a loaded tutor is worth more than the footprint.
+        let mustGo = reason == .pressure
+            || MemoryBudget.isOverBudget(model)
+            || MemoryBudget.hasSlimHeadroom(model)
+        guard mustGo else { return }
+
+        modelContainer = nil
+        isModelLoaded = false
+        currentModel = nil
+        evictedModel = model
+        MemorySaver.releaseCaches()
+        MemorySaver.applyAllocatorLimits(for: nil)
+        logger.notice("[\(model.rawValue, privacy: .public)] Evicted (\(reason.rawValue, privacy: .public)) — App footprint: \(self.memFootprintMB(), privacy: .public) MB")
+        MemoryDiagnostics.record(
+            .modelEvicted,
+            title: "Dropped \(model.rawValue) to stay alive",
+            detail: reason == .pressure
+                ? "\(ThisDevice.system) warned that memory was low. The screen using the tutor reloads it on return."
+                : "The app went to the background holding a tutor this device has little room for; a suspended app that size is the first one \(ThisDevice.system) closes."
+        )
+    }
+
+    /// Whether `model` was dropped by the app and hasn't been brought back yet.
+    func wasEvicted(_ model: MLXModel) -> Bool { evictedModel == model && !isModelLoaded }
+
+    /// Forget a pending eviction without reloading — the user moved on.
+    func clearEviction() { evictedModel = nil }
 
     /// Delete a downloaded model from the HuggingFace Hub cache.
     /// If it's the currently loaded model, unloads it first.
@@ -467,6 +676,11 @@ class MLXGenerationService {
             modelContainer = nil
             isModelLoaded = false
             currentModel = nil
+            MemorySaver.releaseCaches()
+            MemorySaver.applyAllocatorLimits(for: nil)
+        }
+        if UserDefaults.standard.string(forKey: Self.downloadInFlightKey) == model.rawValue {
+            UserDefaults.standard.removeObject(forKey: Self.downloadInFlightKey)
         }
         try model.deleteFromCache()
     }
@@ -488,6 +702,31 @@ class MLXGenerationService {
         timeoutSeconds: Double = 300,
         excludeWords: [String] = []
     ) async throws -> [VocabCard] {
+        // Apple's built-in model has no MLX container: build the same prompt, generate raw text,
+        // and reuse the existing tolerant parser. (See AppleIntelligence-CardGeneration-TODO.md
+        // for the planned @Generable upgrade.)
+        if model == .appleIntelligence {
+            guard isModelLoaded, currentModel == model else { throw MLXError.modelNotLoaded }
+            let applePrompt = buildJSONPrompt(
+                topic: topic,
+                count: count,
+                includeExamples: includeExamples,
+                includeGender: includeGender,
+                wordTypeFilter: wordTypeFilter,
+                includeConjugations: includeConjugations,
+                selectedTenses: selectedTenses,
+                excludeWords: excludeWords
+            )
+            let appleSystem = "You are a German language tutor. Respond ONLY with valid JSON. No markdown fences, no explanation."
+            streamingTokenCount = 0
+            lastBatchEndedEarly = false
+            let raw = try await appleService.generateCardsRaw(system: appleSystem, user: applePrompt)
+            print("--- Apple Intelligence raw output ---")
+            print(raw)
+            print("--- end raw output ---")
+            return try parseVocabCards(from: raw)
+        }
+
         guard let container = modelContainer, isModelLoaded, currentModel == model else {
             throw MLXError.modelNotLoaded
         }
@@ -505,17 +744,7 @@ class MLXGenerationService {
 
         let systemPrompt = "You are a German language tutor. Respond ONLY with valid JSON. No markdown fences, no explanation."
 
-        // Qwen3's chat template only honors /no_think at the END of the user message,
-        // not in the system prompt. Placing it elsewhere leaves thinking mode active,
-        // which produces <think> blocks that corrupt the conjugation JSON.
-        let userMessage: String
-        switch model {
-        case .qwen3_0_6B, .qwen3_4B:
-            userMessage = prompt + "\n/no_think"
-            print("[MLX:\(model.rawValue)] /no_think appended to user message")
-        default:
-            userMessage = prompt
-        }
+        let userMessage = prompt
 
         print("[MLX:\(model.rawValue)] User prompt:\n\(userMessage)")
 
@@ -527,42 +756,65 @@ class MLXGenerationService {
         MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
 
         let lmInput = try await container.prepare(input: userInput)
-        let parameters = GenerateParameters(maxTokens: 4096, temperature: 0.6)
+        let parameters = tunedParameters(maxTokens: 4096, temperature: 0.6)
 
         let footprintBeforeGen = memFootprintMB()
         genLogger.info("[\(model.rawValue, privacy: .public)] Generation start — batch excludeWords=\(excludeWords.count, privacy: .public), count=\(count, privacy: .public), footprint=\(footprintBeforeGen, privacy: .public) MB")
 
         let stream = try await container.generate(input: lmInput, parameters: parameters)
 
-        var fullText = ""
-        var tokenCount = 0
-        var exitedEarly = false
         streamingTokenCount = 0
         lastBatchEndedEarly = false
+        MemoryPressureMonitor.shared.beginRun()
+        activeGenerations += 1
+        defer { activeGenerations -= 1 }
         let batchStartTime = Date()
 
-        for try await generation in stream {
-            if isStopRequested {
-                exitedEarly = true
-                break
-            }
-            if Date().timeIntervalSince(batchStartTime) > timeoutSeconds {
-                let elapsed = Int(Date().timeIntervalSince(batchStartTime))
-                let elapsedVal = elapsed
-                genLogger.warning("[\(model.rawValue, privacy: .public)] Batch timeout after \(elapsedVal, privacy: .public)s (\(tokenCount, privacy: .public) tokens) — attempting partial parse")
-                exitedEarly = true
-                break
-            }
-            if let chunk = generation.chunk {
-                fullText += chunk
-                tokenCount += 1
-                if tokenCount % 256 == 0 {
-                    let fp = memFootprintMB()
-                    genLogger.info("[\(model.rawValue, privacy: .public)] token=\(tokenCount, privacy: .public) footprint=\(fp, privacy: .public) MB")
-                    streamingTokenCount = tokenCount
+        // The batch timeout above only fires when a token arrives. A stream that never yields one
+        // used to sit here forever — and with `activeGenerations` pinned above zero, the model
+        // could never be evicted either. The same watchdog the chat path uses cancels the decode
+        // after `cardStallTimeout` of silence; the partial output survives in `partial`.
+        let partial = PartialOutput()
+        let activity = GenerationActivity()
+        let decode = Task { @MainActor in
+            for try await generation in stream {
+                try Task.checkCancellation()
+                activity.recordProgress()
+                if self.isStopRequested {
+                    partial.exitedEarly = true
+                    break
+                }
+                if Date().timeIntervalSince(batchStartTime) > timeoutSeconds {
+                    let elapsed = Int(Date().timeIntervalSince(batchStartTime))
+                    self.genLogger.warning("[\(model.rawValue, privacy: .public)] Batch timeout after \(elapsed, privacy: .public)s (\(partial.tokenCount, privacy: .public) tokens) — attempting partial parse")
+                    partial.exitedEarly = true
+                    break
+                }
+                if self.shouldStopForMemory(at: partial.tokenCount) {
+                    self.genLogger.warning("[\(model.rawValue, privacy: .public)] Memory floor reached after \(partial.tokenCount, privacy: .public) tokens (available=\(MemoryBudget.availableMB, privacy: .public) MB) — stopping early, parsing what arrived")
+                    partial.exitedEarly = true
+                    break
+                }
+                if let chunk = generation.chunk {
+                    partial.text += chunk
+                    partial.tokenCount += 1
+                    if partial.tokenCount % 256 == 0 {
+                        let fp = self.memFootprintMB()
+                        self.genLogger.info("[\(model.rawValue, privacy: .public)] token=\(partial.tokenCount, privacy: .public) footprint=\(fp, privacy: .public) MB")
+                        self.streamingTokenCount = partial.tokenCount
+                    }
                 }
             }
         }
+        do {
+            try await value(of: decode, abortingIfIdlePast: Self.cardStallTimeout, tracking: activity)
+        } catch MLXError.generationTimedOut {
+            genLogger.warning("[\(model.rawValue, privacy: .public)] No token for \(Int(Self.cardStallTimeout), privacy: .public)s (\(partial.tokenCount, privacy: .public) so far) — declaring the batch stuck, parsing what arrived")
+            partial.exitedEarly = true
+        }
+        let fullText = partial.text
+        let tokenCount = partial.tokenCount
+        let exitedEarly = partial.exitedEarly
 
         let footprintAfterGen = memFootprintMB()
         genLogger.info("[\(model.rawValue, privacy: .public)] Generation \(exitedEarly ? "interrupted" : "done", privacy: .public) — tokens=\(tokenCount, privacy: .public), footprint=\(footprintAfterGen, privacy: .public) MB, output_chars=\(fullText.count, privacy: .public)")
@@ -591,17 +843,18 @@ class MLXGenerationService {
         model: MLXModel,
         maxTokens: Int = 32
     ) async throws -> String {
+        if model == .appleIntelligence {
+            guard isModelLoaded, currentModel == model else { throw MLXError.modelNotLoaded }
+            return try await appleService.generateText(
+                system: systemPrompt, user: userMessage, maxTokens: maxTokens
+            )
+        }
+
         guard let container = modelContainer, isModelLoaded, currentModel == model else {
             throw MLXError.modelNotLoaded
         }
 
-        let adjustedUser: String
-        switch model {
-        case .qwen3_0_6B, .qwen3_4B:
-            adjustedUser = userMessage + "\n/no_think"
-        default:
-            adjustedUser = userMessage
-        }
+        let adjustedUser = userMessage
 
         let userInput = UserInput(chat: [
             .system(systemPrompt),
@@ -610,16 +863,102 @@ class MLXGenerationService {
 
         MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
         let lmInput = try await container.prepare(input: userInput)
-        let parameters = GenerateParameters(maxTokens: maxTokens, temperature: 0.1)
+        let parameters = tunedParameters(maxTokens: maxTokens, temperature: 0.1)
         let stream = try await container.generate(input: lmInput, parameters: parameters)
 
         var output = ""
+        var tokenCount = 0
+        MemoryPressureMonitor.shared.beginRun()
+        activeGenerations += 1
+        defer { activeGenerations -= 1 }
         for try await generation in stream {
             try Task.checkCancellation()
+            if shouldStopForMemory(at: tokenCount) {
+                genLogger.warning("[\(model.rawValue, privacy: .public)] Memory floor reached after \(tokenCount, privacy: .public) tokens — returning partial text")
+                break
+            }
             if let chunk = generation.chunk {
                 output += chunk
+                tokenCount += 1
             }
         }
+        return output.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Like `generateText`, but built for long-form output (story writing): streams with live
+    /// `streamingTokenCount` updates, honors `isStopRequested` (returning the partial text and
+    /// setting `lastBatchEndedEarly`), and takes a sampling temperature — creative prose needs
+    /// more than the near-greedy default the short extraction calls use.
+    /// The model must already be loaded and must match `model`.
+    func generateStreamedText(
+        system systemPrompt: String,
+        user userMessage: String,
+        model: MLXModel,
+        maxTokens: Int,
+        temperature: Float = 0.7,
+        timeoutSeconds: Double = 300
+    ) async throws -> String {
+        if model == .appleIntelligence {
+            guard isModelLoaded, currentModel == model else { throw MLXError.modelNotLoaded }
+            streamingTokenCount = 0
+            lastBatchEndedEarly = false
+            return try await appleService.generateText(
+                system: systemPrompt, user: userMessage, maxTokens: maxTokens
+            )
+        }
+
+        guard let container = modelContainer, isModelLoaded, currentModel == model else {
+            throw MLXError.modelNotLoaded
+        }
+
+        let adjustedUser = userMessage
+
+        let userInput = UserInput(chat: [
+            .system(systemPrompt),
+            .user(adjustedUser)
+        ])
+
+        MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
+        let lmInput = try await container.prepare(input: userInput)
+        let parameters = tunedParameters(maxTokens: maxTokens, temperature: temperature)
+        let stream = try await container.generate(input: lmInput, parameters: parameters)
+
+        var output = ""
+        var tokenCount = 0
+        var exitedEarly = false
+        streamingTokenCount = 0
+        lastBatchEndedEarly = false
+        isStopRequested = false
+        MemoryPressureMonitor.shared.beginRun()
+        activeGenerations += 1
+        defer { activeGenerations -= 1 }
+        let startTime = Date()
+
+        for try await generation in stream {
+            try Task.checkCancellation()
+            if isStopRequested {
+                exitedEarly = true
+                break
+            }
+            if Date().timeIntervalSince(startTime) > timeoutSeconds {
+                exitedEarly = true
+                break
+            }
+            if shouldStopForMemory(at: tokenCount) {
+                genLogger.warning("[\(model.rawValue, privacy: .public)] Memory floor reached after \(tokenCount, privacy: .public) tokens — ending this answer early")
+                exitedEarly = true
+                break
+            }
+            if let chunk = generation.chunk {
+                output += chunk
+                tokenCount += 1
+                if tokenCount % 32 == 0 {
+                    streamingTokenCount = tokenCount
+                }
+            }
+        }
+
+        if exitedEarly { lastBatchEndedEarly = true }
         return output.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -638,22 +977,42 @@ class MLXGenerationService {
         model: MLXModel,
         maxTokens: Int = 256,
         temperature: Float = 0.7,
+        /// Give up if no token arrives within this many seconds (a wedged GPU / stalled decode).
+        /// It's an *idle* timeout, so a legitimately long reply keeps going as long as tokens flow.
+        stallTimeout: Double = 30,
         onPartial: @escaping (String) -> Void
     ) async throws -> String {
+        // Several chat templates (notably Gemma's) require the turn sequence to begin with a
+        // `user` message and to strictly alternate user/assistant; anything else calls
+        // `raise_exception(...)` and surfaces to the learner as "Jinja.TemplateException".
+        // ``ChatTurnNormalizer`` is the single place that guarantees the accepted shape — see it
+        // for every way an ordinary conversation drifts out of it.
+        let turns = ChatTurnNormalizer.normalized(history, openerSeed: ConversationPrompts.openerSeed)
+
+        if model == .appleIntelligence {
+            guard isModelLoaded, currentModel == model else { throw MLXError.modelNotLoaded }
+            let reply = try await appleService.streamChatReply(
+                history: turns,
+                system: system,
+                maxTokens: maxTokens,
+                temperature: Double(temperature),
+                onPartial: { partial in
+                    let visible = ConversationPrompts.stripThinkBlocks(partial)
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    onPartial(visible)
+                }
+            )
+            return ConversationPrompts.stripThinkBlocks(reply)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
         guard let container = modelContainer, isModelLoaded, currentModel == model else {
             throw MLXError.modelNotLoaded
         }
 
         var messages: [Chat.Message] = [.system(system)]
-        for (index, turn) in history.enumerated() {
-            var content = turn.content
-            // Qwen3 small models only honor /no_think at the end of the final user turn.
-            if turn.role == .user, index == history.count - 1 {
-                switch model {
-                case .qwen3_0_6B, .qwen3_4B: content += "\n/no_think"
-                default: break
-                }
-            }
+        for turn in turns {
+            let content = turn.content
             switch turn.role {
             case .system:    messages.append(.system(content))
             case .user:      messages.append(.user(content))
@@ -663,22 +1022,85 @@ class MLXGenerationService {
 
         let userInput = UserInput(chat: messages)
         MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
-        let lmInput = try await container.prepare(input: userInput)
-        let parameters = GenerateParameters(maxTokens: maxTokens, temperature: temperature)
-        let stream = try await container.generate(input: lmInput, parameters: parameters)
+        let parameters = tunedParameters(maxTokens: maxTokens, temperature: temperature)
 
-        var full = ""
-        for try await generation in stream {
-            try Task.checkCancellation()
-            if let chunk = generation.chunk {
-                full += chunk
-                let visible = ConversationPrompts.stripThinkBlocks(full)
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                onPartial(visible)
+        // Run the decode as a cancellable child task so a stall watchdog can abort it. Without this,
+        // a GPU that never yields a token leaves `for try await generation in stream` suspended
+        // forever — the user is stuck on the typing indicator with no way out. The watchdog cancels
+        // the task if no token arrives within `stallTimeout`; the loop stops at its next
+        // `checkCancellation()` and we surface `generationTimedOut` (shown with "Try again").
+        let activity = GenerationActivity()
+        MemoryPressureMonitor.shared.beginRun()
+        activeGenerations += 1
+        defer { activeGenerations -= 1 }
+        let decode = Task { @MainActor in
+            let lmInput: LMInput
+            do {
+                lmInput = try await container.prepare(input: userInput)
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                // The template rejected even the normalized sequence — a rule we haven't met. A
+                // single user turn is the one shape every chat template renders, so fall back to
+                // the transcript-in-one-turn prompt rather than ending the conversation on an
+                // error nobody can read. Worse replies beat dead ends.
+                self.genLogger.warning("Chat template rejected the turn sequence (\(error.localizedDescription, privacy: .public)) — retrying as a flattened prompt")
+                let flattened = UserInput(chat: [
+                    .system(system),
+                    .user(ChatTurnNormalizer.flattened(turns, openerSeed: ConversationPrompts.openerSeed))
+                ])
+                lmInput = try await container.prepare(input: flattened)
             }
+            let stream = try await container.generate(input: lmInput, parameters: parameters)
+            var full = ""
+            var tokenCount = 0
+            for try await generation in stream {
+                try Task.checkCancellation()
+                activity.recordProgress()
+                if self.shouldStopForMemory(at: tokenCount) {
+                    self.genLogger.warning("Memory floor reached after \(tokenCount, privacy: .public) tokens — cutting the reply short")
+                    break
+                }
+                if let chunk = generation.chunk {
+                    full += chunk
+                    tokenCount += 1
+                    let visible = ConversationPrompts.stripThinkBlocks(full)
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    onPartial(visible)
+                }
+            }
+            return ConversationPrompts.stripThinkBlocks(full)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        return ConversationPrompts.stripThinkBlocks(full)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return try await value(of: decode, abortingIfIdlePast: stallTimeout, tracking: activity)
+    }
+
+    /// Await a streaming generation's result, but abort it if it goes idle (no token) longer than
+    /// `stallTimeout`. On stall, cancels the task and throws `MLXError.generationTimedOut`. The
+    /// watchdog runs on the main actor alongside the (also main-actor) decode task, so they share
+    /// `activity` safely and interleave at each other's suspension points.
+    private func value<T: Sendable>(
+        of task: Task<T, Error>,
+        abortingIfIdlePast stallTimeout: Double,
+        tracking activity: GenerationActivity
+    ) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask { try await task.value }
+            group.addTask { @MainActor in
+                while true {
+                    let idle = activity.idleSeconds
+                    if idle >= stallTimeout {
+                        task.cancel()
+                        throw MLXError.generationTimedOut
+                    }
+                    // Sleep just past the projected deadline, then re-check.
+                    let wait = max(0.25, stallTimeout - idle)
+                    try await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
+                }
+            }
+            defer { group.cancelAll() }
+            return try await group.next()!
+        }
     }
 
     // MARK: - Prompt Building
@@ -1026,8 +1448,10 @@ class MLXGenerationService {
 
     /// Extract the first complete JSON object from raw text using brace matching.
     /// Strips thinking blocks, markdown fences, and other wrapper text first.
-    /// If the JSON is truncated (e.g. token limit), attempts to repair it.
-    private func extractJSON(from text: String) -> String? {
+    /// If the JSON is truncated (e.g. token limit), attempts to repair it —
+    /// `arrayKey` names the top-level array ("cards", "exercises", "questions") the repair scans for.
+    /// Internal so other generation services (story questions) can reuse the salvage chain.
+    func extractJSON(from text: String, arrayKey: String = "cards") -> String? {
         var cleaned = text
 
         // Strip all <think>...</think> blocks (Qwen3 may emit multiple in one response)
@@ -1078,19 +1502,19 @@ class MLXGenerationService {
         }
 
         // JSON is truncated — try to repair by finding the last complete card object
-        return repairTruncatedJSON(String(cleaned[startIndex...]))
+        return repairTruncatedJSON(String(cleaned[startIndex...]), arrayKey: arrayKey)
     }
 
     /// Attempt to repair truncated JSON like `{"cards":[{...},{...},{incomplete`
     /// by finding the last complete card and closing the structure.
-    private func repairTruncatedJSON(_ json: String) -> String? {
+    private func repairTruncatedJSON(_ json: String, arrayKey: String = "cards") -> String? {
         // Find the last complete "}" that closes a card object inside the cards array.
         // Strategy: find last occurrence of "},{"  or the pattern "}]}" which would be the end.
         // If we find "},", we can cut there, close the array and object.
 
         // Look for the last complete card boundary: "},{"
         // or a complete card ending with just "}"
-        guard let cardsStart = json.range(of: #""cards"\s*:\s*\["#, options: .regularExpression) else {
+        guard let cardsStart = json.range(of: "\"\(arrayKey)\"\\s*:\\s*\\[", options: .regularExpression) else {
             return nil
         }
 
@@ -1134,5 +1558,159 @@ class MLXGenerationService {
 
         print("--- Repaired truncated JSON (kept cards up to index \(cardEnd)) ---")
         return repaired
+    }
+}
+
+// MARK: - Article-noun generation (der/die/das game)
+
+extension MLXGenerationService {
+
+    /// Topic nouns for the article game. Same contract as the other generators: model must
+    /// already be loaded; returns whatever parses (possibly empty on stop/timeout). Every
+    /// survivor is dictionary-checked — when the bundled Wiktionary is unanimous about a
+    /// noun's gender, its article wins over the model's, so the game never teaches a wrong one.
+    func generateArticleNouns(
+        topic: String,
+        count: Int,
+        model: MLXModel,
+        timeoutSeconds: Double = 120
+    ) async throws -> [ArticleQuestion] {
+        let systemPrompt = "You are a German language tutor. Respond ONLY with valid JSON. No markdown fences, no explanation."
+        let prompt = """
+            List exactly \(count) common German nouns about the topic "\(topic)".
+            Respond with a JSON object: {"nouns":[{"noun":"Gabel","article":"die","english":"fork"}, ...]}
+            Rules:
+            - "article" is the noun's definite article: der, die, or das. It must be correct.
+            - "noun" is the singular noun WITHOUT the article, capitalized.
+            - "english" is a short English translation.
+            - Concrete, useful words a learner meets at A1-B1. No plural-only nouns, no proper names. Every noun must be different.
+            """
+
+        if model == .appleIntelligence {
+            guard isModelLoaded, currentModel == model else { throw MLXError.modelNotLoaded }
+            streamingTokenCount = 0
+            lastBatchEndedEarly = false
+            let raw = try await appleService.generateCardsRaw(system: systemPrompt, user: prompt)
+            return parseArticleNouns(from: raw)
+        }
+
+        guard let container = modelContainer, isModelLoaded, currentModel == model else {
+            throw MLXError.modelNotLoaded
+        }
+
+        let userMessage = prompt
+
+        let userInput = UserInput(chat: [
+            .system(systemPrompt),
+            .user(userMessage)
+        ])
+
+        MLXRandom.seed(UInt64(Date.timeIntervalSinceReferenceDate * 1000))
+        let lmInput = try await container.prepare(input: userInput)
+        let parameters = tunedParameters(maxTokens: 1536, temperature: 0.6)
+
+        genLogger.info("[\(model.rawValue, privacy: .public)] Article-noun generation start — topic length=\(topic.count, privacy: .public), count=\(count, privacy: .public)")
+
+        let stream = try await container.generate(input: lmInput, parameters: parameters)
+
+        var fullText = ""
+        var tokenCount = 0
+        streamingTokenCount = 0
+        lastBatchEndedEarly = false
+        isStopRequested = false
+        MemoryPressureMonitor.shared.beginRun()
+        activeGenerations += 1
+        defer { activeGenerations -= 1 }
+        let startTime = Date()
+
+        for try await generation in stream {
+            if isStopRequested || Date().timeIntervalSince(startTime) > timeoutSeconds
+                || shouldStopForMemory(at: tokenCount) {
+                lastBatchEndedEarly = true
+                break
+            }
+            if let chunk = generation.chunk {
+                fullText += chunk
+                tokenCount += 1
+                if tokenCount % 32 == 0 {
+                    streamingTokenCount = tokenCount
+                }
+            }
+        }
+
+        genLogger.info("[\(model.rawValue, privacy: .public)] Article-noun generation done — tokens=\(tokenCount, privacy: .public)")
+        return parseArticleNouns(from: fullText)
+    }
+
+    private struct CodableArticleNoun: Decodable {
+        let noun: String
+        let article: String
+        let english: String
+    }
+
+    private struct CodableArticleNounResponse: Decodable {
+        let nouns: [CodableArticleNoun]
+    }
+
+    private func parseArticleNouns(from rawOutput: String) -> [ArticleQuestion] {
+        guard let jsonString = extractJSON(from: rawOutput, arrayKey: "nouns"),
+              let data = jsonString.data(using: .utf8) else { return [] }
+
+        var decoded: [CodableArticleNoun] = []
+        if let response = try? JSONDecoder().decode(CodableArticleNounResponse.self, from: data) {
+            decoded = response.nouns
+        } else {
+            decoded = salvageArticleNouns(from: jsonString)
+        }
+
+        var seen = Set<String>()
+        var questions: [ArticleQuestion] = []
+        for item in decoded {
+            var noun = ArticleGameService.bareNoun(item.noun)
+            let english = item.english.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !noun.isEmpty, !english.isEmpty,
+                  var article = GermanArticle(text: item.article),
+                  seen.insert(noun.lowercased()).inserted
+            else { continue }
+            noun = noun.prefix(1).uppercased() + noun.dropFirst()
+            // The dictionary outranks the model — a gender game must never teach a wrong article.
+            if let hit = WiktionaryValidator.shared.nounArticle(for: noun) {
+                article = hit.article
+            }
+            questions.append(ArticleQuestion(noun: noun, article: article, english: english))
+        }
+        return questions
+    }
+
+    /// Brace-match individual noun objects out of malformed JSON (same idea as `salvageCards`).
+    private func salvageArticleNouns(from json: String) -> [CodableArticleNoun] {
+        let sanitized = sanitizeModelJSON(json)
+        var nouns: [CodableArticleNoun] = []
+        let decoder = JSONDecoder()
+
+        var searchStart = sanitized.startIndex
+        while searchStart < sanitized.endIndex {
+            guard let openBrace = sanitized[searchStart...].firstIndex(of: "{") else { break }
+            var depth = 0
+            var end: String.Index?
+            for i in sanitized.indices[openBrace...] {
+                if sanitized[i] == "{" { depth += 1 }
+                if sanitized[i] == "}" { depth -= 1 }
+                if depth == 0 {
+                    end = i
+                    break
+                }
+            }
+            guard let closeBrace = end else { break }
+            let candidate = String(sanitized[openBrace...closeBrace])
+            searchStart = sanitized.index(after: closeBrace)
+
+            guard candidate.contains("article") else { continue }
+            if let data = candidate.data(using: .utf8),
+               let noun = try? decoder.decode(CodableArticleNoun.self, from: data) {
+                nouns.append(noun)
+            }
+        }
+        return nouns
     }
 }

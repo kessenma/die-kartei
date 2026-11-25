@@ -1,0 +1,96 @@
+{
+  "categories": [
+    {
+      "id": "praep-wechsel",
+      "title": "Two-Way Prepositions: Wohin or Wo?",
+      "subtitle": "Movement takes the Akkusativ, location the Dativ",
+      "grammaticalCase": "wechselpraepositionen",
+      "articleType": "definite",
+      "ruleNote": "Wohin? (movement) takes the Akkusativ · Wo? (location) takes the Dativ",
+      "options": ["die", "der", "dem"],
+      "exercises": [
+        { "id": "praep-wechsel-001", "sentence": "Ich hänge das Bild an ______ Wand.", "correctAnswer": "die", "noun": "Wand", "gender": "feminin", "verb": "hängen", "verbForm": "hänge", "options": ["die", "der", "dem"], "english": "I'm hanging the picture on the wall.", "why": "the picture is being moved there, so an answers Wohin? and takes the Akkusativ: die Wand." },
+        { "id": "praep-wechsel-002", "sentence": "Das Bild hängt an ______ Wand.", "correctAnswer": "der", "noun": "Wand", "gender": "feminin", "verb": "hängen", "verbForm": "hängt", "options": ["die", "der", "dem"], "english": "The picture is hanging on the wall.", "why": "the picture is already there, so an answers Wo? and takes the Dativ: der Wand." },
+        { "id": "praep-wechsel-003", "sentence": "Ich lege das Buch auf ______ Tisch.", "correctAnswer": "den", "noun": "Tisch", "gender": "maskulin", "verb": "legen", "verbForm": "lege", "options": ["den", "dem", "der"], "english": "I'm putting the book on the table.", "why": "legen moves the book somewhere, so auf answers Wohin? and takes the Akkusativ: den Tisch." },
+        { "id": "praep-wechsel-004", "sentence": "Das Buch liegt auf ______ Tisch.", "correctAnswer": "dem", "noun": "Tisch", "gender": "maskulin", "verb": "liegen", "verbForm": "liegt", "options": ["den", "dem", "der"], "english": "The book is lying on the table.", "why": "liegen is a position, so auf answers Wo? and takes the Dativ: dem Tisch." },
+        { "id": "praep-wechsel-005", "sentence": "Wir gehen heute in ______ Kino.", "correctAnswer": "das", "noun": "Kino", "gender": "neutrum", "verb": "gehen", "verbForm": "gehen", "options": ["das", "dem", "der"], "english": "We're going to the cinema today.", "why": "gehen is movement into it, so in answers Wohin? and takes the Akkusativ: das Kino." },
+        { "id": "praep-wechsel-006", "sentence": "Wir sitzen schon in ______ Kino.", "correctAnswer": "dem", "noun": "Kino", "gender": "neutrum", "verb": "sitzen", "verbForm": "sitzen", "options": ["das", "dem", "der"], "english": "We're already sitting in the cinema.", "why": "sitzen is a position, so in answers Wo? and takes the Dativ: dem Kino." },
+        { "id": "praep-wechsel-007", "sentence": "Die Katze läuft unter ______ Bett.", "correctAnswer": "das", "noun": "Bett", "gender": "neutrum", "verb": "laufen", "verbForm": "läuft", "options": ["das", "dem", "der"], "english": "The cat runs under the bed.", "why": "the cat is moving under it, so unter answers Wohin? and takes the Akkusativ: das Bett." },
+        { "id": "praep-wechsel-008", "sentence": "Die Katze schläft unter ______ Bett.", "correctAnswer": "dem", "noun": "Bett", "gender": "neutrum", "verb": "schlafen", "verbForm": "schläft", "options": ["das", "dem", "der"], "english": "The cat is sleeping under the bed.", "why": "schlafen happens in one place, so unter answers Wo? and takes the Dativ: dem Bett." },
+        { "id": "praep-wechsel-009", "sentence": "Stell den Stuhl neben ______ Sofa.", "correctAnswer": "das", "noun": "Sofa", "gender": "neutrum", "verb": "stellen", "verbForm": "Stell", "options": ["das", "dem", "der"], "english": "Put the chair next to the sofa.", "why": "stellen puts it somewhere, so neben answers Wohin? and takes the Akkusativ: das Sofa." },
+        { "id": "praep-wechsel-010", "sentence": "Der Stuhl steht neben ______ Sofa.", "correctAnswer": "dem", "noun": "Sofa", "gender": "neutrum", "verb": "stehen", "verbForm": "steht", "options": ["das", "dem", "der"], "english": "The chair is standing next to the sofa.", "why": "stehen is a position, so neben answers Wo? and takes the Dativ: dem Sofa." },
+        { "id": "praep-wechsel-011", "sentence": "Ich fahre das Auto vor ______ Garage.", "correctAnswer": "die", "noun": "Garage", "gender": "feminin", "verb": "fahren", "verbForm": "fahre", "options": ["die", "der", "dem"], "english": "I'm driving the car in front of the garage.", "why": "the car ends up there, so vor answers Wohin? and takes the Akkusativ: die Garage." },
+        { "id": "praep-wechsel-012", "sentence": "Das Auto steht vor ______ Garage.", "correctAnswer": "der", "noun": "Garage", "gender": "feminin", "verb": "stehen", "verbForm": "steht", "options": ["die", "der", "dem"], "english": "The car is parked in front of the garage.", "why": "the car is already there, so vor answers Wo? and takes the Dativ: der Garage." }
+      ]
+    },
+    {
+      "id": "praep-fall",
+      "title": "Prepositions: Which Case?",
+      "subtitle": "The preposition decides the case",
+      "grammaticalCase": "praepositionen",
+      "articleType": "definite",
+      "ruleNote": "Akkusativ after durch, für, ohne, um · Dativ after aus, bei, mit, nach, seit, von, zu · Genitiv after trotz, während, wegen",
+      "options": ["den", "dem", "der"],
+      "exercises": [
+        { "id": "praep-fall-001", "sentence": "Ich fahre mit ______ Bus zur Arbeit.", "correctAnswer": "dem", "noun": "Bus", "gender": "maskulin", "verb": "fahren", "verbForm": "fahre", "options": ["dem", "den", "der"], "english": "I take the bus to work.", "why": "mit always takes the Dativ, and Bus is masculine: dem Bus." },
+        { "id": "praep-fall-002", "sentence": "Das Geschenk ist für ______ Lehrer.", "correctAnswer": "den", "noun": "Lehrer", "gender": "maskulin", "verb": "sein", "verbForm": "ist", "options": ["den", "dem", "der"], "english": "The present is for the teacher.", "why": "für always takes the Akkusativ, and Lehrer is masculine: den Lehrer." },
+        { "id": "praep-fall-003", "sentence": "Wir gehen durch ______ Park.", "correctAnswer": "den", "noun": "Park", "gender": "maskulin", "verb": "gehen", "verbForm": "gehen", "options": ["den", "dem", "der"], "english": "We're walking through the park.", "why": "durch always takes the Akkusativ, and Park is masculine: den Park." },
+        { "id": "praep-fall-004", "sentence": "Sie kommt aus ______ Schweiz.", "correctAnswer": "der", "noun": "Schweiz", "gender": "feminin", "verb": "kommen", "verbForm": "kommt", "options": ["die", "der", "dem"], "english": "She comes from Switzerland.", "why": "aus always takes the Dativ, and Schweiz is feminine: der Schweiz." },
+        { "id": "praep-fall-005", "sentence": "Nach ______ Essen gehen wir spazieren.", "correctAnswer": "dem", "noun": "Essen", "gender": "neutrum", "verb": "gehen", "verbForm": "gehen", "options": ["dem", "das", "der"], "english": "After dinner we go for a walk.", "why": "nach always takes the Dativ, and Essen is neuter: dem Essen." },
+        { "id": "praep-fall-006", "sentence": "Ich gehe ohne ______ Hund spazieren.", "correctAnswer": "den", "noun": "Hund", "gender": "maskulin", "verb": "gehen", "verbForm": "gehe", "options": ["den", "dem", "der"], "english": "I'm going for a walk without the dog.", "why": "ohne always takes the Akkusativ, and Hund is masculine: den Hund." },
+        { "id": "praep-fall-007", "sentence": "Wir sitzen um ______ Tisch.", "correctAnswer": "den", "noun": "Tisch", "gender": "maskulin", "verb": "sitzen", "verbForm": "sitzen", "options": ["den", "dem", "der"], "english": "We're sitting around the table.", "why": "um always takes the Akkusativ, and Tisch is masculine: den Tisch." },
+        { "id": "praep-fall-008", "sentence": "Ich wohne bei ______ Eltern.", "correctAnswer": "den", "noun": "Eltern", "gender": "Plural", "verb": "wohnen", "verbForm": "wohne", "options": ["den", "die", "der"], "english": "I live at my parents' place.", "why": "bei always takes the Dativ, and the Dativ plural is den." },
+        { "id": "praep-fall-009", "sentence": "Seit ______ Woche lerne ich Deutsch.", "correctAnswer": "einer", "noun": "Woche", "gender": "feminin", "verb": "lernen", "verbForm": "lerne", "options": ["einer", "eine", "einem"], "english": "I've been learning German for a week.", "why": "seit always takes the Dativ, and Woche is feminine: einer Woche." },
+        { "id": "praep-fall-010", "sentence": "Das ist ein Geschenk von ______ Schwester.", "correctAnswer": "meiner", "noun": "Schwester", "gender": "feminin", "verb": "sein", "verbForm": "ist", "options": ["meiner", "meine", "meinen"], "english": "That's a present from my sister.", "why": "von always takes the Dativ, and Schwester is feminine: meiner Schwester." },
+        { "id": "praep-fall-011", "sentence": "Trotz ______ Regens gehen wir spazieren.", "correctAnswer": "des", "noun": "Regen", "gender": "maskulin", "verb": "gehen", "verbForm": "gehen", "options": ["des", "dem", "den"], "english": "Despite the rain we're going for a walk.", "why": "trotz takes the Genitiv, and masculine nouns take des plus an -s: des Regens." },
+        { "id": "praep-fall-012", "sentence": "Wegen ______ Wetters bleiben wir zu Hause.", "correctAnswer": "des", "noun": "Wetter", "gender": "neutrum", "verb": "bleiben", "verbForm": "bleiben", "options": ["des", "dem", "das"], "english": "Because of the weather we're staying home.", "why": "wegen takes the Genitiv, and neuter nouns take des plus an -s: des Wetters." }
+      ]
+    },
+    {
+      "id": "praep-welche",
+      "title": "Which Preposition?",
+      "subtitle": "The case after the blank gives it away",
+      "grammaticalCase": "praepositionen",
+      "articleType": "preposition",
+      "ruleNote": "The article after the blank shows the case, and the case tells you which preposition fits.",
+      "options": ["mit", "für", "aus"],
+      "exercises": [
+        { "id": "praep-welche-001", "sentence": "Ich fahre ______ dem Bus zur Arbeit.", "correctAnswer": "mit", "noun": "Bus", "gender": "maskulin", "verb": "fahren", "verbForm": "fahre", "options": ["mit", "für", "ohne"], "english": "I take the bus to work.", "why": "dem is Dativ, and going by a vehicle takes mit." },
+        { "id": "praep-welche-002", "sentence": "Das Geschenk ist ______ meinen Bruder.", "correctAnswer": "für", "noun": "Bruder", "gender": "maskulin", "verb": "sein", "verbForm": "ist", "options": ["für", "mit", "aus"], "english": "The present is for my brother.", "why": "meinen is Akkusativ, and something intended for someone takes für." },
+        { "id": "praep-welche-003", "sentence": "Sie kommt ______ der Schweiz.", "correctAnswer": "aus", "noun": "Schweiz", "gender": "feminin", "verb": "kommen", "verbForm": "kommt", "options": ["aus", "nach", "für"], "english": "She comes from Switzerland.", "why": "der is Dativ here, and coming out of a country takes aus." },
+        { "id": "praep-welche-004", "sentence": "Wir gehen ______ den Park.", "correctAnswer": "durch", "noun": "Park", "gender": "maskulin", "verb": "gehen", "verbForm": "gehen", "options": ["durch", "aus", "bei"], "english": "We're walking through the park.", "why": "den is Akkusativ, and moving from one side to the other takes durch." },
+        { "id": "praep-welche-005", "sentence": "______ dem Essen gehen wir spazieren.", "correctAnswer": "Nach", "noun": "Essen", "gender": "neutrum", "verb": "gehen", "verbForm": "gehen", "options": ["Nach", "Ohne", "Durch"], "english": "After dinner we go for a walk.", "why": "dem is Dativ, and 'after' in time takes nach." },
+        { "id": "praep-welche-006", "sentence": "Ich lerne ______ einem Jahr Deutsch.", "correctAnswer": "seit", "noun": "Jahr", "gender": "neutrum", "verb": "lernen", "verbForm": "lerne", "options": ["seit", "bei", "von"], "english": "I've been learning German for a year.", "why": "einem is Dativ, and a stretch of time still going on takes seit." },
+        { "id": "praep-welche-007", "sentence": "Ich gehe ______ meinen Bruder ins Kino.", "correctAnswer": "ohne", "noun": "Bruder", "gender": "maskulin", "verb": "gehen", "verbForm": "gehe", "options": ["ohne", "außer", "seit"], "english": "I'm going to the cinema without my brother.", "why": "meinen is Akkusativ, and leaving someone out takes ohne." },
+        { "id": "praep-welche-008", "sentence": "Wir sitzen ______ den Tisch.", "correctAnswer": "um", "noun": "Tisch", "gender": "maskulin", "verb": "sitzen", "verbForm": "sitzen", "options": ["um", "aus", "bei"], "english": "We're sitting around the table.", "why": "den is Akkusativ, and sitting around something takes um." },
+        { "id": "praep-welche-009", "sentence": "Ich fliege morgen ______ Italien.", "correctAnswer": "nach", "noun": "", "gender": "", "verb": "fliegen", "verbForm": "fliege", "options": ["nach", "zu", "aus"], "english": "I'm flying to Italy tomorrow.", "why": "countries and cities used without an article take nach for the destination." },
+        { "id": "praep-welche-010", "sentence": "______ des schlechten Wetters bleiben wir zu Hause.", "correctAnswer": "Wegen", "noun": "Wetter", "gender": "neutrum", "verb": "bleiben", "verbForm": "bleiben", "options": ["Wegen", "Trotz", "Ohne"], "english": "Because of the bad weather we're staying home.", "why": "des is Genitiv, and giving the reason takes wegen." },
+        { "id": "praep-welche-011", "sentence": "Alle sind da ______ meinem Bruder.", "correctAnswer": "außer", "noun": "Bruder", "gender": "maskulin", "verb": "sein", "verbForm": "sind", "options": ["außer", "durch", "gegen"], "english": "Everyone is here except my brother.", "why": "meinem is Dativ, and leaving one person out of a group takes außer." },
+        { "id": "praep-welche-012", "sentence": "Das ist ein Geschenk ______ meiner Schwester.", "correctAnswer": "von", "noun": "Schwester", "gender": "feminin", "verb": "sein", "verbForm": "ist", "options": ["von", "für", "ohne"], "english": "That's a present from my sister.", "why": "meiner is Dativ, and the giver or the origin takes von." }
+      ]
+    },
+    {
+      "id": "praep-kontraktion",
+      "title": "Short Forms: ins, im, zum, zur",
+      "subtitle": "Preposition and article contracted",
+      "grammaticalCase": "praepositionen",
+      "articleType": "contraction",
+      "ruleNote": "in + das = ins · in + dem = im · zu + dem = zum · zu + der = zur · an + das = ans · an + dem = am",
+      "options": ["ins", "im", "zum"],
+      "exercises": [
+        { "id": "praep-kontr-001", "sentence": "Wir gehen heute Abend ______ Kino.", "correctAnswer": "ins", "noun": "Kino", "gender": "neutrum", "verb": "gehen", "verbForm": "gehen", "options": ["ins", "im", "ans"], "english": "We're going to the cinema this evening.", "why": "movement into it takes in plus Akkusativ, and in + das contracts to ins." },
+        { "id": "praep-kontr-002", "sentence": "Wir waren gestern ______ Kino.", "correctAnswer": "im", "noun": "Kino", "gender": "neutrum", "verb": "sein", "verbForm": "waren", "options": ["im", "ins", "zum"], "english": "We were at the cinema yesterday.", "why": "being somewhere takes in plus Dativ, and in + dem contracts to im." },
+        { "id": "praep-kontr-003", "sentence": "Ich gehe morgen ______ Arzt.", "correctAnswer": "zum", "noun": "Arzt", "gender": "maskulin", "verb": "gehen", "verbForm": "gehe", "options": ["zum", "zur", "beim"], "english": "I'm going to the doctor tomorrow.", "why": "zu always takes the Dativ, and zu + dem contracts to zum." },
+        { "id": "praep-kontr-004", "sentence": "Meine Tochter geht schon ______ Schule.", "correctAnswer": "zur", "noun": "Schule", "gender": "feminin", "verb": "gehen", "verbForm": "geht", "options": ["zur", "zum", "ins"], "english": "My daughter already goes to school.", "why": "Schule is feminine, and zu + der contracts to zur." },
+        { "id": "praep-kontr-005", "sentence": "Er geht ______ Fenster und schaut hinaus.", "correctAnswer": "ans", "noun": "Fenster", "gender": "neutrum", "verb": "gehen", "verbForm": "geht", "options": ["ans", "am", "im"], "english": "He goes to the window and looks out.", "why": "gehen is movement, so an takes the Akkusativ, and an + das contracts to ans." },
+        { "id": "praep-kontr-006", "sentence": "Er steht ______ Fenster und schaut hinaus.", "correctAnswer": "am", "noun": "Fenster", "gender": "neutrum", "verb": "stehen", "verbForm": "steht", "options": ["am", "ans", "im"], "english": "He is standing at the window looking out.", "why": "stehen is a position, so an takes the Dativ, and an + dem contracts to am." },
+        { "id": "praep-kontr-007", "sentence": "Ich komme gerade ______ Bäcker.", "correctAnswer": "vom", "noun": "Bäcker", "gender": "maskulin", "verb": "kommen", "verbForm": "komme", "options": ["vom", "beim", "zum"], "english": "I've just come from the baker's.", "why": "von always takes the Dativ, and von + dem contracts to vom." },
+        { "id": "praep-kontr-008", "sentence": "Ich habe sie ______ Bäcker getroffen.", "correctAnswer": "beim", "noun": "Bäcker", "gender": "maskulin", "verb": "treffen", "verbForm": "getroffen", "options": ["beim", "zum", "vom"], "english": "I ran into her at the baker's.", "why": "bei always takes the Dativ, and bei + dem contracts to beim." },
+        { "id": "praep-kontr-009", "sentence": "Ich freue mich schon ______ Wochenende.", "correctAnswer": "aufs", "noun": "Wochenende", "gender": "neutrum", "verb": "freuen", "verbForm": "freue", "options": ["aufs", "am", "im"], "english": "I'm already looking forward to the weekend.", "why": "sich freuen auf takes the Akkusativ, and auf + das contracts to aufs." },
+        { "id": "praep-kontr-010", "sentence": "______ Sonntag schlafe ich lange.", "correctAnswer": "Am", "noun": "Sonntag", "gender": "maskulin", "verb": "schlafen", "verbForm": "schlafe", "options": ["Am", "Im", "Ans"], "english": "On Sunday I sleep in.", "why": "days take an plus Dativ, and an + dem contracts to am." },
+        { "id": "praep-kontr-011", "sentence": "______ Sommer fahren wir ans Meer.", "correctAnswer": "Im", "noun": "Sommer", "gender": "maskulin", "verb": "fahren", "verbForm": "fahren", "options": ["Im", "Am", "Ans"], "english": "In summer we go to the sea.", "why": "seasons take in plus Dativ, and in + dem contracts to im." },
+        { "id": "praep-kontr-012", "sentence": "Der Ball rollt ______ Auto.", "correctAnswer": "unters", "noun": "Auto", "gender": "neutrum", "verb": "rollen", "verbForm": "rollt", "options": ["unters", "unterm", "ums"], "english": "The ball rolls under the car.", "why": "rollen is movement, so unter takes the Akkusativ, and unter + das contracts to unters." }
+      ]
+    }
+  ]
+}

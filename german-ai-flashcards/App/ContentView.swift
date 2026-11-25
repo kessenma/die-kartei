@@ -5,177 +5,959 @@
 //  Created by Kyle Essenmacher on 5/14/26.
 //
 
-import DieKarteiCore
 import SwiftUI
 import SwiftData
+
+/// Payload for the post-generation "keep which cards?" sheet. Item-driven presentation
+/// guarantees the sheet always builds with the cards in hand — a Bool flag could present
+/// before SwiftUI saw the freshly set arrays, briefly showing an empty picker.
+private struct CardSelectionPayload: Identifiable {
+    let id = UUID()
+    let cards: [VocabCard]
+    let validationResults: [ValidationResult]
+    /// Set when the pictures were drawn before the review (`CardImageTiming.everyCard`), so the
+    /// sheet can show them next to each card.
+    let draftImageID: UUID?
+    let draftImages: [String: String]
+}
+
+/// A deck that's saved but is still having its pictures drawn, held here so the overlay can stand
+/// between the review and the deck screen. `CardImageTiming.keptCards` produces one of these; the
+/// deck opens when the run ends, or sooner if the learner doesn't want to wait.
+private struct PendingIllustration: Identifiable {
+    let id = UUID()
+    let deckUUID: UUID
+    let session: StudySession
+    let topic: String
+}
 
 struct ContentView: View {
     @State private var selectedTab: MenuTab = .home
     @State private var visitedTabs: Set<MenuTab> = [.home]
     @Bindable var coordinator: GenerationCoordinator
-    @State private var displayedCards: [VocabCard] = []
-    @State private var displayedTopic: String = ""
-    @State private var displayedValidation: [ValidationResult] = []
-    @State private var currentDeckID: PersistentIdentifier?
-    @State private var displayedSavedCards: [SavedCard] = []
-    @State private var displayedFlashcardStyle: FlashcardStyle = .default
-    @State private var cardsResetToken: Int = 0
-    @State private var pendingSubDeckLabel: String?
-    @State private var grammarMultipleChoiceCategory: GrammarCategory?
-    @State private var grammarMultipleChoiceShowHints = false
-    @State private var showingCardSelection = false
-    @State private var pendingSelectionCards: [VocabCard] = []
-    @State private var pendingSelectionValidation: [ValidationResult] = []
+
+    /// Drives the immersive activity cover (flashcard player, grammar quiz, …). Launchers set
+    /// `router.active`; this view presents it through the single `.fullScreenCover` below.
+    @State private var router = ActivityRouter()
+
+    @State private var settingsResetToken: Int = 0
+    @State private var homeResetToken: Int = 0
+    @State private var grammarResetToken: Int = 0
+    /// Where the tabs' safe area ends and where the NavBar begins, in the shell's coordinates.
+    /// Measured rather than set, so a bar that changes height (Dynamic Type, a theme's font) or a
+    /// device without a home indicator needs nothing done by hand. See `navBarClearance`.
+    @State private var tabsSafeBottom: CGFloat = 0
+    @State private var navBarTop: CGFloat = .infinity
+    /// Drawing mode: a Pencil page holds the NavBar down while it is up (`.hidesNavBar()`).
+    @State private var navBarVisibility = NavBarVisibility()
+    @State private var pendingSelection: CardSelectionPayload?
+    @State private var pendingIllustration: PendingIllustration?
+    @State private var saveError: String?
+    #if DEBUG
+    @State private var showPlacementReview = false
+    @State private var showLevelSettings = false
+    @State private var showConversationSetup = false
+    /// `-wortschatz.debugOpen 1`: the hub sits two taps into Home, and this simulator can't tap.
+    @State private var showWortschatzHub = false
+    /// `-stories.debugOpen 1`: the reader sits several taps deep and needs a story that has
+    /// pictures, which normally means running diffusion. See `StoryDebugSeeder`.
+    @State private var debugStory: StudyStory?
+    /// `-classNotes.debugOpen <screen>`: the Deutschkurs screens sit two or more taps into Home
+    /// and need seeded courses to show anything. See `ClassNotesDebugSeeder`.
+    @State private var classNotesDebugScreen: ClassNotesDebugScreen?
+    /// `-kasus.debugOpen hub|unit:<unit>`: the Grammatik hub and its unit screens, which sit two
+    /// or more taps into Home. The story player's screens launch through the router instead.
+    @State private var kasusDebugSheet: KasusDebugOpen?
+    /// `-kasus.debugOpen history|round|round-mark`: Verlauf, or the newest Kasus (or Markieren)
+    /// round's detail.
+    @State private var kasusHistoryDebug: KasusHistoryDebugScreen?
+    /// `-kasus.debugGenerate <unit>`: the generation sheet on canned tutor output, and the story it
+    /// asks to play once it has closed.
+    @State private var kasusGenerateJob: KasusGenerationJob?
+    @State private var kasusGeneratePending: KasusSession?
+    /// `-kasus.debugLab <runs>`: the Kasus Lab, which sits behind Settings ▸ Developer.
+    @State private var kasusLabRuns: Int?
+    /// `-schreibblatt.debugOpen hub|wahl`: the Schreibblatt hub and its word picker, two or more
+    /// taps into Home. The sheet itself needs a sheet to exist, so it opens through the hub.
+    @State private var schreibblattDebug: SchreibblattDebugOpen?
+    @State private var zeichnenDebug: ZeichnenDebugOpen?
+    @State private var schreibenDebug: SchreibenDebugOpen?
+    @State private var hoerenDebug: HoerenDebugOpen?
+    @State private var spieleDebug: SpieleDebugOpen?
+    #endif
     @Environment(\.modelContext) private var modelContext
 
+    /// Legacy first-launch flag from when the hero intro was its own sheet. Still read (and set)
+    /// so anyone who saw the old flow is never shown the wizard, and still respected by nothing
+    /// else — the standalone sheet now only opens from Settings → Model.
+    @AppStorage("hasSeenHeroModelIntro") private var hasSeenHeroModelIntro = false
+
+    /// Superseded by `hasSeenOnboardingV2`. Still written so a downgrade doesn't re-onboard, and
+    /// still cleared by the debug reset.
+    @AppStorage("hasSeenOnboardingWizard") private var hasSeenOnboardingWizard = false
+
+    /// The first-launch flow: why-a-download, the tutor offer, then the placement check while the
+    /// model downloads. Offered once, ever.
+    ///
+    /// A *new* key rather than a reuse of `hasSeenOnboardingWizard`, and that is deliberate: the
+    /// flow now leads with an explanation nobody who saw the old wizard has ever been shown, so
+    /// everyone gets it once. The steps self-skip for people who are already set up (see
+    /// `OnboardingWizardView`), which is what keeps that from being a nuisance.
+    @AppStorage("hasSeenOnboardingV2") private var hasSeenOnboardingV2 = false
+    @State private var showOnboardingWizard = false
+
+    /// Deep links into the Settings tab, so the Home tutor card and the upgrade nudges can point
+    /// somewhere real instead of naming a screen and leaving the reader to find it.
+    @State private var settingsRouter = SettingsRouter()
+    #if os(macOS)
+    /// Sidebar (the Mac default) or the iPhone's tab bar: View ▸ Navigation, or Settings ▸ Appearance.
+    @AppStorage(MacNavigationStyle.defaultsKey) private var navigationStyle: MacNavigationStyle = .sidebar
+    @Environment(\.openSettings) private var openSettings
+    #endif
+
+    /// A retired model build still sitting in the hub cache, if this device has one. Item-driven so
+    /// the sheet can never present before its payload is set, and nil for everyone who never had the
+    /// old build — which, since a fresh install has no hub cache at all, is every new user.
+    @State private var modelUpdate: ModelSupersession?
+
+    /// The version whose release notes to show at launch, if this launch is the first on a new
+    /// version of an existing install. Item-driven for the same reason as `modelUpdate`.
+    @State private var whatsNewRelease: WhatsNewRelease?
+
+    private var deckStore: DeckStore { DeckStore(modelContext: modelContext) }
+
+    private static let shellSpace = "ContentView.shell"
+
+    /// How far the NavBar reaches above the tabs' safe area: the bottom padding that keeps lists,
+    /// forms, scroll views and pinned bottom bars on every tab clear of the bar without a hand-set
+    /// margin. Zero while the keyboard is up, which already lifts the tabs past the bar.
+    ///
+    /// A difference of two frames rather than the bar's height less its safe-area inset, because
+    /// the bar sits in a column that ignores the safe area and so always reads that inset as zero.
+    private var navBarClearance: CGFloat {
+        // Taken from the flag, not the measure: a bar slid off keeps its last measured top.
+        navBarHidden ? 0 : max(0, tabsSafeBottom - navBarTop)
+    }
+
+    /// A screen on the selected tab is in drawing mode.
+    private var navBarHidden: Bool { navBarVisibility.isHidden(on: selectedTab) }
+
     var body: some View {
+        shell
+        .overlay {
+            if let pendingIllustration {
+                IllustratingDeckView(
+                    topic: pendingIllustration.topic,
+                    model: coordinator.modelManager.selectedMLXModel,
+                    onStudyNow: { openDeck(pendingIllustration) }
+                )
+                .transition(.opacity)
+            }
+        }
+        // Gamification moments (level up, daily goal, streak milestones, badges, pyramid layers)
+        // rise above whichever tab is active. The center decides; this only displays.
+        .overlay { CelebrationOverlayHost() }
+        .environment(router)
+        .environment(settingsRouter)
+        // Anyone can ask for a Settings destination by setting the route; the shell is what brings
+        // the tab forward to show it.
+        .onChange(of: settingsRouter.route) { showSettingsRoute() }
+        #if os(macOS)
+        // "Show Me How" on the missing-voice alert (an NSAlert, which has no router of its own).
+        .onChange(of: VoiceSetup.shared.settingsRequest) { settingsRouter.route = .voice }
+        #endif
+        // The loaded model's brand theme, published once for the whole app. Themes that defer
+        // their accent to the model (Klar) resolve their tint from this; the identity-forward
+        // themes ignore it and assert their own.
+        .environment(\.modelTheme, coordinator.mlxService.loadedModel?.theme)
+        .sheet(item: $pendingSelection) { selection in
+            CardSelectionView(
+                cards: selection.cards,
+                topic: coordinator.lastTopic,
+                validationResults: selection.validationResults,
+                draftImageID: selection.draftImageID,
+                draftImages: selection.draftImages,
+                onSave: { selected in
+                    pendingSelection = nil
+                    finalizeSession(with: selected)
+                },
+                onCancel: {
+                    pendingSelection = nil
+                    // Nothing will ever adopt these pictures now.
+                    coordinator.discardDraftImages()
+                }
+            )
+        }
+        .fullScreenCover(item: $router.active) { activity in
+            activityCover(activity)
+        }
+        // Full screen, not a sheet. Setup is the app's first screen, not an interruption laid over
+        // it — and a cover has no swipe-to-dismiss, which replaces the old
+        // `interactiveDismissDisabled` guard that kept a half-finished check from vanishing.
+        .fullScreenCover(isPresented: $showOnboardingWizard) {
+            OnboardingWizardView(
+                modelManager: coordinator.modelManager,
+                mlxService: coordinator.mlxService,
+                onOpenModelSettings: openModelSettings
+            )
+        }
+        .sheet(item: $modelUpdate, onDismiss: offerNextOnboardingStep) { supersession in
+            ModelUpdateSheet(
+                supersession: supersession,
+                modelManager: coordinator.modelManager,
+                mlxService: coordinator.mlxService
+            )
+        }
+        .sheet(item: $whatsNewRelease) { release in
+            WhatsNewSheet(current: release)
+        }
+        #if DEBUG
+        // `-placement.debugOpenReview 1` opens the answer review straight from launch. The screen
+        // otherwise sits three taps deep behind the Lernpyramide, and a simulator can be driven by
+        // launch arguments but not by taps — so without this the only way to see it is by hand.
+        .sheet(isPresented: $showPlacementReview) {
+            NavigationStack {
+                PlacementReviewView(modelManager: coordinator.modelManager)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { showPlacementReview = false }
+                        }
+                    }
+            }
+        }
+        // `-level.debugOpenLevel 1` opens Settings ▸ Learning ▸ Your Level, which is otherwise two
+        // taps deep. Same reason as the review sheet above.
+        .sheet(isPresented: $showLevelSettings) {
+            NavigationStack {
+                LevelSettingsView(modelManager: coordinator.modelManager)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { showLevelSettings = false }
+                        }
+                    }
+            }
+        }
+        .sheet(isPresented: $showConversationSetup) {
+            ConversationSetupView(
+                modelManager: coordinator.modelManager,
+                mlxService: coordinator.mlxService
+            ) { _ in showConversationSetup = false }
+        }
+        .sheet(item: $debugStory) { story in
+            NavigationStack {
+                StoryDetailView(
+                    story: story,
+                    modelManager: coordinator.modelManager,
+                    mlxService: coordinator.mlxService
+                )
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { debugStory = nil }
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showWortschatzHub) {
+            NavigationStack {
+                WortschatzHubView(coordinator: coordinator)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { showWortschatzHub = false }
+                        }
+                    }
+            }
+            .environment(router)
+            .environment(settingsRouter)
+        }
+        .sheet(item: $zeichnenDebug) { open in
+            NavigationStack {
+                ZeichnenDebugScreen(open: open)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { zeichnenDebug = nil }
+                        }
+                    }
+            }
+            .environment(router)
+            .environment(settingsRouter)
+        }
+        .sheet(item: $hoerenDebug) { open in
+            NavigationStack {
+                HoerenDebugScreen(open: open, modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { hoerenDebug = nil }
+                        }
+                    }
+            }
+            .environment(router)
+            .environment(settingsRouter)
+        }
+        .sheet(item: $schreibenDebug) { open in
+            NavigationStack {
+                SchreibenDebugScreen(open: open, modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { schreibenDebug = nil }
+                        }
+                    }
+            }
+            .environment(router)
+            .environment(settingsRouter)
+        }
+        .sheet(item: $schreibblattDebug) { open in
+            NavigationStack {
+                Group {
+                    switch open {
+                    case .hub: SchreibblattHubView()
+                    case .wahl: SchreibblattWortwahlView()
+                    case .blatt:
+                        if let sheet = SchreibblattDebugSeeder.newest(in: modelContext) {
+                            SchreibblattSheetView(sheet: sheet)
+                        } else {
+                            ContentUnavailableView("No sheet", systemImage: "doc",
+                                                   description: Text("Run with -schreibblatt.debugSeed 1"))
+                        }
+                    case .fertig:
+                        SchreibblattCelebration(
+                            finish: SchreibblattFinish(title: "Alle Teile geschafft!",
+                                                       subtitle: "52 words in 6 parts, each written 5 times",
+                                                       stats: SchreibblattDebugSeeder.finishStats(in: modelContext)),
+                            onDone: { schreibblattDebug = nil })
+                    }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { schreibblattDebug = nil }
+                    }
+                }
+            }
+            .environment(router)
+            .environment(settingsRouter)
+        }
+        .sheet(item: $spieleDebug) { open in
+            NavigationStack {
+                Group {
+                    if open.startsRound {
+                        HangmanPlayView(
+                            session: SpieleDebugWords.session(
+                                open,
+                                // `-spiele.debugMotif turm|ballon|geruest`
+                                motif: HangmanMotif(rawValue: UserDefaults.standard
+                                    .string(forKey: "spiele.debugMotif") ?? "") ?? .turm
+                            ),
+                            hapticMode: coordinator.modelManager.hapticFeedbackMode,
+                            openingGuesses: open.openingGuesses,
+                            onFinish: { SpieleScoringService.record($0, in: modelContext) },
+                            onDismiss: { spieleDebug = nil }
+                        )
+                    } else {
+                        HangmanSetupView(modelManager: coordinator.modelManager)
+                    }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { spieleDebug = nil }
+                    }
+                }
+            }
+            .environment(router)
+            .environment(settingsRouter)
+        }
+        .sheet(item: $classNotesDebugScreen) { screen in
+            NavigationStack {
+                ClassNotesDebugScreenView(
+                    screen: screen,
+                    modelManager: coordinator.modelManager,
+                    mlxService: coordinator.mlxService
+                )
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { classNotesDebugScreen = nil }
+                    }
+                }
+            }
+            .environment(router)
+        }
+        .sheet(item: $kasusDebugSheet) { open in
+            NavigationStack {
+                Group {
+                    switch open {
+                    case .unit(let unit):
+                        KasusUnitView(unit: unit, modelManager: coordinator.modelManager,
+                                      mlxService: coordinator.mlxService)
+                    case .lesson(let topic):
+                        KasusLessonView(topic: topic, onRead: { seconds in
+                            KasusService.recordLessonRead(topicKey: topic.key, seconds: seconds, in: modelContext)
+                        }, onPractice: {
+                            kasusDebugSheet = nil
+                            router.launch(.grammarDrill(GrammarDrillSession(kind: topic.lessonPractice ?? .roles, topic: topic)))
+                        })
+                    case .topic(let topic):
+                        ReflexivTopicView(topic: topic)
+                    case .bereich(let area):
+                        GrammarBereichView(area: area, modelManager: coordinator.modelManager,
+                                           mlxService: coordinator.mlxService)
+                    case .mnemonics:
+                        KasusMnemonicsView()
+                    case .werkstatt:
+                        EndungsWerkstattView()
+                    case .table:
+                        CaseEndingsView()
+                    default:
+                        GrammarHubView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+                    }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { kasusDebugSheet = nil }
+                    }
+                }
+            }
+            .environment(router)
+        }
+        .sheet(item: $kasusHistoryDebug) { screen in
+            NavigationStack {
+                KasusHistoryDebugView(screen: screen)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { kasusHistoryDebug = nil }
+                        }
+                    }
+            }
+            .environment(router)
+        }
+        // Presented from here rather than over a unit screen, so the player's cover can come up
+        // the moment the sheet has gone.
+        .sheet(item: $kasusGenerateJob, onDismiss: {
+            guard let session = kasusGeneratePending else { return }
+            kasusGeneratePending = nil
+            router.launch(.kasusStory(session))
+        }) { job in
+            KasusGenerationSheet(
+                job: job,
+                autoPlay: KasusDebugOpen.fromLaunchArguments().flatMap { open -> KasusStoryScreen? in
+                    if case .story(let screen) = open { return screen }
+                    return nil
+                },
+                onPlay: { kasusGeneratePending = $0 },
+                onFinished: { result in
+                    KasusGenerateDebug.report(result).forEach { print($0) }
+                }
+            )
+            .environment(router)
+        }
+        .sheet(isPresented: Binding(get: { kasusLabRuns != nil }, set: { if !$0 { kasusLabRuns = nil } })) {
+            NavigationStack {
+                KasusLabView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService,
+                             autoRunCount: kasusLabRuns)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { kasusLabRuns = nil }
+                        }
+                    }
+            }
+        }
+        #endif
+        .memoryPressureBanner()
+        .memoryReadoutOverlay()
+        // The banner above is outside the `.environment(settingsRouter)` applied further in, so
+        // it gets its own — its "See what's using memory" link routes through this.
+        .environment(settingsRouter)
+        .task {
+            #if DEBUG
+            // `-onboarding.resetWizard 1` clears every first-launch flag plus the stored estimate,
+            // so a relaunch lands straight in the wizard — the sim can't be tapped through a reset
+            // any other way.
+            if UserDefaults.standard.bool(forKey: "onboarding.resetWizard") {
+                UserDefaults.standard.removeObject(forKey: "hasSeenOnboardingV2")
+                UserDefaults.standard.removeObject(forKey: "hasSeenOnboardingWizard")
+                UserDefaults.standard.removeObject(forKey: "hasSeenHeroModelIntro")
+                UserDefaults.standard.removeObject(forKey: PlacementService.seenKey)
+                PlacementService.clear()
+                // The recorded answers are a separate store, and "fresh install" has to mean both
+                // — otherwise a reset leaves the review screen full of history and the sim lies.
+                PlacementAttemptStore.deleteAll()
+                PlacementCoachExport.resetHighWaterMark()
+                // The level anchor is part of "fresh install" too — a declared level would
+                // otherwise survive the reset and the wizard would open pre-answered.
+                UserDefaults.standard.removeObject(forKey: "german.level")
+                UserDefaults.standard.removeObject(forKey: "german.level.declared")
+                coordinator.modelManager.germanLevel = .a2
+                coordinator.modelManager.germanLevelIsDeclared = false
+                hasSeenOnboardingV2 = false
+                hasSeenOnboardingWizard = false
+                hasSeenHeroModelIntro = false
+            }
+            // `-onboarding.debugV2Only 1` clears *only* the V2 flag, leaving the placement result
+            // and the level anchor alone. That's the returning-user path: someone already set up,
+            // meeting the new explanation for the first time, whose check steps should self-skip.
+            // `resetWizard` can't test it — it wipes the very result the skip depends on.
+            if UserDefaults.standard.bool(forKey: "onboarding.debugV2Only") {
+                UserDefaults.standard.removeObject(forKey: "hasSeenOnboardingV2")
+                hasSeenOnboardingV2 = false
+            }
+            // `-settings.debugOpenModel 1` fires the deep link at launch. Proves it *pushes* — the
+            // only handle on this stack before `SettingsRouter` was one that popped to root.
+            if UserDefaults.standard.bool(forKey: "settings.debugOpenModel") {
+                openModelSettings()
+            }
+            VoiceSetup.shared.applyDebugLaunchArgumentIfNeeded()
+            PlacementService.applyDebugLaunchArgumentIfNeeded()
+            PlacementService.applyDebugAttemptsLaunchArgumentIfNeeded()
+            // `-review.debugForce 1` raises the App Store ask without the seven-day streak the real
+            // trigger needs — the only way to see that sheet on a simulator.
+            ReviewPromptService.shared.applyDebugLaunchArgumentIfNeeded()
+            // `-whatsNew.debugForce 1` raises the release-notes sheet on a simulator, which never
+            // has an "update" to detect — the only way to see that sheet without shipping.
+            WhatsNew.applyDebugLaunchArgumentIfNeeded()
+            // `-level.debugDeclare B2` hard-selects a level the way the intro door does, so the
+            // "declaring credits nothing" invariant can be checked on a simulator that can't tap.
+            // Deliberately writes no `PlacementResult` — that's the whole thing being verified.
+            if let raw = UserDefaults.standard.string(forKey: "level.debugDeclare"),
+               let level = CEFRLevel(rawValue: raw.uppercased()) {
+                coordinator.modelManager.germanLevel = level
+                coordinator.modelManager.germanLevelIsDeclared = true
+                PlacementService.markOffered()
+            }
+            if UserDefaults.standard.bool(forKey: "placement.debugOpenReview") {
+                showPlacementReview = true
+            }
+            if UserDefaults.standard.bool(forKey: "level.debugOpenLevel") {
+                showLevelSettings = true
+            }
+            // `-conversation.debugOpenSetup 1` opens New Conversation, which otherwise sits behind
+            // Speaking ▸ Conversation ▸ +. Same reason as the two above: the upgrade nudge under
+            // the model picker is only reachable by tapping, and this simulator can't.
+            if UserDefaults.standard.bool(forKey: "conversation.debugOpenSetup") {
+                showConversationSetup = true
+            }
+            if UserDefaults.standard.bool(forKey: "placement.debugVerify") {
+                print(PlacementCoachExport.runDebugVerification(in: modelContext))
+            }
+            // `-screenshots.debugFill 1` / `-screenshots.debugRestore 1` run Settings ▸ Developer ▸
+            // Screenshot Data from launch. The button is three taps deep and this simulator can't
+            // tap; on real hardware you'd always use the button.
+            if UserDefaults.standard.bool(forKey: "screenshots.debugFill") {
+                print("[screenshots] " + ScreenshotDataSeeder.fill(in: modelContext))
+            }
+            if UserDefaults.standard.bool(forKey: "screenshots.debugRestore") {
+                print("[screenshots] restored: \(ScreenshotDataSeeder.restore(in: modelContext))")
+            }
+            // `-deckTransfer.debugVerify 1` round-trips a deck through a `.kartei` file in one
+            // launch. Two simulators can't AirDrop to each other, so this is the only way to see
+            // the export/import pair work without two physical devices.
+            if UserDefaults.standard.bool(forKey: "deckTransfer.debugVerify") {
+                print(DeckImporter.runDebugVerification(in: modelContext))
+            }
+            // `-sync.debugVerify 1` syncs two temporary stores through an in-memory CloudKit
+            // stand-in with the real tracker/applier, checking counters add up and never double.
+            // No iCloud needed; results go to the console as `[sync.verify]` lines.
+            if UserDefaults.standard.bool(forKey: "sync.debugVerify") {
+                Task { print(await SyncDebugVerify.run()) }
+            }
+            // `-pictures.debugSource cloud|onDevice` picks where pictures are drawn without the
+            // Settings picker and its one-time consent sheet, so the simulator can run the cloud
+            // path straight away (docs/CLOUD_PICTURES.md).
+            if let raw = UserDefaults.standard.string(forKey: "pictures.debugSource"),
+               let source = PictureSource(rawValue: raw) {
+                PictureSource.current = source
+                if source == .cloud {
+                    UserDefaults.standard.set(true, forKey: CloudPicturesConsentSheet.acceptedDefaultsKey)
+                }
+            }
+            // `-pictures.debugReport addCredit|raiseKeyLimit|confirmAge|reconnect|skipped` files a
+            // sample picture-run report on every deck and story, so the "Pictures stopped" banners
+            // can be seen without running an account dry.
+            if let raw = UserDefaults.standard.string(forKey: "pictures.debugReport") {
+                let fix = PictureRunReport.Fix(rawValue: raw)
+                let error: OpenRouterError? = switch fix {
+                case .addCredit:     .outOfCredit(keyLimit: false)
+                case .raiseKeyLimit: .outOfCredit(keyLimit: true)
+                case .confirmAge:    .needsAgeConfirmation
+                case .reconnect:     .unauthorized
+                case nil:            nil
+                }
+                let report = PictureRunReport(
+                    drawn: 5, total: 20, skipped: fix == nil ? 3 : 0,
+                    stopReason: error?.reportReason, fix: fix
+                )
+                for deck in (try? modelContext.fetch(FetchDescriptor<SavedDeck>())) ?? [] {
+                    PictureRunReports.shared.record(report, for: deck.id)
+                }
+                for story in (try? modelContext.fetch(FetchDescriptor<StudyStory>())) ?? [] {
+                    PictureRunReports.shared.record(report, for: story.id)
+                }
+            }
+            // `-openrouter.debugOpen 1` opens Settings ▸ Model, where the cloud picture rows live.
+            if UserDefaults.standard.bool(forKey: "openrouter.debugOpen") {
+                openModelSettings()
+            }
+            // `-sync.debugOpen 1` opens Settings ▸ Account ▸ iCloud Sync (this simulator can't tap).
+            if UserDefaults.standard.bool(forKey: "sync.debugOpen") {
+                settingsRouter.route = .sync
+            }
+            // `-sync.debugSeedSchema 1` puts every KarteiItem field into the Development schema
+            // before a Production deploy (docs/ICLOUD_SYNC.md ▸ Shipping). Needs a signed-in device.
+            if UserDefaults.standard.bool(forKey: "sync.debugSeedSchema") {
+                Task { print("[sync] " + (await SyncManager.shared.seedDevelopmentSchema())) }
+            }
+            // The Wortschatz box on a simulator that can't tap. `-wortschatz.debugLegacyDecks 1`
+            // recreates the three old per-level SRS decks and clears the merge flag, so the merge
+            // below has input; `-wortschatz.debugMerge 1` re-runs the merge now;
+            // `-wortschatz.debugSeed 1` spreads the merged deck over new / due / known / lapsed
+            // (reversible with `-wortschatz.debugRestore 1`).
+            if UserDefaults.standard.bool(forKey: "wortschatz.debugOpen") {
+                showWortschatzHub = true
+            }
+
+            // `-schreibblatt.debugSeed 1`: a sheet with ink already on it. A sheet cannot be made
+            // without tapping, so the canvas and the "begonnen" badge are otherwise unreachable.
+            if UserDefaults.standard.bool(forKey: "schreibblatt.debugSeed") {
+                let seeded = SchreibblattDebugSeeder.seed(in: modelContext)
+                print("[schreibblatt] seeded \(seeded.title): \(seeded.strokeCount) strokes")
+            }
+
+            // `-schreibblatt.debugOpen hub|wahl|blatt`: the Schreibblatt hub sits under the third
+            // wide tile on Home, its word picker a tap further in; neither can be tapped here.
+            if let raw = UserDefaults.standard.string(forKey: "schreibblatt.debugOpen") {
+                schreibblattDebug = SchreibblattDebugOpen(argument: raw)
+                print("[schreibblatt] open \(raw): \(schreibblattDebug == nil ? "no such screen" : "ok")")
+            }
+            // `-zeichnen.debugSeedArt 1`: pictures for the first few words without OpenRouter, and a
+            // paint-by-number begun. `-zeichnen.debugOpen hub|quick|run|review|studio|gallery|pbn`:
+            // the Zeichnen room sits under a wide Home tile the simulator can't tap.
+            if UserDefaults.standard.bool(forKey: "zeichnen.debugSeedArt") {
+                let made = ZeichnenDebugSeeder.seed(in: modelContext)
+                print("[zeichnen] seeded \(made) pictures")
+            }
+            if let raw = UserDefaults.standard.string(forKey: "zeichnen.debugOpen") {
+                zeichnenDebug = ZeichnenDebugOpen(argument: raw)
+                print("[zeichnen] open \(raw): \(zeichnenDebug == nil ? "no such screen" : "ok")")
+            }
+            // `-schreiben.debugSeed 1`: a journal entry and an essay with text in them.
+            // `-schreiben.debugOpen hub|timeline|entry|essay`: the Schreiben room sits under a
+            // wide Home tile the simulator can't tap.
+            if UserDefaults.standard.bool(forKey: "schreiben.debugSeed") {
+                print("[schreiben] \(SchreibenDebugSeeder.seed(in: modelContext))")
+            }
+            if let raw = UserDefaults.standard.string(forKey: "schreiben.debugOpen") {
+                schreibenDebug = SchreibenDebugOpen(argument: raw)
+                print("[schreiben] open \(raw): \(schreibenDebug == nil ? "no such screen" : "ok")")
+            }
+            // `-schreiben.debugVerify 1`: the prompt bank's gate, its golden counts and the gate
+            // on tutor-written prompts.
+            if UserDefaults.standard.bool(forKey: "schreiben.debugVerify") {
+                print(WritingPromptBank.runDebugVerification())
+            }
+            // `-hoeren.debugSeed 1`: two rounds and a story with key points.
+            // `-hoeren.debugOpen hub|zahlen|diktat|gist|stats|speller|story`: the Hören room sits
+            // under a wide Home tile the simulator can't tap. `-hoeren.debugVerify 1`: goldens.
+            if UserDefaults.standard.bool(forKey: "hoeren.debugSeed") {
+                print("[hoeren] \(HoerenDebugSeeder.seed(in: modelContext))")
+            }
+            if let raw = UserDefaults.standard.string(forKey: "hoeren.debugOpen") {
+                hoerenDebug = HoerenDebugOpen(argument: raw)
+                print("[hoeren] open \(raw): \(hoerenDebug == nil ? "no such screen" : "ok")")
+            }
+            if UserDefaults.standard.bool(forKey: "hoeren.debugVerify") {
+                print(HoerenDebugSeeder.runVerification())
+            }
+            // `-spiele.debugOpen hangman|hangmanPlay|hangmanWin|hangmanLose`: the Spiele room.
+            // The simulator can't drag or run a tutor, so every screen needs a way in that isn't
+            // a gesture.
+            if let raw = UserDefaults.standard.string(forKey: "spiele.debugOpen") {
+                spieleDebug = SpieleDebugOpen(argument: raw)
+                print("[spiele] open \(raw): \(spieleDebug == nil ? "no such screen" : "ok")")
+            }
+
+            // `-schreibblatt.debugVerifyPDF 1` / `-schreibblatt.debugVerifyInk 1`: round trips
+            // that cannot be tapped — see the two `runDebugVerification`s.
+            if UserDefaults.standard.bool(forKey: "schreibblatt.debugVerifyPDF") {
+                print(SchreibblattPDF.runDebugVerification())
+            }
+            if UserDefaults.standard.bool(forKey: "schreibblatt.debugVerifyInk") {
+                print(SchreibblattInkStore.runDebugVerification())
+            }
+            // `-wortschatz.debugOpenSession 1` starts a box session at launch (the player is
+            // three taps deep), so the "der · die · das?" front can be checked on a simulator.
+            if UserDefaults.standard.bool(forKey: "wortschatz.debugOpenSession"),
+               let session = deckStore.wortschatzSession(
+                    scope: WortschatzScope.load(), style: WortschatzPrefs.style(),
+                    newBudget: WortschatzPrefs.newPerDay(), sessionCap: WortschatzPrefs.sessionCap()
+               ) {
+                router.launch(.cardDeck(session))
+            }
+            // `-stories.debugSeed 1` / `-stories.debugOpen 1` / `-stories.debugRemove 1`: an
+            // illustrated story without running diffusion, so the reader's three picture layouts
+            // can be checked on a simulator that can neither tap nor generate.
+            if UserDefaults.standard.bool(forKey: "stories.debugRemove") {
+                print("[stories] removed: \(StoryDebugSeeder.remove(in: modelContext))")
+            }
+            if UserDefaults.standard.bool(forKey: "stories.debugSeed") {
+                print("[stories] seeded: \(StoryDebugSeeder.seed(in: modelContext)?.title ?? "failed")")
+            }
+            if UserDefaults.standard.bool(forKey: "stories.debugOpen") {
+                debugStory = StoryDebugSeeder.seed(in: modelContext)
+            }
+            // `-cards.debugSeedPictures 1` / `-cards.debugRemovePictures 1`: an illustrated deck
+            // without running diffusion, so the picture face can be checked on a simulator — in
+            // particular how a square picture sits in the card on an iPad.
+            if UserDefaults.standard.bool(forKey: "cards.debugRemovePictures") {
+                print("[cards] pictures removed: \(CardPictureDebugSeeder.remove(in: modelContext))")
+            }
+            if UserDefaults.standard.bool(forKey: "cards.debugSeedPictures") {
+                print("[cards] " + CardPictureDebugSeeder.seed(in: modelContext))
+            }
+            // `-classNotes.debugSeed 1` / `-classNotes.debugOpen 1` / `-classNotes.debugRemove 1`:
+            // two courses (a dated semester course, an undated tutor) with entries and handouts,
+            // so the Deutschkurs screens can be checked on a simulator that can't tap.
+            if UserDefaults.standard.bool(forKey: "classNotes.debugRemove") {
+                print("[classNotes] removed: \(ClassNotesDebugSeeder.remove(in: modelContext))")
+            }
+            // `-classNotes.debugIntro 1`: forget the Deutschkurs intro and checklist, as on a fresh
+            // install, so the intro opens by itself on the next visit with no course.
+            if UserDefaults.standard.bool(forKey: "classNotes.debugIntro") {
+                for key in ClassNotesGuide.Keys.all { UserDefaults.standard.removeObject(forKey: key) }
+                print("[classNotes] intro and checklist reset")
+            }
+            if UserDefaults.standard.bool(forKey: "classNotes.debugSeed") {
+                print("[classNotes] " + ClassNotesDebugSeeder.seed(in: modelContext))
+            }
+            if let raw = UserDefaults.standard.string(forKey: "classNotes.debugOpen") {
+                classNotesDebugScreen = ClassNotesDebugSeeder.screen(named: raw, in: modelContext)
+                print("[classNotes] open \(raw): \(classNotesDebugScreen == nil ? "no such screen" : "ok")")
+            }
+            if UserDefaults.standard.bool(forKey: "wortschatz.debugLegacyDecks") {
+                print("[wortschatz] " + WortschatzDebugSeeder.createLegacyDecks(in: modelContext))
+            }
+            if UserDefaults.standard.bool(forKey: "wortschatz.debugMerge") {
+                print("[wortschatz] " + WortschatzDebugSeeder.rerunMerge(in: modelContext))
+            }
+            if UserDefaults.standard.bool(forKey: "wortschatz.debugSeed") {
+                print("[wortschatz] " + WortschatzDebugSeeder.seed(in: modelContext))
+            }
+            if UserDefaults.standard.bool(forKey: "wortschatz.debugRestore") {
+                print("[wortschatz] restored: \(WortschatzDebugSeeder.restore(in: modelContext))")
+            }
+            // `-kasus.debugVerify 1` prints the bundled stories' validator reports (targets, the
+            // per-proof tally, errors), every planted-error fixture and the forms round trip, then
+            // the service's blanks, options, grading and `KasusPath.next` checks.
+            if UserDefaults.standard.bool(forKey: "kasus.debugVerify") {
+                let lexicon = AppKasusLexicon()
+                let report = KasusStoryBank.debugVerifyReport(lexicon: lexicon)
+                    .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+                // Then the Verstehen items (`kasus_concepts.json`): per unit and kind, with their
+                // golden numbers and which exercises each unit offers.
+                let concepts = KasusConceptBank.debugVerifyReport(lexicon: lexicon)
+                    .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+                // Then the gap-choice items (`gap_choice_items.json`): per topic and focus, with
+                // their golden numbers, the pack's composition and the planted errors.
+                let gaps = GapChoiceBank.debugVerifyReport(lexicon: lexicon)
+                    .split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+                for line in report + concepts + gaps + KasusService.debugServiceReport() {
+                    print("[kasus.debugVerify] \(line)")
+                }
+            }
+            // `-kasus.debugVerifyRecord 1` runs recordRound on synthetic rounds in the live store and
+            // checks which ones may move a case skill (scaffolded picks, under three per case,
+            // f/n/pl Akkusativ at Genus-Hilfe and Nominativ must not), then puts it all back.
+            // `-kasus.debugVerifyRecord keep` leaves the rounds and the skill changes in place.
+            let verifyRecord = UserDefaults.standard.string(forKey: "kasus.debugVerifyRecord")?.lowercased()
+            if verifyRecord == "keep" || UserDefaults.standard.bool(forKey: "kasus.debugVerifyRecord") {
+                for line in KasusService.debugVerifyRecord(in: modelContext, keep: verifyRecord == "keep") {
+                    print("[kasus.debugVerifyRecord] \(line)")
+                }
+            }
+            // `-kasus.debugSeedRounds 1` inserts most of a week of Kasus, der/die/das and preposition
+            // rounds (with answers) for Verlauf; `remove` takes exactly those out again.
+            if let seed = UserDefaults.standard.string(forKey: "kasus.debugSeedRounds") {
+                print("[kasus.debugSeedRounds] " + KasusDebugSeeder.run(seed, in: modelContext))
+            }
+            // `-kasus.debugOpen hub|unit:<unit>|quick:<unit>|read|mark|mark-checked|mark-revealed|fill|
+            // fill-checked|result` opens a Grammatik screen at launch, since this simulator can't tap
+            // its way there. The player screens open the bundled story (`-kasus.debugStory <id>`),
+            // prefilled by `-kasus.debugAnswers right|mixed`, `-kasus.debugHint lern|viel|genus|ohne`
+            // and `-kasus.debugFeedback sofort|amEnde`; prefilled answers are never recorded.
+            // `-kasus.debugGenerate <unit>` runs the Phase 3 pipeline on canned tutor output
+            // (`-kasus.debugGenerateFixture good|altered|wrongArticle|tooFew`, default good): the
+            // generation sheet, the gate, the fallback note and the saved story. With
+            // `-kasus.debugOpen unit:<unit>` it opens that unit screen instead, its „Neue
+            // Geschichte“ row ready on the canned writer; with `-kasus.debugOpen <player screen>`
+            // a story that passes goes on to the player at that screen, prefilled as usual.
+            // `-kasus.debugLab <runs>` opens the Kasus Lab and starts that many runs (0 just opens
+            // it); in the simulator they are canned, good · altered · wrongArticle · tooFew in turn.
+            if let runs = UserDefaults.standard.string(forKey: "kasus.debugLab").flatMap({ Int($0) }) {
+                kasusLabRuns = max(0, runs)
+                print("[kasus.debugLab] open · \(runs) runs")
+            }
+            if let launch = KasusGenerateDebug.fromLaunchArguments() {
+                if let open = KasusDebugOpen.fromLaunchArguments(), case .unit = open {
+                    kasusDebugSheet = open
+                    print("\(KasusGenerateDebug.logPrefix) open \(open.id) · canned \(launch.fixture.rawValue)")
+                } else {
+                    let (generator, request) = KasusGenerateDebug.generator(for: launch)
+                    kasusGenerateJob = KasusGenerationJob(generator: generator, request: request,
+                                                          tutorName: KasusGenerationCopy.tutorName(generator.writer.modelID))
+                    print("\(KasusGenerateDebug.logPrefix) generate \(launch.unit.rawValue) · canned \(launch.fixture.rawValue)")
+                }
+            } else if let open = KasusDebugOpen.fromLaunchArguments() {
+                switch open {
+                case .hub, .unit, .lesson, .topic, .bereich, .mnemonics, .werkstatt, .table:
+                    kasusDebugSheet = open
+                case .drill(let kind, let topic):
+                    router.launch(.grammarDrill(KasusDebugOpen.drillSession(kind, in: topic)))
+                case .story(let screen):
+                    if let session = KasusDebugOpen.session(for: screen) {
+                        router.launch(.kasusStory(session))
+                    }
+                }
+                print("[kasus.debugOpen] open \(open.id)")
+            } else if let screen = KasusHistoryDebugScreen.fromLaunchArguments() {
+                // `history` (Verlauf), `round` (the newest Kasus round's detail) or `round-mark`
+                // (the newest Markieren round's).
+                kasusHistoryDebug = screen
+                print("[kasus.debugOpen] open \(screen.id)")
+            } else if let raw = UserDefaults.standard.string(forKey: "kasus.debugOpen") {
+                print("[kasus.debugOpen] no such screen: \(raw)")
+            }
+            // `-kasus.debugRoute 1` prints where every GrammarFocus goes from Today, Coach's Notes,
+            // the pyramid and a class entry (`GrammarRoute`), resolved against the live store,
+            // and whether a case, article or preposition focus falls back to the lesson sheet.
+            if UserDefaults.standard.bool(forKey: "kasus.debugRoute") {
+                for line in GrammarRoute.debugReport(in: modelContext, level: coordinator.modelManager.germanLevel) {
+                    print("[kasus.debugRoute] \(line)")
+                }
+            }
+            #endif
+
+            // One-time roll-up of historical activity durations into the per-day log, so the
+            // streak calendar's time totals cover the days that predate time tracking.
+            StudyTimeBackfillService.runIfNeeded(in: modelContext)
+            // One-time merge of the per-level Goethe SRS decks into the single Wortschatz deck, so
+            // a word studied at A1 and again at A2 has one schedule from now on.
+            WortschatzMergeService.runIfNeeded(in: modelContext)
+
+            // Watch for system memory warnings for the whole session, not just while a model
+            // happens to be loading.
+            MemoryPressureMonitor.shared.startMonitoring()
+
+            // Was the last session closed by iOS, a crash, or the app switcher? The marker it
+            // left behind says, and lands in the memory log (Settings ▸ Speicher) with the last
+            // reading and the screen that was open.
+            MemoryDiagnostics.beginSession()
+
+            // A load still marked in-flight means the app went away mid-load last time — on a
+            // device that's tight for the model, that's iOS reclaiming it. Say so once.
+            if let interrupted = MLXGenerationService.takeInterruptedLoad() {
+                MemoryPressureMonitor.shared.noteInterruptedLoad(of: interrupted)
+            }
+
+            // A retired model build still in the cache outranks the first-launch intro: those are
+            // the learner's gigabytes, and after a retrain ordinary use quietly starts a fresh
+            // multi-GB download (GenerationCoordinator auto-loads the selected model), so this has
+            // to land ahead of it. Marked seen *before* presenting, so a crash inside the sheet
+            // can't turn a one-time offer into a nag. The `return` is what keeps the two sheets
+            // mutually exclusive by construction rather than by assumption.
+            if let supersession = ModelSupersession.launchPrompt {
+                supersession.markUpdateSheetSeen()
+                try? await Task.sleep(for: .seconds(0.6))
+                modelUpdate = supersession
+                return
+            }
+
+            offerNextOnboardingStep()
+        }
+    }
+
+    // MARK: - Shells
+
+    /// The window's layout: on the Mac, the sidebar or (by choice) the iPhone's tab bar; on iPhone
+    /// and iPad, always the tab bar. Every sheet, cover and overlay above hangs off whichever shows.
+    @ViewBuilder
+    private var shell: some View {
+        #if os(macOS)
+        if navigationStyle == .sidebar {
+            MacSidebarShell(coordinator: coordinator, onGenerationComplete: handleGenerationComplete)
+        } else {
+            tabShell
+        }
+        #else
+        tabShell
+        #endif
+    }
+
+    private var tabShell: some View {
         ZStack(alignment: .bottom) {
             ZStack {
-                HomeView(service: coordinator) {
-                    pendingSelectionCards = coordinator.generatedCards
-                    pendingSelectionValidation = coordinator.validationResults
-                    showingCardSelection = true
-                }
+                HomeHubView(
+                    coordinator: coordinator,
+                    onGenerationComplete: handleGenerationComplete,
+                    resetToken: homeResetToken,
+                    onOpenGrammar: showGrammarTab
+                )
+                .environment(\.shellTab, .home)
                 .opacity(selectedTab == .home ? 1 : 0)
                 .allowsHitTesting(selectedTab == .home)
 
-                if visitedTabs.contains(.cards) {
-                    CardDeckView(
-                        cards: displayedCards,
-                        topic: displayedTopic,
-                        deckID: currentDeckID,
-                        validationResults: displayedValidation,
-                        onQuizComplete: { correct, total, missedIndices, duration, mode, ankiRatings in
-                            saveQuizResult(correct: correct, total: total, missedIndices: missedIndices, durationSeconds: duration, mode: mode, ankiRatings: ankiRatings, subDeckLabel: pendingSubDeckLabel)
-                            pendingSubDeckLabel = nil
-                        },
-                        savedCards: displayedSavedCards,
-                        flashcardStyle: displayedFlashcardStyle,
-                        onStartGoetheStudy: { cards, topic, style, label in
-                            displayedCards = cards
-                            displayedTopic = topic
-                            displayedValidation = []
-                            displayedSavedCards = []
-                            currentDeckID = fetchOrCreateGoetheStatsDeck(for: topic)?.persistentModelID
-                            pendingSubDeckLabel = label
-                        },
-                        resetTrigger: cardsResetToken,
-                        autoAdvance: coordinator.modelManager.autoAdvance,
-                        isActiveTab: selectedTab == .cards
-                    )
-                    .environment(coordinator.mlxService)
-                    .opacity(selectedTab == .cards ? 1 : 0)
-                    .allowsHitTesting(selectedTab == .cards)
+                // The one tab root that needs a stack supplied: `GrammarHubView`'s body starts at
+                // a bare `List`, where Home, Library and Settings each open their own. `.id` on
+                // the stack is what pops a pushed unit screen when the tab is tapped again.
+                if visitedTabs.contains(.grammar) {
+                    NavigationStack {
+                        GrammarHubView(modelManager: coordinator.modelManager,
+                                       mlxService: coordinator.mlxService)
+                    }
+                    .id(grammarResetToken)
+                    .environment(\.shellTab, .grammar)
+                    .opacity(selectedTab == .grammar ? 1 : 0)
+                    .allowsHitTesting(selectedTab == .grammar)
                 }
 
                 if visitedTabs.contains(.library) {
-                    SavedDecksView(
-                        onSelectDeck: { deck in
-                            currentDeckID = deck.persistentModelID
-                            displayedCards = deck.vocabCards
-                            displayedTopic = deck.topic
-                            displayedValidation = WiktionaryValidator.shared.validate(deck.vocabCards)
-                            displayedSavedCards = deck.cards.sorted { $0.sortOrder < $1.sortOrder }
-                            displayedFlashcardStyle = coordinator.modelManager.flashcardStyle
-                            selectedTab = .cards
-                        },
-                        onSelectGoetheLevel: { cards, topic, style, label in
-                            displayedCards = cards
-                            displayedTopic = topic
-                            displayedValidation = []
-                            displayedFlashcardStyle = style
-                            pendingSubDeckLabel = label
-
-                            if style == .anki || style == .leitner,
-                               let srsDeck = fetchOrCreateGoetheSRSDeck(for: topic) {
-                                let lookup = Dictionary(
-                                    srsDeck.cards.map { ($0.germanWord, $0) },
-                                    uniquingKeysWith: { first, _ in first }
-                                )
-                                displayedSavedCards = cards.compactMap { lookup[$0.germanWord] }
-                                currentDeckID = srsDeck.persistentModelID
-                            } else {
-                                displayedSavedCards = []
-                                currentDeckID = fetchOrCreateGoetheStatsDeck(for: topic)?.persistentModelID
-                            }
-
-                            selectedTab = .cards
-                        },
-                        onSelectPastTenseLevel: { cards, topic, style, label in
-                            displayedCards = cards
-                            displayedTopic = topic
-                            displayedValidation = []
-                            displayedFlashcardStyle = style
-                            pendingSubDeckLabel = label
-
-                            if style == .anki || style == .leitner,
-                               let srsDeck = fetchOrCreatePastTenseSRSDeck(for: topic, cards: cards) {
-                                let lookup = Dictionary(
-                                    srsDeck.cards.map { ($0.germanWord, $0) },
-                                    uniquingKeysWith: { first, _ in first }
-                                )
-                                displayedSavedCards = cards.compactMap { lookup[$0.germanWord] }
-                                currentDeckID = srsDeck.persistentModelID
-                            } else {
-                                displayedSavedCards = []
-                                currentDeckID = fetchOrCreatePastTenseStatsDeck(for: topic)?.persistentModelID
-                            }
-
-                            selectedTab = .cards
-                        },
-                        onSelectGrammarFlipCards: { cards, topic, style, label in
-                            displayedCards = cards
-                            displayedTopic = topic
-                            displayedValidation = []
-                            displayedFlashcardStyle = style
-                            displayedSavedCards = []
-                            pendingSubDeckLabel = label
-                            currentDeckID = fetchOrCreateGrammarStatsDeck(for: topic)?.persistentModelID
-                            selectedTab = .cards
-                        },
-                        onSelectGrammarMultipleChoice: { category, hints in
-                            grammarMultipleChoiceShowHints = hints
-                            grammarMultipleChoiceCategory = category
-                        }
+                    UnifiedLibraryView(
+                        modelManager: coordinator.modelManager,
+                        mlxService: coordinator.mlxService
                     )
-                    .fullScreenCover(item: $grammarMultipleChoiceCategory) { category in
-                        GrammarMultipleChoiceView(
-                            category: category,
-                            showHints: grammarMultipleChoiceShowHints,
-                            onComplete: { correct, total in
-                                saveGrammarQuizResult(correct: correct, total: total, category: category)
-                            },
-                            onDismiss: {
-                                grammarMultipleChoiceCategory = nil
-                            }
-                        )
-                    }
+                    .environment(\.shellTab, .library)
                     .opacity(selectedTab == .library ? 1 : 0)
                     .allowsHitTesting(selectedTab == .library)
-                }
-
-                if visitedTabs.contains(.conversation) {
-                    NavigationStack {
-                        ConversationListView(
-                            modelManager: coordinator.modelManager,
-                            mlxService: coordinator.mlxService
-                        )
-                    }
-                    .opacity(selectedTab == .conversation ? 1 : 0)
-                    .allowsHitTesting(selectedTab == .conversation)
                 }
 
                 if visitedTabs.contains(.settings) {
                     SettingsView(
                         modelManager: coordinator.modelManager,
-                        mlxService: coordinator.mlxService
+                        mlxService: coordinator.mlxService,
+                        resetToken: settingsResetToken,
+                        route: $settingsRouter.route
                     )
+                    .environment(\.shellTab, .settings)
                     .opacity(selectedTab == .settings ? 1 : 0)
                     .allowsHitTesting(selectedTab == .settings)
                 }
             }
+            .environment(\.navBarVisibility, navBarVisibility)
             .onChange(of: selectedTab) { _, newTab in
                 visitedTabs.insert(newTab)
+                // Pressing Home always lands on the hub root, even when arriving from
+                // another tab with screens still pushed on Home's stack.
+                if newTab == .home { homeResetToken += 1 }
+            }
+            // The NavBar floats over the tabs, so the tabs stop at its top edge: every screen on
+            // every tab, pushed or root, ends above the bar with no margin of its own. Padding,
+            // not a safe-area inset: a NavigationStack stretches its screens to the window edge
+            // and takes the window's inset, so neither `.safeAreaInset` nor `.safeAreaPadding`
+            // out here ever reaches a pushed screen. Covers and sheets sit above the bar anyway.
+            .padding(.bottom, navBarClearance)
+            // The app-wide ground sits behind all three tabs at once, so switching tabs never
+            // crossfades the background. Each tab's own List still has to opt into showing it
+            // through (`.themedListScreen()`); on Klar this is the system grouped color either way.
+            // Applied after the padding, so it still runs under the bar to the screen edge.
+            .themedScreen()
+            // The padding's own frame, so the reading never depends on the padding: where the safe
+            // area ends, above the home indicator or the keyboard while one is up.
+            .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named(Self.shellSpace)).maxY } action: {
+                tabsSafeBottom = $0
             }
 
             VStack {
@@ -189,46 +971,408 @@ struct ContentView: View {
                         .padding(.bottom, 4)
                 }
 
+                // A deck's pictures being drawn, on every tab: the run outlives the deck's screen.
+                DeckPicturesPill()
+                    .padding(.bottom, 6)
+                    .opacity(navBarHidden ? 0 : 1)
+                    .allowsHitTesting(!navBarHidden)
+                    .accessibilityHidden(navBarHidden)
+
                 NavBar(
                     selectedTab: $selectedTab,
-                    isGenerating: coordinator.isGenerating,
+                    isGenerating: coordinator.isGenerating || BatchQueueService.shared.isRunning,
                     isDownloading: coordinator.mlxService.isLoading,
                     downloadProgress: coordinator.mlxService.downloadProgress,
+                    modelTheme: coordinator.mlxService.loadedModel?.theme,
                     onReselect: { tab in
-                        if tab == .cards { cardsResetToken += 1 }
+                        // Re-tapping the active tab pops any pushed sub-screen back to
+                        // that tab's root view.
+                        switch tab {
+                        case .home: homeResetToken += 1
+                        case .grammar: grammarResetToken += 1
+                        case .settings: settingsResetToken += 1
+                        case .library: break
+                        }
                     }
                 )
+                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named(Self.shellSpace)).minY } action: {
+                    // Only while it is in place: slid away, its frame says nothing about the tabs.
+                    if !navBarHidden { navBarTop = $0 }
+                }
+                // Drawing mode: off the bottom edge, and nothing under it can be tapped.
+                .offset(y: navBarHidden ? 160 : 0)
+                .opacity(navBarHidden ? 0 : 1)
+                .allowsHitTesting(!navBarHidden)
+                .accessibilityHidden(navBarHidden)
             }
+            // The bar's column runs through the bottom safe area so the bar can sit on the screen
+            // edge rather than floating above the home indicator; the Spacer takes up the slack and
+            // NavBar keeps its own clearance from the indicator.
+            .ignoresSafeArea(edges: .bottom)
         }
-        .sheet(isPresented: $showingCardSelection) {
-            CardSelectionView(
-                cards: pendingSelectionCards,
-                topic: coordinator.lastTopic,
-                validationResults: pendingSelectionValidation,
-                onSave: { selected in
-                    showingCardSelection = false
-                    finalizeSession(with: selected)
+        .coordinateSpace(.named(Self.shellSpace))
+    }
+
+    /// A generation finished: hand its cards to the selection sheet.
+    private func handleGenerationComplete() {
+        guard !coordinator.generatedCards.isEmpty else { return }
+        pendingSelection = CardSelectionPayload(
+            cards: coordinator.generatedCards,
+            validationResults: coordinator.validationResults,
+            draftImageID: coordinator.draftImageID,
+            draftImages: coordinator.draftImages
+        )
+    }
+
+    /// Routes first launch to the onboarding flow, once, ever.
+    ///
+    /// This used to fork on the legacy flags to keep a half-finished old flow — hero intro seen,
+    /// placement never offered — from losing its placement offer. That fork is gone because the
+    /// flow itself now handles the case: its check step self-skips only when a stored result
+    /// exists, so a legacy mid-state gets the check inside the flow rather than as a separate
+    /// sheet afterwards.
+    private func offerNextOnboardingStep() {
+        // Release notes are asked first, and the two can never both present: the prompt returns
+        // nil for exactly the launches where the wizard should run (a fresh install), stamping the
+        // version as seen so a new user is never told what changed since a version they never had.
+        if let release = WhatsNew.launchPrompt(isFreshInstall: !hasSeenOnboardingV2) {
+            offerWhatsNew(release)
+            return
+        }
+        offerWizardIfNeeded()
+    }
+
+    /// Marked seen *before* presenting, like every launch sheet here. Delayed for the same reason
+    /// as the wizard: this also runs from the supersession sheet's `onDismiss`, and a sheet
+    /// presented synchronously while another is still dismissing is dropped.
+    private func offerWhatsNew(_ release: WhatsNewRelease) {
+        WhatsNew.markSeen()
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.5))
+            whatsNewRelease = release
+        }
+    }
+
+    /// Presents the flow once, ever. Every flag is written *before* presenting, so a crash inside
+    /// it can't turn a one-time offer into a nag — the same discipline the model sheets above use.
+    ///
+    /// The legacy flags are marked too, so the standalone sheets never auto-fire afterwards and a
+    /// downgrade wouldn't re-onboard. `markOffered()` is no longer called here: presentation is
+    /// gated on `hasSeenOnboardingV2` alone now, and the flow's own steps write the placement keys
+    /// when they run. Marking it here would only claim the check had been offered on runs that
+    /// skip it.
+    private func offerWizardIfNeeded() {
+        guard !hasSeenOnboardingV2 else { return }
+        Task { @MainActor in
+            // A new device with iCloud Sync on: give the first fetch a moment. If this learner
+            // already onboarded on another device, their level and placement arrive (and with them
+            // the onboarded flag), and asking again would overwrite the real answers. The tutor
+            // download is still offered by the Home tutor card.
+            if SyncManager.shared.isRunning {
+                await SyncManager.shared.waitForFirstFetch(timeout: .seconds(10))
+                if UserDefaults.standard.bool(forKey: "hasSeenOnboardingV2") { return }
+            }
+            hasSeenOnboardingV2 = true
+            hasSeenOnboardingWizard = true
+            hasSeenHeroModelIntro = true
+            try? await Task.sleep(for: .seconds(0.5))
+            showOnboardingWizard = true
+        }
+    }
+
+    /// Takes the learner to Settings ▸ Model & Downloads.
+    ///
+    /// Only sets the intent. Switching to the tab is `showSettingsRoute`'s job, so that *every*
+    /// caller gets it — a nudge buried three screens down only has the router, not this view's
+    /// tab state, and setting a route without switching tabs would push the destination onto a
+    /// stack nobody is looking at.
+    private func openModelSettings() {
+        settingsRouter.route = .model
+    }
+
+    /// Brings the Settings tab forward for a route someone asked for.
+    ///
+    /// Both steps matter. The Settings tab is built lazily (`visitedTabs`), so it has to exist
+    /// before a route can be honoured, and `.onChange(of: selectedTab)` inserts it only after the
+    /// body pass — too late. Nothing here touches `settingsResetToken`: bumping it would give the
+    /// stack a fresh identity and throw the push away.
+    /// Brings the Grammatik tab forward, for Home's grammar tile. `visitedTabs.insert` comes
+    /// first for the same reason it does in `showSettingsRoute`: the tab is lazily gated, and
+    /// `onChange(of: selectedTab)` only inserts after the body pass. The token bump lands on the
+    /// hub root, the way pressing the tab itself does.
+    private func showGrammarTab() {
+        visitedTabs.insert(.grammar)
+        selectedTab = .grammar
+        grammarResetToken += 1
+    }
+
+    private func showSettingsRoute() {
+        #if os(macOS)
+        // With the sidebar, Settings is its own window: open it on the pane that was asked for.
+        if navigationStyle == .sidebar, let route = settingsRouter.route {
+            MacSettingsSelection.shared.pane = SettingsPane(route: route)
+            settingsRouter.route = nil
+            openSettings()
+            return
+        }
+        #endif
+        guard settingsRouter.route != nil else { return }
+        visitedTabs.insert(.settings)
+        selectedTab = .settings
+    }
+
+    // MARK: - Activity presentation
+
+    @ViewBuilder
+    private func activityCover(_ activity: Activity) -> some View {
+        switch activity {
+        case .cardDeck(let session):
+            CardDeckView(
+                cards: session.cards,
+                topic: session.topic,
+                deckID: session.deckID,
+                validationResults: session.validationResults,
+                onQuizComplete: { correct, total, missedIndices, duration, mode, ankiRatings in
+                    deckStore.saveQuizResult(
+                        deckID: session.deckID,
+                        correct: correct, total: total, missedIndices: missedIndices,
+                        durationSeconds: duration, mode: mode, ankiRatings: ankiRatings,
+                        subDeckLabel: session.subDeckLabel
+                    )
                 },
-                onCancel: {
-                    showingCardSelection = false
+                savedCards: session.savedCards,
+                flashcardStyle: session.flashcardStyle,
+                generatorModel: session.generatorModel,
+                autoAdvance: coordinator.modelManager.autoAdvance,
+                autoResume: session.autoResume,
+                autoStart: session.autoStart,
+                badgeLogoName: session.badgeLogoName,
+                modelManager: coordinator.modelManager,
+                isDeckMix: session.isDeckMix,
+                onward: session.onward
+            )
+            .environment(coordinator.mlxService)
+
+        case .grammarMultipleChoice(let category, let showHints):
+            GrammarMultipleChoiceView(
+                category: category,
+                showHints: showHints,
+                hapticMode: coordinator.modelManager.hapticFeedbackMode,
+                onComplete: { correct, total, durationSeconds in
+                    deckStore.saveGrammarQuizResult(
+                        correct: correct, total: total, category: category,
+                        durationSeconds: durationSeconds
+                    )
+                    // Drill scores feed the coach's memory: `grammaticalCase` carries the
+                    // GrammarFocus raw value for the bundled praep-* and AI categories.
+                    if let focus = GrammarFocus(rawValue: category.grammaticalCase) {
+                        LearnerMemoryService.applyDrillResult(
+                            focus: focus, correct: correct, total: total, in: modelContext
+                        )
+                    }
+                },
+                onDismiss: {
+                    router.dismiss()
+                }
+            )
+
+        case .matching(let session):
+            MatchingGameView(
+                session: session,
+                hapticMode: coordinator.modelManager.hapticFeedbackMode,
+                onComplete: { result in
+                    // Reuse the quiz-result rail: matching slots into per-deck stats and the
+                    // streak (via StudyLogService inside saveQuizResult) with no schema change.
+                    deckStore.saveQuizResult(
+                        deckID: session.deckID,
+                        correct: result.firstTryCount, total: result.pairCount, missedIndices: [],
+                        durationSeconds: result.durationSeconds, mode: .default, ankiRatings: nil,
+                        subDeckLabel: session.subDeckLabel
+                    )
+                    // Pair-level history: repeat-mistake detection, tricky-pair sampling, and the
+                    // learner-profile hand-off. Returns the summary's "missed again" / PB callouts.
+                    return MatchingStatsService.recordRound(
+                        result,
+                        topic: session.topic,
+                        feedCoach: coordinator.modelManager.matchingFeedsCoach,
+                        in: modelContext
+                    )
+                },
+                onDismiss: {
+                    router.dismiss()
+                }
+            )
+
+        case .articleGame(let session):
+            ArticleGameView(
+                session: session,
+                hapticMode: coordinator.modelManager.hapticFeedbackMode,
+                onComplete: { result in
+                    // Streak (as grammar practice), the profile's Artikel skill, per-noun
+                    // history, and the coach hand-off all live inside recordRound.
+                    ArticleGameService.recordRound(
+                        result,
+                        topic: session.topic,
+                        feedCoach: coordinator.modelManager.articleFeedsCoach,
+                        in: modelContext
+                    )
+                },
+                onDismiss: {
+                    router.dismiss()
+                }
+            )
+
+        case .prepositionCase(let session):
+            PrepositionCaseGameView(
+                session: session,
+                hapticMode: coordinator.modelManager.hapticFeedbackMode,
+                pictureMode: coordinator.modelManager.prepositionPictureMode,
+                onComplete: { result in
+                    // Streak (as grammar practice), the profile's Präpositionen skill, per-word
+                    // history, and the coach hand-off all live inside recordRound.
+                    PrepositionService.recordRound(
+                        result,
+                        topic: session.topic,
+                        feedCoach: coordinator.modelManager.prepositionsFeedCoach,
+                        focus: GrammarFocus(rawValue: session.focusRaw) ?? .praepositionen,
+                        keyPrefix: session.statKeyPrefix,
+                        in: modelContext
+                    )
+                },
+                onDismiss: {
+                    router.dismiss()
+                }
+            )
+
+        case .cloze(let session):
+            ClozePracticeView(
+                session: session,
+                onComplete: { mastered, missed, durationSeconds in
+                    // Correct fills retire the slip (self-heal); the round feeds the streak.
+                    LearnerMemoryService.applyClozeResults(
+                        mastered: mastered, missed: missed, seconds: durationSeconds,
+                        in: modelContext
+                    )
+                },
+                onDismiss: {
+                    router.dismiss()
+                }
+            )
+
+        case .kasusStory(let session):
+            KasusStoryView(
+                session: session,
+                hapticMode: coordinator.modelManager.hapticFeedbackMode,
+                germanLevel: coordinator.modelManager.germanLevel,
+                onComplete: { result in
+                    // Called once per scored round (Markieren, Endungen). Markieren counts for
+                    // the streak only; recordRound decides which answers may move a case skill.
+                    KasusService.recordRound(result, in: modelContext)
+                },
+                onAnswersShown: { roundID in
+                    // Lösung zeigen after that round was recorded: flags the same KasusRound.
+                    KasusService.markAnswersShown(roundID: roundID, in: modelContext)
+                },
+                onDismiss: {
+                    router.dismiss()
+                }
+            )
+
+        case .grammarDrill(let session):
+            // Every drill kind on the one shell. Streak and time (as grammar practice), a
+            // KasusRound for Verlauf and the calendar, and the coach's skills from the answers
+            // that count all live inside recordRound, which tells the kinds apart by the step.
+            session.kind.makeView(
+                session,
+                hapticMode: coordinator.modelManager.hapticFeedbackMode,
+                onComplete: { result in
+                    KasusService.recordRound(result, in: modelContext)
+                },
+                onDismiss: {
+                    router.dismiss()
+                }
+            )
+
+        case .hangman(let session):
+            // Spiele keep their own XP bucket rather than the flashcard one, so playing never
+            // inflates the number the Today screen reports as cards reviewed.
+            HangmanPlayView(
+                session: session,
+                hapticMode: coordinator.modelManager.hapticFeedbackMode,
+                onFinish: { result in
+                    SpieleScoringService.record(result, in: modelContext)
+                },
+                onDismiss: {
+                    router.dismiss()
                 }
             )
         }
     }
 
-    @State private var saveError: String?
+    // MARK: - Generation → study
 
-    /// Persist only the cards the user chose to keep, then navigate to the deck.
+    /// Persist only the cards the user chose to keep, then launch the deck.
     private func finalizeSession(with selectedCards: [VocabCard]) {
         guard !selectedCards.isEmpty else { return }
         let deck = saveCurrentSession(cards: selectedCards)
-        currentDeckID = deck?.persistentModelID
-        displayedCards = selectedCards
-        displayedTopic = coordinator.lastTopic
-        displayedValidation = WiktionaryValidator.shared.validate(selectedCards)
-        displayedSavedCards = deck?.cards.sorted { $0.sortOrder < $1.sortOrder } ?? []
-        displayedFlashcardStyle = coordinator.modelManager.flashcardStyle
-        selectedTab = .cards
+
+        // The cards were already validated (and their articles corrected) right after
+        // generation. Carry those results across instead of re-running the check, so the deck
+        // screen can still report what was corrected — a second pass would just see clean
+        // cards and report nothing.
+        let resultsByWord = Dictionary(
+            coordinator.validationResults.map { ($0.germanWord.lowercased(), $0) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        let results = selectedCards.map { card in
+            resultsByWord[card.germanWord.lowercased()]
+                ?? ValidationResult(germanWord: card.germanWord, status: .unchecked, dictionaryTranslation: nil)
+        }
+
+        let session = StudySession(
+            cards: selectedCards,
+            topic: coordinator.lastTopic,
+            deckID: deck?.persistentModelID,
+            validationResults: results,
+            savedCards: deck?.cards.sorted { $0.sortOrder < $1.sortOrder } ?? [],
+            flashcardStyle: coordinator.modelManager.flashcardStyle,
+            generatorRaw: coordinator.lastGeneratorRaw,
+            subDeckLabel: nil
+        )
+
+        // Any card still without a picture gets one before the deck opens — either because the
+        // learner chose `.keptCards` and this is the whole picture run, or because a `.everyCard`
+        // run came up short. A run they stopped themselves is left alone.
+        if let deck,
+           coordinator.modelManager.flashcardIllustrationsEnabled,
+           PictureEngine.isReady,
+           !coordinator.draftImagesStopped,
+           // The draft run already hit something only the learner can fix; the deck says so.
+           PictureRunReports.shared.report(for: deck.id)?.stopReason == nil,
+           deck.cards.contains(where: { $0.imageFileName == nil }) {
+            let job = PendingIllustration(deckUUID: deck.id, session: session, topic: deck.topic)
+            pendingIllustration = job
+            DeckIllustrationService.launch(
+                deckUUID: deck.id,
+                topic: deck.topic,
+                modelContext: modelContext,
+                mlxService: coordinator.mlxService,
+                onFinish: { openDeck(job) }
+            )
+            return
+        }
+
+        router.launch(.cardDeck(session))
+    }
+
+    /// Drop the picture overlay and start studying. Called both when the run finishes and when the
+    /// learner taps "Start studying now" — whichever comes first wins, and the second is a no-op,
+    /// so a run the learner walked away from doesn't yank them into the deck later. Pictures that
+    /// are still being drawn keep landing on the deck screen as they finish.
+    private func openDeck(_ job: PendingIllustration) {
+        guard pendingIllustration?.id == job.id else { return }
+        pendingIllustration = nil
+        router.launch(.cardDeck(job.session))
     }
 
     @discardableResult
@@ -248,6 +1392,7 @@ struct ContentView: View {
         modelContext.insert(deck)
         do {
             try modelContext.save()
+            adoptDraftImages(into: deck)
             return deck
         } catch {
             saveError = error.localizedDescription
@@ -256,191 +1401,43 @@ struct ContentView: View {
         }
     }
 
-    private func fetchOrCreateGoetheStatsDeck(for topic: String) -> SavedDeck? {
-        let validTopics = ["A1 Vocabulary", "A2 Vocabulary", "B1 Vocabulary"]
-        guard validTopics.contains(topic) else { return nil }
-        let descriptor = FetchDescriptor<SavedDeck>(
-            predicate: #Predicate { $0.generatorRaw == "goethe" && $0.topic == topic }
-        )
-        if let existing = (try? modelContext.fetch(descriptor))?.first {
-            return existing
+    /// Move the pictures drawn before the review onto the cards that survived it, and throw the
+    /// rest away. A card whose file didn't make the move is simply left without one — the deck's
+    /// own "Illustrate this deck" button will offer to draw it again.
+    private func adoptDraftImages(into deck: SavedDeck) {
+        guard let draftID = coordinator.draftImageID, !coordinator.draftImages.isEmpty else {
+            // No pictures to move, but a run that stopped before drawing any still has its say.
+            carryDraftPictureReport(onto: deck)
+            return
         }
-        let deck = SavedDeck(topic: topic, wordCount: 0, includeExamples: false, includeGender: false)
-        deck.generatorRaw = "goethe"
-        modelContext.insert(deck)
-        try? modelContext.save()
-        return deck
-    }
-
-    private func fetchOrCreateGoetheSRSDeck(for topic: String) -> SavedDeck? {
-        let level: GoetheLevel
-        switch topic {
-        case "A1 Vocabulary": level = .a1
-        case "A2 Vocabulary": level = .a2
-        case "B1 Vocabulary": level = .b1
-        default: return nil
-        }
-
-        let allEntries = GoetheVocabService.entries(for: level)
-        let descriptor = FetchDescriptor<SavedDeck>(
-            predicate: #Predicate { $0.generatorRaw == "goethe-srs" && $0.topic == topic }
-        )
-
-        if let deck = (try? modelContext.fetch(descriptor))?.first {
-            let existingWords = Set(deck.cards.map { $0.germanWord })
-            var nextOrder = (deck.cards.map(\.sortOrder).max() ?? -1) + 1
-            for entry in allEntries {
-                guard let translation = entry.translation, !translation.isEmpty else { continue }
-                guard !existingWords.contains(entry.word) else { continue }
-                let card = SavedCard(
-                    germanWord: entry.word,
-                    englishTranslation: translation,
-                    wordType: entry.wordType,
-                    article: entry.article,
-                    exampleSentence: entry.example?.isEmpty == false ? entry.example : nil,
-                    sortOrder: nextOrder
-                )
-                deck.cards.append(card)
-                modelContext.insert(card)
-                nextOrder += 1
-            }
-            try? modelContext.save()
-            return deck
-        }
-
-        let deck = SavedDeck(
-            topic: topic,
-            wordCount: allEntries.count,
-            includeExamples: true,
-            includeGender: true
-        )
-        deck.generatorRaw = "goethe-srs"
-        deck.cards = allEntries.enumerated().compactMap { index, entry in
-            guard let translation = entry.translation, !translation.isEmpty else { return nil }
-            return SavedCard(
-                germanWord: entry.word,
-                englishTranslation: translation,
-                wordType: entry.wordType,
-                article: entry.article,
-                exampleSentence: entry.example?.isEmpty == false ? entry.example : nil,
-                sortOrder: index
+        for card in deck.cards {
+            guard let draftFileName = coordinator.draftImages[card.germanWord.lowercased()] else { continue }
+            card.imageFileName = CardImageStore.adopt(
+                draftFileName: draftFileName, from: draftID, toCard: card.id, in: deck.id
             )
         }
-        modelContext.insert(deck)
         try? modelContext.save()
-        return deck
+        carryDraftPictureReport(onto: deck)   // counts what was adopted, so before the discard
+        coordinator.discardDraftImages()      // deletes whatever wasn't adopted
     }
 
-    private func fetchOrCreatePastTenseStatsDeck(for topic: String) -> SavedDeck? {
-        let validTopics = ["A1 Past Tense Verbs", "A2 Past Tense Verbs", "B1 Past Tense Verbs"]
-        guard validTopics.contains(topic) else { return nil }
-        let descriptor = FetchDescriptor<SavedDeck>(
-            predicate: #Predicate { $0.generatorRaw == "past-tense" && $0.topic == topic }
+    /// File what the draft picture run left undone under the deck it became, counted against the
+    /// cards that were kept. Taken once, so a later deck never inherits it.
+    private func carryDraftPictureReport(onto deck: SavedDeck) {
+        guard let draft = coordinator.takeDraftPictureReport() else { return }
+        let total = deck.cards.count
+        let drawn = deck.cards.filter { $0.imageFileName != nil }.count
+        PictureRunReports.shared.record(
+            PictureRunReport(
+                drawn: drawn, total: total, skipped: min(draft.skipped, total - drawn),
+                stopReason: draft.stopReason, fix: draft.fix
+            ),
+            for: deck.id
         )
-        if let existing = (try? modelContext.fetch(descriptor))?.first { return existing }
-        let deck = SavedDeck(topic: topic, wordCount: 0, includeExamples: true, includeGender: false)
-        deck.generatorRaw = "past-tense"
-        modelContext.insert(deck)
-        try? modelContext.save()
-        return deck
-    }
-
-    private func fetchOrCreatePastTenseSRSDeck(for topic: String, cards: [VocabCard]) -> SavedDeck? {
-        let validTopics = ["A1 Past Tense Verbs", "A2 Past Tense Verbs", "B1 Past Tense Verbs"]
-        guard validTopics.contains(topic) else { return nil }
-        let descriptor = FetchDescriptor<SavedDeck>(
-            predicate: #Predicate { $0.generatorRaw == "past-tense-srs" && $0.topic == topic }
-        )
-
-        if let deck = (try? modelContext.fetch(descriptor))?.first {
-            let existingWords = Set(deck.cards.map { $0.germanWord })
-            var nextOrder = (deck.cards.map(\.sortOrder).max() ?? -1) + 1
-            for card in cards where !existingWords.contains(card.germanWord) {
-                let saved = SavedCard(
-                    germanWord: card.germanWord,
-                    englishTranslation: card.englishTranslation,
-                    wordType: card.wordType,
-                    article: nil,
-                    exampleSentence: card.exampleSentence,
-                    sortOrder: nextOrder
-                )
-                deck.cards.append(saved)
-                modelContext.insert(saved)
-                nextOrder += 1
-            }
-            try? modelContext.save()
-            return deck
-        }
-
-        let deck = SavedDeck(topic: topic, wordCount: cards.count, includeExamples: true, includeGender: false)
-        deck.generatorRaw = "past-tense-srs"
-        deck.cards = cards.enumerated().map { index, card in
-            SavedCard(
-                germanWord: card.germanWord,
-                englishTranslation: card.englishTranslation,
-                wordType: card.wordType,
-                article: nil,
-                exampleSentence: card.exampleSentence,
-                sortOrder: index
-            )
-        }
-        modelContext.insert(deck)
-        try? modelContext.save()
-        return deck
-    }
-
-    private func fetchOrCreateGrammarStatsDeck(for topic: String) -> SavedDeck? {
-        let descriptor = FetchDescriptor<SavedDeck>(
-            predicate: #Predicate { $0.generatorRaw == "grammar" && $0.topic == topic }
-        )
-        if let existing = (try? modelContext.fetch(descriptor))?.first { return existing }
-        let deck = SavedDeck(topic: topic, wordCount: 0, includeExamples: false, includeGender: false)
-        deck.generatorRaw = "grammar"
-        modelContext.insert(deck)
-        try? modelContext.save()
-        return deck
-    }
-
-    private func saveGrammarQuizResult(correct: Int, total: Int, category: GrammarCategory) {
-        let deck = fetchOrCreateGrammarStatsDeck(for: category.title)
-        guard let deck else { return }
-        let result = QuizResult(
-            totalCards: total,
-            correctCount: correct,
-            incorrectCardIndices: [],
-            durationSeconds: 0,
-            studyMode: .default,
-            ankiRatings: nil,
-            subDeckLabel: "\(total) exercises · \(category.subtitle)"
-        )
-        result.deck = deck
-        modelContext.insert(result)
-        try? modelContext.save()
-    }
-
-    private func saveQuizResult(correct: Int, total: Int, missedIndices: [Int], durationSeconds: Int, mode: FlashcardStyle, ankiRatings: [Int: AnkiRating]?, subDeckLabel: String? = nil) {
-        guard let deckID = currentDeckID else { return }
-        guard let deck = modelContext.model(for: deckID) as? SavedDeck else { return }
-        let result = QuizResult(
-            totalCards: total,
-            correctCount: correct,
-            incorrectCardIndices: missedIndices,
-            durationSeconds: durationSeconds,
-            studyMode: mode,
-            ankiRatings: mode == .anki ? ankiRatings : nil,
-            subDeckLabel: subDeckLabel
-        )
-        result.deck = deck
-        modelContext.insert(result)
-        do {
-            try modelContext.save()
-        } catch {
-            print("Failed to save quiz result: \(error)")
-        }
     }
 }
 
 #Preview {
     ContentView(coordinator: GenerationCoordinator(modelManager: MLXModelManager()))
-        .modelContainer(for: SavedDeck.self, inMemory: true)
+        .inMemoryModelContainer(for: [SavedDeck.self])
 }

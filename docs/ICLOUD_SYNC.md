@@ -1,0 +1,270 @@
+# iCloud Sync
+
+A learner's progress and content follow them across their own iPhone and iPad. Everything is
+stored in their **private CloudKit database**: no server of ours, and no cost to us (it counts
+against their iCloud storage). There's no sign-in; sync uses the Apple Account the device is
+signed into. Settings ▸ Account ▸ iCloud Sync shows the status.
+
+## Why CKSyncEngine, not SwiftData's built-in CloudKit mirroring
+
+`ModelConfiguration(cloudKitDatabase: .automatic)` looks like one line, but it doesn't fit this app:
+
+- **Last writer wins, per whole record.** StudyDay (the streak, XP and daily-goal source), the
+  per-word stats and the SRS fields are updated in place with `+=`. Two devices studying the same
+  day would overwrite each other's reviews and XP.
+- **Fetch-or-create singletons duplicate.** Each device creates its own LearnerProfile, today's
+  StudyDay, the 2,825-card Wortschatz deck and the stat rows, and readers pick one with `.first`.
+- **Schema rules.** 180 properties and 5 relationships break mirroring's optional/default rules.
+  Once in Production, its CloudKit schema is add-only, with a manual deploy for every change.
+- **It wipes local data** when the learner signs out of iCloud (Apple engineer, Dec 2025).
+
+So `App/german_ai_flashcardsApp.swift` passes **`cloudKitDatabase: .none`**. That line is
+load-bearing: the default `.automatic` would turn mirroring on as soon as the iCloud entitlement
+exists, the store would fail to open, and the app would crash.
+
+The same goes for **every** container: previews, tests, debug harnesses. The app has the
+entitlement, so a plain `ModelConfiguration(isStoredInMemoryOnly: true)` or
+`.modelContainer(for:inMemory:)` fails to load (the grammar tests did, right after the merge). Use
+`ModelContainer.inMemory([...])` / `.inMemoryModelContainer(for: [...])` (`App/InMemoryStore.swift`),
+or pass `cloudKitDatabase: .none` yourself.
+
+## How it works
+
+```
+SwiftData store (cloudKitDatabase: .none)
+  │ SwiftData history, author == nil only        UserDefaults + JSON files + pictures
+  ▼                                              ▼ (compared every pass)
+SyncChangeTracker ── SyncRecordState.needsUpload ◄── SyncDocuments
+  ▼
+CloudKitSyncTransport = CKSyncEngine (zone "Kartei", one record type "KarteiItem")
+  └ fetched / conflict ──► SyncMerge (KarteiSyncCore) ──► SyncApplier (mainContext, author "sync")
+```
+
+| Piece | File |
+|---|---|
+| Pure merge engine (JSON payloads, PN counters, rules, UUIDv5, digest, fake server) | `Services/Sync/Core/` (also `KarteiSyncCore/`, see below) |
+| One codec per `@Model` (fields ⇄ payload, merge rules) | `Services/Sync/Codecs/` |
+| Non-SwiftData records: Progress, Journey, PlacementAttempts, File | `Services/Sync/SyncDocuments.swift` |
+| History → "must upload" | `SyncChangeTracker.swift` |
+| Server copies → store | `SyncApplier.swift` |
+| Ties them together, Repair, forgetServer | `SyncCoordinator.swift` |
+| CKSyncEngine | `CloudKitSyncTransport.swift` |
+| On/off, account, zone deletion, lifecycle | `SyncManager.swift` |
+| Singleton ids | `SyncCanonicalizer.swift`, `SyncSingletonDecks` in `Codecs/DeckCodecs.swift` |
+| Screen | `Features/Settings/ICloudSyncSettingsView.swift` |
+| Sync report (why it isn't finishing) | `Services/Sync/SyncDiagnostics.swift`, `Features/Settings/SyncReportView.swift` |
+
+- **One generic record type** `KarteiItem` with fields `kind`, `payload` (JSON bytes),
+  `payloadAsset` (payloads over 512 KB) and `file` (a picture or handout). Model changes only
+  change the JSON, so the Production schema is deployed **once**.
+- **Record names** are `<Kind>:<UUID>`. Rows keyed by a natural key (StudyDay by date, stats by
+  word) derive the UUID from the key (`SyncRecordName(kind:naturalKey:)`); CloudKit names must be
+  ASCII.
+
+## Invariants (don't re-derive these)
+
+1. **Counters are per-device PN maps**, never "last synced value + my delta". Each counter travels
+   as `{replica: (p, n)}` merged by pointwise max; the model holds the sum. Anything that forgets
+   the server copy (Delete iCloud Data, an account round trip, Debug↔TestFlight) would otherwise
+   sum the same history twice. That's the conservation property the randomized tests check.
+2. **Pre-sync data** is credited at the first scan to a bootstrap slot:
+   - natural-key and canonical rows use the store's UUID, so two devices' histories *sum*, and a
+     restored copy of the same store lands in the same slot;
+   - random-UUID rows use a shared `pre` slot (*max*), because the only way two devices share a
+     random id is a `.kartei` Replace copy.
+3. **Sync writes run on the main actor in `mainContext`**: flush the learner's edits, set author
+   `"sync"`, apply, save, reset, with no `await` in between (`SyncWriter`). The tracker reads only
+   `author == nil` history, which also skips Core Data's `com.apple.coredata.*` migrator.
+4. **`needsUpload` is the source of truth.** The history token is saved in the same save as the
+   flags it produced; the flag clears only on a successful send; everything owed is re-queued at
+   launch and after an account change.
+5. **Canonical ids.** The Wortschatz deck, the goethe / past-tense / grammar decks, the verb-pair
+   review box (`verb-prep-srs`, created in `VerbPrepositionService`) and their cards get UUIDv5
+   ids from (generatorRaw, topic) and (deck, German word), at creation in `DeckStore`
+   and once for older rows (`SyncCanonicalizer`). Wortschatz syncs only reviewed cards; the bundle
+   rebuilds the rest and owns their word content. LearnerProfile has a fixed record name.
+6. **Older builds never clobber newer ones.** A local change is composed on the last copy
+   (unknown fields survive); `_b` (breaking generation) above what a build knows is held back.
+   Adding fields never needs `_b`.
+7. **Never synced:** BatchJob, `pausedProgressData`, device prefs (models, voices, image model,
+   memory tier, review throttle, What's New), migration flags, the memory log.
+8. **Seeders refuse while sync runs**, and a seeded store refuses to enable sync. `.kartei`
+   Replace is hidden while sync runs.
+
+## Merge rules
+
+| Record | Rule |
+|---|---|
+| StudyDay | every activity count and time bucket is a counter; `lastActivityAt` max; keyed by `yyyy-MM-dd` of `dayStart + 12 h` (safe across time zones) |
+| SavedCard | schedule fields as one group from the later `lastReviewedAt`; `totalReviews`/`lapses` counters; `firstReviewedAt` min |
+| Stats (matching / article / preposition) | seen/missed and wrong-pick tallies are counters; `firstTryStreak` from the later `lastSeenAt` |
+| Round logs, QuizResult, story sessions/attempts, ChatMessage | append-only |
+| LearnerProfile | grammar per focus (later `lastSeen`); vocab/slips as sets by id; `sessionCount` counter |
+| Content (decks, stories, chats, papers, class notes, job posts, phrases) | field-wise three-way; lookups and saved words as sets; `bestScore` max; `durationSeconds`/`readingSeconds` counters |
+| Progress (UserDefaults) | level last-writer-wins; badges earliest date; flags OR; celebrations union |
+| Journey | one snapshot per ISO week; milestones deduped by (kind, title) |
+| File | path + size + modified date; the bytes go as a CKAsset. Applying one posts `.syncedFileLanded`, so a card or story picture that lands after its record reloads on screen |
+| Picture orders (`macPictureRequest` / `macPictureResult` on decks and stories) | plain LWW JSON, each written by one side only; pending = the result doesn't name the request's id. See [MAC_PICTURES.md](MAC_PICTURES.md) |
+| Device heartbeat | `macPictureModels`: the MLX picture models a Mac has downloaded (absent on phones) |
+| WordArtwork | one record per picture (random id), plain LWW; pictures from two devices are two records, a delete is a record delete. Bytes are files under `WordArt/` (see [ZEICHNEN.md](ZEICHNEN.md)) |
+| WordDrawingStat | one record per `WordArtKey`; quick/studio/painted/recall counts are counters; last-drawn dates max |
+| QuickDrawSet | plain LWW (a merged word list would bring back removed words) |
+| Voices (UserDefaults) | the pronunciation voice and the four dialogue voices as one group, the later `voices.setAt` wins (see below) |
+
+### Voices
+
+`VoicesSyncDocument` carries the five voice identifiers. The voices themselves can't travel, and
+no app can download one or open Settings ▸ Accessibility (only private `App-prefs:` URLs, which
+App Review rejects). So a choice can land on a device that doesn't have the voice:
+
+- Speech stands in the main voice, then the system de-DE (`SpeechService.speakCurrent`), and calls
+  `VoiceSetup.speechFellBack`. That shows an alert at most once per launch ("Show Me How" opens
+  Settings ▸ Voice as a sheet over whatever is up; UIKit, because a root SwiftUI alert can't
+  present over covers). "Don't Ask Again" holds for that set of missing voices on that device.
+- Settings ▸ Voice lists the missing voices under "Download your voices", the root row says
+  "N to download", and the pickers show the choice as "Anna (Premium), not downloaded" instead
+  of going blank. `availableVoicesDidChangeNotification` refreshes all three.
+- **Invariant: only a pick in a picker writes a voice.** The stand-in is never written back, or a
+  device without the voice would replace every other device's choice with "System Default".
+- Simulator: launch with `-selectedVoiceIdentifier com.apple.voice.premium.de-DE.Anna` (any id the
+  sim lacks; `-voiceFemaleIdentifier …` and friends work the same way). The argument domain
+  overrides the stored pick for one launch without saving it. Add `-voices.debugSpeak 1` to speak
+  a line at launch (raises the alert) or `-voices.debugSheet 1` to open the "Show Me How" sheet.
+
+Field rules live in `Core/SyncMerge.swift` (`SyncFieldRule`). Every codec file ends with a
+`// Field coverage:` block listing each stored property and where it goes. **Adding a stored
+property to a synced model means adding it to its codec**, or it won't travel.
+
+## Development vs. Production
+
+- Xcode builds (simulator or device) talk to CloudKit **Development**; TestFlight and App Store
+  builds talk to **Production**. The data never crosses, and the screen shows "Development" in
+  DEBUG builds.
+- Sync is **off by default in DEBUG** and on in TestFlight/App Store. `-sync.enable 1` and
+  `-sync.disabled 1` override one launch.
+- A Debug build and a TestFlight build on the same phone see different databases. Switching
+  between them is safe (invariant 1), but they don't share data.
+
+## Testing
+
+- `scripts/sync_core_test.sh`: the merge engine, plus randomized 2–3-device simulations over the
+  fake server that must converge and conserve every counter, including across zone resets and
+  database switches. `KarteiSyncCore/Sources/KarteiSyncCore` is a symlink to
+  `german-ai-flashcards/Services/Sync/Core`, so the app and the tests compile the same files. It
+  uses Xcode's toolchain (the swiftly one on PATH can't link against the macOS 27 SDK).
+- `-sync.debugVerify 1` (DEBUG) syncs two temporary SQLite stores through the fake server with the
+  real tracker, applier and coordinator, and prints `[sync.verify]` lines. It covers first sync,
+  concurrent study, a zone reset, delete propagation, and both devices building the Wortschatz box
+  offline. Documents are left out there: both "devices" share one app's UserDefaults.
+- The simulator can't receive CloudKit pushes and its iCloud sign-in is flaky. Test real sync on
+  two devices signed into the same Apple Account: Debug builds first, then TestFlight.
+
+## Shipping
+
+Before the **first** TestFlight build with sync:
+1. Build to a device once from Xcode (automatic signing registers the iCloud container
+   `iCloud.kyle-essenmacher.german-ai-flashcards` and the push capability on the App ID).
+2. On that device (signed in to iCloud), launch once with `-sync.debugSeedSchema 1`. It saves one
+   record that sets every `KarteiItem` field (`payloadAsset` and `file` otherwise exist only after a
+   big payload or a picture was saved), then deletes it; the fields stay in the schema.
+3. CloudKit Console ▸ the container ▸ Schema ▸ **Deploy Schema Changes** to Production.
+   TestFlight uses Production; without this, sync fails there. (cktool can read Production but
+   the deploy is a Console button.)
+
+**Done 2026-11-19.** Production has `KarteiItem` with `kind` STRING, `payload` BYTES,
+`payloadAsset` ASSET and `file` ASSET (`payloadAsset` was added by hand in Development; the seed
+had never run). 1.7 (3) and earlier TestFlight builds had shipped without it. `scripts/deploy.py`
+now checks the Production schema before archiving (DEPLOY_SETUP.md ▸ CloudKit schema). A new
+top-level field on the record means repeating steps 2–3, and the deploy stops until you do.
+Learners never need to do anything: the schema belongs to the container, so one deploy fixes it
+for everyone.
+
+The Mac ("Designed for iPad") and visionOS builds share the container, so they become sync devices
+too.
+
+## When a send fails
+
+A failed save is one of three things, and telling them apart is the difference between a queue that
+drains and one that never moves again:
+
+- **The record's own fault** (`invalidArguments`, `limitExceeded`, anything unrecognised):
+  `transportFailed`. Five in a row and the record is **stuck** — `outgoing` skips it, so one bad
+  record can't block the rest.
+- **Not its fault** (`batchRequestFailed` — a zone save is atomic, so every innocent record in a
+  failed batch comes back too; a conflict whose server copy arrived without its payload; the
+  transient codes the engine retries itself): `transportDeferred`. The reason is recorded, the
+  tries are not. **Never count these towards stuck**, or one bad record drags the whole queue down
+  with it and nothing ever sends again.
+- **A conflict with a readable server copy**: merge, then retry.
+- **"Cannot create new type KarteiItem in production schema"** (or a field of it): the Shipping
+  steps below were skipped, so Production has no schema. Recorded as `schemaNotDeployed`, deferred
+  and **not** retried in the send loop (it never clears by itself); the next launch or Repair Sync
+  sends it again once the schema is deployed.
+
+Reasons are stored as `<codeName>: <server message>` with the record id cut out, so the report
+groups them. (`"\(error.code)"` interpolates as `CKErrorCode(rawValue: 12)`, which no explanation
+matches, so `CloudKitSyncTransport.codeName` spells the name out.)
+
+Both delegate calls take an **array**: a failing batch brings back hundreds of records at once, and
+a SwiftData write each costs more than the send did.
+
+**A stuck record must have a way back.** `reconcileAll` only clears the count when a record's
+payload changes, so Repair Sync calls `clearSendFailures()` first — otherwise a record stuck on an
+error that cleared months ago stays stuck forever, and the screen's own remedy does nothing.
+
+**Settings ▸ iCloud Sync ▸ Sync report** (`SyncReportView`, every build, not just DEBUG) reads
+`SyncRecordState.lastError` back out: what's waiting, by kind; what iCloud said, grouped, with the
+code turned into plain English (`SyncDiagnostics.explain`); records owed with no payload to send
+(a stall with no error behind it — a bug if it isn't zero); the engine's recent lines; and Copy for
+the lot. A sync that won't finish is exactly what can't be reproduced on a Debug build, so the
+report has to exist in the shipped one.
+
+## Drift and database switches
+
+- **Heartbeats.** Each device writes a `Device` record: model, app version, last sync, pending and
+  stuck counts, and a digest per kind of the server copies it holds. The screen lists them under
+  "Your devices" and flags a different app version.
+- **Drift check.** Two settled devices with different digests trigger one automatic Repair Sync a
+  day; a lasting difference is shown on the screen.
+- **Zone fingerprint.** A `Meta` record holds a random id for the zone. A different id, or a full
+  fetch that finds none, means a different database: Debug vs TestFlight, a recreated zone, or
+  another account. The device then forgets its server copies and sends everything; per-device
+  counters keep that from doubling anything.
+- **Open screens.** A delete from another device waits while its deck is being studied or its chat
+  is open (`SyncInUse`), and a paused session is cleared when the deck's cards change under it.
+- **New device.** The onboarding wizard waits up to 10 s for the first fetch and is skipped if the
+  learner already onboarded on another device.
+
+## Models are per device
+
+Content syncs; downloads don't. A chat or paper made with the E4B tutor on the Mac arrives on an
+iPhone that may hold only E2B, or no tutor at all. Reading never needs a model: transcripts,
+reports, saved words, stories and pictures are plain synced data. Only new AI work does.
+
+- **`ModelHandoff` (`Models/ModelHandoff.swift`) picks who continues:** the original if it is on
+  disk and fits → the learner's own pick if ready → the best downloaded tutor → Apple Intelligence.
+  A tutor chat never drops to an Apple Intelligence pick while a tutor is on disk. When nothing is
+  ready it names a download that fits (original, else pick, else the best tutor that fits).
+  Chats (`ChatConversation.makeConfig`), papers (`PaperDetailView.followUpModel`) and the report's
+  card builder (`ReviewDeckView`) use it; stories, handouts and job posts already had
+  `StoryStudyService.followUpModel`, which follows the same idea.
+- **Never write the resolved model back.** `modelRaw` syncs, so saving the iPhone's E2B into the
+  chat would switch the Mac's copy to a model the Mac may lack, and the two would bounce it back
+  and forth. `modelRaw` means "made with"; each device resolves at open time. `ConversationView`
+  compares the chat's `modelRaw` with the config's model to show the "Started with … carries on
+  from here" notice, plus a "Get <original>" button when the original would fit here.
+- Switching tutors mid-chat is safe because a chat holds no model state: the history is plain
+  role/content turns cut to a trailing window (`ChatTurnNormalizer`).
+- The load prompt says "Download … (~size)" whenever the model isn't on disk yet. It used to say
+  "loaded into memory" and then start a multi-GB download.
+- Simulator: `-screenshots.debugFill 1 -onboarding.debugTier apple` seeds chats made with E4B
+  (not on the sim) and makes Apple Intelligence count as ready, so opening one shows the notice.
+  `-screenshots.debugRestore 1` removes the seeded data afterwards.
+
+## Not yet
+
+- Learner preferences (theme, reminders, chat settings) don't sync, except the voices (above). The plan is
+  NSUbiquitousKeyValueStore with an allowlist, plus a reload path in `MLXModelManager`, which caches
+  its settings at launch.
+- The same word saved to a story/job/class deck on two devices while both are offline gives two
+  cards (the deck itself is one record).

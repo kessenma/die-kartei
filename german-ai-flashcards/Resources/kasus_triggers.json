@@ -1,0 +1,134 @@
+{
+  "version": 2,
+  "about": "Verb frames and noun pools for KasusStoryPlanner (Phase 3). Every noun here is a Goethe noun; the planner keeps only those at or below the story's level whose gender the KasusLexicon verifies, and drops n-nouns, dual-gender and plural-only nouns. Verbs above the level are skipped the same way. Subject verbs list only the forms a third-person singular subject takes (the first is what the prompt shows), plus the participle and its helper; the planner adds modal + infinitive. Dativ verbs take their forms from KasusForms, and the liegen/legen pairs take theirs from KasusForms.wechselVerbForms, so this file lists their infinitives only. definiteOnly nouns never take ein (kinship: „der Bruder“, not „ein Bruder“; mass nouns: „wegen des Regens“, not „eines Regens“).",
+  "genre": "Alltag",
+  "topics": ["Ein Samstag bei Familie Weber", "Ein Nachmittag im Park", "Der Geburtstag von Oma", "Chaos in der Küche", "Ein Regentag zu Hause", "Der Umzug in die neue Wohnung", "Ein Besuch bei Freunden", "Der Flohmarkt am Sonntag", "Ein Tag im Büro", "Das Picknick", "Die Überraschung", "Etwas ist verschwunden", "Ein Wochenende auf dem Land", "Der erste Arbeitstag", "Das Familienfest", "Ein Abend mit Freunden", "Die Reise mit dem Zug", "Ein schwieriger Morgen"],
+  "definiteOnly": ["Vater", "Mutter", "Bruder", "Schwester", "Oma", "Opa", "Tochter", "Sohn", "Onkel", "Tante", "Regen", "Wetter", "Verkehr", "Lärm", "Schnee", "Nebel", "Wind", "Kälte", "Hitze", "Fieber", "Arbeit"],
+  "nouns": {
+    "people": ["Vater", "Mutter", "Bruder", "Schwester", "Freund", "Freundin", "Kind", "Baby", "Oma", "Opa", "Tochter", "Sohn", "Onkel", "Tante", "Mann", "Frau", "Lehrer", "Lehrerin", "Chef", "Chefin", "Arzt", "Ärztin", "Kellner", "Kellnerin", "Verkäufer", "Verkäuferin", "Nachbarin", "Gast", "Mädchen", "Fahrer", "Schüler", "Schülerin", "Kollegin"],
+    "visits": ["Freund", "Freundin", "Arzt", "Ärztin", "Nachbarin", "Kollegin", "Lehrer", "Lehrerin"],
+    "animals": ["Hund", "Katze", "Vogel", "Pferd", "Fisch"],
+    "pets": ["Hund", "Katze", "Vogel", "Pferd"],
+    "things": ["Ball", "Schlüssel", "Koffer", "Computer", "Rucksack", "Ring", "Teller", "Löffel", "Topf", "Spiegel", "Brief", "Buch", "Heft", "Handy", "Bild", "Geschenk", "Paket", "Ticket", "Tasche", "Jacke", "Blume", "Tasse", "Flasche", "Uhr", "Zeitung", "Karte", "Lampe", "Kamera", "Brille", "Kerze", "Vase", "Gabel", "Tüte", "Pflanze", "Decke"],
+    "food": ["Apfel", "Kuchen", "Käse", "Brot", "Ei", "Suppe", "Pizza", "Banane", "Torte", "Schokolade", "Wurst"],
+    "drinks": ["Kaffee", "Saft", "Wein", "Wasser", "Bier", "Milch"],
+    "reading": ["Brief", "Buch", "Heft", "Zeitung", "Karte"],
+    "clothes": ["Mantel", "Pullover", "Rock", "Jacke", "Hemd", "Kleid", "Mütze"],
+    "furniture": ["Tisch", "Stuhl", "Bett", "Sofa", "Regal", "Schrank", "Bank", "Kiste", "Kühlschrank", "Sessel", "Couch"],
+    "seats": ["Stuhl", "Sofa", "Sessel", "Bank", "Couch", "Bett"],
+    "surfaces": ["Tisch", "Regal", "Schrank", "Kühlschrank"],
+    "tables": ["Tisch"],
+    "floor": ["Boden", "Teppich"],
+    "places": ["Haus", "Zimmer", "Küche", "Supermarkt", "Büro", "Schule", "Kino", "Bäckerei", "Apotheke", "Wohnzimmer", "Restaurant", "Hotel", "Bahnhof", "Museum", "Theater"],
+    "outdoors": ["Park", "Wald", "Stadt", "Garten", "Straße", "Zoo", "Markt"],
+    "around": ["Tisch", "Haus", "See", "Ecke", "Park"],
+    "events": ["Essen", "Frühstück", "Unterricht", "Konzert", "Party", "Urlaub", "Kurs", "Spiel", "Pause", "Fest", "Arbeit", "Film", "Prüfung"],
+    "outings": ["Party", "Konzert", "Fest", "Essen", "Kurs", "Spiel", "Prüfung"]
+  },
+  "subjectVerbs": [
+    { "lemma": "kommen", "nouns": ["people", "pets"], "forms": ["kommt", "kam"], "participle": "gekommen", "aux": "ist" },
+    { "lemma": "lachen", "nouns": ["people"], "forms": ["lacht", "lachte"], "participle": "gelacht", "aux": "hat" },
+    { "lemma": "schlafen", "nouns": ["people", "pets"], "forms": ["schläft", "schlief"], "participle": "geschlafen", "aux": "hat" },
+    { "lemma": "warten", "nouns": ["people", "pets"], "forms": ["wartet", "wartete"], "participle": "gewartet", "aux": "hat" },
+    { "lemma": "spielen", "nouns": ["people", "pets"], "forms": ["spielt", "spielte"], "participle": "gespielt", "aux": "hat" },
+    { "lemma": "arbeiten", "nouns": ["people"], "forms": ["arbeitet", "arbeitete"], "participle": "gearbeitet", "aux": "hat" },
+    { "lemma": "singen", "nouns": ["people"], "forms": ["singt", "sang"], "participle": "gesungen", "aux": "hat" },
+    { "lemma": "rufen", "nouns": ["people"], "forms": ["ruft", "rief"], "participle": "gerufen", "aux": "hat" },
+    { "lemma": "kochen", "nouns": ["people"], "forms": ["kocht", "kochte"], "participle": "gekocht", "aux": "hat" },
+    { "lemma": "weinen", "nouns": ["people"], "forms": ["weint", "weinte"], "participle": "geweint", "aux": "hat" },
+    { "lemma": "tanzen", "nouns": ["people"], "forms": ["tanzt", "tanzte"], "participle": "getanzt", "aux": "hat" }
+  ],
+  "objectVerbs": [
+    { "lemma": "kaufen", "nouns": ["things", "food", "drinks"], "forms": ["kaufe", "kaufst", "kauft", "kaufen", "kaufte", "kauftest", "kauften", "gekauft"] },
+    { "lemma": "suchen", "nouns": ["things", "animals"], "forms": ["suche", "suchst", "sucht", "suchen", "suchte", "suchtest", "suchten", "gesucht"] },
+    { "lemma": "finden", "nouns": ["things", "animals"], "forms": ["finde", "findest", "findet", "finden", "fand", "fandst", "fanden", "gefunden"] },
+    { "lemma": "brauchen", "nouns": ["things"], "forms": ["brauche", "brauchst", "braucht", "brauchen", "brauchte", "brauchtest", "brauchten", "gebraucht"] },
+    { "lemma": "nehmen", "nouns": ["things", "food"], "forms": ["nehme", "nimmst", "nimmt", "nehmen", "nehmt", "nahm", "nahmst", "nahmen", "genommen"] },
+    { "lemma": "sehen", "nouns": ["people", "animals", "things"], "forms": ["sehe", "siehst", "sieht", "sehen", "seht", "sah", "sahst", "sahen", "gesehen"] },
+    { "lemma": "essen", "nouns": ["food"], "forms": ["esse", "isst", "essen", "esst", "aß", "aßen", "gegessen"] },
+    { "lemma": "trinken", "nouns": ["drinks"], "forms": ["trinke", "trinkst", "trinkt", "trinken", "trank", "tranken", "getrunken"] },
+    { "lemma": "besuchen", "nouns": ["people"], "forms": ["besuche", "besuchst", "besucht", "besuchen", "besuchte", "besuchten"] },
+    { "lemma": "fragen", "nouns": ["people"], "forms": ["frage", "fragst", "fragt", "fragen", "fragte", "fragten", "gefragt"] },
+    { "lemma": "lesen", "nouns": ["reading"], "forms": ["lese", "liest", "lesen", "lest", "las", "lasen", "gelesen"] },
+    { "lemma": "tragen", "nouns": ["clothes", "things"], "forms": ["trage", "trägst", "trägt", "tragen", "tragt", "trug", "trugen", "getragen"] },
+    { "lemma": "holen", "nouns": ["things", "drinks"], "forms": ["hole", "holst", "holt", "holen", "holte", "holten", "geholt"] }
+  ],
+  "dativeVerbs": [
+    { "lemma": "helfen", "nouns": ["people", "pets"] },
+    { "lemma": "danken", "nouns": ["people"] },
+    { "lemma": "antworten", "nouns": ["people"] },
+    { "lemma": "gratulieren", "nouns": ["people"] },
+    { "lemma": "gehören", "nouns": ["people"] },
+    { "lemma": "gefallen", "nouns": ["people"] },
+    { "lemma": "schmecken", "nouns": ["people", "pets"] }
+  ],
+  "recipientVerbs": [
+    { "lemma": "geben", "nouns": ["people", "pets"], "forms": ["gebe", "gibst", "gibt", "geben", "gebt", "gab", "gabst", "gaben", "gegeben"] },
+    { "lemma": "schenken", "nouns": ["people"], "forms": ["schenke", "schenkst", "schenkt", "schenken", "schenkte", "schenkten", "geschenkt"] },
+    { "lemma": "zeigen", "nouns": ["people"], "forms": ["zeige", "zeigst", "zeigt", "zeigen", "zeigte", "zeigten", "gezeigt"] },
+    { "lemma": "bringen", "nouns": ["people", "pets"], "forms": ["bringe", "bringst", "bringt", "bringen", "brachte", "brachten", "gebracht"] },
+    { "lemma": "schicken", "nouns": ["people"], "forms": ["schicke", "schickst", "schickt", "schicken", "schickte", "schickten", "geschickt"] },
+    { "lemma": "erklären", "nouns": ["people"], "forms": ["erkläre", "erklärst", "erklärt", "erklären", "erklärte", "erklärten"] },
+    { "lemma": "erzählen", "nouns": ["people"], "forms": ["erzähle", "erzählst", "erzählt", "erzählen", "erzählte", "erzählten"] }
+  ],
+  "prepositions": [
+    { "word": "für", "case": "akkusativ", "nouns": ["people", "animals", "things"] },
+    { "word": "ohne", "case": "akkusativ", "nouns": ["people", "things", "clothes"] },
+    { "word": "durch", "case": "akkusativ", "nouns": ["outdoors"] },
+    { "word": "um", "case": "akkusativ", "nouns": ["around"], "definiteOnly": true },
+    { "word": "mit", "case": "dativ", "nouns": ["people", "animals", "things"] },
+    { "word": "aus", "case": "dativ", "nouns": ["places"] },
+    { "word": "nach", "case": "dativ", "nouns": ["events"], "definiteOnly": true },
+    { "word": "zu", "case": "dativ", "nouns": ["visits", "outings"], "einOnly": true },
+    { "word": "von", "case": "dativ", "nouns": ["people"] },
+    { "word": "bei", "case": "dativ", "nouns": ["people"] }
+  ],
+  "wechsel": {
+    "pairs": [
+      {
+        "position": "liegen",
+        "placement": "legen",
+        "prepositions": { "auf": ["furniture", "floor"], "unter": ["furniture"], "neben": ["furniture"] }
+      },
+      {
+        "position": "stehen",
+        "placement": "stellen",
+        "prepositions": { "auf": ["surfaces", "floor"], "unter": ["tables"], "neben": ["furniture"] }
+      },
+      {
+        "position": "sitzen",
+        "placement": "setzen",
+        "placementVerb": "sich setzen",
+        "prepositions": { "auf": ["seats", "floor"], "unter": ["tables"] }
+      }
+    ]
+  },
+  "genitive": {
+    "prepositions": ["wegen", "trotz"],
+    "nouns": [
+      { "lemma": "Regen", "genitive": "Regens" },
+      { "lemma": "Wetter", "genitive": "Wetters" },
+      { "lemma": "Verkehr", "genitive": "Verkehrs" },
+      { "lemma": "Stau", "genitive": "Staus" },
+      { "lemma": "Lärm", "genitive": "Lärms" },
+      { "lemma": "Unfall", "genitive": "Unfalls" },
+      { "lemma": "Streik", "genitive": "Streiks" },
+      { "lemma": "Schnee", "genitive": "Schnees" },
+      { "lemma": "Sturm", "genitive": "Sturms" },
+      { "lemma": "Termin", "genitive": "Termins" },
+      { "lemma": "Fieber", "genitive": "Fiebers" },
+      { "lemma": "Problem", "genitive": "Problems" },
+      { "lemma": "Gewitter", "genitive": "Gewitters" },
+      { "lemma": "Nebel", "genitive": "Nebels" },
+      { "lemma": "Wind", "genitive": "Windes" },
+      { "lemma": "Arbeit" },
+      { "lemma": "Kälte" },
+      { "lemma": "Hitze" },
+      { "lemma": "Krankheit" },
+      { "lemma": "Erkältung" },
+      { "lemma": "Verspätung" },
+      { "lemma": "Baustelle" },
+      { "lemma": "Prüfung" }
+    ]
+  }
+}

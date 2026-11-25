@@ -1,0 +1,7 @@
+git_url(ENV["MATCH_GIT_URL"] || "git@github.com:kessenma/die-kartei-certs.git")
+storage_mode("git")
+type("appstore")
+app_identifier(["kyle-essenmacher.german-ai-flashcards"])
+username(ENV["APPLE_ID"] || "kessen@umich.edu")
+team_id(ENV["TEAM_ID"] || "RHPLRY9X9P")
+platform("ios")

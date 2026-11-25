@@ -1,0 +1,89 @@
+{
+  "seed": 7,
+  "focuses": {
+    "case": {
+      "written": 113,
+      "pass": 113,
+      "candidates": 113,
+      "akk": 56,
+      "dat": 57,
+      "inline": 28,
+      "persons": {
+        "1sg": 56,
+        "2sg": 57
+      },
+      "verbs": {
+        "sich abtrocknen": 6,
+        "sich ansehen": 4,
+        "sich anziehen": 7,
+        "sich ausziehen": 8,
+        "sich beeilen": 4,
+        "sich duschen": 4,
+        "sich entschuldigen": 4,
+        "sich erholen": 3,
+        "sich erinnern": 4,
+        "sich freuen": 4,
+        "sich fühlen": 4,
+        "sich interessieren": 4,
+        "sich kaufen": 5,
+        "sich kämmen": 4,
+        "sich leisten": 4,
+        "sich merken": 5,
+        "sich putzen": 1,
+        "sich rasieren": 6,
+        "sich setzen": 4,
+        "sich umziehen": 2,
+        "sich verletzen": 6,
+        "sich vorstellen": 6,
+        "sich waschen": 6,
+        "sich ärgern": 4,
+        "sich überlegen": 4
+      }
+    },
+    "person": {
+      "written": 100,
+      "pass": 100,
+      "candidates": 100,
+      "akk": 50,
+      "dat": 50,
+      "inline": 25,
+      "persons": {
+        "2sg": 21,
+        "3pl": 14,
+        "3sg": 19,
+        "1pl": 16,
+        "1sg": 13,
+        "2pl": 17
+      },
+      "verbs": {
+        "sich abtrocknen": 3,
+        "sich ansehen": 3,
+        "sich anziehen": 4,
+        "sich ausziehen": 4,
+        "sich beeilen": 3,
+        "sich duschen": 3,
+        "sich entschuldigen": 4,
+        "sich erholen": 3,
+        "sich erinnern": 3,
+        "sich freuen": 2,
+        "sich fühlen": 4,
+        "sich interessieren": 4,
+        "sich kaufen": 2,
+        "sich kämmen": 2,
+        "sich leisten": 4,
+        "sich merken": 8,
+        "sich putzen": 3,
+        "sich rasieren": 6,
+        "sich setzen": 3,
+        "sich treffen": 2,
+        "sich umziehen": 2,
+        "sich verletzen": 6,
+        "sich vorstellen": 5,
+        "sich waschen": 11,
+        "sich ärgern": 2,
+        "sich überlegen": 4
+      }
+    }
+  },
+  "rejects": {}
+}

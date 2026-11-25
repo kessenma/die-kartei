@@ -1,4 +1,3 @@
-import DieKarteiCore
 import SwiftUI
 import SwiftData
 
@@ -11,6 +10,16 @@ extension CardDeckView {
         return deck.quizResults.count
     }
 
+    /// The Leitner due check for this session's cards. Boxes are scheduled per deck, so a deck
+    /// mix counts each card against its own deck's session number.
+    var leitnerIsDue: (SavedCard) -> Bool {
+        if isDeckMix {
+            return { LeitnerService.isDue(box: $0.leitnerBox, sessionNumber: $0.deck?.quizResults.count ?? 0) }
+        }
+        let session = leitnerSessionNumber
+        return { LeitnerService.isDue(box: $0.leitnerBox, sessionNumber: session) }
+    }
+
     var srsDueCount: Int {
         if isAnkiMode {
             return savedCards.filter { card in
@@ -18,16 +27,14 @@ extension CardDeckView {
                 return next <= .now
             }.count
         } else if isLeitnerMode {
-            let session = leitnerSessionNumber
-            return savedCards.filter { LeitnerService.isDue(box: $0.leitnerBox, sessionNumber: session) }.count
+            return savedCards.filter(leitnerIsDue).count
         }
         return cards.count
     }
 
     @ViewBuilder
     var leitnerSetupInfo: some View {
-        let session = leitnerSessionNumber
-        let dueCards = LeitnerService.dueCards(in: savedCards, sessionNumber: session)
+        let dueCards = savedCards.filter(leitnerIsDue)
         let distribution = LeitnerService.boxDistribution(savedCards)
 
         VStack(spacing: 8) {
@@ -69,6 +76,7 @@ extension CardDeckView {
 
         HStack(spacing: 20) {
             Button {
+                if leitnerResults[currentIndex] != false { askToWrite(currentIndex) }
                 leitnerResults[currentIndex] = false
                 if localAutoAdvance { leitnerAdvance() }
             } label: {
@@ -143,25 +151,27 @@ extension CardDeckView {
     }
 
     func leitnerBoxSwiftUIColor(_ box: Int) -> Color {
-        switch box {
-        case 0: .gray
-        case 1: .red
-        case 2: .orange
-        case 3: .yellow
-        case 4: .green
-        case 5: .blue
-        default: .gray
-        }
+        LeitnerService.boxSwiftUIColor(box)
     }
 
     func leitnerAdvance() {
         if let correct = leitnerResults[currentIndex], currentIndex < savedCards.count {
+            let card = savedCards[currentIndex]
+            let firstRating = card.totalReviews == 0
             if correct {
-                LeitnerService.markCorrect(savedCards[currentIndex])
+                LeitnerService.markCorrect(card)
             } else {
-                LeitnerService.markWrong(savedCards[currentIndex])
+                LeitnerService.markWrong(card)
             }
             try? modelContext.save()
+            if firstRating, isWortschatzSession {
+                StudyLogService.recordNewWords(1, in: modelContext)
+            }
+            // A wrong answer comes back a few cards later; clear the stale result so the button
+            // isn't pre-selected on its return (see `ankiAdvance`).
+            if !correct, requeue(currentIndex) {
+                leitnerResults[currentIndex] = nil
+            }
         }
 
         if ankiDuePosition < ankiDueIndices.count - 1 {
@@ -174,10 +184,15 @@ extension CardDeckView {
     }
 
     func finishLeitnerSession() {
-        let correct = leitnerResults.values.filter { $0 }.count
-        let total = ankiDueIndices.count
-        let missed = leitnerResults.filter { !$0.value }.map { $0.key }.sorted()
-        onQuizComplete?(correct, total, missed, elapsedSeconds, .leitner, nil)
+        let total = sessionDueCount
+        let missed = sessionLapses.sorted()
+        let correct = max(0, total - missed.count)
+        if isReviewingMissed {
+            recordMissedReview(cards: total)
+        } else {
+            onQuizComplete?(correct, total, missed, elapsedSeconds, .leitner, nil)
+            creditDeckMix(mode: .leitner)
+        }
         clearPauseProgress()
         showQuizSummary = true
     }

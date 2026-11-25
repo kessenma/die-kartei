@@ -1,0 +1,3450 @@
+{
+ "meta": {
+  "description": "v3 FROZEN HOLDOUT for the RL round (REINFORCEMENT_LEARNING.md Part A §5). 300 correction items, exactly 150 expect_ok / 150 error, no cloze, all 14 phenomena. Built to measure VERDICT CALIBRATION: the OK half is dominated by hard negatives — correct sentences shaped like the classic learner error — so a model cannot buy a low miss rate by correcting everything. Error items carry `gold_fix` (a minimal-edit correction) for use as an RL-reward test fixture. RULES: score each candidate ONCE, never iterate against it, never generate training data or RL prompts from it. validate_data.py globs data/eval/*.json, so this file auto-protects itself.",
+  "phenomena": {
+   "vmp": "Verben mit Präpositionen",
+   "sep": "trennbare Verben",
+   "refl": "reflexive Verben",
+   "dawo": "Da-/Wo-Komposita",
+   "wo": "Wortstellung",
+   "aux": "Perfekt auxiliary haben vs sein",
+   "ndekl": "N-Deklination (weak nouns)",
+   "relpron": "Relativpronomen",
+   "adjend": "Adjektivendungen",
+   "wechsel": "Wechselpräpositionen",
+   "k2": "Konjunktiv II",
+   "artikel": "noun gender (der/die/das)",
+   "imperativ": "du-imperative of strong verbs",
+   "negation": "nicht vs kein"
+  },
+  "scoring": "Identical to v0/v1/v2 — run with scripts/run_baseline_eval.py --app-guard. expect_ok items must get 'OK'; error items must produce a FIX: line matching require_all/require_any and no forbid_any. Report FC over the 150 ok items and miss over the 150 error items (scripts/behavior_metrics.py --eval-file data/eval/grammar_eval_v3.json).",
+  "counts": "300 items: 150 error + 150 ok (93 hard negatives)",
+  "per_phenomenon": {
+   "adjend": {
+    "error": 10,
+    "ok": 10,
+    "hard_negative": 7
+   },
+   "artikel": {
+    "error": 10,
+    "ok": 10,
+    "hard_negative": 5
+   },
+   "aux": {
+    "error": 10,
+    "ok": 10,
+    "hard_negative": 8
+   },
+   "dawo": {
+    "error": 12,
+    "ok": 12,
+    "hard_negative": 8
+   },
+   "imperativ": {
+    "error": 10,
+    "ok": 10,
+    "hard_negative": 7
+   },
+   "k2": {
+    "error": 11,
+    "ok": 11,
+    "hard_negative": 6
+   },
+   "ndekl": {
+    "error": 10,
+    "ok": 10,
+    "hard_negative": 5
+   },
+   "negation": {
+    "error": 10,
+    "ok": 10,
+    "hard_negative": 5
+   },
+   "refl": {
+    "error": 12,
+    "ok": 12,
+    "hard_negative": 8
+   },
+   "relpron": {
+    "error": 11,
+    "ok": 11,
+    "hard_negative": 7
+   },
+   "sep": {
+    "error": 12,
+    "ok": 12,
+    "hard_negative": 6
+   },
+   "vmp": {
+    "error": 12,
+    "ok": 12,
+    "hard_negative": 10
+   },
+   "wechsel": {
+    "error": 10,
+    "ok": 10,
+    "hard_negative": 5
+   },
+   "wo": {
+    "error": 10,
+    "ok": 10,
+    "hard_negative": 6
+   }
+  },
+  "verified": "0 exact and 0 near-duplicate (Jaccard>=0.6) overlaps against v0/v1/v2 and 37,579 corpus student/fix sentences; every error item's gold_fix passes its own criteria and no echo of the input can pass (scripts/build_eval_v3.py).",
+  "created": "2026-09-05"
+ },
+ "items": [
+  {
+   "id": "v3-vmp-e1",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Ich kümmere mich über meine Oma.",
+   "expect_ok": false,
+   "gold_fix": "Ich kümmere mich um meine Oma.",
+   "require_any": [
+    "um meine oma"
+   ],
+   "forbid_any": [
+    "über meine oma"
+   ]
+  },
+  {
+   "id": "v3-vmp-e2",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Auf dem Ausflug kannst du dich an unseren Bergführer verlassen.",
+   "expect_ok": false,
+   "gold_fix": "Auf dem Ausflug kannst du dich auf unseren Bergführer verlassen.",
+   "require_any": [
+    "auf unseren bergführer"
+   ],
+   "forbid_any": [
+    "an unseren bergführer"
+   ]
+  },
+  {
+   "id": "v3-vmp-e3",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Ich nehme bei dem Kurs teil.",
+   "expect_ok": false,
+   "gold_fix": "Ich nehme an dem Kurs teil.",
+   "require_any": [
+    "an dem kurs",
+    "am kurs"
+   ],
+   "forbid_any": [
+    "bei dem kurs",
+    "beim kurs"
+   ]
+  },
+  {
+   "id": "v3-vmp-e4",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Ich erinnere mich von meiner Kindheit.",
+   "expect_ok": false,
+   "gold_fix": "Ich erinnere mich an meine Kindheit.",
+   "require_any": [
+    "an meine kindheit"
+   ],
+   "forbid_any": [
+    "von meiner kindheit"
+   ]
+  },
+  {
+   "id": "v3-vmp-e5",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Er beschwert sich auf den Lärm.",
+   "expect_ok": false,
+   "gold_fix": "Er beschwert sich über den Lärm.",
+   "require_any": [
+    "über den lärm"
+   ],
+   "forbid_any": [
+    "auf den lärm"
+   ]
+  },
+  {
+   "id": "v3-vmp-e6",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Nach drei Monaten habe ich mich endlich auf den Lärm der Baustelle gewöhnt.",
+   "expect_ok": false,
+   "gold_fix": "Nach drei Monaten habe ich mich endlich an den Lärm der Baustelle gewöhnt.",
+   "require_any": [
+    "an den lärm"
+   ],
+   "forbid_any": [
+    "auf den lärm"
+   ]
+  },
+  {
+   "id": "v3-vmp-e7",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Bitte konzentriere dich an deine Arbeit.",
+   "expect_ok": false,
+   "gold_fix": "Bitte konzentriere dich auf deine Arbeit.",
+   "require_any": [
+    "auf deine arbeit"
+   ],
+   "forbid_any": [
+    "an deine arbeit"
+   ]
+  },
+  {
+   "id": "v3-vmp-e8",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Ob wir grillen, hängt an der Wettervorhersage ab.",
+   "expect_ok": false,
+   "gold_fix": "Ob wir grillen, hängt von der Wettervorhersage ab.",
+   "require_any": [
+    "von der wettervorhersage"
+   ],
+   "forbid_any": [
+    "an der wettervorhersage"
+   ]
+  },
+  {
+   "id": "v3-vmp-e9",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Er leidet von Kopfschmerzen.",
+   "expect_ok": false,
+   "gold_fix": "Er leidet an Kopfschmerzen.",
+   "require_any": [
+    "an kopfschmerzen",
+    "unter kopfschmerzen"
+   ],
+   "forbid_any": [
+    "von kopfschmerzen"
+   ]
+  },
+  {
+   "id": "v3-vmp-e10",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Der Tisch besteht von Holz.",
+   "expect_ok": false,
+   "gold_fix": "Der Tisch besteht aus Holz.",
+   "require_any": [
+    "aus holz"
+   ],
+   "forbid_any": [
+    "von holz"
+   ]
+  },
+  {
+   "id": "v3-vmp-e11",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Trotz aller Zweifel glaube ich in deinen Plan.",
+   "expect_ok": false,
+   "gold_fix": "Trotz aller Zweifel glaube ich an deinen Plan.",
+   "require_any": [
+    "an deinen plan"
+   ],
+   "forbid_any": [
+    "in deinen plan"
+   ]
+  },
+  {
+   "id": "v3-vmp-e12",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Wir hoffen für besseres Wetter.",
+   "expect_ok": false,
+   "gold_fix": "Wir hoffen auf besseres Wetter.",
+   "require_any": [
+    "auf besseres wetter"
+   ],
+   "forbid_any": [
+    "für besseres wetter"
+   ]
+  },
+  {
+   "id": "v3-vmp-o1",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Sie besteht auf ihrem Recht.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "bestehen auf + Dativ looks like a case error"
+  },
+  {
+   "id": "v3-vmp-o2",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Beim Kochen denke ich oft an meine Großmutter aus Bremen.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "denken an, easily 'fixed' to über"
+  },
+  {
+   "id": "v3-vmp-o3",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Er ärgert sich über seinen Chef.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-vmp-o4",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Wir freuen uns schon auf das Dorffest im August.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "auf vs über — both exist, auf is right here"
+  },
+  {
+   "id": "v3-vmp-o5",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Sie leidet unter dem Stress.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "leiden unter is as valid as leiden an"
+  },
+  {
+   "id": "v3-vmp-o6",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Ich habe mich bei der Nachbarin für die geliehene Leiter bedankt.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "two prepositions in one clause"
+  },
+  {
+   "id": "v3-vmp-o7",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Das erinnert mich an meine Schulzeit.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "non-reflexive erinnern + an"
+  },
+  {
+   "id": "v3-vmp-o8",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Mein Cousin hat sich in seine Tanzpartnerin aus Leipzig verliebt.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "sich verlieben in + Akk"
+  },
+  {
+   "id": "v3-vmp-o9",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Im Seminar diskutieren wir über die Reform des Mietrechts.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "diskutieren über and diskutieren + Akk both valid"
+  },
+  {
+   "id": "v3-vmp-o10",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Ehrlich gesagt halte ich nichts von diesem Umzugsplan.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "halten von"
+  },
+  {
+   "id": "v3-vmp-o11",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Seit dem Unfall kümmert sich ihre Tante um den Haushalt.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-vmp-o12",
+   "phenomenon": "vmp",
+   "mode": "correction",
+   "input": "Ob der Ausflug klappt, kommt auf den Busfahrplan an.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "ankommen auf"
+  },
+  {
+   "id": "v3-sep-e1",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Ich anrufe dich heute Abend.",
+   "expect_ok": false,
+   "gold_fix": "Ich rufe dich heute Abend an.",
+   "require_all": [
+    "rufe",
+    "an"
+   ],
+   "forbid_any": [
+    "anrufe"
+   ]
+  },
+  {
+   "id": "v3-sep-e2",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Wir einkaufen freitags auf dem Wochenmarkt frisches Gemüse.",
+   "expect_ok": false,
+   "gold_fix": "Wir kaufen freitags auf dem Wochenmarkt frisches Gemüse ein.",
+   "require_all": [
+    "kaufen",
+    "ein"
+   ],
+   "forbid_any": [
+    "wir einkaufen"
+   ]
+  },
+  {
+   "id": "v3-sep-e3",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Der Handwerker hat den Wasserhahn geabdreht.",
+   "expect_ok": false,
+   "gold_fix": "Der Handwerker hat den Wasserhahn abgedreht.",
+   "require_any": [
+    "abgedreht"
+   ],
+   "forbid_any": [
+    "geabdreht"
+   ]
+  },
+  {
+   "id": "v3-sep-e4",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Nach dem Abendessen haben wir zwei Stunden gefernsehen.",
+   "expect_ok": false,
+   "gold_fix": "Nach dem Abendessen haben wir zwei Stunden ferngesehen.",
+   "require_any": [
+    "ferngesehen"
+   ],
+   "forbid_any": [
+    "gefernsehen",
+    "fern gesehen"
+   ]
+  },
+  {
+   "id": "v3-sep-e5",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Sie ausgeht jeden Freitag mit Freunden.",
+   "expect_ok": false,
+   "gold_fix": "Sie geht jeden Freitag mit Freunden aus.",
+   "require_all": [
+    "geht",
+    "aus"
+   ],
+   "forbid_any": [
+    "ausgeht"
+   ]
+  },
+  {
+   "id": "v3-sep-e6",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Die Fähre nach Rügen ablegt um Viertel nach neun.",
+   "expect_ok": false,
+   "gold_fix": "Die Fähre nach Rügen legt um Viertel nach neun ab.",
+   "require_all": [
+    "legt",
+    "ab"
+   ],
+   "forbid_any": [
+    "ablegt"
+   ]
+  },
+  {
+   "id": "v3-sep-e7",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Ich habe keine Lust, zu aufräumen.",
+   "expect_ok": false,
+   "gold_fix": "Ich habe keine Lust aufzuräumen.",
+   "require_any": [
+    "aufzuräumen"
+   ],
+   "forbid_any": [
+    "zu aufräumen"
+   ]
+  },
+  {
+   "id": "v3-sep-e8",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Es ist wichtig, früh zu aufstehen.",
+   "expect_ok": false,
+   "gold_fix": "Es ist wichtig, früh aufzustehen.",
+   "require_any": [
+    "aufzustehen"
+   ],
+   "forbid_any": [
+    "zu aufstehen"
+   ]
+  },
+  {
+   "id": "v3-sep-e9",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Ich weiß, dass er morgen kommt an.",
+   "expect_ok": false,
+   "gold_fix": "Ich weiß, dass er morgen ankommt.",
+   "require_any": [
+    "ankommt"
+   ],
+   "forbid_any": [
+    "kommt an"
+   ]
+  },
+  {
+   "id": "v3-sep-e10",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Wenn ich stehe auf, trinke ich Kaffee.",
+   "expect_ok": false,
+   "gold_fix": "Wenn ich aufstehe, trinke ich Kaffee.",
+   "require_any": [
+    "aufstehe"
+   ],
+   "forbid_any": [
+    "stehe auf"
+   ]
+  },
+  {
+   "id": "v3-sep-e11",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Sie setzt den Text über.",
+   "expect_ok": false,
+   "gold_fix": "Sie übersetzt den Text.",
+   "require_any": [
+    "übersetzt"
+   ],
+   "forbid_any": [
+    "setzt den text über"
+   ]
+  },
+  {
+   "id": "v3-sep-e12",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Kannst du im Flur bitte die Heizung drehen auf?",
+   "expect_ok": false,
+   "gold_fix": "Kannst du im Flur bitte die Heizung aufdrehen?",
+   "require_any": [
+    "aufdrehen"
+   ],
+   "forbid_any": [
+    "drehen auf"
+   ]
+  },
+  {
+   "id": "v3-sep-o1",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Er wiederholt den Satz noch einmal.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "wiederholen is inseparable (looks like wieder|holen)"
+  },
+  {
+   "id": "v3-sep-o2",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Sie hat den Brief unterschrieben.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "unter- inseparable here: no ge-"
+  },
+  {
+   "id": "v3-sep-o3",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Ich weiß, dass die Chefin erst am Donnerstag zurückkommt.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "separable verb correctly unseparated in a subordinate clause"
+  },
+  {
+   "id": "v3-sep-o4",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Wir haben das Konzert sehr genossen.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-sep-o5",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Darf ich das Radio ausmachen?",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-sep-o6",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Die Versicherung hat mich wegen des Schadens zurückgerufen.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-sep-o7",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Mein Mitbewohner steht werktags schon um halb sechs auf.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-sep-o8",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Ich versuche, das Problem zu verstehen.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "inseparable: zu stands in front"
+  },
+  {
+   "id": "v3-sep-o9",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Der Bus fährt gleich ab.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-sep-o10",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Es ist schwer, damit aufzuhören.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "zu inside the separable verb"
+  },
+  {
+   "id": "v3-sep-o11",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Er umarmt seine Mutter.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "um- inseparable in umarmen"
+  },
+  {
+   "id": "v3-sep-o12",
+   "phenomenon": "sep",
+   "mode": "correction",
+   "input": "Wann kommst du heute Abend zurück?",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-refl-e1",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Ich putze mich die Zähne.",
+   "expect_ok": false,
+   "gold_fix": "Ich putze mir die Zähne.",
+   "require_any": [
+    "putze mir"
+   ],
+   "forbid_any": [
+    "putze mich"
+   ]
+  },
+  {
+   "id": "v3-refl-e2",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Kannst du dich vorstellen, ohne Handy zu verreisen?",
+   "expect_ok": false,
+   "gold_fix": "Kannst du dir vorstellen, ohne Handy zu verreisen?",
+   "require_any": [
+    "kannst du dir"
+   ],
+   "forbid_any": [
+    "kannst du dich"
+   ]
+  },
+  {
+   "id": "v3-refl-e3",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Beim Klettern habe ich mich gestern den Knöchel verstaucht.",
+   "expect_ok": false,
+   "gold_fix": "Beim Klettern habe ich mir gestern den Knöchel verstaucht.",
+   "require_any": [
+    "mir gestern den knöchel"
+   ],
+   "forbid_any": [
+    "mich gestern den knöchel"
+   ]
+  },
+  {
+   "id": "v3-refl-e4",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Ich ziehe mich die Schuhe an.",
+   "expect_ok": false,
+   "gold_fix": "Ich ziehe mir die Schuhe an.",
+   "require_any": [
+    "mir die schuhe"
+   ],
+   "forbid_any": [
+    "mich die schuhe"
+   ]
+  },
+  {
+   "id": "v3-refl-e5",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Ich freue schon auf den Besuch meiner Tante aus Kanada.",
+   "expect_ok": false,
+   "gold_fix": "Ich freue mich schon auf den Besuch meiner Tante aus Kanada.",
+   "require_any": [
+    "freue mich"
+   ],
+   "forbid_any": [
+    "ich freue schon"
+   ]
+  },
+  {
+   "id": "v3-refl-e6",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Seit der langen Zugfahrt fühle ich ziemlich erschöpft.",
+   "expect_ok": false,
+   "gold_fix": "Seit der langen Zugfahrt fühle ich mich ziemlich erschöpft.",
+   "require_any": [
+    "fühle ich mich"
+   ],
+   "forbid_any": [
+    "fühle ich ziemlich"
+   ]
+  },
+  {
+   "id": "v3-refl-e7",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Beeil sich, wir sind spät dran!",
+   "expect_ok": false,
+   "gold_fix": "Beeil dich, wir sind spät dran!",
+   "require_any": [
+    "beeil dich"
+   ],
+   "forbid_any": [
+    "beeil sich"
+   ]
+  },
+  {
+   "id": "v3-refl-e8",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Ich erinnere sich noch gut an unseren Ausflug zum Leuchtturm.",
+   "expect_ok": false,
+   "gold_fix": "Ich erinnere mich noch gut an unseren Ausflug zum Leuchtturm.",
+   "require_any": [
+    "erinnere mich"
+   ],
+   "forbid_any": [
+    "erinnere sich"
+   ]
+  },
+  {
+   "id": "v3-refl-e9",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Wir haben sich sehr gefreut.",
+   "expect_ok": false,
+   "gold_fix": "Wir haben uns sehr gefreut.",
+   "require_any": [
+    "haben uns"
+   ],
+   "forbid_any": [
+    "haben sich"
+   ]
+  },
+  {
+   "id": "v3-refl-e10",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Habt ihr sich schon vorgestellt?",
+   "expect_ok": false,
+   "gold_fix": "Habt ihr euch schon vorgestellt?",
+   "require_any": [
+    "euch"
+   ],
+   "forbid_any": [
+    "ihr sich"
+   ]
+  },
+  {
+   "id": "v3-refl-e11",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Ich habe erkältet.",
+   "expect_ok": false,
+   "gold_fix": "Ich habe mich erkältet.",
+   "require_any": [
+    "mich erkältet"
+   ],
+   "forbid_any": [
+    "ich habe erkältet"
+   ]
+  },
+  {
+   "id": "v3-refl-e12",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Setzen Sie bitte!",
+   "expect_ok": false,
+   "gold_fix": "Setzen Sie sich bitte!",
+   "require_any": [
+    "setzen sie sich"
+   ],
+   "forbid_any": [
+    "setzen sie bitte"
+   ]
+  },
+  {
+   "id": "v3-refl-o1",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Ich wasche mir das Gesicht.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "dative reflexive with a body part"
+  },
+  {
+   "id": "v3-refl-o2",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Sie kämmt sich die Haare.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "sich is the dative form here"
+  },
+  {
+   "id": "v3-refl-o3",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Wir haben uns lange nicht gesehen.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "reciprocal uns"
+  },
+  {
+   "id": "v3-refl-o4",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Ich kann mir gut vorstellen, in einer Kleinstadt zu leben.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "dative mir with vorstellen"
+  },
+  {
+   "id": "v3-refl-o5",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Er hat sich den Fuß verstaucht.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "dative sich + body part"
+  },
+  {
+   "id": "v3-refl-o6",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Ich merke mir deine Nummer.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "sich (Dat) etwas merken"
+  },
+  {
+   "id": "v3-refl-o7",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Die Kinder freuen sich über die Geschenke.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-refl-o8",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Ich habe mich riesig über die Einladung zur Hochzeit gefreut.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-refl-o9",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Sie erinnert ihn an den Termin.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "non-reflexive erinnern with an object"
+  },
+  {
+   "id": "v3-refl-o10",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Vor dem Spaziergang ziehe ich mir noch einen dickeren Pullover an.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "dative mir with anziehen + object"
+  },
+  {
+   "id": "v3-refl-o11",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Setz dich doch!",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-refl-o12",
+   "phenomenon": "refl",
+   "mode": "correction",
+   "input": "Nach dem Urlaub an der Nordsee fühle ich mich wieder richtig fit.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-dawo-e1",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Über was reden die Nachbarn eigentlich jeden Morgen am Zaun?",
+   "expect_ok": false,
+   "gold_fix": "Worüber reden die Nachbarn eigentlich jeden Morgen am Zaun?",
+   "require_any": [
+    "worüber"
+   ],
+   "forbid_any": [
+    "über was"
+   ]
+  },
+  {
+   "id": "v3-dawo-e2",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Auf was wartet der Fahrer an der Ecke?",
+   "expect_ok": false,
+   "gold_fix": "Worauf wartet der Fahrer an der Ecke?",
+   "require_any": [
+    "worauf"
+   ],
+   "forbid_any": [
+    "auf was"
+   ]
+  },
+  {
+   "id": "v3-dawo-e3",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Mit was schneidest du das Brot?",
+   "expect_ok": false,
+   "gold_fix": "Womit schneidest du das Brot?",
+   "require_any": [
+    "womit"
+   ],
+   "forbid_any": [
+    "mit was"
+   ]
+  },
+  {
+   "id": "v3-dawo-e4",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Für was gibst du dein Taschengeld normalerweise aus?",
+   "expect_ok": false,
+   "gold_fix": "Wofür gibst du dein Taschengeld normalerweise aus?",
+   "require_any": [
+    "wofür"
+   ],
+   "forbid_any": [
+    "für was"
+   ]
+  },
+  {
+   "id": "v3-dawo-e5",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Das Konzert war toll. Ich denke oft an es.",
+   "expect_ok": false,
+   "gold_fix": "Das Konzert war toll. Ich denke oft daran.",
+   "require_any": [
+    "daran"
+   ],
+   "forbid_any": [
+    "an es"
+   ]
+  },
+  {
+   "id": "v3-dawo-e6",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Das Angebot ist gut. Ich bin sehr zufrieden mit ihm.",
+   "expect_ok": false,
+   "gold_fix": "Das Angebot ist gut. Ich bin sehr zufrieden damit.",
+   "require_any": [
+    "damit"
+   ],
+   "forbid_any": [
+    "mit ihm"
+   ]
+  },
+  {
+   "id": "v3-dawo-e7",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Das Wetter ist schlecht. Wir müssen uns auf es einstellen.",
+   "expect_ok": false,
+   "gold_fix": "Das Wetter ist schlecht. Wir müssen uns darauf einstellen.",
+   "require_any": [
+    "darauf"
+   ],
+   "forbid_any": [
+    "auf es"
+   ]
+  },
+  {
+   "id": "v3-dawo-e8",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Kennst du meinen Bruder? Ich warte gerade darauf.",
+   "expect_ok": false,
+   "gold_fix": "Kennst du meinen Bruder? Ich warte gerade auf ihn.",
+   "require_any": [
+    "auf ihn"
+   ],
+   "forbid_any": [
+    "darauf"
+   ]
+  },
+  {
+   "id": "v3-dawo-e9",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Wo ist deine Lehrerin? Ich möchte damit sprechen.",
+   "expect_ok": false,
+   "gold_fix": "Wo ist deine Lehrerin? Ich möchte mit ihr sprechen.",
+   "require_any": [
+    "mit ihr"
+   ],
+   "forbid_any": [
+    "damit"
+   ]
+  },
+  {
+   "id": "v3-dawo-e10",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Wovon hast du das Geschenk bekommen?",
+   "expect_ok": false,
+   "gold_fix": "Von wem hast du das Geschenk bekommen?",
+   "require_any": [
+    "von wem"
+   ],
+   "forbid_any": [
+    "wovon"
+   ]
+  },
+  {
+   "id": "v3-dawo-e11",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Wo warten Sie auf?",
+   "expect_ok": false,
+   "gold_fix": "Worauf warten Sie?",
+   "require_any": [
+    "worauf"
+   ],
+   "forbid_any": [
+    "wo warten"
+   ]
+  },
+  {
+   "id": "v3-dawo-e12",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Das Buch ist spannend. Ich habe lange daüber nachgedacht.",
+   "expect_ok": false,
+   "gold_fix": "Das Buch ist spannend. Ich habe lange darüber nachgedacht.",
+   "require_any": [
+    "darüber"
+   ],
+   "forbid_any": [
+    "daüber"
+   ]
+  },
+  {
+   "id": "v3-dawo-o1",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Mit wem fährst du in den Urlaub?",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "person: mit wem, not womit"
+  },
+  {
+   "id": "v3-dawo-o2",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Meine Schwester kommt später; ich warte am Eingang auf sie.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "person: auf sie, not darauf"
+  },
+  {
+   "id": "v3-dawo-o3",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Woran erkennt man eigentlich frischen Fisch?",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-dawo-o4",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Das ist alles, wovon ich geträumt habe.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "wo-compound as relative after alles"
+  },
+  {
+   "id": "v3-dawo-o5",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Ich habe keine Ahnung, worum es in dem Vortrag ging.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "worum in an indirect question"
+  },
+  {
+   "id": "v3-dawo-o6",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Sie erzählt gern von ihm.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "person: von ihm"
+  },
+  {
+   "id": "v3-dawo-o7",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Wir haben uns darauf geeinigt, früher zu gehen.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "darauf as correlate of a zu-clause"
+  },
+  {
+   "id": "v3-dawo-o8",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Ich bin damit einverstanden.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-dawo-o9",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "An wen hast du den Brief geschickt?",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "person: an wen, not woran"
+  },
+  {
+   "id": "v3-dawo-o10",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Danke, dass du daran gedacht hast!",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-dawo-o11",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Er kümmert sich um sie, seit sie krank ist.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "person: um sie, not darum"
+  },
+  {
+   "id": "v3-dawo-o12",
+   "phenomenon": "dawo",
+   "mode": "correction",
+   "input": "Wofür brauchst du eigentlich diese vielen Schrauben?",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-wo-e1",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Ich glaube, dass er hat Recht.",
+   "expect_ok": false,
+   "gold_fix": "Ich glaube, dass er Recht hat.",
+   "require_any": [
+    "recht hat"
+   ],
+   "forbid_any": [
+    "hat recht"
+   ]
+  },
+  {
+   "id": "v3-wo-e2",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Gestern ich habe meinen Onkel besucht.",
+   "expect_ok": false,
+   "gold_fix": "Gestern habe ich meinen Onkel besucht.",
+   "require_any": [
+    "gestern habe ich"
+   ],
+   "forbid_any": [
+    "gestern ich habe"
+   ]
+  },
+  {
+   "id": "v3-wo-e3",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Ich weiß nicht, wann öffnet die Apotheke am Samstag.",
+   "expect_ok": false,
+   "gold_fix": "Ich weiß nicht, wann die Apotheke am Samstag öffnet.",
+   "require_any": [
+    "apotheke am samstag öffnet"
+   ],
+   "forbid_any": [
+    "öffnet die apotheke"
+   ]
+  },
+  {
+   "id": "v3-wo-e4",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Obwohl der Wind bläst heftig, segeln wir heute raus.",
+   "expect_ok": false,
+   "gold_fix": "Obwohl der Wind heftig bläst, segeln wir heute raus.",
+   "require_any": [
+    "heftig bläst"
+   ],
+   "forbid_any": [
+    "bläst heftig"
+   ]
+  },
+  {
+   "id": "v3-wo-e5",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Wenn ich habe Urlaub, besuche ich meine Cousine in Bern.",
+   "expect_ok": false,
+   "gold_fix": "Wenn ich Urlaub habe, besuche ich meine Cousine in Bern.",
+   "require_any": [
+    "urlaub habe"
+   ],
+   "forbid_any": [
+    "habe urlaub"
+   ]
+  },
+  {
+   "id": "v3-wo-e6",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Ich muss heute gehen zum Arzt.",
+   "expect_ok": false,
+   "gold_fix": "Ich muss heute zum Arzt gehen.",
+   "require_any": [
+    "zum arzt gehen"
+   ],
+   "forbid_any": [
+    "gehen zum arzt"
+   ]
+  },
+  {
+   "id": "v3-wo-e7",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Wir haben gefrühstückt auf der Terrasse.",
+   "expect_ok": false,
+   "gold_fix": "Wir haben auf der Terrasse gefrühstückt.",
+   "require_any": [
+    "auf der terrasse gefrühstückt"
+   ],
+   "forbid_any": [
+    "gefrühstückt auf der terrasse"
+   ]
+  },
+  {
+   "id": "v3-wo-e8",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Am Wochenende wir fahren nach Hamburg.",
+   "expect_ok": false,
+   "gold_fix": "Am Wochenende fahren wir nach Hamburg.",
+   "require_any": [
+    "am wochenende fahren wir"
+   ],
+   "forbid_any": [
+    "wochenende wir fahren"
+   ]
+  },
+  {
+   "id": "v3-wo-e9",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Ich frage mich, ob sie kommt heute.",
+   "expect_ok": false,
+   "gold_fix": "Ich frage mich, ob sie heute kommt.",
+   "require_any": [
+    "heute kommt"
+   ],
+   "forbid_any": [
+    "kommt heute"
+   ]
+  },
+  {
+   "id": "v3-wo-e10",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Warum du bist so müde?",
+   "expect_ok": false,
+   "gold_fix": "Warum bist du so müde?",
+   "require_any": [
+    "warum bist du"
+   ],
+   "forbid_any": [
+    "warum du bist"
+   ]
+  },
+  {
+   "id": "v3-wo-o1",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Er sagt, er hat keine Zeit.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "V2 after sagt without dass is correct"
+  },
+  {
+   "id": "v3-wo-o2",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Weil es spät ist, gehe ich jetzt nach Hause.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-wo-o3",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Ich hoffe, dass der Elektriker vor dem Wochenende noch vorbeikommt.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-wo-o4",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Übermorgen fliege ich mit meiner Kollegin nach Kopenhagen.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "fronted time adverb + inversion"
+  },
+  {
+   "id": "v3-wo-o5",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Können Sie mir sagen, wann der letzte Bus nach Trier fährt?",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-wo-o6",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Sie kommt nicht, denn sie ist krank.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "denn keeps V2 — looks like a weil error"
+  },
+  {
+   "id": "v3-wo-o7",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Ich habe ihn gefragt, aber er hat nicht geantwortet.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "aber keeps V2"
+  },
+  {
+   "id": "v3-wo-o8",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Dass er lügt, weiß jeder.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "fronted dass-clause, then the verb"
+  },
+  {
+   "id": "v3-wo-o9",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Ich habe leider keine Zeit, weil ich die Bewerbung noch fertig schreiben muss.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "modal last after weil"
+  },
+  {
+   "id": "v3-wo-o10",
+   "phenomenon": "wo",
+   "mode": "correction",
+   "input": "Wenn du willst, kannst du mitkommen.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-aux-e1",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Wir haben am Freitag mit dem Nachtzug nach Prag gefahren.",
+   "expect_ok": false,
+   "gold_fix": "Wir sind am Freitag mit dem Nachtzug nach Prag gefahren.",
+   "require_any": [
+    "sind am freitag"
+   ],
+   "forbid_any": [
+    "haben am freitag"
+   ]
+  },
+  {
+   "id": "v3-aux-e2",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Mein Bruder hat gestern schon vor den Nachrichten eingeschlafen.",
+   "expect_ok": false,
+   "gold_fix": "Mein Bruder ist gestern schon vor den Nachrichten eingeschlafen.",
+   "require_any": [
+    "ist gestern"
+   ],
+   "forbid_any": [
+    "hat gestern"
+   ]
+  },
+  {
+   "id": "v3-aux-e3",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Meine Eltern sind den halben Sommer an der Gartenmauer gearbeitet.",
+   "expect_ok": false,
+   "gold_fix": "Meine Eltern haben den halben Sommer an der Gartenmauer gearbeitet.",
+   "require_any": [
+    "haben den halben sommer"
+   ],
+   "forbid_any": [
+    "sind den halben sommer"
+   ]
+  },
+  {
+   "id": "v3-aux-e4",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Er ist das Essen gekocht.",
+   "expect_ok": false,
+   "gold_fix": "Er hat das Essen gekocht.",
+   "require_any": [
+    "hat das essen"
+   ],
+   "forbid_any": [
+    "ist das essen"
+   ]
+  },
+  {
+   "id": "v3-aux-e5",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Ich habe heute wegen des Lärms schon um fünf aufgewacht.",
+   "expect_ok": false,
+   "gold_fix": "Ich bin heute wegen des Lärms schon um fünf aufgewacht.",
+   "require_any": [
+    "bin heute"
+   ],
+   "forbid_any": [
+    "habe heute"
+   ]
+  },
+  {
+   "id": "v3-aux-e6",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Was hat passiert?",
+   "expect_ok": false,
+   "gold_fix": "Was ist passiert?",
+   "require_any": [
+    "ist passiert"
+   ],
+   "forbid_any": [
+    "hat passiert"
+   ]
+  },
+  {
+   "id": "v3-aux-e7",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Meine Tante ist ein gebrauchtes Klavier gekauft.",
+   "expect_ok": false,
+   "gold_fix": "Meine Tante hat ein gebrauchtes Klavier gekauft.",
+   "require_any": [
+    "hat ein gebrauchtes klavier"
+   ],
+   "forbid_any": [
+    "ist ein gebrauchtes klavier"
+   ]
+  },
+  {
+   "id": "v3-aux-e8",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Meine Oma hat vor zwei Jahren gestorben.",
+   "expect_ok": false,
+   "gold_fix": "Meine Oma ist vor zwei Jahren gestorben.",
+   "require_any": [
+    "ist vor zwei jahren"
+   ],
+   "forbid_any": [
+    "hat vor zwei jahren"
+   ]
+  },
+  {
+   "id": "v3-aux-e9",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Der Preis hat gestiegen.",
+   "expect_ok": false,
+   "gold_fix": "Der Preis ist gestiegen.",
+   "require_any": [
+    "ist gestiegen"
+   ],
+   "forbid_any": [
+    "hat gestiegen"
+   ]
+  },
+  {
+   "id": "v3-aux-e10",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Ich bin im Zug meinen Regenschirm vergessen.",
+   "expect_ok": false,
+   "gold_fix": "Ich habe im Zug meinen Regenschirm vergessen.",
+   "require_any": [
+    "habe im zug"
+   ],
+   "forbid_any": [
+    "bin im zug"
+   ]
+  },
+  {
+   "id": "v3-aux-o1",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Mein Vater hat den Anhänger rückwärts in die Einfahrt gefahren.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "transitive fahren takes haben"
+  },
+  {
+   "id": "v3-aux-o2",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Ich bin ihm gestern in der Stadt begegnet.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "begegnen takes sein"
+  },
+  {
+   "id": "v3-aux-o3",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Wegen des Sturms sind wir den ganzen Sonntag in der Hütte geblieben.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "bleiben takes sein despite no motion"
+  },
+  {
+   "id": "v3-aux-o4",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Sie hat zwei Stunden auf dem Sofa gelegen.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "liegen takes haben in the standard"
+  },
+  {
+   "id": "v3-aux-o5",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Ich bin noch nie in Wien gewesen.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-aux-o6",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Das Kind ist schnell gewachsen.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "wachsen = change of state, sein"
+  },
+  {
+   "id": "v3-aux-o7",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Der Hund hat die ganze Nacht vor der Tür gewinselt.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-aux-o8",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Der Hund ist mir bis nach Hause gefolgt.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "folgen takes sein"
+  },
+  {
+   "id": "v3-aux-o9",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Bei der Abschlussfeier haben die Lehrer bis nach Mitternacht getanzt.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "tanzen takes haben without a goal"
+  },
+  {
+   "id": "v3-aux-o10",
+   "phenomenon": "aux",
+   "mode": "correction",
+   "input": "Sie ist letztes Jahr nach Spanien gezogen.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "ziehen = move house, sein"
+  },
+  {
+   "id": "v3-ndekl-e1",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Ich habe den neuen Student aus Ghana nach dem Weg gefragt.",
+   "expect_ok": false,
+   "gold_fix": "Ich habe den neuen Studenten aus Ghana nach dem Weg gefragt.",
+   "require_any": [
+    "studenten"
+   ],
+   "forbid_any": [
+    "student"
+   ]
+  },
+  {
+   "id": "v3-ndekl-e2",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Der Rasenmäher des Nachbar ist schon wieder kaputt.",
+   "expect_ok": false,
+   "gold_fix": "Der Rasenmäher des Nachbarn ist schon wieder kaputt.",
+   "require_any": [
+    "nachbarn"
+   ],
+   "forbid_any": [
+    "nachbar"
+   ]
+  },
+  {
+   "id": "v3-ndekl-e3",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Die Trainerin gibt dem Junge einen zweiten Versuch.",
+   "expect_ok": false,
+   "gold_fix": "Die Trainerin gibt dem Jungen einen zweiten Versuch.",
+   "require_any": [
+    "jungen"
+   ],
+   "forbid_any": [
+    "junge"
+   ]
+  },
+  {
+   "id": "v3-ndekl-e4",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Kennst du diesen Herr mit dem grauen Hut?",
+   "expect_ok": false,
+   "gold_fix": "Kennst du diesen Herrn mit dem grauen Hut?",
+   "require_any": [
+    "herrn"
+   ],
+   "forbid_any": [
+    "herr"
+   ]
+  },
+  {
+   "id": "v3-ndekl-e5",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Beim Betriebsausflug saß ich neben einem Kollege aus der Buchhaltung.",
+   "expect_ok": false,
+   "gold_fix": "Beim Betriebsausflug saß ich neben einem Kollegen aus der Buchhaltung.",
+   "require_any": [
+    "kollegen"
+   ],
+   "forbid_any": [
+    "kollege"
+   ]
+  },
+  {
+   "id": "v3-ndekl-e6",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Im Film rettet der Junge einen verletzten Elefant.",
+   "expect_ok": false,
+   "gold_fix": "Im Film rettet der Junge einen verletzten Elefanten.",
+   "require_any": [
+    "elefanten"
+   ],
+   "forbid_any": [
+    "elefant"
+   ]
+  },
+  {
+   "id": "v3-ndekl-e7",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Die Beamtin erklärt dem Tourist den Weg zum Rathaus.",
+   "expect_ok": false,
+   "gold_fix": "Die Beamtin erklärt dem Touristen den Weg zum Rathaus.",
+   "require_any": [
+    "touristen"
+   ],
+   "forbid_any": [
+    "tourist"
+   ]
+  },
+  {
+   "id": "v3-ndekl-e8",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Im Wildpark haben wir einen schlafenden Bär fotografiert.",
+   "expect_ok": false,
+   "gold_fix": "Im Wildpark haben wir einen schlafenden Bären fotografiert.",
+   "require_any": [
+    "bären"
+   ],
+   "forbid_any": [
+    "bär"
+   ]
+  },
+  {
+   "id": "v3-ndekl-e9",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Die Rechnung trägt den Namen des Kunde aus Ulm.",
+   "expect_ok": false,
+   "gold_fix": "Die Rechnung trägt den Namen des Kunden aus Ulm.",
+   "require_any": [
+    "kunden"
+   ],
+   "forbid_any": [
+    "kunde"
+   ]
+  },
+  {
+   "id": "v3-ndekl-e10",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Der Studenten aus dem dritten Stock übt jeden Abend Cello.",
+   "expect_ok": false,
+   "gold_fix": "Der Student aus dem dritten Stock übt jeden Abend Cello.",
+   "require_any": [
+    "der student aus"
+   ],
+   "forbid_any": [
+    "der studenten"
+   ]
+  },
+  {
+   "id": "v3-ndekl-o1",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Der Student lernt für die Prüfung.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "nominative weak noun: no -en"
+  },
+  {
+   "id": "v3-ndekl-o2",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Ich habe den Präsidenten im Fernsehen gesehen.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-ndekl-o3",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Der Junge spielt im Park.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "nominative weak noun"
+  },
+  {
+   "id": "v3-ndekl-o4",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Beim Umzug haben wir unserem Nachbarn aus dem Erdgeschoss geholfen.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-ndekl-o5",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Der Name meines Kollegen ist Peter.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-ndekl-o6",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Ich habe den Zahnarzt nach einem Termin gefragt.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "Zahnarzt is not a weak noun"
+  },
+  {
+   "id": "v3-ndekl-o7",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Sie liebt den Sommer.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "looks like a weak noun, is not"
+  },
+  {
+   "id": "v3-ndekl-o8",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Er spricht mit dem Polizisten.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-ndekl-o9",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Der Doktor kommt gleich.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "Doktor is not weak (Doktoren only in the plural)"
+  },
+  {
+   "id": "v3-ndekl-o10",
+   "phenomenon": "ndekl",
+   "mode": "correction",
+   "input": "Kennst du den Herrn am Fenster mit der Zeitung?",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-relpron-e1",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Der Mann, der ich gestern getroffen habe, ist Arzt.",
+   "expect_ok": false,
+   "gold_fix": "Der Mann, den ich gestern getroffen habe, ist Arzt.",
+   "require_any": [
+    "der mann, den"
+   ],
+   "forbid_any": [
+    "der mann, der ich"
+   ]
+  },
+  {
+   "id": "v3-relpron-e2",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Die Frau, die Auto kaputt ist, wartet.",
+   "expect_ok": false,
+   "gold_fix": "Die Frau, deren Auto kaputt ist, wartet.",
+   "require_any": [
+    "deren"
+   ],
+   "forbid_any": [
+    "die auto"
+   ]
+  },
+  {
+   "id": "v3-relpron-e3",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Das Kind, den auf der Schaukel sitzt, ist mein Patenkind.",
+   "expect_ok": false,
+   "gold_fix": "Das Kind, das auf der Schaukel sitzt, ist mein Patenkind.",
+   "require_any": [
+    "das kind, das"
+   ],
+   "forbid_any": [
+    "das kind, den"
+   ]
+  },
+  {
+   "id": "v3-relpron-e4",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Die Kollegen, mit die ich das Projekt leite, sitzen in Bremen.",
+   "expect_ok": false,
+   "gold_fix": "Die Kollegen, mit denen ich das Projekt leite, sitzen in Bremen.",
+   "require_any": [
+    "mit denen"
+   ],
+   "forbid_any": [
+    "mit die"
+   ]
+  },
+  {
+   "id": "v3-relpron-e5",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Der Nachbar, den ich beim Umzug geholfen habe, hat mir Kuchen gebracht.",
+   "expect_ok": false,
+   "gold_fix": "Der Nachbar, dem ich beim Umzug geholfen habe, hat mir Kuchen gebracht.",
+   "require_any": [
+    "der nachbar, dem"
+   ],
+   "forbid_any": [
+    "der nachbar, den"
+   ]
+  },
+  {
+   "id": "v3-relpron-e6",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Der Roman, den ich ihn im Urlaub gelesen habe, war enttäuschend.",
+   "expect_ok": false,
+   "gold_fix": "Der Roman, den ich im Urlaub gelesen habe, war enttäuschend.",
+   "require_any": [
+    "den ich im urlaub gelesen habe"
+   ],
+   "forbid_any": [
+    "ich ihn im urlaub"
+   ]
+  },
+  {
+   "id": "v3-relpron-e7",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Der Lehrer, deren Tochter ich kenne, ist streng.",
+   "expect_ok": false,
+   "gold_fix": "Der Lehrer, dessen Tochter ich kenne, ist streng.",
+   "require_any": [
+    "dessen"
+   ],
+   "forbid_any": [
+    "deren"
+   ]
+  },
+  {
+   "id": "v3-relpron-e8",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Der Mann, welche dort steht, ist mein Vater.",
+   "expect_ok": false,
+   "gold_fix": "Der Mann, der dort steht, ist mein Vater.",
+   "require_any": [
+    "der mann, der",
+    "welcher"
+   ],
+   "forbid_any": [
+    "welche dort"
+   ]
+  },
+  {
+   "id": "v3-relpron-e9",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Die Katzen, das auf dem Dach schlafen, gehören der Wirtin.",
+   "expect_ok": false,
+   "gold_fix": "Die Katzen, die auf dem Dach schlafen, gehören der Wirtin.",
+   "require_any": [
+    "die katzen, die"
+   ],
+   "forbid_any": [
+    "katzen, das"
+   ]
+  },
+  {
+   "id": "v3-relpron-e10",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Das ist die Ärztin, mit dem ich wegen der Allergie gesprochen habe.",
+   "expect_ok": false,
+   "gold_fix": "Das ist die Ärztin, mit der ich wegen der Allergie gesprochen habe.",
+   "require_any": [
+    "mit der"
+   ],
+   "forbid_any": [
+    "mit dem"
+   ]
+  },
+  {
+   "id": "v3-relpron-e11",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Der Hund, der Besitzer verreist ist, bleibt bei uns.",
+   "expect_ok": false,
+   "gold_fix": "Der Hund, dessen Besitzer verreist ist, bleibt bei uns.",
+   "require_any": [
+    "dessen"
+   ],
+   "forbid_any": [
+    "der besitzer"
+   ]
+  },
+  {
+   "id": "v3-relpron-o1",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Die Nachbarin, deren Katze ständig in unserem Garten sitzt, hat sich entschuldigt.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "deren"
+  },
+  {
+   "id": "v3-relpron-o2",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Das ist alles, was mir zu dem Thema einfällt.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "was after alles, not das"
+  },
+  {
+   "id": "v3-relpron-o3",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Der Mann, dem das Auto gehört, ist verreist.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "dative relative"
+  },
+  {
+   "id": "v3-relpron-o4",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Die Freunde, denen ich vertraue, wohnen weit weg.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "denen"
+  },
+  {
+   "id": "v3-relpron-o5",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Das Dorf, in dem ich aufgewachsen bin, ist winzig.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-relpron-o6",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Die Lehrerin, der ich geschrieben habe, hat geantwortet.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "feminine dative der looks masculine"
+  },
+  {
+   "id": "v3-relpron-o7",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Der Dokumentarfilm, den wir im Kurs gesehen haben, war ziemlich zäh.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-relpron-o8",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Das Mädchen, das dort wartet, ist meine Cousine.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "das for Mädchen"
+  },
+  {
+   "id": "v3-relpron-o9",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Es gibt nichts, worüber wir streiten müssten.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "worüber after nichts"
+  },
+  {
+   "id": "v3-relpron-o10",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Der Kollege, dessen Büro nebenan liegt, ist im Urlaub.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-relpron-o11",
+   "phenomenon": "relpron",
+   "mode": "correction",
+   "input": "Die Stadt, die ich am liebsten mag, ist Lissabon.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-adjend-e1",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Ich habe ein schönes Garten.",
+   "expect_ok": false,
+   "gold_fix": "Ich habe einen schönen Garten.",
+   "require_any": [
+    "schönen garten"
+   ],
+   "forbid_any": [
+    "schönes garten"
+   ]
+  },
+  {
+   "id": "v3-adjend-e2",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Im Sommer trinkt er am liebsten eiskalter Apfelsaft.",
+   "expect_ok": false,
+   "gold_fix": "Im Sommer trinkt er am liebsten eiskalten Apfelsaft.",
+   "require_any": [
+    "eiskalten apfelsaft"
+   ],
+   "forbid_any": [
+    "eiskalter apfelsaft"
+   ]
+  },
+  {
+   "id": "v3-adjend-e3",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Wir wohnen in einem klein Dorf.",
+   "expect_ok": false,
+   "gold_fix": "Wir wohnen in einem kleinen Dorf.",
+   "require_any": [
+    "kleinen dorf"
+   ],
+   "forbid_any": [
+    "klein dorf"
+   ]
+  },
+  {
+   "id": "v3-adjend-e4",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Das ist ein spannende Roman über die Nordsee.",
+   "expect_ok": false,
+   "gold_fix": "Das ist ein spannender Roman über die Nordsee.",
+   "require_any": [
+    "spannender roman"
+   ],
+   "forbid_any": [
+    "spannende roman"
+   ]
+  },
+  {
+   "id": "v3-adjend-e5",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Ich mag die gelbe Blumen.",
+   "expect_ok": false,
+   "gold_fix": "Ich mag die gelben Blumen.",
+   "require_any": [
+    "gelben blumen"
+   ],
+   "forbid_any": [
+    "gelbe blumen"
+   ]
+  },
+  {
+   "id": "v3-adjend-e6",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Mit meinem alte Auto fahre ich nicht mehr.",
+   "expect_ok": false,
+   "gold_fix": "Mit meinem alten Auto fahre ich nicht mehr.",
+   "require_any": [
+    "alten auto"
+   ],
+   "forbid_any": [
+    "alte auto"
+   ]
+  },
+  {
+   "id": "v3-adjend-e7",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Sie hat einen neue Job.",
+   "expect_ok": false,
+   "gold_fix": "Sie hat einen neuen Job.",
+   "require_any": [
+    "neuen job"
+   ],
+   "forbid_any": [
+    "neue job"
+   ]
+  },
+  {
+   "id": "v3-adjend-e8",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Der kleiner Hund bellt laut.",
+   "expect_ok": false,
+   "gold_fix": "Der kleine Hund bellt laut.",
+   "require_any": [
+    "kleine hund"
+   ],
+   "forbid_any": [
+    "kleiner hund"
+   ]
+  },
+  {
+   "id": "v3-adjend-e9",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Ich brauche frische Brot.",
+   "expect_ok": false,
+   "gold_fix": "Ich brauche frisches Brot.",
+   "require_any": [
+    "frisches brot"
+   ],
+   "forbid_any": [
+    "frische brot"
+   ]
+  },
+  {
+   "id": "v3-adjend-e10",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Er hilft dem alter Mann.",
+   "expect_ok": false,
+   "gold_fix": "Er hilft dem alten Mann.",
+   "require_any": [
+    "alten mann"
+   ],
+   "forbid_any": [
+    "alter mann"
+   ]
+  },
+  {
+   "id": "v3-adjend-o1",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Die Suppe ist noch viel zu heiß.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "predicative adjective: no ending"
+  },
+  {
+   "id": "v3-adjend-o2",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Zum Frühstück trinke ich am liebsten schwarzen Kaffee.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "strong masculine accusative without article"
+  },
+  {
+   "id": "v3-adjend-o3",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Sie hat schöne Augen.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "strong plural -e, often 'fixed' to -en"
+  },
+  {
+   "id": "v3-adjend-o4",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Wir brauchen frisches Obst.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "strong neuter"
+  },
+  {
+   "id": "v3-adjend-o5",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Ein guter Freund hilft immer.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "mixed declension -er after ein"
+  },
+  {
+   "id": "v3-adjend-o6",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Mit großer Freude nehme ich die Einladung an.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "strong feminine dative"
+  },
+  {
+   "id": "v3-adjend-o7",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Das kleine Kind schläft.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-adjend-o8",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Meine Großeltern wohnen in einem winzigen Dorf bei Kassel.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-adjend-o9",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Ich habe viele interessante Bücher gelesen.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "viele + strong plural"
+  },
+  {
+   "id": "v3-adjend-o10",
+   "phenomenon": "adjend",
+   "mode": "correction",
+   "input": "Die neuen Mieter im Erdgeschoss haben zwei kleine Kinder.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-wechsel-e1",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Ich lege die frischen Handtücher auf dem Badewannenrand.",
+   "expect_ok": false,
+   "gold_fix": "Ich lege die frischen Handtücher auf den Badewannenrand.",
+   "require_any": [
+    "auf den badewannenrand"
+   ],
+   "forbid_any": [
+    "auf dem badewannenrand"
+   ]
+  },
+  {
+   "id": "v3-wechsel-e2",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Die Laterne hängt über den Hofeingang.",
+   "expect_ok": false,
+   "gold_fix": "Die Laterne hängt über dem Hofeingang.",
+   "require_any": [
+    "über dem hofeingang"
+   ],
+   "forbid_any": [
+    "über den hofeingang"
+   ]
+  },
+  {
+   "id": "v3-wechsel-e3",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Wir gehen am Samstag im Freibad.",
+   "expect_ok": false,
+   "gold_fix": "Wir gehen am Samstag ins Freibad.",
+   "require_any": [
+    "ins freibad",
+    "in das freibad"
+   ],
+   "forbid_any": [
+    "im freibad"
+   ]
+  },
+  {
+   "id": "v3-wechsel-e4",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Er sitzt auf den Sessel.",
+   "expect_ok": false,
+   "gold_fix": "Er sitzt auf dem Sessel.",
+   "require_any": [
+    "auf dem sessel"
+   ],
+   "forbid_any": [
+    "auf den sessel"
+   ]
+  },
+  {
+   "id": "v3-wechsel-e5",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Ich stelle den Koffer in dem Abstellraum.",
+   "expect_ok": false,
+   "gold_fix": "Ich stelle den Koffer in den Abstellraum.",
+   "require_any": [
+    "in den abstellraum"
+   ],
+   "forbid_any": [
+    "in dem abstellraum",
+    "im abstellraum"
+   ]
+  },
+  {
+   "id": "v3-wechsel-e6",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Der Spiegel hängt an die Wand neben der Garderobe.",
+   "expect_ok": false,
+   "gold_fix": "Der Spiegel hängt an der Wand neben der Garderobe.",
+   "require_any": [
+    "an der wand"
+   ],
+   "forbid_any": [
+    "an die wand"
+   ]
+  },
+  {
+   "id": "v3-wechsel-e7",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Wir sind gestern in einem Restaurant gegangen.",
+   "expect_ok": false,
+   "gold_fix": "Wir sind gestern in ein Restaurant gegangen.",
+   "require_any": [
+    "in ein restaurant"
+   ],
+   "forbid_any": [
+    "in einem restaurant"
+   ]
+  },
+  {
+   "id": "v3-wechsel-e8",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Setz dich doch auf dem freien Platz neben Opa!",
+   "expect_ok": false,
+   "gold_fix": "Setz dich doch auf den freien Platz neben Opa!",
+   "require_any": [
+    "auf den freien platz"
+   ],
+   "forbid_any": [
+    "auf dem freien platz"
+   ]
+  },
+  {
+   "id": "v3-wechsel-e9",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Die Schlüssel sind in die Tasche.",
+   "expect_ok": false,
+   "gold_fix": "Die Schlüssel sind in der Tasche.",
+   "require_any": [
+    "in der tasche"
+   ],
+   "forbid_any": [
+    "in die tasche"
+   ]
+  },
+  {
+   "id": "v3-wechsel-e10",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Wir treffen uns um acht vor das alte Rathaus.",
+   "expect_ok": false,
+   "gold_fix": "Wir treffen uns um acht vor dem alten Rathaus.",
+   "require_any": [
+    "vor dem alten rathaus"
+   ],
+   "forbid_any": [
+    "vor das alte rathaus"
+   ]
+  },
+  {
+   "id": "v3-wechsel-o1",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Wir sind spät im Hotel angekommen.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "ankommen takes the dative despite the motion verb"
+  },
+  {
+   "id": "v3-wechsel-o2",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Ich steige in den Bus ein.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "einsteigen in + Akk"
+  },
+  {
+   "id": "v3-wechsel-o3",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Sie stellt sich hinter mich.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "reflexive + accusative direction"
+  },
+  {
+   "id": "v3-wechsel-o4",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Der Lieferwagen steht seit Stunden vor der Bäckerei.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-wechsel-o5",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Er hängt die Jacke an den Haken.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-wechsel-o6",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Wir fahren übers Wochenende ans Meer.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "temporal übers + directional ans"
+  },
+  {
+   "id": "v3-wechsel-o7",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Die Kinder bauen hinter der Scheune eine Hütte.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-wechsel-o8",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Ich habe den Brief in die Schublade gelegt.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-wechsel-o9",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Die Schlüssel liegen neben der Tür.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-wechsel-o10",
+   "phenomenon": "wechsel",
+   "mode": "correction",
+   "input": "Sie ist ins Wasser gesprungen.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "springen + direction, accusative"
+  },
+  {
+   "id": "v3-k2-e1",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Wenn ich mehr Geld habe, würde ich ein Haus kaufen.",
+   "expect_ok": false,
+   "gold_fix": "Wenn ich mehr Geld hätte, würde ich ein Haus kaufen.",
+   "require_any": [
+    "hätte"
+   ],
+   "forbid_any": [
+    "geld habe"
+   ]
+  },
+  {
+   "id": "v3-k2-e2",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Wenn ich an deiner Stelle wäre, ich würde den Vertrag nicht unterschreiben.",
+   "expect_ok": false,
+   "gold_fix": "Wenn ich an deiner Stelle wäre, würde ich den Vertrag nicht unterschreiben.",
+   "require_any": [
+    "würde ich"
+   ],
+   "forbid_any": [
+    "ich würde den"
+   ]
+  },
+  {
+   "id": "v3-k2-e3",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Ich wünschte, ich bin schon mit der Steuererklärung fertig.",
+   "expect_ok": false,
+   "gold_fix": "Ich wünschte, ich wäre schon mit der Steuererklärung fertig.",
+   "require_any": [
+    "wäre"
+   ],
+   "forbid_any": [
+    "ich bin schon"
+   ]
+  },
+  {
+   "id": "v3-k2-e4",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Wenn er Zeit hat, würde er kommen.",
+   "expect_ok": false,
+   "gold_fix": "Wenn er Zeit hätte, würde er kommen.",
+   "require_any": [
+    "hätte"
+   ],
+   "forbid_any": [
+    "zeit hat"
+   ]
+  },
+  {
+   "id": "v3-k2-e5",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Ich würde das Buch gelesen, wenn ich Zeit hätte.",
+   "expect_ok": false,
+   "gold_fix": "Ich hätte das Buch gelesen, wenn ich Zeit gehabt hätte.",
+   "require_any": [
+    "hätte das buch gelesen",
+    "würde das buch lesen"
+   ],
+   "forbid_any": [
+    "würde das buch gelesen"
+   ]
+  },
+  {
+   "id": "v3-k2-e6",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Könnte Sie mir vielleicht kurz beim Ausfüllen des Formulars helfen?",
+   "expect_ok": false,
+   "gold_fix": "Könnten Sie mir vielleicht kurz beim Ausfüllen des Formulars helfen?",
+   "require_any": [
+    "könnten sie"
+   ],
+   "forbid_any": [
+    "könnte sie"
+   ]
+  },
+  {
+   "id": "v3-k2-e7",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Wenn ich gestern Zeit gehabt hätte, würde ich gekommen.",
+   "expect_ok": false,
+   "gold_fix": "Wenn ich gestern Zeit gehabt hätte, wäre ich gekommen.",
+   "require_any": [
+    "wäre ich gekommen"
+   ],
+   "forbid_any": [
+    "würde ich gekommen"
+   ]
+  },
+  {
+   "id": "v3-k2-e8",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Ich möchtete gern einen Tisch für vier Personen reservieren.",
+   "expect_ok": false,
+   "gold_fix": "Ich möchte gern einen Tisch für vier Personen reservieren.",
+   "require_any": [
+    "möchte"
+   ],
+   "forbid_any": [
+    "möchtete"
+   ]
+  },
+  {
+   "id": "v3-k2-e9",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Wir hätten früher gehen sollten.",
+   "expect_ok": false,
+   "gold_fix": "Wir hätten früher gehen sollen.",
+   "require_any": [
+    "gehen sollen"
+   ],
+   "forbid_any": [
+    "gehen sollten"
+   ]
+  },
+  {
+   "id": "v3-k2-e10",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Ich würde lieber zu Hause geblieben.",
+   "expect_ok": false,
+   "gold_fix": "Ich wäre lieber zu Hause geblieben.",
+   "require_any": [
+    "wäre lieber"
+   ],
+   "forbid_any": [
+    "würde lieber"
+   ]
+  },
+  {
+   "id": "v3-k2-e11",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Wenn ich mehr Zeit hätte, ich lerne Spanisch.",
+   "expect_ok": false,
+   "gold_fix": "Wenn ich mehr Zeit hätte, würde ich Spanisch lernen.",
+   "require_any": [
+    "würde ich spanisch lernen",
+    "lernte ich spanisch"
+   ],
+   "forbid_any": [
+    "ich lerne spanisch"
+   ]
+  },
+  {
+   "id": "v3-k2-o1",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Wenn ich reich wäre, reiste ich um die Welt.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "reiste is Konjunktiv II (same form as Präteritum)"
+  },
+  {
+   "id": "v3-k2-o2",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Ich wünschte, er käme endlich.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "käme instead of würde kommen"
+  },
+  {
+   "id": "v3-k2-o3",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Wenn es morgen regnet, bleiben wir zu Hause.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "real condition: indicative is correct"
+  },
+  {
+   "id": "v3-k2-o4",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Ich hätte gern einen Tee mit Zitrone.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-k2-o5",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Könnten Sie mir sagen, ob die Bibliothek sonntags geöffnet ist?",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-k2-o6",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "An deiner Stelle würde ich früher losfahren.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-k2-o7",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Er tut so, als ob er nichts wüsste.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "wüsste after als ob"
+  },
+  {
+   "id": "v3-k2-o8",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Wäre ich doch nur früher aufgestanden!",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "verb-first wish without wenn"
+  },
+  {
+   "id": "v3-k2-o9",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Es wäre besser gewesen, wenn wir gefragt hätten.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-k2-o10",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Ich ginge gern mit, aber ich muss arbeiten.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "ginge"
+  },
+  {
+   "id": "v3-k2-o11",
+   "phenomenon": "k2",
+   "mode": "correction",
+   "input": "Wenn ich von dem Stau gewusst hätte, wäre ich mit dem Rad gefahren.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-artikel-e1",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Die Mädchen aus dem Nachbarhaus übt jeden Nachmittag Geige.",
+   "expect_ok": false,
+   "gold_fix": "Das Mädchen aus dem Nachbarhaus übt jeden Nachmittag Geige.",
+   "require_any": [
+    "das mädchen"
+   ],
+   "forbid_any": [
+    "die mädchen"
+   ]
+  },
+  {
+   "id": "v3-artikel-e2",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Der Auto meiner Schwester steht in der Werkstatt.",
+   "expect_ok": false,
+   "gold_fix": "Das Auto meiner Schwester steht in der Werkstatt.",
+   "require_any": [
+    "das auto"
+   ],
+   "forbid_any": [
+    "der auto"
+   ]
+  },
+  {
+   "id": "v3-artikel-e3",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Ich habe die Buch über Island in zwei Tagen gelesen.",
+   "expect_ok": false,
+   "gold_fix": "Ich habe das Buch über Island in zwei Tagen gelesen.",
+   "require_any": [
+    "das buch"
+   ],
+   "forbid_any": [
+    "die buch"
+   ]
+  },
+  {
+   "id": "v3-artikel-e4",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Das Tisch ist aus Holz.",
+   "expect_ok": false,
+   "gold_fix": "Der Tisch ist aus Holz.",
+   "require_any": [
+    "der tisch"
+   ],
+   "forbid_any": [
+    "das tisch"
+   ]
+  },
+  {
+   "id": "v3-artikel-e5",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Ich kaufe ein Tasche für den Laptop meiner Mutter.",
+   "expect_ok": false,
+   "gold_fix": "Ich kaufe eine Tasche für den Laptop meiner Mutter.",
+   "require_any": [
+    "eine tasche"
+   ],
+   "forbid_any": [
+    "ein tasche"
+   ]
+  },
+  {
+   "id": "v3-artikel-e6",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Die Käse aus dem Allgäu schmeckt besonders kräftig.",
+   "expect_ok": false,
+   "gold_fix": "Der Käse aus dem Allgäu schmeckt besonders kräftig.",
+   "require_any": [
+    "der käse"
+   ],
+   "forbid_any": [
+    "die käse"
+   ]
+  },
+  {
+   "id": "v3-artikel-e7",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Der Messer ist scharf.",
+   "expect_ok": false,
+   "gold_fix": "Das Messer ist scharf.",
+   "require_any": [
+    "das messer"
+   ],
+   "forbid_any": [
+    "der messer"
+   ]
+  },
+  {
+   "id": "v3-artikel-e8",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Das Schlüssel liegt auf dem Tisch.",
+   "expect_ok": false,
+   "gold_fix": "Der Schlüssel liegt auf dem Tisch.",
+   "require_any": [
+    "der schlüssel"
+   ],
+   "forbid_any": [
+    "das schlüssel"
+   ]
+  },
+  {
+   "id": "v3-artikel-e9",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Ich habe einen Bier bestellt.",
+   "expect_ok": false,
+   "gold_fix": "Ich habe ein Bier bestellt.",
+   "require_any": [
+    "ein bier"
+   ],
+   "forbid_any": [
+    "einen bier"
+   ]
+  },
+  {
+   "id": "v3-artikel-e10",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Die Hund schläft.",
+   "expect_ok": false,
+   "gold_fix": "Der Hund schläft.",
+   "require_any": [
+    "der hund"
+   ],
+   "forbid_any": [
+    "die hund"
+   ]
+  },
+  {
+   "id": "v3-artikel-o1",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Das Mädchen ist sehr klug.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "-chen is neuter even for a girl"
+  },
+  {
+   "id": "v3-artikel-o2",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Der Käse liegt im Kühlschrank.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "often guessed die/das"
+  },
+  {
+   "id": "v3-artikel-o3",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Die Butter ist im Kühlschrank.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "often guessed der"
+  },
+  {
+   "id": "v3-artikel-o4",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Das Bett ist zu weich.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-artikel-o5",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Der Junge hat Hunger.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "-e ending but masculine"
+  },
+  {
+   "id": "v3-artikel-o6",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Die Milch ist sauer.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-artikel-o7",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Das Brötchen ist frisch.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "-chen neuter"
+  },
+  {
+   "id": "v3-artikel-o8",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Der Löffel liegt neben dem Teller.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-artikel-o9",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Die Gabel ist schmutzig.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-artikel-o10",
+   "phenomenon": "artikel",
+   "mode": "correction",
+   "input": "Das Fahrrad steht im Keller.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-imperativ-e1",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Lese das Buch!",
+   "expect_ok": false,
+   "gold_fix": "Lies das Buch!",
+   "require_any": [
+    "lies"
+   ],
+   "forbid_any": [
+    "lese"
+   ]
+  },
+  {
+   "id": "v3-imperativ-e2",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Nehme den Apfel!",
+   "expect_ok": false,
+   "gold_fix": "Nimm den Apfel!",
+   "require_any": [
+    "nimm"
+   ],
+   "forbid_any": [
+    "nehme"
+   ]
+  },
+  {
+   "id": "v3-imperativ-e3",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Spreche bitte lauter!",
+   "expect_ok": false,
+   "gold_fix": "Sprich bitte lauter!",
+   "require_any": [
+    "sprich"
+   ],
+   "forbid_any": [
+    "spreche"
+   ]
+  },
+  {
+   "id": "v3-imperativ-e4",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Vergesse nicht deine Jacke!",
+   "expect_ok": false,
+   "gold_fix": "Vergiss nicht deine Jacke!",
+   "require_any": [
+    "vergiss"
+   ],
+   "forbid_any": [
+    "vergesse"
+   ]
+  },
+  {
+   "id": "v3-imperativ-e5",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Fährst langsam!",
+   "expect_ok": false,
+   "gold_fix": "Fahr langsam!",
+   "require_any": [
+    "fahr langsam",
+    "fahre langsam"
+   ],
+   "forbid_any": [
+    "fährst"
+   ]
+  },
+  {
+   "id": "v3-imperativ-e6",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Gebe mir bitte den Schraubenzieher aus der Kiste!",
+   "expect_ok": false,
+   "gold_fix": "Gib mir bitte den Schraubenzieher aus der Kiste!",
+   "require_any": [
+    "gib"
+   ],
+   "forbid_any": [
+    "gebe"
+   ]
+  },
+  {
+   "id": "v3-imperativ-e7",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Helfe mir bitte!",
+   "expect_ok": false,
+   "gold_fix": "Hilf mir bitte!",
+   "require_any": [
+    "hilf"
+   ],
+   "forbid_any": [
+    "helfe"
+   ]
+  },
+  {
+   "id": "v3-imperativ-e8",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Bist ruhig!",
+   "expect_ok": false,
+   "gold_fix": "Sei ruhig!",
+   "require_any": [
+    "sei ruhig"
+   ],
+   "forbid_any": [
+    "bist ruhig"
+   ]
+  },
+  {
+   "id": "v3-imperativ-e9",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Esse endlich deine Suppe, bevor sie kalt wird!",
+   "expect_ok": false,
+   "gold_fix": "Iss endlich deine Suppe, bevor sie kalt wird!",
+   "require_any": [
+    "iss"
+   ],
+   "forbid_any": [
+    "esse"
+   ]
+  },
+  {
+   "id": "v3-imperativ-e10",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Läuf schneller!",
+   "expect_ok": false,
+   "gold_fix": "Lauf schneller!",
+   "require_any": [
+    "lauf schneller",
+    "laufe schneller"
+   ],
+   "forbid_any": [
+    "läuf"
+   ]
+  },
+  {
+   "id": "v3-imperativ-o1",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Fahr vorsichtig!",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "a-verbs take no umlaut in the imperative"
+  },
+  {
+   "id": "v3-imperativ-o2",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Schlaf gut!",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "no umlaut"
+  },
+  {
+   "id": "v3-imperativ-o3",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Lies mir bitte die Zutatenliste vor!",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-imperativ-o4",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Hab keine Angst!",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "Hab is the standard du-imperative of haben"
+  },
+  {
+   "id": "v3-imperativ-o5",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Kommen Sie bitte herein!",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "Sie-imperative keeps the pronoun"
+  },
+  {
+   "id": "v3-imperativ-o6",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Geht nach Hause, Kinder!",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "ihr-imperative looks like a statement"
+  },
+  {
+   "id": "v3-imperativ-o7",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Warte hier auf mich!",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-imperativ-o8",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Nimm dir ruhig eine zweite Decke aus dem Schrank!",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-imperativ-o9",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Lauf nicht so schnell!",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "no umlaut"
+  },
+  {
+   "id": "v3-imperativ-o10",
+   "phenomenon": "imperativ",
+   "mode": "correction",
+   "input": "Seid leise!",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "ihr-form of sein"
+  },
+  {
+   "id": "v3-negation-e1",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Ich habe leider nicht Auto und fahre mit dem Rad zur Arbeit.",
+   "expect_ok": false,
+   "gold_fix": "Ich habe leider kein Auto und fahre mit dem Rad zur Arbeit.",
+   "require_any": [
+    "kein auto"
+   ],
+   "forbid_any": [
+    "nicht auto"
+   ]
+  },
+  {
+   "id": "v3-negation-e2",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Ich habe diese Woche nicht Zeit für das Training.",
+   "expect_ok": false,
+   "gold_fix": "Ich habe diese Woche keine Zeit für das Training.",
+   "require_any": [
+    "keine zeit"
+   ],
+   "forbid_any": [
+    "nicht zeit"
+   ]
+  },
+  {
+   "id": "v3-negation-e3",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Er trinkt nicht Kaffee.",
+   "expect_ok": false,
+   "gold_fix": "Er trinkt keinen Kaffee.",
+   "require_any": [
+    "keinen kaffee"
+   ],
+   "forbid_any": [
+    "nicht kaffee"
+   ]
+  },
+  {
+   "id": "v3-negation-e4",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Das ist kein mein Buch.",
+   "expect_ok": false,
+   "gold_fix": "Das ist nicht mein Buch.",
+   "require_any": [
+    "nicht mein buch"
+   ],
+   "forbid_any": [
+    "kein mein"
+   ]
+  },
+  {
+   "id": "v3-negation-e5",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Ich kenne ihn kein.",
+   "expect_ok": false,
+   "gold_fix": "Ich kenne ihn nicht.",
+   "require_any": [
+    "ihn nicht"
+   ],
+   "forbid_any": [
+    "ihn kein"
+   ]
+  },
+  {
+   "id": "v3-negation-e6",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Meine Schwester ist kein müde, obwohl sie früh aufgestanden ist.",
+   "expect_ok": false,
+   "gold_fix": "Meine Schwester ist nicht müde, obwohl sie früh aufgestanden ist.",
+   "require_any": [
+    "nicht müde"
+   ],
+   "forbid_any": [
+    "kein müde"
+   ]
+  },
+  {
+   "id": "v3-negation-e7",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Wir haben nicht Kinder.",
+   "expect_ok": false,
+   "gold_fix": "Wir haben keine Kinder.",
+   "require_any": [
+    "keine kinder"
+   ],
+   "forbid_any": [
+    "nicht kinder"
+   ]
+  },
+  {
+   "id": "v3-negation-e8",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Ich mag nicht Katzen.",
+   "expect_ok": false,
+   "gold_fix": "Ich mag keine Katzen.",
+   "require_any": [
+    "keine katzen"
+   ],
+   "forbid_any": [
+    "nicht katzen"
+   ]
+  },
+  {
+   "id": "v3-negation-e9",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Ich nicht verstehe die Aufgabe auf Seite zwölf.",
+   "expect_ok": false,
+   "gold_fix": "Ich verstehe die Aufgabe auf Seite zwölf nicht.",
+   "require_any": [
+    "seite zwölf nicht"
+   ],
+   "forbid_any": [
+    "nicht verstehe"
+   ]
+  },
+  {
+   "id": "v3-negation-e10",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Er hat den Vertrag gelesen nicht, bevor er unterschrieb.",
+   "expect_ok": false,
+   "gold_fix": "Er hat den Vertrag nicht gelesen, bevor er unterschrieb.",
+   "require_any": [
+    "nicht gelesen"
+   ],
+   "forbid_any": [
+    "gelesen nicht"
+   ]
+  },
+  {
+   "id": "v3-negation-o1",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Das ist nicht mein Schlüssel.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "nicht before a possessive, not kein"
+  },
+  {
+   "id": "v3-negation-o2",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Ich habe nicht das Buch gelesen, sondern den Artikel.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "contrastive nicht before a definite noun"
+  },
+  {
+   "id": "v3-negation-o3",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Er hat keine Geschwister.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-negation-o4",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Ich bin noch nicht fertig.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "noch nicht"
+  },
+  {
+   "id": "v3-negation-o5",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Sie trinkt keinen Alkohol.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-negation-o6",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Ich habe ihn nicht gesehen.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-negation-o7",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Wir haben kein Brot mehr.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "kein ... mehr"
+  },
+  {
+   "id": "v3-negation-o8",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Das war nicht meine Idee.",
+   "expect_ok": true,
+   "hard_negative": true,
+   "trap": "nicht + possessive"
+  },
+  {
+   "id": "v3-negation-o9",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Er ist nicht zu Hause.",
+   "expect_ok": true
+  },
+  {
+   "id": "v3-negation-o10",
+   "phenomenon": "negation",
+   "mode": "correction",
+   "input": "Ich habe keine Lust, heute auszugehen.",
+   "expect_ok": true
+  }
+ ]
+}

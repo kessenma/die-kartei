@@ -1,4 +1,3 @@
-import DieKarteiCore
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
@@ -12,11 +11,16 @@ struct PaperListView: View {
     var mlxService: MLXGenerationService
 
     @Query(sort: \StudyPaper.createdAt, order: .reverse) private var papers: [StudyPaper]
+    /// Handouts brought over from these, to say which course each went to.
+    @Query private var handouts: [ClassMaterial]
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var appTheme
 
     @State private var showImporter = false
     @State private var showURLImport = false
     @State private var importError: String?
+    /// A long PDF's text layer is read off the main actor, so the list says so instead of freezing.
+    @State private var isReadingPDF = false
     @State private var generatingPaper: StudyPaper?
     @State private var service: PaperStudyService?
     @State private var cacheRefreshID = UUID()
@@ -46,19 +50,33 @@ struct PaperListView: View {
                 Text("Upload a German paper or paste a link. The AI extracts a summary, a vocabulary deck, and questions — then you can discuss it.")
                     .font(.caption2)
             }
+            .themedListRow()
 
             ChatModelPickerSection(
                 selected: $modelManager.selectedPaperModel,
                 cacheRefreshID: cacheRefreshID,
                 title: "Study model",
-                footerText: "Used to generate the summary, deck, and questions, and to discuss the paper. \(PaperStudyService.requiredModel.rawValue) is recommended for its German quality, but any downloaded model works."
+                footerText: "Used to generate the summary, deck, and questions, and to discuss the paper. \(PaperStudyService.requiredModel.rawValue) is recommended for its German quality, but any downloaded model works.",
+                emphasizeHero: false
             )
+            .themedListRow()
+
+            if isReadingPDF {
+                Section {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("Reading the PDF…").font(.subheadline).foregroundStyle(.secondary)
+                    }
+                }
+                .themedListRow()
+            }
 
             if let importError {
                 Section {
                     Label(importError, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption).foregroundStyle(.orange)
                 }
+                .themedListRow()
             }
 
             if regularPapers.isEmpty {
@@ -69,8 +87,9 @@ struct PaperListView: View {
                         description: Text("Import a German PDF to study and discuss it.")
                     )
                 }
+                .themedListRow()
             } else {
-                Section("Your papers") {
+                Section {
                     ForEach(regularPapers) { paper in
                         NavigationLink {
                             PaperDetailView(paper: paper, modelManager: modelManager, mlxService: mlxService)
@@ -81,12 +100,15 @@ struct PaperListView: View {
                             Button(role: .destructive) { delete(paper) } label: { Label("Delete", systemImage: "trash") }
                         }
                     }
+                } header: {
+                    Text("Your papers").themedSectionHeader()
                 }
+                .themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("Study a Paper")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.pdf]) { result in
             handleImport(result)
         }
@@ -98,7 +120,7 @@ struct PaperListView: View {
             }
         }
         .sheet(isPresented: $showURLImport) {
-            URLImportView { title, text, url in
+            URLImportView(accent: modelManager.selectedPaperModel.theme.accent) { title, text, url in
                 // Defer so the URL sheet finishes dismissing before the next sheet/dialog appears.
                 DispatchQueue.main.async {
                     tryImport(title: title, text: text, sourceURL: url)
@@ -106,13 +128,18 @@ struct PaperListView: View {
             }
         }
         .sheet(item: $reviewItem) { item in
-            ExtractedTextReviewView(title: item.title, text: item.text) { deckCount, selectedWords in
+            // Deck-building is deferred until the learner picks "Make flashcards" in the paper, so the
+            // review step here just verifies the extracted text before generating summary + questions.
+            ExtractedTextReviewView(
+                title: item.title,
+                text: item.text,
+                accent: modelManager.selectedPaperModel.theme.accent,
+                collectDeckOptions: false,
+                confirmTitle: "Study this text"
+            ) { _, _ in
                 // Defer so the review sheet finishes dismissing before the generating sheet appears.
                 DispatchQueue.main.async {
-                    createAndGenerate(
-                        title: item.title, text: item.text, sourceURL: item.sourceURL,
-                        deckCount: deckCount, selectedWords: selectedWords
-                    )
+                    createAndGenerate(title: item.title, text: item.text, sourceURL: item.sourceURL)
                 }
             }
         }
@@ -135,12 +162,13 @@ struct PaperListView: View {
     }
 
     private func row(_ paper: StudyPaper) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: paper.sourceURL != nil ? "link" : "doc.text.fill")
-                .foregroundStyle(.tint)
+        let accent = paper.rowTheme?.accent ?? modelManager.selectedPaperModel.theme.accent
+        return HStack(spacing: 12) {
+            Image(systemName: paper.sourceSymbol)
+                .foregroundStyle(accent)
                 .frame(width: 30, height: 30)
-                .background(Color.accentColor.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .background(accent.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
             VStack(alignment: .leading, spacing: 2) {
                 Text(paper.title).lineLimit(1)
                 HStack(spacing: 8) {
@@ -152,6 +180,9 @@ struct PaperListView: View {
                     }
                 }
                 .font(.caption2).foregroundStyle(.tertiary)
+                if let courses = ClassMaterialOrigins.courseNames(handouts)[paper.id] {
+                    OnCourseLabel(courses: courses)
+                }
             }
         }
         .padding(.vertical, 2)
@@ -165,16 +196,30 @@ struct PaperListView: View {
         case .failure(let error):
             importError = "Couldn’t open the file: \(error.localizedDescription)"
         case .success(let url):
-            guard let extracted = PDFTextExtractor.extract(from: url) else {
+            let title = url.deletingPathExtension().lastPathComponent
+            let needsAccess = url.startAccessingSecurityScopedResource()
+            let data = try? Data(contentsOf: url)
+            if needsAccess { url.stopAccessingSecurityScopedResource() }
+            guard let data else {
                 importError = "Couldn’t read that PDF."
                 return
             }
-            guard !extracted.looksScanned else {
-                importError = "This PDF appears to be scanned (no selectable text). Text extraction needs a PDF with a real text layer."
-                return
+            isReadingPDF = true
+            Task {
+                let extracted = await Task.detached(priority: .userInitiated) {
+                    PDFTextExtractor.extract(from: data)
+                }.value
+                isReadingPDF = false
+                guard let extracted else {
+                    importError = "Couldn’t read that PDF."
+                    return
+                }
+                guard !extracted.looksScanned else {
+                    importError = "This PDF appears to be scanned (no selectable text). Text extraction needs a PDF with a real text layer."
+                    return
+                }
+                tryImport(title: title, text: extracted.text, sourceURL: nil)
             }
-            let title = url.deletingPathExtension().lastPathComponent
-            tryImport(title: title, text: extracted.text, sourceURL: nil)
         }
     }
 
@@ -188,11 +233,11 @@ struct PaperListView: View {
         }
     }
 
-    private func createAndGenerate(title: String, text: String, sourceURL: String?, deckCount: Int, selectedWords: [String]?) {
+    private func createAndGenerate(title: String, text: String, sourceURL: String?) {
         let paper = StudyPaper(title: title, fullText: text, sourceURL: sourceURL)
         modelContext.insert(paper)
         try? modelContext.save()
-        startGeneration(for: paper, deckCount: deckCount, selectedWords: selectedWords)
+        startGeneration(for: paper)
     }
 
     private func findDuplicate(sourceURL: String?, title: String, text: String) -> StudyPaper? {
@@ -221,15 +266,12 @@ struct PaperListView: View {
         return k
     }
 
-    private func startGeneration(for paper: StudyPaper, deckCount: Int, selectedWords: [String]?) {
+    private func startGeneration(for paper: StudyPaper) {
         let svc = PaperStudyService(mlxService: mlxService, modelContext: modelContext)
         service = svc
         generatingPaper = paper
         Task {
-            await svc.generate(
-                for: paper, model: modelManager.selectedPaperModel,
-                deckCount: deckCount, questionCount: 6, selectedWords: selectedWords
-            )
+            await svc.generate(for: paper, model: modelManager.selectedPaperModel, questionCount: 6)
         }
     }
 
@@ -261,6 +303,8 @@ private struct PaperGeneratingView: View {
     let paper: StudyPaper
     let onClose: () -> Void
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -274,6 +318,7 @@ private struct PaperGeneratingView: View {
                 default:
                     ProgressView(value: service.progress)
                         .progressViewStyle(.linear)
+                        .tint(service.model.theme.accent)
                         .frame(maxWidth: 260)
                     Text(service.statusText).foregroundStyle(.secondary)
                     if service.phase == .loadingModel {
@@ -284,6 +329,9 @@ private struct PaperGeneratingView: View {
             }
             .padding()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
+            }
             .navigationTitle("Studying paper")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -298,8 +346,10 @@ private struct PaperGeneratingView: View {
 
 /// Paste a link to fetch and study its German text.
 private struct URLImportView: View {
+    var accent: Color = .accentColor
     var onFetched: (_ title: String, _ text: String, _ url: String) -> Void
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     @State private var urlText = ""
     @State private var loading = false
@@ -342,16 +392,18 @@ private struct URLImportView: View {
                         }
                     }
                 } header: {
-                    Text("Link")
+                    Text("Link").themedSectionHeader()
                 } footer: {
                     Text("Tested on German Reddit posts and the AI Factory Austria news page (ai-at.eu/news). Other sites may work too. but... lots of sites have bot protection. and this feature can be fickle. You can also save pages as PDFs in Safari and then upload the PDF if you're having trouble.")
                 }
+                .themedListRow()
 
                 if let error {
                     Section {
                         Label(error, systemImage: "exclamationmark.triangle.fill")
                             .font(.caption).foregroundStyle(.orange)
                     }
+                    .themedListRow()
                 }
 
                 Section {
@@ -370,14 +422,16 @@ private struct URLImportView: View {
                 } footer: {
                     Text("Reddit often blocks direct fetches. If the quick fetch fails, open the page in the in-app browser, log in or navigate to the post, then tap “Use this page”.")
                 }
+                .themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("Study a link")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             }
             .fullScreenCover(isPresented: $showBrowser) {
-                WebClipperView(initialURL: urlText.isEmpty ? nil : urlText) { title, text, url in
+                WebClipperView(initialURL: urlText.isEmpty ? nil : urlText, accent: accent) { title, text, url in
                     showBrowser = false
                     onFetched(title, text, url)
                     dismiss()
@@ -389,7 +443,7 @@ private struct URLImportView: View {
 
     /// Offer a one-tap paste when a URL is on the clipboard (like Maps' "paste copied link").
     private func checkClipboard() {
-        #if canImport(UIKit)
+        #if canImport(UIKit) || os(macOS)
         guard urlText.isEmpty else { return }
         let board = UIPasteboard.general
         // `hasURLs` / `hasStrings` don't expose content (no "pasted from…" banner); reading does.
@@ -421,4 +475,17 @@ private struct URLImportView: View {
             }
         }
     }
+}
+
+#Preview("Papers · 4 themes") {
+    ForEach(AppTheme.allCases) { theme in
+        NavigationStack {
+            PaperListView(
+                modelManager: MLXModelManager(),
+                mlxService: MLXGenerationService()
+            )
+        }
+        .environment(\.appTheme, theme)
+    }
+    .inMemoryModelContainer(for: [StudyPaper.self])
 }

@@ -1,0 +1,75 @@
+{
+  "total": {
+    "written": 546,
+    "pass": 546,
+    "candidates": 546
+  },
+  "slots": {
+    "nominativ/roles": {
+      "written": 42,
+      "pass": 42,
+      "candidates": 42
+    },
+    "akkusativ/roles": {
+      "written": 42,
+      "pass": 42,
+      "candidates": 42
+    },
+    "akkusativ/wer": {
+      "written": 42,
+      "pass": 42,
+      "candidates": 42
+    },
+    "akkusativ/probe": {
+      "written": 42,
+      "pass": 42,
+      "candidates": 42
+    },
+    "dativ/roles": {
+      "written": 42,
+      "pass": 42,
+      "candidates": 42
+    },
+    "dativ/wer": {
+      "written": 42,
+      "pass": 42,
+      "candidates": 42
+    },
+    "dativ/probe": {
+      "written": 42,
+      "pass": 42,
+      "candidates": 42
+    },
+    "genitiv/roles": {
+      "written": 42,
+      "pass": 42,
+      "candidates": 42
+    },
+    "genitiv/wer": {
+      "written": 42,
+      "pass": 42,
+      "candidates": 42
+    },
+    "genitiv/probe": {
+      "written": 42,
+      "pass": 42,
+      "candidates": 42
+    },
+    "alleFaelle/roles": {
+      "written": 42,
+      "pass": 42,
+      "candidates": 42
+    },
+    "alleFaelle/wer": {
+      "written": 42,
+      "pass": 42,
+      "candidates": 42
+    },
+    "alleFaelle/probe": {
+      "written": 42,
+      "pass": 42,
+      "candidates": 42
+    }
+  },
+  "rejects": {}
+}

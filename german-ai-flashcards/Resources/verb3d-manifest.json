@@ -1,0 +1,355 @@
+{
+  "relations": {
+    "verb3d-angst": {
+      "asset": "verb3d-angst",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-ekel": {
+      "asset": "verb3d-ekel",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-leiden": {
+      "asset": "verb3d-leiden",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-arbeiten": {
+      "asset": "verb3d-arbeiten",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-helfen": {
+      "asset": "verb3d-helfen",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-ernaehren": {
+      "asset": "verb3d-ernaehren",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-rudel": {
+      "asset": "verb3d-rudel",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-abhaengen": {
+      "asset": "verb3d-abhaengen",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-schreiben": {
+      "asset": "verb3d-schreiben",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-antworten": {
+      "asset": "verb3d-antworten",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-kuemmern": {
+      "asset": "verb3d-kuemmern",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-sorgen": {
+      "asset": "verb3d-sorgen",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-aufpassen": {
+      "asset": "verb3d-aufpassen",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-warten": {
+      "asset": "verb3d-warten",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-freuen_auf": {
+      "asset": "verb3d-freuen_auf",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-freuen_ueber": {
+      "asset": "verb3d-freuen_ueber",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-hoffen": {
+      "asset": "verb3d-hoffen",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-vorbereiten": {
+      "asset": "verb3d-vorbereiten",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-sprechen_ueber": {
+      "asset": "verb3d-sprechen_ueber",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-erzaehlen": {
+      "asset": "verb3d-erzaehlen",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-nachdenken": {
+      "asset": "verb3d-nachdenken",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-aergern": {
+      "asset": "verb3d-aergern",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-beschweren": {
+      "asset": "verb3d-beschweren",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-streiten": {
+      "asset": "verb3d-streiten",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-wundern": {
+      "asset": "verb3d-wundern",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-denken": {
+      "asset": "verb3d-denken",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-erinnern": {
+      "asset": "verb3d-erinnern",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-gewoehnen": {
+      "asset": "verb3d-gewoehnen",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-zweifeln": {
+      "asset": "verb3d-zweifeln",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-bitten": {
+      "asset": "verb3d-bitten",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-sprechen_mit": {
+      "asset": "verb3d-sprechen_mit",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-schimpfen": {
+      "asset": "verb3d-schimpfen",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-angeben": {
+      "asset": "verb3d-angeben",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-traeumen": {
+      "asset": "verb3d-traeumen",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-handeln": {
+      "asset": "verb3d-handeln",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-fragen": {
+      "asset": "verb3d-fragen",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-sehnen": {
+      "asset": "verb3d-sehnen",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-verlangen": {
+      "asset": "verb3d-verlangen",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    },
+    "verb3d-interesse": {
+      "asset": "verb3d-interesse",
+      "akkOffset": [
+        0,
+        0,
+        0
+      ],
+      "baked": true
+    }
+  }
+}

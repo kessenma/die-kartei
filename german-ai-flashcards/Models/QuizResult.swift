@@ -1,4 +1,3 @@
-import DieKarteiCore
 import Foundation
 import SwiftData
 

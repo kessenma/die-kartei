@@ -1,0 +1,369 @@
+{
+  "releases": [
+    {
+      "version": "unreleased",
+      "highlights": [
+        {
+          "title": "Schreibblatt · Writing sheet",
+          "detail": "With the wrist guard on, Nächste Tabelle brings the next table into view. After the flashcards you go straight on to the next part, and a finished set ends with a small cheer and one of your writing numbers.",
+          "symbol": "applepencil.and.scribble"
+        }
+      ]
+    },
+    {
+      "version": "1.7",
+      "date": "2026-11-08",
+      "highlights": [
+        {
+          "title": "Wortgruppen · Phrases",
+          "detail": "Phrases like „eine Störung beheben“ become cards that hide the verb or preposition for you to pick, added from Save phrase, a card's example sentence or a lesson's answers.",
+          "symbol": "text.word.spacing"
+        },
+        {
+          "title": "Zeichnen · Draw your words",
+          "detail": "Sketch words against the clock, draw over a picture in the Atelier, or paint by number, with pictures of each word in styles you pick.",
+          "symbol": "paintpalette"
+        },
+        {
+          "title": "Schreiben · Writing",
+          "detail": "Keep a German journal or write an essay to a prompt, by keyboard or Pencil, have the tutor check it sentence by sentence, and share what you find hard with your coach.",
+          "symbol": "square.and.pencil"
+        },
+        {
+          "title": "Übungen prüfen · Check your homework",
+          "detail": "Check a lesson's exercises against your teacher's own answer key, or show her answers right on the slide.",
+          "symbol": "pencil.and.list.clipboard"
+        },
+        {
+          "title": "Der Stift · Pencil",
+          "detail": "Pencil pages gain a highlighter, and notes paper beside a slide.",
+          "symbol": "applepencil.tip"
+        },
+        {
+          "title": "Bilder · Pictures",
+          "detail": "Sign in to OpenRouter once for all your devices, and a deck's pictures keep drawing while you use the rest of the app.",
+          "symbol": "cloud"
+        },
+        {
+          "title": "Schreibblatt · Writing sheet",
+          "detail": "Write a big deck in parts with flashcard checkpoints, keep your words floating beside the sheet, and see handwriting on your day tracker. Missed cards can ask to be written out.",
+          "symbol": "applepencil.and.scribble"
+        },
+        {
+          "title": "Wortliste · Word list",
+          "detail": "See a deck as one table with the words you missed and how often you wrote each by hand, test yourself, and send it to a tutor as a PDF, spreadsheet or text.",
+          "symbol": "tablecells"
+        },
+        {
+          "title": "Hören · Listening room",
+          "detail": "A new room on Home: type numbers you hear once, write down sentences from dictation and see which endings you missed, and track what your ear catches.",
+          "symbol": "headphones"
+        },
+        {
+          "title": "Worum geht's? · The gist of a story",
+          "detail": "In a story's Hören mode, guess the words first, listen with the text hidden, sum it up in English, then tick it against the story's key points.",
+          "symbol": "text.bubble"
+        },
+        {
+          "title": "Leicht · Easy practice",
+          "detail": "After a hard session, Today offers a quick round of cards you already know, and stories can be written in Leicht lesen: a level below yours, longer, with few new words.",
+          "symbol": "leaf"
+        },
+        {
+          "title": "Deutschkurs · Your class, everywhere",
+          "detail": "Conversations work in what your class covered, Today offers your class words and grammar, and a sent worksheet comes back a day and a week later, answers hidden.",
+          "symbol": "graduationcap"
+        },
+        {
+          "title": "Rund um die Stunde · Around each class",
+          "detail": "Prepare the day before, recall three things after, save questions for your teacher, keep her corrections as cards, rehearse with the tutor, and send her a progress report.",
+          "symbol": "calendar.badge.clock"
+        },
+        {
+          "title": "Erste Schritte · Getting started",
+          "detail": "Deutschkurs starts with a short setup for your class, your tutor or learning on your own, then a checklist that ticks itself off as you go. Restart it from the ? button.",
+          "symbol": "checklist"
+        },
+        {
+          "title": "Förderplan & Monatsbericht · Plans and a monthly note",
+          "detail": "Give a shaky grammar point ten days of short daily tasks, read a monthly note on what improved, and take a quick listening check every four weeks.",
+          "symbol": "calendar.badge.checkmark"
+        },
+        {
+          "title": "Stammtisch · Keep up with a real chat",
+          "detail": "A free conversation where the topic jumps every few turns, an optional timer has the tutor move on, background noise is optional, and Ach so! or Genau. is one tap.",
+          "symbol": "person.3.fill"
+        },
+        {
+          "title": "Lebenslauf · Your résumé in interviews",
+          "detail": "Import your CV, edit a short German profile, and the recruiter asks about your own career, with or without a job posting. It stays on this device.",
+          "symbol": "person.text.rectangle"
+        }
+      ]
+    },
+    {
+      "version": "1.6",
+      "date": "2026-11-03",
+      "highlights": [
+        {
+          "title": "Die vier Fälle · The four cases",
+          "detail": "Grammatik is a path through Nominativ, Akkusativ, Dativ and Genitiv, in rooms: a lesson with die Figur, seven worksheet stories, eight explainers, the Endungs-Werkstatt, and a room that starts from the English sentence. Every exercise shows a small drawing of what it asks.",
+          "symbol": "text.magnifyingglass"
+        },
+        {
+          "title": "Grammatik-Übungen · Grammar drills",
+          "detail": "Over 700 drill sentences plus Finde den Fehler, a 60-second Blitzrunde, Dativ-Verben, the Pronomen-Brücke, reflexive pronouns, the article chart as a drag-and-drop board, and a drill on the forms you mix up most.",
+          "symbol": "exclamationmark.magnifyingglass"
+        },
+        {
+          "title": "iCloud-Sync · iCloud Sync",
+          "detail": "Cards, progress, streak, stories and conversations stay the same on your devices through your own iCloud, and a sync report says in plain words what iCloud is waiting on.",
+          "symbol": "icloud"
+        },
+        {
+          "title": "Deutschkurs · Class notes",
+          "detail": "Log what each class covered, read handouts side by side with tap-to-translate, and turn a word list, photo or PDF into a deck for that course.",
+          "symbol": "graduationcap.fill"
+        },
+        {
+          "title": "Tastatur · German keyboard",
+          "detail": "A keyboard for Mail, Messages and anywhere you write: Auf Deutsch translates, Korrigieren fixes your German, hold a, o, u or s for ä, ö, ü and ß. On your device, never Full Access.",
+          "symbol": "keyboard"
+        },
+        {
+          "title": "Wortschatz · One word box for A1–B1",
+          "detail": "The three Goethe lists share one box, with new words in daily portions and every word's status to browse.",
+          "symbol": "archivebox"
+        },
+        {
+          "title": "Karteikarten · Flashcards",
+          "detail": "Nouns hide their article until you flip, cards show plural and Perfekt forms with real native sentences, a picture can fill the whole card, missed cards come back soon, several decks can be studied as one session, and a deck can be shared with its progress.",
+          "symbol": "rectangle.stack.fill"
+        },
+        {
+          "title": "Dein Weg · Your journey",
+          "detail": "A timeline with badges, a „Weißt du es noch?“ check on older words, and a Lernpyramide of what you've proven.",
+          "symbol": "map"
+        },
+        {
+          "title": "Bewerbung · Job prep",
+          "detail": "Save a job posting from the browser, study its language, and rehearse the interview for that role.",
+          "symbol": "briefcase"
+        },
+        {
+          "title": "Gespräch · Conversations",
+          "detail": "Type a turn instead of speaking, switch between German and English keyboards, and pick an interrupted chat back up.",
+          "symbol": "bubble.left.and.bubble.right"
+        },
+        {
+          "title": "Verben mit Präpositionen · Verbs with prepositions",
+          "detail": "42 pairs like warten auf, each with a 3D scene: cards, a case drill, gap fills, Die Falle, and spaced review that shows up on Today.",
+          "symbol": "link"
+        },
+        {
+          "title": "Bilder · Pictures",
+          "detail": "Draw card and story pictures in seconds with Muse Image or Nano Banana on your own OpenRouter account, or much sharper ones on your Mac and send a deck there from your iPhone.",
+          "symbol": "cloud"
+        },
+        {
+          "title": "Die Kartei für Mac · Die Kartei on Mac",
+          "detail": "Study on your Mac with the same decks, tutors and progress via iCloud, and fix text in any Mac app with Services ▸ Auf Deutsch or Deutsch korrigieren.",
+          "symbol": "macbook"
+        },
+        {
+          "title": "Vokabelfolien · Vocabulary slides",
+          "detail": "A teacher's vocabulary PDF becomes a deck, from a file or a link: pick the pages by looking at them, see which words the sheet lists twice, and each card keeps the example sentence, the plural and its word class.",
+          "symbol": "rectangle.stack.badge.plus"
+        },
+        {
+          "title": "Stabiler · More stable",
+          "detail": "Runs more reliably on devices with less memory; Settings ▸ Speicher shows what's using it.",
+          "symbol": "checkmark.shield"
+        },
+        {
+          "title": "Schreibblatt · Writing sheet",
+          "detail": "Write your words out by hand with the Apple Pencil, or share the tables as a PDF to print.",
+          "symbol": "pencil.and.outline"
+        },
+        {
+          "title": "Grammatik · Grammar tab",
+          "detail": "Grammar has a tab of its own, with a progress screen for the days you practised and how often each case comes out right first try.",
+          "symbol": "checklist"
+        },
+        {
+          "title": "Spiele · Games",
+          "detail": "A new Spiele room on Home. Galgenmännchen hides a word from any deck or Goethe list and gives you six tries, with die Figur on a tower, a balloon or a scaffold.",
+          "symbol": "gamecontroller"
+        },
+        {
+          "title": "Übungen · Homework from a lesson PDF",
+          "detail": "Pick the exercises left over from class, answer them here or on the slides with the Pencil, and send your teacher her own slides filled in.",
+          "symbol": "pencil.and.list.clipboard"
+        },
+        {
+          "title": "Der Stift · Pencil",
+          "detail": "Writing pages fill the screen with a slim Pencil bar instead of the system palette: double-tap to undo, circle a word to erase it. Schreibblatt sheets can go landscape, two by two, and be marked Fertig.",
+          "symbol": "applepencil.tip"
+        }
+      ]
+    },
+    {
+      "version": "1.4",
+      "date": "2026-09-05",
+      "highlights": [
+        {
+          "title": "Tutors for smaller phones",
+          "detail": "Additional models that fit lower-end devices.",
+          "symbol": "iphone"
+        },
+        {
+          "title": "Vorstellungsgespräch · Job interview chats",
+          "detail": "A clearer flow for interview practice.",
+          "symbol": "briefcase"
+        },
+        {
+          "title": "Präpositionen in 3D · Preposition game",
+          "detail": "A new grammar game where every spatial word is acted out in 3D.",
+          "symbol": "cube"
+        },
+        {
+          "title": "Einstufung · Placement quiz",
+          "detail": "A new entrance quiz and proficiency selector, A1 to C1.",
+          "symbol": "checklist"
+        },
+        {
+          "title": "Lernpyramide · Learner pyramid",
+          "detail": "Track your progress layer by layer.",
+          "symbol": "triangle"
+        },
+        {
+          "title": "Easier story translation",
+          "detail": "Unknown words in short stories are simpler to look up.",
+          "symbol": "book.pages"
+        },
+        {
+          "title": "Farbige Artikel · der, die, das in colour",
+          "detail": "Articles are colour-coded in conversation views.",
+          "symbol": "paintbrush"
+        },
+        {
+          "title": "New conversation animations",
+          "symbol": "bubble.left.and.bubble.right"
+        }
+      ]
+    },
+    {
+      "version": "1.3",
+      "date": "2026-07-21",
+      "highlights": [
+        {
+          "title": "German Tutor, a model fine-tuned for this app",
+          "detail": "Gemma 4 E4B, trained on a German tutoring dataset built for Die Kartei and running entirely on device. It writes every story and backs the coaching, cards and corrections.",
+          "symbol": "graduationcap"
+        },
+        {
+          "title": "Open model, open data",
+          "detail": "The model and its training data are public on Hugging Face.",
+          "symbol": "globe"
+        },
+        {
+          "title": "Story Mode · Lesen",
+          "detail": "Read a short story at your level, then answer comprehension questions in the format of the Goethe and ÖSD reading exams.",
+          "symbol": "book"
+        },
+        {
+          "title": "Illustrated stories, two voices",
+          "detail": "Stories can be illustrated on device, and separate male and female voices make dialogue sound like two people.",
+          "symbol": "photo"
+        },
+        {
+          "title": "A coach that watches where you struggle",
+          "detail": "Weak spots from cards, games and chats come back as targeted drills, and a streak calendar on Home shows each day's practice.",
+          "symbol": "figure.mind.and.body"
+        },
+        {
+          "title": "Two games",
+          "detail": "Vocab Matching with your own decks, and Der/Die/Das from the on-device dictionary.",
+          "symbol": "gamecontroller"
+        },
+        {
+          "title": "Bulk jobs",
+          "detail": "Queue the heavy work, illustrated decks and story images, and let it run in one pass.",
+          "symbol": "tray.full"
+        },
+        {
+          "title": "Smarter article checking",
+          "detail": "Every card is checked against the bundled Wiktionary. Compounds take the gender of their last part, reliable endings cover most of the rest, and nouns with two valid articles are no longer flagged.",
+          "symbol": "checkmark.seal"
+        },
+        {
+          "title": "Reminders on your terms",
+          "detail": "Choose the cadence or turn them off, all inside the app.",
+          "symbol": "bell.badge"
+        },
+        {
+          "title": "Rebuilt navigation and haptics",
+          "detail": "New navigation now that there is more to reach, plus haptics on flashcard and multiple-choice answers with settings to tune them.",
+          "symbol": "hand.tap"
+        }
+      ]
+    },
+    {
+      "version": "1.2",
+      "date": "2026-06-12",
+      "highlights": [
+        {
+          "title": "KI-Sprachchat · AI Voice Chat",
+          "detail": "Practice speaking German out loud in 20+ everyday scenarios or on a grammar focus, and get corrected as you go.",
+          "symbol": "waveform"
+        },
+        {
+          "title": "Hints, translations, replies read aloud",
+          "detail": "Tap any word for its meaning, and every reply can be read aloud.",
+          "symbol": "speaker.wave.2"
+        },
+        {
+          "title": "Sag es auf Deutsch · Say it in German",
+          "detail": "Work out what you want to say from English, then get coached through saying it.",
+          "symbol": "text.bubble"
+        },
+        {
+          "title": "Coaching report after every chat",
+          "detail": "Each conversation ends with a report and can become a flashcard deck.",
+          "symbol": "doc.text"
+        },
+        {
+          "title": "Save phrases you hear in the wild",
+          "detail": "Double-tap or highlight any phrase in a chat to save it. The AI weaves active ones into later chats, and saved phrases can become decks.",
+          "symbol": "bookmark"
+        },
+        {
+          "title": "Cards from your own material",
+          "detail": "Scan PDFs, scan photos, or paste a webpage to build cards and conversations.",
+          "symbol": "doc.viewfinder"
+        },
+        {
+          "title": "The app takes on your model's look",
+          "detail": "Colours follow whichever AI model you pick, conversations included.",
+          "symbol": "paintpalette"
+        },
+        {
+          "title": "Also in this update",
+          "detail": "A Conversation settings tab, step-by-step instructions for Apple's higher-quality voices, smarter model loading, and the first Akkusativ and Dativ cards in the Goethe decks.",
+          "symbol": "ellipsis.circle"
+        }
+      ]
+    },
+    {
+      "version": "1.0",
+      "date": "2026-05-17",
+      "highlights": [
+        {
+          "title": "Die Kartei",
+          "detail": "AI flashcards for German: generate a deck on any topic, study it, and keep the words that stick.",
+          "symbol": "rectangle.stack"
+        }
+      ]
+    }
+  ]
+}

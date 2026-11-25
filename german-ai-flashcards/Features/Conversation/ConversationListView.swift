@@ -1,4 +1,3 @@
-import DieKarteiCore
 import SwiftUI
 import SwiftData
 
@@ -6,6 +5,9 @@ import SwiftData
 struct ConversationListView: View {
     @Bindable var modelManager: MLXModelManager
     var mlxService: MLXGenerationService
+    /// When false (embedded as the Library's "Chats" section), the create-actions header and the
+    /// "+" toolbar are hidden so this reads as a pure browse/resume list of saved conversations.
+    var showsCreateActions: Bool = true
 
     @Query(sort: \ChatConversation.updatedAt, order: .reverse) private var conversations: [ChatConversation]
     @Query private var decks: [SavedDeck]
@@ -14,53 +16,84 @@ struct ConversationListView: View {
     @State private var showSetup = false
     @State private var activeChat: ActiveChat?
     @State private var summaryConversation: ChatConversation?
+    @State private var filter = ConversationListFilter()
+
+    private var visibleConversations: [ChatConversation] {
+        conversations.filter(filter.matches)
+    }
+
+    /// Conversation types the library holds, in declaration order.
+    private var presentModes: [ConversationMode] {
+        let present = Set(conversations.map(\.mode))
+        return ConversationMode.allCases.filter { present.contains($0) }
+    }
+
+    /// Employers among the interview chats, most frequent first, one spelling per company.
+    private var presentCompanies: [String] {
+        var counts: [String: (label: String, count: Int)] = [:]
+        for convo in conversations where convo.mode == .interview {
+            guard let company = convo.jobCompany?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !company.isEmpty else { continue }
+            counts[ConversationListFilter.normalized(company), default: (company, 0)].count += 1
+        }
+        return counts.values
+            .sorted { $0.count != $1.count ? $0.count > $1.count : $0.label < $1.label }
+            .prefix(10)
+            .map(\.label)
+    }
 
     var body: some View {
         List {
-            Section {
-                Button {
-                    showSetup = true
-                } label: {
-                    Label("New Conversation", systemImage: "plus.bubble.fill")
-                        .font(.body.weight(.medium))
-                }
-                NavigationLink {
-                    PaperListView(modelManager: modelManager, mlxService: mlxService)
-                } label: {
-                    Label("Study a paper or link", systemImage: "doc.text.magnifyingglass")
-                }
-                NavigationLink {
-                    PhotoScanListView(modelManager: modelManager, mlxService: mlxService)
-                } label: {
-                    HStack {
-                        Label("Scan text from a photo", systemImage: "camera.viewfinder")
-                        Spacer()
-                        Text("Beta")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(.orange, in: Capsule())
+            if showsCreateActions {
+                Section {
+                    Button {
+                        showSetup = true
+                    } label: {
+                        Label("New Conversation", systemImage: "plus.bubble.fill")
+                            .font(.body.weight(.medium))
                     }
+                    NavigationLink {
+                        PhraseLibraryView(modelManager: modelManager, mlxService: mlxService)
+                    } label: {
+                        Label("Phrase library", systemImage: "ear.badge.waveform")
+                    }
+                } footer: {
+                    Text("Have a German conversation with the on-device AI — out loud, or typed when you'd rather stay quiet. Pick a topic, deck, or scenario, choose a grammar focus, and go: it corrects you as you do.")
+                        .font(.caption2)
                 }
-            } footer: {
-                Text("Have a spoken German conversation with the on-device AI. Pick a topic, deck, or scenario, choose a grammar focus, and talk — it corrects you as you go. Or upload a German paper to study and discuss.")
-                    .font(.caption2)
+                .themedListRow()
+            }
+
+            // One conversation can't be filtered into anything but itself.
+            if conversations.count > 1 {
+                filterSection
             }
 
             if conversations.isEmpty {
                 Section {
                     ContentUnavailableView(
                         "No conversations yet",
-                        systemImage: "waveform.and.mic",
-                        description: Text("Tap “New Conversation” to start talking.")
+                        systemImage: "bubble.left.and.text.bubble.right",
+                        description: Text("Tap “New Conversation” to start talking — or typing.")
                     )
                 }
+                .themedListRow()
+            } else if visibleConversations.isEmpty {
+                Section {
+                    ContentUnavailableView {
+                        Label("No conversations match", systemImage: "line.3.horizontal.decrease.circle")
+                    } description: {
+                        Text("Nothing in your library fits these filters yet.")
+                    } actions: {
+                        Button("Clear filters") { clearFilter() }
+                    }
+                }
+                .themedListRow()
             } else {
-                Section("Saved conversations") {
-                    ForEach(conversations) { convo in
+                Section {
+                    ForEach(visibleConversations) { convo in
                         Button {
-                            activeChat = ActiveChat(conversation: convo, config: makeConfig(for: convo))
+                            activeChat = ActiveChat(conversation: convo, config: convo.makeConfig(modelManager: modelManager, decks: decks))
                         } label: {
                             ConversationRow(conversation: convo)
                         }
@@ -81,23 +114,43 @@ struct ConversationListView: View {
                             }
                         }
                     }
+                } header: {
+                    HStack {
+                        Text("Saved conversations").themedSectionHeader()
+                        Spacer()
+                        if filter.isActive {
+                            Text("\(visibleConversations.count) of \(conversations.count)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
+                .themedListRow()
             }
         }
-        .navigationTitle("Conversation Practice")
+        .themedListScreen()
+        .navigationTitle(showsCreateActions ? "Conversation Practice" : "Library")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    showSetup = true
-                } label: {
-                    Image(systemName: "plus")
+            if showsCreateActions {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showSetup = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
                 }
             }
         }
         .sheet(isPresented: $showSetup) {
-            ConversationSetupView(modelManager: modelManager) { config in
+            ConversationSetupView(
+                modelManager: modelManager,
+                mlxService: mlxService,
+                onResume: { convo in
+                    showSetup = false
+                    resume(convo)
+                }
+            ) { config in
                 showSetup = false
                 startNewChat(with: config)
             }
@@ -123,7 +176,34 @@ struct ConversationListView: View {
         }
     }
 
+    // MARK: - Sections
+
+    private var filterSection: some View {
+        Section {
+            ConversationFilterBar(filter: $filter, modes: presentModes, companies: presentCompanies)
+                // The pills are their own chrome; a row card behind them would box in a strip
+                // that is meant to scroll past the section's edges.
+                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+        } header: {
+            HStack {
+                Text("Filter").themedSectionHeader()
+                Spacer()
+                if filter.isActive {
+                    Button("Clear") { clearFilter() }
+                        .font(.caption.weight(.semibold))
+                        .textCase(nil)          // grouped headers uppercase their text; a button isn't a header
+                }
+            }
+        }
+    }
+
     // MARK: - Actions
+
+    private func clearFilter() {
+        withAnimation(.snappy(duration: 0.25)) { filter = ConversationListFilter() }
+    }
 
     private func startNewChat(with config: ConversationConfig) {
         let convo = ChatConversation(config: config)
@@ -135,34 +215,22 @@ struct ConversationListView: View {
         }
     }
 
+    /// Open an existing chat from the setup sheet (an interview for a posting already prepared).
+    private func resume(_ convo: ChatConversation) {
+        // Same deferral as `startNewChat`: let the setup sheet finish dismissing first.
+        DispatchQueue.main.async {
+            activeChat = ActiveChat(conversation: convo, config: convo.makeConfig(modelManager: modelManager, decks: decks))
+        }
+    }
+
     private func delete(_ convo: ChatConversation) {
+        JobPostingSnapshotStore.delete(convo.jobSnapshotFile)
         modelContext.delete(convo)
         try? modelContext.save()
     }
 
-    private func makeConfig(for convo: ChatConversation) -> ConversationConfig {
-        let model = convo.model ?? modelManager.selectedChatModel
-        var c = ConversationConfig(model: model)
-        c.mode = convo.mode
-        c.deckIDs = convo.deckIDsRaw.compactMap { UUID(uuidString: $0) }
-        c.deckLabel = convo.deckLabel
-        let ids = Set(c.deckIDs)
-        c.deckWords = decks.filter { ids.contains($0.id) }.flatMap { $0.cards.map(\.germanWord) }
-        c.scenario = convo.scenario
-        c.customScenario = convo.customScenario ?? ""
-        c.focusAreas = convo.focusAreas
-        c.level = convo.level
-        c.formality = convo.formality
-        c.correctionsEnabled = convo.correctionsEnabled
-        c.strictness = convo.strictness
-        c.autoPlay = convo.autoPlay
-        c.eagerAssist = modelManager.chatEagerAssist
-        c.autoShowTranslation = modelManager.chatAutoShowTranslation
-        c.hintCount = modelManager.chatHintCount
-        c.paperTitle = convo.paperTitle
-        c.paperContext = convo.paperContext
-        return c
-    }
+    // `makeConfig(for:)` moved to `ChatConversation.makeConfig(modelManager:decks:)`
+    // (ConversationLaunch.swift) so the Job prep hub can resume interviews the same way.
 }
 
 /// Presentation payload binding a conversation to its reconstructed config.
@@ -172,8 +240,11 @@ struct ActiveChat: Identifiable {
     var id: UUID { conversation.id }
 }
 
-private struct ConversationRow: View {
+/// One saved chat. Internal rather than private since the Job prep hub lists interviews with it.
+struct ConversationRow: View {
     let conversation: ChatConversation
+
+    @Environment(\.appTheme) private var appTheme
 
     private var hintsUsed: Int {
         conversation.summary?.hintsUsed ?? conversation.messages.filter { $0.usedHint }.count
@@ -189,7 +260,7 @@ private struct ConversationRow: View {
                 .foregroundStyle(.tint)
                 .frame(width: 32, height: 32)
                 .background(Color.accentColor.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(conversation.title)
@@ -212,6 +283,10 @@ private struct ConversationRow: View {
                         Label("\(translationsUsed)", systemImage: "character.book.closed.fill")
                             .labelStyle(.titleAndIcon)
                     }
+                    if conversation.inputMode == .type {
+                        Label("Typed", systemImage: "keyboard.fill")
+                            .labelStyle(.iconOnly)
+                    }
                     if conversation.summary != nil {
                         Label("Report", systemImage: "checkmark.seal.fill")
                             .labelStyle(.iconOnly)
@@ -224,10 +299,10 @@ private struct ConversationRow: View {
 
             Spacer()
 
-            if let logo = conversation.model?.logoName {
-                Image(logo).resizable().scaledToFit()
+            if let model = conversation.model {
+                model.logoImage.resizable().scaledToFit()
                     .frame(width: 22, height: 22)
-                    .clipShape(RoundedRectangle(cornerRadius: 5))
+                    .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(5)))
             }
             Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
         }
@@ -238,6 +313,15 @@ private struct ConversationRow: View {
         var parts: [String] = []
         if conversation.mode == .scenario, let scenario = conversation.scenario {
             parts.append(scenario.germanTitle)
+        } else if conversation.mode == .interview {
+            // "Interview prep · Technical round · Company · City": what the chat rehearsed.
+            parts.append(conversation.mode.libraryLabel)
+            if let round = conversation.interviewRound { parts.append(round.label) }
+            for detail in [conversation.jobCompany, conversation.jobLocation] {
+                if let detail = detail?.trimmingCharacters(in: .whitespacesAndNewlines), !detail.isEmpty {
+                    parts.append(detail)
+                }
+            }
         } else {
             parts.append(conversation.mode.rawValue)
         }
@@ -247,5 +331,15 @@ private struct ConversationRow: View {
             parts.append(focus.map(\.germanLabel).joined(separator: ", "))
         }
         return parts.joined(separator: " · ")
+    }
+}
+
+#Preview("Conversations · 4 themes") {
+    ForEach(AppTheme.allCases) { theme in
+        NavigationStack {
+            ConversationListView(modelManager: MLXModelManager(), mlxService: MLXGenerationService())
+        }
+        .environment(\.appTheme, theme)
+        .inMemoryModelContainer(for: [ChatConversation.self, SavedDeck.self])
     }
 }

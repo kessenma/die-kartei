@@ -1,9 +1,10 @@
-import DieKarteiCore
 import SwiftUI
 
 /// The full, categorized scenario list. Tap one to select it and pop back.
 struct ScenarioPickerView: View {
     @Binding var selected: ConversationScenario
+    var modelManager: MLXModelManager
+    var mlxService: MLXGenerationService
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -15,15 +16,19 @@ struct ScenarioPickerView: View {
                     }
                 } header: {
                     Label("\(category.germanTitle) · \(category.englishTitle)", systemImage: category.systemImage)
+                        .themedSectionHeader()
                 }
+                .themedListRow()
             }
 
             Section {
                 row(.custom)
             } header: {
-                Text("Your own")
+                Text("Your own").themedSectionHeader()
             }
+            .themedListRow()
         }
+        .themedListScreen()
         .navigationTitle("Scenarios")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -33,6 +38,13 @@ struct ScenarioPickerView: View {
                     dismiss()
                 } label: {
                     Label("Surprise me", systemImage: "die.face.5.fill")
+                }
+            }
+            ToolbarItem(placement: .topBarLeading) {
+                NavigationLink {
+                    PhraseLibraryView(modelManager: modelManager, mlxService: mlxService)
+                } label: {
+                    Label("Phrase library", systemImage: "ear.badge.waveform")
                 }
             }
         }

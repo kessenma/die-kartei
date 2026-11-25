@@ -1,5 +1,5 @@
-import DieKarteiCore
 import SwiftUI
+import SwiftData
 
 enum WordTypeFilter: String, CaseIterable, Codable {
     case all = "All"
@@ -26,18 +26,31 @@ struct HomeView: View {
     var onGenerationComplete: () -> Void
 
     @FocusState private var isTopicFieldFocused: Bool
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var theme
+    @Environment(ActivityRouter.self) private var router
+    /// "Flashcards from a document": the other way to a deck, next to the topic form.
+    @State private var showDocumentDeck = false
     @State private var topic = ""
-    @State private var wordCount = 10
-    @State private var includeExamples = true
-    @State private var includeGender = true
-    @State private var wordTypeFilter: WordTypeFilter = .all
-    @State private var includeConjugations = false
-    @State private var selectedTenses: Set<String> = ["Präsens"]
+    @State private var isOptionsExpanded = false
     @State private var showingTenseInfo: TenseInfo?
     @State private var showingShortfallAlert = false
-    @State private var cacheRefreshID = UUID()
-    @State private var showingModelPicker = false
     @State private var showingTopicInfo = false
+    @State private var showingTopicBrowser = false
+    /// A fresh handful of bundled ideas for the chips, drawn once per visit to this screen.
+    @State private var suggestedTopics = FlashcardTopics.sample(8)
+    /// Briefly true after "Add to Batch Queue", to flash the confirmation state.
+    @State private var justQueued = false
+
+    // Persisted across launches so the only decision a returning user makes is the topic.
+    @AppStorage("home.wordCount") private var wordCount = 10
+    @AppStorage("home.includeExamples") private var includeExamples = true
+    @AppStorage("home.includeGender") private var includeGender = true
+    @AppStorage("home.wordTypeFilter") private var wordTypeFilter: WordTypeFilter = .all
+    @AppStorage("home.includeConjugations") private var includeConjugations = false
+    @AppStorage("home.selectedTenses") private var selectedTensesRaw = "Präsens"
+    /// Shared with Settings ▸ Cards and read by the flow through `CardImageTiming.current`.
+    @AppStorage(CardImageTiming.defaultsKey) private var imageTiming: CardImageTiming = .keptCards
 
     private let wordCountOptions = [5, 10, 15, 20, 30, 50]
 
@@ -81,151 +94,41 @@ struct HomeView: View {
     ]
 
     var body: some View {
-        NavigationStack {
-            Form {
+        Form {
                 modelSection
 
-                // MARK: Topic
-                Section {
-                    if activeModelIsReady {
-                        TextField("e.g. kitchen items, travel phrases, animals...", text: $topic)
-                            .textInputAutocapitalization(.never)
-                            .focused($isTopicFieldFocused)
-                            .onSubmit { isTopicFieldFocused = false }
-                    } else {
-                        Label("Select a model above to get started", systemImage: "arrow.up")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                } header: {
-                    HStack {
-                        Text("What do you want to learn?")
-                        Spacer()
-                        Button {
-                            showingTopicInfo = true
-                        } label: {
-                            Image(systemName: "info.circle")
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                } footer: {
-                    if activeModelIsReady && topic.trimmingCharacters(in: .whitespaces).isEmpty {
-                        Text("Enter a topic and the AI will generate vocabulary flashcards based on it.")
-                    }
-                }
-                .alert("How Topics Work", isPresented: $showingTopicInfo) {
-                    Button("Got it") {}
-                } message: {
-                    Text("Enter any topic — a theme, situation, or category — and the AI generates vocabulary flashcards tailored to it.\n\nExamples: \"kitchen items\", \"travel phrases\", \"animals\", \"business German\".")
-                }
+                topicSection
 
-                // MARK: Options
-                Section {
-                    Picker("Word type", selection: $wordTypeFilter) {
-                        ForEach(WordTypeFilter.allCases, id: \.self) { filter in
-                            Text(filter.rawValue).tag(filter)
-                        }
-                    }
-                    Toggle("Include example sentences", isOn: $includeExamples)
-                    if wordTypeFilter.includesNouns {
-                        Toggle("Include gender (der/die/das)", isOn: $includeGender)
-                    }
-                    if wordTypeFilter.includesVerbs {
-                        Toggle("Show conjugation tables", isOn: $includeConjugations)
-                        if includeConjugations && wordTypeFilter == .verbsAndAdjectives {
-                            Label("Conjugation tables apply to verbs only.", systemImage: "info.circle")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                } header: {
-                    Text("Options")
-                } footer: {
-                    wordTypeFooter
-                }
+                optionsSection
 
-                // MARK: Tenses to Include
-                if wordTypeFilter.includesVerbs {
-                    Section("Tenses to Include") {
-                        ForEach(tenses) { tense in
-                            HStack {
-                                Toggle(isOn: Binding(
-                                    get: { selectedTenses.contains(tense.id) },
-                                    set: { isOn in
-                                        if isOn {
-                                            selectedTenses.insert(tense.id)
-                                        } else if selectedTenses.count > 1 {
-                                            selectedTenses.remove(tense.id)
-                                        }
-                                    }
-                                )) {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(tense.german)
-                                        Text(tense.english)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
+                generateSection
 
-                                Button {
-                                    showingTenseInfo = tense
-                                } label: {
-                                    Image(systemName: "info.circle")
-                                        .foregroundStyle(.blue)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                    }
-                    .alert(item: $showingTenseInfo) { tense in
-                        Alert(
-                            title: Text("\(tense.german) — \(tense.english)"),
-                            message: Text("\(tense.explanation)\n\n\(tense.example)"),
-                            dismissButton: .default(Text("OK"))
-                        )
-                    }
-                }
-
-                // MARK: Word Count + Generate
-                Section {
-                    Picker("Number of words", selection: $wordCount) {
-                        ForEach(wordCountOptions, id: \.self) { n in
-                            Text("\(n)").tag(n)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                } header: {
-                    Text("How many Flashcards?")
-                }
-
-                Section {
-                    Button(action: generate) {
-                        Label("Generate Flashcards", systemImage: "sparkles")
-                    }
-                    .disabled(
-                        topic.trimmingCharacters(in: .whitespaces).isEmpty
-                        || service.isGenerating
-                        || !service.isAvailable
-                    )
-                }
+                documentSection
 
                 if let error = service.errorMessage {
                     Section {
                         Label(error, systemImage: "exclamationmark.triangle")
                             .foregroundStyle(.red)
                     }
+                    .themedListRow()
                 }
             }
             .navigationTitle("Create")
+            // Was `.tint(activeTheme?.accent)`; the theme resolves the same model accent on Klar
+            // and asserts its own everywhere else.
+            .themedListScreen()
             .scrollDismissesKeyboard(.interactively)
-            .contentMargins(.bottom, 120)
-            .sheet(isPresented: $showingModelPicker) {
-                modelPickerSheet
-            }
             .overlay {
-                if service.isGenerating {
+                // Stays up through the picture phase — one operation, two phases.
+                if service.isGenerating || service.isDrawingImages {
                     generatingOverlay
+                }
+            }
+            .sheet(isPresented: $showDocumentDeck) {
+                DocumentDeckImportView(modelManager: service.modelManager, mlxService: service.mlxService) { deck in
+                    DispatchQueue.main.async {
+                        router.launch(.cardDeck(DeckStore(modelContext: modelContext).session(for: deck, style: service.modelManager.flashcardStyle)))
+                    }
                 }
             }
             .alert(
@@ -240,6 +143,262 @@ struct HomeView: View {
                     Text("Only \(shortfall.generated) unique cards could be generated for \"\(topic)\" (you requested \(shortfall.requested)). The model ran out of unique words for this topic.")
                 }
             }
+    }
+
+    // MARK: - Topic
+
+    private var trimmedTopic: String {
+        topic.trimmingCharacters(in: .whitespaces)
+    }
+
+    private var topicSection: some View {
+        Section {
+            if activeModelIsReady {
+                TextField("e.g. kitchen items, travel phrases, animals...", text: $topic)
+                    .textInputAutocapitalization(.never)
+                    .focused($isTopicFieldFocused)
+                    .onSubmit { isTopicFieldFocused = false }
+                if trimmedTopic.isEmpty {
+                    suggestionChips
+                }
+
+                Button {
+                    if let pick = FlashcardTopics.random(excluding: trimmedTopic) {
+                        topic = pick.en
+                        isTopicFieldFocused = false
+                    }
+                } label: {
+                    Label("Surprise me", systemImage: "die.face.5.fill")
+                }
+
+                Button {
+                    isTopicFieldFocused = false
+                    showingTopicBrowser = true
+                } label: {
+                    Label("Browse 100 topics", systemImage: "square.grid.2x2.fill")
+                }
+            } else {
+                Label("Select a model above to get started", systemImage: "arrow.up")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            HStack {
+                Text("What do you want to learn?").themedSectionHeader()
+                Spacer()
+                Button {
+                    showingTopicInfo = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+        } footer: {
+            if activeModelIsReady && trimmedTopic.isEmpty {
+                Text("Pick a suggestion or type your own topic.")
+            }
+        }
+        .themedListRow()
+        .alert("How Topics Work", isPresented: $showingTopicInfo) {
+            Button("Got it") {}
+        } message: {
+            Text("Enter any topic — a theme, situation, or category — and the AI generates vocabulary flashcards tailored to it.\n\nExamples: \"kitchen items\", \"travel phrases\", \"animals\", \"business German\".")
+        }
+        .sheet(isPresented: $showingTopicBrowser) {
+            FlashcardTopicBrowseSheet { picked in
+                topic = picked
+            }
+        }
+    }
+
+    private var suggestionChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(suggestedTopics) { idea in
+                    Button {
+                        topic = idea.en
+                        isTopicFieldFocused = false
+                    } label: {
+                        Text(idea.en)
+                            .font(.subheadline)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color(.tertiarySystemFill), in: theme.pillShape)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+        .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 10, trailing: 0))
+    }
+
+    // MARK: - Options
+
+    private var selectedTenses: Set<String> {
+        let parsed = Set(selectedTensesRaw.split(separator: ",").map(String.init))
+        return parsed.isEmpty ? ["Präsens"] : parsed
+    }
+
+    /// Selected tenses in canonical (pedagogical) order rather than Set order.
+    private var orderedSelectedTenses: [String] {
+        tenses.map(\.id).filter { selectedTenses.contains($0) }
+    }
+
+    private func setTense(_ id: String, isOn: Bool) {
+        var updated = selectedTenses
+        if isOn {
+            updated.insert(id)
+        } else if updated.count > 1 {
+            updated.remove(id)
+        }
+        selectedTensesRaw = tenses.map(\.id).filter { updated.contains($0) }.joined(separator: ",")
+    }
+
+    private var wordTypeSummary: String {
+        switch wordTypeFilter {
+        case .all: "all word types"
+        case .nouns: "nouns"
+        case .verbs: "verbs"
+        case .adjectives: "adjectives"
+        case .verbsAndAdjectives: "verbs & adjectives"
+        }
+    }
+
+    /// One-line recap of the current setup, shown while the options group is collapsed.
+    private var optionsSummary: String {
+        var parts = ["\(wordCount) cards", wordTypeSummary]
+        if includeExamples {
+            parts.append("examples")
+        }
+        if wordTypeFilter.includesVerbs {
+            let selected = orderedSelectedTenses
+            parts.append(selected.count == 1 ? selected[0] : "\(selected.count) tenses")
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    private var optionsSection: some View {
+        Section {
+            DisclosureGroup(isExpanded: $isOptionsExpanded) {
+                Picker("Word type", selection: $wordTypeFilter) {
+                    ForEach(WordTypeFilter.allCases, id: \.self) { filter in
+                        Text(filter.rawValue).tag(filter)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Number of cards")
+                    Picker("Number of cards", selection: $wordCount) {
+                        ForEach(wordCountOptions, id: \.self) { n in
+                            Text("\(n)").tag(n)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+                .padding(.vertical, 4)
+
+                Toggle("Example sentences", isOn: $includeExamples)
+
+                // The toggle needs the model on disk. This used to be a silent hide, on the grounds
+                // that there was "nothing useful to promise otherwise" — but the result was that
+                // anyone making flashcards never learned the feature existed at all. So the space
+                // now carries the offer instead of nothing, and it is dismissible for good.
+                if PictureEngine.isReady {
+                    Toggle(isOn: Binding(
+                        get: { service.modelManager.flashcardIllustrationsEnabled },
+                        set: { service.modelManager.flashcardIllustrationsEnabled = $0 }
+                    )) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("AI pictures")
+                            Text("Drawn \(PictureEngine.drawnWherePhrase) as part of this run. The deck opens with its pictures already in place.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if service.modelManager.flashcardIllustrationsEnabled {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Draw pictures for")
+                                .font(.subheadline)
+                            Picker("Draw pictures for", selection: $imageTiming) {
+                                ForEach(CardImageTiming.allCases) { timing in
+                                    Text(timing.label).tag(timing)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            Text(imageTiming.caption)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 4)
+
+                        CardImageStyleRow(mlxService: service.mlxService)
+                    }
+                } else {
+                    ModelUpgradeNudge(kind: .pictures)
+                }
+
+                if wordTypeFilter.includesNouns {
+                    Toggle("Gender (der/die/das)", isOn: $includeGender)
+                }
+
+                if wordTypeFilter.includesVerbs {
+                    Toggle("Conjugation tables", isOn: $includeConjugations)
+                    if includeConjugations && wordTypeFilter == .verbsAndAdjectives {
+                        Label("Conjugation tables apply to verbs only.", systemImage: "info.circle")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Text("Tenses to include")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    ForEach(tenses) { tense in
+                        HStack {
+                            Toggle(isOn: Binding(
+                                get: { selectedTenses.contains(tense.id) },
+                                set: { setTense(tense.id, isOn: $0) }
+                            )) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(tense.german)
+                                    Text(tense.english)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+
+                            Button {
+                                showingTenseInfo = tense
+                            } label: {
+                                Image(systemName: "info.circle")
+                                    .foregroundStyle(.blue)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Options")
+                    Text(optionsSummary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } footer: {
+            if isOptionsExpanded {
+                wordTypeFooter
+            }
+        }
+        .themedListRow()
+        .alert(item: $showingTenseInfo) { tense in
+            Alert(
+                title: Text("\(tense.german) — \(tense.english)"),
+                message: Text("\(tense.explanation)\n\n\(tense.example)"),
+                dismissButton: .default(Text("OK"))
+            )
         }
     }
 
@@ -259,245 +418,143 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - Generate
+
+    private var generateSection: some View {
+        Section {
+            Button(action: generate) {
+                Label("Generate \(wordCount) Flashcards", systemImage: "sparkles")
+                    .themedLabel(.headline, size: 17)
+                    .textCase(theme.uppercaseSectionHeaders ? .uppercase : nil)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .foregroundStyle(activeTheme == nil ? AnyShapeStyle(.tint) : AnyShapeStyle(.white))
+            }
+            .disabled(generateDisabled)
+            .listRowBackground(generateRowBackground)
+        } footer: {
+            // Same setup, but queued for later instead of generated now (runs from
+            // Home ▸ All Activities ▸ Batch). Doesn't need the model loaded.
+            Button(action: addToQueue) {
+                Label(
+                    justQueued ? "Added to the Batch Queue" : "Add to Batch Queue instead",
+                    systemImage: justQueued ? "checkmark.circle.fill" : "text.badge.plus"
+                )
+                .font(.subheadline)
+            }
+            .disabled(trimmedTopic.isEmpty || justQueued)
+            .frame(maxWidth: .infinity)
+            .padding(.top, 4)
+        }
+    }
+
+    /// The other door: cards from a document instead of a topic. Needs no model loaded for a
+    /// two-column word list; the tutor only steps in to translate what the learner highlighted.
+    private var documentSection: some View {
+        Section {
+            Button {
+                isTopicFieldFocused = false
+                showDocumentDeck = true
+            } label: {
+                Label("Flashcards from a document", systemImage: "doc.plaintext")
+            }
+        } header: {
+            Text("Oder aus einem Dokument · Or from a document").themedSectionHeader()
+        } footer: {
+            Text("A teacher's word list is paired into cards automatically. In a story or a handout, highlight the phrases you want; each becomes one card. Pick a course and the deck shows on its page; the document is kept, so it can join the course as a handout later.")
+        }
+        .themedListRow()
+    }
+
+    private func addToQueue() {
+        isTopicFieldFocused = false
+        let hasVerbs = wordTypeFilter.includesVerbs
+        let job = BatchJob.flashcards(
+            topic: trimmedTopic,
+            wordCount: wordCount,
+            includeExamples: includeExamples,
+            includeGender: includeGender,
+            wordTypeFilter: wordTypeFilter,
+            includeConjugations: hasVerbs && includeConjugations,
+            selectedTenses: hasVerbs ? Array(selectedTenses) : [],
+            withImages: service.modelManager.flashcardIllustrationsEnabled && PictureEngine.isReady,
+            generatorRaw: service.modelManager.selectedMLXModel.rawValue,
+            sortOrder: BatchQueueService.shared.nextSortOrder(in: modelContext)
+        )
+        modelContext.insert(job)
+        try? modelContext.save()
+        justQueued = true
+        topic = ""
+        Task {
+            try? await Task.sleep(for: .seconds(1.6))
+            justQueued = false
+        }
+    }
+
     @ViewBuilder
     private var generatingOverlay: some View {
+        let illustration = DeckIllustrationService.shared
         GeneratingFlashcardsView(
             progress: service.generationProgress,
             cardsGenerated: service.cardsGenerated,
             cardsRequested: service.cardsRequested,
             isValidating: service.isValidating,
             topic: topic,
-            startTime: service.generationStartTime ?? Date(),
+            startTime: service.generationStartTime ?? service.drawingImagesStartTime ?? Date(),
+            model: service.modelManager.selectedMLXModel,
             generatedWords: service.generatedCards.map { $0.englishTranslation },
             streamingTokenCount: service.mlxService.streamingTokenCount,
             currentBatchSize: service.currentBatchSize,
             currentBatchIndex: service.currentBatchIndex,
-            onStop: { service.stopGeneration() }
+            onStop: { service.stopGeneration() },
+            isDrawingImages: service.isDrawingImages,
+            imagesDrawn: illustration.completedCount,
+            imagesTotal: illustration.totalCount,
+            imageProgress: illustration.progress,
+            onStopImages: { illustration.stop() }
         )
     }
 
-    // MARK: - Model Status & Picker
-
-    private var activeModel: MLXModel {
-        let mlxService = service.mlxService
-        let modelManager = service.modelManager
-        if let current = mlxService.currentModel, mlxService.isModelLoaded {
-            return current
-        }
-        return modelManager.selectedMLXModel
-    }
-
-    private var activeModelName: String {
-        activeModel.rawValue
-    }
+    // MARK: - Model Status
 
     private var activeModelIsReady: Bool {
         service.isAvailable
     }
 
+    /// Brand theme of the model currently loaded in memory, or `nil` when none is ready. Drives the
+    /// per-model tint of the whole form and the Generate button's gradient.
+    private var activeTheme: ModelTheme? {
+        service.mlxService.loadedModel?.theme
+    }
+
+    private var generateDisabled: Bool {
+        trimmedTopic.isEmpty
+        || service.isGenerating
+        || service.isDrawingImages
+        || !service.isAvailable
+    }
+
+    /// A brand-gradient fill for the Generate button once a model is loaded (it's only enabled then),
+    /// dimmed while disabled; falls back to the theme's own surface otherwise. The gradient is the
+    /// model's, deliberately: the app theme owns the chrome, `ModelTheme` still owns this button.
     @ViewBuilder
+    private var generateRowBackground: some View {
+        if let activeTheme {
+            activeTheme.linear.opacity(generateDisabled ? 0.4 : 1)
+        } else {
+            theme.surface
+        }
+    }
+
     private var modelSection: some View {
-        let mlxService = service.mlxService
-
-        Section {
-            // Current model indicator — tap to open picker
-            Button {
-                showingModelPicker = true
-            } label: {
-                HStack {
-                    Image(activeModel.logoName)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 28, height: 28)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(activeModelName)
-                            .foregroundStyle(.primary)
-                        if mlxService.isLoading {
-                            Text("Loading…")
-                                .font(.caption)
-                                .foregroundStyle(.orange)
-                        } else if activeModelIsReady {
-                            Text("Ready")
-                                .font(.caption)
-                                .foregroundStyle(.green)
-                        } else {
-                            Text("Not loaded")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .disabled(mlxService.isLoading)
-
-            // Inline loading progress when an MLX model is being loaded
-            if mlxService.isLoading {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .controlSize(.small)
-                        Image(activeModel.logoName)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 18, height: 18)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
-                        Text(mlxService.downloadInfo ?? "Loading model…")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    if let progress = mlxService.downloadProgress, progress > 0 {
-                        ProgressView(value: progress)
-                    } else {
-                        ProgressView()
-                            .progressViewStyle(.linear)
-                    }
-                    HStack {
-                        if let start = mlxService.loadStartTime {
-                            TimelineView(.periodic(from: .now, by: 1)) { _ in
-                                Text("Elapsed: \(elapsedString(since: start))")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .monospacedDigit()
-                            }
-                        }
-                        Spacer()
-                        if let bytes = mlxService.downloadBytesInfo {
-                            Text(bytes)
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-                    }
-                    Button("Cancel", role: .destructive) {
-                        mlxService.cancelLoad()
-                    }
-                    .font(.caption)
-                }
-            }
-        } header: {
-            Label("Model", systemImage: "cpu")
-        }
-
-        if let error = mlxService.loadError {
-            Section {
-                Label(error, systemImage: "exclamationmark.triangle")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
-        }
-    }
-
-    // MARK: - Model Picker Sheet
-
-    @ViewBuilder
-    private var modelPickerSheet: some View {
-        let mlxService = service.mlxService
-        let modelManager = service.modelManager
-        let downloadedModels = MLXModel.allCases.filter { isDownloaded($0) }
-        let lastLoaded = modelManager.lastLoadedModel
-
-        NavigationStack {
-            List {
-                Section {
-                    if downloadedModels.isEmpty {
-                        Label("No models downloaded yet. Go to Settings to download one.", systemImage: "arrow.down.circle")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(downloadedModels) { model in
-                            let isActive = mlxService.isModelLoaded && mlxService.currentModel == model
-                            let isLastUsed = lastLoaded == model && !isActive
-
-                            Button {
-                                modelManager.selectedMLXModel = model
-                                showingModelPicker = false
-                                Task {
-                                    await mlxService.loadModel(model)
-                                    cacheRefreshID = UUID()
-                                }
-                            } label: {
-                                HStack {
-                                    Image(model.logoName)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 28, height: 28)
-                                        .clipShape(RoundedRectangle(cornerRadius: 6))
-
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        HStack(spacing: 6) {
-                                            Text(model.rawValue)
-                                                .foregroundStyle(.primary)
-                                            if isLastUsed {
-                                                Text("Last used")
-                                                    .font(.caption2)
-                                                    .fontWeight(.semibold)
-                                                    .padding(.horizontal, 5)
-                                                    .padding(.vertical, 2)
-                                                    .background(Color.secondary.opacity(0.12))
-                                                    .foregroundStyle(.secondary)
-                                                    .clipShape(Capsule())
-                                            }
-                                        }
-                                        Text("~\(formattedSize(model.approximateSizeMB))")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    Spacer()
-                                    if isActive {
-                                        Image(systemName: "checkmark")
-                                            .foregroundStyle(.tint)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } header: {
-                    Text("MLX Models")
-                } footer: {
-                    Text("Download more models in Settings.")
-                }
-            }
-            .navigationTitle("Select Model")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { showingModelPicker = false }
-                }
-            }
-        }
-        .onChange(of: mlxService.currentModel) { _, newModel in
-            if let model = newModel {
-                service.modelManager.lastLoadedModel = model
-            }
-        }
-        .presentationDetents([.medium])
-    }
-
-    private func isDownloaded(_ model: MLXModel) -> Bool {
-        _ = cacheRefreshID
-        return model.isDownloaded
-    }
-
-    private func formattedSize(_ mb: Int) -> String {
-        if mb >= 1000 {
-            let gb = Double(mb) / 1000.0
-            return String(format: "%.1f GB", gb)
-        }
-        return "\(mb) MB"
-    }
-
-    private func elapsedString(since start: Date) -> String {
-        let seconds = Int(Date().timeIntervalSince(start))
-        if seconds < 60 {
-            return "\(seconds)s"
-        }
-        return "\(seconds / 60)m \(seconds % 60)s"
+        ModelPickerButton(
+            selection: Binding(
+                get: { service.modelManager.selectedMLXModel },
+                set: { service.modelManager.selectedMLXModel = $0 }
+            ),
+            modelManager: service.modelManager,
+            mlxService: service.mlxService
+        )
     }
 
     private func generate() {
@@ -515,9 +572,11 @@ struct HomeView: View {
             )
             if service.wasStoppedEarly {
                 if !service.generatedCards.isEmpty {
+                    await drawPicturesIfTimedForEveryCard()
                     onGenerationComplete()
                 }
             } else if service.errorMessage == nil {
+                await drawPicturesIfTimedForEveryCard()
                 if service.uniqueShortfall != nil {
                     showingShortfallAlert = true
                 } else {
@@ -526,6 +585,16 @@ struct HomeView: View {
             }
         }
     }
+
+    /// The `CardImageTiming.everyCard` half of the picture setting: the words are done, so draw
+    /// their pictures now, before the review, instead of after the deck is saved. The other
+    /// timing (`.keptCards`) draws in `ContentView` once the learner has picked.
+    private func drawPicturesIfTimedForEveryCard() async {
+        guard service.modelManager.flashcardIllustrationsEnabled,
+              PictureEngine.isReady,
+              CardImageTiming.current == .everyCard,
+              !service.generatedCards.isEmpty
+        else { return }
+        await service.drawDraftImages()
+    }
 }
-
-

@@ -1,4 +1,3 @@
-import DieKarteiCore
 import SwiftUI
 import SwiftData
 
@@ -21,6 +20,13 @@ extension CardDeckView {
         isPaused = false
         hasStarted = false
         currentIndex = 0
+        cardOrder = []
+        cardPosition = 0
+        ankiDueIndices = []
+        ankiDuePosition = 0
+        sessionDueCount = 0
+        sessionLapses = []
+        requeueCounts = [:]
         isFlipped = false
         cardResults = [:]
         ankiRatings = [:]
@@ -44,7 +50,9 @@ extension CardDeckView {
     }
 
     func savePauseProgress() {
-        guard let deckID, let deck = fetchDeck(for: deckID) else { return }
+        // A review of the missed cards comes after the session was recorded; resuming it later
+        // would replay it as a full session and score it again.
+        guard !isReviewingMissed, let deckID, let deck = fetchDeck(for: deckID) else { return }
         let progress = DeckSessionProgress(
             cardIndex: currentIndex,
             elapsedSeconds: elapsedSeconds,
@@ -54,7 +62,12 @@ extension CardDeckView {
             leitnerResults: leitnerResults.isEmpty ? nil : leitnerResults,
             ankiDueIndices: ankiDueIndices.isEmpty ? nil : ankiDueIndices,
             ankiDuePosition: isSRSMode ? ankiDuePosition : nil,
-            cardGermanWords: cards.map { $0.germanWord }
+            cardGermanWords: cards.map { $0.germanWord },
+            sessionDueCount: isSRSMode ? sessionDueCount : nil,
+            sessionLapses: sessionLapses.isEmpty ? nil : sessionLapses.sorted(),
+            cardPosition: isSRSMode ? nil : cardPosition,
+            showGermanFirst: showGermanFirst,
+            cardOrder: (isSRSMode || cardOrder.count != cards.count) ? nil : cardOrder
         )
         deck.pausedProgressData = try? JSONEncoder().encode(progress)
         deck.pausedAt = .now
@@ -69,6 +82,7 @@ extension CardDeckView {
     }
 
     func resumeFromSavedProgress(_ progress: DeckSessionProgress) {
+        isReviewingMissed = false
         currentIndex = progress.cardIndex
         elapsedSeconds = progress.elapsedSeconds
         if let style = FlashcardStyle(rawValue: progress.studyModeRaw) { localStyle = style }
@@ -79,14 +93,28 @@ extension CardDeckView {
         leitnerResults = progress.leitnerResults ?? [:]
         ankiDueIndices = progress.ankiDueIndices ?? []
         ankiDuePosition = progress.ankiDuePosition ?? 0
+        // A session saved before the re-queue existed had no repeats, so its due list is its count.
+        sessionDueCount = progress.sessionDueCount ?? ankiDueIndices.count
+        sessionLapses = Set(progress.sessionLapses ?? [])
+        requeueCounts = [:]
+        if let direction = progress.showGermanFirst { showGermanFirst = direction }
+        // A saved deal comes back as it was; a session saved before the order was persisted
+        // resumes in deck order, at the position it had.
+        if let order = progress.cardOrder, order.count == cards.count, Set(order) == Set(cards.indices) {
+            cardOrder = order
+        }
+        cardPosition = progress.cardPosition ?? playOrder.firstIndex(of: progress.cardIndex) ?? 0
         sessionStartTime = Date.now - TimeInterval(elapsedSeconds)
         savedProgress = nil
         clearPauseProgress()
         hasStarted = true
     }
 
+    /// Registered-object lookup by identifier — not a fetch. This used to fetch *every* deck in
+    /// the store and filter in Swift, on appear, disappear and every scene change.
     private func fetchDeck(for id: PersistentIdentifier) -> SavedDeck? {
-        try? modelContext.fetch(FetchDescriptor<SavedDeck>()).first { $0.persistentModelID == id }
+        guard let deck = modelContext.model(for: id) as? SavedDeck, !deck.isDeleted else { return nil }
+        return deck
     }
 
     // MARK: - Pause Overlay

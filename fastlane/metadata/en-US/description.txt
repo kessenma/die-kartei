@@ -1,0 +1,25 @@
+Learn German your way: vocabulary, grammar, and now speaking, powered by AI that runs entirely on your device.
+
+PRACTICE SPEAKING WITH AI VOICE CHAT
+Have a real, turn-based spoken conversation in German and get corrected as you go. Each turn shows what to fix and the corrected sentence. Role-play 20+ everyday scenarios (a café, a haircut, a job interview, a first date) or focus on specific grammar like Perfekt, Konjunktiv II, and the cases. Tap any word for its translation, double-tap or highlight a phrase to save it, ask for hints, and hear replies read aloud. Stuck? "Say it in German" turns what you want to say from English into natural German, then coaches you through saying it. Every chat ends with a coaching report and can become a flashcard deck.
+
+SAVE PHRASES YOU HEAR IN THE WILD
+Heard something you didn't catch, like a clerk's "Sonst noch etwas?" Save it to your phrase library and the AI weaves it into matching chats, so you get used to hearing it. Save phrases straight from a conversation too, and turn any of them into flashcards.
+
+GENERATE FLASHCARDS ON ANY TOPIC
+Type a theme like "kitchen items," "travel phrases," or "business German," and the AI builds a full deck tailored to it. Filter by word type, add example sentences, include conjugation tables across four tenses, and control how many cards you want.
+
+STUDY FROM PDFs, PHOTOS, AND WEB PAGES
+Upload a German PDF, scan text from a photo (Beta), or paste a link, and the AI pulls out a summary, a vocabulary deck, and practice questions, then discusses the material with you in German.
+
+OFFICIAL GOETHE-INSTITUT WORD LISTS
+Pre-built decks drawn from the official vocabulary lists used in Goethe-Institut certification exams: A1 (Start Deutsch 1), A2, and B1. Over 4,000 words with articles, translations, and word types, plus dedicated practice for the Akkusativ and Dativ cases.
+
+THREE WAYS TO STUDY
+Classic flip cards let you browse at your own pace. Anki mode uses SM-2 spaced repetition: rate each card and the app schedules your next review. Leitner mode uses the classic box system, where correct cards advance and wrong cards go back to Box 1.
+
+RUNS ENTIRELY ON-DEVICE
+All AI generation uses open-source models running locally via MLX. No account. No subscription. No data leaves your device. The app even takes on the look of whichever model you choose.
+
+BUILT FOR GERMAN LEARNERS
+Noun articles are color-coded by gender (der / die / das). Verb conjugations span Präsens, Perfekt, Präteritum, and Plusquamperfekt. German pronunciation via text-to-speech, with step-by-step instructions for adding Apple's natural Enhanced and Premium voices. AI-generated cards are validated against Wiktionary data for accuracy. Pause and resume any study session.

@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// "Say it in German" — the learner types or speaks (in English) what they want to say,
-/// and the AI shows the natural German. They can hear it or use it as their spoken turn.
+/// and the AI shows the natural German. They can hear it, say it back, or write it back —
+/// whichever way the conversation is being taken.
 struct SayItView: View {
     let engine: ConversationEngine
     @Environment(\.dismiss) private var dismiss
@@ -23,28 +24,44 @@ struct SayItView: View {
                     TextField("What do you want to say? (in English)", text: $englishText, axis: .vertical)
                         .lineLimit(2...5)
 
-                    Button {
-                        toggleRecording()
-                    } label: {
-                        Label(
-                            recognizer.isRecording ? "Stop" : "Or speak in English",
-                            systemImage: recognizer.isRecording ? "stop.circle.fill" : "mic.fill"
-                        )
-                        .foregroundStyle(recognizer.isRecording ? .red : .accentColor)
+                    // Offering to talk is beside the point in a typed session — the reason to type
+                    // is usually that speaking isn't an option.
+                    if !engine.isSilent {
+                        Button {
+                            toggleRecording()
+                        } label: {
+                            Label(
+                                recognizer.isRecording ? "Stop" : "Or speak in English",
+                                systemImage: recognizer.isRecording ? "stop.circle.fill" : "mic.fill"
+                            )
+                            .foregroundStyle(recognizer.isRecording ? .red : .accentColor)
+                        }
                     }
 
                     if recognizer.isRecording {
                         Text(recognizer.transcript.isEmpty ? "Listening…" : recognizer.transcript)
                             .font(.caption).foregroundStyle(.secondary)
+
+                        RecordingControls(
+                            onPeriod:   { recognizer.appendPunctuation(".") },
+                            onQuestion: { recognizer.appendPunctuation("?") },
+                            onComma:    { recognizer.appendPunctuation(",") },
+                            onRestart:  { recognizer.restart() }
+                        )
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 8, trailing: 12))
                     }
                     if let authError {
                         Text(authError).font(.caption).foregroundStyle(.orange)
                     }
                 } header: {
-                    Text("In English")
+                    Text("In English").themedSectionHeader()
                 } footer: {
-                    Text("Type or speak what you’d like to say. The AI will show you how to say it in German — then you can hear it or use it as your turn.")
+                    Text(engine.isSilent
+                         ? "Write what you’d like to say. The AI will show you how to say it in German — then you can write it back as your turn."
+                         : "Type or speak what you’d like to say. The AI will show you how to say it in German — then you can hear it or use it as your turn.")
                 }
+                .themedListRow()
 
                 Section {
                     Button {
@@ -58,23 +75,31 @@ struct SayItView: View {
                     }
                     .disabled(!canTranslate)
                 }
+                .themedListRow()
 
                 if let german {
-                    Section("In German") {
+                    Section {
                         Text(german).font(.title3)
                         Button { SpeechService.shared.speak(german) } label: {
                             Label("Hear it", systemImage: "speaker.wave.2.fill")
                         }
                         Button {
                             recognizer.cancel()
-                            engine.usePhrase(german)
+                            let gloss = englishText.trimmingCharacters(in: .whitespacesAndNewlines)
+                            engine.practiceSaying(german, english: gloss.isEmpty ? nil : gloss)
                             dismiss()
                         } label: {
-                            Label("Use as my response", systemImage: "paperplane.fill")
+                            let typing = engine.inputMode == .type
+                            Label(typing ? "Let me write it" : "Let me say it",
+                                  systemImage: typing ? "keyboard.fill" : "mic.fill")
                         }
+                    } header: {
+                        Text("In German").themedSectionHeader()
                     }
+                    .themedListRow()
                 }
             }
+            .themedListScreen()
             .navigationTitle("Say it in German")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -2,43 +2,67 @@ import SwiftUI
 
 extension CardDeckView {
 
+    var correctedCount: Int {
+        localValidationResults.filter { $0.status.wasAutoCorrected }.count
+    }
+
+    var attentionCount: Int {
+        localValidationResults.filter { $0.status.needsAttention }.count
+    }
+
+    /// The deck's dictionary-check result, in one line where possible.
+    ///
+    /// Leads with what's fine rather than what's wrong: corrections have already been applied
+    /// by the time this renders, so they're reported as finished work, not as a to-do list.
     @ViewBuilder
     var validationSummary: some View {
         let verified = localValidationResults.filter { $0.isVerified }.count
-        let genderIssues = localValidationResults.filter {
-            if case .genderMismatch = $0.status { return true }
-            return false
-        }.count
-        let notFound = localValidationResults.filter { $0.status == .notFound }.count
+        let hasDetail = correctedCount > 0 || attentionCount > 0
 
-        VStack(spacing: 4) {
-            HStack(spacing: 8) {
-                VStack(spacing: 4) {
-                    if verified > 0 {
-                        Label("\(verified) verified", systemImage: "checkmark.seal.fill")
-                            .foregroundStyle(.green)
-                    }
-                    if genderIssues > 0 {
-                        Label("\(genderIssues) gender issue\(genderIssues == 1 ? "" : "s")", systemImage: "exclamationmark.triangle.fill")
+        VStack(spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.seal.fill")
+                    .foregroundStyle(.green)
+                Text("\(verified) of \(localValidationResults.count) checked against the dictionary")
+                    .foregroundStyle(.secondary)
+
+                Button {
+                    showValidationInfo = true
+                } label: {
+                    Image(systemName: "info.circle")
+                        .foregroundStyle(.tertiary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if hasDetail {
+                Button {
+                    showCorrectionSheet = true
+                } label: {
+                    HStack(spacing: 10) {
+                        if correctedCount > 0 {
+                            Label(
+                                "\(correctedCount) article\(correctedCount == 1 ? "" : "s") corrected",
+                                systemImage: "wand.and.sparkles"
+                            )
+                            .foregroundStyle(.blue)
+                        }
+                        if attentionCount > 0 {
+                            Label(
+                                "\(attentionCount) to check",
+                                systemImage: "questionmark.circle"
+                            )
                             .foregroundStyle(.orange)
-                    }
-                    if notFound > 0 {
-                        Label("\(notFound) not in dictionary", systemImage: "questionmark.circle")
-                            .foregroundStyle(.secondary)
+                        }
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
                     }
                 }
-
-                if genderIssues > 0 || notFound > 0 {
-                    Button {
-                        showValidationInfo = true
-                    } label: {
-                        Image(systemName: "info.circle")
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                }
+                .buttonStyle(.plain)
             }
         }
         .font(.caption)
+        .multilineTextAlignment(.center)
     }
 }

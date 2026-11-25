@@ -1,0 +1,416 @@
+//
+//  ClassEntryDetailView.swift
+//  german-ai-flashcards
+//
+//  One logged class: what it covered (each grammar point opens its quick lesson, and a tagged case
+//  its story through `GrammarRoute`), the new words (into the course deck in one tap), the notes,
+//  the homework with its tick, and the handouts.
+//
+
+import SwiftUI
+import SwiftData
+
+struct ClassEntryDetailView: View {
+    @Bindable var entry: ClassEntry
+    @Bindable var modelManager: MLXModelManager
+    var mlxService: MLXGenerationService
+
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var appTheme
+    @Environment(ActivityRouter.self) private var router
+
+    @State private var showEditor = false
+    @State private var lessonFocus: GrammarFocus?
+    @State private var importTarget: ClassHandoutTarget?
+    /// Briefly the count after "Add to deck", to confirm.
+    @State private var addedCount: Int?
+    /// A handout's homework, opened from the Homework row.
+    @State private var openedWorksheet: ClassMaterial?
+
+    private var course: ClassCourse? { entry.course }
+    private var deck: SavedDeck? {
+        guard let course else { return nil }
+        return ClassDeckStore.deck(for: course, context: modelContext)
+    }
+
+    var body: some View {
+        List {
+            headerSection
+            coveredSection
+            wordsSection
+            if !entry.notes.isEmpty {
+                notesSection
+            }
+            if entry.hasHomework {
+                homeworkSection
+            }
+            materialsSection
+            TeacherCorrectionsSection(entry: entry)
+        }
+        .themedListScreen()
+        .navigationTitle(entry.displayTitle)
+        .navigationDestination(item: $openedWorksheet) { material in
+            WorksheetView(material: material, modelManager: modelManager, mlxService: mlxService)
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Edit") { showEditor = true }
+            }
+        }
+        .sheet(isPresented: $showEditor) {
+            ClassEntryEditorView(entry: entry, course: course)
+        }
+        .sheet(item: $lessonFocus) { focus in
+            GrammarLessonSheet(focus: focus)
+        }
+        .sheet(item: $importTarget) { target in
+            ClassMaterialImportView(course: target.course, entry: target.entry) { _ in }
+        }
+    }
+
+    // MARK: - Sections
+
+    private var headerSection: some View {
+        Section {
+            HStack(spacing: 10) {
+                Text(entry.date.formatted(date: .complete, time: .omitted))
+                    .font(.subheadline)
+                Spacer()
+                if let course, let week = course.weekNumber(for: entry.date) {
+                    Text("Woche \(week)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(ClassNotesTile.tint)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(ClassNotesTile.tint.opacity(0.12), in: appTheme.pillShape)
+                }
+            }
+            if let course {
+                Label(course.name, systemImage: course.kind.systemImage)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .themedListRow()
+    }
+
+    private var coveredSection: some View {
+        Section {
+            let foci = entry.grammarFoci
+            if foci.isEmpty && entry.topics.isEmpty {
+                Text("Nothing tagged yet. Edit the entry to add the grammar and topics the class covered.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if !foci.isEmpty {
+                WrapLayout(spacing: 6) {
+                    ForEach(foci) { focus in
+                        FilterPill(label: focus.germanLabel, systemImage: "book", tint: ClassNotesTile.tint, isOn: false) {
+                            lessonFocus = focus
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            if !entry.topics.isEmpty {
+                WrapLayout(spacing: 6) {
+                    ForEach(entry.topics, id: \.self) { topic in
+                        Text(topic)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color(.tertiarySystemFill), in: appTheme.pillShape)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            ForEach(kasusUnits(foci)) { unit in
+                Button {
+                    practise(unit)
+                } label: {
+                    practiseLabel(unit)
+                }
+            }
+            // The same routes Today and the coach take for these two focuses.
+            if foci.contains(where: { GrammarRoute($0) == .articleGame }) {
+                Button(action: practiseArticles) {
+                    practiceRow("Der · Die · Das üben · Practise the articles",
+                                "a round of nouns at your level", systemImage: "textformat.abc")
+                }
+            }
+            if foci.contains(where: { if case .prepositionHub = GrammarRoute($0) { true } else { false } }) {
+                NavigationLink {
+                    // Verb pairs alone land on the verb track; any place/time focus keeps the pick.
+                    PrepositionHubView(modelManager: modelManager, mlxService: mlxService,
+                                       initialTrack: foci.contains(.verbenPraepositionen)
+                                           && !foci.contains(.praepositionen)
+                                           && !foci.contains(.wechselpraepositionen) ? .verb : nil)
+                } label: {
+                    practiceRow("Präpositionen · Prepositions",
+                                "which case each one takes", systemImage: "arrow.triangle.branch")
+                }
+            }
+            // A topic that isn't a case (Reflexive Verben): its lesson's drill, the same route
+            // Today and the coach take.
+            ForEach(topicRoutes(foci)) { topic in
+                Button {
+                    practise(topic)
+                } label: {
+                    practiceRow("\(topic.germanTitle) üben · Practise reflexive verbs",
+                                topic.lessonPractice.map { "\($0.meta.germanTitle) · \($0.meta.blurb)" } ?? topic.englishRole,
+                                systemImage: topic.symbol)
+                }
+            }
+        } header: {
+            Text("Behandelt · Covered").themedSectionHeader()
+        } footer: {
+            if !entry.grammarFoci.isEmpty {
+                Text("Tap a grammar point for its quick lesson.")
+                    .font(.caption2)
+            }
+        }
+        .themedListRow()
+    }
+
+    @ViewBuilder
+    private var wordsSection: some View {
+        let words = entry.words
+        Section {
+            if words.isEmpty {
+                Text("No words logged. Edit the entry to add the ones the class introduced.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(words) { word in
+                    HStack(spacing: 10) {
+                        Text(word.german)
+                            .fontWeight(.medium)
+                        Spacer()
+                        if word.english.isEmpty {
+                            Text("no translation yet")
+                                .foregroundStyle(.tertiary)
+                                .italic()
+                        } else {
+                            Text(word.english)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.trailing)
+                        }
+                        if word.addedToDeck {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(ClassNotesTile.tint)
+                                .accessibilityLabel("In the deck")
+                        }
+                        Button {
+                            SpeechService.shared.speak(word.german)
+                        } label: {
+                            Image(systemName: "speaker.wave.2")
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                    .font(.subheadline)
+                }
+
+                let pending = words.filter { $0.isComplete && !$0.addedToDeck }.count
+                Button {
+                    addWordsToDeck()
+                } label: {
+                    Label(
+                        addedCount.map { "Added \($0) to the course deck" }
+                            ?? (pending == 0 ? "All in the course deck" : "Add \(pending) to the course deck"),
+                        systemImage: addedCount != nil ? "checkmark.circle.fill" : "rectangle.stack.badge.plus"
+                    )
+                }
+                .disabled(pending == 0 || addedCount != nil || course == nil)
+
+                if let deck, !deck.cards.isEmpty {
+                    Button {
+                        router.launch(.cardDeck(DeckStore(modelContext: modelContext).session(for: deck, style: modelManager.flashcardStyle)))
+                    } label: {
+                        Label("Study the course deck (\(deck.cards.count))", systemImage: "rectangle.stack.fill")
+                    }
+                }
+            }
+        } header: {
+            Text("Neue Wörter · New words").themedSectionHeader()
+        } footer: {
+            if !words.isEmpty {
+                Text("Words with both sides go into the course's flashcard deck. Ones without a translation wait.")
+                    .font(.caption2)
+            }
+        }
+        .themedListRow()
+    }
+
+    private var notesSection: some View {
+        Section {
+            Text(entry.notes)
+                .font(.body)
+                .textSelection(.enabled)
+        } header: {
+            Text("Notizen · Notes").themedSectionHeader()
+        }
+        .themedListRow()
+    }
+
+    private var homeworkSection: some View {
+        Section {
+            ClassHomeworkRow(entry: entry) { material in
+                openedWorksheet = material
+            }
+        } header: {
+            Text("Hausaufgabe · Homework").themedSectionHeader()
+        }
+        .themedListRow()
+    }
+
+    private var materialsSection: some View {
+        Section {
+            ForEach(entry.materials.sorted { $0.createdAt > $1.createdAt }) { material in
+                NavigationLink {
+                    ClassMaterialDetailView(material: material, modelManager: modelManager, mlxService: mlxService)
+                } label: {
+                    ClassMaterialRow(material: material)
+                }
+                .swipeActions(edge: .trailing) {
+                    Button(role: .destructive) {
+                        ClassEntryStore.delete(material, context: modelContext)
+                        try? modelContext.save()
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+            }
+            Button {
+                guard let course else { return }
+                importTarget = ClassHandoutTarget(course: course, entry: entry)
+            } label: {
+                Label("Add a handout", systemImage: "doc.text.viewfinder")
+            }
+            .disabled(course == nil)
+        } header: {
+            Text("Handouts").themedSectionHeader()
+        } footer: {
+            Text("A PDF, a photo of a page, or pasted text from this class. Read it word by word and save what you look up.")
+                .font(.caption2)
+        }
+        .themedListRow()
+    }
+
+    // MARK: - Case practice
+
+    /// The Kasus units behind the tagged case focuses (Akkusativ, Dativ, Genitiv), in path order.
+    private func kasusUnits(_ foci: [GrammarFocus]) -> [KasusUnit] {
+        let units = Set(foci.compactMap { focus -> KasusUnit? in
+            if case .kasus(let unit) = GrammarRoute(focus) { return unit }
+            return nil
+        })
+        return KasusUnit.allCases.filter(units.contains)
+    }
+
+    /// The unit's story, or its Schnellrunde while it has none: the pick Today and the coach make.
+    private func practiseLabel(_ unit: KasusUnit) -> some View {
+        let hasStory = GrammarRoute.hasStory(unit)
+        return Label {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(hasStory ? "Mit einer Geschichte üben · Practise with a story" : "Schnellrunde · Quick round")
+                Text(hasStory ? "\(unit.germanTitle) · fill in the articles"
+                              : "\(unit.germanTitle) · the endings drill, until there's a story")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } icon: {
+            Image(systemName: unit.symbol)
+                .foregroundStyle(unit.color)
+        }
+    }
+
+    private func practise(_ unit: KasusUnit) {
+        if case .launch(let activity) = GrammarRoute.kasus(unit).resolve(in: modelContext, level: modelManager.germanLevel) {
+            router.launch(activity)
+        }
+    }
+
+    /// The topics behind the tagged focuses that aren't a case, in the hub's order.
+    private func topicRoutes(_ foci: [GrammarFocus]) -> [GrammarTopic] {
+        let topics = Set(foci.compactMap { focus -> GrammarTopic? in
+            if case .topic(let topic) = GrammarRoute(focus) { return topic }
+            return nil
+        })
+        return GrammarTopic.allCases.filter(topics.contains)
+    }
+
+    private func practise(_ topic: GrammarTopic) {
+        if case .launch(let activity) = GrammarRoute.topic(topic).resolve(in: modelContext, level: modelManager.germanLevel) {
+            router.launch(activity)
+        }
+    }
+
+    private func practiceRow(_ title: String, _ subtitle: String, systemImage: String) -> some View {
+        Label {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        } icon: {
+            Image(systemName: systemImage)
+                .foregroundStyle(.tint)
+        }
+    }
+
+    /// A der/die/das round from the Goethe list at the learner's level; the lesson if that ever
+    /// comes back empty.
+    private func practiseArticles() {
+        switch GrammarRoute.articleGame.resolve(in: modelContext, level: modelManager.germanLevel) {
+        case .launch(let activity): router.launch(activity)
+        case .lesson(let focus):    lessonFocus = focus
+        case .prepositionHub:       break
+        }
+    }
+
+    // MARK: - Actions
+
+    private func addWordsToDeck() {
+        let added = ClassDeckStore.saveWords(of: entry, feedsCoach: modelManager.storyFeedsCoach, context: modelContext)
+        addedCount = added
+        Task {
+            try? await Task.sleep(for: .seconds(1.6))
+            addedCount = nil
+        }
+    }
+}
+
+// MARK: - Preview
+
+@MainActor
+private func classEntryPreview(_ theme: AppTheme) -> some View {
+    let entry = ClassEntry(date: .now, title: "Kapitel 4 · Wechselpräpositionen")
+    entry.grammarFoci = [.wechselpraepositionen, .dativ]
+    entry.topics = ["Wohnen", "Im Zimmer"]
+    entry.setWords([
+        ClassWord(german: "der Schrank", english: "wardrobe"),
+        ClassWord(german: "das Regal", english: "shelf", addedToDeck: true),
+        ClassWord(german: "hängen")
+    ])
+    entry.notes = "Wo? + Dativ, wohin? + Akkusativ. Ich stelle die Lampe auf den Tisch. Die Lampe steht auf dem Tisch."
+    entry.homework = "Arbeitsbuch S. 42, Übung 3 und 4"
+    entry.homeworkDue = Calendar.current.date(byAdding: .day, value: 2, to: .now)
+    return NavigationStack {
+        ClassEntryDetailView(entry: entry, modelManager: MLXModelManager(), mlxService: MLXGenerationService())
+    }
+    .environment(ActivityRouter())
+    .environment(\.appTheme, theme)
+    .modelContainer(
+        for: [ClassCourse.self, ClassEntry.self, ClassMaterial.self, SavedDeck.self, SavedCard.self,
+              KasusRound.self],
+        inMemory: true
+    )
+}
+
+#Preview("Entry · System")   { classEntryPreview(.klar) }
+#Preview("Entry · Soft")     { classEntryPreview(.sanft) }
+#Preview("Entry · Notebook") { classEntryPreview(.kritzel) }
+#Preview("Entry · Bauhaus")  { classEntryPreview(.grundform) }

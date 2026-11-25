@@ -16,29 +16,51 @@ struct ConversationSummaryView: View {
     var body: some View {
         NavigationStack {
             List {
-                statsSection
+                statsSection.themedListRow()
 
                 if !summary.strengths.isEmpty {
-                    section("What you did well", systemImage: "hand.thumbsup.fill", tint: .green, items: summary.strengths)
+                    section("What you did well", systemImage: "hand.thumbsup.fill", tint: .green, items: summary.strengths).themedListRow()
                 }
                 if !summary.improvements.isEmpty {
-                    section("Room to improve", systemImage: "arrow.up.forward.circle.fill", tint: .orange, items: summary.improvements)
+                    section("Room to improve", systemImage: "arrow.up.forward.circle.fill", tint: .orange, items: summary.improvements).themedListRow()
                 }
                 if !summary.patternNote.isEmpty {
-                    Section("Pattern noticed") {
+                    Section {
                         Text(summary.patternNote).font(.callout)
+                    } header: {
+                        Text("Pattern noticed").themedSectionHeader()
                     }
+                    .themedListRow()
                 }
                 if let raw = summary.rawText, summary.strengths.isEmpty, summary.improvements.isEmpty {
-                    Section("Coach's notes") {
+                    Section {
                         Text(raw).font(.callout)
+                    } header: {
+                        Text("Coach's notes").themedSectionHeader()
                     }
+                    .themedListRow()
+                }
+
+                if let reviews = summary.spacedReviews, !reviews.isEmpty {
+                    Section {
+                        FlowChips(items: reviews)
+                    } header: {
+                        Label("Reviewed in conversation (\(reviews.count))", systemImage: "arrow.triangle.2.circlepath")
+                            .themedSectionHeader()
+                    } footer: {
+                        Text("You used these due words correctly, so their flashcard review has been pushed further out — spaced repetition, straight from the chat.")
+                            .font(.caption2)
+                    }
+                    .themedListRow()
                 }
 
                 if !summary.wordsPracticed.isEmpty {
-                    Section("Vocabulary you used") {
+                    Section {
                         FlowChips(items: summary.wordsPracticed)
+                    } header: {
+                        Text("Vocabulary you used").themedSectionHeader()
                     }
+                    .themedListRow()
                 }
 
                 if !conversation.savedVocab.isEmpty {
@@ -53,14 +75,17 @@ struct ConversationSummaryView: View {
                         }
                     } header: {
                         Label("Words you saved (\(conversation.savedVocab.count))", systemImage: "bookmark.fill")
+                            .themedSectionHeader()
                     } footer: {
                         Text("Add these to a deck below.")
                             .font(.caption2)
                     }
+                    .themedListRow()
                 }
 
-                deckSection
+                deckSection.themedListRow()
             }
+            .themedListScreen()
             .navigationTitle("Your report")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -74,14 +99,24 @@ struct ConversationSummaryView: View {
     // MARK: - Sections
 
     private var statItems: [(value: String, label: String)] {
-        [
+        var items: [(value: String, label: String)] = [
             ("\(summary.turnCount)", "Your turns"),
             (conversation.durationLabel, "Duration"),
             ("\(summary.correctionCount)", "Corrections"),
+        ]
+        // Only surface self-corrections when the learner actually repaired some (Nudge me mode).
+        if let selfFixed = summary.selfCorrections, selfFixed > 0 {
+            items.append(("\(selfFixed)", "Self-fixed"))
+        }
+        items.append(contentsOf: [
             ("\(summary.hintsUsed ?? 0)", "Hints used"),
             ("\(summary.translationsUsed ?? 0)", "Translations"),
             ("\(summary.phraseHelperUsed ?? 0)", "Phrase helps"),
-        ]
+        ])
+        if let streak = summary.bestUnaidedStreak, streak > 0 {
+            items.append(("\(streak)", "On your own"))
+        }
+        return items
     }
 
     private var statsSection: some View {
@@ -94,6 +129,12 @@ struct ConversationSummaryView: View {
             .padding(.vertical, 4)
         } header: {
             Text(conversation.createdAt.formatted(date: .abbreviated, time: .shortened))
+                .themedSectionHeader()
+        } footer: {
+            if summary.unaidedStreakIsRecord == true, let streak = summary.bestUnaidedStreak {
+                Text("\(streak) turn\(streak == 1 ? "" : "s") in a row without hints or translations. Your best yet.")
+                    .font(.caption2)
+            }
         }
     }
 
@@ -115,7 +156,7 @@ struct ConversationSummaryView: View {
                 }
             }
         } header: {
-            Text(title)
+            Text(title).themedSectionHeader()
         }
     }
 
@@ -143,6 +184,8 @@ struct ConversationSummaryView: View {
 struct FlowChips: View {
     let items: [String]
 
+    @Environment(\.appTheme) private var appTheme
+
     var body: some View {
         FlexibleWrap(items: items) { item in
             Text(item)
@@ -150,7 +193,7 @@ struct FlowChips: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .background(Color(.secondarySystemBackground))
-                .clipShape(Capsule())
+                .clipShape(appTheme.pillShape)
         }
     }
 }
@@ -207,4 +250,33 @@ struct WrapLayout: Layout {
             rowHeight = max(rowHeight, size.height)
         }
     }
+}
+
+#Preview("Report · record streak") {
+    let config = ConversationConfig(model: .hero)
+    let summary = ConversationSummary(
+        strengths: ["Natural word order in main clauses", "Good use of scenario vocabulary"],
+        improvements: ["Watch the case after \"mit\""],
+        patternNote: "Dative endings slip when the sentence gets long.",
+        wordsPracticed: ["die Gabel", "bestellen"],
+        correctionCount: 2,
+        selfCorrections: 1,
+        hintsUsed: 1,
+        translationsUsed: 0,
+        phraseHelperUsed: 0,
+        spacedReviews: nil,
+        bestUnaidedStreak: 4,
+        unaidedStreakIsRecord: true,
+        turnCount: 9,
+        generatedAt: .now,
+        rawText: nil
+    )
+    return ConversationSummaryView(
+        conversation: ChatConversation(config: config),
+        summary: summary,
+        mlxService: nil,
+        modelManager: nil,
+        onDone: {}
+    )
+    .inMemoryModelContainer(for: [ChatConversation.self])
 }

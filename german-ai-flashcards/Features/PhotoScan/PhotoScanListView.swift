@@ -1,4 +1,3 @@
-import DieKarteiCore
 import SwiftUI
 import SwiftData
 import PhotosUI
@@ -7,14 +6,17 @@ import UIKit
 #endif
 
 /// Lists photo scans and lets the user import a new photo (camera or library) to study.
-/// Beta feature — Apple's Vision recognizer extracts the text, then an MLX model
+/// Apple's Vision recognizer extracts the text, then an MLX model
 /// tidies it up and generates the study materials.
 struct PhotoScanListView: View {
     @Bindable var modelManager: MLXModelManager
     var mlxService: MLXGenerationService
 
     @Query(sort: \StudyPaper.createdAt, order: .reverse) private var allPapers: [StudyPaper]
+    /// Handouts brought over from these, to say which course each went to.
+    @Query private var handouts: [ClassMaterial]
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.appTheme) private var appTheme
 
     @State private var showCamera = false
     @State private var photoPickerItem: PhotosPickerItem?
@@ -33,21 +35,24 @@ struct PhotoScanListView: View {
 
     var body: some View {
         List {
-            betaBannerSection
-            importSection
+            tipBannerSection.themedListRow()
+            importSection.themedListRow()
 
             ChatModelPickerSection(
                 selected: $modelManager.selectedPaperModel,
                 cacheRefreshID: cacheRefreshID,
                 title: "Study model",
-                footerText: "Used to tidy up the scanned text and to generate the summary, deck, and questions. Any downloaded model works."
+                footerText: "Used to tidy up the scanned text and to generate the summary, deck, and questions. Any downloaded model works.",
+                emphasizeHero: false
             )
+            .themedListRow()
 
             if let importError {
                 Section {
                     Label(importError, systemImage: "exclamationmark.triangle.fill")
                         .font(.caption).foregroundStyle(.orange)
                 }
+                .themedListRow()
             }
 
             if photoScans.isEmpty {
@@ -58,8 +63,9 @@ struct PhotoScanListView: View {
                         description: Text("Take a photo or import one from your library to extract German vocabulary.")
                     )
                 }
+                .themedListRow()
             } else {
-                Section("Your photo scans") {
+                Section {
                     ForEach(photoScans) { paper in
                         NavigationLink {
                             PaperDetailView(paper: paper, modelManager: modelManager, mlxService: mlxService)
@@ -72,12 +78,15 @@ struct PhotoScanListView: View {
                             }
                         }
                     }
+                } header: {
+                    Text("Your photo scans").themedSectionHeader()
                 }
+                .themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("Scan German Text")
         .navigationBarTitleDisplayMode(.inline)
-        .contentMargins(.bottom, 120, for: .scrollContent)
         .onChange(of: photoPickerItem) { _, item in
             guard let item else { return }
             importError = nil
@@ -103,11 +112,19 @@ struct PhotoScanListView: View {
             #endif
         }
         .sheet(item: $scanReview) { review in
-            ExtractedTextReviewView(title: "Scanned text", text: review.text) { deckCount, selectedWords in
+            // Deck-building is deferred to the paper's "Make flashcards" chooser, so this review step
+            // just lets the user verify the scanned/cleaned text before generating summary + questions.
+            ExtractedTextReviewView(
+                title: "Scanned text",
+                text: review.text,
+                accent: modelManager.selectedPaperModel.theme.accent,
+                collectDeckOptions: false,
+                confirmTitle: "Study this text"
+            ) { _, _ in
                 // Defer so the review sheet finishes dismissing before the generating sheet appears.
                 DispatchQueue.main.async {
                     Task {
-                        await cleanupAndGenerate(rawText: review.text, deckCount: deckCount, selectedWords: selectedWords)
+                        await cleanupAndGenerate(rawText: review.text)
                     }
                 }
             }
@@ -127,17 +144,16 @@ struct PhotoScanListView: View {
 
     // MARK: - Sections
 
-    private var betaBannerSection: some View {
+    private var tipBannerSection: some View {
         Section {
             HStack(spacing: 10) {
-                Image(systemName: "flask.fill")
-                    .foregroundStyle(.orange)
+                Image(systemName: "info.circle.fill")
+                    .foregroundStyle(modelManager.selectedPaperModel.theme.accent)
                     .font(.title3)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Beta Feature")
+                    Text("How it works")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.orange)
-                    Text("Text is read with Apple's on-device scanner, then the AI tidies it up and builds the study materials. The AI step is experimental and may make mistakes — check the extracted text before studying.")
+                    Text("Text is read with Apple's on-device scanner, then the AI tidies it up and builds the study materials. The AI can occasionally make mistakes — review the extracted text before studying.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -173,12 +189,13 @@ struct PhotoScanListView: View {
     // MARK: - Row
 
     private func row(_ paper: StudyPaper) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "camera.fill")
-                .foregroundStyle(.tint)
+        let accent = paper.rowTheme?.accent ?? modelManager.selectedPaperModel.theme.accent
+        return HStack(spacing: 12) {
+            Image(systemName: paper.sourceSymbol)
+                .foregroundStyle(accent)
                 .frame(width: 30, height: 30)
-                .background(Color.accentColor.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .background(accent.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: appTheme.innerRadius(8)))
             VStack(alignment: .leading, spacing: 2) {
                 Text(paper.title).lineLimit(1)
                 HStack(spacing: 8) {
@@ -190,6 +207,9 @@ struct PhotoScanListView: View {
                     }
                 }
                 .font(.caption2).foregroundStyle(.tertiary)
+                if let courses = ClassMaterialOrigins.courseNames(handouts)[paper.id] {
+                    OnCourseLabel(courses: courses)
+                }
             }
         }
         .padding(.vertical, 2)
@@ -236,9 +256,9 @@ struct PhotoScanListView: View {
         }
     }
 
-    /// After the user confirms the review: clean up the OCR text with the AI,
-    /// then generate the summary, deck, and questions.
-    private func cleanupAndGenerate(rawText: String, deckCount: Int, selectedWords: [String]?) async {
+    /// After the user confirms the review: clean up the OCR text with the AI, then generate the
+    /// summary + questions. The vocab deck is built on-demand from the paper's "Make flashcards".
+    private func cleanupAndGenerate(rawText: String) async {
         guard let ocr = ocrService else { return }
 
         let dateStr = Date.now.formatted(date: .abbreviated, time: .omitted)
@@ -255,7 +275,7 @@ struct PhotoScanListView: View {
         paper.fullText = cleaned
         try? modelContext.save()
 
-        await svc.generate(for: paper, model: model, deckCount: deckCount, questionCount: 6, selectedWords: selectedWords)
+        await svc.generate(for: paper, model: model, questionCount: 6)
     }
 
     private func delete(_ paper: StudyPaper) {
@@ -279,6 +299,8 @@ private struct PhotoScanGeneratingView: View {
     let studyService: PaperStudyService
     let paper: StudyPaper
     let onClose: () -> Void
+
+    @Environment(\.appTheme) private var appTheme
 
     private var isRunning: Bool { ocrService.isRunning || studyService.isRunning }
 
@@ -330,6 +352,9 @@ private struct PhotoScanGeneratingView: View {
             }
             .padding()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
+            }
             .navigationTitle("Scanning photo")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -342,42 +367,18 @@ private struct PhotoScanGeneratingView: View {
     }
 }
 
-// MARK: - Camera picker
+// The camera picker moved to `Features/Shared/CameraPickerView.swift` when the class handouts
+// needed it too.
 
-#if canImport(UIKit)
-private struct CameraPickerView: UIViewControllerRepresentable {
-    var onCapture: (UIImage) -> Void
-    var onCancel: () -> Void
-
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.delegate = context.coordinator
-        return picker
-    }
-
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
-
-    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: CameraPickerView
-        init(_ parent: CameraPickerView) { self.parent = parent }
-
-        func imagePickerController(
-            _ picker: UIImagePickerController,
-            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
-        ) {
-            if let image = info[.originalImage] as? UIImage {
-                parent.onCapture(image)
-            } else {
-                parent.onCancel()
-            }
+#Preview("Photo scans · 4 themes") {
+    ForEach(AppTheme.allCases) { theme in
+        NavigationStack {
+            PhotoScanListView(
+                modelManager: MLXModelManager(),
+                mlxService: MLXGenerationService()
+            )
         }
-
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.onCancel()
-        }
+        .environment(\.appTheme, theme)
     }
+    .inMemoryModelContainer(for: [StudyPaper.self])
 }
-#endif

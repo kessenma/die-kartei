@@ -1,0 +1,654 @@
+//
+//  TodayView.swift
+//  german-ai-flashcards
+//
+//  The "Today" plan — the top section of the Home hub. It reads the learner's profile, the SRS
+//  backlog, and the streak, then recommends a short, ordered set of "next things" so the learner
+//  never has to decide what to do. Each recommendation is one tap: a `router` launch, a tab
+//  switch, a pushed screen, or a quick grammar lesson. This is the single biggest anti-scattershot
+//  lever (see docs/FUTURE_FEATURES.md #1).
+//
+
+import SwiftUI
+import SwiftData
+
+/// How TodaySection presents the plan.
+enum TodayStyle {
+    /// The compact ordered list of up to three recommendations.
+    case plan
+    /// One big "up next" pick, with the rest of the plan as smaller rows below. Used by the
+    /// Home hub's "For You" mode, where the app decides the next exercise for the learner.
+    case hero
+}
+
+struct TodaySection: View {
+    @Bindable var coordinator: GenerationCoordinator
+    /// Forwarded to the "Generate flashcards" recommendation (mirrors the hub's own wiring).
+    var onGenerationComplete: () -> Void
+    var style: TodayStyle = .plan
+
+    @Environment(ActivityRouter.self) private var router
+    @Environment(\.modelContext) private var modelContext
+
+    private var deckStore: DeckStore { DeckStore(modelContext: modelContext) }
+
+    @Query private var profiles: [LearnerProfile]
+    @Query private var decks: [SavedDeck]
+    @Query private var studyDays: [StudyDay]
+    @Query(sort: \JournalEntry.day, order: .reverse) private var journalEntries: [JournalEntry]
+
+    /// Set to present a 30-second mini-lesson for a weak spot that has no drill of its own.
+    @State private var lessonFocus: GrammarFocus?
+
+    /// Grammar counts as "shaky" at or above this struggle level (matches the memory briefing).
+    private let weaknessThreshold = GrammarSkill.shakyThreshold
+
+    private var profile: LearnerProfile? { profiles.first }
+
+    var body: some View {
+        switch style {
+        case .plan:
+            Section {
+                ForEach(recommendations) { rec in
+                    row(rec)
+                }
+            } header: {
+                header
+            } footer: {
+                Text("Your short, personalized plan — just do the next thing. Picked from what's due and what's shaky.")
+                    .font(.caption2)
+            }
+            .themedListRow()
+
+        case .hero:
+            Section {
+                if let pick = recommendations.first {
+                    row(pick, hero: true)
+                }
+            } header: {
+                header
+            } footer: {
+                Text("Picked for you from your coach's memory, what's due, and your streak.")
+                    .font(.caption2)
+            }
+            .themedListRow()
+            if recommendations.count > 1 {
+                Section {
+                    ForEach(recommendations.dropFirst()) { rec in
+                        row(rec)
+                    }
+                } header: {
+                    Text("Also good right now").themedSectionHeader()
+                }
+                .themedListRow()
+            }
+        }
+    }
+
+    // MARK: - Header
+
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(style == .hero ? "Up Next" : "Today")
+                .themedSectionHeader()
+            Spacer()
+            if streak > 0 {
+                Label("\(streak)", systemImage: "flame.fill")
+                    .themedLabel(.caption.weight(.bold), size: 13)
+                    .foregroundStyle(.orange)
+                    .labelStyle(.titleAndIcon)
+            }
+        }
+        .textCase(nil)
+        .sheet(item: $lessonFocus) { focus in
+            GrammarLessonSheet(focus: focus)
+        }
+    }
+
+    // MARK: - Rows
+
+    @ViewBuilder
+    private func row(_ rec: TodayRecommendation, hero: Bool = false) -> some View {
+        switch rec.intent {
+        case .reviewDueCards:
+            Button { launchReview() } label: { rowLabel(rec, hero: hero, chevron: true) }
+                .buttonStyle(.plain)
+        case .grammar(let focus):
+            // `GrammarRoute` decides; the preposition hub is a push, the rest a tap.
+            if case .prepositionHub(let verbTrack) = GrammarRoute(focus) {
+                NavigationLink {
+                    PrepositionHubView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService,
+                                       initialTrack: verbTrack ? .verb : nil)
+                } label: {
+                    rowLabel(rec, hero: hero)
+                }
+            } else {
+                Button { launchGrammar(focus) } label: { rowLabel(rec, hero: hero, chevron: true) }
+                    .buttonStyle(.plain)
+            }
+        case .chat:
+            NavigationLink {
+                ConversationListView(modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+            } label: {
+                rowLabel(rec, hero: hero)
+            }
+        case .buildDrillDeck:
+            NavigationLink { DrillDeckView() } label: { rowLabel(rec, hero: hero) }
+        case .generateDeck:
+            NavigationLink {
+                HomeView(service: coordinator, onGenerationComplete: onGenerationComplete)
+            } label: {
+                rowLabel(rec, hero: hero)
+            }
+        case .resumePausedDeck:
+            Button { launchResume() } label: { rowLabel(rec, hero: hero, chevron: true) }
+                .buttonStyle(.plain)
+        case .wortschatz:
+            Button { launchWortschatz() } label: { rowLabel(rec, hero: hero, chevron: true) }
+                .buttonStyle(.plain)
+        case .verbReview:
+            NavigationLink { VerbPrepositionReviewView() } label: { rowLabel(rec, hero: hero) }
+        case .easyRound:
+            Button { launchEasyRound() } label: { rowLabel(rec, hero: hero, chevron: true) }
+                .buttonStyle(.plain)
+        case .classWords:
+            Button { launchClassWords() } label: { rowLabel(rec, hero: hero, chevron: true) }
+                .buttonStyle(.plain)
+        case .hoerCheck:
+            NavigationLink {
+                HoerenCheckView(modelManager: coordinator.modelManager)
+            } label: { rowLabel(rec, hero: hero) }
+        case .foerderplan:
+            NavigationLink {
+                FoerderplanView(modelManager: coordinator.modelManager)
+            } label: { rowLabel(rec, hero: hero) }
+        case .beforeClass(let id):
+            if let course = course(id) {
+                NavigationLink {
+                    BeforeClassView(course: course, modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+                } label: { rowLabel(rec, hero: hero) }
+            }
+        case .afterClass(let id):
+            if let course = course(id) {
+                NavigationLink {
+                    AfterClassView(course: course, modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+                } label: { rowLabel(rec, hero: hero) }
+            }
+        case .worksheetRedo(let id):
+            if let material = material(id) {
+                NavigationLink {
+                    WorksheetRedoView(material: material, modelManager: coordinator.modelManager,
+                                      mlxService: coordinator.mlxService)
+                } label: {
+                    rowLabel(rec, hero: hero)
+                }
+            }
+        case .write(let prompt):
+            NavigationLink {
+                JournalTodayWriteView(prompt: prompt, modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+            } label: {
+                rowLabel(rec, hero: hero)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func rowLabel(_ rec: TodayRecommendation, hero: Bool, chevron: Bool = false) -> some View {
+        if hero {
+            TodayHeroRow(rec: rec)
+        } else {
+            TodayRow(rec: rec, showsChevron: chevron)
+        }
+    }
+
+    // MARK: - Plan inputs
+
+    private var recommendations: [TodayRecommendation] {
+        TodayPlanner.plan(
+            TodaySnapshot(
+                dueCardCount: dueCards.count,
+                weaknesses: weaknesses,
+                hasCoachContent: hasCoachContent,
+                streak: streak,
+                studiedToday: StudyLogService.studiedToday(studyDays),
+                hasStartedLearning: hasStartedLearning,
+                dayIndex: dayIndex,
+                resume: resumeInfo,
+                wortschatz: wortschatzInfo,
+                verbDue: verbDueCount,
+                writing: writingInfo,
+                knownCardCount: knownCards.count,
+                hardSessionToday: hardSessionToday,
+                classWordsDue: classDueCards.count,
+                classCourseName: classCourses.first?.name,
+                classFocus: classFocus,
+                worksheetRedo: worksheetRedo,
+                foerderplan: foerderplanInfo,
+                hoerCheckDue: hoerCheckDue,
+                classSession: classSession
+            )
+        )
+    }
+
+    // MARK: - Schreiben
+
+    /// Whether today's page exists, how long since the last one, and today's bank prompt.
+    private var writingInfo: TodaySnapshot.WritingInfo {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: .now)
+        let wroteToday = journalEntries.contains { $0.day == today }
+        let days = journalEntries.first.map { cal.dateComponents([.day], from: $0.day, to: today).day ?? 0 }
+        let prompt = WritingPromptBank.daily(level: coordinator.modelManager.germanLevel, kind: .tagebuch, dayIndex: dayIndex)?.de
+        return .init(wroteToday: wroteToday, daysSinceLastEntry: days, prompt: prompt)
+    }
+
+    // MARK: - Wortschatz
+
+    private var wortschatzDeck: SavedDeck? {
+        decks.first { $0.kind == .goetheSRS && $0.topic == DeckStore.wortschatzTopic }
+    }
+
+    /// The box's counts under the learner's own scope, style, and daily budget. Nil until the box
+    /// has been opened once — the plan never invents 2,800 new words for someone who hasn't.
+    private var wortschatzInfo: TodaySnapshot.WortschatzInfo? {
+        guard let deck = wortschatzDeck else { return nil }
+        let summary = WortschatzService.summary(
+            cards: deck.cards,
+            scope: WortschatzScope.load(),
+            style: WortschatzPrefs.style(),
+            leitnerSession: deck.quizResults.count,
+            budgetRemaining: StudyLogService.newWordBudgetRemaining(studyDays, newPerDay: WortschatzPrefs.newPerDay())
+        )
+        return .init(due: summary.due, new: summary.new)
+    }
+
+    private func launchWortschatz() {
+        guard let session = deckStore.wortschatzSession(
+            scope: WortschatzScope.load(),
+            style: WortschatzPrefs.style(),
+            newBudget: StudyLogService.newWordBudgetRemaining(studyDays, newPerDay: WortschatzPrefs.newPerDay()),
+            sessionCap: WortschatzPrefs.sessionCap()
+        ) else { return }
+        router.launch(.cardDeck(session))
+    }
+
+    /// Due pairs in the verb review box, which has its own plan step.
+    private var verbDueCount: Int {
+        decks.first { $0.kind == .verbPrepositionSRS }
+            .map { VerbPrepositionService.counts($0.cards).due } ?? 0
+    }
+
+    /// SRS cards that have been scheduled and are now due (never-reviewed cards are "new", not due),
+    /// soonest-due first, across every deck except the Goethe box and the verb-pair box, which have
+    /// their own plan steps (the Goethe words would fill the whole review, and a verb pair shown
+    /// on a generic card would carry its own answer).
+    private var dueCards: [SavedCard] {
+        let now = Date()
+        let classDecks = classDeckIDs
+        return decks
+            .filter { $0.kind != .goetheSRS && $0.kind != .verbPrepositionSRS && !classDecks.contains($0.id) }
+            .flatMap(\.cards)
+            .filter { card in
+                guard let next = card.nextReviewDate else { return false }
+                return next <= now
+            }
+            .sorted { ($0.nextReviewDate ?? now) < ($1.nextReviewDate ?? now) }
+    }
+
+    // MARK: - Class (docs/CLASS_NOTES.md ▸ Today, docs/WORKSHEETS.md ▸ Wiederholen)
+
+    /// Courses with a class in the last fortnight, most recent class first.
+    private var classCourses: [ClassCourse] {
+        var seen = Set<UUID>()
+        return ClassTutorContext.recentEntries(in: modelContext).compactMap(\.course).filter { seen.insert($0.id).inserted }
+    }
+
+    private var classDeckIDs: Set<UUID> { Set(classCourses.compactMap(\.deckID)) }
+
+    /// Due cards on those courses' decks: this fortnight's class words.
+    private var classDueCards: [SavedCard] {
+        let now = Date()
+        let ids = classDeckIDs
+        guard !ids.isEmpty else { return [] }
+        return decks.filter { ids.contains($0.id) }.flatMap(\.cards)
+            .filter { card in card.nextReviewDate.map { $0 <= now } ?? false }
+            .sorted { ($0.nextReviewDate ?? now) < ($1.nextReviewDate ?? now) }
+    }
+
+    /// Worksheet mistakes from the last fortnight first (the app's rule checks name the case), then
+    /// the grammar a class in the last week covered, rotating day to day.
+    private var classFocus: TodaySnapshot.ClassFocusInfo? {
+        let entries = ClassTutorContext.recentEntries(in: modelContext)
+        let answers = entries.flatMap(\.materials).flatMap { $0.worksheetAnswers.values }
+        if let top = WorksheetReviewPlan.mistakeFoci(Array(answers)).first {
+            return .init(focus: top.focus,
+                         reason: "\(top.count) \(top.focus.germanLabel) slip\(top.count == 1 ? "" : "s") in your worksheets")
+        }
+        let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: .now) ?? .distantPast
+        let covered = entries.filter { $0.date >= weekAgo }.flatMap(\.grammarFoci)
+        var seen = Set<GrammarFocus>()
+        let foci = covered.filter { seen.insert($0).inserted }
+        guard !foci.isEmpty else { return nil }
+        let focus = foci[dayIndex % foci.count]
+        return .init(focus: focus, reason: "Covered in class this week")
+    }
+
+    /// A sent worksheet her review plan brings back today.
+    private var worksheetRedo: TodaySnapshot.WorksheetRedoInfo? {
+        let descriptor = FetchDescriptor<ClassMaterial>(predicate: #Predicate { $0.worksheetData != nil })
+        for material in (try? modelContext.fetch(descriptor)) ?? [] {
+            var sentAt = material.worksheet?.sentAt
+            #if DEBUG
+            // `-today.debugRedo 1`: every sent worksheet is a day old.
+            if UserDefaults.standard.bool(forKey: "today.debugRedo"), sentAt != nil {
+                sentAt = Date().addingTimeInterval(-WorksheetReviewPlan.offsets[0] - 60)
+            }
+            #endif
+            if let step = WorksheetReviewPlan.dueStep(sentAt: sentAt, redone: material.redoDates) {
+                return .init(materialID: material.id, title: material.title.isEmpty ? "Übung" : material.title, step: step)
+            }
+        }
+        return nil
+    }
+
+    /// Today's class to review (after its start time, until three things are recalled), else
+    /// tomorrow's to prepare.
+    private var classSession: TodaySnapshot.ClassSessionInfo? {
+        let courses = ((try? modelContext.fetch(FetchDescriptor<ClassCourse>(predicate: #Predicate { !$0.isArchived })))) ?? []
+        let now = Date()
+        let minutesNow = Calendar.current.component(.hour, from: now) * 60 + Calendar.current.component(.minute, from: now)
+        for course in courses {
+            let entry = course.entry(on: now)
+            let classToday = course.meetsToday(now) || entry != nil
+            guard classToday, entry?.recall.isEmpty ?? true else { continue }
+            // Before the scheduled start the class hasn't happened yet.
+            if entry == nil, course.meetingMinutes >= 0, minutesNow < course.meetingMinutes { continue }
+            return .init(courseID: course.id, courseName: course.name, moment: .after,
+                         detail: entry == nil ? "Nothing logged yet · log it, then review" : "Three things from memory, then today's words")
+        }
+        for course in courses where course.meetsTomorrow(now) {
+            let questions = course.openQuestions.count
+            let detail = questions > 0 ? "The lesson's words · \(questions) question\(questions == 1 ? "" : "s") for her" : "The lesson's words and handouts"
+            return .init(courseID: course.id, courseName: course.name, moment: .before, detail: detail)
+        }
+        return nil
+    }
+
+    private var foerderplanInfo: TodaySnapshot.FoerderplanInfo? {
+        #if DEBUG
+        // `-today.debugFoerderplan <focus>`: start a plan on that grammar point if none runs.
+        if let raw = UserDefaults.standard.string(forKey: "today.debugFoerderplan"), let focus = GrammarFocus(rawValue: raw),
+           FoerderplanService.current(in: modelContext) == nil {
+            FoerderplanService.start(focus, in: modelContext)
+        }
+        #endif
+        guard let plan = FoerderplanService.current(in: modelContext), !plan.doneToday(), let focus = plan.focus else { return nil }
+        return .init(focus: focus, day: plan.dayNumber)
+    }
+
+    private var hoerCheckDue: Bool {
+        #if DEBUG
+        // `-today.debugHoerCheck 1`: offer the Hör-Check now.
+        if UserDefaults.standard.bool(forKey: "today.debugHoerCheck") { return true }
+        #endif
+        return HoerenCheck.isDue(in: modelContext)
+    }
+
+    private func course(_ id: UUID) -> ClassCourse? {
+        var descriptor = FetchDescriptor<ClassCourse>(predicate: #Predicate { $0.id == id })
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    private func material(_ id: UUID) -> ClassMaterial? {
+        var descriptor = FetchDescriptor<ClassMaterial>(predicate: #Predicate { $0.id == id })
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    private func launchClassWords() {
+        let cards = Array(classDueCards.prefix(60))
+        guard !cards.isEmpty else { return }
+        let session = StudySession(
+            cards: cards.map(\.vocabCard),
+            topic: classCourses.first?.name ?? "Kurs",
+            deckID: nil,
+            savedCards: cards,
+            flashcardStyle: .anki,
+            subDeckLabel: "Class words · \(cards.count) due"
+        )
+        router.launch(.cardDeck(session))
+    }
+
+    /// Cards the learner knows well and that aren't due: Leitner box 4+ or an Anki interval of
+    /// three weeks or more, last answered right. The pool for an easy round (roadmap item 6).
+    private var knownCards: [SavedCard] {
+        let now = Date()
+        return decks
+            .filter { $0.kind != .verbPrepositionSRS }
+            .flatMap(\.cards)
+            .filter { card in
+                guard card.lastReviewWasCorrect == true else { return false }
+                if let next = card.nextReviewDate, next <= now { return false }
+                return card.leitnerBox >= 4 || card.interval >= 21
+            }
+    }
+
+    /// Today's most recent scored session was under 60% right first time: a flashcard quiz or a
+    /// grammar round.
+    private var hardSessionToday: Bool {
+        #if DEBUG
+        // `-today.debugEasyRound 1`: treat today as having had a hard session.
+        if UserDefaults.standard.bool(forKey: "today.debugEasyRound") { return true }
+        #endif
+        let start = Calendar.current.startOfDay(for: .now)
+        let quiz = decks.flatMap(\.quizResults).filter { $0.date >= start }.max { $0.date < $1.date }
+        var descriptor = FetchDescriptor<KasusRound>(predicate: #Predicate { $0.date >= start },
+                                                     sortBy: [SortDescriptor(\.date, order: .reverse)])
+        descriptor.fetchLimit = 1
+        let kasus = (try? modelContext.fetch(descriptor))?.first
+        switch (quiz, kasus) {
+        case let (q?, k?) where k.date > q.date:
+            return k.askedCount > 0 && Double(k.firstTryCount) / Double(k.askedCount) < 0.6
+        case let (q?, _):
+            return q.scorePercentage < 60
+        case let (nil, k?):
+            return k.askedCount > 0 && Double(k.firstTryCount) / Double(k.askedCount) < 0.6
+        default:
+            return false
+        }
+    }
+
+    private func launchEasyRound() {
+        let cards = Array(knownCards.shuffled().prefix(10))
+        guard !cards.isEmpty else { return }
+        // Plain flip cards with no SRS style: an easy round never reschedules anything.
+        var session = StudySession(
+            cards: cards.map(\.vocabCard),
+            topic: "Leichte Runde",
+            deckID: nil,
+            flashcardStyle: .default,
+            subDeckLabel: "Easy round · \(cards.count) cards you know"
+        )
+        session.autoStart = true
+        router.launch(.cardDeck(session))
+    }
+
+    /// Shaky grammar structures, worst-first (mirrors the coach's grammar sort).
+    private var weaknesses: [GrammarFocus] {
+        guard let profile else { return [] }
+        return profile.grammar
+            .compactMap { key, skill -> (GrammarFocus, Double)? in
+                guard skill.struggle >= weaknessThreshold, let f = GrammarFocus(rawValue: key) else { return nil }
+                return (f, skill.struggle)
+            }
+            .sorted { $0.1 > $1.1 }
+            .map(\.0)
+    }
+
+    private var hasCoachContent: Bool {
+        !(profile?.vocab.isEmpty ?? true) || !(profile?.slips.isEmpty ?? true)
+    }
+
+    private var streak: Int { StudyLogService.currentStreak(studyDays) }
+
+    private var hasStartedLearning: Bool {
+        studyDays.contains(where: \.hasActivity)
+            || (profile?.sessionCount ?? 0) > 0
+            || decks.contains { !$0.cards.isEmpty }
+    }
+
+    /// Day-of-year — rotates which weak spot / drill is surfaced so the plan varies day to day.
+    private var dayIndex: Int {
+        Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 0
+    }
+
+    // MARK: - Resume
+
+    /// Paused decks, most-recently-paused first.
+    private var pausedDecks: [SavedDeck] {
+        decks.filter { $0.pausedAt != nil }
+            .sorted { ($0.pausedAt ?? .distantPast) > ($1.pausedAt ?? .distantPast) }
+    }
+
+    /// The most recent paused deck we can actually rebuild, paired with its ready-to-launch session.
+    private var resumeTarget: (deck: SavedDeck, session: StudySession)? {
+        for deck in pausedDecks {
+            if let session = deckStore.resumeSession(for: deck) {
+                return (deck, session)
+            }
+        }
+        return nil
+    }
+
+    private var resumeInfo: TodaySnapshot.ResumeInfo? {
+        guard let target = resumeTarget,
+              let data = target.deck.pausedProgressData,
+              let progress = try? JSONDecoder().decode(DeckSessionProgress.self, from: data)
+        else { return nil }
+        return .init(topic: target.deck.topic, cardIndex: progress.cardIndex, cardCount: target.session.cards.count)
+    }
+
+    // MARK: - Launchers
+
+    private func launchResume() {
+        guard let target = resumeTarget else { return }
+        router.launch(.cardDeck(target.session))
+    }
+
+    private func launchReview() {
+        let cards = Array(dueCards.prefix(60))
+        guard !cards.isEmpty else { return }
+        let session = StudySession(
+            cards: cards.map(\.vocabCard),
+            topic: "Daily Review",
+            deckID: nil,
+            savedCards: cards,
+            flashcardStyle: .anki,
+            subDeckLabel: "Daily review · \(cards.count) due"
+        )
+        router.launch(.cardDeck(session))
+    }
+
+    private func launchGrammar(_ focus: GrammarFocus) {
+        // A case opens its story (or Schnellrunde), Artikel a der/die/das round, and every
+        // structure without an exercise the 30-second explanation.
+        switch GrammarRoute(focus).resolve(in: modelContext, level: coordinator.modelManager.germanLevel) {
+        case .launch(let activity):
+            router.launch(activity)
+        case .lesson(let focus):
+            lessonFocus = focus
+        case .prepositionHub:
+            break // A NavigationLink in `row(_:hero:)`.
+        }
+    }
+
+}
+
+// MARK: - Row
+
+private struct TodayRow: View {
+    let rec: TodayRecommendation
+    /// Button-driven rows draw their own chevron; `NavigationLink` rows get the system one.
+    var showsChevron: Bool = false
+
+    @Environment(\.appTheme) private var theme
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // `rec.accent` is content, not chrome — it's how the plan tells one kind of exercise
+            // from another — so the theme reshapes the chip without recoloring it.
+            Image(systemName: rec.systemImage)
+                .font(.title3)
+                .foregroundStyle(rec.accent)
+                .frame(width: 38, height: 38)
+                .background(rec.accent.opacity(0.14),
+                            in: RoundedRectangle(cornerRadius: theme.innerRadius(9), style: .continuous))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(rec.title)
+                    .themedLabel(.subheadline, size: 15)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.primary)
+                Text(rec.subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 8)
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+    }
+}
+
+// MARK: - Hero row
+
+/// The single emphasized "up next" pick shown in the Home hub's For You mode: the plan's top
+/// recommendation as one card with an unmistakable Start affordance.
+private struct TodayHeroRow: View {
+    let rec: TodayRecommendation
+
+    @Environment(\.appTheme) private var theme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                Image(systemName: rec.systemImage)
+                    .font(.title2)
+                    .foregroundStyle(.white)
+                    .frame(width: 46, height: 46)
+                    .background(rec.accent,
+                                in: RoundedRectangle(cornerRadius: theme.innerRadius(12), style: .continuous))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(rec.title)
+                        .themedLabel(.headline, size: 18)
+                        .foregroundStyle(.primary)
+                    Text(rec.subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            // The Start affordance: a pill everywhere but Grundform, which squares it off. Uppercase
+            // there too, so the app's loudest button carries the loudest part of that theme.
+            HStack(spacing: 6) {
+                Text("Start")
+                Image(systemName: "arrow.right")
+            }
+            .themedLabel(.subheadline.weight(.semibold), size: 16)
+            .textCase(theme.uppercaseSectionHeaders ? .uppercase : nil)
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(rec.accent, in: theme.pillShape)
+        }
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
+    }
+}
+
+// (GrammarLessonSheet — the just-in-time mini-lesson this section presents — moved to
+// Features/Grammar/GrammarLessonSheet.swift so the Grammar hub can share it.)

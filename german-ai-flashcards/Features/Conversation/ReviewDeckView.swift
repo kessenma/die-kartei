@@ -1,4 +1,3 @@
-import DieKarteiCore
 import SwiftUI
 import SwiftData
 
@@ -12,6 +11,7 @@ struct ReviewDeckView: View {
     @Query(sort: \SavedDeck.createdAt, order: .reverse) private var allDecks: [SavedDeck]
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appTheme) private var appTheme
 
     @State private var source: WordSource = .aiReview
     @State private var count: Int = 10
@@ -46,7 +46,7 @@ struct ReviewDeckView: View {
     }
 
     private var existingDecks: [SavedDeck] {
-        allDecks.filter { !["goethe", "goethe-srs", "past-tense", "past-tense-srs", "grammar"].contains($0.generatorRaw) }
+        allDecks.filter(\.isBrowsableContent)
     }
 
     private var selectedCount: Int { words.filter(\.selected).count }
@@ -59,13 +59,15 @@ struct ReviewDeckView: View {
                         .foregroundStyle(.green)
                     Button("Done") { dismiss() }
                 }
+                .themedListRow()
             } else {
-                sourceSection
-                wordsSection
-                destinationSection
-                saveSection
+                sourceSection.themedListRow()
+                wordsSection.themedListRow()
+                destinationSection.themedListRow()
+                saveSection.themedListRow()
             }
         }
+        .themedListScreen()
         .navigationTitle("Review deck")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: "\(source.rawValue)-\(count)") {
@@ -92,7 +94,7 @@ struct ReviewDeckView: View {
                 .pickerStyle(.segmented)
             }
         } header: {
-            Text("Where words come from")
+            Text("Where words come from").themedSectionHeader()
         }
     }
 
@@ -127,7 +129,7 @@ struct ReviewDeckView: View {
             }
         } header: {
             HStack {
-                Text("Words (\(selectedCount) selected)")
+                Text("Words (\(selectedCount) selected)").themedSectionHeader()
                 Spacer()
                 if !words.isEmpty {
                     Button(allSelected ? "Deselect all" : "Select all") { toggleAll() }
@@ -161,7 +163,7 @@ struct ReviewDeckView: View {
                 }
             }
         } header: {
-            Text("Destination")
+            Text("Destination").themedSectionHeader()
         } footer: {
             Text("Merging skips words already in the deck. Growing existing decks keeps your library tidy.")
                 .font(.caption2)
@@ -245,7 +247,9 @@ struct ReviewDeckView: View {
         loading = true
         defer { loading = false }
 
-        let model = conversation.model ?? modelManager?.selectedChatModel ?? .qwen3_0_6B
+        // The chat may have synced from a device with a tutor this one hasn't got.
+        let model = ModelHandoff.current(original: conversation.model,
+                                         pick: modelManager?.selectedChatModel ?? .hero).model
         if !mlxService.isModelLoaded || mlxService.currentModel != model {
             await mlxService.loadModel(model)
         }
@@ -346,18 +350,17 @@ struct ReviewDeckView: View {
         guard !chosen.isEmpty else { return }
 
         if let deckID = selectedDeckID, let deck = existingDecks.first(where: { $0.id == deckID }) {
-            let existingWords = Set(deck.cards.map { $0.germanWord.lowercased() })
+            let existingWords = Set(deck.cards.map { CardKind.matchKey($0.germanWord) })
             var order = (deck.cards.map(\.sortOrder).max() ?? -1) + 1
             var added = 0
             for word in chosen {
-                let (german, article) = splitArticle(word.german)
-                guard !existingWords.contains(german.lowercased()),
-                      !existingWords.contains(word.german.lowercased()) else { continue }
+                let split = CardKind.split(word.german)
+                guard !existingWords.contains(CardKind.matchKey(word.german)) else { continue }
                 let card = SavedCard(
-                    germanWord: german,
+                    germanWord: split.word,
                     englishTranslation: word.english,
-                    wordType: article != nil ? "noun" : nil,
-                    article: article,
+                    wordType: split.wordType,
+                    article: split.article,
                     sortOrder: order
                 )
                 card.deck = deck
@@ -374,12 +377,12 @@ struct ReviewDeckView: View {
         } else {
             let name = newDeckName.trimmingCharacters(in: .whitespaces)
             let vocab = chosen.map { word -> VocabCard in
-                let (german, article) = splitArticle(word.german)
+                let split = CardKind.split(word.german)
                 return VocabCard(
-                    germanWord: german,
+                    germanWord: split.word,
                     englishTranslation: word.english,
-                    wordType: article != nil ? "noun" : nil,
-                    article: article,
+                    wordType: split.wordType,
+                    article: split.article,
                     exampleSentence: nil,
                     conjugations: nil
                 )
@@ -396,14 +399,6 @@ struct ReviewDeckView: View {
             try? modelContext.save()
             savedSummary = "Created “\(deck.topic)” with \(vocab.count) card\(vocab.count == 1 ? "" : "s")."
         }
-    }
-
-    /// Split a leading article ("der Tisch" -> ("Tisch", "der")).
-    private func splitArticle(_ word: String) -> (String, String?) {
-        for article in ["der ", "die ", "das "] where word.lowercased().hasPrefix(article) {
-            return (String(word.dropFirst(article.count)).trimmingCharacters(in: .whitespaces), String(article.dropLast()))
-        }
-        return (word, nil)
     }
 }
 

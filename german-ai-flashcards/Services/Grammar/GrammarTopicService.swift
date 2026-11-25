@@ -1,0 +1,36 @@
+import Foundation
+
+/// One browsable topic, a German theme word with its English gloss. Kept for story topics since
+/// the AI exercise screen that first used it was deleted; nothing reads it today.
+struct StoryTopic: Codable, Identifiable, Hashable {
+    let de: String
+    let en: String
+
+    var id: String { de }
+    /// The form fed to the generation prompt (and shown in the topic field when picked).
+    var promptLabel: String { "\(de) (\(en))" }
+}
+
+private struct GrammarTopicsFile: Codable {
+    let topics: [StoryTopic]
+}
+
+/// Loads the bundled catalog of ~100 exercise topics the learner can scroll through
+/// (or have picked at random) instead of typing their own.
+enum GrammarTopicService {
+    private static var cache: [StoryTopic]?
+
+    static func topics() -> [StoryTopic] {
+        if let cached = cache { return cached }
+        guard let url = Bundle.main.url(forResource: "grammar_topics", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let file = try? JSONDecoder().decode(GrammarTopicsFile.self, from: data)
+        else { return [] }
+        cache = file.topics
+        return file.topics
+    }
+
+    static func randomTopic() -> StoryTopic? {
+        topics().randomElement()
+    }
+}

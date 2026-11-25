@@ -1,0 +1,351 @@
+# Deutschkurs — class notes, handouts, homework
+
+**What:** a Home entry (the second wide tile under the six category tiles, beneath Job prep) for
+learners who take a German class somewhere else: a semester course at a university, a private
+tutor, a Volkshochschule evening class. The app keeps what the class produced. One **course** owns
+dated **entries** (the grammar covered, topics, new words, notes, homework) and **handouts** (a
+PDF, a photo of a page, or pasted text, read word by word with the same toolkit as a job posting),
+and builds one **flashcard deck** per course from the words logged and saved. Homework stays on
+the front page until it is ticked off.
+
+**Why:** the app is a self-contained tutor, but many learners are also enrolled somewhere, and
+the words and grammar their class introduces this week are exactly what they should be practising.
+Two courses at once are the norm, not the exception (the designing learner has a semester course
+and an independent HR-German tutor), and they are organized differently: the semester course by
+chapter and week, the tutor by session and goal. So the course is a first-class object rather than
+a name on an entry, and a dated course labels its entries "Woche N".
+
+**Feasibility:** high; the capture side recombines what ships. Import is `PDFTextExtractor` +
+`PhotoOCRService` + a paste screen, with one addition (scanned PDFs, the common handout, are now
+read page by page instead of rejected). Reading is the job-posting text surface and word
+inspector. The deck is a `JobDeckStore` twin keyed on the course.
+
+**Not built yet (the follow-on):** the tutors do not read any of this. `ClassEntry.tutorContext`
+renders an entry for a prompt and is the hook; see "Later".
+
+## Data model
+
+Three `@Model`s, registered in the schema. Every property is defaulted or set in `init` (additive
+migration; the container deletes the store on a failed one). Inverses are declared on the to-many
+side only, as `SavedDeck.cards` does.
+
+**`Models/ClassCourse.swift`**
+
+| field | meaning |
+|---|---|
+| `name`, `kindRaw` | the course, and `Kind`: `course` (group) / `tutor` / `selfStudy` |
+| `teacher?`, `teacherEmail?`, `courseURL?`, `goal?` | who teaches it (+ a `mailto:` link), the course page online (Moodle, Canvas; `pageURL` assumes https), what it is for |
+| `levelRaw?` | `CEFRLevel` the course is pitched at |
+| `startDate?`, `endDate?` | a semester has dates; `weekNumber(for:)` and `currentWeekLabel` ("Woche 7 von 20") derive from them |
+| `isArchived` | finished: off the hub's front page, notes and deck kept |
+| `deckIDRaw?` | the course's one `SavedDeck`, created on the first word saved |
+| `sortOrder` | hub order |
+| `entries` | cascade → `ClassEntry` |
+
+**`Models/ClassEntry.swift`**
+
+| field | meaning |
+|---|---|
+| `date` | the class day, stored as `startOfDay` (so "today's entry" is an equality) |
+| `title` | optional; `displayTitle` falls back to "Woche N" or the date |
+| `grammarFocusRaws`, `topics` | `GrammarFocus` raw values the class covered; free-text themes |
+| `wordsData?` | `[ClassWord]` (`german`, `english`, `addedToDeck`); `ClassWord.parseList` reads a pasted list |
+| `notes` | free text |
+| `homework`, `homeworkDue?`, `homeworkDone` | the assignment; `hasOpenHomework`, `homeworkIsOverdue` |
+| `course` | the owning `ClassCourse` |
+| `materials` | cascade → `ClassMaterial` |
+| `tutorContext` | the entry as a prompt block (German labels, ≤ 2000 chars); not injected yet |
+
+**`Models/ClassMaterial.swift`** (the `JobPosting` twin)
+
+| field | meaning |
+|---|---|
+| `title`, `sourceKindRaw` | `pdf` / `photo` / `paste` |
+| `text` | the handout as text, `[Seite N]` markers stripped (`JobPosting.cleanedText`) |
+| `snapshotFile?` | the original in `ClassMaterialStore` (`Application Support/ClassNotes/<UUID>.pdf|.jpg`) |
+| `lookupsData?` | `[GlossaryEntry]`, newest first, via `lookups` / `recordLookup` |
+| `modelRaw?` | the tutor that answered the lookups |
+| `entry` | the owning `ClassEntry` |
+
+Related additions: `SavedDeck.Kind.classNotes` (`generatorRaw == "class"`, browsable, shown with a
+graduation cap in the Library; also added to `DeckStore.resumeSession`); `CameraPickerView` moved
+from `PhotoScanListView` to `Features/Shared/`; `PDFTextExtractor.pageImages(from:limit:width:)`;
+`Services/ScannedPDFReader` (renders up to 12 pages and runs `PhotoOCRService` over each).
+
+**Deleting** cascades course → entries → handouts, but the files are ours: `ClassEntryStore`
+(in `ClassNotesHubView.swift`) deletes every snapshot before `context.delete`. Decks stay.
+
+## Screens — `Features/ClassNotes/`
+
+- **`ClassNotesTile`** (`Features/Home/`): the full-width card under Job prep. Brown,
+  `graduationcap.fill`, glyph `▤` on Grundform. Pushes the hub.
+- **`ClassNotesHubView`**: Courses (one row each → course page; "Add a course"; with none, a
+  hero "Log your first class" that creates the course with the entry), then two hero rows (Log a
+  class → entry editor; Add a handout → import, asking which course when there are several, into
+  the course's entry for today), open Hausaufgaben across courses (checkbox rows), Diese Woche
+  (rolling 7 days, swipe to delete), Kursdecks (launch the card player), finished courses.
+  Toolbar `+` and `?` (`ClassNotesHelpSheet`). `ClassEntryStore` holds fetch-or-create-today and
+  the three deletes.
+- **`ClassCourseEditorView`**: name, kind (segmented), teacher, goal, level, dates toggle; for an
+  existing course, Finished toggle and Delete (confirmed; `onDeleted` pops the course page).
+- **`ClassCourseDetailView`**: header, action rows (log / handout / study deck), open homework,
+  entries grouped "Woche N" (dated) or by month, handouts, Edit.
+- **`ClassEntryEditorView`**: course picker (menu when several; inline name when none; fixed
+  when editing), date, title, grammar chips (`WrapLayout` + `FilterPill` over `GrammarFocus`),
+  topic chips, word rows (German / English, add, delete, "Paste a list" → `ClassWordListPasteSheet`),
+  notes, homework + due date. Save is off while the draft is empty. `classNotes.lastCourseID`
+  remembers the course.
+- **`ClassEntryDetailView`**: header (date, week pill, course), Behandelt (grammar pills open
+  `GrammarLessonSheet`; topic pills), Neue Wörter (speak, "Add N to the course deck" for complete
+  words, Study the course deck), Notizen, Hausaufgabe (checkbox), Handouts (+ Add a handout), Edit.
+- **`ClassMaterialImportView`**: PDF (`fileImporter`; a `looksScanned` file goes through
+  `ScannedPDFReader` with a page-by-page progress row), photo from the library or the camera
+  (`PhotoOCRService`; the JPEG is the original), paste. All three → `ClassMaterialReviewView`
+  (title + text preview, "Attach to this class") → saved under the entry. A fourth door, *From the
+  app* (`ClassMaterialLibraryPicker`), copies in a text the app already has: a `StudyStory`
+  (`.story`, its lookups come along), a paper or link (`.pdf` / `.link`), a photo scan (`.photo`), or
+  the kept document of a document deck (`SavedDeck.sourceText`/`sourceFile`; the file is copied, not
+  shared). The deck that goes with it (story/paper `deckID`, or the document deck) becomes the
+  handout's `glossaryDeckID` and joins the course if no course has it. `ClassMaterial.originIDRaw`
+  records the source: the picker marks what the course already has, and Short Stories, Papers and
+  Photo Scans show the course a text went to (`ClassMaterialOrigins`, `OnCourseLabel`).
+- **`ClassMaterialDetailView`**: header (source pill, word count, entry, "Open the original" via
+  Quick Look), the text surface (`JobPostingTextSurface` + `WordInspectorSheet`, built by
+  `ClassWordInspector`), Unbekannte Wörter (speak, swipe to remove, Add all to the deck),
+  Flashcards (+ *Make a deck from this handout*). **Vokabeln · Vocab**: the deck this text is read
+  with, its words dotted in the text and answered without the model, English inline on request
+  (`docs/DOCUMENT_DECKS.md`). *Translate the whole text* / *Read in English or side by side* →
+  `HandoutTranslationReaderView`. Phrase selection goes through the inspector.
+- **`HandoutTranslationReaderView`**: the handout in Deutsch / Beide / English (segmented,
+  `handout.translation.mode`). Beide defaults to *Scroll together* (⋯ menu,
+  `handout.translation.scrollTogether`): ONE scroll view of sentence pairs, German beside English
+  when `horizontalSizeClass == .regular` (iPad), German over its English otherwise, so the two
+  cannot drift. Turned off, each language gets its own pane (side by side / English above German)
+  and the panes follow each other by sentence: both read `topID` through
+  `scrollPosition(id:anchor: .top)` over a `scrollTargetLayout`, but only the `leader` (the pane
+  last touched, from `onScrollPhaseChange`) writes it, so the follower's report after jumping
+  never pulls the leader back; when the leader comes to rest the follower `scrollTo`s the
+  sentence again (a far jump into unlaid lazy rows stops short). Every sentence must be able to
+  reach the top, so the last row gets `minHeight` = the scroll view's visible height (measured
+  with `onScrollGeometryChange`) instead of a tail spacer, which would overshoot into blank. The
+  German is `SelectableGermanText` per sentence with the handout page's inspector
+  (`ClassWordInspector`), vocab-list glossary and saved/looked-up marks: double-tap a word,
+  select a phrase. A single tap on a sentence (separate panes only) brings both to it; the ⋯
+  menu's *Highlight the top sentence* (`handout.translation.highlightTop`) tints it. Without a
+  translation the screen offers a tutor picker (downloaded models) and *Translate N sentences*
+  with progress and Stop; a stopped run resumes with *Continue translating*.
+  `HandoutTranslationService` sends each paragraph as numbered sentences (batches of 8) and
+  parses numbered lines; a batch whose numbering breaks is translated as a block, split with
+  `NLTokenizer`, and spread over the German sentences (`HandoutTranslation.align`). Saved on
+  `ClassMaterial.translationData` (`HandoutTranslation`: paragraphs of parallel sentence arrays)
+  after every paragraph, with `translationModelRaw`.
+- **`ClassMaterialListView`**: every handout; Library ▸ Reading ▸ Class Handouts.
+
+## Decks
+
+A course can hold any number of decks; `SavedDeck.courseIDRaw` links them (additive column).
+- **The course's own word deck** — `ClassDeckStore` (`Features/ClassNotes/`): `"Class: <name>"`,
+  `generatorRaw = "class"`, found by `course.deckID`, tagged with `courseID` on creation. `saveWord`
+  (feeds `LearnerMemoryService.noteVocabEncounters(source: "class")` unless `storyFeedsCoach` is
+  off), `saveWords(of: entry)` (complete words only, marks `addedToDeck`), `saveAllLookups(for:)`.
+- **Decks from documents** — a vocab sheet or a handout turned into a deck (`docs/DOCUMENT_DECKS.md`),
+  from the course page's *Add a flashcard deck* or a handout's *Make a deck from this handout*.
+- **Linked Library decks** — `CourseDeckLinkView`, or the Course swipe on a Library deck row (not
+  offered for a course's own word deck); swipe on the course page to unlink. Library deck rows show
+  their course and their source (story, paper, or the handout they are the vocab list for;
+  `DeckLinks` in `UnifiedLibraryView`).
+The course page lists them all; the hub lists every course-linked deck with its course.
+
+**Wortliste (the word table).** Each deck row on the course page has a table button beside Study
+(and a context-menu item) that pushes `DeckWordTableView` (`Features/Cards/`): every card as one
+row, German with its article in gender colour, English, and on wide screens (≥640 pt: iPad, Mac,
+phone landscape) the position, word type, example and "Last time" columns. Search, sort by a
+column (tap the header; again reverses), examples on/off, and "Test yourself" hides the German or
+the English column until a row is tapped. The deck's setup screen opens the same table from its
+"See all N words" link (it replaced the old `WordListSheet`), with the session's corrected
+articles and the saved cards' progress. Rows are snapshotted on appear, never read from the deck
+in `body`. The progress column shows only once any card has been reviewed.
+
+**Progress in the Wortliste.** A saved card's flashcard record and its handwriting show as two
+columns once any card has some (wide: "Flashcards" with Missed last time / Knew it / New and
+"forgotten N×", "Written" with N×; phone: an icon and N×), plus a summary line ("2 missed last
+time · 2 written by hand"). *Missed last time* is `SavedCard.lastReviewWasCorrect == false`, in any
+mode: Anki and Leitner stamp it through their services, and Default mode now stamps its ✓/✗ when a
+round finishes (`CardDeckView.stampDefaultModeAnswers`, last-answer stamps only; reviews, lapses
+and boxes stay the schedulers'). *Forgotten N×* is `lapses` (Again in Anki, back to box 1 in
+Leitner). *Written N×* is `DeckWordRow.handwriting(in:)`: every finished Schreibblatt sheet adds
+its `repetitions` to each word on its pages (`writtenWords`, once per sheet), the same rule as the
+Schreibblatt picker's pencil count. Sheets don't sync, so it counts this device's sheets. Schreib
+es (write a missed card) keeps no record and doesn't count. Sort "Missed first" or "Most written".
+
+**Sharing the Wortliste.** The table's Share menu sends every word (never just the search hits)
+in the order on screen, with examples when "Show examples" is on: a **PDF table** (A4, the
+der/die/das colours, plural lines, the header repeated on each page, "1 / 3" footers), a
+**CSV** (UTF-8 with a BOM so Excel keeps the umlauts; the article stays on the noun), or **text**
+for a chat ("der Holzhacker = lumberjack" per line, shared as a string so Messages pastes it
+inline). "Include my progress" (on by default, remembered) adds the progress to each: PDF columns
+FLASHCARDS (Missed / Knew it / New, forgotten N×) and WRITTEN (N×, sheets), a pale red wash on the
+rows missed last time with a legend under the title; CSV columns Flashcards, Times forgotten,
+Times written (numbers, so a spreadsheet can sort them); "(missed last time, forgotten 2×, written
+10×)" after a word in the text. A column with nothing in it is left out. `-classNotes.debugOpen
+wordlist` seeds some answers and a finished 5× sheet on the sample deck so these show.
+`Services/DeckTableExport.swift` draws the PDF with Core Graphics + Core Text, no
+UIKit, so it runs on the Mac too; `DeckTableDocument` is the `Transferable`, and builds the bytes
+only when someone shares. To check the PDF without the simulator, compile `DeckTableExport.swift`
+with a stub `DeckWordRow`/`Gender` and rasterize it with `CGPDFDocument` (`xcrun swiftc`; the
+swiftly toolchain on PATH can't build against the SDK).
+
+## Debug launch arguments (DEBUG)
+
+- `-classNotes.debugSeed 1` — two courses: "[debug] Deutsch A2 an der Uni" (dated, 6 weeks in,
+  3 entries, one overdue and one open homework, a pasted worksheet) and "[debug] HR-Deutsch mit
+  Anna" (tutor, goal, 2 entries, a "photo" handout with a drawn page as its original).
+- `-classNotes.debugOpen <screen>` — seeds if needed and opens `hub` (or `1`), `course`, `entry`,
+  `editor`, `handout`, `story` (the Grimm story with its vocab deck linked), `translation` (that
+  story's side-by-side reader; the opening is seeded in English), `builder` (the flashcard
+  builder over the real Hänsel vocab sheet), `slides` (the same builder over a five-page
+  three-column slide module, for the page pills and the example/plural captions), or `wordlist`
+  (the Hänsel vocab deck's Wortliste) in a sheet.
+- `-classNotes.debugRemove 1` — removes both courses and their files.
+- `-classNotes.debugOpen intro` — the hub over whatever is on the device, **unseeded**, with the
+  onboarding intro open: the first run with no course, the restart with one (add
+  `-classNotes.debugSeed 1`). `-classNotes.debugIntroStep kind|notInClass|basics|materials|plan`
+  opens it on one step; `-classNotes.debugIntroKind university|evening|tutor|selfStudy` picks the
+  answer behind it.
+- `-classNotes.debugOpen guide` — the seeded hub with the "Erste Schritte" checklist on it, half
+  done.
+- `-classNotes.debugIntro 1` — forgets the intro and the checklist (`ClassNotesGuide.Keys.all`),
+  so the intro opens by itself on the next visit with no course.
+
+Only one presenting argument per launch (see `WhatsNewService`).
+
+## Verification
+
+- `build_sim` clean on the simulator (2026-09-21). The sim can't run MLX, so a word double-tap
+  shows "Getting the model ready…" and no translation; persistence of lookups is a device check.
+- Flows: Home ▸ All Activities → Deutschkurs tile → hub → Log a class (inline course name on a
+  fresh install) → Save → entry pushed; entry → Edit → Paste a list (`Haus = house`,
+  `gehen – to go`, `Tisch<tab>table`, `Buch: book`) → 4 rows; Add N to the course deck → deck under
+  Kursdecks, the course page, and Library ▸ Decks with the graduation cap; grammar pill → quick
+  lesson; Add a handout → paste → review → attach → handout row → reader; PDF via Files (a text
+  PDF, then a scan: progress, then text); photo from the library; Open the original → Quick Look;
+  homework checkbox on hub, course, and entry; swipe-delete an entry removes its handouts' files;
+  Delete course from its editor pops to the hub, deck stays.
+
+## Homework from a lesson PDF
+
+A PDF handout's exercise pages can be set up as homework, worked in the app or on the slide with
+the Pencil, checked if the learner wants, and shared back as the teacher's own slides filled in.
+The handout page's **Hausaufgabe** section, the import's review step and the hub's Homework row
+lead there. Its own doc: `docs/WORKSHEETS.md`. A course's setup asks what kind it is (course,
+private tutor, on my own) and, for a course, its length in weeks.
+
+## Tutors read the class (built 2026-11-20)
+
+`ConversationEngine` fills `ConversationConfig.classContext` at session start from
+`ClassTutorContext.text`: the last fortnight's `ClassEntry.tutorContext`, newest first, whole
+entries up to 1,200 characters, active courses only. `ConversationPrompts` adds it as a steering
+section ("use its words and grammar where it fits; don't quiz, don't mention the class unless they
+do"). Every mode but interview and paper, which carry their own documents. Gated by
+`MLXModelManager.classFeedsCoach` (Settings ▸ Conversation ▸ "Use my class notes", on by default).
+Never stored on the chat: a resumed conversation reads the class as it is now. The coach's
+briefing is unchanged; the class section sits next to it.
+
+## Today plans from the class (built 2026-11-20)
+
+- **Class words**: due cards on the decks of courses with a class in the last fortnight get their
+  own step ("Kurs · 4 class words due"), and leave the general review so they aren't counted twice.
+- **Class grammar** replaces the weak-spot step when there is one: checked worksheet mistakes from
+  the last fortnight first (`WorksheetReviewPlan.mistakeFoci`: the article-rule checks name the case,
+  and a preposition in the reason points at Präpositionen), else the grammar an entry in the last
+  week covered, rotating day to day. Launched through `GrammarRoute` like any grammar step.
+- **Her review plan**: see docs/WORKSHEETS.md ▸ Wiederholen.
+
+## The loop around a session (built 2026-11-20, roadmap section E)
+
+On the course page, "Rund um die Stunde"; on Today, the day before and the day of a class.
+Files: `Models/ClassLoop.swift` (schedule, questions, corrections), `Features/ClassNotes/Loop/`,
+`Features/ClassNotes/AskTeacherSheet.swift`.
+
+- **When it meets** (course editor): weekdays (`meetingWeekdaysRaw`), an optional start time
+  (`meetingMinutes`), and a tutor's one-off next date (`nextSessionAt`, wins when sooner). All
+  synced. `ClassSchedule.nextSessionDay` / `previousSessionDay` are pure.
+- **Vor der Stunde** (item 12): the day before a session Today offers `BeforeClassView`: the
+  questions saved for her, the lesson's words as a plain card round, and its handouts in the reader.
+  The lesson is an entry dated on the next session (a handout imported ahead); without one it warms
+  up with the last entry and says so.
+- **Nach der Stunde** (item 13): on a class day (scheduled, or an entry dated today), after the start
+  time, Today offers `AfterClassView`: three things from memory first (`ClassEntry.recall`, synced),
+  then the entry as logged, its words as a card round, its grammar through `GrammarRoute`. No entry
+  yet: "Log today's class". The step leaves Today once the recall is saved.
+- **Fragen für die Stunde** (item 14): "Ask my teacher" (`AskTeacherButton`) in the word inspector,
+  a conversation's correction card, a drill's misses and a worksheet check row. Questions park on
+  the course (`ClassCourse.questionsData`, a dictionary merged per question by `at`, deletes kept as
+  tombstones) and show on the course page and before class. Ticking one asks for her answer and
+  appends "Frage: … / Antwort: …" to that day's entry (else the newest).
+- **Bericht für die Lehrerin** (item 15): `TeacherReportBuilder` writes a German page since the last
+  session (by the schedule, else the newest earlier entry, else a week): time practised, course words
+  practised, words that keep failing (2+ lapses or last missed), weak grammar with two of the coach's
+  real "you said → better" samples each, her corrections being practised, homework, open questions.
+  The learner edits it, then shares as PDF (`TeacherReportPDF`, Core Text, works on the Mac) or text.
+- **Sprechen vorbereiten** (item 16): a topic (the course goal, else the last entry), an outline,
+  phrases straight to the course deck, then a rehearsal: a custom-scenario chat built from the outline
+  with the learner's own chat settings (`ConversationConfig.fromSettings`). The tutor reads the class
+  too (`classFeedsCoach`).
+- **Korrekturen der Lehrerin** (item 17): on an entry, "what I said / what she said". Each pair is
+  stored on the entry (`teacherCorrectionsData`, a set by id), becomes a card on the course deck
+  through `DeckCardAdder` (a phrase stays a phrase card), and a slip tagged `MemorySource.teacher`:
+  a one-word fix is a cloze-ready word slip. Teacher slips, unlike other sourced ones, reach the
+  coach's correction hint. No recording of the lesson.
+- Debug: `-classNotes.debugOpen before|after|speak|report|redo` (the seeded course meets today and
+  tomorrow and has one open question).
+
+## Onboarding (built 2026-11-20)
+
+`Features/ClassNotes/Guide/`. A short intro that sets up the real course, then an "Erste Schritte
+· Getting started" checklist at the top of the hub that ticks itself off from the learner's data.
+
+- **Intro** (`ClassNotesIntroView`, a `.sheet`, never a cover: on the Mac a cover is a window).
+  Steps: *kind* (university, evening class, tutor, on my own, plus **"I'm not taking a class"**) →
+  *notInClass* (the way out: use it on my own / look around first / back to Home, which is hidden on
+  the Mac where Deutschkurs is a sidebar place) → *basics* (name, level, Semester/Quarter/no dates
+  or a goal) → *materials* (handouts, vocab lists, homework sheets, mostly talking; skipped for
+  self-study, which reads handouts and vocab lists) → *plan* (the checklist preview, then
+  Los geht's or "Log my first class now"). Steps that don't apply are skipped, and "Step x of y"
+  counts only the ones this run shows. Back sits next to that counter, not in the toolbar, where
+  on iOS it would crowd Close.
+- **Exits.** Close on every step, and a swipe down is the same thing. Nothing is saved before the
+  last step. A restart (from the ? menu with a course present) is *materials → plan* only: it
+  re-picks the checklist and never makes a second course.
+- **When it opens.** By itself once, on the first visit by someone with **no course at all**
+  (archived ones count). With iCloud Sync on, it waits for the first fetch first. The seen flag is
+  written before the sheet shows. Any time after that: the hub's ? is a menu with *How it works*
+  (the old sheet) and *Take the tour*.
+- **Checklist** (`ClassNotesGuideSection`, the hub's first section). Items come from
+  `ClassNotesGuide.items(kind:materials:)`: course, log a class (not self-study), add a handout,
+  save a word, turn a vocab list into flashcards, do homework in the app (not self-study), study
+  your deck. **Done is read from data, never ticked by hand** (`ClassNotesGuide.Snapshot`), so work
+  done earlier or on another device is already ticked. Each open row is a button to where it's
+  done. "Save a word" pushes the newest handout with an inline double-tap hint
+  (`ClassMaterialDetailView.showsSaveWordHint`). ✕ hides it, and so does the "All done" row.
+- **Body-loop rule.** The snapshot is fetched in `refreshGuide()` (on appear, on the hub queries'
+  counts, when a sheet or a study session closes), never in `body`. A filtered query read in `body`
+  loops once a screen is pushed over the hub.
+- **State.** UserDefaults `classNotes.intro.seen`, `classNotes.guide.kind`, `.materials`,
+  `.shownAt`, `.hiddenAt` (seconds since the reference date). The checklist is visible while
+  `shownAt > hiddenAt`. Synced in `ProgressSyncDocument`: the intro flag `.or`, `hiddenAt` `.max`,
+  and kind + materials + `shownAt` as one group ordered by `shownAt`. A restart writes a newer
+  `shownAt` and never clears the `.or` flag, so the merge can't undo it.
+- **Adding a step** when the section grows: a case on `ClassNotesGuide.Item` (title, detail,
+  symbol), its place in `items(kind:materials:)`, a fact on `Snapshot` and its `isDone` line, and
+  the hub's `showMe` destination. `ClassNotesGuideTests` covers the item lists, the done rules and
+  the visibility rule.
+
+## Later
+- **Weekly recap** conversation seeded from the course's entries (`FUTURE_FEATURES.md` #7).
+- **Tutor course ↔ Job prep.** A tutor course with a job-search goal feeds interview practice
+  (`course.goal` + the class words).
+- **Handout extras.** The MLX cleanup pass over OCR text (`PhotoOCRService.cleanupText`), a
+  `PaperStudyService`-style summary and questions, the PDF reading surface (`JobPostingPDFSurface`
+  is document-agnostic), a `StudyDay` time bucket for handout reading. `looksScanned` is a
+  whole-document test, so a mixed PDF with one text page skips OCR for the rest.

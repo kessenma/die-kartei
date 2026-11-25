@@ -1,0 +1,152 @@
+{
+  "about": "Worum geht's? judge probe (training/GIST_PROBE.md). Each story has 3-4 English key points and learner-style summaries of known kinds, each with a gold verdict per point (ja / teilweise / nein). Gold labels were drafted by Claude; Kyle reviews them before the numbers are trusted. Stories: the seven bundled Kasus stories (German text from kasus_stories.json, joined by the CLI) and one news report.",
+  "stories": [
+    {
+      "id": "ks-dat-a2-schluessel",
+      "keyPoints": [
+        "Jonas cannot find his key before an eight o'clock appointment.",
+        "The dog had the key and was playing with it under the table.",
+        "Jonas gives the dog a biscuit and later buys it a ball.",
+        "Now he always puts the key on top of the cupboard."
+      ],
+      "summaries": [
+        {"type": "full", "text": "Jonas lost his key before an appointment. The dog was playing with it under the table, so Jonas gave it a biscuit and later bought it a ball. Now he keeps the key on the cupboard.", "gold": ["ja", "ja", "ja", "ja"]},
+        {"type": "partial", "text": "A boy called Jonas couldn't find his key, and it turned out the dog had it.", "gold": ["ja", "ja", "nein", "nein"]},
+        {"type": "vague", "text": "Someone lost something at home and an animal was involved.", "gold": ["teilweise", "teilweise", "nein", "nein"]},
+        {"type": "wrong_detail", "text": "Jonas couldn't find his key. His mother had hidden it in her bag. He gave the dog a biscuit and now keeps the key on the cupboard.", "gold": ["ja", "nein", "teilweise", "ja"]},
+        {"type": "off_topic", "text": "A family goes to the beach for the weekend and has a picnic.", "gold": ["nein", "nein", "nein", "nein"]},
+        {"type": "german", "text": "Jonas findet seinen Schlüssel nicht. Der Hund spielt damit unter dem Tisch. Jetzt legt Jonas den Schlüssel immer auf den Schrank.", "gold": ["ja", "ja", "nein", "ja"]},
+        {"type": "copied_point", "text": "Jonas cannot find his key before an eight o'clock appointment.", "gold": ["ja", "nein", "nein", "nein"]}
+      ]
+    },
+    {
+      "id": "ks-nom-a1-foto",
+      "keyPoints": [
+        "The narrator describes an old family photo.",
+        "It shows grandpa Karl, grandma, and the narrator's dad as a boy with his dog Bello.",
+        "Aunt Anna stands on the right, with a garden at the back.",
+        "The garden is still there and the narrator plays in it now."
+      ],
+      "summaries": [
+        {"type": "full", "text": "Someone looks at an old family photo with grandpa Karl, grandma, their dad as a little boy with the dog Bello, and aunt Anna. The garden behind them still exists and they play there now.", "gold": ["ja", "ja", "ja", "ja"]},
+        {"type": "partial", "text": "It's about an old photo of the family with the grandparents.", "gold": ["ja", "teilweise", "nein", "nein"]},
+        {"type": "vague", "text": "Somebody talks about their relatives and the past.", "gold": ["teilweise", "teilweise", "nein", "nein"]},
+        {"type": "wrong_detail", "text": "An old family photo shows grandpa Karl, grandma and dad as a boy with his cat. Aunt Anna stands on the right. The garden was sold long ago.", "gold": ["ja", "teilweise", "ja", "nein"]},
+        {"type": "off_topic", "text": "Two friends go shopping for new shoes in town.", "gold": ["nein", "nein", "nein", "nein"]},
+        {"type": "german", "text": "Ein altes Foto von der Familie: Opa Karl, Oma, Papa als Junge mit dem Hund Bello und Tante Anna. Den Garten gibt es noch heute.", "gold": ["ja", "ja", "teilweise", "teilweise"]},
+        {"type": "copied_point", "text": "The narrator describes an old family photo.", "gold": ["ja", "nein", "nein", "nein"]}
+      ]
+    },
+    {
+      "id": "ks-akk-a1-picknick",
+      "keyPoints": [
+        "Tom packs a basket with cake and juice for a Saturday picnic.",
+        "His friend Ali comes along with his dog Rex.",
+        "Rex eats the cake before they can.",
+        "They drink the juice, play with Rex and still enjoy the day."
+      ],
+      "summaries": [
+        {"type": "full", "text": "Tom and his friend Ali go on a picnic with Ali's dog Rex. Tom brought cake and juice, but Rex ate the cake. They still had a nice day drinking juice and playing with the dog.", "gold": ["ja", "ja", "ja", "ja"]},
+        {"type": "partial", "text": "Tom made a picnic and a dog ate the cake.", "gold": ["teilweise", "nein", "ja", "nein"]},
+        {"type": "vague", "text": "Some friends were outside and something went wrong with the food.", "gold": ["teilweise", "teilweise", "teilweise", "nein"]},
+        {"type": "wrong_detail", "text": "Tom and Ali had a picnic with Rex. Ali ate all the cake, so Tom was angry and they went home early.", "gold": ["teilweise", "ja", "nein", "nein"]},
+        {"type": "off_topic", "text": "A woman visits her brother in Berlin and buys an umbrella.", "gold": ["nein", "nein", "nein", "nein"]},
+        {"type": "german", "text": "Tom und Ali machen ein Picknick. Der Hund Rex frisst den Kuchen. Sie trinken den Saft und spielen mit Rex.", "gold": ["teilweise", "ja", "ja", "ja"]},
+        {"type": "copied_point", "text": "Rex eats the cake before they can.", "gold": ["nein", "nein", "ja", "nein"]}
+      ]
+    },
+    {
+      "id": "ks-akk-a1-berlin",
+      "keyPoints": [
+        "Anna visits her brother Paul in Berlin.",
+        "They ride a bus through the city and she sees a river and a tall tower.",
+        "It starts to rain and Paul buys her a red umbrella.",
+        "She goes home without the umbrella, so it stays with Paul."
+      ],
+      "summaries": [
+        {"type": "full", "text": "Anna visits her brother Paul in Berlin. They take a bus around the city and see a river and a tower. When it rains Paul buys her a red umbrella, but she forgets it at his place.", "gold": ["ja", "ja", "ja", "ja"]},
+        {"type": "partial", "text": "Anna went to Berlin to see her brother and it rained.", "gold": ["ja", "nein", "teilweise", "nein"]},
+        {"type": "vague", "text": "A trip to a city with some sightseeing and bad weather.", "gold": ["teilweise", "teilweise", "teilweise", "nein"]},
+        {"type": "wrong_detail", "text": "Anna visits Paul in Munich. They take the bus and see a tower. Paul buys her a red umbrella and she takes it home.", "gold": ["nein", "teilweise", "ja", "nein"]},
+        {"type": "off_topic", "text": "Lisa moves into a new flat and her brother carries the boxes.", "gold": ["nein", "nein", "nein", "nein"]},
+        {"type": "german", "text": "Anna besucht Paul in Berlin. Sie fahren mit dem Bus. Es regnet und Paul kauft einen roten Regenschirm. Der Schirm bleibt bei Paul.", "gold": ["ja", "teilweise", "ja", "ja"]},
+        {"type": "copied_point", "text": "Anna visits her brother Paul in Berlin.", "gold": ["ja", "nein", "nein", "nein"]}
+      ]
+    },
+    {
+      "id": "ks-dat-a2-umzug",
+      "keyPoints": [
+        "Lisa moves house and her brother Max comes to help.",
+        "Max carries twenty boxes up to the top-floor flat, which has no lift.",
+        "A neighbour helps carry the heavy sofa.",
+        "Lisa thanks the neighbour with a cake, and Max's back hurts."
+      ],
+      "summaries": [
+        {"type": "full", "text": "Lisa is moving and her brother Max helps. He carries twenty boxes upstairs because there's no lift, and a neighbour helps with the sofa. Lisa brings the neighbour a cake, and Max's back hurts afterwards.", "gold": ["ja", "ja", "ja", "ja"]},
+        {"type": "partial", "text": "Lisa moved flats and her brother carried lots of boxes.", "gold": ["ja", "teilweise", "nein", "nein"]},
+        {"type": "vague", "text": "People moved furniture and someone helped.", "gold": ["teilweise", "teilweise", "teilweise", "nein"]},
+        {"type": "wrong_detail", "text": "Lisa moved house. Max carried twenty boxes in the lift. The neighbour helped with the sofa and Lisa gave him flowers.", "gold": ["ja", "teilweise", "ja", "nein"]},
+        {"type": "off_topic", "text": "Sara has a job interview in Munich and her train is late.", "gold": ["nein", "nein", "nein", "nein"]},
+        {"type": "german", "text": "Lisa zieht um. Max trägt zwanzig Kisten nach oben, es gibt keinen Aufzug. Ein Nachbar hilft mit dem Sofa.", "gold": ["ja", "ja", "ja", "nein"]},
+        {"type": "copied_point", "text": "A neighbour helps carry the heavy sofa.", "gold": ["nein", "nein", "ja", "nein"]}
+      ]
+    },
+    {
+      "id": "ks-gen-b1-grossmutter",
+      "keyPoints": [
+        "As a child the narrator spent every summer at their grandmother's house by the forest.",
+        "The grandmother baked, worked in the garden and told stories from her childhood.",
+        "Last summer the narrator went back and found strangers living there and a car park instead of the roses.",
+        "For the narrator it will always be their grandmother's house."
+      ],
+      "summaries": [
+        {"type": "full", "text": "The narrator remembers summers at grandma's house next to the forest, where she baked, gardened and told stories. Going back last summer, other people live there and the roses are a car park, but it is still grandma's house to them.", "gold": ["ja", "ja", "ja", "ja"]},
+        {"type": "partial", "text": "Someone remembers spending summers with their grandmother in the village.", "gold": ["ja", "nein", "nein", "nein"]},
+        {"type": "vague", "text": "It's about memories of an old house and how things change.", "gold": ["teilweise", "nein", "teilweise", "teilweise"]},
+        {"type": "wrong_detail", "text": "The narrator spent summers at grandma's house by the sea. She baked and told stories. Now the house is empty and falling down.", "gold": ["teilweise", "ja", "nein", "nein"]},
+        {"type": "off_topic", "text": "Tom and Ali go on a picnic and the dog eats the cake.", "gold": ["nein", "nein", "nein", "nein"]},
+        {"type": "german", "text": "Als Kind war ich jeden Sommer bei meiner Oma am Wald. Sie hat gebacken und Geschichten erzählt. Heute wohnen dort Leute aus Hamburg.", "gold": ["ja", "ja", "teilweise", "nein"]},
+        {"type": "copied_point", "text": "For the narrator it will always be their grandmother's house.", "gold": ["nein", "nein", "nein", "ja"]}
+      ]
+    },
+    {
+      "id": "ks-alle-b1-gespraech",
+      "keyPoints": [
+        "Sara has a job interview as a graphic designer at a company in Munich.",
+        "Her train stops because of a fault and she arrives an hour late.",
+        "The boss, Mr Weber, stays calm and likes one of her designs.",
+        "She gets the job and starts next Monday."
+      ],
+      "summaries": [
+        {"type": "full", "text": "Sara has a job interview in Munich as a graphic designer. Her train breaks down and she's an hour late, but the boss stays calm, likes her designs and offers her the job. She starts on Monday.", "gold": ["ja", "ja", "ja", "ja"]},
+        {"type": "partial", "text": "Sara's train was late on the way to an interview.", "gold": ["teilweise", "ja", "nein", "nein"]},
+        {"type": "vague", "text": "A woman had a stressful day at work.", "gold": ["teilweise", "nein", "nein", "nein"]},
+        {"type": "wrong_detail", "text": "Sara has an interview in Munich. Her train is late and the boss is angry, so she doesn't get the job.", "gold": ["ja", "ja", "nein", "nein"]},
+        {"type": "off_topic", "text": "Anna visits Berlin and leaves her umbrella behind.", "gold": ["nein", "nein", "nein", "nein"]},
+        {"type": "german", "text": "Sara hat ein Vorstellungsgespräch in München. Der Zug bleibt stehen und sie kommt zu spät. Am Ende bekommt sie die Stelle.", "gold": ["teilweise", "ja", "nein", "teilweise"]},
+        {"type": "copied_point", "text": "She gets the job and starts next Monday.", "gold": ["nein", "nein", "nein", "ja"]}
+      ]
+    },
+    {
+      "id": "news-zug-bonn",
+      "title": "Der verpasste Zug",
+      "text": "Am Montagmorgen ist der Regionalzug von Köln nach Bonn zwanzig Minuten zu spät gekommen. Viele Pendler haben ihren Anschluss verpasst. Der Grund war ein Baum auf den Gleisen. Die Feuerwehr hat den Baum schnell entfernt. Ab neun Uhr sind die Züge wieder pünktlich gefahren. Die Bahn entschuldigt sich bei den Fahrgästen und bietet einen Gutschein an.",
+      "keyPoints": [
+        "A train from Cologne to Bonn was twenty minutes late on Monday morning.",
+        "A tree on the tracks caused the delay.",
+        "The fire brigade removed it and trains ran on time from nine.",
+        "The railway apologised and offers passengers a voucher."
+      ],
+      "summaries": [
+        {"type": "full", "text": "On Monday a train from Cologne to Bonn was 20 minutes late because a tree was on the tracks. Firefighters removed it, trains were on time again from nine, and the railway offered vouchers.", "gold": ["ja", "ja", "ja", "ja"]},
+        {"type": "partial", "text": "A train was late because of a tree.", "gold": ["teilweise", "ja", "nein", "nein"]},
+        {"type": "vague", "text": "There were problems with trains in the morning.", "gold": ["teilweise", "nein", "nein", "nein"]},
+        {"type": "wrong_detail", "text": "A train from Cologne to Bonn was late because of a strike. The railway apologised and gave vouchers.", "gold": ["ja", "nein", "nein", "ja"]},
+        {"type": "off_topic", "text": "The weather will be sunny and warm all week.", "gold": ["nein", "nein", "nein", "nein"]},
+        {"type": "german", "text": "Der Zug von Köln nach Bonn kam zu spät, weil ein Baum auf den Gleisen lag. Die Bahn gibt einen Gutschein.", "gold": ["teilweise", "ja", "nein", "ja"]},
+        {"type": "copied_point", "text": "A tree on the tracks caused the delay.", "gold": ["nein", "ja", "nein", "nein"]},
+        {"type": "too_short", "text": "train late", "gold": ["nein", "nein", "nein", "nein"]}
+      ]
+    }
+  ]
+}

@@ -7,11 +7,23 @@ struct GeneratingFlashcardsView: View {
     var isValidating: Bool
     var topic: String
     var startTime: Date
+    var model: MLXModel
     var generatedWords: [String] = []
     var streamingTokenCount: Int = 0
     var currentBatchSize: Int = 0
     var currentBatchIndex: Int = 0
     var onStop: (() -> Void)? = nil
+
+    /// The `CardImageTiming.everyCard` second half: the words are done and pictures are being drawn
+    /// for them. Same overlay rather than a new screen — from the learner's side it's still one
+    /// "make my deck" operation, it just has two phases.
+    var isDrawingImages: Bool = false
+    var imagesDrawn: Int = 0
+    var imagesTotal: Int = 0
+    var imageProgress: Double = 0
+    var onStopImages: (() -> Void)? = nil
+
+    @Environment(\.appTheme) private var theme
 
     private var tokenFill: Double {
         guard currentBatchSize > 0, progress < 1.0 else { return 0 }
@@ -40,26 +52,37 @@ struct GeneratingFlashcardsView: View {
 
     var body: some View {
         ZStack {
-            Color(.systemBackground)
-                .opacity(0.95)
-                .ignoresSafeArea()
+            // The overlay covers a screen that's still there underneath, so it stays near-opaque;
+            // which ground it paints is the theme's call.
+            Group {
+                if theme == .klar {
+                    Color(.systemBackground).opacity(0.95)
+                } else {
+                    ThemedBackground().opacity(0.97)
+                }
+            }
+            .ignoresSafeArea()
+            .memoryContext(isDrawingImages ? "Creating cards · drawing pictures" : "Creating cards")
 
             VStack(spacing: 24) {
-                AnimatedCardStack()
+                AnimatedCardStack(accent: model.theme.accent)
                     .frame(height: 200)
 
-                Text("Generating Flashcards")
-                    .font(.title3)
+                Text(isDrawingImages ? "Drawing Pictures" : "Generating Flashcards")
+                    .themedLabel(.title3, size: 20)
                     .fontWeight(.semibold)
 
                 VStack(spacing: 8) {
-                    ProgressView(value: smoothedProgress)
-                        .tint(.accentColor)
+                    ProgressView(value: isDrawingImages ? imageProgress : smoothedProgress)
+                        .tint(model.theme.accent)
                         .frame(maxWidth: 240)
                         .animation(.linear(duration: 0.3), value: smoothedProgress)
+                        .animation(.linear(duration: 0.3), value: imageProgress)
 
                     HStack(spacing: 12) {
-                        Text("\(estimatedCardsInProgress) of \(cardsRequested) cards")
+                        Text(isDrawingImages
+                             ? "Picture \(min(imagesDrawn + 1, max(imagesTotal, 1))) of \(imagesTotal)"
+                             : "\(estimatedCardsInProgress) of \(cardsRequested) cards")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
@@ -72,8 +95,24 @@ struct GeneratingFlashcardsView: View {
                     }
                 }
 
+                if isDrawingImages {
+                    Text("All \(imagesTotal) cards are written. You'll see the pictures when you pick which cards to keep.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 280)
+
+                    if let onStopImages {
+                        Button(role: .destructive, action: onStopImages) {
+                            Label("Skip the Pictures", systemImage: "stop.circle")
+                                .font(.subheadline)
+                        }
+                        .padding(.top, 4)
+                    }
+                }
+
                 // Batch dots — one per chunk, fills with token progress while active
-                if totalBatches > 1 {
+                if !isDrawingImages, totalBatches > 1 {
                     HStack(spacing: 10) {
                         ForEach(0..<totalBatches, id: \.self) { i in
                             batchDot(at: i)
@@ -90,10 +129,11 @@ struct GeneratingFlashcardsView: View {
                         .animation(.easeInOut(duration: 0.4), value: generatedWords.count)
                 }
 
-                if isValidating {
+                if isValidating, !isDrawingImages {
                     HStack(spacing: 8) {
                         ProgressView()
                             .controlSize(.small)
+                            .tint(model.theme.accent)
                         Text("Validating against dictionary…")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -104,7 +144,7 @@ struct GeneratingFlashcardsView: View {
                         .foregroundStyle(.tertiary)
                 }
 
-                if let onStop, !isValidating {
+                if let onStop, !isValidating, !isDrawingImages {
                     Button(role: .destructive, action: onStop) {
                         Label("Stop & Keep Cards", systemImage: "stop.circle")
                             .font(.subheadline)
@@ -120,17 +160,17 @@ struct GeneratingFlashcardsView: View {
         if index < currentBatchIndex {
             // Completed batch — solid filled circle
             Circle()
-                .fill(Color.accentColor)
+                .fill(model.theme.accent)
                 .frame(width: 10, height: 10)
         } else if index == currentBatchIndex {
             // Active batch — arc fills as tokens stream in
             ZStack {
                 Circle()
-                    .stroke(Color.accentColor.opacity(0.2), lineWidth: 2)
+                    .stroke(model.theme.accent.opacity(0.2), lineWidth: 2)
                     .frame(width: 12, height: 12)
                 Circle()
                     .trim(from: 0, to: tokenFill)
-                    .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .stroke(model.theme.accent, style: StrokeStyle(lineWidth: 2, lineCap: .round))
                     .frame(width: 12, height: 12)
                     .rotationEffect(.degrees(-90))
                     .animation(.linear(duration: 0.3), value: tokenFill)
@@ -153,13 +193,19 @@ struct GeneratingFlashcardsView: View {
 // MARK: - Animated card stack
 
 private struct AnimatedCardStack: View {
+    var accent: Color = .accentColor
+
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.appTheme) private var theme
 
     @State private var isFlipped = false
     @State private var currentCardIndex = 0
 
+    /// Klar keeps the hand-tuned card paper this animation shipped with; the identity themes draw
+    /// the blank cards on their own surface, so the placeholder deck matches the real one.
     private var cardColor: Color {
-        colorScheme == .dark
+        if theme != .klar { return theme.surface }
+        return colorScheme == .dark
             ? Color(red: 0.18, green: 0.18, blue: 0.20)
             : Color(red: 0.98, green: 0.96, blue: 0.93)
     }
@@ -174,11 +220,18 @@ private struct AnimatedCardStack: View {
             : Color(red: 0.85, green: 0.35, blue: 0.35).opacity(0.5)
     }
     private var borderColor: Color {
-        Color.gray.opacity(colorScheme == .dark ? 0.5 : 0.3)
+        accent.opacity(colorScheme == .dark ? 0.5 : 0.35)
     }
 
     var body: some View {
         ZStack {
+            // Soft brand glow behind the stack, tying it to the generating model.
+            Ellipse()
+                .fill(accent)
+                .frame(width: 260, height: 170)
+                .opacity(0.18)
+                .blur(radius: 45)
+
             // Background stacked cards for depth
             blankCard
                 .frame(width: 220, height: 150)
@@ -206,14 +259,23 @@ private struct AnimatedCardStack: View {
                     removal: .scale(scale: 1.05).combined(with: .opacity)
                 ))
         }
-        .onAppear { startAnimation() }
+        // A `.task`, not a `Timer`: SwiftUI cancels it when the overlay goes away. The repeating
+        // timer this replaced was never invalidated, so every generation left one behind, firing
+        // forever and mutating state nobody was showing.
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1.2))
+                guard !Task.isCancelled else { break }
+                advanceAnimation()
+            }
+        }
     }
 
     private var blankCard: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: theme.innerRadius(12), style: .continuous)
                 .fill(cardColor)
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: theme.innerRadius(12), style: .continuous)
                 .stroke(borderColor, lineWidth: 1)
 
             // Ruled lines to match FlashCardView style
@@ -224,7 +286,7 @@ private struct AnimatedCardStack: View {
                     .padding(.top, 36)
                 Spacer()
             }
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: theme.innerRadius(12), style: .continuous))
 
             VStack(spacing: 16) {
                 ForEach(0..<3, id: \.self) { _ in
@@ -235,22 +297,44 @@ private struct AnimatedCardStack: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 42)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: theme.innerRadius(12), style: .continuous))
         }
     }
 
-    private func startAnimation() {
-        Timer.scheduledTimer(withTimeInterval: 1.2, repeats: true) { _ in
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                isFlipped.toggle()
-            }
+    private func advanceAnimation() {
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+            isFlipped.toggle()
+        }
 
-            // After each full flip cycle (back to front), swap to a "new" card
-            if isFlipped == false {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                    currentCardIndex += 1
-                }
+        // After each full flip cycle (back to front), swap to a "new" card
+        if isFlipped == false {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                currentCardIndex += 1
             }
         }
     }
 }
+
+// MARK: - Previews
+
+@MainActor
+private func generatingPreview(_ theme: AppTheme) -> some View {
+    GeneratingFlashcardsView(
+        progress: 0.45,
+        cardsGenerated: 4,
+        cardsRequested: 10,
+        isValidating: false,
+        topic: "kitchen items",
+        startTime: Date(),
+        model: .hero,
+        generatedWords: ["the pot", "the spoon", "the plate"],
+        currentBatchSize: 5,
+        currentBatchIndex: 0
+    )
+    .environment(\.appTheme, theme)
+}
+
+#Preview("Generating · System")   { generatingPreview(.klar) }
+#Preview("Generating · Soft")     { generatingPreview(.sanft) }
+#Preview("Generating · Notebook") { generatingPreview(.kritzel) }
+#Preview("Generating · Bauhaus")  { generatingPreview(.grundform) }

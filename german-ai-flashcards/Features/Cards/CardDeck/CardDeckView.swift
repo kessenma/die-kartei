@@ -1,4 +1,3 @@
-import DieKarteiCore
 import SwiftUI
 import SwiftData
 
@@ -11,19 +10,65 @@ struct CardDeckView: View {
     /// Saved cards for Anki-style SRS updates; passed when launching from library.
     var savedCards: [SavedCard] = []
     var flashcardStyle: FlashcardStyle = .default
-    var onStartGoetheStudy: (([VocabCard], String, FlashcardStyle, String) -> Void)? = nil
-    var resetTrigger: Int = 0
+    /// The model that generated this deck, when known. Drives the deck's brand theming.
+    var generatorModel: MLXModel? = nil
     var autoAdvance: Bool = false
-    var isActiveTab: Bool = true
+    /// When true, restore the paused session immediately on appear (Home ▸ Continue), skipping
+    /// the setup screen's resume prompt.
+    var autoResume: Bool = false
+    /// When true, skip the setup screen and begin at once — for launchers that are themselves the
+    /// setup screen (the Wortschatz hub). A paused session still wins.
+    var autoStart: Bool = false
+    /// Badge the card wears when no model logo applies. Falls back to the Goethe mark for
+    /// Wortschatz decks (`cardBadgeLogoName`).
+    var badgeLogoName: String? = nil
+    /// Backs the in-session card settings sheet; nil hides its shortcuts.
+    var modelManager: MLXModelManager? = nil
+    /// Several saved decks studied as one (`StudySession.isDeckMix`). No single deck backs the
+    /// session, so the per-deck controls hide and each deck is credited its share at the end.
+    var isDeckMix: Bool = false
+    /// The launcher's next step after the cards (`StudySession.onward`): the summary's and the
+    /// start screen's main button. Nil for every ordinary deck.
+    var onward: StudyOnward? = nil
 
     @Environment(\.modelContext) var modelContext
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.appTheme) private var appTheme
+    /// Injected at the app root. Needed so an illustrate-this-deck run can free the language
+    /// model before loading the diffusion pipeline.
+    @Environment(MLXGenerationService.self) var mlxService
 
     @State var localStyle: FlashcardStyle = .default
     @State var currentIndex = 0
-    @State var showGermanFirst = true
+    /// Which side shows first. Shared with Settings ▸ Cards and the setup picker through one key.
+    @AppStorage(CardStudyPrefs.germanFirstKey) var showGermanFirst = true
+    /// Nouns hide their article on the German side until the flip (der / die / das?).
+    @AppStorage(CardStudyPrefs.articleQuizKey) var articleQuiz = true
+    /// A card rated Again comes back a few cards later in the same session.
+    @AppStorage(CardStudyPrefs.repeatMissedKey) var repeatMissed = true
+    @AppStorage(CardStudyPrefs.shuffleKey) var shuffleCards = false
+    @AppStorage(CardStudyPrefs.phraseGapsKey) var phraseGaps = true
+    /// iPad: a missed card asks to be written out with the Pencil (`WriteItSheet`).
+    @AppStorage(CardStudyPrefs.writeAfterMissKey) var writeAfterMiss = true
+    /// The missed card's word while its write-it sheet is up.
+    @State var writeItWord: WriteItWord?
+    /// The gap each phrase card shows, by card index (`PhraseGapPlanner`), dealt once a session.
+    @State var gapQuestions: [Int: PhraseGapQuestion] = [:]
+    /// "Make this sentence a card": the inspector translating an example sentence for this deck.
+    @State var sentenceInspector: WordInspectorModel?
     @State var hasStarted = false
+    /// A round reached its summary and Done led back to the start screen, which then offers the
+    /// launcher's way on (`onward`) first.
+    @State var finishedARound = false
     @State var isFlipped = false
+    /// When the current card came up: the recall clock (roadmap item 5, `AnswerTimeLog`).
+    @State var cardShownAt = Date()
     @State var showExamplesOnGermanSide = true
+    /// How AI pictures present on the German side (immersive gradient vs high-contrast bar).
+    /// Persisted so the choice sticks across sessions; `FlashCardView` reads the same key.
+    @AppStorage(FlashcardImageStyle.defaultsKey) var flashcardImageStyle: FlashcardImageStyle = .immersive
+    @AppStorage(FlashcardPictureSide.defaultsKey) var flashcardPictureSide: FlashcardPictureSide = .both
     @State var isFullscreen = false
     @State var cardResults: [Int: Bool] = [:]
     @State var showQuizSummary = false
@@ -35,27 +80,109 @@ struct CardDeckView: View {
     @State var ankiDueIndices: [Int] = []
     /// Position within the ankiDueIndices array.
     @State var ankiDuePosition: Int = 0
+    /// How many distinct cards this SRS session set out to review. `ankiDueIndices` grows as
+    /// missed cards are re-queued, so it can't serve as the denominator any more.
+    @State var sessionDueCount = 0
+    /// Card indices missed at least once this session — the summary's "missed" list.
+    @State var sessionLapses: Set<Int> = []
+    /// How often each card has been put back into the queue (capped so a card can't loop forever).
+    @State var requeueCounts: [Int: Int] = [:]
+    /// How many cards later a missed card comes back.
+    let requeueGap = 3
+    /// The summary's "Review Missed Cards" round is running: the play order (`cardOrder`, or
+    /// `ankiDueIndices` in SRS modes) holds only the missed cards. The session itself was recorded
+    /// when it finished, so this round is practice — it banks time on the study log, not a score.
+    @State var isReviewingMissed = false
+    /// The SRS session's distinct due cards, kept while a review borrows `ankiDueIndices`, so
+    /// "Try Again" from a review's summary still replays the whole session.
+    @State var fullSessionDueIndices: [Int] = []
+    @State var showCardSettings = false
+    /// The current card has been flipped at least once, so its article is no longer withheld and
+    /// the example sentence may show again. Mirrors `FlashCardView.revealed`; resets per card.
+    @State var revealedCurrent = false
+    /// Play order for plain/quiz mode: position → index into `cards`. Deck order on the first
+    /// pass, reshuffled by "Try Again" so a repeat run isn't the same sequence. SRS modes use
+    /// `ankiDueIndices`/`ankiDuePosition` for the same job.
+    @State var cardOrder: [Int] = []
+    /// Position within `playOrder`.
+    @State var cardPosition: Int = 0
     /// Leitner right/wrong results (index → correct).
     @State var leitnerResults: [Int: Bool] = [:]
     @State var isPaused: Bool = false
     @State var savedProgress: DeckSessionProgress? = nil
     @State var showValidationInfo = false
+    /// The expanded card picture, held here rather than in the card: the card view is rebuilt per
+    /// index, so a cover it owned would close itself the moment the learner pressed next inside it.
+    @State var expandedPicture: UIImage?
+    @State var showingPicture = false
     @State var showCorrectionSheet = false
     @State var showSingleCardCorrection = false
+    /// Guards the redraw-every-picture button on the setup screen.
+    @State var confirmingRedraw = false
     @State var localAutoAdvance: Bool = false
     @State var localCards: [VocabCard] = []
     @State var localValidationResults: [ValidationResult] = []
-    @State private var wasAutoPaused: Bool = false
+    /// The decks registered with `SyncInUse` on appear, so disappear ends exactly those.
+    @State var openDeckUUIDs: [UUID] = []
+    /// The setup screen's "See all words" push to the Wortliste table.
+    @State var showWordTable = false
 
-    var isQuizMode: Bool { deckID != nil }
+    var isQuizMode: Bool { deckID != nil || isDeckMix }
     var isAnkiMode: Bool { localStyle == .anki && !savedCards.isEmpty }
     var isLeitnerMode: Bool { localStyle == .leitner && !savedCards.isEmpty }
     var isSRSMode: Bool { isAnkiMode || isLeitnerMode }
 
+    /// The generating model's brand theme, when known.
+    var deckTheme: ModelTheme? { generatorModel?.theme }
+    /// The model's accent, or the app accent for bundled decks with no model.
+    var brandAccent: Color { deckTheme?.accent ?? .accentColor }
+
+    /// The session's badge when it brought one, else the Goethe mark for the Wortschatz box.
     var cardBadgeLogoName: String? {
-        let goetheLevels = ["A1", "A2", "B1", "B2", "C1", "C2"]
-        guard goetheLevels.contains(where: { topic == "\($0) Vocabulary" }) else { return nil }
-        return "logo-goethe-square-icon"
+        badgeLogoName ?? (savedDeck?.kind == .goetheSRS ? DeckStore.wortschatzBadge : nil)
+    }
+
+    /// Studying the Goethe word box: first ratings count against today's new-word budget.
+    var isWortschatzSession: Bool { savedDeck?.kind == .goetheSRS }
+
+    /// A miss, on an iPad with "Write it after a miss" on: open the write-it sheet for that card.
+    /// Called once per miss as it is marked, before any auto-advance, so the sheet names the card
+    /// that was missed even when the next one is already showing. `delay` lets a gap card show
+    /// its right answer first.
+    func askToWrite(_ index: Int, delay: Duration = .zero) {
+        guard writeAfterMiss, CardStudyPrefs.writeAfterMissAvailable else { return }
+        let source = localCards.indices.contains(index) ? localCards : cards
+        guard source.indices.contains(index) else { return }
+        let card = source[index]
+        let word = WriteItWord(german: card.germanWord.withArticle(card.article),
+                               english: card.englishTranslation)
+        guard delay > .zero else {
+            writeItWord = word
+            return
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: delay)
+            writeItWord = word
+        }
+    }
+
+    /// Puts a missed card back into the queue a few cards ahead, at most twice per card, and
+    /// records the lapse either way. Returns whether the card was actually re-queued.
+    @discardableResult
+    func requeue(_ idx: Int) -> Bool {
+        sessionLapses.insert(idx)
+        guard repeatMissed, requeueCounts[idx, default: 0] < 2 else { return false }
+        requeueCounts[idx, default: 0] += 1
+        let at = min(ankiDuePosition + 1 + requeueGap, ankiDueIndices.count)
+        ankiDueIndices.insert(idx, at: at)
+        return true
+    }
+
+    /// Resets the re-queue bookkeeping for a fresh pass over `ankiDueIndices`.
+    func resetSessionTally() {
+        sessionDueCount = ankiDueIndices.count
+        sessionLapses = []
+        requeueCounts = [:]
     }
 
     var currentValidation: ValidationResult? {
@@ -65,6 +192,33 @@ struct CardDeckView: View {
 
     var currentCard: VocabCard {
         localCards.indices.contains(currentIndex) ? localCards[currentIndex] : cards[currentIndex]
+    }
+
+    // MARK: - Card pictures
+
+    /// The saved deck being studied, when this is a library/saved deck rather than a loose set
+    /// of cards. `savedCards` is index-aligned with `cards` (both ordered by `sortOrder`).
+    var savedDeck: SavedDeck? { isDeckMix ? nil : savedCards.first?.deck }
+
+    /// The deck UUID that card pictures are filed under, or nil when there's no saved deck.
+    var deckUUID: UUID? { savedDeck?.id }
+
+    /// This card's picture file name, read straight from SwiftData in `body` so pictures that
+    /// finish generating in the background pop in without a manual refresh.
+    func imageFileName(at index: Int) -> String? {
+        savedCards.indices.contains(index) ? savedCards[index].imageFileName : nil
+    }
+
+    /// The folder this card's picture is filed under: its own deck's, since a deck mix or the
+    /// Daily Review holds cards from many decks.
+    func imageDeckID(at index: Int) -> UUID? {
+        savedCards.indices.contains(index) ? savedCards[index].deck?.id ?? deckUUID : deckUUID
+    }
+
+    /// Every deck this session's cards come from — one, or several for a mix. Held open against
+    /// sync deletes while the player is up.
+    var inUseDeckUUIDs: [UUID] {
+        isDeckMix ? Array(Set(savedCards.compactMap { $0.deck?.id })) : (deckUUID.map { [$0] } ?? [])
     }
 
     func applyCorrection(at index: Int, newArticle: String?) {
@@ -93,6 +247,33 @@ struct CardDeckView: View {
         return String(format: "%d:%02d", m, s)
     }
 
+    /// Dismisses the activity cover, persisting an in-progress session first so the deck's
+    /// setup screen (and Home ▸ Continue) can offer to resume it.
+    private func closeActivity() {
+        if hasStarted, !showQuizSummary, !isPaused {
+            savePauseProgress()
+        }
+        dismiss()
+    }
+
+    /// The launcher's next step, as the main button: on the summary and on the start screen
+    /// (where Done leads), so the way on is never only behind the ×.
+    @ViewBuilder
+    var onwardButton: some View {
+        if let onward {
+            Button {
+                closeActivity()
+                onward.action()
+            } label: {
+                Label(onward.title, systemImage: onward.systemImage)
+                    .font(.headline)
+                    .frame(maxWidth: 260)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+        }
+    }
+
     var body: some View {
         NavigationStack {
             VStack {
@@ -107,14 +288,41 @@ struct CardDeckView: View {
                         cardContent
                         if isPaused { pauseOverlay }
                     }
+                    // A resumed or auto-started session skips `beginSession`, where gaps are dealt.
+                    .onAppear { if gapQuestions.isEmpty { prepareGapQuestions() } }
+                    .onChange(of: phraseGaps) { prepareGapQuestions() }
+                    .onDisappear { sentenceInspector?.tearDown() }
+                    .sheet(isPresented: Binding(
+                        get: { sentenceInspector?.inspectedWord != nil },
+                        set: { if !$0 { sentenceInspector?.dismissInspector() } }
+                    )) {
+                        if let sentenceInspector {
+                            WordInspectorSheet(
+                                source: sentenceInspector,
+                                footer: "Saved, the sentence becomes a phrase card in this deck, studied with a gap."
+                            )
+                        }
+                    }
+                    .writeItSheet($writeItWord, accent: brandAccent)
                 }
             }
             .navigationTitle(hasStarted ? "" : "Flashcards")
             .navigationBarTitleDisplayMode(.inline)
+            // The identity themes paint their ground behind the whole player; Klar keeps the exact
+            // system background it has always had, so this is a no-op there.
+            .background {
+                if appTheme != .klar { ThemedBackground().ignoresSafeArea() }
+            }
+            .tint(brandAccent)
             .toolbar {
-                if hasStarted && !cards.isEmpty {
-                    ToolbarItem(placement: .topBarLeading) {
-                        HStack(spacing: 16) {
+                ToolbarItem(placement: .topBarLeading) {
+                    HStack(spacing: 16) {
+                        Button {
+                            closeActivity()
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                        if hasStarted && !cards.isEmpty {
                             Button {
                                 isFullscreen = true
                             } label: {
@@ -127,7 +335,9 @@ struct CardDeckView: View {
                             }
                         }
                     }
+                }
 
+                if hasStarted && !cards.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
                         Menu {
                             Picker("Front side", selection: $showGermanFirst) {
@@ -135,6 +345,12 @@ struct CardDeckView: View {
                                     .tag(true)
                                 Label("English first", systemImage: "textformat.abc")
                                     .tag(false)
+                            }
+
+                            Toggle("Ask der / die / das first", systemImage: "questionmark.circle", isOn: $articleQuiz)
+
+                            if CardStudyPrefs.writeAfterMissAvailable {
+                                Toggle("Write it after a miss", systemImage: "pencil.and.scribble", isOn: $writeAfterMiss)
                             }
 
                             Divider()
@@ -145,13 +361,50 @@ struct CardDeckView: View {
                                 Label("Examples on English side", systemImage: "e.circle")
                                     .tag(false)
                             }
+
+                            Divider()
+
+                            Picker("Picture style", selection: $flashcardImageStyle) {
+                                ForEach(FlashcardImageStyle.allCases) { style in
+                                    Label(style.label, systemImage: style.systemImage).tag(style)
+                                }
+                            }
+
+                            Picker("Pictures on", selection: $flashcardPictureSide) {
+                                ForEach(FlashcardPictureSide.allCases) { side in
+                                    Label(side.label, systemImage: side.systemImage).tag(side)
+                                }
+                            }
+
+                            if modelManager != nil {
+                                Divider()
+
+                                Button("All card settings…", systemImage: "slider.horizontal.3") {
+                                    showCardSettings = true
+                                }
+                            }
                         } label: {
                             Image(systemName: "textformat.size")
                         }
                     }
                 }
             }
-            .fullScreenCover(isPresented: $isFullscreen) {
+            .fullScreenCover(isPresented: $isFullscreen, onDismiss: {
+                // Fullscreen steps `currentIndex` in deck order; realign our position with
+                // whatever card it left us on so the deck doesn't jump back.
+                if isSRSMode {
+                    // Re-queued cards appear more than once, so look from the current position
+                    // forward first and only then anywhere in the queue.
+                    if ankiDueIndices.indices.contains(ankiDuePosition),
+                       let pos = ankiDueIndices[ankiDuePosition...].firstIndex(of: currentIndex) {
+                        ankiDuePosition = pos
+                    } else if let pos = ankiDueIndices.firstIndex(of: currentIndex) {
+                        ankiDuePosition = pos
+                    }
+                } else {
+                    cardPosition = playOrder.firstIndex(of: currentIndex) ?? cardPosition
+                }
+            }) {
                 FullscreenCardView(
                     cards: $localCards,
                     currentIndex: $currentIndex,
@@ -162,8 +415,15 @@ struct CardDeckView: View {
                     showExamplesOnGermanSide: showExamplesOnGermanSide,
                     isQuizMode: isQuizMode,
                     badgeLogoName: cardBadgeLogoName,
+                    hidesArticleUntilFlipped: articleQuiz,
+                    model: generatorModel,
+                    savedCards: savedCards,
+                    deckUUID: deckUUID,
                     onApplyCorrection: { index, article in applyCorrection(at: index, newArticle: article) }
                 )
+            }
+            .fullScreenCover(isPresented: $showingPicture) {
+                pictureViewer
             }
             .sheet(isPresented: $showSingleCardCorrection) {
                 if localValidationResults.indices.contains(currentIndex) {
@@ -176,13 +436,35 @@ struct CardDeckView: View {
                     )
                 }
             }
+            .sheet(isPresented: $showCardSettings, onDismiss: {
+                // The setup screen mirrors the global style / auto-advance in local state; pick up
+                // whatever the sheet changed before the session starts. Mid-session they stay put.
+                if !hasStarted, let modelManager {
+                    localStyle = modelManager.flashcardStyle
+                    localAutoAdvance = modelManager.autoAdvance
+                }
+            }) {
+                if let modelManager {
+                    CardSettingsSheet(modelManager: modelManager)
+                }
+            }
         }
         .onAppear {
+            openDeckUUIDs = inUseDeckUUIDs
+            openDeckUUIDs.forEach { SyncInUse.begin($0) }
             localStyle = flashcardStyle
             localAutoAdvance = autoAdvance
             if localCards.isEmpty { localCards = cards }
             if localValidationResults.isEmpty { localValidationResults = validationResults }
             loadSavedProgress()
+            if autoResume, let progress = savedProgress {
+                resumeFromSavedProgress(progress)
+            }
+            // Launchers that are their own setup screen skip ours, unless there is nothing due
+            // (the Start button would be disabled for the same reason).
+            if autoStart, savedProgress == nil, !hasStarted, !(isSRSMode && srsDueCount == 0) {
+                beginSession()
+            }
         }
         .onChange(of: flashcardStyle) { _, newValue in
             if !hasStarted { localStyle = newValue }
@@ -192,6 +474,14 @@ struct CardDeckView: View {
             localCards = cards
             localValidationResults = validationResults
             currentIndex = 0
+            cardOrder = []
+            cardPosition = 0
+            ankiDueIndices = []
+            ankiDuePosition = 0
+            sessionDueCount = 0
+            sessionLapses = []
+            requeueCounts = [:]
+            isReviewingMissed = false
             hasStarted = false
             isPaused = false
             cardResults = [:]
@@ -205,33 +495,38 @@ struct CardDeckView: View {
             savedProgress = nil
             loadSavedProgress()
         }
-        .onChange(of: resetTrigger) {
-            localStyle = flashcardStyle
-            hasStarted = false
-            showQuizSummary = false
-            isPaused = false
-            wasAutoPaused = false
-            currentIndex = 0
-            isFlipped = false
-            cardResults = [:]
-            ankiRatings = [:]
-            leitnerResults = [:]
-            sessionStartTime = nil
-            elapsedSeconds = 0
-            savedProgress = nil
-            loadSavedProgress()
+        .onChange(of: isFlipped) { _, flipped in
+            // The first flip of a card is its recall time; a flip back and forth is not.
+            if flipped, !revealedCurrent, hasStarted, !isPaused {
+                AnswerTimeLog.record(.cardFlip, ms: Int(Date().timeIntervalSince(cardShownAt) * 1000),
+                                     detail: localStyle.rawValue)
+            }
+            if flipped { revealedCurrent = true }
         }
-        .onChange(of: isActiveTab) { _, active in
-            guard hasStarted, !showQuizSummary else { return }
-            if !active && !isPaused {
-                wasAutoPaused = true
-                pauseSession()
-            } else if active && wasAutoPaused {
-                wasAutoPaused = false
-                resumeSession()
+        .onChange(of: currentIndex) {
+            revealedCurrent = false
+            cardShownAt = Date()
+        }
+        .onChange(of: hasStarted) { _, started in
+            if started { cardShownAt = Date() }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // Leaving the app mid-session persists position so it survives a hard kill.
+            if phase != .active, hasStarted, !showQuizSummary, !isPaused {
+                savePauseProgress()
             }
         }
-        .task(id: hasStarted) {
+        .onDisappear {
+            // Safety net: the cover was dismissed some other way — persist position.
+            if hasStarted, !showQuizSummary, !isPaused {
+                savePauseProgress()
+            }
+            openDeckUUIDs.forEach { SyncInUse.end($0) }
+        }
+        .memoryContext("Deck study")
+        // Keyed on the summary flag too: the loop exits when the session ends, and "Try Again"
+        // only clears that flag — without it in the id the timer would never restart.
+        .task(id: "\(hasStarted)-\(showQuizSummary)") {
             guard hasStarted, !showQuizSummary else { return }
             while !Task.isCancelled && hasStarted && !showQuizSummary {
                 if !isPaused, let start = sessionStartTime {

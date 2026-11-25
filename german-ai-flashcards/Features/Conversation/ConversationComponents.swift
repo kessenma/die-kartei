@@ -1,4 +1,3 @@
-import DieKarteiCore
 import SwiftUI
 
 // MARK: - Model picker (downloaded-first)
@@ -10,31 +9,59 @@ struct ChatModelPickerSection: View {
     var cacheRefreshID: UUID
     var title: String = "Conversation model"
     var footerText: String = "Downloaded models are listed first. Picking one that isn’t downloaded yet will download it (~once) when the chat starts."
+    /// When true (and the device can run it), the hero model is pulled into its own "Recommended"
+    /// section at the top. Set false for features that shouldn't push it (e.g. multimodal
+    /// paper/photo study, which is pinned to a vision-capable model).
+    var emphasizeHero: Bool = true
     @State private var modelForInfo: MLXModel?
 
-    private var deviceRAMGB: Int {
-        Int((Double(ProcessInfo.processInfo.physicalMemory) / 1_073_741_824).rounded())
-    }
+    /// Whether to surface the promoted hero section here.
+    private var showsHero: Bool { emphasizeHero && DeviceCapability.canRunHero }
 
     private var sortedModels: [MLXModel] {
         _ = cacheRefreshID
-        return MLXModel.allCases.sorted { a, b in
+        // Downloaded first, then in `germanTutors` order (already best-first), with the built-in
+        // Apple model last. Matches how the Settings screen and the story picker order things.
+        let rank: (MLXModel) -> Int = { model in
+            MLXModel.germanTutors.firstIndex(of: model) ?? MLXModel.germanTutors.count
+        }
+        let sorted = MLXModel.allCases.sorted { a, b in
             let da = a.isDownloaded, db = b.isDownloaded
             if da != db { return da }            // downloaded first
-            return a.germanQualityScore > b.germanQualityScore
+            return rank(a) < rank(b)
         }
+        // The hero has its own section above when emphasized, so drop it from the main list.
+        return showsHero ? sorted.filter { !$0.isHero } : sorted
     }
 
     var body: some View {
-        Section {
-            ForEach(sortedModels) { model in
-                row(model)
+        Group {
+            if showsHero {
+                Section {
+                    row(MLXModel.hero, isHero: true)
+                } header: {
+                    Text("Recommended")
+                } footer: {
+                    Text(MLXModel.hero.heroTagline)
+                        .font(.caption2)
+                }
             }
-        } header: {
-            Text(title)
-        } footer: {
-            Text(footerText)
-                .font(.caption2)
+
+            Section {
+                ForEach(sortedModels) { model in
+                    row(model)
+                }
+            } header: {
+                Text(showsHero ? "Other models" : title)
+            } footer: {
+                if showsHero {
+                    Text("Every tutor here is trained on the same German material. \(MLXModel.hero.rawValue) holds a back-and-forth best and is the sharpest at correcting you as you go; the smaller ones reply faster and use less memory. Apple's built-in model is instant but weaker at correcting you.")
+                        .font(.caption2)
+                } else {
+                    Text(footerText)
+                        .font(.caption2)
+                }
+            }
         }
         // An alert (not a sheet) avoids a sheet-on-sheet conflict, since this picker
         // lives inside the setup sheet.
@@ -54,23 +81,30 @@ struct ChatModelPickerSection: View {
         return "\(model.description)\n\nParameters: \(model.parameterCount) · ~\(size)\nRecommended: \(model.deviceNote)"
     }
 
-    @ViewBuilder private func row(_ model: MLXModel) -> some View {
+    @ViewBuilder private func row(_ model: MLXModel, isHero: Bool = false) -> some View {
         let downloaded = model.isDownloaded
         Button {
             selected = model
         } label: {
             HStack(spacing: 12) {
-                Image(model.logoName)
+                model.logoImage
                     .resizable().scaledToFit()
                     .frame(width: 28, height: 28)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(model.rawValue).foregroundStyle(.primary)
                     HStack(spacing: 6) {
-                        Text("~\(formattedSize(model.approximateSizeMB))")
-                        if downloaded {
-                            Text("Downloaded").fontWeight(.medium).foregroundStyle(.green)
+                        Text(model.rawValue).foregroundStyle(.primary)
+                        if isHero { RecommendedBadge() }
+                    }
+                    HStack(spacing: 6) {
+                        if model.isAppleIntelligence {
+                            Text("Built-in · no download")
+                        } else {
+                            Text("~\(formattedSize(model.approximateSizeMB))")
+                            if downloaded {
+                                Text("Downloaded").fontWeight(.medium).foregroundStyle(.green)
+                            }
                         }
                     }
                     .font(.caption)
@@ -92,6 +126,7 @@ struct ChatModelPickerSection: View {
             }
         }
         .buttonStyle(.plain)
+        .modifier(ConditionalHeroHighlight(isHero: isHero))
     }
 
     private func formattedSize(_ mb: Int) -> String {

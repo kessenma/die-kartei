@@ -1,4 +1,3 @@
-import DieKarteiCore
 import SwiftUI
 
 struct CorrectionSheetView: View {
@@ -15,12 +14,11 @@ struct CorrectionSheetView: View {
     private let articles = ["der", "die", "das"]
 
     private func genderInfo(for article: String) -> (symbol: String, color: Color) {
-        switch article.lowercased() {
-        case "der": return ("figure.stand", .blue)
-        case "die": return ("figure.stand.dress", Color(.systemPink))
-        case "das": return ("figure.stand.dress.line.vertical.figure", .purple)
-        default: return ("questionmark", .secondary)
-        }
+        // Colors come from GenderPalette so this correction UI matches der/die/das on the cards
+        // (blue/red/green) — the old blue/pink/purple read as a second, conflicting gender code.
+        // Symbols come from `Gender.symbol`, the same glyphs as FlashCardView's badge.
+        guard let gender = Gender(article: article) else { return ("questionmark", .secondary) }
+        return (gender.symbol, gender.color)
     }
 
     var body: some View {
@@ -37,6 +35,7 @@ struct CorrectionSheetView: View {
                     EmptyView()
                 }
             }
+            .themedListScreen()
             .navigationTitle("Correct \u{201C}\(germanWord)\u{201D}")
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -175,8 +174,6 @@ struct CorrectionSheetView: View {
             Text("Choose correct article")
         }
 
-        crossCheckSection(dictionarySuggestion: suggested)
-
         Section {
             Button {
                 onApply(selectedArticle)
@@ -211,8 +208,6 @@ struct CorrectionSheetView: View {
             }
         }
 
-        crossCheckSection(dictionarySuggestion: nil)
-
         Section {
             Button {
                 onApply(isNoun ? selectedArticle : nil)
@@ -235,28 +230,4 @@ struct CorrectionSheetView: View {
         }
     }
 
-    // MARK: - Cross-check section
-
-    @ViewBuilder
-    private func crossCheckSection(dictionarySuggestion: String?) -> some View {
-        let installed = MLXModel.allCases.filter { $0.isDownloaded }
-        if !installed.isEmpty {
-            Section {
-                NavigationLink {
-                    ModelCrossCheckView(
-                        germanWord: germanWord,
-                        englishWord: englishWord,
-                        wordType: wordType,
-                        dictionarySuggestion: dictionarySuggestion
-                    )
-                } label: {
-                    Label("Ask local AI models", systemImage: "brain")
-                }
-            } header: {
-                Text("Cross-check")
-            } footer: {
-                Text("Query your downloaded models to see what each one thinks the correct article is.")
-            }
-        }
-    }
 }

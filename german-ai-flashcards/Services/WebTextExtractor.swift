@@ -12,6 +12,8 @@ enum WebTextExtractor {
         case network(String)
         case blocked
         case empty
+        case notAPDF
+        case tooLarge
 
         var errorDescription: String? {
             switch self {
@@ -19,22 +21,21 @@ enum WebTextExtractor {
             case .network(let m):   return "Couldn’t load the page: \(m)"
             case .blocked:          return "Reddit blocked the request (their anti-bot / rate limit). Wait a minute and try again, or try a different source — an ai-at.eu article works reliably."
             case .empty:            return "No readable German text was found at that link."
+            case .notAPDF:          return "That link gave back a web page, not a PDF — a share link or one that needs a login does this. Open it in Safari, save it as a PDF, and bring that in with PDF file."
+            case .tooLarge:         return "That PDF is too big to bring in over a link. Download it and use PDF file instead."
             }
         }
     }
 
     struct Extracted { let title: String; let text: String }
 
-    private static let userAgent =
+    nonisolated private static let userAgent =
         "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) DieKartei/1.0"
     /// Reddit blocks generic browser UAs; their guidelines ask for a unique descriptive one.
     private static let redditUserAgent = "ios:de.diekartei.studyapp:1.0 (German study app)"
 
     static func fetch(_ raw: String) async -> Result<Extracted, WebError> {
-        var input = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !input.isEmpty else { return .failure(.badURL) }
-        if !input.lowercased().hasPrefix("http") { input = "https://" + input }
-        guard let url = URL(string: input), let host = url.host else { return .failure(.badURL) }
+        guard let url = normalizedURL(raw), let host = url.host else { return .failure(.badURL) }
 
         if host.contains("reddit.com") {
             return await fetchReddit(url)
@@ -140,7 +141,7 @@ enum WebTextExtractor {
     }
 
     private static func htmlToText(_ data: Data, fallbackTitle: String) -> (String, String) {
-        #if canImport(UIKit)
+        #if canImport(UIKit) || os(macOS)
         if let attr = try? NSAttributedString(
             data: data,
             options: [
@@ -171,9 +172,55 @@ enum WebTextExtractor {
         return inner.isEmpty ? nil : inner
     }
 
+    // MARK: - A PDF behind a link
+
+    /// The bytes of a PDF at `raw`, when the far end really served one. The same normalization and
+    /// transport as `fetch`, plus a content check and a size cap: a share link, a login wall or a
+    /// cloud drive answers a plain GET with an HTML page and a 200, and handing those bytes to
+    /// PDFKit would fail much later and much less clearly.
+    static func downloadPDF(_ raw: String, maxBytes: Int = 40 * 1024 * 1024) async -> Result<Data, WebError> {
+        guard let url = normalizedURL(raw) else { return .failure(.badURL) }
+        do {
+            let (data, response) = try await getWithResponse(url)
+            let contentType = (response as? HTTPURLResponse)?
+                .value(forHTTPHeaderField: "Content-Type")?.lowercased()
+            guard looksLikePDF(data, contentType: contentType) else { return .failure(.notAPDF) }
+            guard data.count <= maxBytes else { return .failure(.tooLarge) }
+            return .success(data)
+        } catch let error as WebError {
+            return .failure(error)
+        } catch {
+            return .failure(.network(error.localizedDescription))
+        }
+    }
+
+    /// A PDF says so in its type, and failing that in its first bytes. The magic has the last word:
+    /// a server that labels an error page `application/pdf` is still serving an error page.
+    nonisolated static func looksLikePDF(_ data: Data, contentType: String?) -> Bool {
+        guard data.count >= 5 else { return false }
+        if data.prefix(5).elementsEqual(Array("%PDF-".utf8)) { return true }
+        // Some servers prepend whitespace or a byte-order mark before the header.
+        guard let head = String(data: data.prefix(1024), encoding: .isoLatin1) else { return false }
+        guard head.contains("%PDF-") else { return false }
+        return contentType?.contains("pdf") ?? false
+    }
+
+    /// Shared with `fetch`: trim, assume https, and require a host.
+    private static func normalizedURL(_ raw: String) -> URL? {
+        var input = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !input.isEmpty else { return nil }
+        if !input.lowercased().hasPrefix("http") { input = "https://" + input }
+        guard let url = URL(string: input), url.host != nil else { return nil }
+        return url
+    }
+
     // MARK: - Networking
 
     private static func get(_ url: URL, agent: String = userAgent) async throws -> Data {
+        try await getWithResponse(url, agent: agent).0
+    }
+
+    private static func getWithResponse(_ url: URL, agent: String = userAgent) async throws -> (Data, URLResponse) {
         var request = URLRequest(url: url)
         request.timeoutInterval = 25
         request.setValue(agent, forHTTPHeaderField: "User-Agent")
@@ -183,6 +230,6 @@ enum WebTextExtractor {
             if http.statusCode == 403 || http.statusCode == 429 { throw WebError.blocked }
             throw WebError.network("HTTP \(http.statusCode)")
         }
-        return data
+        return (data, response)
     }
 }
