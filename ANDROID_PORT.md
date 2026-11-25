@@ -28,7 +28,7 @@ PDFKit, FoundationModels. On Android these need replacements behind protocols, o
 | Apple | Android candidate |
 | --- | --- |
 | SwiftData | SQLite in Swift (Skip's SkipSQL / GRDB-style), behind a store protocol |
-| iCloud sync | later; `Services/Sync/Core` already builds for Android, only the transport is Apple |
+| iCloud sync | `Services/Sync/Core` builds for Android; plan in [docs/ANDROID_SYNC_PLAN.md](docs/ANDROID_SYNC_PLAN.md) |
 | MLX | llama.cpp (GGUF builds of the tutor models) |
 | Speech / AVSpeech | Android TTS/STT through Skip's Kotlin bridging |
 | PencilKit | Compose canvas; later |
