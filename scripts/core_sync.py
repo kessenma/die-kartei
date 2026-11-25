@@ -9,13 +9,20 @@ the package builds. The final list is written to DieKarteiCore/core_files.txt.
     python3 scripts/core_sync.py            # relink from core_files.txt
     python3 scripts/core_sync.py --prune    # rediscover from scratch against Android
 """
-import os, re, subprocess, sys, pathlib
+import os, re, shutil, subprocess, sys, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 APP = ROOT / "german-ai-flashcards"
 PKG = ROOT / "DieKarteiCore"
 SRC = PKG / "Sources" / "DieKarteiCore"
+# The Android app packages the data files with its own module (AppResources.bundle points there).
+# They are plain copies, gitignored: the resource copy in Xcode and in Skip's mirrored Android
+# build resolves symlinks logically, which breaks relative links. Rerun after changing the data.
+ANDROID_RES = ROOT / "DieKarteiAndroid" / "Sources" / "DieKartei" / "Resources"
 LIST = PKG / "core_files.txt"
+# Bundled data the shared services load through `AppResources`.
+RESOURCES = ["a1_vocabulary", "a2_vocabulary", "b1_vocabulary", "flashcard_topics",
+             "grammar_exercises", "grammar_topics", "past_tense_verbs", "story_starters"]
 TRIPLE = os.environ.get("CORE_TRIPLE", "aarch64-unknown-linux-android28")
 SDK = os.environ.get("CORE_SWIFT_SDK", "swift-6.4.3-RELEASE_android")
 IMPORT = re.compile(r"^[ \t]*(?:@\w+(?:\(.*?\))?[ \t]+)*import[ \t]+(?:(?:struct|class|enum|protocol|func|var|let|typealias)[ \t]+)?(\w+)", re.M)
@@ -42,6 +49,10 @@ def link(files):
         dst = SRC / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         dst.symlink_to(os.path.relpath(APP / rel, dst.parent))
+    if ANDROID_RES.parent.exists():
+        ANDROID_RES.mkdir(parents=True, exist_ok=True)
+        for name in RESOURCES:
+            shutil.copyfile(APP / "Resources" / f"{name}.json", ANDROID_RES / f"{name}.json")
     for d in sorted(SRC.rglob("*"), reverse=True):
         if d.is_dir() and not any(d.iterdir()):
             d.rmdir()

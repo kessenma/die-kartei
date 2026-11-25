@@ -148,7 +148,7 @@ enum GoetheVocabService {
 
     static func entries(for level: GoetheLevel) -> [A1Entry] {
         if let cached = cache[level] { return cached }
-        guard let url = Bundle.main.url(forResource: level.resourceName, withExtension: "json"),
+        guard let url = AppResources.url(level.resourceName, "json"),
               let data = try? Data(contentsOf: url),
               let entries = try? JSONDecoder().decode([A1Entry].self, from: data)
         else { return [] }

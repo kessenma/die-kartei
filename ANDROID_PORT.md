@@ -14,7 +14,8 @@ Two layers, both Swift:
   `import DieKarteiCore` edits in the app. `scripts/core_sync.py` keeps the link list.
 - **DieKarteiAndroid** (`DieKarteiAndroid/`): a [Skip Fuse](https://skip.dev) app. Skip compiles
   Swift natively with the official Swift SDK for Android and maps SwiftUI to Jetpack Compose, so
-  the Android UI is SwiftUI too. It depends on DieKarteiCore.
+  the Android UI is SwiftUI too. It compiles the same core files as its own `DieKarteiCore`
+  module and reaches them with `@testable import` (see DieKarteiAndroid/README.md).
 
 The June attempt (moving files into a package and adding `import DieKarteiCore` to 41 files)
 couldn't be rebased onto today's main, so it was redone this way. Its history stays on the branch.
@@ -41,7 +42,10 @@ PDFKit, FoundationModels. On Android these need replacements behind protocols, o
 | Skip 1.9 (`skip checkup` passes) | ✅ |
 | DieKarteiCore cross-compiles for `aarch64-unknown-linux-android28` | ✅ 75 app files |
 | iOS app still builds with the splits below | ✅ |
-| Skip Fuse app on the emulator | see below |
+| DieKarteiCore tests (`swift test --package-path DieKarteiCore`) | ✅ 4 |
+| Skip Fuse app on the emulator: Wortschatz, Karteikarten, Die vier Fälle | ✅ |
+| Spaced repetition on Android | ⬜ needs the SRS split below |
+| Persistence on Android | ⬜ |
 
 ### App-side changes made for the core (no behaviour change on iOS)
 
@@ -53,6 +57,8 @@ PDFKit, FoundationModels. On Android these need replacements behind protocols, o
   `#if canImport(CryptoKit)`.
 - Five files using `@Observable` import `Observation` explicitly (Apple's Foundation re-exports
   it; Android's doesn't).
+- The six services that read bundled JSON go through `Services/AppResources.swift` instead of
+  `Bundle.main`: the app bundle on iOS, a bundle the host sets in the package builds.
 
 ## Growing the core
 
@@ -60,6 +66,11 @@ PDFKit, FoundationModels. On Android these need replacements behind protocols, o
 Observation, or CryptoKit behind `canImport`) and has no `@Model`, cross-compiles for Android,
 and drops whatever fails until the package builds. It prints the most-missed types: each one is
 a type that lives next to SwiftUI/SwiftData code and is worth splitting into its own file.
+
+**Spaced repetition first:** `LeitnerService` and `SpacedRepetitionService` take the SwiftData
+`SavedCard` directly. A small protocol for the card's SRS fields (the June branch had one,
+`SRSCardState`) that `SavedCard` adopts would let both algorithms move into the core unchanged,
+and the Android app could keep its cards in SQLite or JSON behind the same protocol.
 
 Next splits, by how much each one unlocks (the Kasus cluster is one dependency cycle, so one
 leaf blocks the whole group):

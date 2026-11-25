@@ -30,5 +30,10 @@ let package = Package(
                 .enableUpcomingFeature("MemberImportVisibility"),
             ]
         ),
+        .testTarget(
+            name: "DieKarteiCoreTests",
+            dependencies: ["DieKarteiCore"],
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
     ]
 )

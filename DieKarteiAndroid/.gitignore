@@ -1,0 +1,86 @@
+## User settings
+
+# vi
+.*.swp
+.*.swo
+
+# macOS
+.DS_Store
+
+# gradle properties
+local.properties
+.gradle/
+.android/
+.kotlin/
+Android/app/keystore.jks
+Android/app/keystore.properties
+
+xcodebuild*.log
+
+default.profraw
+*.mobileprovision
+*.cer
+*.p12
+*.p12.password
+
+# Xcode automatically generates this directory with a .xcworkspacedata file and xcuserdata
+# hence it is not needed unless you have added a package configuration file to your project
+.swiftpm
+.build/
+build/
+DerivedData/
+xcuserdata/
+xcodebuild*.log
+.idea/
+
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+*.xcscmblueprint
+*.xccheckout
+
+## Obj-C/Swift specific
+*.hmap
+
+## App packaging
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+## Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Swift Package Manager
+#
+# Add this line if you want to avoid checking in source code from Swift Package Manager dependencies.
+Packages/
+Package.pins
+Package.resolved
+#*.xcodeproj
+
+Carthage/Build/
+
+# fastlane
+
+**/fastlane/apikey.json
+**/fastlane/report.xml
+**/fastlane/README.md
+**/fastlane/Preview.html
+**/fastlane/test_output
+
+# Copies of german-ai-flashcards/Resources data, made by scripts/core_sync.py
+Sources/DieKartei/Resources/a1_vocabulary.json
+Sources/DieKartei/Resources/a2_vocabulary.json
+Sources/DieKartei/Resources/b1_vocabulary.json
+Sources/DieKartei/Resources/flashcard_topics.json
+Sources/DieKartei/Resources/grammar_exercises.json
+Sources/DieKartei/Resources/grammar_topics.json
+Sources/DieKartei/Resources/past_tense_verbs.json
+Sources/DieKartei/Resources/story_starters.json

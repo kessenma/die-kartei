@@ -35,6 +35,7 @@ Models/WordArt/WordArtStyle.swift
 Models/Worksheet.swift
 Services/A1VocabService.swift
 Services/AnswerTimeLog.swift
+Services/AppResources.swift
 Services/CardKind.swift
 Services/FlashcardTopicService.swift
 Services/GermanGenderInference.swift
