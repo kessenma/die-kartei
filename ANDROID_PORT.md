@@ -51,6 +51,7 @@ PDFKit, FoundationModels. On Android these need replacements behind protocols, o
 | Grammatik: Kasus lessons, der/die/das, Präpositionen, Lückensätze, Perfekt | ✅ |
 | Hören: Zahlen-Diktat with Android's German TextToSpeech | ✅ |
 | Spiele: Galgenmännchen, Wortsuche | ✅ |
+| iOS tab bar (Home, Grammar, Library, Settings) and a Settings tab | ✅ |
 | Kasus drills and stories, Matching, Reflexiv drills | ⬜ next (see "Next splits") |
 | Anything needing the tutor model (Gespräch, Stammtisch, Lebenslauf, stories) | ⬜ needs an Android LLM |
 

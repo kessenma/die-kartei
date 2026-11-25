@@ -31,6 +31,23 @@ public final class GermanVoice {
         #endif
     }
 
+    /// Opens Android's text-to-speech settings, where voices are picked and downloaded.
+    /// Returns false where there is no such screen (Apple platforms, or a device without one).
+    public func openSystemVoiceSettings() -> Bool {
+        #if SKIP
+        let intent = android.content.Intent("com.android.settings.TTS_SETTINGS")
+        intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        do {
+            try ProcessInfo.processInfo.androidContext.startActivity(intent)
+            return true
+        } catch {
+            return false
+        }
+        #else
+        return false
+        #endif
+    }
+
     /// Speaks `text` now, cutting off anything still playing. `slow` is the replay-slower button.
     public func speak(_ text: String, slow: Bool) {
         #if SKIP

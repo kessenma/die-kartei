@@ -13,7 +13,11 @@ bigger picture.
 - **DieKartei**: the Android screens. It uses the core through `@testable import` so the iOS
   app's internal types stay internal.
 
-Today:
+Today the tab bar matches iOS: Home, Grammar, Library, Settings.
+- Home: what's due today, then Vocabulary, Grammar, Hören and Spiele.
+- Library: the three Goethe decks with their progress.
+- Settings: Appearance, Voice (sample + Android's voice settings), Your Level, Flashcards (new
+  words per session, reset a deck), Sources & Credits.
 - Karten: the Goethe deck with spaced repetition (shared SM-2, four rating buttons, progress
   in SharedPreferences), with a speaker button.
 - Wortschatz: the A1–B1 lists, searchable.

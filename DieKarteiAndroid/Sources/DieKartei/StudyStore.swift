@@ -49,8 +49,15 @@ final class StudyCard: SRSCardState {
 final class StudyStore {
     static let shared = StudyStore()
 
+    /// Where Settings ▸ Flashcards keeps the number of new words per session.
+    static let newPerSessionKey = "flashcards.newPerSession"
+    static let newPerSessionDefault = 10
+
     /// New words a session brings in, on top of everything due.
-    static let newPerSession = 10
+    static var newPerSession: Int {
+        let stored = UserDefaults.standard.integer(forKey: newPerSessionKey)
+        return stored > 0 ? stored : newPerSessionDefault
+    }
 
     private(set) var progress: [String: CardProgress] = [:]
     private let defaultsKey = "studyProgress.v1"
