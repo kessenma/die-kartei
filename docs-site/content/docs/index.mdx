@@ -1,0 +1,38 @@
+---
+title: Die Kartei
+description: How the German tutor app is built, and where it's going next.
+---
+
+Die Kartei is a German tutor that runs on your own iPhone, iPad and Mac: flashcards with spaced
+repetition, grammar drills, stories, listening practice and conversations, with its own language
+model on device. No account, no server, no subscription.
+
+<KarteiIllustration />
+
+These docs are for the people building it. They cover how the app is put together and the work in
+progress, starting with the Android port.
+
+<Cards>
+  <Card title="Roadmap" href="/roadmap/">
+    What's being worked on, in order.
+  </Card>
+  <Card title="The Android port" href="/android/">
+    Keeping the app in Swift on Android: what runs today and how.
+  </Card>
+  <Card title="Build and run on Android" href="/android/build/">
+    The toolchain on a Mac, and the emulator loop.
+  </Card>
+  <Card title="Sync on Android" href="/android/sync/">
+    Something like iCloud Sync, in three steps.
+  </Card>
+</Cards>
+
+## Where things live
+
+| Path | What |
+| --- | --- |
+| `german-ai-flashcards/` | The iOS, iPadOS and macOS app (SwiftUI, SwiftData) |
+| `DieKarteiCore/` | The app's portable Swift files, shared with Android |
+| `DieKarteiAndroid/` | The Android app (Skip Fuse: Swift and SwiftUI on Android) |
+| `docs/` | Notes on each part of the iOS app (Kasus, Schreibblatt, iCloud Sync, …) |
+| `docs-site/` | This site |

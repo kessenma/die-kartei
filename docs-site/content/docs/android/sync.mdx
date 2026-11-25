@@ -1,0 +1,98 @@
+---
+title: Sync on Android
+description: Something like iCloud Sync for Android, in three steps.
+---
+
+On iOS, progress follows the learner between their own devices through their private iCloud
+database: no server of ours, no account to make. Android should work the same way.
+
+<SyncIllustration />
+
+The hard part already runs on Android. The merge engine in `Services/Sync/Core` (`SyncMerge`,
+`SyncRecordLogic`, per-device counters, record names, the test server) is shared code. CloudKit is
+only the transport. So Android needs a store that speaks the iOS record format, a backup, and a
+transport. The rules in `docs/ICLOUD_SYNC.md` apply unchanged.
+
+## Step 1: a store shaped like iOS sync
+
+**Goal:** Android keeps progress as the same records iOS syncs, so any transport (and later
+iPhone ↔ Android) is plumbing.
+
+**Work:**
+
+- **Same ids as iOS.** iOS keeps one Wortschatz deck across A1–B1, with card ids from
+  `SyncNameUUID.make("deck", "goethe-srs", "Goethe Vocabulary")` and
+  `SyncSingletonDecks.cardID(deckID:germanWord:)` (the exact word, never lowercased). Android keys
+  cards as `A1:word` today. It moves to the iOS ids, keeps the level only as a filter, and migrates
+  saved progress once.
+- **One definition of the rules.** `SavedCardCodec.spec` and the canonical id functions move from
+  their SwiftData files into `Services/Sync/Core`, with no change on iOS.
+- **The store.** One record per reviewed card, holding the last server copy and any pending copy
+  (`SyncRecordCopies`). Each review goes through `SyncRecordLogic.noteLocal` with the same field
+  names as `SavedCardCodec.known`, credited to this install's device id. Saved as one JSON file,
+  written to a temporary file then renamed.
+- **Device id.** iOS keeps its id in the Keychain, so Android makes its own.
+
+**Done when:**
+
+- Two simulated devices review the same card offline and merge: review counts add up, the schedule
+  comes whole from the later review, and the first-review date is the earlier one.
+- An iOS test reads an Android-made card through the iOS rules.
+
+## Step 2: Android Auto Backup
+
+**Goal:** a new or reset phone gets its progress back. Backup and restore only, not live sync.
+
+**Work:**
+
+- Turn on Android's Auto Backup (`allowBackup`, plus data-extraction rules for Android 12 and
+  later): the store file and settings go in, caches stay out.
+- Leave the device id out of the backup. A restored phone makes a new one; two phones sharing an
+  id would undercount reviews when they merge.
+
+**Done when:** on the emulator, `bmgr backupnow`, uninstall, reinstall and `bmgr restore` bring the
+progress back with a new device id.
+
+## Step 3: sync through Google Drive
+
+**Goal:** live sync between a learner's Android devices, through their own Google Drive.
+
+**How:**
+
+- Data goes in Drive's hidden app folder, which the learner doesn't see and which goes away when
+  they remove the app's access.
+- **Each device writes only its own file** (`kartei-<device>.json`). A sync pass reads the other
+  devices' files that changed, merges each record, and uploads its own file if anything is
+  pending.
+- Since no device overwrites another's file, there are no write conflicts. The merge rules give the
+  same result in any order, and when a file is read twice.
+- The Drive calls are Swift (so iOS could use them later). Only the Google sign-in is Android code,
+  in a small module like `GermanVoice`.
+- A settings row: the Google account, last sync, Sync now, and Remove synced data.
+
+**Done when:**
+
+- A fake Drive with three simulated devices, doing random reviews and syncing in random order,
+  always converges, with no review lost or counted twice.
+- Two emulators on one test Google account show the same progress.
+
+<Callout title="Needs a Google Cloud project first">
+  The Drive API turned on, an OAuth consent screen, and an Android OAuth client for
+  `com.kessenma.diekartei` with the signing certificate's SHA-1 (debug first, release before
+  shipping). Check whether the Drive app-folder permission needs Google's review before a public
+  release.
+</Callout>
+
+## Later: iPhone ↔ Android
+
+Step 1 keeps this open. Two routes:
+
+- **CloudKit from Android**, through Apple's web services. iCloud stays the one source of truth;
+  the learner signs in with their Apple Account once on Android. Apple's current support for
+  private-database web access needs confirming first.
+- **The Drive transport on iOS too**, reusing step 3's Swift code, with a Google sign-in on iOS.
+
+## Not planned
+
+A server of our own (Firebase, Supabase and the like). It would mean accounts and running costs,
+which the iCloud design was chosen to avoid.

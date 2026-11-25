@@ -1,0 +1,33 @@
+{
+  "name": "die-kartei-docs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Die Kartei docs: how the app is built, and the Android port. Static Fumadocs + Next.js site.",
+  "scripts": {
+    "dev": "next dev --port 3200",
+    "build": "next build",
+    "start": "serve out -l 3200",
+    "check-types": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "cn": "^0.5.2",
+    "fumadocs-core": "16.19.3",
+    "fumadocs-mdx": "15.6.3",
+    "fumadocs-ui": "npm:@fumadocs/base-ui@16.19.3",
+    "lucide-react": "^1.71.0",
+    "next": "16.2.10",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.17",
+    "@types/mdx": "^2.0.14",
+    "@types/node": "^22.10.2",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "postcss": "^8.5.6",
+    "serve": "^14.2.7",
+    "tailwindcss": "^4.1.17",
+    "typescript": "5.9.3"
+  }
+}

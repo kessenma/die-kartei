@@ -1,5 +1,8 @@
 # Android port: working log
 
+The readable version of this (goals, status, the sync plan, the roadmap) is the docs site:
+`docs-site/` (`npm run dev`, then http://localhost:3200). This file stays the working log.
+
 **Goal:** die Kartei on Android, keeping as much of the app in Swift as possible.
 
 **Branch:** `android-port`. Main stays the iOS app; this branch merges main in as it moves.
@@ -28,7 +31,7 @@ PDFKit, FoundationModels. On Android these need replacements behind protocols, o
 | Apple | Android candidate |
 | --- | --- |
 | SwiftData | SQLite in Swift (Skip's SkipSQL / GRDB-style), behind a store protocol |
-| iCloud sync | `Services/Sync/Core` builds for Android; plan in [docs/ANDROID_SYNC_PLAN.md](docs/ANDROID_SYNC_PLAN.md) |
+| iCloud sync | `Services/Sync/Core` builds for Android; plan in `docs-site/content/docs/android/sync.mdx` |
 | MLX | llama.cpp (GGUF builds of the tutor models) |
 | Speech / AVSpeech | Android TTS/STT through Skip's Kotlin bridging |
 | PencilKit | Compose canvas; later |
