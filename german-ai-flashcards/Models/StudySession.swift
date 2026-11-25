@@ -38,7 +38,21 @@ struct StudySession: Identifiable {
     /// Several saved decks studied as one (Library ▸ Decks ▸ Mix). `deckID` stays nil, so the
     /// session can't pause; the player credits each deck its share of the result instead.
     var isDeckMix: Bool = false
+    /// Where the learner goes after the cards, when the launcher has a next step (the next part
+    /// of a Schreibblatt set, or finishing it). The player makes it the main button on its
+    /// summary and its start screen; nil leaves both as they were.
+    var onward: StudyOnward? = nil
 
     /// The model that generated this deck, when known — used for the deck's brand tint.
     var generatorModel: MLXModel? { MLXModel(rawValue: generatorRaw) }
+}
+
+/// The player's way on (`StudySession.onward`). Tapping it closes the player and calls `action`
+/// at once; a launcher that presents something itself should wait for the cover to be down
+/// (the router's `active` going nil), since a cover cannot open over one still leaving.
+struct StudyOnward {
+    /// "Weiter: Teil 4 schreiben".
+    let title: String
+    let systemImage: String
+    let action: @MainActor () -> Void
 }

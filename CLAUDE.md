@@ -36,6 +36,8 @@ German for identity words and headings, plain English for explanation.
   PencilKit traps, formats (Hochformat, Querformat 2×2, endless grids), paper styles, the shared
   Pencil controls (the dock in place of the system tool picker, pens and colours, the wrist
   guard, circle to erase), the Spickzettel (the words floating over the sheet, following the pen),
+  Nächste Tabelle (the next table into view with the wrist guard on), the flashcard checkpoints and
+  the way on after them, Abschließen (die Figur cheering, the writing numbers),
   Schreib es (write a missed flashcard by hand, iPad only), and the reusable Pencil surface every drawing screen runs on
   (`PencilPaper`/`PencilSurface`/`PencilPad`, full-screen hand-off, drawing mode hiding the tab bar).
 - `docs/WORTSCHATZ.md` — the Goethe word box: merged index, one SRS deck, sessions, status, debug args.

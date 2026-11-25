@@ -86,6 +86,23 @@ private struct SchreibblattSheetPage: View {
     @State private var checkpointChoice: SchreibblattCheckpoint.Choice?
     /// The part to write after this one, once this one is done.
     @State private var nextPart: SchreibblattSheet?
+    /// The flashcard cover this page opened, so the page notices it close and offers the way on.
+    @State private var practiceActivityID: String?
+    /// What the player's way on asked for (`StudyOnward`), done once its cover is down.
+    @State private var onwardChoice: Onward?
+    /// The finish screen: the set (or sheet) done, die Figur cheering.
+    @State private var finishScreen: SchreibblattFinish?
+    /// Its Fertig was tapped: leave the flow once the cover is down.
+    @State private var leaveAfterFinish = false
+
+    @Environment(\.dismiss) private var dismiss
+    /// Back to the hub past Wörter wählen and the setup screen, when the sheet was made there.
+    @Environment(\.schreibblattLeave) private var leaveFlow
+
+    private enum Onward {
+        case next(SchreibblattSheet)
+        case finish
+    }
 
     init(sheet: SchreibblattSheet, openPart: @escaping (SchreibblattSheet) -> Void) {
         self.sheet = sheet
@@ -159,6 +176,21 @@ private struct SchreibblattSheetPage: View {
             .sheet(item: $checkpoint, onDismiss: actOnCheckpoint) { checkpoint in
                 SchreibblattCheckpointSheet(checkpoint: checkpoint) { checkpointChoice = $0 }
             }
+            .fullScreenCover(item: $finishScreen, onDismiss: {
+                guard leaveAfterFinish else { return }
+                leaveAfterFinish = false
+                leave()
+            }) { finish in
+                SchreibblattCelebration(finish: finish) { leaveAfterFinish = true }
+            }
+            // The cards this page opened have closed: the way on they chose, or the checkpoint again.
+            .onChange(of: router?.active?.id) { old, new in
+                guard new == nil, let launched = practiceActivityID, old == launched else { return }
+                practiceActivityID = nil
+                // Once the player's cover is all the way down: `active` goes nil as it starts to
+                // leave, and nothing can be presented over a cover still on its way out.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { cardsClosed() }
+            }
             .navigationDestination(item: $copy) { SchreibblattSheetView(sheet: $0) }
             // Again on the way back from the cards or a copy: a card may have been deleted since.
             .onAppear { findPracticeCards() }
@@ -188,6 +220,7 @@ private struct SchreibblattSheetPage: View {
                         save(data, strokes: strokes)
                     }
                     .id(fullScreen.token)
+                    .schreibblattNextTable(layout: layout, board: pencil, onFinish: finish)
                     .schreibblattCribSheet(layout: layout, board: pencil)
                     .pencilRail(pencil, accent: SchreibblattTile.tint,
                                 canvasSettings: { SchreibblattCanvasSettings(sheet: sheet) },
@@ -216,7 +249,8 @@ private struct SchreibblattSheetPage: View {
                 .foregroundStyle(.green)
             Button("Wieder öffnen") { setFinished(false) }
                 .buttonStyle(.bordered)
-            if !sheet.isPart {
+            // A sheet on its own leads with Abschließen below; "…" still writes it again.
+            if !sheet.isPart && !setIsDone {
                 Button("Nochmal schreiben") { writeAgain(sheet.format) }
                     .buttonStyle(.bordered)
             }
@@ -230,9 +264,19 @@ private struct SchreibblattSheetPage: View {
                     .buttonStyle(.borderedProminent)
                     .tint(SchreibblattTile.tint)
                     .accessibilityHint("Opens the next part of this set")
+            } else if setIsDone {
+                Button {
+                    celebrate()
+                } label: {
+                    Label("Abschließen", systemImage: "flag.checkered")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(SchreibblattTile.tint)
+                .accessibilityHint("Finishes and goes back to your sheets")
             }
         }
         .font(.subheadline.weight(.semibold))
+        .lineLimit(1)
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
         .background(.regularMaterial, in: Capsule())
@@ -350,6 +394,12 @@ private struct SchreibblattSheetPage: View {
                         } label: {
                             Label("Weiter: \(next.partLabel)", systemImage: "arrow.right.circle.fill")
                         }
+                    } else if setIsDone {
+                        Button {
+                            celebrate()
+                        } label: {
+                            Label("Abschließen · Finish", systemImage: "flag.checkered")
+                        }
                     }
                     if canPractice {
                         Button {
@@ -427,17 +477,19 @@ private struct SchreibblattSheetPage: View {
         try? modelContext.save()
     }
 
-    // MARK: Karten üben, and the next part
+    // MARK: Karten üben, the next part, and the finish
 
     private var canPractice: Bool { router != nil && !practiceIDs.isEmpty }
 
+    /// Finished, with no part left to write: a sheet on its own, or the set's last part.
+    private var setIsDone: Bool { sheet.isFinished && nextPart == nil }
+
     /// Fertig: lock the sheet, then offer its words as flashcards (and, for a part, the rest of
-    /// the set so far and the next part).
+    /// the set so far and the next part; at the end, the last round and the finish).
     private func finish() {
         setFinished(true)
         findPracticeCards()
-        let made = makeCheckpoint()
-        if !made.isEmpty { checkpoint = made }
+        checkpoint = makeCheckpoint()
     }
 
     /// The words that still have a card, and the next part, read again whenever the page shows.
@@ -464,7 +516,8 @@ private struct SchreibblattSheetPage: View {
         }
     }
 
-    private func makeCheckpoint() -> SchreibblattCheckpoint {
+    /// `practised`: back from the cards, so the title says so and going on leads.
+    private func makeCheckpoint(practised: Bool = false) -> SchreibblattCheckpoint {
         let parts = sheet.parts(in: modelContext)
         let allIDs = parts.flatMap { $0.writtenWords.map(\.id) }
         let existing = DeckStore(modelContext: modelContext).existingCardIDs(allIDs)
@@ -472,27 +525,31 @@ private struct SchreibblattSheetPage: View {
         let options = router == nil ? [] : SchreibblattParts.practiceOptions(parts: facts, current: sheet.partIndex)
         let next = SchreibblattParts.nextPart(parts: facts, after: sheet.partIndex)
             .flatMap { index in parts.first { $0.partIndex == index } }
+        let stats = SchreibblattStats.load(in: modelContext)
 
         guard sheet.isPart else {
             return SchreibblattCheckpoint(
-                title: "Fertig", subtitle: "\(SchreibblattParts.words(sheet.writtenWords.count)) written",
-                progress: nil, options: options, next: nil)
+                title: practised ? "Karten geübt" : "Fertig",
+                subtitle: "\(SchreibblattParts.words(sheet.writtenWords.count)) written",
+                progress: nil, options: options, next: nil, practised: practised, stats: stats)
         }
         let done = parts.filter(\.isFinished)
         let wordsDone = done.reduce(0) { $0 + $1.writtenWords.count }
         let wordsAll = parts.reduce(0) { $0 + $1.writtenWords.count }
+        let title = practised
+            ? "Karten geübt"
+            : (done.count == parts.count ? "Alle Teile geschafft" : "\(sheet.partLabel) geschafft")
         return SchreibblattCheckpoint(
-            title: done.count == parts.count ? "Alle Teile geschafft" : "\(sheet.partLabel) geschafft",
+            title: title,
             subtitle: "\(wordsDone) of \(wordsAll) words written · \(done.count) of \(parts.count) parts",
             progress: parts.isEmpty ? nil : Double(done.count) / Double(parts.count),
-            options: options, next: next)
+            options: options, next: next, practised: practised, stats: stats)
     }
 
     /// A sheet on its own goes straight to its cards; a part asks how much of the set.
     private func practiceOrAsk() {
         if sheet.isPart {
-            let made = makeCheckpoint()
-            if !made.isEmpty { checkpoint = made }
+            checkpoint = makeCheckpoint()
         } else {
             practice(practiceIDs, count: practiceIDs.count)
         }
@@ -504,18 +561,70 @@ private struct SchreibblattSheetPage: View {
         switch choice {
         case .practice(let option): practice(option.wordIDs, count: option.wordIDs.count)
         case .next(let part): openPart(part)
+        case .finish: celebrate()
         }
     }
 
-    /// These words, and only these, in the flashcard player.
+    /// These words, and only these, in the flashcard player, with the way on as its main button
+    /// at the end: the next part to write, or the finish.
     private func practice(_ ids: [UUID], count: Int) {
         guard let router,
-              let session = DeckStore(modelContext: modelContext).practiceSession(
+              var session = DeckStore(modelContext: modelContext).practiceSession(
                   cardIDs: ids,
                   topic: sheet.isPart && !sheet.seriesTitle.isEmpty ? sheet.seriesTitle : sheet.title,
                   label: "Schreibblatt · \(SchreibblattParts.words(count))")
         else { return }
+        if sheet.isFinished {
+            if let next = nextPart {
+                session.onward = StudyOnward(title: "Weiter: Teil \(next.partIndex + 1) schreiben",
+                                             systemImage: "arrow.right.circle.fill") { onwardChoice = .next(next) }
+            } else {
+                session.onward = StudyOnward(title: "Abschließen", systemImage: "flag.checkered") {
+                    onwardChoice = .finish
+                }
+            }
+        }
+        onwardChoice = nil
+        practiceActivityID = Activity.cardDeck(session).id
         router.launch(.cardDeck(session))
+    }
+
+    /// The cards are down. Their way on if one was tapped; else, on a finished sheet, the
+    /// checkpoint again, so going on is never only a banner on a locked page.
+    private func cardsClosed() {
+        let choice = onwardChoice
+        onwardChoice = nil
+        switch choice {
+        case .next(let part): openPart(part)
+        case .finish: celebrate()
+        case nil:
+            guard sheet.isFinished else { return }
+            findPracticeCards()
+            checkpoint = makeCheckpoint(practised: true)
+        }
+    }
+
+    /// The finish screen, then out of the flow.
+    private func celebrate() {
+        let parts = sheet.parts(in: modelContext)
+        let words = parts.reduce(0) { $0 + $1.writtenWords.count }
+        let passes = sheet.repetitions == 1 ? "once" : "\(sheet.repetitions) times"
+        finishScreen = SchreibblattFinish(
+            title: sheet.isPart ? "Alle Teile geschafft!" : "Blatt geschafft!",
+            subtitle: sheet.isPart
+                ? "\(SchreibblattParts.words(words)) in \(parts.count) parts, each written \(passes)"
+                : "\(SchreibblattParts.words(words)), each written \(passes)",
+            stats: SchreibblattStats.load(in: modelContext))
+    }
+
+    /// Back to where the writing started: the hub, past Wörter wählen and the setup screen when
+    /// the sheet was made there; else the list it was opened from.
+    private func leave() {
+        if let leaveFlow {
+            leaveFlow()
+        } else {
+            dismiss()
+        }
     }
 
     private func writeAgain(_ format: SchreibblattFormat) {
@@ -567,6 +676,7 @@ struct SchreibblattFullScreen: View {
                 sheet.saveInk(data, strokeCount: strokes)
                 try? modelContext.save()
             }
+            .schreibblattNextTable(layout: sheet.layout, board: pencil)
             .schreibblattCribSheet(layout: sheet.layout, board: pencil)
             .pencilRail(pencil, accent: SchreibblattTile.tint,
                         canvasSettings: { SchreibblattCanvasSettings(sheet: sheet) },

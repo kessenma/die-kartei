@@ -22,6 +22,21 @@
 import SwiftData
 import SwiftUI
 
+extension EnvironmentValues {
+    /// Leaves the whole writing flow (Wörter wählen ▸ setup ▸ sheet) back to the hub, which sets
+    /// it on the picker it pushes. Nil where a sheet was opened straight from a list: dismissing
+    /// the sheet is the way back there.
+    @Entry var schreibblattLeave: SchreibblattLeave? = nil
+}
+
+/// The hub's way back (`schreibblattLeave`). Equal to any other, so setting it never invalidates
+/// the views that read it: there is only ever the one hub behind a flow.
+struct SchreibblattLeave: Equatable {
+    let action: () -> Void
+    func callAsFunction() { action() }
+    static func == (lhs: Self, rhs: Self) -> Bool { true }
+}
+
 struct SchreibblattHubView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \SchreibblattSheet.updatedAt, order: .reverse) private var sheets: [SchreibblattSheet]
@@ -168,7 +183,9 @@ struct SchreibblattHubView: View {
             Text("This set's sheets go together, with everything written on them.")
         }
         .navigationDestination(isPresented: $picking) {
+            // Finishing a sheet made from here leaves Wörter wählen and its setup screen too.
             SchreibblattWortwahlView()
+                .environment(\.schreibblattLeave, SchreibblattLeave { picking = false })
         }
     }
 

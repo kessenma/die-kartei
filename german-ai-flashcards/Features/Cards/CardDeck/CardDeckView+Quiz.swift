@@ -131,6 +131,9 @@ extension CardDeckView {
                 }
 
                 VStack(spacing: 12) {
+                    // The launcher's way on leads; Done (back to the start screen) steps down.
+                    onwardButton
+
                     Button {
                         reviewMissed()
                     } label: {
@@ -149,6 +152,7 @@ extension CardDeckView {
                     .buttonStyle(.bordered)
 
                     Button {
+                        finishedARound = true
                         hasStarted = false
                         isReviewingMissed = false
                         showQuizSummary = false
@@ -160,7 +164,7 @@ extension CardDeckView {
                         Label("Done", systemImage: "checkmark")
                             .frame(maxWidth: 260)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(DoneButtonStyle(prominent: onward == nil))
                 }
 
                 Spacer().frame(height: 120)
@@ -286,6 +290,20 @@ extension CardDeckView {
             cardOrder = Array(cards.indices).shuffled()
             cardPosition = 0
             currentIndex = cardOrder.first ?? 0
+        }
+    }
+}
+
+/// The summary's Done: the prominent way out, unless a launcher's way on (`StudyOnward`) leads.
+struct DoneButtonStyle: PrimitiveButtonStyle {
+    let prominent: Bool
+
+    @ViewBuilder
+    func makeBody(configuration: Configuration) -> some View {
+        if prominent {
+            Button(configuration).buttonStyle(.borderedProminent)
+        } else {
+            Button(configuration).buttonStyle(.bordered)
         }
     }
 }

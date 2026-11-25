@@ -25,13 +25,16 @@ import PencilKit
 
 // MARK: - Which screen to open
 
-/// `-schreibblatt.debugOpen hub|wahl|blatt`
+/// `-schreibblatt.debugOpen hub|wahl|blatt|fertig`
 enum SchreibblattDebugOpen: String, Identifiable, CaseIterable {
     case hub
     case wahl
     /// The newest sheet, canvas and all. Needs one to exist — pair it with
     /// `-schreibblatt.debugSeed 1`, since a sheet cannot be made without tapping.
     case blatt
+    /// The finish screen (die Figur cheering, the writing numbers), which otherwise sits at the
+    /// end of a whole set.
+    case fertig
 
     var id: String { rawValue }
 
@@ -43,6 +46,25 @@ enum SchreibblattDebugOpen: String, Identifiable, CaseIterable {
 // MARK: - Seeding
 
 enum SchreibblattDebugSeeder {
+
+    /// The finish screen's numbers: the store's, or a made-up week of writing when this device
+    /// has none yet, so `-schreibblatt.debugOpen fertig` always shows the card.
+    @MainActor
+    static func finishStats(in context: ModelContext) -> SchreibblattStats {
+        let real = SchreibblattStats.load(in: context)
+        guard real.stats.isEmpty else { return real }
+        let now = Date()
+        let words = ["das Haus", "der Hund", "die Stadt", "das Buch", "der Löffel"]
+            .map { SchreibblattStats.Sheet.Word(id: UUID(), german: $0) }
+        let day = Calendar.current.startOfDay(for: now)
+        return SchreibblattStats(
+            sheets: [
+                .init(loggedAt: now.addingTimeInterval(-900), words: words, repetitions: 5, strokes: 212),
+                .init(loggedAt: now.addingTimeInterval(-86_400), words: Array(words.prefix(3)), repetitions: 5, strokes: 140),
+            ],
+            days: (0..<4).map { .init(start: day.addingTimeInterval(Double(-$0) * 86_400), words: 5 + $0) },
+            now: now)
+    }
 
     /// `-schreibblatt.debugSeed 1` — a sheet with a few strokes already on it, so the canvas, the
     /// "begonnen" badge and the ink-in-PDF path can be seen without an Apple Pencil.

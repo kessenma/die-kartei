@@ -318,6 +318,12 @@ struct ContentView: View {
                             ContentUnavailableView("No sheet", systemImage: "doc",
                                                    description: Text("Run with -schreibblatt.debugSeed 1"))
                         }
+                    case .fertig:
+                        SchreibblattCelebration(
+                            finish: SchreibblattFinish(title: "Alle Teile geschafft!",
+                                                       subtitle: "52 words in 6 parts, each written 5 times",
+                                                       stats: SchreibblattDebugSeeder.finishStats(in: modelContext)),
+                            onDone: { schreibblattDebug = nil })
                     }
                 }
                 .toolbar {
@@ -1142,7 +1148,8 @@ struct ContentView: View {
                 autoStart: session.autoStart,
                 badgeLogoName: session.badgeLogoName,
                 modelManager: coordinator.modelManager,
-                isDeckMix: session.isDeckMix
+                isDeckMix: session.isDeckMix,
+                onward: session.onward
             )
             .environment(coordinator.mlxService)
 

@@ -6,6 +6,17 @@ extension CardDeckView {
     var setupScreen: some View {
         ScrollView {
             VStack(spacing: 24) {
+                // Back here from a finished round's Done: the launcher's way on comes first, and
+                // going again is everything below it.
+                if onward != nil, finishedARound {
+                    VStack(spacing: 8) {
+                        onwardButton
+                        Text("Or practice these cards again below.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
                 ZStack {
                     Image(systemName: "rectangle.stack.fill")
                         .font(.system(size: 150))

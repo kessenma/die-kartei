@@ -27,6 +27,9 @@ struct CardDeckView: View {
     /// Several saved decks studied as one (`StudySession.isDeckMix`). No single deck backs the
     /// session, so the per-deck controls hide and each deck is credited its share at the end.
     var isDeckMix: Bool = false
+    /// The launcher's next step after the cards (`StudySession.onward`): the summary's and the
+    /// start screen's main button. Nil for every ordinary deck.
+    var onward: StudyOnward? = nil
 
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -55,6 +58,9 @@ struct CardDeckView: View {
     /// "Make this sentence a card": the inspector translating an example sentence for this deck.
     @State var sentenceInspector: WordInspectorModel?
     @State var hasStarted = false
+    /// A round reached its summary and Done led back to the start screen, which then offers the
+    /// launcher's way on (`onward`) first.
+    @State var finishedARound = false
     @State var isFlipped = false
     /// When the current card came up: the recall clock (roadmap item 5, `AnswerTimeLog`).
     @State var cardShownAt = Date()
@@ -248,6 +254,24 @@ struct CardDeckView: View {
             savePauseProgress()
         }
         dismiss()
+    }
+
+    /// The launcher's next step, as the main button: on the summary and on the start screen
+    /// (where Done leads), so the way on is never only behind the ×.
+    @ViewBuilder
+    var onwardButton: some View {
+        if let onward {
+            Button {
+                closeActivity()
+                onward.action()
+            } label: {
+                Label(onward.title, systemImage: onward.systemImage)
+                    .font(.headline)
+                    .frame(maxWidth: 260)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+        }
     }
 
     var body: some View {

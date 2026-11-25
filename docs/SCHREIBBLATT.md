@@ -94,6 +94,63 @@ finished parts count as written, apart from the one just finished, so a skipped 
   checkpoint's offers for a part). The player is the shell's cover, so the checkpoint acts in its
   `onDismiss`, once it is down.
 - "Practice" means `writtenWords`: the words actually on the page (a page-limit prefix).
+- **The way on rides with the cards** (`StudySession.onward`, a `StudyOnward`). Practice launched
+  from a finished sheet carries "Weiter: Teil N schreiben", or "Abschließen" when no part is left.
+  The player makes it the main button on its summary (Done steps down to bordered) and, once a
+  round has ended, on its start screen too. It only records the choice; the page acts when the
+  router's `active` goes nil (the cover is down), the same pattern as `PaperDetailView`.
+- **Closing the cards any other way** (×, or Done and then ×) brings the checkpoint back on a
+  finished sheet (`practised`: "Karten geübt", going on leads, the offers stay below as "Nochmal
+  üben"). A locked page with only a banner was the dead end.
+- **At the end** (no part left, or a sheet on its own) the checkpoint leads with the last round
+  ("Letzte Runde: Alle Teile", or "Karten üben · N words") and offers "Abschließen" beside it. The
+  banner and the details offer Abschließen too.
+
+## Abschließen · The finish
+
+`SchreibblattCelebration`, a full-screen cover from the page: die Figur cheering beside a gold
+trophy, Bauhaus confetti once (circles, squares, triangles, half-discs in red, yellow, blue and
+black), a writing number, and Fertig.
+
+- **The scene is the shipped „sich freuen über" verb scene** (`verb3d-freuen_ueber.usdz`: the
+  figure with figur.py's `jubel` clip, the trophy as its `subject`, the slab). Nothing new was
+  baked: the trophy is tinted gold, everything else takes `FigurScene.defaultTint`, the clip plays
+  three times (`repeat(count:)`) and holds its first pose, arms up. Tap it to cheer again.
+  Lightweight graphics and Reduce Motion get the scene's still on a light disc, and no confetti.
+- **Fertig leaves the flow.** The hub sets `schreibblattLeave` on the word picker it pushes, so a
+  sheet made there goes back past Wörter wählen and the setup screen to the hub (it used to land
+  on the setup screen). A sheet opened from a list just dismisses back to it. The page leaves in
+  the cover's `onDismiss`, not while it is still going down.
+
+## Schreibzahlen · Writing numbers
+
+`SchreibblattStats` (pure, `SchreibblattStatsTests`), shown one at a time by
+`SchreibblattStatCard` on the checkpoint and, bigger, on the finish screen. Each appearance shows
+the next in turn (`schreibblatt.lastStat`), a tap shows another.
+
+| Kind | Counts | From |
+|---|---|---|
+| `lastHour` | words on sheets first finished in the last hour | sheets (`loggedAt`) |
+| `byHand` | words × passes, every logged sheet | sheets |
+| `streak` | days in a row with sheet words, back from today or yesterday (2+) | `StudyDay` |
+| `total`, `week`, `today` | `sheetWordsWritten` summed | `StudyDay` |
+| `topWord` | the word on the most sheets (2+) | sheets |
+| `distinct`, `sheets`, `strokes` | different words, sheets finished, pen strokes | sheets |
+
+`StudyDay` syncs, so total, week, today and the streak include another device's sheets; the sheets
+are local, so the rest are this device's. A zero is left out rather than shown.
+
+## Nächste Tabelle · Next table
+
+With the wrist guard on, a pill at the bottom of the canvas scrolls the next writing table into
+view, at the learner's zoom (`PencilBoard.reveal(sheetRect:)`, the table's top 20 pt under the top
+of the screen, sideways only when it is not all in view). Which table is next is pure
+(`Services/SchreibblattTableNav.swift`, `SchreibblattTableNavTests`): the current table is the one
+under the pen's newest stroke while that stroke is on screen, else the one showing most of itself;
+next is the following pass, across page breaks and columns. The pill remembers the table it just
+revealed until the pen writes, since a sliver of the previous table (and its stroke) can still
+show above. On the last pass it reads Fertig (inline) or steps aside (full screen). It hides with
+the guard off, where a finger scrolls anyway, and on a finished sheet.
 
 ## Written words · Geschrieben
 
@@ -150,7 +207,11 @@ finished parts count as written, apart from the one just finished, so a skipped 
 | `Features/Schreibblatt/SchreibblattWortwahlView.swift` | the selection screen |
 | `Features/Schreibblatt/SchreibblattSetupView.swift` | the knobs, Aufteilen (parts), making the sheet or the set |
 | `Features/Schreibblatt/SchreibblattSheetView.swift` | the host (swaps parts in place) + the page: canvas on iPad, details + Share elsewhere; the "…" menu; full screen; Fertig → checkpoint |
-| `Features/Schreibblatt/SchreibblattCheckpointSheet.swift` | what Fertig opens: practice offers, progress, the next part |
+| `Features/Schreibblatt/SchreibblattCheckpointSheet.swift` | what Fertig opens, and what the cards come back to: practice offers, progress, a writing number, the next part or the last round and Abschließen |
+| `Features/Schreibblatt/SchreibblattCelebration.swift` | the finish screen (`SchreibblattJubelScene`, `BauhausConfetti`) and `SchreibblattStatCard` |
+| `Features/Schreibblatt/SchreibblattNextTableButton.swift` | the "Nächste Tabelle" pill |
+| `Services/SchreibblattTableNav.swift` | the current and next writing table, pure |
+| `Services/SchreibblattStats.swift` (+ `Features/Schreibblatt/SchreibblattStats+Store.swift`) | the writing numbers and their turn; reading them from the store |
 | `Features/Schreibblatt/SchreibblattSeriesView.swift` | a set of parts: progress, next part, practice, every part |
 | `Services/SchreibblattParts.swift` | the pure splitting, the practice offers, the next part |
 | `Features/Schreibblatt/SchreibblattCribSheet.swift` | the Spickzettel: the floating word table that follows the pen |
@@ -254,8 +315,9 @@ sheets. A deck deleted since is left off.
   `SchreibblattSheet.finishedAt` and locks the page. Locked means `PencilBoard.isLocked`: the
   canvas scrolls and zooms, its drawing recognizer is off, undo, redo, clear and squeeze do nothing,
   and the rail steps aside. It then opens the checkpoint (Karten üben, above) and logs the day's
-  words. A banner offers "Wieder öffnen" (clears `finishedAt`), "Nochmal schreiben" (a part: the
-  next part instead) and "Karten üben". The hub lists finished sheets in their own Fertig section. The rail modifier keeps
+  words. A banner offers "Wieder öffnen" (clears `finishedAt`), "Karten üben", and the way on:
+  "Weiter: Teil N" for a part with parts left, else "Abschließen" (the finish). "Nochmal
+  schreiben" (a blank copy) stays in "…". The hub lists finished sheets in their own Fertig section. The rail modifier keeps
   the same view structure when locked, so the canvas is never rebuilt (a rebuilt canvas would
   re-read the ink the screen opened with).
 - **Share** writes the PDF when someone shares (`SchreibblattDocument` holds the layout and the
@@ -379,7 +441,8 @@ Invariants:
 A4 gets its own section. `SchreibblattPracticeTests` covers the join, the lenses and the ranking
 over value structs. `SchreibblattPDFTests` reads real PDF bytes back with PDFKit.
 `SchreibblattVerifierTests` runs the two self-verifiers. `SchreibblattPartsTests` covers the split,
-the checkpoint offers, the next part and the day counter.
+the checkpoint offers, the next part and the day counter. `SchreibblattTableNavTests` covers which
+table "Nächste Tabelle" brings up; `SchreibblattStatsTests` the writing numbers and their turn.
 
 Two DEBUG self-verifiers exist because the things that matter most cannot be asserted from a
 layout: a PDF that opens but is blank or upside down passes everything else. **Mirrored text
@@ -387,7 +450,8 @@ extracts perfectly well, so only the reading-order check catches a botched flip.
 
 | Launch argument | What it does |
 |---|---|
-| `-schreibblatt.debugOpen hub\|wahl\|blatt` | opens a screen (one presenting argument per launch) |
+| `-schreibblatt.debugOpen hub\|wahl\|blatt\|fertig` | opens a screen (one presenting argument per launch); `fertig` is the finish screen |
+| `-schreibblatt.debugNextTable <n>` | with `blatt` and the wrist guard on (`-pencil.wristGuard '<true/>'`): taps "Nächste Tabelle" n times, a second and a half apart, and logs where it went |
 | `-schreibblatt.debugSeed 1` | a sheet with synthetic ink, so the canvas is reachable without a Pencil |
 | `-schreibblatt.debugLandscape 1` | with `debugSeed`: the seeded sheet on its side, two by two |
 | `-schreibblatt.debugVerifyPDF 1` | the PDF round trip — **run this on the Mac**, which the test target cannot reach |

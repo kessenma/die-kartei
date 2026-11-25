@@ -612,6 +612,38 @@ final class PencilBoard {
     /// Everything off the page, as one step the learner can undo.
     func clear() { canvas?.clear() }
 
+    /// The part of the paper on screen, in sheet space (the paper's own points, unzoomed); nil
+    /// with no canvas attached. Read when asked, never observed: scrolling does not redraw a view.
+    var visibleSheetRect: CGRect? {
+        guard let canvas, canvas.zoomScale > 0, canvas.bounds.width > 0 else { return nil }
+        let zoom = canvas.zoomScale
+        return CGRect(x: canvas.contentOffset.x / zoom, y: canvas.contentOffset.y / zoom,
+                      width: canvas.bounds.width / zoom, height: canvas.bounds.height / zoom)
+    }
+
+    /// Scrolls a sheet-space rect into view at the current zoom: its top `padding` below the top
+    /// of the screen, and sideways only when it is not already all in view. The zoom is the
+    /// learner's and stays. What the Schreibblatt's "Nächste Tabelle" does, so a hand on the glass
+    /// with the wrist guard on never has to scroll.
+    func reveal(sheetRect rect: CGRect, padding: CGFloat = 20, animated: Bool = true) {
+        guard let canvas, canvas.zoomScale > 0, !rect.isNull else { return }
+        let zoom = canvas.zoomScale
+        let inset = canvas.contentInset
+        let size = canvas.bounds.size
+        let lowestY = max(-inset.top, canvas.contentSize.height + inset.bottom - size.height)
+        let farthestX = max(-inset.left, canvas.contentSize.width + inset.right - size.width)
+
+        var x = canvas.contentOffset.x
+        let shownMinX = x / zoom
+        let shownMaxX = shownMinX + size.width / zoom
+        if rect.minX < shownMinX || rect.maxX > shownMaxX {
+            x = (rect.minX - padding) * zoom
+        }
+        let y = (rect.minY - padding) * zoom
+        let target = CGPoint(x: min(max(-inset.left, x), farthestX), y: min(max(-inset.top, y), lowestY))
+        canvas.setContentOffset(target, animated: animated)
+    }
+
     private func push() {
         canvas?.darkPaper = darkPaper
         canvas?.prefs = prefs
@@ -627,6 +659,8 @@ final class PencilBoard {
     func undo() {}
     func redo() {}
     func clear() {}
+    var visibleSheetRect: CGRect? { nil }
+    func reveal(sheetRect rect: CGRect, padding: CGFloat = 20, animated: Bool = true) {}
     private func push() {}
     #endif
 }
