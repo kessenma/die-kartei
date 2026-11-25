@@ -22,7 +22,8 @@ ANDROID_RES = ROOT / "DieKarteiAndroid" / "Sources" / "DieKartei" / "Resources"
 LIST = PKG / "core_files.txt"
 # Bundled data the shared services load through `AppResources`.
 RESOURCES = ["a1_vocabulary", "a2_vocabulary", "b1_vocabulary", "flashcard_topics",
-             "grammar_exercises", "grammar_topics", "past_tense_verbs", "story_starters"]
+             "grammar_exercises", "grammar_topics", "past_tense_verbs", "story_starters",
+             "prepositions", "verb_prepositions"]
 TRIPLE = os.environ.get("CORE_TRIPLE", "aarch64-unknown-linux-android28")
 SDK = os.environ.get("CORE_SWIFT_SDK", "swift-6.4.3-RELEASE_android")
 IMPORT = re.compile(r"^[ \t]*(?:@\w+(?:\(.*?\))?[ \t]+)*import[ \t]+(?:(?:struct|class|enum|protocol|func|var|let|typealias)[ \t]+)?(\w+)", re.M)

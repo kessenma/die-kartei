@@ -74,13 +74,3 @@ Carthage/Build/
 **/fastlane/README.md
 **/fastlane/Preview.html
 **/fastlane/test_output
-
-# Copies of german-ai-flashcards/Resources data, made by scripts/core_sync.py
-Sources/DieKartei/Resources/a1_vocabulary.json
-Sources/DieKartei/Resources/a2_vocabulary.json
-Sources/DieKartei/Resources/b1_vocabulary.json
-Sources/DieKartei/Resources/flashcard_topics.json
-Sources/DieKartei/Resources/grammar_exercises.json
-Sources/DieKartei/Resources/grammar_topics.json
-Sources/DieKartei/Resources/past_tense_verbs.json
-Sources/DieKartei/Resources/story_starters.json

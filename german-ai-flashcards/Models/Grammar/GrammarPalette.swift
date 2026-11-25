@@ -103,3 +103,33 @@ nonisolated extension KasusUnit {
     /// The case color, or neutral for Alle Fälle: graphite already means Nominativ.
     var color: Color { focusCase?.color ?? .secondary }
 }
+
+nonisolated extension PrepositionCase {
+    /// This group's fixed identity color, used on the drill buttons, the card's case tab and the
+    /// rules sheet so the color itself becomes a memory hook. From `CasePalette`, so a
+    /// preposition's case reads the same as that case everywhere else in the app.
+    var color: Color {
+        switch self {
+        case .akkusativ: GrammarCase.akkusativ.color
+        case .dativ:     GrammarCase.dativ.color
+        case .wechsel:   CasePalette.wechsel
+        case .genitiv:   GrammarCase.genitiv.color
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .akkusativ: GrammarCase.akkusativ.symbol
+        case .dativ:     GrammarCase.dativ.symbol
+        case .wechsel:   CasePalette.wechselSymbol
+        case .genitiv:   GrammarCase.genitiv.symbol
+        }
+    }
+}
+
+nonisolated extension GermanArticle {
+    /// The fixed identity color. Delegates to `GenderPalette` — previously this was plain
+    /// `.blue`/`.red`/`.green`, which read *close* to the flashcard colors without matching them,
+    /// so the same noun could be two different blues in two screens.
+    var color: Color { gender.color }
+}

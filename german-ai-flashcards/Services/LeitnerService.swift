@@ -13,7 +13,7 @@ import SwiftUI
 /// - **Wrong** → card drops back to Box 1.
 enum LeitnerService {
 
-    static let maxBox = 5
+    static let maxBox = SRSScheduling.leitnerMaxBox
 
     /// Promote a card after a correct answer.
     ///
@@ -21,20 +21,12 @@ enum LeitnerService {
     /// bumps `repetitions` (the bar `PyramidService.provenRepetitions` reads), and the box's own
     /// spacing stands in for an interval, so a word drilled only in Leitner can reach "bekannt".
     static func markCorrect(_ card: SavedCard) {
-        card.leitnerBox = min(card.leitnerBox + 1, maxBox)
-        card.totalReviews += 1
-        card.noteReview(correct: true)
-        card.repetitions += 1
-        card.interval = max(card.interval, 1 << (card.leitnerBox - 1))
+        SRSScheduling.leitnerCorrect(card)
     }
 
     /// Demote a card after a wrong answer (back to Box 1). The correct-run resets with it.
     static func markWrong(_ card: SavedCard) {
-        card.leitnerBox = 1
-        card.totalReviews += 1
-        card.noteReview(correct: false)
-        card.lapses += 1
-        card.repetitions = 0
+        SRSScheduling.leitnerWrong(card)
     }
 
     /// Returns cards that should be reviewed this session.

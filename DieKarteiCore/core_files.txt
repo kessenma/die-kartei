@@ -3,6 +3,8 @@ Models/CardImageTiming.swift
 Models/CloudImageModel.swift
 Models/ConversationConfig.swift
 Models/FlashcardStyle.swift
+Models/Grammar/Article/ArticleGame.swift
+Models/Grammar/Article/ArticleRules.swift
 Models/Grammar/GrammarDrillFamily.swift
 Models/Grammar/GrammarExercise.swift
 Models/Grammar/GrammarExplanation.swift
@@ -15,7 +17,9 @@ Models/Grammar/Kasus/KasusHelp.swift
 Models/Grammar/Kasus/KasusLesson.swift
 Models/Grammar/Kasus/KasusUnit.swift
 Models/Grammar/Kasus/ReflexivLesson.swift
+Models/Grammar/Prepositions/Preposition.swift
 Models/Grammar/Prepositions/PrepositionPictureMode.swift
+Models/Grammar/Prepositions/VerbPreposition.swift
 Models/HapticFeedbackMode.swift
 Models/Hoeren/HoerenNumberKind.swift
 Models/JobPostingCapture.swift
@@ -41,6 +45,7 @@ Services/FlashcardTopicService.swift
 Services/GermanGenderInference.swift
 Services/Grammar/GrammarExerciseService.swift
 Services/Grammar/GrammarTopicService.swift
+Services/Grammar/Prepositions/PrepositionService+Content.swift
 Services/Hoeren/DiktatScorer.swift
 Services/Hoeren/GermanNumberSpeller.swift
 Services/Hoeren/GistPrompts.swift
@@ -51,6 +56,7 @@ Services/JobReadingScripts.swift
 Services/PastTenseVerbService.swift
 Services/PhraseGapPlanner.swift
 Services/Resume/ResumePrompts.swift
+Services/SRSScheduling.swift
 Services/SchreibblattParts.swift
 Services/SchreibblattStats.swift
 Services/Schreiben/WritingDiff.swift
