@@ -1,0 +1,1 @@
+../../../../german-ai-flashcards/Services/A1VocabService.swift
