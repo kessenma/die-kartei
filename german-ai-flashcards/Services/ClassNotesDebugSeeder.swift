@@ -15,9 +15,8 @@ import UIKit
 /// goal), so both course shapes are on screen at once.
 ///
 /// `-classNotes.debugSeed 1` creates them, `-classNotes.debugOpen <screen>` creates them (if needed)
-/// and opens a screen (`hub` or `1`, `course`, `entry`, `editor`, `handout`, `worksheet-setup`,
-/// `worksheet`, `worksheet-pencil`; see `ClassNotesDebugScreen`), `-classNotes.debugRemove 1`
-/// removes them and their files. The worksheet screens use `WorksheetSamplePDF`, reset each time.
+/// and opens a screen (every value is in `screen(named:)` and the table in docs/CLASS_NOTES.md;
+/// `intro` alone opens over unseeded data), `-classNotes.debugRemove 1` removes them and their files. The worksheet screens use `WorksheetSamplePDF`, reset each time.
 enum ClassNotesDebugSeeder {
     static let uniMarker = "[debug] Deutsch A2 an der Uni"
     static let tutorMarker = "[debug] HR-Deutsch mit Anna"
@@ -189,12 +188,19 @@ enum ClassNotesDebugSeeder {
     /// The screen a `-classNotes.debugOpen` value names, over the seeded data (seeding first).
     @MainActor
     static func screen(named raw: String, in context: ModelContext) -> ClassNotesDebugScreen? {
+        // The onboarding intro over whatever is on the device, unseeded: with no course it is the
+        // first run, with one (add `-classNotes.debugSeed 1`) the restart.
+        if raw.lowercased() == "intro" { return .intro }
         _ = seed(in: context)
         let courses = existing(in: context)
         let uni = courses.first { $0.name == uniMarker }
         let tutor = courses.first { $0.name == tutorMarker }
         switch raw.lowercased() {
         case "1", "hub", "true":
+            return .hub
+        case "guide":
+            // The hub with the "Erste Schritte" checklist on it, half done by the seeded courses.
+            ClassNotesGuide.showChecklist(kind: .course, materials: [.handouts, .vocab, .homework])
             return .hub
         case "course":
             return uni.map { .course($0) }
@@ -540,6 +546,7 @@ enum ClassNotesDebugSeeder {
 /// What `-classNotes.debugOpen <screen>` presents, in a sheet with a Close button.
 enum ClassNotesDebugScreen: Identifiable {
     case hub
+    case intro
     case course(ClassCourse)
     case entry(ClassEntry)
     case editor(ClassEntry)
@@ -557,6 +564,7 @@ enum ClassNotesDebugScreen: Identifiable {
     var id: String {
         switch self {
         case .hub: "hub"
+        case .intro: "intro"
         case .course(let course): "course-\(course.id)"
         case .entry(let entry): "entry-\(entry.id)"
         case .editor(let entry): "editor-\(entry.id)"
@@ -581,6 +589,8 @@ struct ClassNotesDebugScreenView: View {
         switch screen {
         case .hub:
             ClassNotesHubView(modelManager: modelManager, mlxService: mlxService)
+        case .intro:
+            ClassNotesHubView(modelManager: modelManager, mlxService: mlxService, presentsIntro: true)
         case .course(let course):
             ClassCourseDetailView(course: course, modelManager: modelManager, mlxService: mlxService)
         case .entry(let entry):

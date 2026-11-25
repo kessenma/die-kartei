@@ -14,6 +14,9 @@ import SwiftData
 struct ClassNotesHubView: View {
     @Bindable var modelManager: MLXModelManager
     var mlxService: MLXGenerationService
+    /// Open the intro as soon as the hub appears, whatever the seen flag says (the debug screen,
+    /// or any future "Try it" link).
+    var presentsIntro = false
 
     @Query(sort: \ClassCourse.sortOrder) private var allCourses: [ClassCourse]
     @Query(sort: \ClassEntry.date, order: .reverse) private var allEntries: [ClassEntry]
@@ -22,6 +25,7 @@ struct ClassNotesHubView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appTheme) private var appTheme
     @Environment(ActivityRouter.self) private var router
+    @Environment(\.dismiss) private var dismiss
 
     @State private var showCourseEditor = false
     /// "Add a handout" with no course yet: the course editor first, then the import.
@@ -38,6 +42,23 @@ struct ClassNotesHubView: View {
     @State private var openedWorksheet: ClassMaterial?
     /// The course the learner logged for last; the editor and the handout door start from it.
     @AppStorage("classNotes.lastCourseID") private var lastCourseID = ""
+
+    // Onboarding (docs/CLASS_NOTES.md ▸ Onboarding): the intro and the "Erste Schritte" checklist.
+    @AppStorage(ClassNotesGuide.Keys.introSeen) private var introSeen = false
+    @AppStorage(ClassNotesGuide.Keys.kind) private var guideKindRaw = ""
+    @AppStorage(ClassNotesGuide.Keys.materials) private var guideMaterialsRaw = ""
+    @AppStorage(ClassNotesGuide.Keys.shownAt) private var guideShownAt: Double = 0
+    @AppStorage(ClassNotesGuide.Keys.hiddenAt) private var guideHiddenAt: Double = 0
+    @State private var showIntro = false
+    @State private var introOffered = false
+    /// What the intro asked for on its way out, run once its sheet is gone.
+    @State private var introFollowUp: ClassNotesIntroView.FollowUp = .none
+    /// The checklist's done-state, fetched outside `body` (see `refreshGuide`).
+    @State private var guideSnapshot: ClassNotesGuide.Snapshot = .empty
+    /// A handout opened from the checklist's "Save a word", with the double-tap hint.
+    @State private var hintedMaterial: ClassMaterial?
+    /// The course a vocab list is being turned into a deck for (the checklist's "vocab list").
+    @State private var documentDeckCourse: ClassCourse?
 
     private var courses: [ClassCourse] { allCourses.filter { !$0.isArchived } }
     private var archivedCourses: [ClassCourse] { allCourses.filter(\.isArchived) }
@@ -56,8 +77,27 @@ struct ClassNotesHubView: View {
     }
     private var deckStore: DeckStore { DeckStore(modelContext: modelContext) }
 
+    private var guideVisible: Bool {
+        ClassNotesGuide.isChecklistVisible(shownAt: guideShownAt, hiddenAt: guideHiddenAt)
+    }
+    private var guideKind: ClassCourse.Kind {
+        ClassCourse.Kind(rawValue: guideKindRaw) ?? preferredCourse?.kind ?? .course
+    }
+    private var guideItems: [ClassNotesGuide.Item] {
+        ClassNotesGuide.items(kind: guideKind, materials: ClassNotesGuide.Material.parse(guideMaterialsRaw))
+    }
+
     var body: some View {
         List {
+            if guideVisible {
+                ClassNotesGuideSection(
+                    items: guideItems,
+                    snapshot: guideSnapshot,
+                    kind: guideKind,
+                    onShowMe: showMe,
+                    onHide: { withAnimation { ClassNotesGuide.hideChecklist() } }
+                )
+            }
             coursesSection
             if !courses.isEmpty {
                 practiceSection
@@ -80,8 +120,17 @@ struct ClassNotesHubView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                Button {
-                    showHelp = true
+                Menu {
+                    Button {
+                        showHelp = true
+                    } label: {
+                        Label("How it works", systemImage: "book")
+                    }
+                    Button {
+                        showIntro = true
+                    } label: {
+                        Label("Take the tour", systemImage: "sparkles")
+                    }
                 } label: {
                     Image(systemName: "questionmark.circle")
                 }
@@ -99,6 +148,10 @@ struct ClassNotesHubView: View {
         }
         .navigationDestination(item: $openedWorksheet) { material in
             WorksheetView(material: material, modelManager: modelManager, mlxService: mlxService)
+        }
+        .navigationDestination(item: $hintedMaterial) { material in
+            ClassMaterialDetailView(material: material, modelManager: modelManager, mlxService: mlxService,
+                                    showsSaveWordHint: true)
         }
         .sheet(isPresented: $showEntryEditor) {
             ClassEntryEditorView(entry: nil, course: preferredCourse) { entry in
@@ -131,12 +184,136 @@ struct ClassNotesHubView: View {
         .sheet(isPresented: $showHelp) {
             ClassNotesHelpSheet()
         }
+        .sheet(isPresented: $showIntro, onDismiss: runIntroFollowUp) {
+            ClassNotesIntroView(
+                hasCourses: !allCourses.isEmpty,
+                existingKind: preferredCourse?.kind ?? .course,
+                defaultLevel: modelManager.germanLevel,
+                canGoBackHome: canGoBackHome,
+                onFinish: { course, followUp in
+                    if let course { lastCourseID = course.id.uuidString }
+                    introFollowUp = followUp
+                }
+            )
+        }
+        .sheet(item: $documentDeckCourse) { course in
+            DocumentDeckImportView(modelManager: modelManager, mlxService: mlxService, course: course) { _ in }
+        }
+        .task { await offerIntroIfNeeded() }
+        .onAppear(perform: refreshGuide)
+        // A sheet closing or a study session ending doesn't re-run onAppear; what they change does.
+        .onChange(of: allCourses.count) { refreshGuide() }
+        .onChange(of: allEntries.count) { refreshGuide() }
+        .onChange(of: decks.count) { refreshGuide() }
+        .onChange(of: showEntryEditor) { refreshGuide() }
+        .onChange(of: importTarget == nil) { refreshGuide() }
+        .onChange(of: documentDeckCourse == nil) { refreshGuide() }
+        .onChange(of: router.active == nil) { refreshGuide() }
+        .onChange(of: guideShownAt) { refreshGuide() }
         .confirmationDialog("Which course is the handout from?", isPresented: $showHandoutCoursePicker, titleVisibility: .visible) {
             ForEach(courses) { course in
                 Button(course.name) { startHandout(in: course) }
             }
             Button("Cancel", role: .cancel) {}
         }
+    }
+
+    // MARK: - Onboarding
+
+    /// The Mac shows Deutschkurs as a sidebar place, with no Home screen under it to go back to.
+    private var canGoBackHome: Bool {
+        #if os(macOS)
+        false
+        #else
+        true
+        #endif
+    }
+
+    /// The intro opens by itself once, for someone with no course at all (a finished one counts:
+    /// that learner knows the room). The flag is written before it shows, so a crash or a Close
+    /// never turns it into a nag.
+    private func offerIntroIfNeeded() async {
+        if presentsIntro {
+            guard !introOffered else { return }
+            introOffered = true
+            showIntro = true
+            return
+        }
+        guard ClassNotesGuide.shouldAutoShowIntro(seen: introSeen, courseCount: allCourses.count) else { return }
+        // A new device with iCloud Sync on: courses made elsewhere may still be on their way.
+        if SyncManager.shared.isRunning {
+            await SyncManager.shared.waitForFirstFetch(timeout: .seconds(10))
+        }
+        guard ClassNotesGuide.shouldAutoShowIntro(seen: introSeen, courseCount: allCourses.count) else { return }
+        introSeen = true
+        // A sheet presented while the push into this screen is still settling can be dropped.
+        try? await Task.sleep(for: .milliseconds(500))
+        guard !Task.isCancelled, allCourses.isEmpty else { return }
+        showIntro = true
+    }
+
+    /// Runs from the intro sheet's `onDismiss`, so the next sheet or the pop never races it.
+    private func runIntroFollowUp() {
+        let followUp = introFollowUp
+        introFollowUp = .none
+        refreshGuide()
+        switch followUp {
+        case .none: break
+        case .logClass: showEntryEditor = true
+        case .addHandout: startHandout()
+        case .backHome: dismiss()
+        }
+    }
+
+    /// Re-reads the checklist's done-state. Fetches, not `body` reads: a filtered query read in
+    /// `body` loops once a screen is pushed over the hub.
+    private func refreshGuide() {
+        guard guideVisible else { return }
+        let fresh = ClassNotesGuide.Snapshot.make(context: modelContext)
+        if fresh != guideSnapshot { guideSnapshot = fresh }
+    }
+
+    /// Where each open checklist step is done.
+    private func showMe(_ item: ClassNotesGuide.Item) {
+        switch item {
+        case .course:
+            showCourseEditor = true
+        case .logClass:
+            showEntryEditor = true
+        case .handout, .homework:
+            startHandout()
+        case .saveWord:
+            if let material = newestHandout() {
+                hintedMaterial = material
+            } else {
+                showEntryEditor = true
+            }
+        case .vocabList:
+            if let course = preferredCourse {
+                documentDeckCourse = course
+            } else {
+                showCourseEditor = true
+            }
+        case .studyDeck:
+            if let deck = studyDeck() {
+                router.launch(.cardDeck(deckStore.session(for: deck, style: modelManager.flashcardStyle)))
+            }
+        }
+    }
+
+    /// The handout added last, on any course.
+    private func newestHandout() -> ClassMaterial? {
+        var descriptor = FetchDescriptor<ClassMaterial>(sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    /// The preferred course's own deck if it has cards, else any course deck that does.
+    private func studyDeck() -> SavedDeck? {
+        if let course = preferredCourse, let own = ClassDeckStore.deck(for: course, context: modelContext), !own.cards.isEmpty {
+            return own
+        }
+        return classDecks.first
     }
 
     // MARK: - Courses

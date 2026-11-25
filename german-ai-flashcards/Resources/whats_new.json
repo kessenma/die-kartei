@@ -1,46 +1,6 @@
 {
   "releases": [
     {
-      "version": "unreleased",
-      "highlights": [
-        {
-          "title": "Leicht · Easy practice",
-          "detail": "After a hard session, Today offers a quick round of cards you already know, and stories can be written in Leicht lesen: a level below yours, longer, with few new words.",
-          "symbol": "leaf"
-        },
-        {
-          "title": "Deutschkurs · Your class, everywhere",
-          "detail": "Conversations work in what your class covered, Today offers your class words and grammar, and a sent worksheet comes back a day and a week later, answers hidden.",
-          "symbol": "graduationcap"
-        },
-        {
-          "title": "Rund um die Stunde · Around each class",
-          "detail": "Prepare the day before, recall three things after, save questions for your teacher, keep her corrections as cards, rehearse with the tutor, and send her a progress report.",
-          "symbol": "calendar.badge.clock"
-        },
-        {
-          "title": "Erste Schritte · Getting started",
-          "detail": "Deutschkurs starts with a short setup for your class, your tutor or learning on your own, then a checklist that ticks itself off as you go. Restart it from the ? button.",
-          "symbol": "checklist"
-        },
-        {
-          "title": "Förderplan & Monatsbericht · Plans and a monthly note",
-          "detail": "Give a shaky grammar point ten days of short daily tasks, read a monthly note on what improved, and take a quick listening check every four weeks.",
-          "symbol": "calendar.badge.checkmark"
-        },
-        {
-          "title": "Stammtisch · Keep up with a real chat",
-          "detail": "A free conversation where the topic jumps every few turns, an optional timer has the tutor move on, background noise is optional, and Ach so! or Genau. is one tap.",
-          "symbol": "person.3.fill"
-        },
-        {
-          "title": "Lebenslauf · Your résumé in interviews",
-          "detail": "Import your CV, edit a short German profile, and the recruiter asks about your own career, with or without a job posting. It stays on this device.",
-          "symbol": "person.text.rectangle"
-        }
-      ]
-    },
-    {
       "version": "1.7",
       "date": "2026-11-08",
       "highlights": [
@@ -93,6 +53,41 @@
           "title": "Worum geht's? · The gist of a story",
           "detail": "In a story's Hören mode, guess the words first, listen with the text hidden, sum it up in English, then tick it against the story's key points.",
           "symbol": "text.bubble"
+        },
+        {
+          "title": "Leicht · Easy practice",
+          "detail": "After a hard session, Today offers a quick round of cards you already know, and stories can be written in Leicht lesen: a level below yours, longer, with few new words.",
+          "symbol": "leaf"
+        },
+        {
+          "title": "Deutschkurs · Your class, everywhere",
+          "detail": "Conversations work in what your class covered, Today offers your class words and grammar, and a sent worksheet comes back a day and a week later, answers hidden.",
+          "symbol": "graduationcap"
+        },
+        {
+          "title": "Rund um die Stunde · Around each class",
+          "detail": "Prepare the day before, recall three things after, save questions for your teacher, keep her corrections as cards, rehearse with the tutor, and send her a progress report.",
+          "symbol": "calendar.badge.clock"
+        },
+        {
+          "title": "Erste Schritte · Getting started",
+          "detail": "Deutschkurs starts with a short setup for your class, your tutor or learning on your own, then a checklist that ticks itself off as you go. Restart it from the ? button.",
+          "symbol": "checklist"
+        },
+        {
+          "title": "Förderplan & Monatsbericht · Plans and a monthly note",
+          "detail": "Give a shaky grammar point ten days of short daily tasks, read a monthly note on what improved, and take a quick listening check every four weeks.",
+          "symbol": "calendar.badge.checkmark"
+        },
+        {
+          "title": "Stammtisch · Keep up with a real chat",
+          "detail": "A free conversation where the topic jumps every few turns, an optional timer has the tutor move on, background noise is optional, and Ach so! or Genau. is one tap.",
+          "symbol": "person.3.fill"
+        },
+        {
+          "title": "Lebenslauf · Your résumé in interviews",
+          "detail": "Import your CV, edit a short German profile, and the recruiter asks about your own career, with or without a job posting. It stays on this device.",
+          "symbol": "person.text.rectangle"
         }
       ]
     },

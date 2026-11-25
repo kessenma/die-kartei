@@ -76,13 +76,20 @@ struct ProgressSyncDocument: SyncDocumentKind {
             "chatBestUnaidedStreak": .max,
             "maxLevelSeen": .max,
             "fired": .union,
+            // Deutschkurs onboarding (docs/CLASS_NOTES.md ▸ Onboarding).
+            "classNotesIntro": .or,
+            "classNotesGuideHiddenAt": .max,
         ],
         // The level and whether the learner declared it are one choice.
         // The level and whether the learner declared it are one choice, ordered by when it was
         // made. A level nobody chose (the default a fresh install writes) travels as absent, so it
         // can never replace a real one.
         groups: [SyncFieldGroup(fields: ["germanLevel", "germanLevelDeclared", "germanLevelSetAt"],
-                                orderBy: ["germanLevelSetAt"])]
+                                orderBy: ["germanLevelSetAt"]),
+                 // The checklist's items are one choice, made when it was last put on the hub. A
+                 // restart writes a newer `shownAt`, so it wins over an older hide on any device.
+                 SyncFieldGroup(fields: ["classNotesGuideKind", "classNotesGuideMaterials", "classNotesGuideShownAt"],
+                                orderBy: ["classNotesGuideShownAt"])]
     )
 
     private var defaults: UserDefaults { .standard }
@@ -110,6 +117,15 @@ struct ProgressSyncDocument: SyncDocumentKind {
         f.set("chatBestUnaidedStreak", defaults.integer(forKey: "chatBestUnaidedStreak"))
         f.set("maxLevelSeen", defaults.object(forKey: "celebration.maxLevelSeen") as? Int)
         f.set("fired", firedCelebrations())
+        f.set("classNotesIntro", defaults.bool(forKey: ClassNotesGuide.Keys.introSeen))
+        // A checklist never put on the hub travels as absent, so it can't replace one that was.
+        let guideShownAt = defaults.double(forKey: ClassNotesGuide.Keys.shownAt)
+        let guideShown = guideShownAt > 0
+        f.set("classNotesGuideKind", guideShown ? defaults.string(forKey: ClassNotesGuide.Keys.kind) : nil)
+        f.set("classNotesGuideMaterials", guideShown ? defaults.string(forKey: ClassNotesGuide.Keys.materials) : nil)
+        f.set("classNotesGuideShownAt", guideShown ? Date(timeIntervalSinceReferenceDate: guideShownAt) : nil)
+        let guideHiddenAt = defaults.double(forKey: ClassNotesGuide.Keys.hiddenAt)
+        f.set("classNotesGuideHiddenAt", guideHiddenAt > 0 ? Date(timeIntervalSinceReferenceDate: guideHiddenAt) : nil)
         return [(Self.name, f.payload)]
     }
 
@@ -148,6 +164,15 @@ struct ProgressSyncDocument: SyncDocumentKind {
         // Celebrations already shown on another device are marked shown here, so they don't fire twice.
         for key in flat.strings("fired") ?? [] where key != "maxLevelSeen" {
             defaults.set(true, forKey: Self.celebrationPrefix + key)
+        }
+        if flat.bool("classNotesIntro") == true { defaults.set(true, forKey: ClassNotesGuide.Keys.introSeen) }
+        if let shownAt = flat.date("classNotesGuideShownAt") {
+            defaults.set(flat.string("classNotesGuideKind") ?? "", forKey: ClassNotesGuide.Keys.kind)
+            defaults.set(flat.string("classNotesGuideMaterials") ?? "", forKey: ClassNotesGuide.Keys.materials)
+            defaults.set(shownAt.timeIntervalSinceReferenceDate, forKey: ClassNotesGuide.Keys.shownAt)
+        }
+        if let hiddenAt = flat.date("classNotesGuideHiddenAt") {
+            defaults.set(hiddenAt.timeIntervalSinceReferenceDate, forKey: ClassNotesGuide.Keys.hiddenAt)
         }
     }
 

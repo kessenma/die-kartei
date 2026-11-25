@@ -16,6 +16,8 @@ struct ClassMaterialDetailView: View {
     @Bindable var material: ClassMaterial
     @Bindable var modelManager: MLXModelManager
     var mlxService: MLXGenerationService
+    /// Opened from the Deutschkurs checklist's "Save a word": a one-line banner says how.
+    var showsSaveWordHint = false
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appTheme) private var appTheme
@@ -40,6 +42,7 @@ struct ClassMaterialDetailView: View {
     @State private var previewURL: URL?
     /// Briefly the count after "Add all to deck", to confirm.
     @State private var addedCount: Int?
+    @State private var hintDismissed = false
 
     private var course: ClassCourse? { material.entry?.course }
 
@@ -81,6 +84,9 @@ struct ClassMaterialDetailView: View {
             }
             if !glossaryOptions.isEmpty {
                 vocabSection
+            }
+            if showsSaveWordHint, !hintDismissed {
+                saveWordHint
             }
             readSection
             lookupSection
@@ -290,6 +296,33 @@ struct ClassMaterialDetailView: View {
             } else {
                 Text("Pick the vocab list that goes with this text to mark its words in the handout.")
             }
+        }
+        .themedListRow()
+    }
+
+    /// Right above the text, where the gesture happens. Inline rather than a popover: it sits the
+    /// same on a phone, an iPad and the Mac.
+    private var saveWordHint: some View {
+        Section {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "hand.tap.fill")
+                    .font(.title3)
+                    .foregroundStyle(ClassNotesTile.tint)
+                Text("Double-tap a word you don't know, then tap Save. It becomes a flashcard in \(course?.name ?? "the course")'s deck.")
+                    .font(.subheadline)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 4)
+                Button {
+                    withAnimation { hintDismissed = true }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Color.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Hide the tip")
+            }
+            .padding(.vertical, 2)
         }
         .themedListRow()
     }

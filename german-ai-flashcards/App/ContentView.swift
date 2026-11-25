@@ -709,6 +709,12 @@ struct ContentView: View {
             if UserDefaults.standard.bool(forKey: "classNotes.debugRemove") {
                 print("[classNotes] removed: \(ClassNotesDebugSeeder.remove(in: modelContext))")
             }
+            // `-classNotes.debugIntro 1`: forget the Deutschkurs intro and checklist, as on a fresh
+            // install, so the intro opens by itself on the next visit with no course.
+            if UserDefaults.standard.bool(forKey: "classNotes.debugIntro") {
+                for key in ClassNotesGuide.Keys.all { UserDefaults.standard.removeObject(forKey: key) }
+                print("[classNotes] intro and checklist reset")
+            }
             if UserDefaults.standard.bool(forKey: "classNotes.debugSeed") {
                 print("[classNotes] " + ClassNotesDebugSeeder.seed(in: modelContext))
             }

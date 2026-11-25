@@ -17,7 +17,8 @@ German for identity words and headings, plain English for explanation.
   Nano Banana): sign-in, the picture-source seam, error policy, invariants, a deck run in the
   background (the app-wide picture pill), the probe, debug args.
 - `docs/JOB_PREP.md` — job-posting capture and interview prep.
-- `docs/CLASS_NOTES.md` — Deutschkurs: courses, class entries, handouts, homework, the per-course deck.
+- `docs/CLASS_NOTES.md` — Deutschkurs: courses, class entries, handouts, homework, the per-course deck,
+  the onboarding (setup intro + the self-ticking "Erste Schritte" checklist).
 - `docs/WORKSHEETS.md` — Übungen: a lesson PDF's exercises as homework. The parser (and what iOS
   PDFKit does differently), answering in the app or on the slide with the Pencil, the export of her
   slides filled in, the optional check (key → article rules → tutor; handwriting confirmed first),
