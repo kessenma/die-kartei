@@ -7,6 +7,7 @@
 //   (scripts/core_sync.py keeps the list). Plain Swift, no Skip plugin: SwiftPM plugins are
 //   sandboxed to this folder and couldn't read the linked files anyway. Settings mirror the iOS
 //   target (Swift 5 mode, MainActor by default) so the shared files mean the same thing.
+// - GermanVoice: a few lines of transpiled Swift around Android's TextToSpeech (Skip Lite).
 // - DieKartei: the Android UI in SwiftUI (Skip Fuse). It reaches the core's internal types
 //   through `@testable import`, which is why the core builds with -enable-testing: the iOS
 //   app's code is internal, and making it public just for Android isn't worth the churn.
@@ -23,6 +24,8 @@ let package = Package(
         .package(url: "https://github.com/skiptools/skip.git", from: "1.9.21"),
         .package(url: "https://github.com/skiptools/skip-fuse-ui.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-crypto.git", "3.0.0"..<"5.0.0"),
+        .package(url: "https://github.com/skiptools/skip-foundation.git", from: "1.0.0"),
+        .package(url: "https://github.com/skiptools/skip-bridge.git", "0.17.3"..<"2.0.0"),
     ],
     targets: [
         .target(
@@ -41,10 +44,21 @@ let package = Package(
                 .unsafeFlags(["-enable-testing"]),
             ]
         ),
+        // Transpiled to Kotlin (Skip Lite) so it can use Android's TextToSpeech; see its skip.yml.
+        .target(
+            name: "GermanVoice",
+            dependencies: [
+                .product(name: "SkipFoundation", package: "skip-foundation"),
+                .product(name: "SkipBridge", package: "skip-bridge"),
+            ],
+            swiftSettings: [.swiftLanguageMode(.v5)],  // a shared voice; TextToSpeech is main-thread only anyway
+            plugins: [.plugin(name: "skipstone", package: "skip")]
+        ),
         .target(
             name: "DieKartei",
             dependencies: [
                 "DieKarteiCore",
+                "GermanVoice",
                 .product(name: "SkipFuseUI", package: "skip-fuse-ui"),
             ],
             resources: [.process("Resources")],

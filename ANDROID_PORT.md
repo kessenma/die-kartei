@@ -44,8 +44,12 @@ PDFKit, FoundationModels. On Android these need replacements behind protocols, o
 | iOS app still builds with the splits below | ✅ |
 | DieKarteiCore tests (`swift test --package-path DieKarteiCore`) | ✅ 4 |
 | Skip Fuse app on the emulator: Wortschatz, Karteikarten, Die vier Fälle | ✅ |
-| Spaced repetition on Android | ⬜ needs the SRS split below |
-| Persistence on Android | ⬜ |
+| Spaced repetition on Android (shared SM-2, progress saved on device) | ✅ |
+| Grammatik: Kasus lessons, der/die/das, Präpositionen, Lückensätze, Perfekt | ✅ |
+| Hören: Zahlen-Diktat with Android's German TextToSpeech | ✅ |
+| Spiele: Galgenmännchen, Wortsuche | ✅ |
+| Kasus drills and stories, Matching, Reflexiv drills | ⬜ next (see "Next splits") |
+| Anything needing the tutor model (Gespräch, Stammtisch, Lebenslauf, stories) | ⬜ needs an Android LLM |
 
 ### App-side changes made for the core (no behaviour change on iOS)
 
@@ -67,10 +71,17 @@ Observation, or CryptoKit behind `canImport`) and has no `@Model`, cross-compile
 and drops whatever fails until the package builds. It prints the most-missed types: each one is
 a type that lives next to SwiftUI/SwiftData code and is worth splitting into its own file.
 
-**Spaced repetition first:** `LeitnerService` and `SpacedRepetitionService` take the SwiftData
-`SavedCard` directly. A small protocol for the card's SRS fields (the June branch had one,
-`SRSCardState`) that `SavedCard` adopts would let both algorithms move into the core unchanged,
-and the Android app could keep its cards in SQLite or JSON behind the same protocol.
+Done so far: the SM-2/Leitner math lives in `Services/SRSScheduling.swift` behind
+`SRSCardState` (SavedCard adopts it); `GermanArticle` and `PrepositionCase` keep their colours
+in GrammarPalette. `DieKarteiCore/Sources/DieKarteiCore/AndroidShims/` holds real files (not
+links) that declare namespaces whose iOS declaration sits in a SwiftData file, e.g.
+`enum PrepositionService {}`, so their portable extensions compile.
+
+**Kasus next:** `KasusService.swift` (1,600 lines, SwiftData) declares the value types the
+whole Kasus engine uses (KasusHintLevel, KasusPickOutcome, KasusTipp, KasusRoundResult,
+KasusPrefill, …, lines ~36–470). Moving those into their own Foundation-only file unlocks most
+of `Services/Grammar/Kasus` and the drills; `KasusRound.CaseTally` (SwiftData) is the one
+dependency to cut.
 
 Next splits, by how much each one unlocks (the Kasus cluster is one dependency cycle, so one
 leaf blocks the whole group):
@@ -101,6 +112,13 @@ swift build --package-path DieKarteiCore \
 emulator -avd Medium_Phone_API_37.0 &   # or Android Studio › Device Manager
 cd DieKarteiAndroid && skip android build   # see DieKarteiAndroid/README.md
 ```
+
+## Keeping main and this branch close
+
+The app-side changes on this branch are moves with no behaviour change on iOS (types into
+Foundation-only files, colours into GrammarPalette, JSON through AppResources). The longer they
+sit only here, the more Kyle's work on main will conflict with them; merging the
+`german-ai-flashcards/` part of this branch into main early keeps later merges small.
 
 ## Gotchas
 

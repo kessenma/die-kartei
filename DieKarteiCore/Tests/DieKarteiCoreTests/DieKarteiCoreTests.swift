@@ -33,8 +33,57 @@ struct DieKarteiCoreTests {
         #expect(MLXModel.appleIntelligence.huggingFaceRepoURL == nil)
     }
 
+    /// The SM-2 steps the iOS app has always used: 1 → 6 → interval × ease, lapses reset.
+    @Test func sm2SchedulesLikeTheApp() {
+        let card = TestCard()
+        SRSScheduling.apply(rating: .good, to: card)
+        #expect(card.interval == 1 && card.repetitions == 1)
+        SRSScheduling.apply(rating: .good, to: card)
+        #expect(card.interval == 6)
+        SRSScheduling.apply(rating: .good, to: card)
+        #expect(card.interval == 15)  // ceil(6 × 2.5)
+        SRSScheduling.apply(rating: .again, to: card)
+        #expect(card.interval == 1 && card.repetitions == 0 && card.lapses == 1)
+        #expect(abs(card.easeFactor - 2.3) < 0.0001)
+        #expect(card.totalReviews == 4 && card.lastCorrect == false)
+        #expect(SRSScheduling.previewIntervals(for: TestCard()).map(\.label) == ["1d", "1d", "1d", "4d"])
+    }
+
+    @Test func leitnerMovesBoxes() {
+        let card = TestCard()
+        SRSScheduling.leitnerCorrect(card)
+        SRSScheduling.leitnerCorrect(card)
+        #expect(card.leitnerBox == 2 && card.interval == 2)
+        SRSScheduling.leitnerWrong(card)
+        #expect(card.leitnerBox == 1 && card.repetitions == 0)
+    }
+
+    @Test func grammarContentLoads() {
+        #expect(PrepositionService.all().count > 20)
+        #expect(PrepositionService.preposition("mit")?.governs == .dativ)
+        #expect(ArticleRules.hint(for: "Zeitung", article: .die) != nil)
+        #expect(GrammarExerciseService.loadCategories().count == 4)
+        #expect(!PastTenseVerbService.entries(for: .a1).isEmpty)
+    }
+
     @Test func syncNamesAreStable() {
         #expect(SyncNameUUID.make("WordArt", "Hund") == SyncNameUUID.make("WordArt", "Hund"))
         #expect(SyncNameUUID.make("WordArt", "Hund") != SyncNameUUID.make("WordArt", "Katze"))
     }
+}
+
+/// A bare card for the scheduler, like the Android app's.
+@MainActor
+final class TestCard: SRSCardState {
+    let sortOrder = 0
+    var easeFactor = 2.5
+    var interval = 0
+    var repetitions = 0
+    var nextReviewDate: Date?
+    var totalReviews = 0
+    var lapses = 0
+    var leitnerBox = 0
+    var lastCorrect: Bool?
+
+    func noteReview(correct: Bool, at now: Date) { lastCorrect = correct }
 }

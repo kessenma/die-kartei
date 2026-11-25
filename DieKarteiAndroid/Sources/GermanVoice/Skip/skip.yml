@@ -1,0 +1,5 @@
+# Transpiled to Kotlin so it can call Android's TextToSpeech directly; bridged so the native
+# DieKartei module can call it.
+skip:
+  mode: 'transpiled'
+  bridging: true

@@ -6,6 +6,7 @@ struct GrammatikView: View {
     var body: some View {
         List {
             Section("Artikel & Fälle") {
+                NavigationLink("Kasus-Lektionen") { KasusLessonsView() }
                 NavigationLink("der, die oder das?") { ArtikelView() }
                 NavigationLink("Präpositionen: welcher Fall?") { PraepositionenView() }
                 NavigationLink("Die vier Fälle") { FaelleView() }

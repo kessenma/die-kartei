@@ -1,4 +1,5 @@
 @testable import DieKarteiCore
+import GermanVoice
 import SwiftUI
 
 /// The Wortschatz deck with spaced repetition: what's due, then a few new words. Rated with the
@@ -93,6 +94,12 @@ struct KartenView: View {
         VStack(spacing: 12) {
             GenderedWord(word: entry.word, article: entry.article)
                 .font(.largeTitle)
+            Button {
+                GermanVoice.shared.speak([entry.article, entry.word].compactMap { $0 }.joined(separator: " "), slow: false)
+            } label: {
+                Image(systemName: "play.fill")
+            }
+            .buttonStyle(.bordered)
             if flipped {
                 Text(entry.translation ?? "–")
                     .font(.title2)

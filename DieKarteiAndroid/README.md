@@ -8,11 +8,19 @@ bigger picture.
 
 - **DieKarteiCore** (`Sources/DieKarteiCore` → `../DieKarteiCore/Sources/DieKarteiCore`): the
   iOS app's own portable files, symlinked, not copied. Plain Swift, no Skip plugin.
+- **GermanVoice**: transpiled Swift (Skip Lite) around Android's TextToSpeech, bridged to the
+  native module. The place to add other Android-only APIs.
 - **DieKartei**: the Android screens. It uses the core through `@testable import` so the iOS
   app's internal types stay internal.
 
-Today: Wortschatz (the Goethe A1–B1 lists), Karteikarten (a shuffled round of 20, no spaced
-repetition yet), and Die vier Fälle (the article table from `GrammarCase`).
+Today:
+- Karten: the Goethe deck with spaced repetition (shared SM-2, four rating buttons, progress
+  in SharedPreferences), with a speaker button.
+- Wortschatz: the A1–B1 lists, searchable.
+- Grammatik: Kasus lessons (with the case-colour markup), der/die/das with ArticleRules hints,
+  Präpositionen, the four Lückensatz sets, Perfekt haben/sein, Die vier Fälle.
+- Hören: Zahlen-Diktat for every number kind, spoken by Android's German voice.
+- Spiele: Galgenmännchen and Wortsuche on the iOS engines.
 
 ## Run it
 
@@ -26,9 +34,15 @@ skip app launch --android
 `Darwin/` is Skip's iOS shell; Skip drives the build through it. The real iOS app is still
 `german-ai-flashcards.xcodeproj`.
 
+## Testing on the emulator
+
+`adb exec-out screencap -p > shot.png` for a picture; `adb shell uiautomator dump` gives every
+visible text with its bounds, which is enough to tap through screens from a script.
+
 ## Things that bit
 
 - `@State` / `@Environment` properties can't be `private` (Skip can't bridge them).
+- `Text + Text` is unavailable; build an `AttributedString` (colours and bold/italic render).
 - Compose needs unique `ForEach` ids across a whole `List`, not just within a section.
 - Only some SF Symbols have Android equivalents (SkipUI `Image.swift` lists them); others
   show a warning triangle.
