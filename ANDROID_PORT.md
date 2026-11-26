@@ -53,7 +53,8 @@ PDFKit, FoundationModels. On Android these need replacements behind protocols, o
 | Spiele: Galgenmännchen, Wortsuche | ✅ |
 | iOS tab bar (Home, Grammar, Library, Settings) and a Settings tab | ✅ |
 | Kasus drills and stories, Matching, Reflexiv drills | ⬜ next (see "Next splits") |
-| Anything needing the tutor model (Gespräch, Stammtisch, Lebenslauf, stories) | ⬜ needs an Android LLM |
+| Tutor models as GGUF (llama.cpp): all four score the same as MLX 4-bit (`training/ANDROID_GGUF.md`) | ✅ |
+| Anything needing the tutor model (Gespräch, Stammtisch, Lebenslauf, stories) | ⬜ needs llama.cpp wired into the app |
 
 ### App-side changes made for the core (no behaviour change on iOS)
 
