@@ -33,6 +33,27 @@ struct DieKarteiCoreTests {
         #expect(MLXModel.appleIntelligence.huggingFaceRepoURL == nil)
     }
 
+    /// The tutor prompts and parsers the Android tutor shares with iOS.
+    @Test func correctionParsingAndTranscriptMatchTheApp() {
+        let fixed = ConversationPrompts.parseCorrection(
+            "FIX: Ich warte auf den Bus.\nWHY: 'warten' takes 'auf'.", original: "Ich warte für den Bus.")
+        #expect(fixed.correctedText == "Ich warte auf den Bus.")
+        #expect(fixed.note == "'warten' takes 'auf'.")
+        // An echo that only adds punctuation is not a correction.
+        #expect(ConversationPrompts.parseCorrection("FIX: Ich bin müde.", original: "ich bin müde").isClean)
+        #expect(ConversationPrompts.parseCorrection("OK", original: "Ich bin müde.").isClean)
+
+        let transcript = ConversationPrompts.transcript(lines: [
+            (sortOrder: 1, isUser: true, text: "Hallo!"),
+            (sortOrder: 0, isUser: false, text: "Wie geht's?"),
+        ])
+        #expect(transcript == "PARTNER: Wie geht's?\nSTUDENT: Hallo!")
+        #expect(ClassTutorContext.promptSection("Dativ").contains("\"\"\"\nDativ\n\"\"\""))
+
+        let config = ConversationConfig(model: .gemma4_E2B_german)
+        #expect(ConversationPrompts.correctionSystemPrompt(for: config).contains("FIX: <the full corrected sentence"))
+    }
+
     /// The SM-2 steps the iOS app has always used: 1 → 6 → interval × ease, lapses reset.
     @Test func sm2SchedulesLikeTheApp() {
         let card = TestCard()

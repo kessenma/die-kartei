@@ -598,12 +598,15 @@ enum ConversationPrompts {
         return s
     }
 
-    static func transcript(from messages: [ChatMessage]) -> String {
-        messages
+    /// The transcript the summary prompt reads, one `STUDENT:` / `PARTNER:` line per turn, in order.
+    /// Takes plain values so it builds where SwiftData doesn't (Android); the `[ChatMessage]`
+    /// overload is in ConversationPrompts+Transcript.swift.
+    static func transcript(lines: [(sortOrder: Int, isUser: Bool, text: String)]) -> String {
+        lines
             .sorted { $0.sortOrder < $1.sortOrder }
-            .map { msg in
-                let speaker = msg.isUser ? "STUDENT" : "PARTNER"
-                return "\(speaker): \(msg.text)"
+            .map { line in
+                let speaker = line.isUser ? "STUDENT" : "PARTNER"
+                return "\(speaker): \(line.text)"
             }
             .joined(separator: "\n")
     }

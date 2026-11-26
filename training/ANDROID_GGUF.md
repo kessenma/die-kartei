@@ -54,21 +54,57 @@ only; llama-server is OpenAI-compatible) and score with `run_baseline_eval.py --
 Responses: `results/gguf_*_{core,ext,holdout}.responses.json`. The chat template comes from
 each repo's `chat_template.jinja`, embedded in the GGUF.
 
-## On Android
+## Q4_0 vs Q4_K_M (speed on ARM CPUs, same scores?)
 
-- `llama-cli` cross-compiled with NDK r30 runs on the emulator (API 37, arm64) and answers the
-  tutor prompt correctly with Granite 4.1 Q4_K_M ("FIX: Ich interessiere mich für Fußball.").
-  The AVD has 1 core and 4 GB, so it swaps and crawls: emulator speed means nothing, measure on
-  a phone.
-- The emulator's CPU has dotprod but no i8mm, so `-march=armv8.7a` builds would crash there. For
-  the app, build with `GGML_BACKEND_DL=ON GGML_CPU_ALL_VARIANTS=ON` so the right CPU kernels load
-  at runtime on each phone.
-- The Android app is native Swift (Skip Fuse), so it can call llama.cpp's C API directly: a C
-  module over `llama.h` linking the NDK-built `libllama.so`. No Kotlin and no JNI.
+llama.cpp repacks Q4_0 weights for ARM's int8 dot-product instructions; Q4_0 also keeps the PLE
+and `token_embd` at Q6_K. Emulator (6 Mac cores, dotprod, no i8mm), `llama-bench -p 128 -n 32`:
+
+| model | threads | Q4_K_M read / write t/s | Q4_0 read / write t/s |
+|---|---|---|---|
+| Granite 4.1 3B | 4 | 119 / 44 | **176 / 54** |
+| Granite 4.1 3B | 6 | 153 / 44 | **216 / 54** |
+| Gemma 4 E2B | 4 | 297 / 52 | (pushed, run lost to a full disk) |
+
+Writing speed flattens after 4 threads (memory bandwidth); reading keeps scaling. A phone's cores
+are 2–4× slower than these, so treat the numbers as ratios.
+
+Scores, Q4_0 (/203, guarded): E4B **184** (K_M 185, McNemar p = 1.0), E2B **169** (K_M 173,
+p = 0.42), Granite 4.1 **160** (K_M 164, p = 0.48), Granite 3.3 **148** (K_M 153, p = 0.27).
+None significant on its own, but the three small models all moved the same way. **The app ships
+E4B as Q4_0 and the three smaller tutors as Q4_K_M** (`TutorStore.swift`). The prompt cache
+(below) means most of a turn's prompt is never re-read, so the read-speed gain matters less than
+it looks. On the emulator, E2B Q4_0 "corrected" the correct "Ich habe ein neues Auto gekauft."
+(added "mir"); Q4_K_M left it alone.
+
+## In the Android app (2026-11-26)
+
+`DieKarteiAndroid/Sources/DieKartei/TutorEngine.swift`: llama.cpp's C API from native Swift
+(Skip Fuse), through a `CLlama` module. No Kotlin, no JNI. Libraries:
+`scripts/build_llama_android.sh` (pinned commit, NDK r30, `GGML_BACKEND_DL` +
+`GGML_CPU_ALL_VARIANTS`: one CPU backend per ARM feature level, the best one loaded at launch;
+the emulator gets `android_armv8.2_2`, DOTPROD + FP16).
+
+What it does for speed on a phone:
+- **Fast cores only:** threads = cores outside the slowest cluster (`/sys/.../cpuinfo_max_freq`),
+  so 4 on a 1+3+4 phone. A llama.cpp step waits for its slowest thread.
+- **Prompt cache, two slots:** the conversation and the correction pass each keep their own KV
+  prefix (two sequences), so they don't evict each other. Measured on the emulator: the second
+  sentence check read 19 of 210 tokens (0.8 s → 0.1 s); the second chat turn 25 of 284.
+- **mmap + lazy PLE rows:** Gemma's per-layer embedding table stays in the file.
+
+Verified on the emulator with E2B: model loads in ~1.5 s, Satz prüfen corrects "Ich warte fuer
+den Bus." → "Ich warte auf den Bus." and leaves a correct sentence alone, and Gespräch runs the
+iOS flow (opener, correction pass, reply) with streaming. No crashes.
+
+Older emulator notes:
+- `llama-cli` with the AVD at 1 core / 4 GB swapped and crawled; it now runs 6 cores / 8 GB.
+- The emulator's CPU has no i8mm, so a `-march=armv8.7a` build crashes there; the app's
+  per-feature backends avoid this.
 
 ## Open
 
-- Publish the GGUFs to Hugging Face (`kessenma/*-gguf`); needs an HF login on this Mac.
-- Phone measurements: tokens/s and memory on a real 6–8 GB and a 4 GB Android phone; CPU first,
-  then the Vulkan/OpenCL backends.
+- Publish the GGUFs to Hugging Face (`kessenma/*-gguf`) and download them in the app; needs an
+  HF login on this Mac.
+- Phone measurements: tokens/s and memory on a real 6–8 GB and a 4 GB Android phone; then the
+  Vulkan/OpenCL (Adreno) GPU backends.
 - Which tiers ship on Android: same RAM floors as iOS to start (E4B 8 GB, E2B 6 GB, Granite 4 GB).

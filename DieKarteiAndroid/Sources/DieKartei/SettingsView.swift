@@ -34,6 +34,9 @@ struct SettingsView: View {
                 NavigationLink { FlashcardsSettingsView() } label: {
                     Text("Flashcards")
                 }
+                NavigationLink { TutorModelView() } label: {
+                    Text("Tutor Model")
+                }
             }
             Section("About") {
                 NavigationLink { SourcesView() } label: {
@@ -46,7 +49,7 @@ struct SettingsView: View {
                 }
             }
             Section {
-                Text("Not on Android yet: iCloud Sync, Reminders, themes and the tutor model.")
+                Text("Not on Android yet: iCloud Sync, Reminders and themes.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

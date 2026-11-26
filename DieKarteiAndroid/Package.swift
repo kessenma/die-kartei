@@ -8,10 +8,14 @@
 //   sandboxed to this folder and couldn't read the linked files anyway. Settings mirror the iOS
 //   target (Swift 5 mode, MainActor by default) so the shared files mean the same thing.
 // - GermanVoice: a few lines of transpiled Swift around Android's TextToSpeech (Skip Lite).
+// - CLlama: llama.cpp's C API (Android only), for the tutor models as GGUF. See TutorEngine.swift.
 // - DieKartei: the Android UI in SwiftUI (Skip Fuse). It reaches the core's internal types
 //   through `@testable import`, which is why the core builds with -enable-testing: the iOS
 //   app's code is internal, and making it public just for Android isn't worth the churn.
 import PackageDescription
+
+/// llama.cpp's Android libraries, built by scripts/build_llama_android.sh (gitignored).
+let llamaLibs = Context.packageDirectory + "/Vendor/llama/arm64-v8a"
 
 let package = Package(
     name: "DieKarteiAndroid",
@@ -54,11 +58,20 @@ let package = Package(
             swiftSettings: [.swiftLanguageMode(.v5)],  // a shared voice; TextToSpeech is main-thread only anyway
             plugins: [.plugin(name: "skipstone", package: "skip")]
         ),
+        // llama.cpp, called straight from Swift: no Kotlin, no JNI. Android only; the libraries are
+        // packaged into the APK by app/build.gradle.kts.
+        .target(
+            name: "CLlama",
+            linkerSettings: [
+                .unsafeFlags(["-L\(llamaLibs)"], .when(platforms: [.android])),
+            ]
+        ),
         .target(
             name: "DieKartei",
             dependencies: [
                 "DieKarteiCore",
                 "GermanVoice",
+                .target(name: "CLlama", condition: .when(platforms: [.android])),
                 .product(name: "SkipFuseUI", package: "skip-fuse-ui"),
             ],
             resources: [.process("Resources")],

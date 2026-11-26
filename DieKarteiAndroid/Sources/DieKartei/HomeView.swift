@@ -40,6 +40,16 @@ struct HomeView: View {
                                 systemImage: "star.fill", tint: Color.teal)
                 }
             }
+            Section("Tutor") {
+                NavigationLink { GespraechView() } label: {
+                    ActivityRow(title: "Gespräch", subtitle: "Talk with the tutor; every line gets corrected",
+                                systemImage: "person.fill", tint: Color.green)
+                }
+                NavigationLink { SatzPruefenView() } label: {
+                    ActivityRow(title: "Satz prüfen", subtitle: "One sentence, checked by the tutor",
+                                systemImage: "checkmark.circle.fill", tint: Color.green)
+                }
+            }
         }
         .navigationTitle("Home")
     }

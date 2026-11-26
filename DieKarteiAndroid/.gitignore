@@ -74,3 +74,6 @@ Carthage/Build/
 **/fastlane/README.md
 **/fastlane/Preview.html
 **/fastlane/test_output
+
+# llama.cpp Android libraries, built by scripts/build_llama_android.sh
+Vendor/

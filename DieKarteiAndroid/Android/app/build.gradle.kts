@@ -27,9 +27,12 @@ android {
             keepDebugSymbols.add("**/*.so")
             pickFirsts.add("**/*.so")
             // this option would compress JNI .so files and reduce overall size for Skip Fuse apps, but cost more at install time
-            //useLegacyPackaging = true
+            // On for die Kartei: llama.cpp loads its CPU backend (one .so per ARM feature level) from
+            // the extracted native library directory, so the libraries must be extracted.
+            useLegacyPackaging = true
         }
     }
+    sourceSets["main"].jniLibs.srcDir("../../Vendor/llama")
 
     defaultConfig {
         minSdk = libs.versions.android.sdk.min.get().toInt()

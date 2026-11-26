@@ -4,3 +4,4 @@
 // leaves it alone. Only ever add namespaces here, never behaviour.
 
 enum PrepositionService {}
+enum ClassTutorContext {}

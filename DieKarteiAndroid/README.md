@@ -10,6 +10,8 @@ bigger picture.
   iOS app's own portable files, symlinked, not copied. Plain Swift, no Skip plugin.
 - **GermanVoice**: transpiled Swift (Skip Lite) around Android's TextToSpeech, bridged to the
   native module. The place to add other Android-only APIs.
+- **CLlama**: llama.cpp's C API, for the tutor models (Android only). The libraries come from
+  `../scripts/build_llama_android.sh`; `TutorEngine.swift` calls them from Swift directly.
 - **DieKartei**: the Android screens. It uses the core through `@testable import` so the iOS
   app's internal types stay internal.
 
@@ -25,11 +27,15 @@ Today the tab bar matches iOS: Home, Grammar, Library, Settings.
   Präpositionen, the four Lückensatz sets, Perfekt haben/sein, Die vier Fälle.
 - Hören: Zahlen-Diktat for every number kind, spoken by Android's German voice.
 - Spiele: Galgenmännchen and Wortsuche on the iOS engines.
+- Tutor: Gespräch (a conversation; every line gets the correction pass, then a reply) and Satz
+  prüfen (one sentence, checked), on the iOS prompts and parsers (`ConversationPrompts`).
+  Settings ▸ Tutor Model picks the model.
 
 ## Run it
 
 ```bash
 python3 ../scripts/core_sync.py      # relink the core and copy the JSON data into Resources/
+../scripts/build_llama_android.sh    # once: llama.cpp for Android into Vendor/ (gitignored)
 emulator -avd Medium_Phone_API_37.0 & # or start it from Android Studio's Device Manager
 export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 skip app launch --android
@@ -37,6 +43,22 @@ skip app launch --android
 
 `Darwin/` is Skip's iOS shell; Skip drives the build through it. The real iOS app is still
 `german-ai-flashcards.xcodeproj`.
+
+## Tutor models on the device
+
+The app looks for GGUF files in its private `files/models/` (names in `TutorStore.swift`;
+building them: `../training/ANDROID_GGUF.md`). Until they're downloadable, copy one in:
+
+```bash
+adb push gemma4-e2b-german-tutor-Q4_K_M.gguf /data/local/tmp/
+adb shell "cat /data/local/tmp/gemma4-e2b-german-tutor-Q4_K_M.gguf | run-as com.kessenma.diekartei \
+  sh -c 'cat > files/models/gemma4-e2b-german-tutor-Q4_K_M.gguf'"
+adb shell rm /data/local/tmp/gemma4-e2b-german-tutor-Q4_K_M.gguf
+```
+
+The emulator's default data partition (10 GB) holds one model plus the app; the AVD here runs
+with 6 cores and 8 GB RAM (`hw.cpu.ncore`, `hw.ramSize` in its config.ini). Its cores are the
+Mac's, so its speed is far above a phone's: measure speed on a real phone.
 
 ## Testing on the emulator
 
@@ -52,6 +74,9 @@ visible text with its bounds, which is enough to tap through screens from a scri
   show a warning triangle.
 - The JSON data files must be real files in `Resources/` (copied by `core_sync.py`, gitignored):
   the resource copy resolves symlinks logically and Skip keeps subfolders as they are.
+- llama.cpp loads its CPU backend from the extracted native-library directory, so the APK uses
+  `useLegacyPackaging = true`. Foundation reads `/proc` files by their reported size (0): read
+  them with `FileHandle.readDataToEndOfFile()`.
 - SwiftPM looks up github.com credentials in the login keychain before downloading Skip's
   binary; with the screen locked that prompt waits forever. `swift package resolve
   --disable-keychain` once fetches it into the shared cache.

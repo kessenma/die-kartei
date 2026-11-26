@@ -32,7 +32,7 @@ PDFKit, FoundationModels. On Android these need replacements behind protocols, o
 | --- | --- |
 | SwiftData | SQLite in Swift (Skip's SkipSQL / GRDB-style), behind a store protocol |
 | iCloud sync | `Services/Sync/Core` builds for Android; plan in `docs-site/content/docs/android/sync.mdx` |
-| MLX | llama.cpp (GGUF builds of the tutor models) |
+| MLX | llama.cpp (GGUF builds of the tutor models), `TutorEngine.swift` |
 | Speech / AVSpeech | Android TTS/STT through Skip's Kotlin bridging |
 | PencilKit | Compose canvas; later |
 
@@ -54,7 +54,8 @@ PDFKit, FoundationModels. On Android these need replacements behind protocols, o
 | iOS tab bar (Home, Grammar, Library, Settings) and a Settings tab | ✅ |
 | Kasus drills and stories, Matching, Reflexiv drills | ⬜ next (see "Next splits") |
 | Tutor models as GGUF (llama.cpp): all four score the same as MLX 4-bit (`training/ANDROID_GGUF.md`) | ✅ |
-| Anything needing the tutor model (Gespräch, Stammtisch, Lebenslauf, stories) | ⬜ needs llama.cpp wired into the app |
+| Tutor in the app: llama.cpp from Swift, Gespräch + Satz prüfen on the iOS prompts | ✅ emulator |
+| Rest of the tutor features (Stammtisch, Lebenslauf, stories, summaries), model download | ⬜ |
 
 ### App-side changes made for the core (no behaviour change on iOS)
 

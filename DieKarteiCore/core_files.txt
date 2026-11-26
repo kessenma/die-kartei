@@ -41,6 +41,8 @@ Services/A1VocabService.swift
 Services/AnswerTimeLog.swift
 Services/AppResources.swift
 Services/CardKind.swift
+Services/ClassTutorContext+Prompt.swift
+Services/ConversationPrompts.swift
 Services/FlashcardTopicService.swift
 Services/GermanGenderInference.swift
 Services/Grammar/GrammarExerciseService.swift
