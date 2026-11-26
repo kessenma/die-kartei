@@ -160,8 +160,11 @@ EXPORT_OPTIONS_MAC = ROOT / "ExportOptions-macOS.plist"
 # Xcode's automatic signing normally needs a signed-in Apple ID account. The
 # GUI can't be launched on macOS 27 beta, so authenticate with the same App
 # Store Connect API key `asc` uses instead.
-ASC_KEY_PATH = Path(os.environ.get("ASC_KEY_PATH", Path.home() / ".asc" / "AuthKey_24JDJGBV9T.p8"))
-ASC_KEY_ID = "24JDJGBV9T"
+ASC_KEY_ID = os.environ.get("ASC_KEY_ID", "2DA9297SQ6")
+_ASC_KEY_CANDIDATES = [Path.home() / ".asc" / "keys" / f"AuthKey_{ASC_KEY_ID}.p8",
+                       Path.home() / ".asc" / f"AuthKey_{ASC_KEY_ID}.p8"]
+ASC_KEY_PATH = Path(os.environ.get("ASC_KEY_PATH") or next(
+    (p for p in _ASC_KEY_CANDIDATES if p.exists()), _ASC_KEY_CANDIDATES[0]))
 ASC_ISSUER_ID = "5e67a835-18f8-47a8-aa06-e1a43e9c5c44"
 
 MAC = "--mac" in sys.argv[1:]
@@ -530,10 +533,10 @@ def ensure_signing():
         capture_output=True, text=True,
     ).stdout
     if "Apple Distribution" not in found:
-        die(
-            "No 'Apple Distribution' identity in the keychain — archiving will fail.\n"
-            "   Import the distribution .p12; see docs/DEPLOY_SETUP.md section 4."
-        )
+        # Automatic signing with the API key (ADMIN role) can use a cloud-managed distribution
+        # certificate at export, so a Mac without the .p12 can still ship.
+        log("⚠️", "No 'Apple Distribution' identity in the keychain; relying on cloud-managed "
+                  "signing via the API key (docs/DEPLOY_SETUP.md section 4).")
     options = EXPORT_OPTIONS_MAC if MAC else EXPORT_OPTIONS
     if not options.exists():
         die(f"Missing {options.name} — required to stop Xcode rewriting the build number.")

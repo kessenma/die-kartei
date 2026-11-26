@@ -1,16 +1,6 @@
 {
   "releases": [
     {
-      "version": "unreleased",
-      "highlights": [
-        {
-          "title": "Schreibblatt · Writing sheet",
-          "detail": "With the wrist guard on, Nächste Tabelle brings the next table into view. After the flashcards you go straight on to the next part, and a finished set ends with a small cheer and one of your writing numbers.",
-          "symbol": "applepencil.and.scribble"
-        }
-      ]
-    },
-    {
       "version": "1.7",
       "date": "2026-11-08",
       "highlights": [

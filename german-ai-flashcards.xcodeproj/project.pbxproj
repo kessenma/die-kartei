@@ -573,7 +573,7 @@
 		"CODE_SIGN_ENTITLEMENTS" = "german-ai-flashcards/german-ai-flashcards.entitlements";
 		"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "german-ai-flashcards/german-ai-flashcards-macOS.entitlements";
 		"CODE_SIGN_STYLE" = Automatic;
-		"CURRENT_PROJECT_VERSION" = 24;
+		"CURRENT_PROJECT_VERSION" = 25;
 		"DEAD_CODE_STRIPPING" = YES;
 		"DEVELOPMENT_TEAM" = RHPLRY9X9P;
 		"ENABLE_APP_SANDBOX" = YES;
@@ -657,7 +657,7 @@
 		8ABE00012FC000000000000A /* Release */ = {
 	buildSettings = {
 		"CODE_SIGN_STYLE" = Automatic;
-		"CURRENT_PROJECT_VERSION" = 24;
+		"CURRENT_PROJECT_VERSION" = 25;
 		"DEAD_CODE_STRIPPING" = YES;
 		"DEVELOPMENT_TEAM" = RHPLRY9X9P;
 		"ENABLE_PREVIEWS" = YES;

@@ -33,7 +33,7 @@ Values you'll see referenced throughout. None of these are secret.
 | App Store Connect app ID | `6770390331` |
 | Bundle ID | `kyle-essenmacher.german-ai-flashcards` |
 | Apple team ID | `RHPLRY9X9P` |
-| ASC API key ID | `24JDJGBV9T` |
+| ASC API key ID | `2DA9297SQ6` |
 | ASC issuer ID | `5e67a835-18f8-47a8-aa06-e1a43e9c5c44` |
 | TestFlight groups | `internal-die-Kartei`, `external-die-Kartei` |
 
@@ -90,7 +90,7 @@ Three things are deliberately **not** in this repo and must arrive out of band
 
 | Secret | Where it goes | Notes |
 |---|---|---|
-| `AuthKey_24JDJGBV9T.p8` | `~/.asc/AuthKey_24JDJGBV9T.p8` | The App Store Connect API key. Apple lets you download it **once**; this copy is the only one. Account-scoped, shared with the Fajr app. |
+| `AuthKey_2DA9297SQ6.p8` | `~/.asc/AuthKey_2DA9297SQ6.p8` | The App Store Connect API key. Apple lets you download it **once**; this copy is the only one. Account-scoped, shared with the Fajr app. |
 | Signing repo password | `~/.asc/signing-sync-password` | Encrypts the signing repo contents. |
 | `.p12` export password | needed once, during import | Protects the exported distribution identity. |
 
@@ -112,14 +112,14 @@ afterwards, add that directory to your `PATH`.
 
 ```bash
 mkdir -p ~/.asc && chmod 700 ~/.asc
-# copy AuthKey_24JDJGBV9T.p8 into ~/.asc/ now, then:
-chmod 600 ~/.asc/AuthKey_24JDJGBV9T.p8
+# copy AuthKey_2DA9297SQ6.p8 into ~/.asc/ now, then:
+chmod 600 ~/.asc/AuthKey_2DA9297SQ6.p8
 
 asc auth login \
   --name "kessenma" \
-  --key-id 24JDJGBV9T \
+  --key-id 2DA9297SQ6 \
   --issuer-id 5e67a835-18f8-47a8-aa06-e1a43e9c5c44 \
-  --private-key ~/.asc/AuthKey_24JDJGBV9T.p8 \
+  --private-key ~/.asc/AuthKey_2DA9297SQ6.p8 \
   --network
 
 asc auth status --validate      # expect "validation":"works"
@@ -527,8 +527,8 @@ asc xcode archive \
   --clean --overwrite \
   --xcodebuild-flag=-destination --xcodebuild-flag=generic/platform=iOS \
   --xcodebuild-flag=-allowProvisioningUpdates \
-  --xcodebuild-flag=-authenticationKeyPath --xcodebuild-flag=$HOME/.asc/AuthKey_24JDJGBV9T.p8 \
-  --xcodebuild-flag=-authenticationKeyID --xcodebuild-flag=24JDJGBV9T \
+  --xcodebuild-flag=-authenticationKeyPath --xcodebuild-flag=$HOME/.asc/AuthKey_2DA9297SQ6.p8 \
+  --xcodebuild-flag=-authenticationKeyID --xcodebuild-flag=2DA9297SQ6 \
   --xcodebuild-flag=-authenticationKeyIssuerID --xcodebuild-flag=5e67a835-18f8-47a8-aa06-e1a43e9c5c44 \
   --output json --pretty
 
@@ -559,7 +559,7 @@ Optionally validate the binary against Apple before ever uploading:
 
 ```bash
 asc xcode validate --ipa .asc/artifacts/DieKartei.ipa \
-  --api-key 24JDJGBV9T \
+  --api-key 2DA9297SQ6 \
   --api-issuer 5e67a835-18f8-47a8-aa06-e1a43e9c5c44 \
   --output json
 ```
@@ -568,7 +568,7 @@ asc xcode validate --ipa .asc/artifacts/DieKartei.ipa \
 > only in its own fixed search paths — **not** `~/.asc/`. Make it visible once:
 > ```bash
 > mkdir -p ~/.appstoreconnect/private_keys
-> ln -s ~/.asc/AuthKey_24JDJGBV9T.p8 ~/.appstoreconnect/private_keys/AuthKey_24JDJGBV9T.p8
+> ln -s ~/.asc/AuthKey_2DA9297SQ6.p8 ~/.appstoreconnect/private_keys/AuthKey_2DA9297SQ6.p8
 > ```
 > Everything else in this doc reads the key from `~/.asc/` and needs no such link.
 
@@ -588,7 +588,7 @@ Clean up with `rm -rf .asc/artifacts` when you're done.
 | `NOTIFY_TESTERS` | — | `true` notifies testers after distribution |
 | `XCODE_PATH` | — | Pin a toolchain for one run, e.g. `/Applications/Xcode.app` |
 | `SKIP_SCHEMA_CHECK` | — | `1` skips the CloudKit Production schema check for one run |
-| `ASC_KEY_PATH` | `~/.asc/AuthKey_24JDJGBV9T.p8` | Location of the API key used for signing auth |
+| `ASC_KEY_PATH` | `~/.asc/AuthKey_2DA9297SQ6.p8` | Location of the API key used for signing auth |
 
 Logs are written to `build-logs/deploy-{beta,release}/YYYY-MM-DD/`, 10 kept per
 mode.
@@ -741,3 +741,14 @@ Don't try to run `bundle exec fastlane` here without setting all of that up firs
 
 The React Native apps in other repos still use fastlane normally; nothing here
 affects them.
+
+## Headless Macs (no Xcode GUI)
+
+Xcode can't show its "Trust & Enable" prompt for package macros/plugins without a GUI, so the archive fails on `MLXHuggingFaceMacros` / `CudaBuild`. Run once per Mac:
+
+```bash
+defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES
+```
+
+No `Apple Distribution` certificate in the keychain is fine: automatic signing with the API key (Admin role) uses a cloud-managed one at export.
