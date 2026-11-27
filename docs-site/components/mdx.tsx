@@ -7,11 +7,9 @@ import { BuildIllustration } from './illustrations/BuildIllustration';
 import { KarteiIllustration } from './illustrations/KarteiIllustration';
 import { RoadmapIllustration } from './illustrations/RoadmapIllustration';
 import { SyncIllustration } from './illustrations/SyncIllustration';
-import { Annotated, Screen, Screens } from './screens';
 
 /**
- * Components available in every MDX page without importing, including the illustrations and the
- * app screenshots (Screen, Screens, Annotated).
+ * Components available in every MDX page without importing, including one illustration per page.
  * Defaults include Callout, Card/Cards, code blocks (with copy button) and tables.
  */
 export function getMDXComponents(components?: MDXComponents) {
@@ -26,9 +24,6 @@ export function getMDXComponents(components?: MDXComponents) {
     KarteiIllustration,
     RoadmapIllustration,
     SyncIllustration,
-    Annotated,
-    Screen,
-    Screens,
     ...components,
   } satisfies MDXComponents;
 }

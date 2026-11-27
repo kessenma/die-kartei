@@ -6,6 +6,13 @@ export function AndroidIllustration() {
     <Figure
       id="dk-android"
       title="One shared block of code in the middle sends the same cards to two phones"
+      caption={
+        <>
+          One core of Swift, two phones to fill —
+          <br />
+          the same words, the same drill.
+        </>
+      }
       css={`
         .dk-android-flow { stroke-dasharray: 2 10; animation: dk-android-flow 1.8s linear infinite; }
         .dk-android-core { transform-box: fill-box; transform-origin: center; animation: dk-android-breathe 4.4s ease-in-out infinite; }

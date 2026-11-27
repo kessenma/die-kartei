@@ -1,36 +1,38 @@
 ---
 title: Die Kartei
-description: A German tutor for iPhone, iPad and Mac. What's in it, and how it works.
+description: How the German tutor app is built, and where it's going next.
 ---
 
-Die Kartei is a German tutor that runs on your own devices. It has flashcards, grammar, stories,
-conversation, writing and listening practice, all with an on-device language model. There's no
-account and no server.
+Die Kartei is a German tutor that runs on your own iPhone, iPad and Mac: flashcards with spaced
+repetition, grammar drills, stories, listening practice and conversations, with its own language
+model on device. No account, no server, no subscription.
 
-<Annotated
-  src="home"
-  alt="The Home screen with All Activities selected: a tile for each area of the app"
-  marks={[
-    { x: 376, y: 192, text: <><b>For You · All Activities.</b> For You suggests what to do next; All Activities lists every room.</> },
-    { x: 40, y: 244, text: <><b>The model in use.</b> Apple Intelligence works out of the box. The German teacher model (a one-time download) is needed for stories and better conversations.</> },
-    { x: 54, y: 381, text: <><b>One tile per room.</b> Vocabulary, Grammar, Reading, Speaking, Phrasen, Spiele, and below them Job prep, Deutschkurs, Schreibblatt, Zeichnen, Schreiben and Hören.</> },
-    { x: 249, y: 815, text: <><b>Tabs.</b> Grammar and your Library (decks, chats, readings, phrases) also have tabs of their own.</> },
-  ]}
-/>
+<KarteiIllustration />
 
-## Funktionen · Features
+These docs are for the people building it. They cover how the app is put together and the work in
+progress, starting with the Android port.
 
 <Cards>
-  <Card title="Karten · Flashcards" href="/features/karten/">The Goethe word lists and your own decks, with spaced repetition.</Card>
-  <Card title="Grammatik · Grammar" href="/features/grammatik/">The four cases, one unit at a time.</Card>
-  <Card title="Spiele · Games" href="/features/spiele/">Der · Die · Das, Galgenmännchen, Card Matching.</Card>
-  <Card title="Lesen & Sprechen" href="/features/lesen-sprechen/">Stories, documents, scans and conversation practice.</Card>
-  <Card title="Schreiben & Zeichnen" href="/features/schreiben/">Journal and essays, the Schreibblatt, drawing your words.</Card>
-  <Card title="Hören · Listening" href="/features/hoeren/">Numbers, dictation, and the gist of a story.</Card>
-  <Card title="Beruf & Kurs" href="/features/beruf-kurs/">Job prep and your German class.</Card>
+  <Card title="Roadmap" href="/roadmap/">
+    What's being worked on, in order.
+  </Card>
+  <Card title="The Android port" href="/android/">
+    Keeping the app in Swift on Android: what runs today and how.
+  </Card>
+  <Card title="Build and run on Android" href="/android/build/">
+    The toolchain on a Mac, and the emulator loop.
+  </Card>
+  <Card title="Sync on Android" href="/android/sync/">
+    Something like iCloud Sync, in three steps.
+  </Card>
 </Cards>
 
-## Entwicklung · Building
+## Where things live
 
-The app is moving to Android too, in Swift. See [The Android port](/android/) and the
-[Roadmap](/roadmap/).
+| Path | What |
+| --- | --- |
+| `german-ai-flashcards/` | The iOS, iPadOS and macOS app (SwiftUI, SwiftData) |
+| `DieKarteiCore/` | The app's portable Swift files, shared with Android |
+| `DieKarteiAndroid/` | The Android app (Skip Fuse: Swift and SwiftUI on Android) |
+| `docs/` | Notes on each part of the iOS app (Kasus, Schreibblatt, iCloud Sync, …) |
+| `docs-site/` | This site |

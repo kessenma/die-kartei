@@ -6,6 +6,13 @@ export function SyncIllustration() {
     <Figure
       id="dk-sync"
       title="Two phones each put their own card into a shared folder above them and read the other's card back"
+      caption={
+        <>
+          Each phone writes its own, none overwrite —
+          <br />
+          merge them all, and the counts come out right.
+        </>
+      }
       css={`
         .dk-sync-up { stroke-dasharray: 2 10; animation: dk-sync-up 1.8s linear infinite; }
         .dk-sync-down { stroke-dasharray: 2 10; animation: dk-sync-down 1.8s linear infinite; }
