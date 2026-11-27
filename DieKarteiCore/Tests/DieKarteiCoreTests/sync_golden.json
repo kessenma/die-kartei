@@ -289,6 +289,303 @@
         "wordsWritten" : 0,
         "writingSeconds" : 0
       }
+    },
+    {
+      "kind" : "LearnerProfile",
+      "label" : "full",
+      "name" : "LearnerProfile:1F3C8F95-B429-52FA-B9E6-1AB24850101C",
+      "payload" : {
+        "foerderplan" : {
+          "current" : {
+            "focus" : "dativ",
+            "startedAt" : 816000000
+          },
+          "past" : [
+
+          ]
+        },
+        "grammar" : {
+          "dativ" : {
+            "lastSeen" : 816200000,
+            "samples" : [
+              "mit der Freund → mit dem Freund"
+            ],
+            "struggle" : 0.4
+          }
+        },
+        "lastSessionAt" : 816200000.5,
+        "selfReports" : [
+          {
+            "entryID" : "88888888-8888-4888-8888-888888888888",
+            "focus" : "dativ",
+            "id" : "dem und den nach mit",
+            "notedAt" : 816000000,
+            "pinned" : false,
+            "source" : "journal",
+            "text" : "dem und den nach mit",
+            "timesNoted" : 1
+          }
+        ],
+        "sessionCount" : 4,
+        "slips" : [
+          {
+            "blankIndex" : 3,
+            "id" : "der→dem",
+            "lastSeen" : 816200000,
+            "note" : "mit takes the Dativ",
+            "pinned" : false,
+            "right" : "dem",
+            "sentence" : "Ich fahre mit dem Bus.",
+            "timesSeen" : 3,
+            "wrong" : "der"
+          }
+        ],
+        "vocab" : [
+          {
+            "english" : "station",
+            "german" : "Bahnhof",
+            "lastSeen" : 816150000,
+            "pinned" : true,
+            "timesUsed" : 2
+          },
+          {
+            "english" : "to drive",
+            "german" : "fahren",
+            "lastSeen" : 816100000,
+            "pinned" : false,
+            "source" : "placement",
+            "timesUsed" : 1
+          }
+        ]
+      }
+    },
+    {
+      "kind" : "LearnerProfile",
+      "label" : "bare",
+      "name" : "LearnerProfile:1F3C8F95-B429-52FA-B9E6-1AB24850101C",
+      "payload" : {
+        "foerderplan" : null,
+        "grammar" : null,
+        "lastSessionAt" : null,
+        "selfReports" : null,
+        "sessionCount" : 0,
+        "slips" : null,
+        "vocab" : null
+      }
+    },
+    {
+      "kind" : "ChatConversation",
+      "label" : "full",
+      "name" : "ChatConversation:99999999-9999-4999-8999-999999999999",
+      "payload" : {
+        "autoPlay" : false,
+        "correctionsEnabled" : false,
+        "createdAt" : 816300000,
+        "customScenario" : "Beim Bäcker",
+        "deckIDsRaw" : [
+          "11111111-1111-4111-8111-111111111111"
+        ],
+        "deckLabel" : "Reise",
+        "durationSeconds" : 840,
+        "feedbackStyleRaw" : "Nudge me",
+        "focusRaw" : [
+          "dativ",
+          "perfekt"
+        ],
+        "formalityRaw" : "Sie",
+        "id" : "99999999-9999-4999-8999-999999999999",
+        "inputModeRaw" : "Type",
+        "interviewFormatRaw" : "video",
+        "interviewRoundRaw" : "screening",
+        "jobCompany" : "Deutsche Bahn",
+        "jobContext" : "Kundenservice im Zug",
+        "jobLocation" : "Berlin",
+        "jobPostingIDRaw" : "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "jobSnapshotFile" : "job-1.pdf",
+        "jobTitle" : "Zugbegleiter",
+        "jobURL" : "https://example.com/job/1",
+        "levelRaw" : "B1",
+        "modeRaw" : "Interview",
+        "modelRaw" : "Gemma 4 E4B German Tutor",
+        "paperContext" : "§1 Mietsache",
+        "paperTitle" : "Mietvertrag",
+        "savedVocab" : [
+          {
+            "english" : "conductor",
+            "german" : "Zugbegleiter"
+          },
+          {
+            "english" : "timetable",
+            "german" : "Fahrplan"
+          }
+        ],
+        "scenarioRaw" : "restaurant",
+        "stammtisch" : {
+          "guests" : [
+            "Lena",
+            "Jonas"
+          ],
+          "topic" : "Urlaub"
+        },
+        "strictnessRaw" : "Strict",
+        "summary" : {
+          "headline" : "Gut gemacht",
+          "wins" : [
+            "Dativ nach mit"
+          ]
+        },
+        "title" : "Vorstellungsgespräch bei der Bahn",
+        "updatedAt" : 816300900.25,
+        "usesResume" : true
+      }
+    },
+    {
+      "kind" : "ChatConversation",
+      "label" : "bare",
+      "name" : "ChatConversation:BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+      "payload" : {
+        "autoPlay" : true,
+        "correctionsEnabled" : true,
+        "createdAt" : 816400000,
+        "customScenario" : null,
+        "deckIDsRaw" : [
+
+        ],
+        "deckLabel" : "",
+        "durationSeconds" : 0,
+        "feedbackStyleRaw" : "Tell me",
+        "focusRaw" : [
+
+        ],
+        "formalityRaw" : "du",
+        "id" : "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+        "inputModeRaw" : "Speak",
+        "interviewFormatRaw" : null,
+        "interviewRoundRaw" : null,
+        "jobCompany" : null,
+        "jobContext" : null,
+        "jobLocation" : null,
+        "jobPostingIDRaw" : null,
+        "jobSnapshotFile" : null,
+        "jobTitle" : null,
+        "jobURL" : null,
+        "levelRaw" : "A2",
+        "modeRaw" : "Freestyle",
+        "modelRaw" : "Gemma 4 E4B German Tutor",
+        "paperContext" : null,
+        "paperTitle" : null,
+        "savedVocab" : null,
+        "scenarioRaw" : null,
+        "stammtisch" : null,
+        "strictnessRaw" : "Balanced",
+        "summary" : null,
+        "title" : "Freies Gespräch",
+        "updatedAt" : 816400000,
+        "usesResume" : false
+      }
+    },
+    {
+      "kind" : "ChatMessage",
+      "label" : "full",
+      "name" : "ChatMessage:CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
+      "payload" : {
+        "confirmedClean" : true,
+        "conversation" : "99999999-9999-4999-8999-999999999999",
+        "correctedText" : "Ich fahre mit dem Bus.",
+        "correctionHint" : "Which case follows mit?",
+        "correctionNote" : "mit + Dativ",
+        "correctionTranslationText" : "I take the bus.",
+        "createdAt" : 816300100,
+        "id" : "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
+        "reviewedWords" : [
+          "Bus"
+        ],
+        "roleRaw" : "user",
+        "selfCorrected" : true,
+        "sortOrder" : 2,
+        "targetWordsUsed" : [
+          "fahren",
+          "Bus"
+        ],
+        "text" : "Ich fahre mit der Bus.",
+        "translationText" : "I'm going by bus.",
+        "translationViewed" : true,
+        "usedHint" : true,
+        "usedPhraseHelper" : true
+      }
+    },
+    {
+      "kind" : "ChatMessage",
+      "label" : "bare",
+      "name" : "ChatMessage:DDDDDDDD-DDDD-4DDD-8DDD-DDDDDDDDDDDD",
+      "payload" : {
+        "confirmedClean" : false,
+        "conversation" : "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+        "correctedText" : null,
+        "correctionHint" : null,
+        "correctionNote" : null,
+        "correctionTranslationText" : null,
+        "createdAt" : 816400010,
+        "id" : "DDDDDDDD-DDDD-4DDD-8DDD-DDDDDDDDDDDD",
+        "reviewedWords" : [
+
+        ],
+        "roleRaw" : "assistant",
+        "selfCorrected" : false,
+        "sortOrder" : 0,
+        "targetWordsUsed" : [
+
+        ],
+        "text" : "Hallo!",
+        "translationText" : null,
+        "translationViewed" : false,
+        "usedHint" : false,
+        "usedPhraseHelper" : false
+      }
+    },
+    {
+      "kind" : "LearnedPhrase",
+      "label" : "full",
+      "name" : "LearnedPhrase:EEEEEEEE-EEEE-4EEE-8EEE-EEEEEEEEEEEE",
+      "payload" : {
+        "createdAt" : 816500000,
+        "creatorModelRaw" : "gemma-e4b",
+        "english" : "How do I get to the station?",
+        "focusAreasRaw" : [
+          "dativ"
+        ],
+        "german" : "Wie komme ich zum Bahnhof?",
+        "id" : "EEEEEEEE-EEEE-4EEE-8EEE-EEEEEEEEEEEE",
+        "isActive" : false,
+        "lastSurfacedAt" : 816600000,
+        "note" : "zum = zu dem",
+        "scenarioTagsRaw" : [
+          "restaurant"
+        ],
+        "surfacedCount" : 3
+      }
+    },
+    {
+      "kind" : "LearnedPhrase",
+      "label" : "bare",
+      "name" : "LearnedPhrase:FFFFFFFF-FFFF-4FFF-8FFF-FFFFFFFFFFFF",
+      "payload" : {
+        "createdAt" : 816500100,
+        "creatorModelRaw" : "",
+        "english" : "Bye",
+        "focusAreasRaw" : [
+
+        ],
+        "german" : "Tschüss",
+        "id" : "FFFFFFFF-FFFF-4FFF-8FFF-FFFFFFFFFFFF",
+        "isActive" : true,
+        "lastSurfacedAt" : null,
+        "note" : null,
+        "scenarioTagsRaw" : [
+
+        ],
+        "surfacedCount" : 0
+      }
     }
   ]
 }

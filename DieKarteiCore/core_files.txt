@@ -79,8 +79,10 @@ Services/Spiele/WordSearchGenerator.swift
 Services/StoryReadingTimer.swift
 Services/StoryStarterService.swift
 Services/Sync/Core/FakeSyncServer.swift
+Services/Sync/Core/Records/ChatRecords.swift
 Services/Sync/Core/Records/DeckRecords.swift
 Services/Sync/Core/Records/KarteiRecord.swift
+Services/Sync/Core/Records/LearnerRecords.swift
 Services/Sync/Core/Records/StudyDayRecord.swift
 Services/Sync/Core/SyncCounter.swift
 Services/Sync/Core/SyncDigest.swift

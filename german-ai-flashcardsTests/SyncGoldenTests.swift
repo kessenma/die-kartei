@@ -33,7 +33,9 @@ import Testing
         let payload: SyncPayload
     }
 
-    static let models: [any PersistentModel.Type] = [SavedDeck.self, SavedCard.self, QuizResult.self, StudyDay.self]
+    static let models: [any PersistentModel.Type] = [SavedDeck.self, SavedCard.self, QuizResult.self, StudyDay.self,
+                                                     LearnerProfile.self, ChatConversation.self, ChatMessage.self,
+                                                     LearnedPhrase.self]
 
     static func t(_ seconds: Double) -> Date { Date(timeIntervalSinceReferenceDate: seconds) }
 
@@ -121,6 +123,93 @@ import Testing
         context.insert(day)
         context.insert(bareDay)
 
+        let profile = LearnerProfile()
+        profile.sessionCount = 4
+        profile.lastSessionAt = t(816_200_000.5)
+        profile.grammar = ["dativ": GrammarSkill(struggle: 0.4, lastSeen: t(816_200_000), samples: ["mit der Freund → mit dem Freund"])]
+        profile.vocab = [VocabTouch(german: "Bahnhof", english: "station", lastSeen: t(816_150_000), timesUsed: 2, pinned: true),
+                         VocabTouch(german: "fahren", english: "to drive", lastSeen: t(816_100_000), timesUsed: 1, source: "placement")]
+        profile.slips = [LexicalSlip(wrong: "der", right: "dem", note: "mit takes the Dativ", lastSeen: t(816_200_000),
+                                     timesSeen: 3, sentence: "Ich fahre mit dem Bus.", blankIndex: 3)]
+        profile.selfReports = [SelfReportNote(text: "dem und den nach mit", focus: "dativ", notedAt: t(816_000_000),
+                                              entryID: UUID(uuidString: "88888888-8888-4888-8888-888888888888")!)]
+        profile.foerderplanData = Data(#"{"current":{"focus":"dativ","startedAt":816000000},"past":[]}"#.utf8)
+        let bareProfile = LearnerProfile()
+        context.insert(profile)
+        context.insert(bareProfile)
+
+        var config = ConversationConfig(model: .hero)
+        config.mode = .interview
+        config.level = .b1
+        config.formality = .sie
+        let chat = ChatConversation(config: config, createdAt: t(816_300_000))
+        chat.id = UUID(uuidString: "99999999-9999-4999-8999-999999999999")!
+        chat.title = "Vorstellungsgespräch bei der Bahn"
+        chat.updatedAt = t(816_300_900.25)
+        chat.durationSeconds = 840
+        chat.scenarioRaw = "restaurant"
+        chat.customScenario = "Beim Bäcker"
+        chat.focusRaw = ["dativ", "perfekt"]
+        chat.strictnessRaw = "Strict"
+        chat.feedbackStyleRaw = "Nudge me"
+        chat.correctionsEnabled = false
+        chat.inputModeRaw = "Type"
+        chat.autoPlay = false
+        chat.deckIDsRaw = ["11111111-1111-4111-8111-111111111111"]
+        chat.deckLabel = "Reise"
+        chat.paperTitle = "Mietvertrag"
+        chat.paperContext = "§1 Mietsache"
+        chat.jobTitle = "Zugbegleiter"
+        chat.jobContext = "Kundenservice im Zug"
+        chat.jobCompany = "Deutsche Bahn"
+        chat.jobLocation = "Berlin"
+        chat.jobURL = "https://example.com/job/1"
+        chat.interviewRoundRaw = "screening"
+        chat.interviewFormatRaw = "video"
+        chat.jobSnapshotFile = "job-1.pdf"
+        chat.jobPostingIDRaw = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+        chat.stammtischData = Data(#"{"guests":["Lena","Jonas"],"topic":"Urlaub"}"#.utf8)
+        chat.usesResume = true
+        chat.summaryData = Data(#"{"headline":"Gut gemacht","wins":["Dativ nach mit"]}"#.utf8)
+        chat.savedVocabData = Data(#"[{"english":"conductor","german":"Zugbegleiter"},{"english":"timetable","german":"Fahrplan"}]"#.utf8)
+
+        let bareChat = ChatConversation(config: ConversationConfig(model: .hero), createdAt: t(816_400_000))
+        bareChat.id = UUID(uuidString: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")!
+        context.insert(chat)
+        context.insert(bareChat)
+
+        let message = ChatMessage(role: .user, text: "Ich fahre mit der Bus.", sortOrder: 2, createdAt: t(816_300_100))
+        message.id = UUID(uuidString: "cccccccc-cccc-4ccc-8ccc-cccccccccccc")!
+        message.correctedText = "Ich fahre mit dem Bus."
+        message.correctionNote = "mit + Dativ"
+        message.correctionHint = "Which case follows mit?"
+        message.selfCorrected = true
+        message.correctionTranslationText = "I take the bus."
+        message.targetWordsUsed = ["fahren", "Bus"]
+        message.usedHint = true
+        message.usedPhraseHelper = true
+        message.reviewedWords = ["Bus"]
+        message.confirmedClean = true
+        message.translationText = "I'm going by bus."
+        message.translationViewed = true
+        let bareMessage = ChatMessage(role: .assistant, text: "Hallo!", sortOrder: 0, createdAt: t(816_400_010))
+        bareMessage.id = UUID(uuidString: "dddddddd-dddd-4ddd-8ddd-dddddddddddd")!
+        for (m, c) in [(message, chat), (bareMessage, bareChat)] {
+            context.insert(m)
+            m.conversation = c
+        }
+
+        let phrase = LearnedPhrase(german: "Wie komme ich zum Bahnhof?", english: "How do I get to the station?",
+                                   scenarios: [.restaurant], focusAreas: [.dativ], creatorModelRaw: "gemma-e4b",
+                                   isActive: false, note: "zum = zu dem", createdAt: t(816_500_000))
+        phrase.id = UUID(uuidString: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee")!
+        phrase.surfacedCount = 3
+        phrase.lastSurfacedAt = t(816_600_000)
+        let barePhrase = LearnedPhrase(german: "Tschüss", english: "Bye", createdAt: t(816_500_100))
+        barePhrase.id = UUID(uuidString: "ffffffff-ffff-4fff-8fff-ffffffffffff")!
+        context.insert(phrase)
+        context.insert(barePhrase)
+
         return [
             Sample(kind: "SavedDeck", label: "full", name: SavedDeckCodec.recordName(for: full), payload: SavedDeckCodec.known(full)),
             Sample(kind: "SavedDeck", label: "bare", name: SavedDeckCodec.recordName(for: bare), payload: SavedDeckCodec.known(bare)),
@@ -132,6 +221,14 @@ import Testing
             Sample(kind: "QuizResult", label: "bare", name: QuizResultCodec.recordName(for: bareResult), payload: QuizResultCodec.known(bareResult)),
             Sample(kind: "StudyDay", label: "full", name: StudyDayCodec.recordName(for: day), payload: StudyDayCodec.known(day)),
             Sample(kind: "StudyDay", label: "bare", name: StudyDayCodec.recordName(for: bareDay), payload: StudyDayCodec.known(bareDay)),
+            Sample(kind: "LearnerProfile", label: "full", name: LearnerProfileCodec.recordName(for: profile), payload: LearnerProfileCodec.known(profile)),
+            Sample(kind: "LearnerProfile", label: "bare", name: LearnerProfileCodec.recordName(for: bareProfile), payload: LearnerProfileCodec.known(bareProfile)),
+            Sample(kind: "ChatConversation", label: "full", name: ChatConversationCodec.recordName(for: chat), payload: ChatConversationCodec.known(chat)),
+            Sample(kind: "ChatConversation", label: "bare", name: ChatConversationCodec.recordName(for: bareChat), payload: ChatConversationCodec.known(bareChat)),
+            Sample(kind: "ChatMessage", label: "full", name: ChatMessageCodec.recordName(for: message), payload: ChatMessageCodec.known(message)),
+            Sample(kind: "ChatMessage", label: "bare", name: ChatMessageCodec.recordName(for: bareMessage), payload: ChatMessageCodec.known(bareMessage)),
+            Sample(kind: "LearnedPhrase", label: "full", name: LearnedPhraseCodec.recordName(for: phrase), payload: LearnedPhraseCodec.known(phrase)),
+            Sample(kind: "LearnedPhrase", label: "bare", name: LearnedPhraseCodec.recordName(for: barePhrase), payload: LearnedPhraseCodec.known(barePhrase)),
         ]
     }
 

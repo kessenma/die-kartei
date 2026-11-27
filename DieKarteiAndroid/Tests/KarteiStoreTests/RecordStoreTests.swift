@@ -183,6 +183,54 @@ struct RecordStoreTests {
         #expect(try ReplicaID.load(directory: dir) == first)
         #expect(try ReplicaID.load(directory: tempDir()) != first)
     }
+
+    @Test("Chats, messages, the profile and phrases store the iOS shape; deleting a chat takes its messages")
+    func storesTheTutorKinds() throws {
+        let dir = tempDir()
+        var store = try open(dir)
+        let chats = ["full", "bare"].map { ChatConversationRecord(payload: Self.golden("ChatConversation", $0)) }
+        let messages = ["full", "bare"].map { ChatMessageRecord(payload: Self.golden("ChatMessage", $0)) }
+        let phrases = ["full", "bare"].map { LearnedPhraseRecord(payload: Self.golden("LearnedPhrase", $0)) }
+        let profile = LearnerProfileRecord(payload: Self.golden("LearnerProfile", "full"))
+        try store.transaction {
+            try store.put(chats); try store.put(messages); try store.put(phrases); try store.put(profile)
+        }
+        try store.database.close()
+
+        store = try open(dir)
+        for (i, label) in ["full", "bare"].enumerated() {
+            #expect(store.record(ChatConversationRecord.self, id: chats[i].id)?.payload == Self.golden("ChatConversation", label))
+            #expect(store.record(ChatMessageRecord.self, id: messages[i].id)?.payload == Self.golden("ChatMessage", label))
+            #expect(store.record(LearnedPhraseRecord.self, id: phrases[i].id)?.payload == Self.golden("LearnedPhrase", label))
+        }
+        // The singleton: one row under the fixed name, whatever wrote it.
+        #expect(store.records(LearnerProfileRecord.self).map(\.payload) == [Self.golden("LearnerProfile", "full")])
+        #expect(store.record(LearnerProfileRecord.self, id: SyncKinds.learnerProfileName.id)?.sessionCount == 4)
+        #expect(store.records(ChatMessageRecord.self, parent: chats[0].id).map(\.id) == [messages[0].id])
+        #expect(store.records(LearnedPhraseRecord.self, naturalKey: "Tschüss").count == 1)
+
+        try store.delete(chats[0])
+        #expect(store.record(ChatMessageRecord.self, id: messages[0].id) == nil)
+        #expect(store.record(ChatMessageRecord.self, id: messages[1].id) != nil)
+        #expect(store.count(kind: "ChatConversation") == 1)
+    }
+
+    @Test("A session on this device counts in the profile's slot; a chat's time likewise")
+    func tutorCountersArePerDevice() throws {
+        let store = try open(tempDir(), replica: "phone-1")
+        var profile = LearnerProfileRecord()
+        profile.sessionCount = 2
+        profile.lastSessionAt = Self.t(50)
+        try store.put(profile, now: Self.t(50))
+        var chat = ChatConversationRecord(payload: Self.golden("ChatConversation", "bare"))
+        chat.durationSeconds = 120
+        try store.put(chat, now: Self.t(60))
+
+        let p = try #require(store.copies(of: profile.name)?.pending)
+        #expect(SyncCounter(json: p["sessionCount"]).p["phone-1"] == 2)
+        let c = try #require(store.copies(of: chat.name)?.pending)
+        #expect(SyncCounter(json: c["durationSeconds"]).p["phone-1"] == 120)
+    }
 }
 
 /// The reviewed Wortschatz card from the golden file, and the same word unreviewed.

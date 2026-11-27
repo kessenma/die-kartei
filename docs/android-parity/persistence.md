@@ -14,8 +14,12 @@ Built and tested; the rest of this document is the design it follows.
   (`SyncFields`), moved to `Services/Sync/Core/SyncKinds.swift` and `SyncPayloadFields.swift`.
   The iOS codecs read `SyncKinds.<kind>`; an iOS test checks `SyncRegistry` against
   `SyncKinds.all`, rule for rule.
-- **Records (step 2, first four):** `DeckRecord`, `CardRecord`, `QuizResultRecord`,
-  `StudyDayRecord` in `Services/Sync/Core/Records/`. Unknown fields pass through (`extra`).
+- **Records (step 2, all eight spine kinds):** `DeckRecord`, `CardRecord`, `QuizResultRecord`,
+  `StudyDayRecord`, plus `LearnerProfileRecord` (the singleton; its sections stay JSON),
+  `ChatConversationRecord`, `ChatMessageRecord` (parent: the chat) and `LearnedPhraseRecord`
+  (`ChatRecords.swift`, `LearnerRecords.swift`) in `Services/Sync/Core/Records/`. Unknown fields
+  pass through (`extra`). They build in KarteiSyncCore too, so they use no app enums: the chat's
+  defaults are iOS's raw strings, checked against `ConversationConfig` in SyncRecordTests.
   `WortschatzRecords` builds the Wortschatz deck and cards exactly as `DeckStore` does.
 - **The contract (step 10):** `DieKarteiCore/Tests/DieKarteiCoreTests/sync_golden.json`, written
   from fully populated SwiftData rows. iOS `SyncGoldenTests`: the codecs produce it and apply it
@@ -32,9 +36,11 @@ Built and tested; the rest of this document is the design it follows.
   the iOS ids; the level is a filter. `WortschatzMigration` moves `studyProgress.v1` once,
   merging a word's per-level copies by the card's sync rules (the old blob stays for rollback).
 
-Next: `LearnerProfile`, `ChatConversation`/`ChatMessage`, `LearnedPhrase` records when those
-Android features persist; StudyDay writes from Android sessions (step 5, needs
-`StudyLogService`'s counting moved to the core); Auto Backup rules (sync.mdx step 2); a transport.
+Next: Android writes for the new kinds (steps 6–7: `TutorStore` saving chats and messages,
+`sessionSummarized` into the profile, saved phrases); StudyDay writes from Android sessions
+(step 5, needs `StudyLogService`'s counting moved to the core); Auto Backup rules (sync.mdx
+step 2); a transport. Android code that adds a slip or self-report to the profile must write the
+item's `"id"` the way the iOS codec does (see `LearnerProfileRecord`).
 
 ## 0. Summary
 

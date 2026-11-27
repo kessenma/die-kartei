@@ -38,6 +38,10 @@ import Testing
         case "SavedCard": let r = CardRecord(payload: g.payload); return (r.name.description, r.payload)
         case "QuizResult": let r = QuizResultRecord(payload: g.payload); return (r.name.description, r.payload)
         case "StudyDay": let r = StudyDayRecord(payload: g.payload); return (r.name.description, r.payload)
+        case "LearnerProfile": let r = LearnerProfileRecord(payload: g.payload); return (r.name.description, r.payload)
+        case "ChatConversation": let r = ChatConversationRecord(payload: g.payload); return (r.name.description, r.payload)
+        case "ChatMessage": let r = ChatMessageRecord(payload: g.payload); return (r.name.description, r.payload)
+        case "LearnedPhrase": let r = LearnedPhraseRecord(payload: g.payload); return (r.name.description, r.payload)
         default: return nil
         }
     }
@@ -50,8 +54,9 @@ import Testing
     }
 
     @Test func theGoldenFileIsThere() {
-        #expect(Self.records.count >= 10)
-        #expect(Set(Self.records.map(\.kind)) == ["SavedDeck", "SavedCard", "QuizResult", "StudyDay"])
+        #expect(Self.records.count >= 18)
+        #expect(Set(Self.records.map(\.kind)) == ["SavedDeck", "SavedCard", "QuizResult", "StudyDay", "LearnerProfile",
+                                                  "ChatConversation", "ChatMessage", "LearnedPhrase"])
     }
 
     @Test(arguments: records.indices)
@@ -99,6 +104,43 @@ import Testing
         day.day = "2026-11-27"
         day.lastActivityAt = Self.t(816_000_000.75)
         #expect(day.payload == Self.golden("StudyDay", "full"))
+
+        #expect(LearnerProfileRecord().payload == Self.golden("LearnerProfile", "bare"))
+
+        // A new chat's defaults are iOS's `ChatConversation(config: ConversationConfig(model:))`.
+        // (`MLXModel.hero` lives outside the core; the golden row has the model iOS picked.)
+        let bareChat = Self.golden("ChatConversation", "bare")
+        let chat = ChatConversationRecord(id: UUID(uuidString: "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB")!,
+                                          modelRaw: bareChat.string("modelRaw") ?? "", createdAt: Self.t(816_400_000))
+        #expect(chat.payload == bareChat)
+        let config = ConversationConfig(model: .gemma4_E4B_german)
+        #expect(chat.title == config.displayTitle)
+        #expect(chat.modeRaw == config.mode.rawValue)
+        #expect(chat.levelRaw == config.level.rawValue)
+        #expect(chat.formalityRaw == config.formality.rawValue)
+        #expect(chat.strictnessRaw == config.strictness.rawValue)
+        #expect(chat.feedbackStyleRaw == config.feedbackStyle.rawValue)
+        #expect(chat.inputModeRaw == config.inputMode.rawValue)
+        #expect(chat.correctionsEnabled == config.correctionsEnabled)
+        #expect(chat.autoPlay == config.autoPlay)
+
+        let hello = ChatMessageRecord(id: UUID(uuidString: "DDDDDDDD-DDDD-4DDD-8DDD-DDDDDDDDDDDD")!,
+                                      conversation: chat.id, roleRaw: ChatRole.assistant.rawValue, text: "Hallo!",
+                                      sortOrder: 0, createdAt: Self.t(816_400_010))
+        #expect(hello.payload == Self.golden("ChatMessage", "bare"))
+
+        let bye = LearnedPhraseRecord(id: UUID(uuidString: "FFFFFFFF-FFFF-4FFF-8FFF-FFFFFFFFFFFF")!,
+                                      german: "Tschüss", english: "Bye", createdAt: Self.t(816_500_100))
+        #expect(bye.payload == Self.golden("LearnedPhrase", "bare"))
+    }
+
+    /// The profile is one record on every device, whatever the row.
+    @Test func learnerProfileIsASingleton() {
+        let full = LearnerProfileRecord(payload: Self.golden("LearnerProfile", "full"))
+        #expect(full.name == SyncKinds.learnerProfileName)
+        #expect(full.name.description == Self.id("learnerProfile"))
+        #expect(full.payload["id"] == nil)
+        #expect(full.sessionCount == 4)
     }
 
     /// A field a newer build added survives a read and a write on an older one.
