@@ -586,6 +586,94 @@
         ],
         "surfacedCount" : 0
       }
+    },
+    {
+      "kind" : "KasusRound",
+      "label" : "full",
+      "name" : "KasusRound:66011321-3728-51EC-AB7C-53EAF4C94179",
+      "payload" : {
+        "askedCount" : 8,
+        "date" : 816700000.5,
+        "durationSeconds" : 140,
+        "feedbackModeRaw" : "end",
+        "firstTryCount" : 6,
+        "hintLevelRaw" : "guided",
+        "items" : [
+          {
+            "answer" : "den",
+            "given" : "den",
+            "index" : 2
+          }
+        ],
+        "key" : "0A0A0A0A-0A0A-4A0A-8A0A-0A0A0A0A0A0A",
+        "markCaseRaw" : "akkusativ",
+        "perCase" : {
+          "akkusativ" : {
+            "asked" : 5,
+            "firstTry" : 4
+          },
+          "dativ" : {
+            "asked" : 3,
+            "firstTry" : 2
+          }
+        },
+        "revealedAnswers" : true,
+        "roundKey" : "0A0A0A0A-0A0A-4A0A-8A0A-0A0A0A0A0A0A",
+        "stepRaw" : "find",
+        "storyID" : "akk-reise-1",
+        "unitRaw" : "akkusativ",
+        "wrongCount" : 3
+      }
+    },
+    {
+      "kind" : "KasusRound",
+      "label" : "lesson",
+      "name" : "KasusRound:E5D01440-48FA-5EB4-88E8-A19FFB75E386",
+      "payload" : {
+        "askedCount" : 0,
+        "date" : 816700100,
+        "durationSeconds" : 95,
+        "feedbackModeRaw" : "",
+        "firstTryCount" : 0,
+        "hintLevelRaw" : "",
+        "items" : null,
+        "key" : "0B0B0B0B-0B0B-4B0B-8B0B-0B0B0B0B0B0B",
+        "markCaseRaw" : "",
+        "perCase" : {
+
+        },
+        "revealedAnswers" : false,
+        "roundKey" : "0B0B0B0B-0B0B-4B0B-8B0B-0B0B0B0B0B0B",
+        "stepRaw" : "lesson",
+        "storyID" : "concept-akkusativ-lesson",
+        "unitRaw" : "akkusativ",
+        "wrongCount" : 0
+      }
+    },
+    {
+      "kind" : "KasusRound",
+      "label" : "legacy",
+      "name" : "KasusRound:4E74BCAA-4C6D-5230-95CD-5618A2581F14",
+      "payload" : {
+        "askedCount" : 4,
+        "date" : 816700200,
+        "durationSeconds" : 60,
+        "feedbackModeRaw" : "",
+        "firstTryCount" : 4,
+        "hintLevelRaw" : "",
+        "items" : null,
+        "key" : "816700200.0|dat-markt-2|dativ|fill",
+        "markCaseRaw" : "",
+        "perCase" : {
+
+        },
+        "revealedAnswers" : false,
+        "roundKey" : "",
+        "stepRaw" : "fill",
+        "storyID" : "dat-markt-2",
+        "unitRaw" : "dativ",
+        "wrongCount" : 0
+      }
     }
   ]
 }

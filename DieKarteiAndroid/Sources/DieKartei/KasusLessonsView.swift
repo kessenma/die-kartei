@@ -114,6 +114,10 @@ struct KasusLessonsView: View {
 struct KasusLessonView: View {
     let unit: KasusUnit
     @State var page = 0
+    /// As iOS's lesson view: reaching the last card for the first time files the lesson as read,
+    /// with the seconds since it opened.
+    @State var openedAt = Date()
+    @State var reported = false
 
     var cards: [KasusLessonCard] { KasusLesson.cards(for: unit) }
 
@@ -169,5 +173,13 @@ struct KasusLessonView: View {
         }
         .padding()
         .navigationTitle(unit.germanTitle)
+        .onAppear { reportIfRead() }
+        .onChange(of: page) { _, _ in reportIfRead() }
+    }
+
+    func reportIfRead() {
+        guard !reported, !cards.isEmpty, page + 1 >= cards.count else { return }
+        reported = true
+        StudyLog.shared.lessonRead(topicKey: unit.rawValue, seconds: max(1, Int(Date().timeIntervalSince(openedAt))))
     }
 }

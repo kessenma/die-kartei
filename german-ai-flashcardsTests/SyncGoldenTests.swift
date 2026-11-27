@@ -35,7 +35,7 @@ import Testing
 
     static let models: [any PersistentModel.Type] = [SavedDeck.self, SavedCard.self, QuizResult.self, StudyDay.self,
                                                      LearnerProfile.self, ChatConversation.self, ChatMessage.self,
-                                                     LearnedPhrase.self]
+                                                     LearnedPhrase.self, KasusRound.self]
 
     static func t(_ seconds: Double) -> Date { Date(timeIntervalSinceReferenceDate: seconds) }
 
@@ -210,6 +210,21 @@ import Testing
         context.insert(phrase)
         context.insert(barePhrase)
 
+        let round = KasusRound(storyID: "akk-reise-1", unitRaw: "akkusativ", stepRaw: "find", hintLevelRaw: "guided",
+                               askedCount: 8, firstTryCount: 6, durationSeconds: 140, date: t(816_700_000.5),
+                               feedbackModeRaw: "end", markCaseRaw: "akkusativ", wrongCount: 3,
+                               revealedAnswers: true, roundKey: "0A0A0A0A-0A0A-4A0A-8A0A-0A0A0A0A0A0A")
+        round.perCaseData = Data(#"{"akkusativ":{"asked":5,"firstTry":4},"dativ":{"asked":3,"firstTry":2}}"#.utf8)
+        round.itemsData = Data(#"[{"answer":"den","given":"den","index":2}]"#.utf8)
+        // What `KasusService.recordLessonRead` inserts.
+        let lesson = KasusRound(storyID: KasusRoundStep.lesson.roundID(topicKey: "akkusativ"), unitRaw: "akkusativ",
+                                stepRaw: KasusRoundStep.lesson.rawValue, askedCount: 0, firstTryCount: 0,
+                                durationSeconds: 95, date: t(816_700_100), roundKey: "0B0B0B0B-0B0B-4B0B-8B0B-0B0B0B0B0B0B")
+        // A row from before `roundKey`: named by date, story, unit and step.
+        let legacy = KasusRound(storyID: "dat-markt-2", unitRaw: "dativ", stepRaw: "fill", askedCount: 4,
+                                firstTryCount: 4, durationSeconds: 60, date: t(816_700_200))
+        for r in [round, lesson, legacy] { context.insert(r) }
+
         return [
             Sample(kind: "SavedDeck", label: "full", name: SavedDeckCodec.recordName(for: full), payload: SavedDeckCodec.known(full)),
             Sample(kind: "SavedDeck", label: "bare", name: SavedDeckCodec.recordName(for: bare), payload: SavedDeckCodec.known(bare)),
@@ -229,6 +244,9 @@ import Testing
             Sample(kind: "ChatMessage", label: "bare", name: ChatMessageCodec.recordName(for: bareMessage), payload: ChatMessageCodec.known(bareMessage)),
             Sample(kind: "LearnedPhrase", label: "full", name: LearnedPhraseCodec.recordName(for: phrase), payload: LearnedPhraseCodec.known(phrase)),
             Sample(kind: "LearnedPhrase", label: "bare", name: LearnedPhraseCodec.recordName(for: barePhrase), payload: LearnedPhraseCodec.known(barePhrase)),
+            Sample(kind: "KasusRound", label: "full", name: KasusRoundCodec.recordName(for: round), payload: KasusRoundCodec.known(round)),
+            Sample(kind: "KasusRound", label: "lesson", name: KasusRoundCodec.recordName(for: lesson), payload: KasusRoundCodec.known(lesson)),
+            Sample(kind: "KasusRound", label: "legacy", name: KasusRoundCodec.recordName(for: legacy), payload: KasusRoundCodec.known(legacy)),
         ]
     }
 

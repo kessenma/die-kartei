@@ -95,9 +95,11 @@ struct VoiceSettingsView: View {
 
 // MARK: - Flashcards
 
-/// Settings ▸ Flashcards: how many new words a session brings in, and starting a deck over.
+/// Settings ▸ Flashcards: iOS's Wortschatz settings (same keys, `WortschatzPrefs`), and starting a
+/// deck over.
 struct FlashcardsSettingsView: View {
-    @AppStorage(StudyStore.newPerSessionKey) var newPerSession = StudyStore.newPerSessionDefault
+    @AppStorage(WortschatzPrefs.newPerDayKey) var newPerDay = WortschatzPrefs.newPerDayDefault
+    @AppStorage(WortschatzPrefs.sessionCapKey) var sessionCap = WortschatzPrefs.sessionCapDefault
     @State var store = StudyStore.shared
     /// Kept apart from the alert's flag: Compose clears the flag before the button's action
     /// runs, so the level has to outlive it.
@@ -107,13 +109,18 @@ struct FlashcardsSettingsView: View {
     var body: some View {
         List {
             Section {
-                Picker("New words per session", selection: $newPerSession) {
-                    ForEach([5, 10, 15, 20, 30], id: \.self) { n in
+                Picker("New words per day", selection: $newPerDay) {
+                    ForEach(WortschatzPrefs.newPerDayOptions, id: \.self) { n in
+                        Text("\(n)").tag(n)
+                    }
+                }
+                Picker("Cards per session", selection: $sessionCap) {
+                    ForEach(WortschatzPrefs.sessionCapOptions, id: \.self) { n in
                         Text("\(n)").tag(n)
                     }
                 }
             } footer: {
-                Text("Due cards always come first; this many new words follow.")
+                Text("Due cards come first, then new words, up to the day's new words.")
             }
             Section("Progress") {
                 ForEach(GoetheLevel.allCases) { level in

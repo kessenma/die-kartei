@@ -65,12 +65,12 @@ struct HomeView: View {
     }
 
     var todayRow: some View {
-        let stats = store.stats(for: level)
-        let fresh = min(StudyStore.newForNextSession, stats.total - stats.seen)
+        // What the next session would hold, so the numbers match what Karteikarten opens with.
+        let plan = store.plan(for: level)
         return VStack(alignment: .leading, spacing: 2) {
             Text("Karteikarten · Goethe \(level.rawValue)")
                 .font(.headline)
-            Text("\(stats.due) fällig · \(fresh) neu")
+            Text("\(plan.due.count) fällig · \(plan.fresh.count) neu")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }

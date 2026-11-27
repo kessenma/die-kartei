@@ -35,16 +35,6 @@ final class StudyCard: SRSCardState {
 final class StudyStore {
     static let shared = StudyStore()
 
-    /// Where Settings ▸ Flashcards keeps the number of new words per session.
-    static let newPerSessionKey = "flashcards.newPerSession"
-    static let newPerSessionDefault = 10
-
-    /// New words a session brings in, on top of everything due.
-    static var newPerSession: Int {
-        let stored = UserDefaults.standard.integer(forKey: newPerSessionKey)
-        return stored > 0 ? stored : newPerSessionDefault
-    }
-
     /// Reviewed cards by exact German word.
     private(set) var cards: [String: CardRecord] = [:]
     private let records: RecordStore?
@@ -80,23 +70,26 @@ final class StudyStore {
         }
     }
 
-    /// New words a session may bring in now: the per-session setting, within what's left of
-    /// today's budget (iOS's daily `wortschatz.newPerDay`).
-    static var newForNextSession: Int { min(newPerSession, StudyLog.shared.newWordsLeftToday) }
-
-    /// Due reviews first (oldest due first), then up to `newForNextSession` unseen words in list order.
-    func session(for level: GoetheLevel, now: Date = Date()) -> [A1Entry] {
-        var due: [(A1Entry, Date)] = []
+    /// A session as iOS builds one (`WortschatzSessionPlan`, shared): every due card, shuffled, up
+    /// to the session cap, then new words in list order within today's budget and the room left.
+    func plan(for level: GoetheLevel, now: Date = Date()) -> (due: [A1Entry], fresh: [A1Entry]) {
+        var due: [A1Entry] = []
         var fresh: [A1Entry] = []
-        let newLimit = Self.newForNextSession
         for entry in words(for: level) {
             if let card = cards[entry.word] {
-                if let next = card.nextReviewDate, next <= now { due.append((entry, next)) }
-            } else if fresh.count < newLimit {
+                if let next = card.nextReviewDate, next <= now { due.append(entry) }
+            } else {
                 fresh.append(entry)
             }
         }
-        return due.sorted { $0.1 < $1.1 }.map(\.0) + fresh
+        fresh.sort { (WortschatzRecords.sortOrder[$0.word] ?? 0) < (WortschatzRecords.sortOrder[$1.word] ?? 0) }
+        return WortschatzSessionPlan.choose(due: due, fresh: fresh, newBudget: StudyLog.shared.newWordsLeftToday,
+                                            sessionCap: WortschatzPrefs.sessionCap())
+    }
+
+    func session(for level: GoetheLevel, now: Date = Date()) -> [A1Entry] {
+        let plan = plan(for: level, now: now)
+        return plan.due + plan.fresh
     }
 
     /// The word's card: its record once reviewed, else a fresh one with the iOS id and content.
@@ -123,8 +116,8 @@ final class StudyStore {
         } catch {
             logger.error("StudyStore: could not save \(entry.word): \(error)")
         }
-        // As iOS: the review counts toward today, a first rating against the new-word budget.
-        StudyLog.shared.answered(.cards(1))
+        // As iOS: a first rating counts against today's new-word budget. (The review itself is
+        // logged with its session, KartenView's StudyRound.)
         if firstRating { StudyLog.shared.recordNewWords(1) }
     }
 

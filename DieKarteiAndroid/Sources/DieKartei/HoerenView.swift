@@ -46,6 +46,8 @@ struct ZahlenDiktatView: View {
     @State var right = 0
     @State var typed = ""
     @State var verdict: Bool?
+    /// Logged at the end, or on leaving with an answer, as iOS saves a Hören round.
+    @State var studyRound = StudyRound(minimumItems: 1) { .hoeren(max(1, $0)) }
 
     var body: some View {
         VStack(spacing: 18) {
@@ -92,7 +94,8 @@ struct ZahlenDiktatView: View {
         }
         .padding()
         .navigationTitle(kind.germanLabel)
-        .onAppear { StudyLog.shared.begin(); if items.isEmpty { newRound() } }
+        .onAppear { if items.isEmpty { newRound() } }
+        .onDisappear { studyRound.finish() }
     }
 
     func check(_ item: HoerenNumberItem) {
@@ -103,16 +106,16 @@ struct ZahlenDiktatView: View {
     }
 
     func next() {
-        // An item heard and answered, right or wrong (iOS: listening is the work).
-        if verdict != nil { StudyLog.shared.answered(.hoeren(1)) }
+        // An item heard and answered counts, right or wrong (iOS: listening is the work).
+        if verdict != nil { studyRound.add() }
         typed = ""
         verdict = nil
         index += 1
-        if index < items.count { GermanVoice.shared.speak(items[index].spoken, slow: false) }
+        if index < items.count { GermanVoice.shared.speak(items[index].spoken, slow: false) } else { studyRound.finish() }
     }
 
     func newRound() {
-        StudyLog.shared.begin()
+        studyRound.start()
         var rng = SystemRandomNumberGenerator()
         items = HoerenNumberGenerator.round(kinds: [kind], level: level, mode: .bare, count: 10, rng: &rng)
         index = 0

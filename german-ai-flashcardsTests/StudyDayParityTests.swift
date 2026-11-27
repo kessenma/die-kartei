@@ -50,4 +50,23 @@ import Testing
         #expect(day.totalSeconds == record.totalSeconds)
         #expect(StudyLogService.currentStreak([day]) == StudyStreak.currentStreak([record]))
     }
+
+    /// Android files a read lesson under the same id and step iOS checks (`drillDone(.lesson)`).
+    @Test func lessonRoundsUseTheIOSIds() {
+        for key in ["akkusativ", "dativ", "reflexiv"] {
+            #expect(KasusRoundRecord.lessonStoryID(topicKey: key) == KasusRoundStep.lesson.roundID(topicKey: key))
+        }
+        #expect(KasusRoundRecord.lessonStep == KasusRoundStep.lesson.rawValue)
+    }
+
+    /// Android's Wortschatz settings are iOS's.
+    @Test func wortschatzSessionsArePlannedOnce() {
+        let plan = WortschatzSessionPlan.choose(due: Array(1...50), fresh: Array(100...130), newBudget: 15,
+                                                sessionCap: 40, shuffle: { $0 })
+        #expect(plan.due == Array(1...40))
+        #expect(plan.fresh.isEmpty)
+        let light = WortschatzSessionPlan.choose(due: [1, 2], fresh: Array(100...130), newBudget: 15,
+                                                 sessionCap: 40, shuffle: { $0 })
+        #expect(light.fresh == Array(100...114))
+    }
 }

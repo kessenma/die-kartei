@@ -83,6 +83,8 @@ struct ScoreLine: View {
 struct ArtikelView: View {
     @AppStorage("level") var levelRaw = GoetheLevel.a1.rawValue
     @State var round: [A1Entry] = []
+    /// Logged when the round is done, as iOS logs its grammar rounds.
+    @State var studyRound = StudyRound { .grammar($0) }
     @State var index = 0
     @State var right = 0
     @State var picked: String?
@@ -115,7 +117,7 @@ struct ArtikelView: View {
         }
         .padding()
         .navigationTitle("der, die, das")
-        .onAppear { StudyLog.shared.begin(); if round.isEmpty { newRound() } }
+        .onAppear { if round.isEmpty { newRound() } }
     }
 
     func feedback(entry: A1Entry, article: GermanArticle, wasRight: Bool) -> some View {
@@ -135,7 +137,8 @@ struct ArtikelView: View {
             Button("Weiter") {
                 if wasRight { right += 1 }
                 picked = nil
-                StudyLog.shared.answered(.grammar(1))
+                studyRound.add()
+                if index + 1 == round.count { studyRound.finish() }
                 index += 1
             }
             .buttonStyle(.borderedProminent)
@@ -143,7 +146,7 @@ struct ArtikelView: View {
     }
 
     func newRound() {
-        StudyLog.shared.begin()
+        studyRound.start()
         let nouns = GoetheVocabService.entries(for: level).filter { GermanArticle(text: $0.article) != nil }
         round = Array(nouns.shuffled().prefix(15))
         index = 0
@@ -157,6 +160,8 @@ struct ArtikelView: View {
 /// Which case does the preposition take? The iOS drill's question, from prepositions.json.
 struct PraepositionenView: View {
     @State var round: [Preposition] = []
+    /// Logged when the round is done, as iOS logs its grammar rounds.
+    @State var studyRound = StudyRound { .grammar($0) }
     @State var index = 0
     @State var right = 0
     @State var picked: String?
@@ -190,7 +195,8 @@ struct PraepositionenView: View {
                         Button("Weiter") {
                             if picked == prep.governs.germanLabel { right += 1 }
                             self.picked = nil
-                            StudyLog.shared.answered(.grammar(1))
+                            studyRound.add()
+                            if index + 1 == round.count { studyRound.finish() }
                             index += 1
                         }
                         .buttonStyle(.borderedProminent)
@@ -206,7 +212,7 @@ struct PraepositionenView: View {
         }
         .padding()
         .navigationTitle("Präpositionen")
-        .onAppear { StudyLog.shared.begin(); if round.isEmpty { newRound() } }
+        .onAppear { if round.isEmpty { newRound() } }
     }
 
     func caseColor(_ group: PrepositionCase?) -> Color {
@@ -220,7 +226,7 @@ struct PraepositionenView: View {
     }
 
     func newRound() {
-        StudyLog.shared.begin()
+        studyRound.start()
         let core = PrepositionService.all().filter { $0.tier != .advanced }
         round = Array(core.shuffled().prefix(10))
         index = 0
@@ -235,6 +241,8 @@ struct PraepositionenView: View {
 struct LueckenView: View {
     let category: GrammarCategory
     @State var round: [GrammarExercise] = []
+    /// Logged when the round is done, as iOS logs its grammar rounds.
+    @State var studyRound = StudyRound { .grammar($0) }
     @State var index = 0
     @State var right = 0
     @State var picked: String?
@@ -264,7 +272,8 @@ struct LueckenView: View {
                         Button("Weiter") {
                             if picked == exercise.correctAnswer { right += 1 }
                             self.picked = nil
-                            StudyLog.shared.answered(.grammar(1))
+                            studyRound.add()
+                            if index + 1 == round.count { studyRound.finish() }
                             index += 1
                         }
                         .buttonStyle(.borderedProminent)
@@ -281,11 +290,11 @@ struct LueckenView: View {
         }
         .padding()
         .navigationTitle(category.title)
-        .onAppear { StudyLog.shared.begin(); if round.isEmpty { newRound() } }
+        .onAppear { if round.isEmpty { newRound() } }
     }
 
     func newRound() {
-        StudyLog.shared.begin()
+        studyRound.start()
         round = category.exercises.shuffled()
         index = 0
         right = 0
@@ -299,6 +308,8 @@ struct LueckenView: View {
 struct PerfektView: View {
     @State var level = PastTenseLevel.a1
     @State var round: [PastTenseVerbEntry] = []
+    /// Logged when the round is done, as iOS logs its grammar rounds.
+    @State var studyRound = StudyRound { .grammar($0) }
     @State var index = 0
     @State var right = 0
     @State var picked: String?
@@ -329,7 +340,8 @@ struct PerfektView: View {
                         Button("Weiter") {
                             if picked == verb.auxiliary { right += 1 }
                             self.picked = nil
-                            StudyLog.shared.answered(.grammar(1))
+                            studyRound.add()
+                            if index + 1 == round.count { studyRound.finish() }
                             index += 1
                         }
                         .buttonStyle(.borderedProminent)
@@ -345,12 +357,12 @@ struct PerfektView: View {
         }
         .padding()
         .navigationTitle("Perfekt")
-        .onAppear { StudyLog.shared.begin(); if round.isEmpty { newRound() } }
+        .onAppear { if round.isEmpty { newRound() } }
         .onChange(of: level) { _, _ in newRound() }
     }
 
     func newRound() {
-        StudyLog.shared.begin()
+        studyRound.start()
         round = Array(PastTenseVerbService.entries(for: level).shuffled().prefix(12))
         index = 0
         right = 0

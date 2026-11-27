@@ -42,6 +42,7 @@ import Testing
         case "ChatConversation": let r = ChatConversationRecord(payload: g.payload); return (r.name.description, r.payload)
         case "ChatMessage": let r = ChatMessageRecord(payload: g.payload); return (r.name.description, r.payload)
         case "LearnedPhrase": let r = LearnedPhraseRecord(payload: g.payload); return (r.name.description, r.payload)
+        case "KasusRound": let r = KasusRoundRecord(payload: g.payload); return (r.name.description, r.payload)
         default: return nil
         }
     }
@@ -54,9 +55,9 @@ import Testing
     }
 
     @Test func theGoldenFileIsThere() {
-        #expect(Self.records.count >= 18)
+        #expect(Self.records.count >= 21)
         #expect(Set(Self.records.map(\.kind)) == ["SavedDeck", "SavedCard", "QuizResult", "StudyDay", "LearnerProfile",
-                                                  "ChatConversation", "ChatMessage", "LearnedPhrase"])
+                                                  "ChatConversation", "ChatMessage", "LearnedPhrase", "KasusRound"])
     }
 
     @Test(arguments: records.indices)
@@ -132,6 +133,14 @@ import Testing
         let bye = LearnedPhraseRecord(id: UUID(uuidString: "FFFFFFFF-FFFF-4FFF-8FFF-FFFFFFFFFFFF")!,
                                       german: "Tschüss", english: "Bye", createdAt: Self.t(816_500_100))
         #expect(bye.payload == Self.golden("LearnedPhrase", "bare"))
+    }
+
+    /// A lesson read on Android is the row iOS's `recordLessonRead` inserts.
+    @Test func lessonReadMatchesIOS() {
+        var lesson = KasusRoundRecord.lessonRead(topicKey: "akkusativ", seconds: 95, at: Self.t(816_700_100))
+        lesson.roundKey = "0B0B0B0B-0B0B-4B0B-8B0B-0B0B0B0B0B0B"
+        #expect(lesson.payload == Self.golden("KasusRound", "lesson"))
+        #expect(KasusRoundRecord(payload: Self.golden("KasusRound", "legacy")).key == "816700200.0|dat-markt-2|dativ|fill")
     }
 
     /// The profile is one record on every device, whatever the row.

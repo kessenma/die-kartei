@@ -61,6 +61,8 @@ struct HangmanView: View {
     @State var index = 0
     @State var state: HangmanState?
     @State var won = 0
+    /// Logged at the end or on leaving (abandoned time counts), as iOS's SpieleScoringService.
+    @State var studyRound = StudyRound { .games($0) }
     @Environment(\.colorScheme) var scheme
 
     let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 8)
@@ -101,7 +103,8 @@ struct HangmanView: View {
         }
         .padding()
         .navigationTitle("Galgenmännchen")
-        .onAppear { StudyLog.shared.begin(); if words.isEmpty { newRound() } }
+        .onAppear { if words.isEmpty { newRound() } }
+        .onDisappear { studyRound.finish() }
     }
 
     func blanks(_ state: HangmanState) -> some View {
@@ -154,6 +157,7 @@ struct HangmanView: View {
     }
 
     func newRound() {
+        studyRound.start()
         words = GameWords.round(HangmanRound.self, levelRaw: levelRaw, seed: GameWords.newSeed())
         index = 0
         won = 0
@@ -161,14 +165,13 @@ struct HangmanView: View {
     }
 
     func next() {
-        // A word is over: solved counts, the time counts either way (iOS banks abandoned time too).
-        if let state, state.isOver {
-            StudyLog.shared.answered(.games(state.isWon && !state.isLost ? 1 : 0))
-        }
+        // A finished word: solved counts. A word left mid-guess doesn't, as on iOS.
+        if let state, state.isOver, state.isWon, !state.isLost { studyRound.add() }
         if index + 1 < words.count {
             index += 1
             state = HangmanState(word: words[index])
         } else {
+            studyRound.finish()
             newRound()
         }
     }
@@ -183,6 +186,7 @@ struct WortsucheView: View {
     @State var found: Set<String> = []
     @State var start: GridPoint?
     @State var message = ""
+    @State var studyRound = StudyRound { .games($0) }
     @Environment(\.colorScheme) var scheme
 
     var body: some View {
@@ -205,7 +209,8 @@ struct WortsucheView: View {
         }
         .padding()
         .navigationTitle("Wortsuche")
-        .onAppear { StudyLog.shared.begin(); if puzzle == nil { newPuzzle() } }
+        .onAppear { if puzzle == nil { newPuzzle() } }
+        .onDisappear { studyRound.finish() }
     }
 
     func grid(_ puzzle: WordSearchPuzzle) -> some View {
@@ -257,7 +262,8 @@ struct WortsucheView: View {
         }
         if let placement = puzzle.placement(matching: cells), !found.contains(placement.id) {
             found.insert(placement.id)
-            StudyLog.shared.answered(.games(1))
+            studyRound.add()
+            if found.count == puzzle.placements.count { studyRound.finish() }
             message = "\(placement.word.display) = \(placement.word.english)"
         } else {
             message = "Kein Wort"
@@ -274,6 +280,8 @@ struct WortsucheView: View {
     }
 
     func newPuzzle() {
+        studyRound.finish()   // a grid left half done still banks its time, as on iOS
+        studyRound.start()
         found = []
         start = nil
         message = ""

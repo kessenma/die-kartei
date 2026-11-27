@@ -11,6 +11,9 @@ struct KartenView: View {
     @State var index = 0
     @State var flipped = false
     @State var rated = 0
+    /// The session's place in today's log. iOS logs a finished session and pauses the rest to
+    /// resume later; Android has no pause yet, so a session left early is logged on leaving.
+    @State var studyRound = StudyRound { .cards($0) }
     @Environment(\.colorScheme) var scheme
 
     var level: GoetheLevel { GoetheLevel(rawValue: levelRaw) ?? .a1 }
@@ -55,7 +58,8 @@ struct KartenView: View {
         }
         .padding()
         .navigationTitle("Karteikarten")
-        .onAppear { StudyLog.shared.begin(); if deck.isEmpty { reload() } }
+        .onAppear { if deck.isEmpty { reload() } }
+        .onDisappear { studyRound.finish() }
         .onChange(of: levelRaw) { _, _ in reload() }
     }
 
@@ -65,6 +69,8 @@ struct KartenView: View {
             ForEach(AnkiRating.allCases, id: \.rawValue) { rating in
                 Button {
                     store.rate(entry, level: level, index: index, rating: rating)
+                    studyRound.add()
+                    if index + 1 == deck.count { studyRound.finish() }
                     rated += 1
                     flipped = false
                     index += 1
@@ -134,7 +140,8 @@ struct KartenView: View {
     }
 
     func reload() {
-        StudyLog.shared.begin()
+        studyRound.finish()
+        studyRound.start()
         deck = store.session(for: level)
         index = 0
         rated = 0

@@ -69,4 +69,17 @@ struct StudyLogTests {
         #expect(SyncCounter(json: pending["cardSeconds"]).p["phone-1"] == 90)
         #expect(SyncCounter(json: pending["newWordsIntroduced"]).p["phone-1"] == 2)
     }
+
+    @Test("Reading a lesson through files iOS's lesson round once and banks the time as grammar")
+    func lessonReadIsFiledOnce() throws {
+        let (records, _) = try store()
+        let now = Date()
+        #expect(!records.lessonRead(topicKey: "akkusativ"))
+        #expect(try records.recordLessonRead(topicKey: "akkusativ", seconds: 95, now: now))
+        #expect(records.lessonRead(topicKey: "akkusativ"))
+        #expect(!records.lessonRead(topicKey: "dativ"))
+        #expect(try !records.recordLessonRead(topicKey: "akkusativ", seconds: 40, now: now))
+        #expect(records.studyDay(at: now)?["grammarSeconds"] == 95)
+        #expect(records.count(kind: "KasusRound") == 1)
+    }
 }

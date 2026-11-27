@@ -41,6 +41,26 @@ extension RecordStore {
         try addToDay(["newWordsBonus": n], stamp: false, now: now, calendar: calendar)
     }
 
+    /// The lesson for a topic was read through (`KasusService.recordLessonRead`): one `lesson`
+    /// round per topic, its reading time banked as grammar time. False when it was already read.
+    @discardableResult
+    func recordLessonRead(topicKey: String, seconds: Int, now: Date = Date(), calendar: Calendar = .current) throws -> Bool {
+        if lessonRead(topicKey: topicKey) { return false }
+        try transaction {
+            try put(KasusRoundRecord.lessonRead(topicKey: topicKey, seconds: seconds, at: now), now: now)
+            if seconds > 0 {
+                try recordStudyTime(StudyActivity.grammar(0).timeBucket, seconds: seconds, now: now, calendar: calendar)
+            }
+        }
+        return true
+    }
+
+    /// The topic's lesson has been read, here or (once synced) on iOS.
+    func lessonRead(topicKey: String) -> Bool {
+        records(KasusRoundRecord.self, naturalKey: KasusRoundRecord.lessonStoryID(topicKey: topicKey))
+            .contains { $0.unitRaw == topicKey && $0.stepRaw == KasusRoundRecord.lessonStep }
+    }
+
     private func addToDay(_ increments: [String: Int], stamp: Bool, now: Date, calendar: Calendar) throws {
         let increments = increments.filter { $0.value > 0 }
         guard !increments.isEmpty else { return }

@@ -180,16 +180,12 @@ struct DeckStore {
         let leitnerSession = deck.quizResults.count
         let inScope = deck.cards.filter { WortschatzService.inScope($0, scope) }
 
-        let due = inScope
-            .filter { WortschatzService.isDue($0, style: style, leitnerSession: leitnerSession, now: now) }
-            .shuffled()
-        let cap = max(1, sessionCap)
-        let newAllowed = max(0, min(newBudget, cap - min(due.count, cap)))
-        let fresh = inScope
-            .filter { WortschatzService.isNew($0) }
-            .sorted { $0.sortOrder < $1.sortOrder }
-            .prefix(newAllowed)
-        let chosen = Array(due.prefix(cap)) + Array(fresh)
+        // The choice is shared with Android (`WortschatzSessionPlan`).
+        let (due, fresh) = WortschatzSessionPlan.choose(
+            due: inScope.filter { WortschatzService.isDue($0, style: style, leitnerSession: leitnerSession, now: now) },
+            fresh: inScope.filter { WortschatzService.isNew($0) }.sorted { $0.sortOrder < $1.sortOrder },
+            newBudget: newBudget, sessionCap: sessionCap)
+        let chosen = due + fresh
         guard !chosen.isEmpty else { return nil }
 
         return StudySession(
@@ -199,7 +195,7 @@ struct DeckStore {
             savedCards: chosen,
             flashcardStyle: style,
             generatorRaw: "goethe-srs",
-            subDeckLabel: "\(min(due.count, cap)) due · \(fresh.count) new · \(scope.summary)",
+            subDeckLabel: "\(due.count) due · \(fresh.count) new · \(scope.summary)",
             badgeLogoName: Self.wortschatzBadge,
             autoStart: true
         )

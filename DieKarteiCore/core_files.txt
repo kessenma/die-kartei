@@ -41,6 +41,7 @@ Models/VocabCard.swift
 Models/WordArt/WordArtKey.swift
 Models/WordArt/WordArtStyle.swift
 Models/Worksheet.swift
+Models/WortschatzPrefs.swift
 Services/A1VocabService.swift
 Services/AnswerTimeLog.swift
 Services/AppResources.swift
@@ -83,6 +84,7 @@ Services/Sync/Core/FakeSyncServer.swift
 Services/Sync/Core/Records/ChatRecords.swift
 Services/Sync/Core/Records/DeckRecords.swift
 Services/Sync/Core/Records/KarteiRecord.swift
+Services/Sync/Core/Records/KasusRecords.swift
 Services/Sync/Core/Records/LearnerRecords.swift
 Services/Sync/Core/Records/StudyDayRecord.swift
 Services/Sync/Core/SyncCounter.swift

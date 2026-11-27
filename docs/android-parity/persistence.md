@@ -40,16 +40,19 @@ Built and tested; the rest of this document is the design it follows.
   `StudyTimeBucket`, what each adds (`StudyDayTally`), when a day is active, the streak, time
   totals and the new-word budget (`StudyStreak`), over a `StudyDayCounts` protocol that iOS
   `StudyDay` (a key-path table) and Android `StudyDayRecord` both adopt. `StudyLogService` keeps
-  its API and forwards there. Android: `RecordStore.recordStudy/recordStudyTime/recordNewWords`
-  (KarteiStore/StudyLog.swift) and the app's `StudyLog`; cards, the four grammar drills, Zahlen-
-  Diktat, Galgenmännchen, Wortsuche and the tutor's live time and summary write to it, per answer
-  with the time since the last one (capped at 120 s). Home shows the streak; new words per session
-  now sit inside iOS's daily budget (`wortschatz.newPerDay`, 15). iOS `StudyDayParityTests` checks
-  both apps write the same payload for the same activities.
+  its API and forwards there. Android: `RecordStore.recordStudy/recordStudyTime/recordNewWords/
+  recordLessonRead` (KarteiStore/StudyLog.swift) and the app's `StudyLog`. Each screen logs where
+  its iOS twin does (`StudyRound`): Spiele at the end or on leaving (abandoned time counts), Hören
+  at the end or on leaving with an answer, grammar drills at the end only, the tutor's live time
+  and summaries, a Kasus lesson once when read through (iOS's `concept-<topic>-lesson`
+  `KasusRoundRecord`). Cards differ on purpose until Android has iOS's paused sessions: a session
+  left early is logged on leaving. Wortschatz sessions come from the shared
+  `WortschatzSessionPlan` with iOS's `WortschatzPrefs` keys (15 new a day, 40 cards a session).
+  iOS `StudyDayParityTests` holds the two apps to the same payloads and ids.
 
 Next: Android writes for the new kinds (steps 6–7: `TutorStore` saving chats and messages,
 `sessionSummarized` into the profile, saved phrases); Auto Backup rules (sync.mdx step 2); a
-transport. Kasus lesson reading time isn't logged on Android yet (iOS banks it as grammar time). Android code that adds a slip or self-report to the profile must write the
+transport. Android code that adds a slip or self-report to the profile must write the
 item's `"id"` the way the iOS codec does (see `LearnerProfileRecord`).
 
 ## 0. Summary
