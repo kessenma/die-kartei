@@ -1,3 +1,10 @@
 {
-  "pages": ["index", "roadmap", "---Android---", "...android"]
+  "pages": [
+    "index",
+    "---Funktionen \u00b7 Features---",
+    "...features",
+    "---Entwicklung \u00b7 Building---",
+    "roadmap",
+    "...android"
+  ]
 }

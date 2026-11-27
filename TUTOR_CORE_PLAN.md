@@ -17,6 +17,22 @@ with iPhone measurements).
   a hand-written Gemma chat template, and a thin copy of the Gespräch flow in `GespraechView`.
 - Branch: `android-port` is 12 commits ahead of `main`, 0 behind.
 
+## Progress
+
+- 2026-11-26: phase 0 (except the merge) and phase 1 done; phase 2 done for Gespräch.
+  - `check_prompt_sync.py` runs again. It found the app now has 14 focus areas (verbenPraepositionen
+    and reflexivverben were added 2026-10-09); training data built before then had 12.
+  - Shared: `TutorGenerating` + `TutorBudget`, `ConversationSession` (was ConversationEngine; iOS
+    keeps the name as a typealias), `ConversationHost` / `SpeechInput` / `SpeechOutput` /
+    `ConversationReviewing`, `ChatTurnNormalizer`, `ChatRole`, `ConversationSummary`,
+    `SingleWordTranslator`, `PhraseMatch`. In-memory host and `ChatPromptFormat` live in the core
+    only (Tutor/).
+  - Tests: 6 session tests on a scripted tutor; Android prompt format matches all four tutors'
+    templates byte for byte (7 fixtures).
+  - Android Gespräch runs the shared session: opener, correction or nudge, reply, translation,
+    hints, summary. Verified on the emulator with E2B.
+- Next: the other features (Lebenslauf, stories, paper study, Schreiben check, …), same pattern.
+
 ## Phase 0: guards (small)
 
 1. Fix `training/scripts/check_prompt_sync.py`: it still reads `Models/GrammarFocus.swift`, which

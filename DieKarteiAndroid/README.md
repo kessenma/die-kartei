@@ -27,9 +27,11 @@ Today the tab bar matches iOS: Home, Grammar, Library, Settings.
   Präpositionen, the four Lückensatz sets, Perfekt haben/sein, Die vier Fälle.
 - Hören: Zahlen-Diktat for every number kind, spoken by Android's German voice.
 - Spiele: Galgenmännchen and Wortsuche on the iOS engines.
-- Tutor: Gespräch (a conversation; every line gets the correction pass, then a reply) and Satz
-  prüfen (one sentence, checked), on the iOS prompts and parsers (`ConversationPrompts`).
-  Settings ▸ Tutor Model picks the model.
+- Tutor: Gespräch runs the iOS app's own conversation session (`ConversationSession` in the
+  core; `TutorStore` answers its `TutorGenerating` protocol with llama.cpp): opener, correction
+  or nudge, reply, translations, hints, summary. Typed only, kept in memory for now. Satz prüfen
+  checks one sentence. Settings ▸ Tutor Model picks the model. Prompts are written out by
+  `ChatPromptFormat` (core), tested against the real chat templates.
 
 ## Run it
 
@@ -74,6 +76,9 @@ visible text with its bounds, which is enough to tap through screens from a scri
   show a warning triangle.
 - The JSON data files must be real files in `Resources/` (copied by `core_sync.py`, gitignored):
   the resource copy resolves symlinks logically and Skip keeps subfolders as they are.
+- `@Observable` types in the core import SkipFuse on Android (`#if os(Android)`, not
+  `canImport`: the Darwin build of this package can see SkipFuse but not its JNI deps), or
+  Compose never hears about their changes and the screen freezes on its first state.
 - llama.cpp loads its CPU backend from the extracted native-library directory, so the APK uses
   `useLegacyPackaging = true`. Foundation reads `/proc` files by their reported size (0): read
   them with `FileHandle.readDataToEndOfFile()`.

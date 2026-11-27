@@ -54,7 +54,7 @@ PDFKit, FoundationModels. On Android these need replacements behind protocols, o
 | iOS tab bar (Home, Grammar, Library, Settings) and a Settings tab | ✅ |
 | Kasus drills and stories, Matching, Reflexiv drills | ⬜ next (see "Next splits") |
 | Tutor models as GGUF (llama.cpp): all four score the same as MLX 4-bit (`training/ANDROID_GGUF.md`) | ✅ |
-| Tutor in the app: llama.cpp from Swift, Gespräch + Satz prüfen on the iOS prompts | ✅ emulator |
+| Tutor in the app: llama.cpp from Swift; Gespräch on the iOS app's own session (`ConversationSession`, shared), Satz prüfen | ✅ emulator |
 | Rest of the tutor features (Stammtisch, Lebenslauf, stories, summaries), model download | ⬜ |
 
 ### App-side changes made for the core (no behaviour change on iOS)

@@ -6,13 +6,6 @@ export function BuildIllustration() {
     <Figure
       id="dk-build"
       title="A Mac mini builds the app and sends it to a phone emulator, which shows a card and a green check"
-      caption={
-        <>
-          Built on the Mac and sent along —
-          <br />
-          the emulator tells you if it&apos;s wrong.
-        </>
-      }
       css={`
         .dk-build-flow { stroke-dasharray: 2 10; animation: dk-build-flow 1.6s linear infinite; }
         .dk-build-led { animation: dk-build-pulse 2.4s ease-in-out infinite; }

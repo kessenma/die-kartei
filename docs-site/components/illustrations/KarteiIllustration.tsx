@@ -6,13 +6,6 @@ export function KarteiIllustration() {
     <Figure
       id="dk-home"
       title="A box of index cards in the four gender colours; one card lifts out and settles back"
-      caption={
-        <>
-          A box of cards, a word on each —
-          <br />
-          one at a time, and all in reach.
-        </>
-      }
       css={`
         .dk-home-lift { transform-box: fill-box; transform-origin: center; animation: dk-home-lift 4.8s ease-in-out infinite; }
         @keyframes dk-home-lift { 0%, 100% { transform: translateY(0); } 40%, 60% { transform: translateY(-34px) rotate(-4deg); } }

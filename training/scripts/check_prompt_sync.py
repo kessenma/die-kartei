@@ -166,8 +166,10 @@ def main() -> int:
     # Counts — a sudden drop means the extractor silently matched fewer cases.
     if len(ap.SCENARIOS) < 20:
         failures.append(f"only {len(ap.SCENARIOS)} scenarios extracted (expected 20+)")
-    if len(ap.FOCUS_AREAS) != 12:
-        failures.append(f"{len(ap.FOCUS_AREAS)} focus areas extracted (expected 12)")
+    # 14 since 2026-10-09 (verbenPraepositionen, reflexivverben); data generated before then
+    # had 12. This script crashed from that day until 2026-11-26, so nothing flagged it.
+    if len(ap.FOCUS_AREAS) != 14:
+        failures.append(f"{len(ap.FOCUS_AREAS)} focus areas extracted (expected 14)")
     if len(ap.LEVELS) != 5 or len(ap.FORMALITY) != 2 or len(ap.STRICTNESS) != 3:
         failures.append(f"enum sizes off: levels={len(ap.LEVELS)} "
                         f"formality={len(ap.FORMALITY)} strictness={len(ap.STRICTNESS)}")

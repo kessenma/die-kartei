@@ -1,7 +1,7 @@
 # docs-site: Die Kartei docs
 
-Static docs site for the people building Die Kartei: how the app is put together and the work in
-progress (the Android port, sync). Fumadocs on Next.js, exported with `output: 'export'`, served by
+Static docs site for Die Kartei: what each feature does (with app screenshots), plus the work in
+progress for builders (the Android port, sync, the roadmap). Fumadocs on Next.js, exported with `output: 'export'`, served by
 nginx. Copied from the Firstline docs (`firstline-emr/apps/docs`), with the PocketDev docs'
 illustration style.
 
@@ -29,9 +29,14 @@ docker build -f docs-site/Dockerfile -t kartei-docs .   # from the repo root
 
 - **Static only**: every route prerenders; no server features.
 - **Internal links end with a slash** (`/android/sync/`), because `trailingSlash: true`.
-- **Every page gets one illustration** right after the intro, from `components/illustrations/`,
-  with a short rhyming two-line caption. Prefix its CSS classes `dk-<page>-` (the styles are
-  global) and give it a reduced-motion off switch.
+- **Feature pages are screenshots first.** A sentence or two, then `<Screen>`, `<Screens>` or
+  `<Annotated>` (numbered markers, positions in iPhone points on a 402 × 874 screen). Images are
+  600px-wide JPEGs in `public/screens/`, taken on the iPhone simulator with
+  `-screenshots.debugFill 1` (demo data) and the status bar set to 9:41. Bullets over paragraphs;
+  a page should read in a minute. Each ends with a "For builders" callout linking `../docs/*.md`.
+- **Builder pages** (Android, roadmap) get a Bauhaus illustration from `components/illustrations/`
+  in the gender colours, without a caption. Prefix CSS classes `dk-<page>-` and keep the
+  reduced-motion off switch.
 - **Voice**: short and humble. No hype, no dates on plans, no "beta" or "free for now".
 - Describe what's built as built and what's planned as planned; say what's not done.
 - The developer notes in `../docs/*.md` stay the source of truth for each subsystem; pages here

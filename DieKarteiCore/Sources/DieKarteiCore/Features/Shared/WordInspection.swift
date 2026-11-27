@@ -1,0 +1,1 @@
+../../../../../german-ai-flashcards/Features/Shared/WordInspection.swift

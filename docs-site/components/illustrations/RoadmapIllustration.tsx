@@ -7,13 +7,6 @@ export function RoadmapIllustration() {
     <Figure
       id="dk-roadmap"
       title="Five steps in the app's colours, climbing to the right, with a marker moving up them"
-      caption={
-        <>
-          No dates on the stairs, just the order to climb —
-          <br />
-          one step done well, then the next in its time.
-        </>
-      }
       css={`
         .dk-roadmap-walker { animation: dk-roadmap-walk 10s steps(1, end) infinite; }
         @keyframes dk-roadmap-walk {

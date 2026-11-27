@@ -78,5 +78,15 @@ public final class GermanVoice {
         synthesizer.speak(utterance)
         #endif
     }
+
+    /// Stops whatever is being spoken.
+    public func stop() {
+        #if SKIP
+        pending = nil
+        engine?.stop()
+        #elseif canImport(AVFoundation)
+        synthesizer.stopSpeaking(at: .immediate)
+        #endif
+    }
 }
 #endif

@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     default: appName,
   },
   description:
-    'How Die Kartei is built: the shared Swift core, the Android port and how sync will work there.',
+    'Die Kartei, a German tutor for iPhone, iPad and Mac: what each feature does, and the work in progress.',
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {

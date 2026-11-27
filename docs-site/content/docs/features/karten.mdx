@@ -1,0 +1,43 @@
+---
+title: Karten · Flashcards
+description: The Goethe word lists, your own decks, and how a review works.
+---
+
+The core of the app is a card box. **Wortschatz** holds the Goethe-Institut A1–B1 word lists
+(about 2,800 words) as one box. Your own decks sit next to it in the Library.
+
+<Annotated
+  src="wortschatz"
+  alt="The Wortschatz screen: 15 due today, a Start button, level and word-type chips"
+  marks={[
+    { x: 30, y: 340, text: <><b>Fällig heute.</b> One number for today: reviews first, then up to 15 new words.</> },
+    { x: 345, y: 410, text: <><b>Start.</b> Every rating saves as you go, so stopping early is fine.</> },
+    { x: 50, y: 557, text: <><b>Scope.</b> Pick levels and word types. Switching one off keeps its progress.</> },
+    { x: 40, y: 682, text: <><b>Der Karteikasten.</b> A chart of how many words sit in each box.</> },
+  ]}
+/>
+
+## A review
+
+<Annotated
+  src="card"
+  alt="A flashcard showing the English side, with Didn't know, Hard, Good and Easy buttons"
+  marks={[
+    { x: 201, y: 226, text: <>Tap the card to turn it over. On German fronts the article is hidden, so you recall it too.</> },
+    { x: 56, y: 644, text: <><b>Rate it.</b> Only <i>Didn't know</i> counts as a miss. Each button shows when the card comes back.</> },
+    { x: 255, y: 725, text: <>Move on to the next card.</> },
+    { x: 362, y: 84, text: <>Text size. Full screen and pause are on the left.</> },
+  ]}
+/>
+
+## Your own decks
+
+<Screens>
+  <Screen src="vocabulary" alt="The Vocabulary room" caption="Make cards on a topic, or from a document." />
+  <Screen src="library" alt="The Library tab with decks" caption="Library: every deck. Mix decks to study several at once." />
+</Screens>
+
+A deck can come from a topic you type, a vocab sheet or handout (each row becomes a card), or a
+phrase you save while reading. Cards can hold phrases as well as single words.
+
+<Callout title="For builders">Design notes: [WORTSCHATZ](https://github.com/kessenma/die-kartei/blob/main/docs/WORTSCHATZ.md), [DOCUMENT_DECKS](https://github.com/kessenma/die-kartei/blob/main/docs/DOCUMENT_DECKS.md), [PHRASES](https://github.com/kessenma/die-kartei/blob/main/docs/PHRASES.md).</Callout>

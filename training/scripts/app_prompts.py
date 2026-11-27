@@ -31,16 +31,27 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 APP = ROOT.parent / "german-ai-flashcards"
 
-CONFIG_SWIFT = APP / "Models" / "ConversationConfig.swift"
-FOCUS_SWIFT = APP / "Models" / "GrammarFocus.swift"
-PROMPTS_SWIFT = APP / "Services" / "ConversationPrompts.swift"
+def _app_file(name: str) -> Path:
+    """The app's one `name`, wherever it sits: the app regroups folders (GrammarFocus moved to
+    Models/Grammar/ in 4ae78a9 and this script crashed for months). Fails loudly on 0 or 2+."""
+    hits = sorted(APP.rglob(name))
+    if len(hits) != 1:
+        raise RuntimeError(f"app_prompts: expected one {name} under {APP}, found {len(hits)}")
+    return hits[0]
+
+
+CONFIG_SWIFT = _app_file("ConversationConfig.swift")
+FOCUS_SWIFT = _app_file("GrammarFocus.swift")
+PROMPTS_SWIFT = _app_file("ConversationPrompts.swift")
 
 
 # --------------------------------------------------------------------------- extraction
 
 def _enum_body(source: str, enum_name: str) -> str:
     """The text of `enum <name> { ... }`, ending at the first closing brace in column 0."""
-    m = re.search(rf"^enum {re.escape(enum_name)}\b.*?\{{$", source, re.M)
+    # Modifiers allowed in front (`nonisolated enum GrammarFocus` since the MainActor default).
+    m = re.search(rf"^(?:(?:nonisolated|public|internal|indirect)\s+)*enum {re.escape(enum_name)}\b.*?\{{$",
+                  source, re.M)
     if not m:
         raise RuntimeError(f"app_prompts: enum {enum_name} not found — Swift source changed shape")
     tail = source[m.end():]

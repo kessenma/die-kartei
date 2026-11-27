@@ -1,5 +1,6 @@
 #if canImport(CLlama)
 import CLlama
+@testable import DieKarteiCore
 import Foundation
 
 /// The tutor models on Android: llama.cpp's C API, called straight from Swift.
@@ -20,10 +21,6 @@ import Foundation
 ///
 /// All llama.cpp calls run on one serial queue; the engine is not reentrant.
 final class TutorEngine: @unchecked Sendable {
-    enum Family: String {
-        case gemma4, granite
-    }
-
     /// A KV-cache sequence with its own reused prefix.
     enum Slot: Int32, CaseIterable {
         /// The conversation: system prompt, then every turn.
@@ -59,7 +56,7 @@ final class TutorEngine: @unchecked Sendable {
         }
     }
 
-    let family: Family
+    let format: ChatPromptFormat
     let threads: Int
     /// Context per slot, in tokens.
     let slotContext: Int
@@ -74,11 +71,11 @@ final class TutorEngine: @unchecked Sendable {
     private let cancelLock = NSLock()
     private var cancelRequested = false
 
-    private init(model: OpaquePointer, context: OpaquePointer, family: Family, threads: Int, slotContext: Int) {
+    private init(model: OpaquePointer, context: OpaquePointer, format: ChatPromptFormat, threads: Int, slotContext: Int) {
         self.model = model
         self.context = context
         self.vocab = llama_model_get_vocab(model)
-        self.family = family
+        self.format = format
         self.threads = threads
         self.slotContext = slotContext
         self.systemInfo = String(cString: llama_print_system_info())
@@ -139,8 +136,8 @@ final class TutorEngine: @unchecked Sendable {
         }
 
         let architecture = metadata(model, "general.architecture") ?? ""
-        let family: Family = architecture.hasPrefix("gemma") ? .gemma4 : .granite
-        return TutorEngine(model: model, context: context, family: family, threads: threads, slotContext: slotContext)
+        let format: ChatPromptFormat = architecture.hasPrefix("gemma") ? .gemma4 : .granite
+        return TutorEngine(model: model, context: context, format: format, threads: threads, slotContext: slotContext)
     }
 
     // MARK: - Generating
@@ -244,46 +241,11 @@ final class TutorEngine: @unchecked Sendable {
 
     // MARK: - Prompt format
 
-    /// The chat template, written out. Gemma 4's template is newer than llama.cpp's built-in list
-    /// (which matches templates by pattern, without a Jinja engine), so it's spelled out here,
-    /// byte for byte what the model's chat_template.jinja renders. Granite's is built in.
+    /// The prompt, in the format the model was trained and evaluated with. Written out in Swift
+    /// (llama.cpp has no Jinja engine) and tested byte for byte against the real templates in
+    /// DieKarteiCore (`ChatPromptFormatTests`).
     private func prompt(for messages: [(role: String, content: String)]) -> String {
-        switch family {
-        case .gemma4:
-            var s = ""   // <bos> comes from tokenize(add_special:)
-            for m in messages {
-                let role = m.role == "assistant" ? "model" : m.role
-                s += "<|turn>\(role)\n\(m.content.trimmingCharacters(in: .whitespacesAndNewlines))<turn|>\n"
-            }
-            return s + "<|turn>model\n"
-        case .granite:
-            return applyBuiltinTemplate(messages)
-        }
-    }
-
-    private func applyBuiltinTemplate(_ messages: [(role: String, content: String)]) -> String {
-        let template = llama_model_chat_template(model, nil)
-        // C strings that live for the call.
-        let roles = messages.map { strdup($0.role) }
-        let contents = messages.map { strdup($0.content) }
-        defer {
-            roles.forEach { free($0) }
-            contents.forEach { free($0) }
-        }
-        var chat = (0..<messages.count).map { llama_chat_message(role: roles[$0], content: contents[$0]) }
-        var capacity = Int32(messages.reduce(0) { $0 + $1.content.utf8.count } * 2 + 512)
-        var buffer = [CChar](repeating: 0, count: Int(capacity))
-        var n = llama_chat_apply_template(template, &chat, chat.count, true, &buffer, capacity)
-        if n > capacity {
-            capacity = n + 1
-            buffer = [CChar](repeating: 0, count: Int(capacity))
-            n = llama_chat_apply_template(template, &chat, chat.count, true, &buffer, capacity)
-        }
-        guard n > 0 else {
-            // Unknown template: a plain transcript beats failing.
-            return messages.map { "\($0.role): \($0.content)" }.joined(separator: "\n") + "\nassistant:"
-        }
-        return String(decoding: buffer.prefix(Int(n)).map { UInt8(bitPattern: $0) }, as: UTF8.self)
+        format.render(messages.map { (role: ChatRole(rawValue: $0.role) ?? .user, content: $0.content) })
     }
 
     /// Drops what a model sometimes writes past its answer: an end-of-turn marker as text, or a

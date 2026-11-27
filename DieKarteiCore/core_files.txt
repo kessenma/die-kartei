@@ -1,7 +1,10 @@
+Features/Shared/WordInspection.swift
 Features/Shared/WordTokenizer.swift
 Models/CardImageTiming.swift
+Models/ChatRole.swift
 Models/CloudImageModel.swift
 Models/ConversationConfig.swift
+Models/ConversationSummary.swift
 Models/FlashcardStyle.swift
 Models/Grammar/Article/ArticleGame.swift
 Models/Grammar/Article/ArticleRules.swift
@@ -41,6 +44,7 @@ Services/A1VocabService.swift
 Services/AnswerTimeLog.swift
 Services/AppResources.swift
 Services/CardKind.swift
+Services/ChatTurnNormalizer.swift
 Services/ClassTutorContext+Prompt.swift
 Services/ConversationPrompts.swift
 Services/FlashcardTopicService.swift
@@ -80,5 +84,8 @@ Services/Sync/Core/SyncJSON.swift
 Services/Sync/Core/SyncMerge.swift
 Services/Sync/Core/SyncNameUUID.swift
 Services/Sync/Core/SyncRecordLogic.swift
+Services/Tutor/ConversationHost.swift
+Services/Tutor/ConversationSession.swift
+Services/Tutor/TutorGenerating.swift
 Services/WordArt/PaintByNumber/GermanColorName.swift
 Services/Worksheet/WorksheetReviewPlan.swift

@@ -134,13 +134,6 @@ final class TutorStore {
                            slot: .check, maxTokens: maxTokens, temperature: 0.1, onText: nil)
     }
 
-    /// A conversation reply, streamed into `onText`. Temperature 0.7, like iOS's chat replies.
-    func reply(system: String, history: [(role: String, content: String)], maxTokens: Int,
-               onText: @escaping @MainActor (String) -> Void) async throws -> String {
-        try await generate([(role: "system", content: system)] + history,
-                           slot: .chat, maxTokens: maxTokens, temperature: 0.7, onText: onText)
-    }
-
     func startNewConversation() {
         #if canImport(CLlama)
         engine?.reset(.chat)
@@ -175,6 +168,52 @@ final class TutorStore {
 }
 
 enum TutorSlot { case chat, check }
+
+/// llama.cpp behind the shared tutor protocol, so the shared conversation session
+/// (`ConversationSession`) runs on Android exactly as on iOS.
+extension TutorStore: TutorGenerating {
+    var readyModel: MLXModel? {
+        guard state == .ready, let loadedID else { return nil }
+        return TutorModelFile.all.first { $0.id == loadedID }?.model
+    }
+
+    var loadFailure: String? {
+        if case .failed(let message) = state { return message }
+        return nil
+    }
+
+    /// Android doesn't shed the model in the background (yet).
+    func wasEvicted(_ model: MLXModel) -> Bool { false }
+
+    func loadTutor(_ model: MLXModel) async {
+        if let file = TutorModelFile.all.first(where: { $0.model == model }), selectedID != file.id {
+            selectedID = file.id
+        }
+        _ = await ensureLoaded()
+    }
+
+    func complete(system: String, user: String, model: MLXModel, maxTokens: Int) async throws -> String {
+        try await complete(system: system, user: user, maxTokens: maxTokens)
+    }
+
+    /// Same turn shape as iOS: normalized to strict user/assistant alternation (Gemma's template
+    /// demands it), think blocks stripped from what the learner sees.
+    func streamReply(
+        history: [(role: ChatRole, content: String)],
+        system: String,
+        model: MLXModel,
+        maxTokens: Int,
+        temperature: Float,
+        onPartial: @escaping (String) -> Void
+    ) async throws -> String {
+        let turns = ChatTurnNormalizer.normalized(history, openerSeed: ConversationPrompts.openerSeed)
+        let messages = [(role: "system", content: system)] + turns.map { (role: $0.role.rawValue, content: $0.content) }
+        let raw = try await generate(messages, slot: .chat, maxTokens: maxTokens, temperature: temperature) { partial in
+            onPartial(ConversationPrompts.stripThinkBlocks(partial))
+        }
+        return ConversationPrompts.stripThinkBlocks(raw)
+    }
+}
 
 struct TutorUnavailable: LocalizedError {
     var errorDescription: String? { "No tutor model is loaded. Pick one in Settings ▸ Tutor Model." }

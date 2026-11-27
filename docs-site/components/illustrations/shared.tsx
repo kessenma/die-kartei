@@ -1,7 +1,7 @@
 /**
  * Docs illustrations: one per page, flat Bauhaus shapes in the app's gender colours
  * (GrammarPalette.swift: der blue, die red, das green, plural gold), slow CSS motion with a
- * reduced-motion off switch, and a short rhyming caption. Same family as the PocketDev docs.
+ * reduced-motion off switch. No captions: the page text says what the picture is about.
  * Class names are prefixed per picture (dk-<page>-*) because the <style> blocks are global.
  */
 import type { ReactNode } from 'react';
@@ -18,14 +18,12 @@ export const GROUND = '#7d7468';
 export function Figure({
   id,
   title,
-  caption,
   viewBox = '0 0 640 260',
   css,
   children,
 }: {
   id: string;
   title: string;
-  caption: ReactNode;
   viewBox?: string;
   css: string;
   children: ReactNode;
@@ -42,9 +40,6 @@ export function Figure({
         <style>{css}</style>
         {children}
       </svg>
-      <figcaption className="mt-2 text-center text-sm" style={{ color: '#998d79' }}>
-        {caption}
-      </figcaption>
     </figure>
   );
 }
