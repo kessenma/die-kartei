@@ -1,0 +1,38 @@
+{
+ "tutor": "e2b",
+ "master": "kessenma/gemma4-e2b-german-tutor",
+ "date": "2026-11-27",
+ "mlx_vs_published": {
+  "tensors": 2507,
+  "published_tensors": 2511,
+  "only_published": 4,
+  "differing": 2,
+  "examples": [
+   "embed_audio.embedding_projection.weight",
+   "embed_vision.embedding_projection.weight"
+  ],
+  "identical": false
+ },
+ "scores": {
+  "MLX": {
+   "total": 172,
+   "of": 203,
+   "format_errors": 0
+  },
+  "Q4_K_M": {
+   "total": 162,
+   "of": 203,
+   "format_errors": 0,
+   "p_vs_mlx": 0.09873714670538902
+  },
+  "Q4_0": {
+   "total": 169,
+   "of": 203,
+   "format_errors": 0,
+   "p_vs_mlx": 0.6476058959960938
+  }
+ },
+ "failures": [
+  "Q4_K_M is clearly worse than MLX (10 behind, p=0.099)"
+ ]
+}

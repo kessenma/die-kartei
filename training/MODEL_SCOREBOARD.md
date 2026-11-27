@@ -556,3 +556,13 @@ python -m python_coreml_stable_diffusion.torch2coreml \
 - Host the resulting `Resources/` as `<subfolder>/compiled/*` under `kessenma/coreml-<model>`
   (public) so `ResumableModelDownloader` + `HubCacheLocation` fetch it unchanged — the only app
   change is a new `ImageGenModel` case.
+
+## Release runs (scripts/release_model.py)
+
+One master, every format, the app's guard, /203 (core + ext + holdout). p is McNemar against MLX.
+
+| date | tutor | master | MLX | Q4_K_M | Q4_0 | MLX same as published |
+|---|---|---|---|---|---|---|
+| 2026-11-27 | Granite 3.3 2B German Tutor v4 | `kessenma/granite33-2b-german-v4-fp16` | 151 | 153 (p=0.81) | 169 (p=0.00) | yes |
+| 2026-11-27 | Granite 4.1 3B German Tutor v4 | `kessenma/granite41-3b-german-v4-fp16` | 165 | 154 (p=0.04) | 160 (p=0.36) | yes |
+| 2026-11-27 | Gemma 4 E2B German Tutor | `kessenma/gemma4-e2b-german-tutor` | 172 | 162 (p=0.10) | 169 (p=0.65) | no: 2 audio/vision projection tensors (text unaffected) |

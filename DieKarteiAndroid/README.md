@@ -48,8 +48,13 @@ skip app launch --android
 
 ## Tutor models on the device
 
-The app looks for GGUF files in its private `files/models/` (names in `TutorStore.swift`;
-building them: `../training/ANDROID_GGUF.md`). Until they're downloadable, copy one in:
+Settings ▸ Tutor Model downloads them from Hugging Face (`kessenma/*-gguf`; the files, sizes
+and SHA-256s are `MLXModel.gguf` in `german-ai-flashcards/Models/MLXModel+Catalog.swift`) into
+the app's private `files/models/`. A download continues where it stopped (`<file>.part`) and is
+checked against the hash before it can load. Publishing: `../training/scripts/publish_gguf.py`;
+building from a master: `../training/scripts/release_model.py` (see `../training/ANDROID_GGUF.md`).
+
+To skip the download during development, copy a file in (it must be the published file, same name):
 
 ```bash
 adb push gemma4-e2b-german-tutor-Q4_K_M.gguf /data/local/tmp/

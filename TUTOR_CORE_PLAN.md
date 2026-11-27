@@ -31,6 +31,16 @@ with iPhone measurements).
     templates byte for byte (7 fixtures).
   - Android Gespräch runs the shared session: opener, correction or nudge, reply, translation,
     hints, summary. Verified on the emulator with E2B.
+- 2026-11-27: phases 3 and 4.
+  - The GGUFs are on Hugging Face (`kessenma/*-gguf`, both quants, with cards). Sizes and hashes in
+    `training/releases/gguf_release.json`; `MLXModel+Catalog.swift` (shared) holds the app's
+    entries, and a core test checks one against the other.
+  - Android downloads from Settings ▸ Tutor Model (`GGUFDownloader`, core): ranged pieces, resume,
+    SHA-256 check. Live download from Hugging Face tested on the Mac; resume after a force-stop
+    seen on the emulator.
+  - `release_model.py`: one master → MLX + GGUF, scored, gated, scoreboard row. Run for both
+    Granites and E2B; the master GGUFs didn't beat the published ones (see ANDROID_GGUF.md), so
+    nothing was replaced.
 - Next: the other features (Lebenslauf, stories, paper study, Schreiben check, …), same pattern.
 
 ## Phase 0: guards (small)

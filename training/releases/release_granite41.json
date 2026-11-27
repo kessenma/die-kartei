@@ -1,0 +1,35 @@
+{
+ "tutor": "granite41",
+ "master": "kessenma/granite41-3b-german-v4-fp16",
+ "date": "2026-11-27",
+ "mlx_vs_published": {
+  "tensors": 924,
+  "published_tensors": 924,
+  "only_published": 0,
+  "differing": 0,
+  "examples": [],
+  "identical": true
+ },
+ "scores": {
+  "MLX": {
+   "total": 165,
+   "of": 203,
+   "format_errors": 0
+  },
+  "Q4_K_M": {
+   "total": 154,
+   "of": 203,
+   "format_errors": 0,
+   "p_vs_mlx": 0.043285250663757324
+  },
+  "Q4_0": {
+   "total": 160,
+   "of": 203,
+   "format_errors": 0,
+   "p_vs_mlx": 0.359283447265625
+  }
+ },
+ "failures": [
+  "Q4_K_M is clearly worse than MLX (11 behind, p=0.043)"
+ ]
+}

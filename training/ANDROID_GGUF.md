@@ -76,6 +76,30 @@ E4B as Q4_0 and the three smaller tutors as Q4_K_M** (`TutorStore.swift`). The p
 it looks. On the emulator, E2B Q4_0 "corrected" the correct "Ich habe ein neues Auto gekauft."
 (added "mir"); Q4_K_M left it alone.
 
+## From the masters (release_model.py, 2026-11-27)
+
+`scripts/release_model.py --tutor <t> --master <bf16 repo>` builds MLX 4-bit and GGUF from the
+same master and scores all of them (/203, guarded; p is McNemar against MLX). The rebuilt MLX is
+tensor-for-tensor what the app ships for both Granites (E2B: only two audio/vision projection
+tensors differ), so the MLX column is the iOS model.
+
+| tutor | MLX | GGUF from master Q4_K_M | Q4_0 | GGUF from MLX (published) Q4_K_M | Q4_0 |
+|---|---|---|---|---|---|
+| Granite 3.3 2B | 151 | 153 (p=0.81) | **169 (p<0.001)** | 153 | 148 |
+| Granite 4.1 3B | 165 | 154 (p=0.04) | 160 (p=0.36) | 164 | 160 |
+| Gemma 4 E2B | 172 | 162 (p=0.10) | 169 (p=0.65) | 173 | 169 |
+
+(E4B's published GGUF already came from its fp16 master: Q4_0 184, Q4_K_M 185, MLX 182.)
+
+Reading: quantizing these fine-tunes moves 10–30 items each way, and the direction isn't
+predictable from the format. Re-quantizing the MLX 4-bit weights stays closest to MLX (its
+values already sit on a 4-bit grid); quantizing from bf16 makes independent rounding choices,
+which cost Granite 4.1 and E2B ~10 items at Q4_K_M and gained Granite 3.3 18 items at Q4_0 (mostly
+extension-suite corrections it now catches, 15 → 24 of 37; it also flagged one of the 56 correct sentences, MLX none). The
+published files stay the dequantized-MLX builds; the release gate (no quant > 6 items or
+significantly behind MLX) is why the master builds weren't uploaded. A 203-item suite picked the
+winner here, so a better-looking build needs a fresh eval set before it replaces the shipped one.
+
 ## In the Android app (2026-11-26)
 
 `DieKarteiAndroid/Sources/DieKartei/TutorEngine.swift`: llama.cpp's C API from native Swift

@@ -1,0 +1,33 @@
+{
+ "tutor": "granite33",
+ "master": "kessenma/granite33-2b-german-v4-fp16",
+ "date": "2026-11-27",
+ "mlx_vs_published": {
+  "tensors": 924,
+  "published_tensors": 924,
+  "only_published": 0,
+  "differing": 0,
+  "examples": [],
+  "identical": true
+ },
+ "scores": {
+  "MLX": {
+   "total": 151,
+   "of": 203,
+   "format_errors": 0
+  },
+  "Q4_K_M": {
+   "total": 153,
+   "of": 203,
+   "format_errors": 0,
+   "p_vs_mlx": 0.8145294189453125
+  },
+  "Q4_0": {
+   "total": 169,
+   "of": 203,
+   "format_errors": 0,
+   "p_vs_mlx": 4.00543212890625e-05
+  }
+ },
+ "failures": []
+}

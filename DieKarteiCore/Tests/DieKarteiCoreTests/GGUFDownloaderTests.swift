@@ -92,6 +92,18 @@ struct GGUFDownloaderTests {
         #expect(try Data(contentsOf: dest) == body)
     }
 
+    /// The real thing: the smallest published tutor from Hugging Face (1.5 GB), through its
+    /// redirect to the CDN, in ranged pieces, hash-checked. `GGUF_LIVE=1 swift test --filter live`.
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["GGUF_LIVE"] == "1"))
+    func liveDownloadFromHuggingFace() async throws {
+        let release = try #require(MLXModel.granite2B_german.gguf)
+        let dest = destination()
+        try await GGUFDownloader().download(release, to: dest) { _ in }
+        let size = try FileManager.default.attributesOfItem(atPath: dest.path)[.size] as? NSNumber
+        #expect(size?.int64Value == release.bytes)
+        try? FileManager.default.removeItem(at: dest.deletingLastPathComponent())
+    }
+
     @Test func deletesAFileThatFailsTheChecksum() async throws {
         let d = downloader()
         let dest = destination()
