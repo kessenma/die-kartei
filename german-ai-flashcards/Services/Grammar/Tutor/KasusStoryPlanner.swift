@@ -150,7 +150,7 @@ nonisolated struct KasusTriggerBank: Decodable {
     static var bundled: KasusTriggerBank {
         if let cache { return cache }
         let bank: KasusTriggerBank
-        if let url = Bundle.main.url(forResource: "kasus_triggers", withExtension: "json"),
+        if let url = AppResources.url("kasus_triggers", "json"),
            let data = try? Data(contentsOf: url),
            let decoded = try? JSONDecoder().decode(KasusTriggerBank.self, from: data) {
             bank = decoded

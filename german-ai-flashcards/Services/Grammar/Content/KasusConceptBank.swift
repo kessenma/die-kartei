@@ -56,7 +56,7 @@ struct KasusConceptBank {
     static var bundled: KasusConceptBank {
         if let cache { return cache }
         let bank: KasusConceptBank
-        if let url = Bundle.main.url(forResource: "kasus_concepts", withExtension: "json"),
+        if let url = AppResources.url("kasus_concepts", "json"),
            let data = try? Data(contentsOf: url),
            let decoded = try? KasusConceptBank(data: data) {
             bank = decoded
@@ -157,7 +157,7 @@ struct KasusConceptBank {
     /// The bundled file decoded without the load-time assert, so a report can list every
     /// problem instead of stopping at the first.
     static var bundledUnchecked: KasusConceptBank {
-        guard let url = Bundle.main.url(forResource: "kasus_concepts", withExtension: "json"),
+        guard let url = AppResources.url("kasus_concepts", "json"),
               let data = try? Data(contentsOf: url),
               let decoded = try? KasusConceptBank(data: data) else { return empty }
         return decoded
