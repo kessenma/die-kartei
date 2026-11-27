@@ -14,6 +14,7 @@ Detail per area, with files, storage keys and effort per item:
 - [`3d-android.md`](android-parity/3d-android.md): 3D rendering options, the GLB export and the SceneView spike
 - [`icons.md`](android-parity/icons.md) + [`icon-map.csv`](android-parity/icon-map.csv): every SF Symbol and its Android match
 - [`stylus.md`](android-parity/stylus.md): Apple Pencil features and the Android stylus design
+- [`voices.md`](android-parity/voices.md) + [`voice-samples/`](android-parity/voice-samples/): German voices on iOS and Android, with samples
 - [`ai-platform-infra.md`](android-parity/ai-platform-infra.md): tutor features, content import, sync, notifications, themes, model download, speech
 
 Effort: S ≈ a day or two, M ≈ a few days to two weeks, L ≈ three weeks or more.
@@ -177,6 +178,39 @@ is read (Vision) in the journal and worksheets.
 - **Order:** spike (M) → Write it (S) → Quick Draw (S–M) → Schreibblatt (M) → journal with
   recognition (M) → worksheets (L) → Atelier (L).
 
+## Voices
+
+iOS picks voices in the app (pronunciation, plus Man / Woman / Boy / Girl for dialogue), but the
+good Enhanced/Premium voices have to be downloaded in iOS Settings ▸ Accessibility, hence the
+7-screenshot guide: Apple has no download API. Word highlighting, slow mode, dialogue stories,
+lock-screen playback and Stammtisch all ride on the voice. Android's `GermanVoice` only speaks,
+stops and opens the system settings.
+
+- **Android can do better than iOS here with the system engine** (tested on the emulator): Google
+  TTS has 4 German voices (2 female, 2 male), each offline and network. The app can list them,
+  pick one for itself without touching the system default, and `setVoice()` on a not-installed
+  voice starts Google's download from inside the app. Word ranges for highlighting arrive while
+  speaking. Effort S–M.
+- **Better-sounding voices on both platforms, no self-hosting:** Supertonic 3 through sherpa-onnx
+  (one C library, linked from Swift the way llama.cpp already is). 10 German voices (5 female, 5
+  male) in one 129 MB download from Hugging Face, no GPL phonemizer, about 7× faster than real time
+  on the Mac (phone speed not measured). Licence OpenRAIL-M: commercial use allowed, with use
+  restrictions passed on to users; needs a quick legal read. No child voices, so Boy/Girl stay on
+  system voices.
+- **Piper** is a second choice: only `thorsten-medium` and `kerstin-medium` are licensed cleanly for
+  commercial use, and sherpa-onnx 2.0 dropped espeak-ng (GPL), so Piper needs another phonemizer.
+- **Cloud TTS** (Google, Azure, ElevenLabs, OpenAI): not recommended. A key in the app needs a
+  proxy server, it bills per character, and it doesn't work offline.
+- **Design:** one Voices screen on both platforms, listing system voices and downloadable Kartei
+  voices with size, a sample button, download/delete, and per-role picks. Underneath, a shared
+  `SpeechPlayer` in the core with three backends: AVSpeech, Android TTS, sherpa-onnx.
+- **Order:** Android system-voice picker with in-app download, word ranges and a queue (S–M) →
+  move `SpeechService` into the shared core (M) → Supertonic voices on Android, mirrored to Hugging
+  Face with pinned checksums (M–L) → the same on iOS (M), which retires the Settings guide.
+- **Listen:** 38 samples of the same two sentences in [`voice-samples/`](android-parity/voice-samples/):
+  `android-google-*` (stock Android), `macos-*` (Apple voices as an iOS reference), `supertonic3-de-*`,
+  `piper-*`. Clarity was scored with speech recognition; naturalness needs ears.
+
 ## Other gaps, by area
 
 - **Home:** iOS has For You (Today plan, level card, streak calendar, week in review, Monatsbericht)
@@ -205,8 +239,8 @@ is read (Vision) in the journal and worksheets.
 
 - **Model download.** The GGUFs aren't on Hugging Face yet, so the tutor only works via adb.
   Every AI feature is effectively missing for a real user until this lands.
-- **Speech.** TTS speaks; no word ranges, voice picker or background playback. No speech-to-text
-  (Android `SpeechRecognizer` behind the core's existing `SpeechInput` protocol).
+- **Speech.** Voices as above. No speech-to-text yet (Android `SpeechRecognizer` behind the
+  core's existing `SpeechInput` protocol).
 - **Design system.** The theme tokens port; the Apple fonts (Noteworthy, Marker Felt, Futura)
   don't, so bundle open-licence substitutes before porting many more screens.
 - **Platform modules** (Kotlin-bridged, like `GermanVoice`): `Kartei3D`, `KarteiInk`,
@@ -228,7 +262,8 @@ chats and phrases, `.kartei` import, Auto Backup.
 Settings on the `SettingsPane` structure with the cheap panes (Conversation settings wired into
 Gespräch, fuller Flashcards, Feedback, Rate, What's New, Sources), the Library with real decks and
 chats, Home For You / All Activities with streak and Today plan. The parts that save nothing
-(icons, themes, Settings shell) can start alongside phase 1.
+(icons, themes, Settings shell) can start alongside phase 1. Settings ▸ Voice gets the system-voice
+picker with in-app download here; the Supertonic voices come in phase 6.
 
 **Phase 3: Placement check and onboarding (M).** Engine into the core, one shared CEFR level,
 the quiz UI, a two-step onboarding, Settings ▸ Your Level with the check. Results saved to the
@@ -243,7 +278,8 @@ Flashcard styles, flip and summary. Präpositionen cards, rules, verb-prepositio
 and Werkstatt. Diktat. Wortschatz hub. XP, goal ring, badges, celebrations, 2D pyramid. Reminders.
 
 **Phase 6: The tutor for real users (M–L).** GGUFs on Hugging Face (in progress in another
-thread); in-app download with progress, RAM check and delete. Speech-to-text and fuller TTS. Voice
+thread); in-app download with progress, RAM check and delete. Speech-to-text; the shared
+`SpeechPlayer` and the Supertonic voices on Android, then iOS. Voice
 Gespräch, Stammtisch. Stories. Typed Schreiben. AI deck generation.
 
 **Phase 7: Import, ink, sync (L).** Text intake (OCR, PDF, URLs) → flashcards from a document,
@@ -257,3 +293,4 @@ worksheets, Atelier. Overnight queue. Google Drive sync. Keyboard via `PROCESS_T
 - Symbolset rendering in Skip's tab bar (centring, cut-outs, `.fill`).
 - Jetpack Ink's input API from Skip; ML Kit on single handwritten letters.
 - Whether Skip picks the dark variant of an image asset (`figur-still`).
+- Supertonic speed and memory on a real phone; Samsung's TTS engine; OpenRAIL-M obligations.
