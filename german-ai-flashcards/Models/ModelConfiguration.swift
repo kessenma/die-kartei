@@ -1,6 +1,4 @@
 import Foundation
-import MLXLLM
-import MLXLMCommon
 
 // MARK: - Model Provider
 
@@ -49,18 +47,19 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
 
     var id: String { rawValue }
 
-    /// The MLX registry configuration for this model.
+    /// The Hugging Face repo id this model loads from. The MLX registry configuration built from
+    /// it lives in MLXModel+MLX.swift, so this catalog stays Foundation-only (shared with Android).
     ///
-    /// For `.appleIntelligence` this returns a harmless sentinel that is NEVER loaded by MLX — it
-    /// only keeps the cache-path helpers (which derive from `configuration.name`) total and
+    /// For `.appleIntelligence` this is a harmless sentinel that is NEVER loaded by MLX — it only
+    /// keeps the cache-path helpers (which derive from `configuration.name`) total and
     /// non-crashing. The service short-circuits the Apple case before any real load happens.
-    var configuration: ModelConfiguration {
+    var repoID: String {
         switch self {
-        case .appleIntelligence: ModelConfiguration(id: "apple-intelligence")
-        case .gemma4_E4B_german: ModelConfiguration(id: "kessenma/gemma4-e4b-german-tutor-v4-4bit")
-        case .gemma4_E2B_german: ModelConfiguration(id: "kessenma/gemma4-e2b-german-tutor-4bit")
-        case .granite2B_german: ModelConfiguration(id: "kessenma/granite33-2b-german-tutor-v4-4bit")
-        case .granite41_3B_german: ModelConfiguration(id: "kessenma/granite41-3b-german-tutor-v4-4bit")
+        case .appleIntelligence: "apple-intelligence"
+        case .gemma4_E4B_german: "kessenma/gemma4-e4b-german-tutor-v4-4bit"
+        case .gemma4_E2B_german: "kessenma/gemma4-e2b-german-tutor-4bit"
+        case .granite2B_german: "kessenma/granite33-2b-german-tutor-v4-4bit"
+        case .granite41_3B_german: "kessenma/granite41-3b-german-tutor-v4-4bit"
         }
     }
 
@@ -79,7 +78,7 @@ enum MLXModel: String, CaseIterable, Codable, Identifiable {
     /// The HuggingFace repo page, or `nil` for the built-in Apple model (no repo).
     var huggingFaceRepoURL: URL? {
         if self == .appleIntelligence { return nil }
-        return URL(string: "https://huggingface.co/\(configuration.name)")
+        return URL(string: "https://huggingface.co/\(repoID)")
     }
 
     // MARK: - Built-in model helpers

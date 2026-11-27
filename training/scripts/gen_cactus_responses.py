@@ -28,6 +28,9 @@ from run_baseline_eval import build_messages  # identical prompts to the MLX har
 SUITES = {
     "core": ROOT / "data/eval/grammar_eval_v0.json",
     "ext": ROOT / "data/eval/grammar_eval_v1_extra.json",
+    "holdout": ROOT / "data/eval/grammar_eval_v2_holdout.json",
+    # Frozen RL holdout: score each candidate once, never iterate against it.
+    "v3": ROOT / "data/eval/grammar_eval_v3.json",
 }
 
 
@@ -63,7 +66,10 @@ def main():
     ap.add_argument("--out-prefix", default="cactus_e2b_cq4")
     ap.add_argument("--runtime", default="cactus-cq4",
                     help="label stamped into the responses file (e.g. litertlm-int4)")
+    ap.add_argument("--suites", default="core,ext",
+                    help="comma-separated: core, ext, holdout (the scoreboard's /203 is all three)")
     args = ap.parse_args()
+    suites = {s: SUITES[s] for s in args.suites.split(",")}
     base = f"http://{args.host}:{args.port}"
 
     with urllib.request.urlopen(base + "/v1/models", timeout=30) as r:
@@ -72,7 +78,7 @@ def main():
 
     (ROOT / "results").mkdir(exist_ok=True)
     handoffs = 0
-    for suite, path in SUITES.items():
+    for suite, path in suites.items():
         items = json.loads(Path(path).read_text())["items"]
         results = []
         t0 = time.time()

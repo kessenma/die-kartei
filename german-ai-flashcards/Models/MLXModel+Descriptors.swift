@@ -105,26 +105,6 @@ extension MLXModel {
         }
     }
 
-    /// Minimum device RAM (in GB) needed to run this model.
-    ///
-    /// Sized against what iOS actually hands an app, not against physical RAM: the jetsam limit is
-    /// roughly half of RAM even with the increased-memory-limit entitlement, so a 6 GB iPhone has
-    /// about 3.4 GB to work with and cannot hold a 4 GB set of weights plus a KV cache. Anything
-    /// whose weights are over ~3 GB therefore lands in the 8 GB tier.
-    ///
-    /// This drives the *interface*: which model gets recommended, and when the memory check sheet
-    /// appears. It's deliberately a fixed tier rather than a live reading, so rows don't appear and
-    /// vanish as the app allocates. Runtime safety is ``MemoryBudget``'s job, which measures the
-    /// real budget on the device in hand.
-    var minimumRAMGB: Int {
-        switch self {
-        case .appleIntelligence: 0   // gated by Apple Intelligence eligibility, not by RAM
-        case .granite2B_german, .granite41_3B_german: 4
-        case .gemma4_E2B_german: 6
-        case .gemma4_E4B_german: 8
-        }
-    }
-
     /// Short device compatibility hint shown in the model picker. iPhones are named by model;
     /// iPads and Macs vary too much for that, so they get the memory the tutor needs.
     var deviceNote: String {

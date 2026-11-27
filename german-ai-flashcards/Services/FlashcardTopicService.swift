@@ -14,7 +14,7 @@ struct FlashcardTopic: Decodable, Hashable, Identifiable {
 /// with a static cache, so the JSON is parsed at most once per launch.
 enum FlashcardTopics {
     private static let cache: [FlashcardTopic] = {
-        guard let url = Bundle.main.url(forResource: "flashcard_topics", withExtension: "json"),
+        guard let url = AppResources.url("flashcard_topics", "json"),
               let data = try? Data(contentsOf: url),
               let topics = try? JSONDecoder().decode([FlashcardTopic].self, from: data)
         else { return [] }

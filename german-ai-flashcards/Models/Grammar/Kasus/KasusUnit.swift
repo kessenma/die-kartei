@@ -12,7 +12,7 @@
 //  never a gate; nothing here locks a unit.
 //
 
-import SwiftUI
+import Foundation
 
 nonisolated enum KasusUnit: String, CaseIterable, Identifiable {
     case nominativ, akkusativ, dativ, genitiv, alleFaelle
@@ -122,8 +122,6 @@ nonisolated enum KasusUnit: String, CaseIterable, Identifiable {
 
     var symbol: String { focusCase?.symbol ?? "square.grid.2x2" }
 
-    /// The case color, or neutral for Alle Fälle: graphite already means Nominativ.
-    var color: Color { focusCase?.color ?? .secondary }
 
     /// The Regel card's opening lines, in the `KasusRich` markup (bold key terms, italic German,
     /// forms in their gender color, case words in their case color). Short, and in Kasus-Check

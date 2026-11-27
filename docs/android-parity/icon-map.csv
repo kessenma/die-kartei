@@ -1,0 +1,464 @@
+sf_symbol,uses,features,skipui_mapped,material_symbol,material_style,match_quality,alternate_library,alternate_name,notes
+checkmark.circle.fill,111,ClassNotes(19); Cards(12); Conversation(12); Grammar(9); Progress(9); Zeichnen(7); Schreibblatt(7); Settings(6); Hoeren(5); Onboarding(4); Stories(3); Schreiben(3); Paper(2); Home(2); Library(2); JobPrep(2); Queue(2); Mac shell(1); Shared(1); Wortschatz(1); DocumentDeck(1); PhotoScan(1),Icons.Filled.CheckCircle,check_circle,Rounded FILL1,exact,,,
+chevron.right,41,Home(6); Grammar(6); Settings(4); ClassNotes(3); Conversation(3); Cards(2); Library(2); JobPrep(2); DocumentDeck(2); Zeichnen(2); Matching(1); Paper(1); Hoeren(1); Progress(1); Stories(1); Schreiben(1); Queue(1); Onboarding(1); Spiele(1),Icons.Outlined.KeyboardArrowRight,chevron_right,Rounded,exact,,,
+checkmark,39,Grammar(9); Stories(4); Conversation(4); Settings(3); Cards(3); Zeichnen(3); ClassNotes(3); Hoeren(2); Shared(2); Schreiben(2); Model UI(1); Home(1); Cloze(1); DocumentDeck(1),Icons.Outlined.Check,check,Rounded,exact,,,
+exclamationmark.triangle,34,Settings(7); Grammar(5); Stories(5); DocumentDeck(3); Mac shell(2); JobPrep(2); ClassNotes(2); Model UI(1); Paper(1); Home(1); Cards(1); Wortschatz(1); Schreiben(1); Zeichnen(1); Conversation(1),Icons.Outlined.Warning,warning,Rounded,exact,,,
+book.pages,32,Settings(6); Home(5); Queue(5); Grammar(4); Progress(3); Hoeren(2); Library(2); ClassNotes(2); Stories(1); Cards(1); WhatsNew(1),,auto_stories,Rounded,close,Phosphor (MIT),book-open-text,alt match=close
+xmark.circle.fill,32,Cards(6); Conversation(6); Progress(5); Grammar(4); Paper(2); JobPrep(2); ClassNotes(2); Hoeren(1); Wortschatz(1); Stories(1); Schreiben(1); Onboarding(1),,cancel,Rounded FILL1,exact,,,
+circle,31,ClassNotes(7); Conversation(6); Grammar(4); Zeichnen(4); Mac shell(1); Settings(1); Home(1); Hoeren(1); Progress(1); Library(1); JobPrep(1); Queue(1); Schreibblatt(1); Spiele(1),,radio_button_unchecked,Rounded,exact,,,selection rings: pair with check_circle FILL=1
+questionmark.circle,30,Grammar(12); Cards(5); ClassNotes(4); Stories(3); Schreiben(2); Settings(1); Mac shell(1); Pencil(1); Onboarding(1),,help,Rounded,exact,,,
+info.circle,29,Settings(8); Conversation(5); Cards(4); Home(3); Mac shell(1); Model UI(1); Hoeren(1); Grammar(1); Library(1); Wortschatz(1); Stories(1); JobPrep(1); ClassNotes(1),Icons.Outlined.Info,info,Rounded,exact,,,
+trash,29,Settings(7); ClassNotes(5); Model UI(2); Matching(2); Grammar(2); Progress(2); Conversation(2); Paper(1); JobPrep(1); Schreiben(1); PhotoScan(1); Zeichnen(1); Queue(1); Schreibblatt(1),Icons.Outlined.Delete,delete,Rounded,exact,,,
+xmark,29,Grammar(10); Shared(4); Cards(3); Zeichnen(3); Cloze(2); Matching(1); Hoeren(1); Stories(1); Schreibblatt(1); ClassNotes(1); Spiele(1); Conversation(1),Icons.Outlined.Clear,close,Rounded,exact,,,
+arrow.up.right.square,27,Settings(21); Model UI(3); Mac shell(1); Shared(1); Wortschatz(1),,open_in_new,Rounded,close,,,
+checkmark.seal.fill,26,Settings(4); Progress(4); Cards(4); Onboarding(3); Schreibblatt(2); Conversation(2); Home(1); Hoeren(1); Grammar(1); Cloze(1); Stories(1); Schreiben(1); ClassNotes(1),,verified,Rounded FILL1,exact,,,
+checklist,25,Home(8); Grammar(4); ClassNotes(3); WhatsNew(3); Settings(2); Progress(2); TabBar(1); Stories(1); Conversation(1),,checklist,Rounded,exact,,,
+checkmark.seal,23,ClassNotes(7); Progress(3); Schreiben(3); Matching(2); Grammar(2); Stories(2); Settings(1); Wortschatz(1); Conversation(1); WhatsNew(1),,verified,Rounded,exact,,,
+play.fill,23,Hoeren(5); Grammar(4); Cards(4); Stories(4); Queue(2); Home(1); Library(1); Zeichnen(1); Conversation(1),Icons.Filled.PlayArrow,play_arrow,Rounded FILL1,exact,,,
+rectangle.stack,23,Grammar(4); Schreibblatt(4); Settings(3); ClassNotes(3); Zeichnen(2); Queue(2); Matching(1); Library(1); Spiele(1); Conversation(1); WhatsNew(1),,cards_stack,Rounded,concept,Phosphor (MIT),cards-three,"alt match=exact; THE card-deck symbol (Vocabulary, decks). No Material match; Phosphor cards-three is near-identical incl. fill weight. Bauhaus custom candidate"
+rectangle.stack.badge.plus,22,ClassNotes(7); Conversation(4); Shared(2); JobPrep(2); Settings(1); Library(1); DocumentDeck(1); Schreiben(1); Queue(1); Home(1); WhatsNew(1),,library_add,Rounded,close,,,card-stack + plus
+sparkles,22,Settings(5); Home(3); Cards(2); Zeichnen(2); Grammar(1); Shared(1); Stories(1); DocumentDeck(1); Schreiben(1); Queue(1); ClassNotes(1); Spiele(1); Conversation(1); WhatsNew(1),,auto_awesome,Rounded,exact,,,
+doc.richtext,21,ClassNotes(8); JobPrep(6); Conversation(3); Cards(2); DocumentDeck(1); Schreibblatt(1),,article,Rounded,close,,,
+rectangle.stack.fill,21,ClassNotes(8); JobPrep(4); Home(2); Library(2); Paper(1); Cards(1); PastTense(1); Progress(1); WhatsNew(1),,cards_stack,Rounded FILL1,concept,Phosphor (MIT),cards-three,"alt match=exact; THE card-deck symbol (Vocabulary, decks). No Material match; Phosphor cards-three is near-identical incl. fill weight. Bauhaus custom candidate"
+exclamationmark.triangle.fill,19,Paper(4); Shared(3); Mac shell(2); Settings(2); Cards(2); PhotoScan(2); Conversation(2); Queue(1); Grammar(1),Icons.Filled.Warning,warning,Rounded FILL1,exact,,,
+speaker.wave.2.fill,19,Cards(7); Conversation(7); Grammar(2); Cloze(1); Shared(1); Wortschatz(1),,volume_up,Rounded FILL1,exact,,,
+character.book.closed,18,JobPrep(5); Schreiben(4); Library(2); Shared(2); Settings(1); Grammar(1); Stories(1); ClassNotes(1); Conversation(1),,dictionary,Rounded,close,Lucide (ISC),book-a,alt match=exact; Material dictionary = OPEN book with A; Lucide book-a = closed book with A (exact)
+doc.text,18,ClassNotes(5); Schreibblatt(4); Progress(2); Conversation(2); Grammar(1); Library(1); Schreiben(1); Cards(1); WhatsNew(1),,description,Rounded,exact,,,
+arrow.counterclockwise,17,Grammar(6); Hoeren(2); Cards(2); Stories(2); Shared(1); DocumentDeck(1); ClassNotes(1); Onboarding(1); Conversation(1),,restart_alt,Rounded,close,Phosphor (MIT),arrow-counter-clockwise,alt match=close
+checkmark.circle,16,Cards(4); Grammar(2); Schreibblatt(2); ClassNotes(2); Home(1); Hoeren(1); Progress(1); Stories(1); Schreiben(1); Queue(1),Icons.Outlined.CheckCircle,check_circle,Rounded,exact,,,
+flame.fill,16,Grammar(6); Progress(6); Home(3); Settings(1),,local_fire_department,Rounded FILL1,close,Phosphor (MIT),fire,alt match=close; streak flame; Phosphor fire closer to SF teardrop
+textformat.abc,16,Grammar(5); Cards(3); Home(2); Wortschatz(2); Progress(2); ClassNotes(1); Schreibblatt(1),,abc,Rounded,close,,,Material ABC is all caps; SF Abc
+arrow.right,15,Grammar(3); Home(2); Progress(2); Settings(1); Hoeren(1); Shared(1); Wortschatz(1); Stories(1); Schreiben(1); ClassNotes(1); Onboarding(1),,arrow_forward,Rounded,exact,,,
+timer,15,Grammar(5); Matching(2); Stories(2); JobPrep(2); Settings(1); Library(1); Zeichnen(1); Conversation(1),,timer,Rounded,exact,,,
+arrow.clockwise,14,Conversation(3); Paper(2); Hoeren(2); Cards(2); Settings(1); JobPrep(1); Schreiben(1); ClassNotes(1); Onboarding(1),,refresh,Rounded,exact,,,
+chevron.left,14,Grammar(5); Conversation(3); Paper(1); Home(1); JobPrep(1); DocumentDeck(1); Queue(1); ClassNotes(1),Icons.Outlined.KeyboardArrowLeft,chevron_left,Rounded,exact,,,
+eye,14,Grammar(9); Progress(1); Cards(1); Zeichnen(1); ClassNotes(1); Onboarding(1),,visibility,Rounded,exact,,,
+list.bullet.rectangle,14,Schreibblatt(4); Progress(3); ClassNotes(3); Settings(2); Grammar(1); Onboarding(1),,list_alt,Rounded,exact,,,
+square.and.pencil,14,Schreiben(6); ClassNotes(5); Home(1); Conversation(1); WhatsNew(1),,edit_square,Rounded,exact,,,
+xmark.circle,14,Cards(4); Settings(3); Grammar(3); Hoeren(1); Progress(1); Schreibblatt(1); ClassNotes(1),,cancel,Rounded,exact,,,
+doc.on.clipboard,13,JobPrep(4); ClassNotes(3); Paper(2); DocumentDeck(2); Conversation(2),,content_paste,Rounded,close,,,
+hand.draw,13,Schreibblatt(5); Home(3); Pencil(3); Zeichnen(1); ClassNotes(1),,gesture,Rounded,close,,,
+play.circle.fill,13,Grammar(7); ClassNotes(3); Stories(1); JobPrep(1); Home(1),,play_circle,Rounded FILL1,exact,,,
+square.and.arrow.up,13,Progress(2); Cards(2); ClassNotes(2); Conversation(2); Settings(1); Grammar(1); Library(1); JobPrep(1); Schreibblatt(1),Icons.Outlined.Share,share,Rounded,close,,,Android convention = share (3 nodes); ios_share exists if exact look wanted
+text.book.closed,13,Progress(3); ClassNotes(2); Spiele(2); Conversation(2); Matching(1); Settings(1); Grammar(1); Queue(1),,book,Rounded,close,Phosphor (MIT),book,alt match=close
+arrow.triangle.branch,12,Grammar(6); Progress(4); Home(1); ClassNotes(1),,call_split,Rounded,close,Lucide (ISC),split,alt match=close
+lightbulb,12,Grammar(7); Settings(2); Hoeren(2); Conversation(1),,lightbulb,Rounded,exact,,,
+photo,12,Stories(4); Zeichnen(3); Cards(2); Library(1); ClassNotes(1); WhatsNew(1),,image,Rounded,exact,,,
+tablecells,12,Grammar(6); Cards(2); Library(2); ClassNotes(1); WhatsNew(1),,table,Rounded,close,,,
+arrow.down.circle,11,Settings(4); Queue(2); Conversation(2); Model UI(1); Grammar(1); Stories(1),,arrow_circle_down,Rounded,exact,,,
+bubble.left.and.bubble.right,11,Settings(3); JobPrep(2); WhatsNew(2); Progress(1); ClassNotes(1); Cards(1); Conversation(1),,forum,Rounded,exact,,,
+bubble.left.and.bubble.right.fill,11,Home(5); Progress(3); Paper(1); Stories(1); ClassNotes(1),,forum,Rounded FILL1,exact,,,
+ear.badge.waveform,11,Conversation(5); Shared(3); Settings(1); Home(1); Cards(1),,hearing,Rounded,close,,,no waveform badge
+photo.on.rectangle.angled,11,Zeichnen(3); Cards(2); Shared(2); Stories(2); Queue(2),,photo_library,Rounded,close,,,
+safari,11,JobPrep(6); Conversation(3); Paper(2),Icons.Outlined.Explore,explore,Rounded,exact,,,"Safari is an Apple app; on Android 'web' means the browser, use language/public if preferred"
+speaker.wave.2,11,Stories(5); ClassNotes(2); Settings(1); JobPrep(1); Zeichnen(1); WhatsNew(1),,volume_up,Rounded,exact,,,
+star.fill,11,Progress(3); Zeichnen(2); Model UI(1); Settings(1); Home(1); Grammar(1); Cards(1); Stories(1),Icons.Filled.Star,star,Rounded FILL1,exact,,,
+arrow.down.circle.fill,10,Settings(3); Stories(2); Onboarding(2); Shared(1); Schreibblatt(1); Conversation(1),,arrow_circle_down,Rounded FILL1,exact,,,
+arrow.triangle.2.circlepath,10,Conversation(3); Settings(2); Grammar(2); Cards(1); Library(1); ClassNotes(1),,sync,Rounded,close,,,
+paintpalette,10,Zeichnen(6); Settings(2); WhatsNew(2),,palette,Rounded,exact,,,
+plus.circle,10,ClassNotes(5); Schreiben(2); DocumentDeck(1); Zeichnen(1); Spiele(1),,add_circle,Rounded,exact,,,
+square.grid.2x2.fill,10,Home(4); Grammar(2); Wortschatz(1); Stories(1); Conversation(1); Progress(1),,grid_view,Rounded FILL1,exact,,,
+stop.fill,10,Stories(3); Conversation(3); Hoeren(2); Grammar(1); Queue(1),,stop,Rounded FILL1,exact,,,
+book.closed,9,Cards(4); Grammar(1); PastTense(1); Schreiben(1); ClassNotes(1); Zeichnen(1),,book,Rounded,close,Phosphor (MIT),book,alt match=close
+briefcase.fill,9,Conversation(4); JobPrep(2); Home(1); Library(1); Cards(1),,work,Rounded FILL1,exact,,,
+clock.arrow.circlepath,9,Grammar(3); Conversation(2); Settings(1); Shared(1); Wortschatz(1); Hoeren(1),,history,Rounded,exact,,,
+ellipsis.circle,9,ClassNotes(2); Matching(1); Settings(1); Cards(1); Schreiben(1); Schreibblatt(1); Conversation(1); WhatsNew(1),,pending,Rounded,exact,,,
+globe,9,Model UI(3); Keyboard extension(2); Settings(1); Schreiben(1); Conversation(1); WhatsNew(1),,language,Rounded,exact,,,
+graduationcap,9,Settings(2); WhatsNew(2); Mac shell(1); Library(1); ClassNotes(1); Spiele(1); Home(1),,school,Rounded,exact,,,
+graduationcap.fill,9,ClassNotes(3); Home(2); Library(2); Cards(1); WhatsNew(1),,school,Rounded FILL1,exact,,,
+memorychip,9,Settings(6); Stories(2); Grammar(1),,memory_alt,Rounded,close,Phosphor (MIT),memory,alt match=close; RAM module; SF chip is plainer
+rectangle.on.rectangle.angled,9,Schreibblatt(6); Home(3),,style,Rounded,close,,,angled stacked cards
+archivebox,8,Settings(6); Home(1); WhatsNew(1),,inventory_2,Rounded,exact,,,
+chevron.right.circle.fill,8,Cards(8),,arrow_circle_right,Rounded FILL1,close,Phosphor (MIT),caret-circle-right,alt match=exact
+doc.text.magnifyingglass,8,Home(2); JobPrep(2); Paper(1); Settings(1); Library(1); Conversation(1),,find_in_page,Rounded,exact,,,
+eye.slash,8,ClassNotes(2); Onboarding(2); Hoeren(1); Progress(1); Cards(1); Grammar(1),,visibility_off,Rounded,exact,,,
+flag.checkered,8,Schreibblatt(5); Conversation(2); Settings(1),,sports_score,Rounded,exact,,,
+lightbulb.fill,8,Conversation(4); Grammar(2); Settings(1); PastTense(1),,lightbulb,Rounded FILL1,exact,,,
+link,8,ClassNotes(4); DocumentDeck(1); Grammar(1); Home(1); WhatsNew(1),,link,Rounded,exact,,,
+pencil.and.scribble,8,Cards(3); Zeichnen(2); Home(1); ClassNotes(1); Schreibblatt(1),,draw,Rounded,exact,,,
+text.bubble,8,Hoeren(2); Conversation(2); WhatsNew(2); Cards(1); ClassNotes(1),,chat,Rounded,exact,,,
+wand.and.sparkles,8,Grammar(6); Settings(1); Cards(1),,auto_fix_high,Rounded,exact,,,
+arrow.left.arrow.right,7,Grammar(6); DocumentDeck(1),,swap_horiz,Rounded,exact,,,
+arrow.right.circle.fill,7,Schreibblatt(4); PastTense(1); Zeichnen(1); Conversation(1),,arrow_circle_right,Rounded FILL1,exact,,,
+brain.head.profile,7,Settings(2); Progress(2); TabBar(1); Mac shell(1); Grammar(1),,psychology,Rounded,close,Phosphor (MIT),head-circuit,alt match=close; Material head has gear-brain inside; SF shows brain in profile; Kyle-custom candidate (Library tab)
+calendar,7,Home(1); Progress(1); Wortschatz(1); Schreiben(1); Conversation(1); Hoeren(1); Schreibblatt(1),Icons.Outlined.DateRange,calendar_today,Rounded,exact,,,
+chevron.down,7,Grammar(2); Schreibblatt(2); Cards(1); Schreiben(1); Conversation(1),Icons.Outlined.KeyboardArrowDown,expand_more,Rounded,exact,,,
+die.face.5.fill,7,Home(2); Stories(2); Conversation(2); Queue(1),,casino,Rounded FILL1,exact,,,
+ear,7,Settings(3); Stories(3); Home(1),,hearing,Rounded,exact,Phosphor (MIT),ear,alt match=exact
+highlighter,7,Pencil(5); Grammar(2),,ink_highlighter,Rounded,exact,,,
+leaf,7,Settings(3); Progress(1); Conversation(1); Zeichnen(1); WhatsNew(1),,eco,Rounded,close,Phosphor (MIT),leaf,alt match=close
+mic.fill,7,Conversation(7),,mic,Rounded FILL1,exact,,,
+text.alignleft,7,Stories(3); JobPrep(2); Settings(1); Schreiben(1),,format_align_left,Rounded,exact,,,
+text.badge.plus,7,Queue(4); Home(1); Stories(1); ClassNotes(1),,playlist_add,Rounded,close,,,
+tortoise.fill,7,Conversation(4); Stories(3),,,,none,Lucide (ISC),turtle,alt match=exact; no Material turtle; Lucide turtle close (stroke icon)
+arrow.uturn.backward,6,Settings(2); Home(1); Pencil(1); ClassNotes(1); Keyboard extension(1),,undo,Rounded,exact,,,
+book,6,ClassNotes(2); Stories(1); Schreiben(1); Onboarding(1); WhatsNew(1),,menu_book,Rounded,close,,,
+book.closed.fill,6,ClassNotes(3); Cards(1); Stories(1); Progress(1),,book,Rounded FILL1,close,Phosphor (MIT),book,alt match=close
+checkmark.shield,6,Settings(4); Shared(1); WhatsNew(1),,verified_user,Rounded,exact,,,
+clock,6,Cards(1); Wortschatz(1); Queue(1); Conversation(1); Hoeren(1); Schreibblatt(1),,schedule,Rounded,exact,,,
+cpu,6,Settings(4); Model UI(1); Conversation(1),,memory,Rounded,exact,Phosphor (MIT),cpu,alt match=exact
+doc.on.doc,6,Settings(3); Cards(1); Schreibblatt(1); Conversation(1),,content_copy,Rounded,exact,,,
+exclamationmark.circle,6,Settings(2); Paper(1); Grammar(1); Cards(1); PhotoScan(1),,error,Rounded,exact,,,
+gearshape,6,Mac shell(3); Pencil(2); Settings(1),Icons.Outlined.Settings,settings,Rounded,exact,,,
+keyboard.fill,6,Conversation(6),,keyboard,Rounded FILL1,exact,,,
+macbook.and.iphone,6,Mac shell(6),,devices,Rounded,exact,,,apple-only use (macOS); Apple-product glyph
+paintbrush.pointed,6,Zeichnen(3); Mac shell(2); Grammar(1),,brush,Rounded,close,Lucide (ISC),paintbrush,alt match=exact
+pencil.and.list.clipboard,6,ClassNotes(4); WhatsNew(2),,edit_note,Rounded,close,,,
+plus.circle.fill,6,Conversation(2); Hoeren(1); Grammar(1); Stories(1); Schreibblatt(1),Icons.Outlined.AddCircle,add_circle,Rounded FILL1,exact,,,
+square.stack.3d.up,6,Spiele(2); Settings(1); Grammar(1); Zeichnen(1); Schreibblatt(1),,layers,Rounded,close,Phosphor (MIT),stack,"alt match=exact; SF has 3 layers, Material 2; Phosphor stack has 3"
+text.insert,6,Grammar(2); Settings(1); Cloze(1); ClassNotes(1); Progress(1),,insert_text,Rounded,close,Lucide (ISC),text-cursor-input,alt match=close
+wand.and.stars,6,Settings(1); Cards(1); Shared(1); Stories(1); Queue(1); Zeichnen(1),,auto_fix_high,Rounded,exact,,,
+arrow.up.left.and.arrow.down.right,5,Cards(2); Schreiben(1); Schreibblatt(1); ClassNotes(1),,open_in_full,Rounded,exact,,,
+bolt.fill,5,Grammar(3); Zeichnen(1); Progress(1),,bolt,Rounded FILL1,exact,,,
+briefcase,5,WhatsNew(2); Mac shell(1); JobPrep(1); Conversation(1),,work,Rounded,exact,,,
+chevron.left.circle.fill,5,Cards(5),,arrow_circle_left,Rounded FILL1,close,Phosphor (MIT),caret-circle-left,alt match=exact; Phosphor has chevron-in-circle with fill
+circle.dashed,5,Grammar(2); Progress(2); Cards(1),,radio_button_unchecked,Rounded,concept,Lucide (ISC),circle-dashed,alt match=exact; Lucide/Tabler exact
+doc.plaintext,5,Home(2); Paper(1); ClassNotes(1); Cards(1),,description,Rounded,close,,,
+doc.text.viewfinder,5,ClassNotes(5),,document_scanner,Rounded,exact,,,
+eraser,5,Pencil(4); Schreiben(1),,ink_eraser,Rounded,exact,,,
+figure.stand,5,Grammar(2); Home(1); Cards(1); Spiele(1),,man,Rounded,exact,,,Galgenmännchen; der = masculine
+hand.raised.fill,5,Pencil(3); Grammar(2),,back_hand,Rounded FILL1,exact,,,
+headphones,5,Hoeren(3); Home(1); WhatsNew(1),,headphones,Rounded,exact,,,
+iphone,5,Settings(3); Onboarding(1); WhatsNew(1),,smartphone,Rounded,close,,,Apple-product glyph; device list
+keyboard,5,Settings(2); Schreiben(2); WhatsNew(1),,keyboard,Rounded,exact,,,
+minus.circle,5,Progress(4); Schreiben(1),,do_not_disturb_on,Rounded,exact,,,
+pencil.tip,5,Schreiben(2); Cards(1); Pencil(1); ClassNotes(1),,stylus,Rounded,close,Lucide (ISC),pen-tool,alt match=close
+person.3.fill,5,ClassNotes(3); Grammar(1); WhatsNew(1),,groups,Rounded FILL1,exact,,,
+person.text.rectangle,5,Mac shell(1); Settings(1); JobPrep(1); Conversation(1); WhatsNew(1),Icons.Outlined.Badge,id_card,Rounded,close,,,
+photo.on.rectangle,5,DocumentDeck(1); PhotoScan(1); Zeichnen(1); ClassNotes(1); Settings(1),,photo_library,Rounded,exact,,,
+plus,5,Conversation(2); Wortschatz(1); JobPrep(1); ClassNotes(1),Icons.Outlined.Add,add,Rounded,exact,,,
+scribble,5,Zeichnen(4); Cards(1),,gesture,Rounded,exact,,,
+shuffle,5,Grammar(4); Schreiben(1),,shuffle,Rounded,exact,,,
+slider.horizontal.3,5,Grammar(2); Cards(2); Wortschatz(1),,tune,Rounded,exact,,,
+star,5,Zeichnen(2); Settings(1); Mac shell(1); Schreibblatt(1),,star,Rounded,exact,,,
+text.quote,5,Cards(2); Library(2); Grammar(1),,format_quote,Rounded,close,,,
+waveform,5,Settings(2); Conversation(2); WhatsNew(1),,graphic_eq,Rounded,close,Phosphor (MIT),waveform,alt match=close; Phosphor waveform matches SF's centred bars better
+arrow.up,4,Home(2); ClassNotes(1); Conversation(1),,arrow_upward,Rounded,exact,,,
+arrow.uturn.backward.circle,4,Grammar(2); Progress(2),,undo,Rounded,concept,Phosphor (MIT),arrow-u-up-left,alt match=close; no circled undo; Circle() overlay
+camera,4,ClassNotes(3); JobPrep(1),,photo_camera,Rounded,exact,,,
+camera.fill,4,Cards(1); DocumentDeck(1); PhotoScan(1); ClassNotes(1),,photo_camera,Rounded FILL1,exact,,,
+character.book.closed.fill,4,JobPrep(1); ClassNotes(1); Conversation(1); Progress(1),,dictionary,Rounded FILL1,close,Lucide (ISC),book-a,alt match=exact; Material dictionary = OPEN book with A; Lucide book-a = closed book with A (exact)
+circle.lefthalf.filled,4,Grammar(3); Spiele(1),,contrast,Rounded,exact,,,
+gamecontroller,4,Settings(2); WhatsNew(2),,sports_esports,Rounded,exact,,,
+hand.tap.fill,4,Shared(1); ClassNotes(1); Conversation(1); Grammar(1),,touch_app,Rounded FILL1,exact,,,
+hand.thumbsup.fill,4,Grammar(1); Cards(1); Stories(1); Conversation(1),Icons.Filled.ThumbUp,thumb_up,Rounded FILL1,exact,,,
+line.3.horizontal,4,Schreibblatt(3); Zeichnen(1),Icons.Outlined.Menu,menu,Rounded,exact,,,
+magnifyingglass,4,Wortschatz(1); Stories(1); DocumentDeck(1); Schreibblatt(1),Icons.Outlined.Search,search,Rounded,exact,,,
+moon.stars.fill,4,Home(2); Stories(1); Queue(1),,bedtime,Rounded FILL1,close,Lucide (ISC),moon-star,alt match=exact
+pause.circle.fill,4,Settings(2); Library(1); Wortschatz(1),,pause_circle,Rounded FILL1,exact,,,
+pause.fill,4,Grammar(1); Cards(1); Stories(1); Queue(1),,pause,Rounded FILL1,exact,,,
+pencil,4,Pencil(2); Zeichnen(1); ClassNotes(1),Icons.Outlined.Create,edit,Rounded,exact,,,
+pencil.line,4,Pencil(2); Schreibblatt(1); ClassNotes(1),,edit,Rounded,close,,,
+person.2.fill,4,Conversation(2); Grammar(2),,group,Rounded FILL1,exact,,,
+person.crop.circle.badge.checkmark,4,Schreiben(2); Settings(1); Grammar(1),,how_to_reg,Rounded,close,,,
+person.crop.circle.badge.exclamationmark,4,Settings(1); Shared(1); Stories(1); Queue(1),,person_alert,Rounded,close,,,
+pin,4,Settings(3); Grammar(1),,push_pin,Rounded,exact,,,
+pin.fill,4,Settings(3); Grammar(1),,push_pin,Rounded FILL1,exact,,,
+plus.bubble,4,JobPrep(4),,add_comment,Rounded,exact,,,
+rectangle.on.rectangle,4,Library(1); Wortschatz(1); Zeichnen(1); ClassNotes(1),,filter_none,Rounded,close,,,
+square.and.arrow.down.fill,4,Onboarding(3); Paper(1),,download,Rounded FILL1,close,,,
+square.grid.2x2,4,Matching(2); Wortschatz(1); Grammar(1),,grid_view,Rounded,exact,,,
+stethoscope,4,Settings(2); Conversation(1); Keyboard extension(1),,stethoscope,Rounded,exact,,,
+text.badge.checkmark,4,Settings(1); Mac shell(1); Home(1); Schreiben(1),,spellcheck,Rounded,close,,,
+text.cursor,4,Hoeren(3); Conversation(1),,text_select_end,Rounded,close,Lucide (ISC),text-cursor,alt match=exact
+text.magnifyingglass,4,Grammar(2); Schreiben(1); WhatsNew(1),,manage_search,Rounded,close,,,
+arrow.down.right.and.arrow.up.left,3,Pencil(1); Schreiben(1); Schreibblatt(1),,close_fullscreen,Rounded,close,,,
+arrow.right.circle,3,Grammar(2); Schreibblatt(1),,arrow_circle_right,Rounded,exact,,,
+arrow.uturn.backward.circle.fill,3,Grammar(2); Progress(1),,undo,Rounded FILL1,concept,,,no circled undo; Circle() background
+bubble.left.and.text.bubble.right,3,Conversation(2); Grammar(1),,forum,Rounded,close,,,
+building.columns.fill,3,Settings(1); ClassNotes(1); Conversation(1),,account_balance,Rounded FILL1,exact,,,
+camera.viewfinder,3,Home(1); Library(1); PhotoScan(1),Icons.Outlined.QrCodeScanner,document_scanner,Rounded,close,,,
+character.cursor.ibeam,3,Grammar(2); Shared(1),,text_fields,Rounded,concept,Lucide (ISC),text-cursor-input,alt match=close
+chevron.up,3,Cards(1); Schreiben(1); Schreibblatt(1),Icons.Outlined.KeyboardArrowUp,expand_less,Rounded,exact,,,
+circle.fill,3,Paper(1); Progress(1); Spiele(1),,circle,Rounded FILL1,exact,,,
+cloud,3,WhatsNew(2); Zeichnen(1),,cloud,Rounded,exact,,,
+creditcard,3,Settings(2); Shared(1),,credit_card,Rounded,exact,,,
+cube.fill,3,Grammar(3),,deployed_code,Rounded FILL1,close,Phosphor (MIT),cube,alt match=close
+envelope,3,Settings(2); ClassNotes(1),Icons.Outlined.Email,mail,Rounded,exact,,,
+exclamationmark.arrow.trianglehead.2.clockwise.rotate.90,3,Grammar(2); Matching(1),,sync_problem,Rounded,exact,,,
+exclamationmark.bubble,3,Settings(2); Grammar(1),Icons.Outlined.Feedback,feedback,Rounded,exact,,,
+figure.stairs,3,Settings(3),,stairs,Rounded,concept,Tabler (MIT),stairs-up,alt match=close; no person-on-stairs anywhere; custom Bauhaus candidate (Level)
+flame,3,Queue(1); Schreibblatt(1); Settings(1),,local_fire_department,Rounded,close,Phosphor (MIT),fire,alt match=close; streak flame; Phosphor fire closer to SF teardrop
+gift.fill,3,Grammar(3),,featured_seasonal_and_gifts,Rounded FILL1,close,Phosphor (MIT),gift,alt match=close
+hand.tap,3,Settings(1); Pencil(1); WhatsNew(1),,touch_app,Rounded,exact,,,
+hourglass,3,Mac shell(2); Settings(1),,hourglass_empty,Rounded,exact,,,
+house,3,TabBar(1); Mac shell(1); Conversation(1),Icons.Outlined.Home,home,Rounded,exact,,,
+icloud,3,Settings(2); WhatsNew(1),,cloud,Rounded,exact,,,iCloud copy; Android has no iCloud
+internaldrive,3,Settings(2); Onboarding(1),,hard_drive,Rounded,exact,,,
+leaf.fill,3,Settings(1); Shared(1); Home(1),,eco,Rounded FILL1,close,Phosphor (MIT),leaf,alt match=close
+line.3.horizontal.decrease.circle,3,Progress(1); Stories(1); Conversation(1),,filter_list,Rounded,close,Phosphor (MIT),funnel-simple,alt match=close; no circled variant
+paintbrush,3,Pencil(1); Settings(1); WhatsNew(1),,brush,Rounded,close,Phosphor (MIT),paint-brush,alt match=close
+pencil.and.outline,3,Conversation(2); WhatsNew(1),,border_color,Rounded,close,,,
+pin.slash,3,Settings(3),,keep_off,Rounded,exact,,,
+plus.rectangle.on.rectangle,3,Hoeren(1); Cards(1); Conversation(1),,library_add,Rounded,exact,,,
+questionmark.bubble,3,ClassNotes(2); Grammar(1),,contact_support,Rounded,close,,,
+scissors,3,Conversation(2); Settings(1),,content_cut,Rounded,exact,,,
+shippingbox,3,Settings(2); Grammar(1),,package_2,Rounded,close,Phosphor (MIT),package,alt match=close
+stop.circle,3,Home(2); Grammar(1),,stop_circle,Rounded,exact,,,
+tag,3,Schreiben(2); Cards(1),,sell,Rounded,exact,,,
+text.viewfinder,3,Schreiben(2); ClassNotes(1),,document_scanner,Rounded,close,Lucide (ISC),scan-text,alt match=exact; Lucide scan-text exact
+textformat,3,Cards(2); Mac shell(1),,match_case,Rounded,exact,,,Aa
+tray,3,Library(1); Queue(1); ClassNotes(1),,inbox,Rounded,close,,,
+trophy.fill,3,Grammar(2); Matching(1),,trophy,Rounded FILL1,exact,,,
+wrench.and.screwdriver,3,Settings(2); Conversation(1),,handyman,Rounded,close,,,
+airplane,2,Conversation(2),,flight,Rounded,close,Phosphor (MIT),airplane,alt match=close
+applepencil.tip,2,WhatsNew(2),,stylus,Rounded,close,,,Apple-product glyph; generic stylus on Android
+arrow.down,2,Home(1); ClassNotes(1),,arrow_downward,Rounded,exact,,,
+arrow.down.to.line,2,Settings(1); Schreiben(1),,vertical_align_bottom,Rounded,close,Phosphor (MIT),arrow-line-down,alt match=close
+arrow.up.and.down.and.arrow.left.and.right,2,Pencil(2),,open_with,Rounded,exact,,,apple-only use (PencilKit)
+arrow.up.right,2,Home(1); Progress(1),,north_east,Rounded,exact,,,
+bell.badge,2,Settings(1); WhatsNew(1),,notifications_unread,Rounded,exact,,,
+bookmark,2,Conversation(1); WhatsNew(1),Icons.Outlined.BookmarkBorder,bookmark,Rounded,exact,,,
+bookmark.fill,2,Conversation(2),Icons.Filled.Bookmark,bookmark,Rounded FILL1,exact,,,
+books.vertical,2,Cards(1); Schreibblatt(1),,library_books,Rounded,concept,Phosphor (MIT),books,alt match=close; Phosphor books (spines on shelf) matches SF
+brain,2,Grammar(1); Library(1),,neurology,Rounded,exact,Phosphor (MIT),brain,alt match=exact
+calendar.badge.checkmark,2,Home(1); WhatsNew(1),,event_available,Rounded,exact,,,
+calendar.badge.clock,2,Hoeren(1); WhatsNew(1),,calendar_clock,Rounded,exact,,,
+character.bubble.fill,2,Conversation(2),,translate,Rounded FILL1,concept,Tabler (MIT),message-language,alt match=exact; Tabler = speech bubble with A (exact)
+chart.bar.doc.horizontal,2,Cards(1); Settings(1),,analytics,Rounded,close,,,
+chart.line.uptrend.xyaxis,2,Home(1); Progress(1),,show_chart,Rounded,close,,,
+checklist.checked,2,TabBar(1); Queue(1),,checklist,Rounded,close,,,no checked variant; FILL has no effect on checklist; use checklist_rtl or tint
+chevron.up.chevron.down,2,Model UI(1); Cards(1),,unfold_more,Rounded,exact,,,
+circle.dotted,2,Shared(1); ClassNotes(1),,radio_button_unchecked,Rounded,concept,Tabler (MIT),circle-dotted,alt match=exact
+circle.hexagongrid.fill,2,Zeichnen(1); Settings(1),,blur_on,Rounded FILL1,close,,,halftone dots
+cube,2,Settings(1); WhatsNew(1),,deployed_code,Rounded,close,Phosphor (MIT),cube,alt match=close
+cube.transparent,2,Grammar(1); Zeichnen(1),,deployed_code,Rounded,concept,Phosphor (MIT),cube-transparent,alt match=exact; Phosphor exact
+cup.and.saucer.fill,2,Stories(1); Conversation(1),,coffee,Rounded FILL1,close,,,
+d.circle,2,Cards(2),,,,none,Tabler (MIT),circle-letter-d,alt match=exact; or Text in Circle
+delete.left,2,ClassNotes(1); Keyboard extension(1),,backspace,Rounded,exact,,,
+doc,2,TabBar(1); Schreibblatt(1),,draft,Rounded,exact,,,
+doc.questionmark,2,ClassNotes(2),,unknown_document,Rounded,exact,,,
+doc.viewfinder,2,ClassNotes(1); WhatsNew(1),,document_scanner,Rounded,close,,,
+exclamationmark.bubble.fill,2,Conversation(2),,feedback,Rounded FILL1,exact,,,
+exclamationmark.magnifyingglass,2,Grammar(1); WhatsNew(1),,search_off,Rounded,concept,Tabler (MIT),zoom-exclamation,alt match=exact
+fork.knife,2,Conversation(2),,restaurant,Rounded,exact,,,
+gamecontroller.fill,2,Home(2),,sports_esports,Rounded FILL1,exact,,,
+gauge.with.dots.needle.33percent,2,Settings(2),,speed,Rounded,close,,,
+hammer,2,Settings(2),,hardware,Rounded,close,Phosphor (MIT),hammer,alt match=exact; Material hammer is upright/stubby; Phosphor diagonal like SF
+heart.fill,2,Stories(1); Conversation(1),Icons.Outlined.Favorite,favorite,Rounded FILL1,exact,,,
+icloud.slash,2,Settings(2),,cloud_off,Rounded,exact,,,apple-only use (iCloud/Mac helper)
+info.circle.fill,2,PhotoScan(1); Onboarding(1),Icons.Filled.Info,info,Rounded FILL1,exact,,,
+key,2,Settings(1); ClassNotes(1),,key,Rounded,exact,,,
+keyboard.chevron.compact.down,2,Schreiben(1); Conversation(1),,keyboard_hide,Rounded,exact,,,
+lineweight,2,Pencil(2),,line_weight,Rounded,exact,,,apple-only use (PencilKit)
+list.bullet,2,Grammar(1); ClassNotes(1),Icons.Outlined.List,format_list_bulleted,Rounded,exact,,,
+list.bullet.clipboard,2,Settings(1); Hoeren(1),,assignment,Rounded,close,Phosphor (MIT),clipboard-text,alt match=close
+list.bullet.rectangle.fill,2,Schreibblatt(2),,list_alt,Rounded FILL1,exact,,,
+lock.shield,2,Mac shell(1); Settings(1),,shield_lock,Rounded,exact,,,
+map.fill,2,Stories(1); Conversation(1),,map,Rounded FILL1,exact,,,
+number,2,Zeichnen(1); Hoeren(1),,tag,Rounded,exact,,,
+paintbrush.pointed.fill,2,Settings(1); Zeichnen(1),,brush,Rounded FILL1,close,Lucide (ISC),paintbrush,alt match=exact
+paintpalette.fill,2,Cards(1); Pencil(1),,palette,Rounded FILL1,exact,,,
+paperplane,2,Schreiben(1); ClassNotes(1),Icons.Outlined.Send,send,Rounded,close,Phosphor (MIT),paper-plane-tilt,alt match=close
+paperplane.fill,2,ClassNotes(2),Icons.Filled.Send,send,Rounded FILL1,close,Phosphor (MIT),paper-plane-tilt,alt match=close
+person.crop.circle.badge.questionmark,2,Progress(2),,account_circle,Rounded,concept,,,
+person.fill,2,ClassNotes(2),Icons.Filled.Person,person,Rounded FILL1,exact,,,
+person.fill.checkmark,2,Conversation(1); Grammar(1),,how_to_reg,Rounded FILL1,exact,,,
+person.wave.2.fill,2,Stories(2),,record_voice_over,Rounded FILL1,exact,,,
+phone.fill,2,Conversation(2),Icons.Filled.Call,call,Rounded FILL1,exact,,,
+photo.badge.exclamationmark,2,Library(1); Shared(1),,broken_image,Rounded,concept,,,
+photo.circle.fill,2,Onboarding(2),,image,Rounded FILL1,concept,,,Circle() background
+point.topleft.down.to.point.bottomright.curvepath,2,Progress(1); Grammar(1),,conversion_path,Rounded,close,,,
+pyramid.fill,2,Progress(2),,change_history,Rounded FILL1,concept,Lucide (ISC),pyramid,alt match=close (outline only); Lucide/Tabler pyramid outline only; Lernpyramide: reuse the app's pyramid art or a custom filled pyramid
+questionmark,2,Cards(2),,question_mark,Rounded,exact,,,
+questionmark.bubble.fill,2,Conversation(2),,contact_support,Rounded FILL1,close,,,
+questionmark.square.dashed,2,Grammar(2),,help_center,Rounded,concept,Lucide (ISC),square-dashed,alt match=concept; custom: dashed square + ?
+rectangle,2,Schreibblatt(2),,rectangle,Rounded,exact,,,
+rectangle.bottomhalf.inset.filled,2,Conversation(2),,bottom_panel_open,Rounded,close,,,
+rectangle.portrait,2,Schreibblatt(2),,crop_portrait,Rounded,exact,,,
+sidebar.left,2,Mac shell(1); Settings(1),,left_panel_open,Rounded,close,Phosphor (MIT),sidebar,apple-only use (macOS); alt match=close; Mac-only shell
+sparkle,2,Grammar(1); Wortschatz(1),,auto_awesome,Rounded,concept,Lucide (ISC),sparkle,alt match=exact; single four-point star; Material only has the 3-star cluster
+square.3.layers.3d,2,Grammar(2),,layers,Rounded,exact,,,
+square.dashed,2,Progress(2),,select,Rounded,close,Lucide (ISC),square-dashed,alt match=close
+square.split.2x1,2,Cards(2),,view_column_2,Rounded,close,,,
+square.stack.3d.up.fill,2,Paper(1); Library(1),,layers,Rounded FILL1,close,Phosphor (MIT),stack,"alt match=exact; SF has 3 layers, Material 2; Phosphor stack has 3"
+stop.circle.fill,2,Cards(1); Conversation(1),,stop_circle,Rounded FILL1,exact,,,
+text.book.closed.fill,2,Progress(2),,book,Rounded FILL1,close,Phosphor (MIT),book,alt match=close
+theatermasks,2,Conversation(1); Zeichnen(1),,theater_comedy,Rounded,exact,,,
+tortoise,2,Settings(1); Hoeren(1),,,,none,Lucide (ISC),turtle,alt match=exact; no Material turtle; Lucide turtle close (stroke icon)
+tray.and.arrow.down,2,Settings(1); Library(1),,move_to_inbox,Rounded,exact,,,
+tray.and.arrow.down.fill,2,Settings(1); Conversation(1),,move_to_inbox,Rounded FILL1,exact,,,
+tray.full,2,ClassNotes(1); WhatsNew(1),,all_inbox,Rounded,close,,,
+waveform.path.ecg,2,PastTense(1); Settings(1),,ecg,Rounded,exact,,,
+a.circle,1,Progress(1),,,,none,Tabler (MIT),circle-letter-a,"alt match=exact; or draw Text(""A"") in a Circle() — letters are font, not icon"
+a.square,1,Progress(1),,,,none,Tabler (MIT),square-letter-a,alt match=exact; or Text in RoundedRectangle
+apple.intelligence,1,Settings(1),,,,none,,,Apple-feature glyph (restricted); iOS-only path; use auto_awesome or the model logo
+applepencil.and.scribble,1,WhatsNew(1),,stylus_note,Rounded,close,,,Apple-product glyph
+applepencil.squeeze,1,Pencil(1),,stylus,Rounded,concept,,,apple-only use (PencilKit); Apple Pencil Pro gesture — iOS-only feature
+archivebox.fill,1,Home(1),,inventory_2,Rounded FILL1,exact,,,
+arrow.2.circlepath,1,Home(1),,sync,Rounded,close,Phosphor (MIT),arrows-clockwise,alt match=close
+arrow.2.squarepath,1,Grammar(1),,repeat,Rounded,close,,,
+arrow.clockwise.circle.fill,1,Conversation(1),,refresh,Rounded FILL1,concept,,,no filled-circle variant; put refresh on a Circle() background
+arrow.counterclockwise.circle.fill,1,Home(1),,replay_circle_filled,Rounded FILL1,close,,,
+arrow.down.doc,1,Paper(1),,file_save,Rounded,close,Phosphor (MIT),file-arrow-down,alt match=close
+arrow.down.right,1,Progress(1),,south_east,Rounded,exact,,,
+arrow.forward.circle,1,ClassNotes(1),,arrow_circle_right,Rounded,exact,,,
+arrow.forward.circle.fill,1,ClassNotes(1),,arrow_circle_right,Rounded FILL1,exact,,,
+arrow.left,1,ClassNotes(1),Icons.Outlined.ArrowBack,arrow_back,Rounded,exact,,,
+arrow.left.and.right,1,Pencil(1),,arrow_range,Rounded,exact,,,apple-only use (PencilKit)
+arrow.right.to.line,1,Grammar(1),,keyboard_tab,Rounded,exact,,,
+arrow.triangle.2.circlepath.circle.fill,1,Home(1),,change_circle,Rounded FILL1,close,,,
+arrow.triangle.2.circlepath.icloud,1,Settings(1),,cloud_sync,Rounded,close,,,apple-only use (iCloud/Mac helper); iCloud-specific copy; Android sync backend differs
+arrow.triangle.merge,1,Settings(1),,merge,Rounded,exact,,,
+arrow.triangle.swap,1,Conversation(1),,swap_horiz,Rounded,concept,Phosphor (MIT),swap,alt match=close
+arrow.trianglehead.clockwise,1,Conversation(1),,refresh,Rounded,close,,,
+arrow.turn.down.right,1,Progress(1),,subdirectory_arrow_right,Rounded,exact,,,
+arrow.up.arrow.down,1,Cards(1),,swap_vert,Rounded,exact,,,
+arrow.up.doc,1,Settings(1),,upload_file,Rounded,close,,,
+arrow.up.forward.circle.fill,1,Conversation(1),,arrow_outward,Rounded FILL1,concept,Phosphor (MIT),arrow-circle-up-right,alt match=exact; Phosphor has the circled NE arrow incl. fill
+arrow.up.left.and.down.right.magnifyingglass,1,Zeichnen(1),,zoom_out_map,Rounded,concept,,,
+arrow.uturn.forward,1,Pencil(1),,redo,Rounded,exact,,,apple-only use (PencilKit)
+arrow.uturn.left,1,Settings(1),,undo,Rounded,exact,,,
+arrow.uturn.left.circle,1,Grammar(1),,undo,Rounded,concept,,,no circled undo
+backward.fill,1,Stories(1),,fast_rewind,Rounded FILL1,exact,,,
+bag.fill,1,Conversation(1),,shopping_bag,Rounded FILL1,exact,,,
+bandage,1,Progress(1),,healing,Rounded,close,Phosphor (MIT),bandaids,alt match=close
+bed.double.fill,1,Conversation(1),,bed,Rounded FILL1,exact,,,
+birthday.cake,1,Conversation(1),,cake,Rounded,exact,,,
+bolt,1,Grammar(1),,bolt,Rounded,exact,,,
+bolt.slash,1,Settings(1),,flash_off,Rounded,close,,,
+book.fill,1,Cards(1),,menu_book,Rounded FILL1,close,,,
+books.vertical.fill,1,Progress(1),,library_books,Rounded FILL1,concept,Phosphor (MIT),books,alt match=close; Phosphor books (spines on shelf) matches SF
+brain.head.profile.fill,1,TabBar(1),,psychology,Rounded FILL1,close,Phosphor (MIT),head-circuit,alt match=close; Material head has gear-brain inside; SF shows brain in profile; Kyle-custom candidate (Library tab)
+building.2,1,Conversation(1),,apartment,Rounded,close,,,
+calendar.badge.plus,1,Home(1),,calendar_add_on,Rounded,exact,,,
+capslock.fill,1,Keyboard extension(1),,keyboard_capslock,Rounded FILL1,exact,,,apple-only use (iOS keyboard ext)
+character.bubble,1,Grammar(1),,translate,Rounded,concept,Tabler (MIT),message-language,alt match=exact; Tabler = speech bubble with A (exact)
+chart.bar,1,Hoeren(1),,bar_chart,Rounded,exact,,,
+chart.bar.xaxis,1,Settings(1),Icons.Outlined.BarChart,bar_chart,Rounded,exact,,,
+checkmark.bubble,1,Schreiben(1),,mark_chat_read,Rounded,exact,,,
+checkmark.bubble.fill,1,Conversation(1),,mark_chat_read,Rounded FILL1,exact,,,
+checkmark.circle.trianglebadge.exclamationmark,1,Schreiben(1),,check_circle,Rounded,concept,,,no badge composition; overlay small warning
+checkmark.icloud,1,Settings(1),,cloud_done,Rounded,exact,,,apple-only use (iCloud/Mac helper)
+chevron.backward,1,ClassNotes(1),,chevron_left,Rounded,exact,,,
+circle.grid.3x3.fill,1,Zeichnen(1),,apps,Rounded FILL1,close,Phosphor (MIT),dots-nine,alt match=exact; Phosphor dots-nine exact
+circle.lefthalf.striped.horizontal,1,Zeichnen(1),,contrast,Rounded,concept,,,custom Bauhaus (half circle with stripes) — trivial SVG
+circle.slash,1,Zeichnen(1),,block,Rounded,exact,,,
+circle.square,1,Zeichnen(1),,,,none,,,circle inside a square; trivial custom Bauhaus SVG (Bauhaus word-art style)
+clock.fill,1,Home(1),,schedule,Rounded FILL1,exact,,,
+cross.case.fill,1,Conversation(1),,medical_services,Rounded FILL1,exact,,,
+crown,1,Zeichnen(1),,crown,Rounded,exact,,,
+desktopcomputer,1,Settings(1),,desktop_windows,Rounded,close,,,apple-only use (iCloud/Mac helper)
+die.face.3,1,Grammar(1),,casino,Rounded,concept,Lucide (ISC),dice-3,alt match=exact
+die.face.5,1,Queue(1),,casino,Rounded,exact,,,
+doc.badge.plus,1,Paper(1),,note_add,Rounded,exact,,,
+e.circle,1,Cards(1),,,,none,Tabler (MIT),circle-letter-e,alt match=exact; or Text in Circle
+envelope.fill,1,Stories(1),Icons.Filled.Email,mail,Rounded FILL1,exact,,,
+equal,1,Progress(1),,equal,Rounded,exact,,,
+eraser.fill,1,Pencil(1),,ink_eraser,Rounded FILL1,exact,,,apple-only use (PencilKit)
+eurosign,1,Hoeren(1),,euro,Rounded,exact,,,
+exclamationmark.arrow.triangle.2.circlepath,1,Settings(1),,sync_problem,Rounded,exact,,,apple-only use (iCloud/Mac helper)
+exclamationmark.circle.fill,1,Conversation(1),,error,Rounded FILL1,exact,,,
+exclamationmark.icloud,1,Settings(1),,cloud_alert,Rounded,exact,,,apple-only use (iCloud/Mac helper)
+exclamationmark.octagon.fill,1,Settings(1),,report,Rounded FILL1,exact,,,
+externaldrive.badge.exclamationmark,1,Settings(1),,hard_drive,Rounded,concept,,,apple-only use (iCloud/Mac helper); no badge; overlay
+eye.slash.circle,1,Cards(1),,visibility_off,Rounded,close,,,
+face.smiling,1,Cards(1),Icons.Outlined.Face,sentiment_satisfied,Rounded,exact,,,
+figure.mind.and.body,1,WhatsNew(1),,self_improvement,Rounded,exact,,,
+figure.stand.dress,1,Grammar(1),,woman,Rounded,exact,,,die = feminine
+figure.stand.dress.line.vertical.figure,1,Grammar(1),,wc,Rounded,exact,,,das; Material wc = man | woman
+figure.strengthtraining.traditional,1,Progress(1),,fitness_center,Rounded,close,,,Zurück im Training
+figure.walk,1,Progress(1),,directions_walk,Rounded,exact,,,
+figure.wave,1,Grammar(1),,emoji_people,Rounded,exact,,,
+flame.circle.fill,1,Progress(1),,local_fire_department,Rounded FILL1,close,,,Circle() background
+forward.fill,1,Stories(1),,fast_forward,Rounded FILL1,exact,,,
+gearshape.2,1,TabBar(1),,manufacturing,Rounded,exact,,,"two gears, same layout as SF"
+gearshape.2.fill,1,TabBar(1),,manufacturing,Rounded FILL1,exact,,,"two gears, same layout as SF"
+hand.pinch,1,Pencil(1),,pinch,Rounded,exact,,,apple-only use (PencilKit)
+hand.point.up.left,1,Onboarding(1),,touch_app,Rounded,close,Phosphor (MIT),hand-pointing,alt match=close
+hand.raised,1,Conversation(1),,back_hand,Rounded,exact,,,
+hand.rays,1,Onboarding(1),,front_hand,Rounded,concept,,,
+hand.thumbsdown,1,Grammar(1),,thumb_down,Rounded,exact,,,
+hand.thumbsup,1,Grammar(1),Icons.Outlined.ThumbUp,thumb_up,Rounded,exact,,,
+hand.wave,1,Conversation(1),,waving_hand,Rounded,exact,,,
+hare.fill,1,Stories(1),,cruelty_free,Rounded FILL1,concept,,,"Material/Phosphor show a rabbit face, SF a whole running hare; custom candidate"
+house.fill,1,TabBar(1),Icons.Filled.Home,home,Rounded FILL1,exact,,,
+infinity,1,Schreibblatt(1),,all_inclusive,Rounded,exact,,,
+ipad,1,Settings(1),,tablet,Rounded,close,,,apple-only use (iCloud/Mac helper); Apple-product glyph; device list
+key.fill,1,Grammar(1),,key,Rounded FILL1,exact,,,
+key.icloud,1,Settings(1),,cloud_lock,Rounded,close,,,
+keyboard.badge.ellipsis,1,Schreiben(1),,keyboard,Rounded,concept,,,
+ladybug,1,Settings(1),,bug_report,Rounded,close,Phosphor (MIT),bug,alt match=close
+laptopcomputer,1,Settings(1),,laptop,Rounded,exact,,,apple-only use (iCloud/Mac helper)
+lasso,1,Pencil(1),,lasso_select,Rounded,exact,Phosphor (MIT),lasso,apple-only use (PencilKit); alt match=exact
+line.3.horizontal.decrease,1,Schreibblatt(1),,filter_list,Rounded,exact,,,
+link.badge.minus,1,ClassNotes(1),,link_off,Rounded,close,,,
+link.badge.plus,1,Paper(1),,add_link,Rounded,exact,,,
+list.number,1,Cards(1),,format_list_numbered,Rounded,exact,,,
+location,1,Settings(1),Icons.Outlined.LocationOn,near_me,Rounded,exact,,,SkipUI maps to LocationOn (a pin) — wrong shape
+lock.icloud,1,Settings(1),,cloud_lock,Rounded,close,,,apple-only use (iCloud/Mac helper)
+lock.open,1,Schreibblatt(1),,lock_open,Rounded,exact,,,
+macbook,1,WhatsNew(1),,laptop,Rounded,close,,,Apple-product glyph
+macwindow,1,Mac shell(1),,web_asset,Rounded,close,Phosphor (MIT),app-window,apple-only use (iCloud/Mac helper); alt match=close; Mac-only
+macwindow.on.rectangle,1,Mac shell(1),,select_window,Rounded,concept,,,apple-only use (macOS); Mac-only
+map,1,WhatsNew(1),,map,Rounded,exact,,,
+mappin.and.ellipse,1,Conversation(1),,pin_drop,Rounded,exact,,,
+metronome,1,Grammar(1),,timer,Rounded,concept,Phosphor (MIT),metronome,alt match=exact; no Material metronome; Phosphor/Lucide/Tabler have one
+moon.stars,1,ClassNotes(1),,bedtime,Rounded,close,Lucide (ISC),moon-star,alt match=exact
+moon.zzz,1,Home(1),,bedtime,Rounded,close,,,
+music.note,1,Grammar(1),,music_note,Rounded,exact,,,
+network,1,Settings(1),,lan,Rounded,close,,,
+number.circle,1,Grammar(1),,tag,Rounded,concept,Tabler (MIT),circle-number-1,"alt match=concept; or Text(""#"") in Circle"
+party.popper.fill,1,Conversation(1),,celebration,Rounded FILL1,exact,,,
+pencil.circle,1,Settings(1),,edit,Rounded,concept,,,Circle() overlay
+pencil.circle.fill,1,Settings(1),,edit,Rounded FILL1,concept,,,Circle() overlay
+pencil.tip.crop.circle,1,ClassNotes(1),,stylus,Rounded,concept,,,
+person.2.badge.gearshape,1,Conversation(1),,manage_accounts,Rounded,close,,,
+person.2.circle,1,Grammar(1),,supervised_user_circle,Rounded,close,,,
+person.2.wave.2,1,Stories(1),,record_voice_over,Rounded,concept,,,
+person.2.wave.2.fill,1,Stories(1),,record_voice_over,Rounded FILL1,concept,,,
+person.crop.rectangle.fill,1,Conversation(1),,account_box,Rounded FILL1,close,,,
+phone,1,Hoeren(1),Icons.Outlined.Call,call,Rounded,exact,,,
+photo.fill,1,Cards(1),,image,Rounded FILL1,exact,,,
+photo.slash,1,Stories(1),,hide_image,Rounded,exact,,,
+pin.circle.fill,1,Grammar(1),,push_pin,Rounded FILL1,close,,,Circle() background
+plus.bubble.fill,1,Conversation(1),,add_comment,Rounded FILL1,exact,,,
+questionmark.circle.fill,1,Conversation(1),,help,Rounded FILL1,exact,,,
+quote.opening,1,Schreiben(1),,format_quote,Rounded,exact,,,
+rectangle.3.group,1,Schreibblatt(1),,view_quilt,Rounded,concept,,,
+rectangle.bottomthird.inset.filled,1,Cards(1),,bottom_panel_open,Rounded,close,,,
+rectangle.compress.vertical,1,Stories(1),,compress,Rounded,close,,,
+rectangle.expand.vertical,1,Stories(1),,expand,Rounded,close,,,
+rectangle.on.rectangle.slash,1,Grammar(1),,filter_none,Rounded,concept,Lucide (ISC),copy-slash,alt match=close
+rectangle.portrait.arrowtriangle.2.inward,1,Pencil(1),,fit_page,Rounded,close,,,apple-only use (PencilKit)
+rectangle.stack.badge.play.fill,1,Home(1),,slideshow,Rounded FILL1,concept,,,custom (card stack + play)
+repeat,1,Progress(1),,repeat,Rounded,exact,,,
+return,1,Keyboard extension(1),,keyboard_return,Rounded,exact,,,apple-only use (iOS keyboard ext)
+rotate.left,1,Cards(1),,rotate_left,Rounded,exact,,,
+rotate.right,1,Cards(1),,rotate_right,Rounded,exact,,,
+ruler,1,Settings(1),,straighten,Rounded,exact,,,
+scribble.variable,1,Pencil(1),,gesture,Rounded,close,,,apple-only use (PencilKit)
+shift.fill,1,Keyboard extension(1),,shift,Rounded FILL1,exact,,,apple-only use (iOS keyboard ext)
+shippingbox.fill,1,Settings(1),,package_2,Rounded FILL1,close,Phosphor (MIT),package,alt match=close
+signpost.right,1,Progress(1),,signpost,Rounded,exact,,,
+speaker.slash.fill,1,Conversation(1),,volume_off,Rounded FILL1,exact,,,
+square.and.arrow.down,1,Zeichnen(1),Icons.Outlined.SaveAlt,download,Rounded,close,,,
+square.grid.3x3.bottomleft.filled,1,Progress(1),,grid_on,Rounded,concept,,,filled cell lost
+square.grid.3x3.square,1,Spiele(1),,grid_on,Rounded,close,,,
+square.grid.3x3.topleft.filled,1,Spiele(1),,grid_on,Rounded,concept,,,filled cell lost; custom Bauhaus (Lückentext grid)
+square.on.circle,1,Cards(1),,category,Rounded,concept,Tabler (MIT),circle-square,alt match=close; Tabler circle-square = overlapping circle+square (close)
+square.on.square,1,Cards(1),,filter_none,Rounded,exact,,,
+square.righthalf.filled,1,Stories(1),,splitscreen_right,Rounded,close,,,
+star.slash,1,Zeichnen(1),,star,Rounded,concept,Lucide (ISC),star-off,alt match=exact
+staroflife.fill,1,PastTense(1),,emergency,Rounded FILL1,exact,,,
+sun.max,1,Schreibblatt(1),,sunny,Rounded,exact,,,
+sunrise,1,ClassNotes(1),,wb_twilight,Rounded,close,Phosphor (MIT),sun-horizon,alt match=close
+sunrise.fill,1,Home(1),,wb_twilight,Rounded FILL1,close,Phosphor (MIT),sun-horizon,alt match=close
+tablecells.badge.ellipsis,1,Grammar(1),,table,Rounded,concept,,,no badge
+tag.fill,1,Grammar(1),,sell,Rounded FILL1,exact,,,
+takeoutbag.and.cup.and.straw.fill,1,Conversation(1),,takeout_dining,Rounded FILL1,close,,,
+target,1,Grammar(1),,target,Rounded,exact,,,
+testtube.2,1,Settings(1),,science,Rounded,close,Lucide (ISC),test-tubes,alt match=exact
+text.bubble.fill,1,Conversation(1),,chat,Rounded FILL1,exact,,,
+text.line.first.and.arrowtriangle.forward,1,ClassNotes(1),,format_indent_increase,Rounded,concept,,,
+text.word.spacing,1,WhatsNew(1),,space_bar,Rounded,concept,,,
+textformat.123,1,Hoeren(1),,123,Rounded,exact,,,
+textformat.size,1,Cards(1),,format_size,Rounded,exact,,,
+textformat.subscript,1,Grammar(1),,subscript,Rounded,exact,,,
+theatermasks.fill,1,Stories(1),,theater_comedy,Rounded FILL1,exact,,,
+tram.fill,1,Conversation(1),,tram,Rounded FILL1,exact,,,
+tray.2,1,Library(1),,inbox,Rounded,concept,Phosphor (MIT),tray,alt match=close
+triangle,1,WhatsNew(1),,change_history,Rounded,exact,,,
+tshirt,1,Conversation(1),,apparel,Rounded,exact,,,
+video.fill,1,Conversation(1),,videocam,Rounded FILL1,exact,,,
+wineglass.fill,1,Conversation(1),,wine_bar,Rounded FILL1,exact,,,

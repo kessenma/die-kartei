@@ -1,0 +1,56 @@
+--- tools/blender/figur.py	2026-11-24 12:33:56
++++ tools/blender/figur.py	2026-11-27 12:02:58
+@@ -509,8 +509,25 @@
+         # RealityKit expects Y-up; Blender authors Z-up.
+         convert_orientation=True,
+     )
++    export_glb(path, animated)
+ 
+ 
++def export_glb(usd_path, animated=False):
++    """[3d-android spike] GLB twin of a USD export, written next to it (.glb).
++    GLB_MODE env: SCENE (default, one merged clip per scene) or ACTIONS (one clip per action)."""
++    import os as _os
++    mode = _os.environ.get("GLB_MODE", "SCENE")
++    out = _os.path.splitext(usd_path)[0] + ("" if mode == "SCENE" else "-" + mode.lower()) + ".glb"
++    kw = dict(filepath=out, export_format="GLB", export_yup=True, export_apply=True,
++              export_cameras=False, export_lights=False, export_extras=True,
++              export_animations=animated, export_animation_mode=mode,
++              export_force_sampling=True, export_optimize_animation_size=True)
++    if mode == "SCENE":
++        kw["export_anim_scene_split_object"] = False
++    bpy.ops.export_scene.gltf(**kw)
++    print(f"GLB export {out} mode={mode}")
++
++
+ # MARK: - Der Aufbau (the self-assembly clip)
+ #
+ # Built the order you would actually build it: legs, then the torso onto them, then the arms,
+--- tools/blender/prep_render.py	2026-11-23 21:25:27
++++ tools/blender/prep_render.py	2026-11-27 12:02:58
+@@ -2036,8 +2036,25 @@
+         # RealityKit expects Y-up; Blender authors Z-up.
+         convert_orientation=True,
+     )
++    export_glb(path, animated)
+ 
+ 
++def export_glb(usd_path, animated=False):
++    """[3d-android spike] GLB twin of a USD export, written next to it (.glb).
++    GLB_MODE env: SCENE (default, one merged clip per scene) or ACTIONS (one clip per action)."""
++    import os as _os
++    mode = _os.environ.get("GLB_MODE", "SCENE")
++    out = _os.path.splitext(usd_path)[0] + ("" if mode == "SCENE" else "-" + mode.lower()) + ".glb"
++    kw = dict(filepath=out, export_format="GLB", export_yup=True, export_apply=True,
++              export_cameras=False, export_lights=False, export_extras=True,
++              export_animations=animated, export_animation_mode=mode,
++              export_force_sampling=True, export_optimize_animation_size=True)
++    if mode == "SCENE":
++        kw["export_anim_scene_split_object"] = False
++    bpy.ops.export_scene.gltf(**kw)
++    print(f"GLB export {out} mode={mode}")
++
++
+ def verify(path):
+     """Re-import a shipped USDZ and check the contract the runtime depends on.
+ 

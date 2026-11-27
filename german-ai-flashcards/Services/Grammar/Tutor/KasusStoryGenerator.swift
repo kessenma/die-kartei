@@ -27,6 +27,7 @@
 //
 
 import Foundation
+import Observation
 
 // MARK: - The model call
 

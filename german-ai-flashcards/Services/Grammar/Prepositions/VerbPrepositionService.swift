@@ -33,7 +33,7 @@ enum VerbPrepositionService {
 
     private static var file: VerbPrepositionsFile {
         if let cache { return cache }
-        guard let url = Bundle.main.url(forResource: "verb_prepositions", withExtension: "json"),
+        guard let url = AppResources.url("verb_prepositions", "json"),
               let data = try? Data(contentsOf: url),
               let decoded = try? JSONDecoder().decode(VerbPrepositionsFile.self, from: data)
         else { return VerbPrepositionsFile(verbs: [], falle: []) }

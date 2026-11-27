@@ -7,7 +7,7 @@ enum GrammarExerciseService {
 
     static func loadCategories() -> [GrammarCategory] {
         if let cached = cache { return cached }
-        guard let url = Bundle.main.url(forResource: "grammar_exercises", withExtension: "json"),
+        guard let url = AppResources.url("grammar_exercises", "json"),
               let data = try? Data(contentsOf: url),
               let file = try? JSONDecoder().decode(GrammarExercisesFile.self, from: data)
         else { return [] }

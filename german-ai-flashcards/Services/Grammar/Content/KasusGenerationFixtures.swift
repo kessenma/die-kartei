@@ -21,6 +21,7 @@
 
 #if DEBUG
 import Foundation
+import Observation
 
 nonisolated enum KasusCannedOutput: String, CaseIterable, Hashable {
     case good, altered, wrongArticle, tooFew

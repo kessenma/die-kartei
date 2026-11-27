@@ -1,4 +1,8 @@
+#if canImport(CryptoKit)
 import CryptoKit
+#else
+import Crypto  // swift-crypto: the same API off Apple platforms (DieKarteiCore on Android)
+#endif
 import Foundation
 
 /// A JSON value: the payload currency of iCloud sync.

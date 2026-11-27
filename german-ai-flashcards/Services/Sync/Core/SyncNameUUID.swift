@@ -1,4 +1,8 @@
+#if canImport(CryptoKit)
 import CryptoKit
+#else
+import Crypto  // swift-crypto: the same API off Apple platforms (DieKarteiCore on Android)
+#endif
 import Foundation
 
 /// Name-based UUIDs (RFC 9562 version 5: SHA-1 over a namespace plus a name).

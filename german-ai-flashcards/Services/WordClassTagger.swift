@@ -14,6 +14,7 @@
 //
 
 import Foundation
+import Observation
 
 @MainActor
 @Observable

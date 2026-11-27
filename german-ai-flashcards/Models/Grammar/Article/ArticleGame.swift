@@ -9,7 +9,7 @@
 //
 
 import Foundation
-import SwiftUI
+import Foundation
 
 // MARK: - The three articles
 
@@ -32,11 +32,6 @@ enum GermanArticle: String, CaseIterable, Codable, Identifiable {
         case .das: .das
         }
     }
-
-    /// The fixed identity color. Delegates to `GenderPalette` — previously this was plain
-    /// `.blue`/`.red`/`.green`, which read *close* to the flashcard colors without matching them,
-    /// so the same noun could be two different blues in two screens.
-    var color: Color { gender.color }
 
     /// "maskulin" — the German gender name, for compact labels.
     var genderGerman: String {

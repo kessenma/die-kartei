@@ -14,7 +14,7 @@ struct StoryStarter: Decodable, Hashable, Identifiable {
 /// load with a static cache, so the JSON is parsed at most once per launch.
 enum StoryStarters {
     private static let cache: [StoryStarter] = {
-        guard let url = Bundle.main.url(forResource: "story_starters", withExtension: "json"),
+        guard let url = AppResources.url("story_starters", "json"),
               let data = try? Data(contentsOf: url),
               let starters = try? JSONDecoder().decode([StoryStarter].self, from: data)
         else { return [] }
