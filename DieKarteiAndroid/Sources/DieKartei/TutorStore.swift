@@ -3,31 +3,9 @@ import Foundation
 import Observation
 import SwiftUI
 
-/// The tutor models as Android has them: GGUF files run by llama.cpp (`TutorEngine`). Same four
-/// tutors as the iOS catalog (`MLXModel`), converted from the same weights; scores and speeds in
-/// training/ANDROID_GGUF.md.
-struct TutorModelFile: Identifiable, Hashable {
-    let model: MLXModel
-    /// File name in the models folder, and in the (not yet published) Hugging Face repo.
-    let fileName: String
-    let sizeGB: Double
-    /// The iOS app's RAM floor for the model, kept the same on Android to start.
-    let minimumRAMGB: Int
-
-    var id: String { model.rawValue }
-
-    /// E4B as Q4_0, the others as Q4_K_M. Q4_0 is what llama.cpp repacks best for ARM's int8
-    /// dot-product instructions (~40% faster to read a prompt, ~20% faster to answer on the
-    /// emulator) and costs E4B nothing (184 vs 185 of 203). On the three smaller tutors it scored
-    /// 4–5 items lower each time (not significant per model, but every time), and with the prompt
-    /// cache most of a turn's prompt is never re-read, so they keep Q4_K_M. training/ANDROID_GGUF.md.
-    static let all: [TutorModelFile] = [
-        TutorModelFile(model: .gemma4_E4B_german, fileName: "gemma4-e4b-german-tutor-v4-Q4_0.gguf", sizeGB: 5.2, minimumRAMGB: 8),
-        TutorModelFile(model: .gemma4_E2B_german, fileName: "gemma4-e2b-german-tutor-Q4_K_M.gguf", sizeGB: 3.4, minimumRAMGB: 6),
-        TutorModelFile(model: .granite41_3B_german, fileName: "granite41-3b-german-tutor-v4-Q4_K_M.gguf", sizeGB: 2.1, minimumRAMGB: 4),
-        TutorModelFile(model: .granite2B_german, fileName: "granite33-2b-german-tutor-v4-Q4_K_M.gguf", sizeGB: 1.5, minimumRAMGB: 4),
-    ]
-}
+// The tutor models as Android has them: GGUF files run by llama.cpp (`TutorEngine`). The catalog
+// (repo, file, size, SHA-256, RAM floor) is the shared one, `MLXModel.gguf`, next to the MLX repos
+// in DieKarteiCore; scores and speeds in training/ANDROID_GGUF.md.
 
 @Observable
 @MainActor
@@ -52,6 +30,13 @@ final class TutorStore {
     /// Bumped when the models folder may have changed, so views re-check which files exist.
     private(set) var filesVersion = 0
 
+    /// Downloads in progress or failed, by model.
+    enum Download: Equatable {
+        case running(Int64), failed(String)
+    }
+    private(set) var downloads: [MLXModel: Download] = [:]
+    private var downloadTasks: [MLXModel: Task<Void, Never>] = [:]
+
     private var engine: TutorEngine?
     private var loadedID: String?
 
@@ -63,29 +48,75 @@ final class TutorStore {
         return base.appendingPathComponent("models", isDirectory: true)
     }
 
-    func url(for file: TutorModelFile) -> URL {
-        Self.modelsDirectory.appendingPathComponent(file.fileName)
+    nonisolated static func url(for release: GGUFRelease) -> URL {
+        modelsDirectory.appendingPathComponent(release.fileName)
     }
 
-    func isOnDevice(_ file: TutorModelFile) -> Bool {
+    func isOnDevice(_ model: MLXModel) -> Bool {
         _ = filesVersion
-        return FileManager.default.fileExists(atPath: url(for: file).path)
+        guard let release = model.gguf else { return false }
+        return FileManager.default.fileExists(atPath: Self.url(for: release).path)
+    }
+
+    /// Bytes of an interrupted download still on the phone, so the button can say "Resume".
+    func partialBytes(_ model: MLXModel) -> Int64 {
+        _ = filesVersion
+        guard let release = model.gguf else { return 0 }
+        return GGUFDownloader.resumableBytes(for: Self.url(for: release))
+    }
+
+    /// Downloads the model from Hugging Face, continuing an interrupted download. The file is
+    /// checked against its published SHA-256 before it can be loaded.
+    func download(_ model: MLXModel) {
+        guard let release = model.gguf, downloadTasks[model] == nil else { return }
+        downloads[model] = .running(partialBytes(model))
+        downloadTasks[model] = Task {
+            do {
+                try await GGUFDownloader().download(release, to: Self.url(for: release)) { [weak self] bytes in
+                    self?.downloads[model] = .running(bytes)
+                }
+                downloads[model] = nil
+                if selectedID == nil { selectedID = model.rawValue }
+            } catch is CancellationError {
+                downloads[model] = nil
+            } catch {
+                downloads[model] = .failed(error.localizedDescription)
+            }
+            downloadTasks[model] = nil
+            filesVersion += 1
+        }
+    }
+
+    /// Stops a download; what's on the phone stays for "Resume".
+    func cancelDownload(_ model: MLXModel) {
+        downloadTasks[model]?.cancel()
+    }
+
+    /// Deletes the model file (and any partial download) from the phone.
+    func delete(_ model: MLXModel) {
+        guard let release = model.gguf else { return }
+        if loadedID == model.rawValue { unload() }
+        let url = Self.url(for: release)
+        try? FileManager.default.removeItem(at: url)
+        try? FileManager.default.removeItem(at: GGUFDownloader.partURL(for: url))
+        downloads[model] = nil
+        filesVersion += 1
     }
 
     func refreshFiles() {
         try? FileManager.default.createDirectory(at: Self.modelsDirectory, withIntermediateDirectories: true)
         filesVersion += 1
-        if selectedID == nil, let first = TutorModelFile.all.first(where: isOnDevice) {
-            selectedID = first.id
+        if selectedID == nil, let first = MLXModel.ggufTutors.first(where: isOnDevice) {
+            selectedID = first.rawValue
         }
     }
 
-    var selected: TutorModelFile? {
-        TutorModelFile.all.first { $0.id == selectedID }
+    var selected: MLXModel? {
+        MLXModel.ggufTutors.first { $0.rawValue == selectedID }
     }
 
     /// The selected model when its file is on the phone.
-    var available: TutorModelFile? {
+    var available: MLXModel? {
         guard let selected, isOnDevice(selected) else { return nil }
         return selected
     }
@@ -93,20 +124,20 @@ final class TutorStore {
     /// Loads the selected model if it isn't loaded yet. False when there's none or it fails.
     func ensureLoaded() async -> Bool {
         #if canImport(CLlama)
-        guard let file = available else {
+        guard let model = available, let release = model.gguf else {
             state = .failed("No tutor model on this phone yet.")
             return false
         }
-        if engine != nil, loadedID == file.id { return true }
+        if engine != nil, loadedID == model.rawValue { return true }
         unload()
         state = .loading
-        let path = url(for: file).path
+        let path = Self.url(for: release).path
         do {
             let loaded = try await Task.detached(priority: .userInitiated) {
                 try TutorEngine.load(path: path)
             }.value
             engine = loaded
-            loadedID = file.id
+            loadedID = model.rawValue
             threads = loaded.threads
             cpuFeatures = loaded.systemInfo
             state = .ready
@@ -174,7 +205,7 @@ enum TutorSlot { case chat, check }
 extension TutorStore: TutorGenerating {
     var readyModel: MLXModel? {
         guard state == .ready, let loadedID else { return nil }
-        return TutorModelFile.all.first { $0.id == loadedID }?.model
+        return MLXModel.ggufTutors.first { $0.rawValue == loadedID }
     }
 
     var loadFailure: String? {
@@ -186,8 +217,8 @@ extension TutorStore: TutorGenerating {
     func wasEvicted(_ model: MLXModel) -> Bool { false }
 
     func loadTutor(_ model: MLXModel) async {
-        if let file = TutorModelFile.all.first(where: { $0.model == model }), selectedID != file.id {
-            selectedID = file.id
+        if model.gguf != nil, selectedID != model.rawValue {
+            selectedID = model.rawValue
         }
         _ = await ensureLoaded()
     }

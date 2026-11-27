@@ -13,27 +13,11 @@ struct TutorModelView: View {
     var body: some View {
         List {
             Section {
-                ForEach(TutorModelFile.all) { file in
-                    Button {
-                        store.selectedID = file.id
-                    } label: {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(file.model.displayName)
-                                    .foregroundStyle(Color.primary)
-                                Text(detail(file))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            if store.selectedID == file.id {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
+                ForEach(MLXModel.ggufTutors) { model in
+                    row(model)
                 }
             } footer: {
-                Text("Downloads come once the models are on Hugging Face. Until then, copy the files in with adb (see DieKarteiAndroid/README.md).")
+                Text("Models download from Hugging Face once, then run on the phone, offline. Pick the largest one your phone has the memory for.")
             }
             Section("Engine") {
                 Button("Load the model") {
@@ -59,14 +43,61 @@ struct TutorModelView: View {
         .onAppear { store.refreshFiles() }
     }
 
-    func detail(_ file: TutorModelFile) -> String {
-        let where_ = store.isOnDevice(file) ? "on this phone" : "not on this phone yet"
-        return String(format: "%.1f GB", file.sizeGB) + " · \(file.minimumRAMGB) GB RAM or more · \(where_)"
+    @ViewBuilder
+    func row(_ model: MLXModel) -> some View {
+        let onPhone = store.isOnDevice(model)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(model.displayName)
+                        .foregroundStyle(Color.primary)
+                    Text(detail(model))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if onPhone && store.selectedID == model.rawValue {
+                    Image(systemName: "checkmark")
+                }
+            }
+            if case .running(let bytes) = store.downloads[model], let total = model.gguf?.bytes {
+                ProgressView(value: Double(bytes), total: Double(total))
+                HStack {
+                    Text(String(format: "%.1f of %.1f GB", Double(bytes) / 1e9, Double(total) / 1e9))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Stop") { store.cancelDownload(model) }
+                        .buttonStyle(.borderless)
+                }
+            } else if onPhone {
+                HStack(spacing: 20) {
+                    if store.selectedID != model.rawValue {
+                        Button("Use") { store.selectedID = model.rawValue }
+                    }
+                    Button("Delete") { store.delete(model) }
+                        .foregroundStyle(Color.red)
+                }
+                .buttonStyle(.borderless)
+            } else {
+                if case .failed(let message) = store.downloads[model] {
+                    Text(message).font(.caption).foregroundStyle(Color.red)
+                }
+                Button(store.partialBytes(model) > 0 ? "Resume download" : "Download") { store.download(model) }
+                    .buttonStyle(.borderless)
+            }
+        }
+    }
+
+    func detail(_ model: MLXModel) -> String {
+        let size = Double(model.gguf?.bytes ?? 0) / 1e9
+        let where_ = store.isOnDevice(model) ? " · on this phone" : ""
+        return String(format: "%.1f GB", size) + " · \(model.minimumRAMGB) GB RAM or more" + where_
     }
 
     var stateText: String {
         switch store.state {
-        case .idle: store.available == nil ? "No model file on this phone yet." : "Not loaded."
+        case .idle: store.available == nil ? "No model on this phone yet." : "Not loaded."
         case .loading: "Loading…"
         case .ready: "Loaded and ready."
         case .failed(let message): message
@@ -91,7 +122,7 @@ struct SatzPruefenView: View {
                 Button(checking ? "Prüfe…" : "Prüfen") { Task { await check() } }
                     .disabled(checking || sentence.trimmingCharacters(in: .whitespaces).isEmpty)
             } footer: {
-                Text("Model: \(store.available?.model.displayName ?? "none — pick one in Settings ▸ Tutor Model")")
+                Text("Model: \(store.available?.displayName ?? "none — pick one in Settings ▸ Tutor Model")")
             }
             if let result {
                 Section {
@@ -120,7 +151,7 @@ struct SatzPruefenView: View {
         errorText = nil
         defer { checking = false }
         let line = sentence.trimmingCharacters(in: .whitespacesAndNewlines)
-        let config = ConversationConfig(model: store.available?.model ?? .gemma4_E2B_german)
+        let config = ConversationConfig(model: store.available ?? .gemma4_E2B_german)
         do {
             let raw = try await store.complete(
                 system: ConversationPrompts.correctionSystemPrompt(for: config),
@@ -183,14 +214,14 @@ struct GespraechView: View {
                 Button("Gespräch beginnen") { start() }
                     .disabled(store.available == nil)
             } footer: {
-                Text(store.available.map { "Tutor: \($0.model.displayName)" }
+                Text(store.available.map { "Tutor: \($0.displayName)" }
                      ?? "No tutor model on this phone yet. Settings ▸ Tutor Model.")
             }
         }
     }
 
     func start() {
-        guard let model = store.available?.model else { return }
+        guard let model = store.available else { return }
         var config = ConversationConfig(model: model)
         config.inputMode = .type
         if let scenario {

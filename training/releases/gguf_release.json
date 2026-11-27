@@ -1,0 +1,58 @@
+{
+  "granite33-2b-german-tutor-v4-Q4_K_M.gguf": {
+    "repo": "kessenma/granite33-2b-german-tutor-v4-gguf",
+    "file": "granite33-2b-german-tutor-v4-Q4_K_M.gguf",
+    "quant": "Q4_K_M",
+    "bytes": 1545303488,
+    "sha256": "d841cb15552c5a8ba3e8d675aa4549cf2d75cb1c58f26c98bf9b96307577f9af"
+  },
+  "granite33-2b-german-tutor-v4-Q4_0.gguf": {
+    "repo": "kessenma/granite33-2b-german-tutor-v4-gguf",
+    "file": "granite33-2b-german-tutor-v4-Q4_0.gguf",
+    "quant": "Q4_0",
+    "bytes": 1453389248,
+    "sha256": "40d8d15222abc9ad60ce99c9b2f61dccf743d58de328ce1e6b7faa8eb5121809"
+  },
+  "gemma4-e2b-german-tutor-Q4_K_M.gguf": {
+    "repo": "kessenma/gemma4-e2b-german-tutor-gguf",
+    "file": "gemma4-e2b-german-tutor-Q4_K_M.gguf",
+    "quant": "Q4_K_M",
+    "bytes": 3416104256,
+    "sha256": "87a5dc28693e910d0a1b57f6c9d200c3b25e4a4da864736ed1e4a61c6dbf54df"
+  },
+  "gemma4-e2b-german-tutor-Q4_0.gguf": {
+    "repo": "kessenma/gemma4-e2b-german-tutor-gguf",
+    "file": "gemma4-e2b-german-tutor-Q4_0.gguf",
+    "quant": "Q4_0",
+    "bytes": 3349500224,
+    "sha256": "cf2ce050ce9563607c77d8932e3cdbc590f309513b1d4f9bbb3886b695c9f93a"
+  },
+  "gemma4-e4b-german-tutor-v4-Q4_K_M.gguf": {
+    "repo": "kessenma/gemma4-e4b-german-tutor-v4-gguf",
+    "file": "gemma4-e4b-german-tutor-v4-Q4_K_M.gguf",
+    "quant": "Q4_K_M",
+    "bytes": 5331558624,
+    "sha256": "14cbbfd5169912988fd0f973c7e87c363f1bdd256e1cbed5122fd207820c35cc"
+  },
+  "gemma4-e4b-german-tutor-v4-Q4_0.gguf": {
+    "repo": "kessenma/gemma4-e4b-german-tutor-v4-gguf",
+    "file": "gemma4-e4b-german-tutor-v4-Q4_0.gguf",
+    "quant": "Q4_0",
+    "bytes": 5185915104,
+    "sha256": "b01a6ffa3e1a8b57cb45bb794cf243d1ed28b18416dabe4a6114b4d54b68f121"
+  },
+  "granite41-3b-german-tutor-v4-Q4_K_M.gguf": {
+    "repo": "kessenma/granite41-3b-german-tutor-v4-gguf",
+    "file": "granite41-3b-german-tutor-v4-Q4_K_M.gguf",
+    "quant": "Q4_K_M",
+    "bytes": 2099502208,
+    "sha256": "f98fef3fc9754c1eba605d7c36c68511f9453066e15884d42bda043c6180308d"
+  },
+  "granite41-3b-german-tutor-v4-Q4_0.gguf": {
+    "repo": "kessenma/granite41-3b-german-tutor-v4-gguf",
+    "file": "granite41-3b-german-tutor-v4-Q4_0.gguf",
+    "quant": "Q4_0",
+    "bytes": 1984609408,
+    "sha256": "18d3ad2d2101bb56b29681736f63547e7e0ad22ba749eff17f03ae1d891f494e"
+  }
+}
