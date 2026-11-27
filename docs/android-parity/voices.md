@@ -296,7 +296,28 @@ outside it.
 compressed in an AAB split, estimated). iOS is similar (not measured). onnxruntime can't share code
 with the llama.cpp already in the app. The voice pack is downloaded, not bundled (129 MB).
 
-## 6. Unverified / open
+## 6. Running alongside the tutor (measured on the Mac mini, M6 2P+4E cores, 2026-11-27)
+
+`tools/voices/tts_bench.py` + `contention.sh` (run from the voice work dir): Gemma 4 E2B tutor Q4_K_M in `llama-bench` (64 tokens,
+3 runs) while Supertonic speaks a three-line tutor reply in a loop. The emulator was running, so
+expect a few % noise.
+
+| | Tutor tokens/s | Voice speed (lower is faster; < 1 = faster than real time) |
+| --- | --- | --- |
+| Tutor alone, CPU 4 threads (Android-like) | 46.2 | – |
+| + voice on 2 threads | 37.4 (−19%) | 0.19 median, 0.35 worst |
+| + voice on 1 thread | 44.2 (−4%) | 0.37 median, 0.53 worst |
+| Tutor alone, GPU/Metal (iOS-like, MLX also runs on the GPU) | 57.6 | – |
+| + voice on 2 threads | 56.7 (−2%) | 0.24 median, 0.74 worst |
+
+- Supertonic's peak memory: ~405 MB (419 MB footprint minus 13 MB for Python). Loading takes
+  0.2–0.3 s once the files are cached.
+- System voices run in the OS speech service (Android: Google TTS's own process; iOS: the system
+  speech service), so today they cost the app nothing. Supertonic runs inside the app and its
+  ~400 MB counts against the app's limit, next to the tutor (E2B: ~1.7 GB llama.cpp footprint on
+  Android, ~2.7 GB MLX peak on iOS, where a 6 GB iPhone allows roughly 3.4 GB).
+
+## 7. Unverified / open
 - Speed, memory and first-word latency on real phones (all timings above are from an M-series Mac).
   Memory while a Gemma tutor is loaded (tutor chat speaks replies), and battery.
 - Whether Supertonic 3's German sounds natural enough to be worth 129 MB compared with Google's 4
@@ -312,7 +333,7 @@ with the llama.cpp already in the app. The voice pack is downloaded, not bundled
 - iOS 17+ `AVSpeechSynthesisProviderAudioUnit` could expose Kartei voices as *system* voices.
   Interesting, but not needed for the in-app path.
 
-## 7. Reproduce
+## 8. Reproduce
 `voice-work/`: `.venv` (uv, py3.12: sherpa-onnx 2.0.3, piper-tts 1.8.0, onnx), `synth_piper.py`,
 `synth_supertonic.py`, `asr_check.py`, `piper_log.json`, `supertonic_log.json`, `mls_pitch.json`,
 `word_timing_demo.json`, `voicespike/` (adb: `am start -n com.kessenma.voicespike/.MainActivity

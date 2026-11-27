@@ -210,6 +210,13 @@ stops and opens the system settings.
 - **Listen:** 38 samples of the same two sentences in [`voice-samples/`](android-parity/voice-samples/):
   `android-google-*` (stock Android), `macos-*` (Apple voices as an iOS reference), `supertonic3-de-*`,
   `piper-*`. Clarity was scored with speech recognition; naturalness needs ears.
+- **Next to the tutor** (measured on the Mac, not a phone): Supertonic needs ~400 MB inside the app,
+  where system voices cost nothing (they run in the OS speech service). Speaking a reply while the
+  tutor writes cost the tutor 19% of its speed on CPU with 2 voice threads, 4% with 1 thread, 2%
+  when the tutor runs on the GPU as on iOS; the voice stayed faster than real time in every case.
+  Plan: one voice thread during conversations, Supertonic only when the memory budget has ~500 MB
+  spare after the tutor, otherwise the chosen system voice. Kyle liked all Supertonic and Google
+  samples; not Anna or Kerstin.
 
 ## Other gaps, by area
 
