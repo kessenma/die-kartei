@@ -243,9 +243,29 @@ enum KarteiSymbol {
 Prefer the symbolset route, though. With it, the SF name works as the asset key on both platforms and
 needs no lookup.
 
+### Shipped (branch `android-icons`)
+
+- `scripts/android_symbols.py` generates all 463 symbolsets from `icon-map.csv`: Material 423,
+  Phosphor 16, Lucide 14, Tabler 10. An alternate is used only where its match beats Material's.
+  For `.fill` names whose alternate is stroke-only (Lucide, most Tabler), the filled Material glyph
+  is used instead, except `tortoise.fill`, which keeps the Lucide outline because Material has no
+  turtle. `laptopcomputer`/`macbook` → `computer` (Google's iOS templates have no `laptop`). The
+  §4 custom-Bauhaus names use the best library glyph until they're drawn.
+- Files are 3–6 KB each, 2.8 MB raw in total, and add +1.05 MB compressed to the APK.
+- `--check` is the guard: it fails if a symbol literal in the Android UI module or the core has
+  no symbolset. `ICON_LICENSES.txt` in Resources holds the notices; it isn't wired into Settings yet.
+- Verified on the emulator: the tab bar (iOS names, `.fill` when selected), the Home and Tutor
+  rows, the Karten speak button and Hören all render, with no "Unable to find system image"
+  in logcat. `check_circle` fill1 cuts out correctly with NonZero.
+- Traps: actool (run by the Skip Darwin shell) rejects a template that is missing any of the
+  six `Baseline-/Capline-S/M/L` guides. SkipUI ignores `transform`s inside the Symbols groups, so
+  wrapped paths are written with the transform already applied. SkipUI tints symbols with
+  `foregroundStyle` or `Color.primary`, not with a button's content colour, so set
+  `.foregroundStyle` on icons in prominent buttons.
+
 ### Not verified / open
 
-- No emulator check yet; the worktree is read-only for this audit. Test first: one Google template, one
+- (Resolved, see above.) No emulator check yet; the worktree is read-only for this audit. Test first: one Google template, one
   Phosphor-wrapped symbol and one `.fill` name in `Module.xcassets`. On the tab bar, check centring and
   size: SkipUI sizes symbolsets from the template's cap-height guides.
 - SkipUI fills with the NonZero rule. Spot-check icons with holes (`check_circle` fill1, `settings`) for

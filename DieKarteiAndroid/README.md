@@ -77,8 +77,14 @@ visible text with its bounds, which is enough to tap through screens from a scri
 - `@State` / `@Environment` properties can't be `private` (Skip can't bridge them).
 - `Text + Text` is unavailable; build an `AttributedString` (colours and bold/italic render).
 - Compose needs unique `ForEach` ids across a whole `List`, not just within a section.
-- Only some SF Symbols have Android equivalents (SkipUI `Image.swift` lists them); others
-  show a warning triangle.
+- Icons: SF Symbols can't ship on Android (Apple's licence), so every SF name the app uses has a
+  `<name>.symbolset` in `Resources/Module.xcassets/Symbols`, drawn from Material Symbols Rounded,
+  Phosphor, Lucide or Tabler (`ICON_LICENSES.txt`). SkipUI checks the catalog before its own small
+  Material table, so views keep the iOS names. `python3 ../scripts/android_symbols.py` regenerates
+  them from `docs/android-parity/icon-map.csv` (needs `pip install picosvg`);
+  `python3 ../scripts/android_symbols.py --check` fails if a symbol literal in the UI module or
+  the core has no symbolset (a missing one only shows at runtime as a ⚠ and the log line
+  "Unable to find system image named").
 - The JSON data files must be real files in `Resources/` (copied by `core_sync.py`, gitignored):
   the resource copy resolves symlinks logically and Skip keeps subfolders as they are.
 - `@Observable` types in the core import SkipFuse on Android (`#if os(Android)`, not
