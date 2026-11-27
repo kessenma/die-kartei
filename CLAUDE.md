@@ -16,7 +16,8 @@ German for identity words and headings, plain English for explanation.
 - `docs/CLOUD_PICTURES.md` — cloud pictures on the learner's own OpenRouter account (Muse Image,
   Nano Banana): sign-in, the picture-source seam, error policy, invariants, a deck run in the
   background (the app-wide picture pill), the probe, debug args.
-- `docs/JOB_PREP.md` — job-posting capture and interview prep.
+- `docs/JOB_PREP.md` — job-posting capture and interview prep; Sammeln (collect words in bulk: tap,
+  select, or mark with the Pencil, then one save sheet) and Häufige Wörter (the word count across ads).
 - `docs/CLASS_NOTES.md` — Deutschkurs: courses, class entries, handouts, homework, the per-course deck,
   the onboarding (setup intro + the self-ticking "Erste Schritte" checklist).
 - `docs/WORKSHEETS.md` — Übungen: a lesson PDF's exercises as homework. The parser (and what iOS

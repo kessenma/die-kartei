@@ -3,7 +3,8 @@ import SwiftUI
 /// The posting as extracted text, paragraph by paragraph, through the same `SelectableGermanText`
 /// the stories use: double-tap a word, select a phrase, saved words washed in the accent, looked-up
 /// words underlined in red. The surface that always works, and the baseline the other two are
-/// compared against.
+/// compared against. In Collect mode a single tap picks a word; the Apple Pencil picks words here
+/// whenever the reader hands it `onPencilMark`.
 struct JobPostingTextSurface: View {
     let text: String
     let decorations: JobReadingDecorations
@@ -23,13 +24,18 @@ struct JobPostingTextSurface: View {
                 SelectableGermanText(
                     text: paragraph,
                     textStyle: .body,
+                    tapsToInspect: decorations.collecting ? 1 : 2,
                     savedWords: decorations.savedWords,
                     glossary: decorations.glossary,
                     inlineGlosses: decorations.inlineGlosses,
                     lookedUpWords: decorations.lookedUpWords,
                     onTapWord: callbacks.onTapWord,
                     onTranslateSelection: callbacks.onTranslateSelection,
-                    onSavePhrase: callbacks.onSavePhrase
+                    onSavePhrase: callbacks.onSavePhrase,
+                    markedWords: decorations.markedWords,
+                    markedPhrases: decorations.markedPhrases,
+                    onCollectSelection: callbacks.onCollectSelection,
+                    onPencilMark: callbacks.onPencilMark
                 )
             }
         }

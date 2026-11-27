@@ -2,7 +2,8 @@
 //  JobPrepHubView.swift
 //  german-ai-flashcards
 //
-//  The Job prep landing page: two front doors (rehearse an interview, study a job ad), then what
+//  The Job prep landing page: the front doors (rehearse an interview, study a job ad, count the
+//  words of several ads, the résumé), then what
 //  the learner already has — the postings being studied, the decks those produced, and the past
 //  interviews. Interviews open the existing conversation setup locked to interview mode, so the
 //  feature is one tap from Home instead of a choice inside the conversation Type picker.
@@ -115,12 +116,22 @@ struct JobPrepHubView: View {
             } label: {
                 JobPrepHeroRow(
                     title: "Study a job ad",
-                    subtitle: "Read a posting line by line. Double-tap the words you don't know, save them as flashcards.",
+                    subtitle: "Read a posting line by line. Tap or circle the words you don't know and add them to a deck in one go.",
                     systemImage: "doc.text.magnifyingglass",
                     accent: JobPrepTile.tint
                 )
             }
             .buttonStyle(.plain)
+            NavigationLink {
+                JobVocabAnalysisView(modelManager: modelManager, mlxService: mlxService)
+            } label: {
+                JobPrepHeroRow(
+                    title: "Häufige Wörter · Word count",
+                    subtitle: "Count the words across several ads. See which ones they share, tick the ones you don't know, add them all to a deck.",
+                    systemImage: "chart.bar.doc.horizontal",
+                    accent: JobPrepTile.tint
+                )
+            }
             NavigationLink {
                 ResumeView(modelManager: modelManager, mlxService: mlxService)
             } label: {

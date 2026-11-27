@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "unreleased",
+      "highlights": [
+        {
+          "title": "Wörter sammeln · Collect words from job ads",
+          "detail": "Tap, or circle with the Pencil, the words you don't know in a job ad and add them all to a deck at once, or count the words across several ads to see which ones they share.",
+          "symbol": "checklist"
+        }
+      ]
+    },
+    {
       "version": "1.7",
       "date": "2026-11-08",
       "highlights": [

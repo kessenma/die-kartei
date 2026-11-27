@@ -26,7 +26,8 @@ extension SelectableGermanText: NSViewRepresentable {
         let styled = Self.attributed(text, font: font, savedWords: savedWords,
                                      glossary: glossary, lookedUpWords: lookedUpWords,
                                      nounTints: nounTints,
-                                     highlightRange: highlightRange)
+                                     highlightRange: highlightRange,
+                                     markedWords: markedWords, markedPhrases: markedPhrases)
         Self.insertInlineGlosses(into: styled, glossary: glossary, mode: inlineGlosses, font: font)
         tv.setStyledText(styled)
         tv.wrappedImages = wrappedImages
@@ -76,6 +77,11 @@ extension SelectableGermanText: NSViewRepresentable {
             if parent.onSavePhrase != nil {
                 items.append(ClosureMenuItem(title: "Save phrase", symbol: "ear.badge.waveform") { [weak self] in
                     self?.parent.onSavePhrase?(selected)
+                })
+            }
+            if parent.onCollectSelection != nil {
+                items.append(ClosureMenuItem(title: "Add to deck…", symbol: "rectangle.stack.badge.plus") { [weak self] in
+                    self?.parent.onCollectSelection?(selected)
                 })
             }
             return items

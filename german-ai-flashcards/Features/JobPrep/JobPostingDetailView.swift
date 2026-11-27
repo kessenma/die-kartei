@@ -8,6 +8,11 @@
 //  saved words build the posting's own flashcard deck. From here the learner can also rehearse an
 //  interview for this posting.
 //
+//  Sammeln · Collect is the fast way to the deck: with it on, one tap picks a word (no inspector),
+//  a selection asks „one phrase card or a card per word?“, and the tray at the bottom turns
+//  everything picked into cards in one sheet. The Apple Pencil collects on the text surface
+//  whether the mode is on or not: tap a word, run over a few, or circle them.
+//
 
 import SwiftUI
 import SwiftData
@@ -16,6 +21,10 @@ struct JobPostingDetailView: View {
     @Bindable var posting: JobPosting
     @Bindable var modelManager: MLXModelManager
     var mlxService: MLXGenerationService
+    #if DEBUG
+    /// `-jobPrep.debugOpen collect`: open in Collect mode with these words picked.
+    var debugPicks: [String] = []
+    #endif
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
@@ -46,6 +55,14 @@ struct JobPostingDetailView: View {
     // Time on posting: runs while the screen is up and the app is in the foreground.
     @State private var readingTimer = StoryReadingTimer()
     @State private var wordsSaved = 0
+
+    // Collect mode (`JobVocabBasket`).
+    @State private var basket = JobVocabBasket()
+    @State private var collecting = false
+    @State private var spanChoice: JobVocabSpanChoice?
+    @State private var showSaveSheet = false
+    /// Briefly what the last bulk save did.
+    @State private var collectNote: String?
 
     /// The tutor the lookups run on: the one that answered earlier lookups here, else the
     /// learner's story tutor, else whatever is on disk. Never starts a download for one word.
@@ -79,6 +96,12 @@ struct JobPostingDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                Button {
+                    withAnimation(.snappy) { collecting.toggle() }
+                } label: {
+                    Image(systemName: collecting ? "checklist.checked" : "checklist")
+                }
+                .accessibilityLabel(collecting ? "Stop collecting words" : "Collect words")
                 if let pageURL = posting.pageURL {
                     Link(destination: pageURL) {
                         Image(systemName: "safari")
@@ -121,11 +144,25 @@ struct JobPostingDetailView: View {
                 }
             )
         }
+        .sheet(isPresented: $showSaveSheet) {
+            JobVocabSaveSheet(
+                picks: basket.picks,
+                posting: posting,
+                modelManager: modelManager,
+                mlxService: mlxService
+            ) { added, deckTitle, keys in
+                wordsSaved += added
+                basket.remove(keys: keys)
+                flashCollectNote(added == 0 ? "Already in \(deckTitle)" : "Added \(added) to \(deckTitle)")
+            }
+        }
+        .jobVocabSpanDialog($spanChoice, basket: basket)
         .sheet(isPresented: $showWords) {
             NavigationStack {
                 List {
                     lookupSection
                     deckSection
+                    wordListSection
                     interviewSection
                 }
                 .themedListScreen()
@@ -169,6 +206,12 @@ struct JobPostingDetailView: View {
         .onAppear {
             SyncInUse.begin(posting.id)
             setUp()
+            #if DEBUG
+            if !debugPicks.isEmpty, basket.isEmpty {
+                collecting = true
+                for word in debugPicks { basket.add(word, example: JobVocabAnalyzer.sentence(containing: word, in: posting.text)) }
+            }
+            #endif
             readingTimer.start()
             posting.lastOpenedAt = .now
         }
@@ -199,9 +242,15 @@ struct JobPostingDetailView: View {
             readSection.themedListRow()
             lookupSection
             deckSection
+            wordListSection
             interviewSection
         }
         .themedListScreen()
+        .safeAreaInset(edge: .bottom) {
+            if collecting || !basket.isEmpty || collectNote != nil {
+                collectTray
+            }
+        }
     }
 
     /// The PDF and the live page want the whole screen; the words and the deck move into a sheet
@@ -223,7 +272,12 @@ struct JobPostingDetailView: View {
         }
         .themedScreen()
         .safeAreaInset(edge: .bottom) {
-            immersiveBar
+            VStack(spacing: 0) {
+                if collecting || !basket.isEmpty || collectNote != nil {
+                    collectTray
+                }
+                immersiveBar
+            }
         }
     }
 
@@ -352,7 +406,9 @@ struct JobPostingDetailView: View {
         } header: {
             Text("Stellenanzeige").themedSectionHeader()
         } footer: {
-            Text("Double-tap a word to translate it; select a phrase to translate or save it. Words you've saved are washed in color, words you looked up get a red dashed line.")
+            Text(collecting
+                 ? "Collecting: tap the words you don't know, or select a phrase and choose Add to deck. Picked words are marked yellow; add them all from the bar below. With the Apple Pencil, tap, underline or circle words."
+                 : "Double-tap a word to translate it; select a phrase to translate, save it, or add it to the deck. Words you've saved are washed in color, words you looked up get a red dashed line. To pick many words at once, turn on Collect (the list button above) or use the Apple Pencil.")
         }
     }
 
@@ -433,6 +489,71 @@ struct JobPostingDetailView: View {
         .themedListRow()
     }
 
+    /// Every word of the ad, counted, to tick the unknown ones in one pass.
+    private var wordListSection: some View {
+        Section {
+            NavigationLink {
+                JobVocabAnalysisView(modelManager: modelManager, mlxService: mlxService, initialSelection: [posting.id])
+            } label: {
+                Label("Every word in this ad, by count", systemImage: "list.number")
+            }
+        } header: {
+            Text("Wortliste").themedSectionHeader()
+        } footer: {
+            Text("Basic words and words already in your decks are hidden. Tick the ones you don't know and add them in one go; add more ads there to see the words they share.")
+        }
+        .themedListRow()
+    }
+
+    /// What has been picked, and the one button that makes cards of it.
+    private var collectTray: some View {
+        HStack(spacing: 12) {
+            if let collectNote {
+                Label(collectNote, systemImage: "checkmark.circle.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.green)
+                    .lineLimit(1)
+                Spacer()
+            } else if basket.isEmpty {
+                Image(systemName: "hand.tap")
+                    .foregroundStyle(.secondary)
+                Text("Tap the words you don't know.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Done") { withAnimation(.snappy) { collecting = false } }
+                    .font(.subheadline)
+            } else {
+                Menu {
+                    ForEach(basket.picks) { pick in
+                        Button(role: .destructive) {
+                            basket.remove(pick.id)
+                        } label: {
+                            Label(pick.german, systemImage: "minus.circle")
+                        }
+                    }
+                    Divider()
+                    Button("Clear all", role: .destructive) { basket.clear() }
+                } label: {
+                    Label("\(basket.count) picked", systemImage: "highlighter")
+                        .font(.subheadline.weight(.semibold))
+                }
+                Spacer()
+                Button {
+                    showSaveSheet = true
+                } label: {
+                    Label("Add to deck", systemImage: "rectangle.stack.badge.plus")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.bar)
+    }
+
     /// Interviews rehearsed for this posting: linked by id, or by the same link for chats from
     /// before the link existed.
     @ViewBuilder
@@ -468,17 +589,68 @@ struct JobPostingDetailView: View {
 
     private var callbacks: JobReadingCallbacks {
         JobReadingCallbacks(
-            onTapWord: { inspect($0) },
+            onTapWord: { word in collecting ? pick(word) : inspect(word) },
             onTranslateSelection: { inspect($0) },
-            onSavePhrase: { phraseDraft = PhraseDraft(german: $0) }
+            onSavePhrase: { phraseDraft = PhraseDraft(german: $0) },
+            onCollectSelection: { collectSelection($0) },
+            onPencilMark: { pencilMark($0) }
         )
     }
 
     private var decorations: JobReadingDecorations {
         JobReadingDecorations(
             savedWords: savedWords,
-            lookedUpWords: Set(posting.lookups.map { $0.german.lowercased() })
+            lookedUpWords: Set(posting.lookups.map { $0.german.lowercased() }),
+            markedWords: basket.markedWords,
+            markedPhrases: basket.markedPhrases,
+            collecting: collecting
         )
+    }
+
+    // MARK: - Collect
+
+    /// A tap in Collect mode: in the basket, or out again.
+    private func pick(_ word: String) {
+        let cleaned = SingleWordTranslator.cleanWord(word)
+        guard !cleaned.isEmpty else { return }
+        basket.toggle(cleaned, example: JobVocabAnalyzer.sentence(containing: cleaned, in: posting.text))
+    }
+
+    /// A selection to make cards of. One word goes straight in; several ask whether they are one
+    /// phrase, a card each, or both.
+    private func collectSelection(_ selection: String) {
+        let span = selection.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }.joined(separator: " ")
+            .trimmingCharacters(in: .punctuationCharacters.union(.whitespaces))
+        guard !span.isEmpty else { return }
+        let example = JobVocabAnalyzer.sentence(containing: span, in: posting.text)
+        let words = JobVocabAnalyzer.contentWords(of: span)
+        if JobVocabAnalyzer.tokens(in: span).count <= 1 {
+            basket.add(span, example: example)
+        } else {
+            spanChoice = JobVocabSpanChoice(span: span, words: words, example: example)
+        }
+    }
+
+    /// The Pencil: one word toggles like a tap; words side by side ask like a selection; words
+    /// circled apart from each other go in one by one.
+    private func pencilMark(_ mark: PencilWordMark) {
+        if mark.words.count == 1, let word = mark.words.first {
+            pick(word)
+        } else if let span = mark.span {
+            collectSelection(span)
+        } else {
+            for word in mark.words where !GermanBasicWords.contains(word) {
+                basket.add(word, example: JobVocabAnalyzer.sentence(containing: word, in: posting.text))
+            }
+        }
+    }
+
+    private func flashCollectNote(_ note: String) {
+        collectNote = note
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            collectNote = nil
+        }
     }
 
     /// Lowercased German words already saved to this posting's deck.

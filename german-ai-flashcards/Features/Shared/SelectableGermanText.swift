@@ -58,6 +58,17 @@ struct SelectableGermanText {
     /// tap fires this after the double-tap recognizer fails — used by the read-along player to
     /// "start reading from this sentence".
     var onSingleTap: (() -> Void)? = nil
+    /// Lowercased words the learner picked to make cards of (a marker-yellow wash), and picked
+    /// phrases, marked wherever they stand. The job-ad reader's Collect mode (`JobVocabBasket`).
+    var markedWords: Set<String> = []
+    var markedPhrases: [String] = []
+    /// A selection the learner wants as cards: the edit menu's „Add to deck…“. When nil, the
+    /// action is omitted.
+    var onCollectSelection: ((String) -> Void)? = nil
+    /// Apple Pencil marks: a tap on a word, a stroke over words, a loop around them
+    /// (`PencilWordMarking`). When set, the Pencil marks words here instead of selecting or
+    /// scrolling; fingers keep doing both.
+    var onPencilMark: ((PencilWordMark) -> Void)? = nil
 }
 
 #if canImport(UIKit)
@@ -84,6 +95,7 @@ extension SelectableGermanText: UIViewRepresentable {
         tap.numberOfTapsRequired = tapsToInspect
         tap.delegate = context.coordinator
         tv.addGestureRecognizer(tap)
+        context.coordinator.tap = tap
 
         // Optional single-tap ("start reading here") that yields to the word-inspect double-tap.
         if onSingleTap != nil {
@@ -106,10 +118,16 @@ extension SelectableGermanText: UIViewRepresentable {
         let styled = Self.attributed(text, font: font, savedWords: savedWords,
                                      glossary: glossary, lookedUpWords: lookedUpWords,
                                      nounTints: nounTints,
-                                     highlightRange: highlightRange)
+                                     highlightRange: highlightRange,
+                                     markedWords: markedWords, markedPhrases: markedPhrases)
         Self.insertInlineGlosses(into: styled, glossary: glossary, mode: inlineGlosses, font: font)
         tv.attributedText = styled
         (tv as? WrappingTextView)?.wrappedImages = wrappedImages
+        // Collect mode turns the double-tap into a single tap, on a view that already exists.
+        if let tap = context.coordinator.tap, tap.numberOfTapsRequired != tapsToInspect {
+            tap.numberOfTapsRequired = tapsToInspect
+        }
+        context.coordinator.updatePencil(enabled: onPencilMark != nil)
     }
 }
 #endif
@@ -196,7 +214,9 @@ extension SelectableGermanText {
                                    glossary: GlossaryHighlight,
                                    lookedUpWords: Set<String>,
                                    nounTints: [(range: NSRange, color: UIColor)],
-                                   highlightRange: NSRange?) -> NSMutableAttributedString {
+                                   highlightRange: NSRange?,
+                                   markedWords: Set<String> = [],
+                                   markedPhrases: [String] = []) -> NSMutableAttributedString {
         let result = NSMutableAttributedString(string: text, attributes: [
             .font: font,
             .foregroundColor: UIColor.label
@@ -235,6 +255,28 @@ extension SelectableGermanText {
                 guard found.location != NSNotFound else { break }
                 result.addAttributes(dotted, range: found)
                 searched = max(NSMaxRange(found), searched + 1)
+            }
+        }
+        // Picked for cards: a marker wash over the saved-word wash, so a word picked again reads
+        // as picked.
+        if !markedWords.isEmpty || !markedPhrases.isEmpty {
+            let marker = UIColor.systemYellow.withAlphaComponent(0.42)
+            if !markedWords.isEmpty {
+                ns.enumerateSubstrings(in: NSRange(location: 0, length: ns.length), options: .byWords) { word, range, _, _ in
+                    if let key = word?.lowercased(), markedWords.contains(key) {
+                        result.addAttribute(.backgroundColor, value: marker, range: range)
+                    }
+                }
+            }
+            for phrase in markedPhrases where !phrase.isEmpty {
+                var searched = 0
+                while searched < ns.length {
+                    let found = ns.range(of: phrase, options: [.caseInsensitive, .diacriticInsensitive],
+                                         range: NSRange(location: searched, length: ns.length - searched))
+                    guard found.location != NSNotFound else { break }
+                    result.addAttribute(.backgroundColor, value: marker, range: found)
+                    searched = max(NSMaxRange(found), searched + 1)
+                }
             }
         }
         // Gender colors sit under the read-along highlight, which is applied last and wins.
@@ -299,6 +341,11 @@ extension SelectableGermanText {
     final class Coordinator: NSObject, UITextViewDelegate, UIGestureRecognizerDelegate {
         var parent: SelectableGermanText
         weak var textView: UITextView?
+        /// The word-inspect tap, kept so Collect mode can change its tap count.
+        weak var tap: UITapGestureRecognizer?
+        /// The Pencil marker, installed while `onPencilMark` is set (`SelectableGermanText+Pencil`).
+        var pencil: PencilMarkRecognizer?
+        var pencilInk: CAShapeLayer?
 
         init(_ parent: SelectableGermanText) { self.parent = parent }
 
@@ -347,6 +394,13 @@ extension SelectableGermanText {
                 }
                 actions.append(savePhrase)
             }
+            if parent.onCollectSelection != nil {
+                let collect = UIAction(title: "Add to deck…",
+                                       image: UIImage(systemName: "rectangle.stack.badge.plus")) { [weak self] _ in
+                    self?.parent.onCollectSelection?(selected)
+                }
+                actions.append(collect)
+            }
             let mine = UIMenu(title: "", options: .displayInline, children: actions)
             return UIMenu(children: [mine] + suggestedActions)
         }
@@ -354,7 +408,9 @@ extension SelectableGermanText {
         // Let our tap coexist with the text view's own selection gestures.
         func gestureRecognizer(_ g: UIGestureRecognizer,
                                shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
-            true
+            // The Pencil marker owns its touches: no selection, no loupe, no scrolling under it.
+            if g is PencilMarkRecognizer || other is PencilMarkRecognizer { return false }
+            return true
         }
     }
 }

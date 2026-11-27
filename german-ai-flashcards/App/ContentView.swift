@@ -84,6 +84,8 @@ struct ContentView: View {
     @State private var schreibenDebug: SchreibenDebugOpen?
     @State private var hoerenDebug: HoerenDebugOpen?
     @State private var spieleDebug: SpieleDebugOpen?
+    /// `-jobPrep.debugOpen hub|count|phrases|posting|collect|save`: the job-ad word count and Collect mode.
+    @State private var jobVocabDebug: JobVocabDebugOpen?
     #endif
     @Environment(\.modelContext) private var modelContext
 
@@ -275,6 +277,18 @@ struct ContentView: View {
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) {
                             Button("Close") { zeichnenDebug = nil }
+                        }
+                    }
+            }
+            .environment(router)
+            .environment(settingsRouter)
+        }
+        .sheet(item: $jobVocabDebug) { open in
+            NavigationStack {
+                JobVocabDebugScreen(open: open, modelManager: coordinator.modelManager, mlxService: coordinator.mlxService)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close") { jobVocabDebug = nil }
                         }
                     }
             }
@@ -662,6 +676,12 @@ struct ContentView: View {
             }
             if UserDefaults.standard.bool(forKey: "hoeren.debugVerify") {
                 print(HoerenDebugSeeder.runVerification())
+            }
+            // `-jobPrep.debugOpen hub|count|phrases|posting|collect|save`: three sample postings, then the
+            // word count, a posting, Collect mode with words picked, or the save sheet.
+            if let raw = UserDefaults.standard.string(forKey: "jobPrep.debugOpen") {
+                jobVocabDebug = JobVocabDebugOpen(argument: raw)
+                print("[jobPrep] open \(raw): \(jobVocabDebug == nil ? "no such screen" : "ok")")
             }
             // `-spiele.debugOpen hangman|hangmanPlay|hangmanWin|hangmanLose`: the Spiele room.
             // The simulator can't drag or run a tutor, so every screen needs a way in that isn't

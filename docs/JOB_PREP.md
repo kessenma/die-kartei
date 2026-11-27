@@ -160,6 +160,84 @@ photo, and kept whole in `Resume.fullText`, uncapped.
   and which years or names in it the résumé doesn't have (`ResumeProbe`). Runs on a device or the
   Mac; read the questions too. No numbers yet.
 
+## Sammeln · Collect, the word count, and the Pencil (built 2026-11-27, branch `job-vocab`)
+
+Saving words from an ad used to be one at a time: double-tap, wait for the tutor, Save, next word.
+This adds a bulk path beside it. Every way in ends in the same sheet.
+
+- **Collect mode** (`JobPostingDetailView`, the checklist button in the toolbar). One tap picks a
+  word (`SelectableGermanText.tapsToInspect` drops to 1, so no inspector, no model load); on the
+  PDF and live-page surfaces their double-tap picks. Picked words get a marker-yellow wash
+  (`JobReadingDecorations.markedWords` / `markedPhrases`, drawn over the saved-word wash). The tray
+  at the bottom counts them (its menu removes one) and *Add to deck* opens the save sheet. The
+  basket (`JobVocabBasket`) lives with the screen and is not persisted.
+- **A selection** gets *Add to deck…* in its edit menu (text surface, read or collect mode;
+  `onCollectSelection`). One word goes straight in. Several ask (`jobVocabSpanDialog`): *One
+  phrase card*, *n word cards* (the content words, `JobVocabAnalyzer.contentWords`: no articles,
+  pronouns or prepositions), or *Both*. A phrase can still be split later in the sheet (swipe ▸
+  Split).
+- **Apple Pencil** (`SelectableGermanText+Pencil.swift`, `PencilWordMarking`). On the text surface
+  the Pencil always collects, mode or not: tap a word (toggles), run a highlighter or an underline
+  over words, or circle them. Words side by side ask the phrase question; words circled apart go
+  in one by one (basic words skipped). A `PencilMarkRecognizer` (Pencil touches only) begins on
+  touch-down, so the text view's selection and the list's scrolling never see the Pencil; every
+  scroll view above the text stops taking Pencil touches. Fingers scroll, select and double-tap as
+  before. The ink is a fading marker stroke; nothing is stored. Loop detection is
+  `PencilEraseLoop.isLoop` (circle to erase). PDF and live page: not yet (the Pencil reads like a
+  finger there). **Device check open:** all of it; the simulator has no Pencil.
+- **The save sheet** (`JobVocabSaveSheet`). A deck: the ad's own (default from a posting), any
+  browsable deck (job decks first), or a new one (`generatorRaw = "job"`, so it is a job deck).
+  Each row: tick, German, English, the ad's sentence (saved as the card's example). English the app
+  already has is filled in first (`JobVocabKnown`): words looked up in any posting, then cards in
+  the learner's decks, then the Goethe lists, by `CardKind.matchKey` and, for single words, by stem
+  with the same capitalisation („Kunden“ finds „der Kunde“; „Arbeit“ never finds
+  „arbeiten“). A known word also takes the source's German with its article. The rest goes to
+  the tutor in batches of 12 (`JobVocabTranslator`), which is asked for the dictionary form too
+  („Kenntnissen“ → „die Kenntnis“). When it answers every line the order holds; otherwise
+  an answer goes to the line it names. A dictionary form is taken only when it is recognisably the
+  same word (`sameWord`: same key, same stem, or the same first five letters); a phrase keeps the
+  learner's wording. Saving goes through `DeckCardAdder` (deduped, `CardKind` decides word or
+  phrase) and `DocumentDeckService.makesCard` (no empty English side; the sheet says how many are
+  left out), and feeds the coach like the reader's saves (`storyFeedsCoach`).
+- **Häufige Wörter · Word count** (`JobVocabAnalysisView`; Job prep hub, and *Wortliste* on a
+  posting for that ad alone). Choose ads (`JobPostingMultiPicker`, default the dozen most recent),
+  or bring in several at once (`JobPostingBulkImportView`: several PDFs from Files, or links one
+  per line read with `WebTextExtractor.fetch`, no browser, no page copy; a site that needs its
+  browser says so per link). Two tabs:
+  - *Wörter*: every word, grouped by form, sorted by how many ads use it, then by count. Each row:
+    „3 of 4 ads“ with a bar, the count, the other spellings, a deck mark, its Goethe level,
+    and a quote button for the sentences it stands in, ad by ad (`JobVocabContextSheet`). Filters
+    (menu, remembered): hide basic words (`GermanBasicWords`: articles, pronouns, prepositions,
+    conjunctions, sein/haben/werden and the modals, small adverbs; on by default), hide words in my
+    decks (on), group word forms (on), hide Goethe words up to A1/A2/B1 (off). With several ads a
+    stepper sets „in at least n ads” (starts at 2 with three ads or more). The footer gives the
+    share of the text's content words the learner's decks already cover.
+  - *Wendungen*: two-to-six-word runs („sehr gute Deutschkenntnisse in Wort und Schrift“) that start and end on a content word, in two ads or more
+    (twice or more in one ad), a run inside a longer, equally common one left out.
+  Tick, *Tick all*, then *Add to deck*: the same sheet.
+- **Counting** (`Services/JobVocab/`, pure, runs off the main actor). Sentences are lines first
+  (bullets carry no full stops), then `NLTokenizer` sentences. Words are letter runs keeping inner
+  hyphens („Full-Stack-Entwickler“); single letters („m/w/d“) drop out. Forms are grouped by
+  a CISTEM stem (`GermanStem`, plus „-nisse(n)“ → „-nis“) because `NLTagger` has no German lemmas
+  (its German schemes are language, script and token type). A capitalised word stays apart from
+  a lowercase one with the same stem, unless it was only ever first on its line. The list shows
+  the shortest spelling, usually the base form; the tutor gives the real dictionary form on save.
+
+Simulator: `-jobPrep.debugOpen hub|count|phrases|posting|collect|save` seeds three sample postings
+(titles start „[debug]“, refused while iCloud Sync runs) and opens that screen; `collect` opens the
+first in Collect mode with four words picked, `save` the save sheet for them (`JobVocabDebug.swift`).
+
+Tests: `german-ai-flashcardsTests/JobVocabTests.swift` (stems, counting, basic words, the noun/verb
+split, line-initial capitals, shared phrases and pruning, sentences, splitting a phrase, the
+tutor's answers by position and by word, known English by stem, saving into the posting's deck
+(article, example, phrase type, no duplicates), the basket, the Pencil's tap,
+stroke and loop).
+
+Not built yet: the Pencil on the PDF and live-page surfaces; a remembered basket; compound
+splitting („Softwareentwicklung“ = Software + Entwicklung); a bundled glossary of job-ad
+formulas („ab sofort“, „unbefristet“, „in Wort und Schrift“) shown with the existing dotted
+glossary marking.
+
 ## Later
 
 - Lebenslauf: posting against résumé (which requirements are covered, which gaps need a prepared

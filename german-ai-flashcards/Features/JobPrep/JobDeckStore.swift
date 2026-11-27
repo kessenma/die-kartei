@@ -38,17 +38,7 @@ enum JobDeckStore {
         context: ModelContext
     ) -> Bool {
         guard !isWordSaved(german, posting: posting, context: context) else { return false }
-        let target: SavedDeck
-        if let existing = deck(for: posting, context: context) {
-            target = existing
-        } else {
-            let created = SavedDeck(topic: "Job: \(posting.title)", wordCount: 0, includeExamples: false, includeGender: true)
-            created.generatorRaw = generatorRaw
-            created.id = SyncSingletonDecks.linkedDeckID(existing: posting.deckID, kind: "job", parentID: posting.id)
-            context.insert(created)
-            posting.deckID = created.id
-            target = created
-        }
+        let target = orCreateDeck(for: posting, context: context)
 
         let split = CardKind.split(german)
         let word = split.word
@@ -69,6 +59,18 @@ enum JobDeckStore {
             LearnerMemoryService.noteVocabEncounters([(german: word, english: english ?? "")], source: "job", in: context)
         }
         return true
+    }
+
+    /// The posting's deck, created (and linked to the posting) when it doesn't exist yet.
+    static func orCreateDeck(for posting: JobPosting, context: ModelContext) -> SavedDeck {
+        if let existing = deck(for: posting, context: context) { return existing }
+        let created = SavedDeck(topic: "Job: \(posting.title)", wordCount: 0, includeExamples: false, includeGender: true)
+        created.generatorRaw = generatorRaw
+        created.id = SyncSingletonDecks.linkedDeckID(existing: posting.deckID, kind: "job", parentID: posting.id)
+        context.insert(created)
+        posting.deckID = created.id
+        posting.updatedAt = .now
+        return created
     }
 
     /// Save every looked-up word that isn't in the deck yet. Returns how many were added.

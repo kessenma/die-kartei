@@ -19,6 +19,12 @@ struct JobReadingCallbacks {
     var onTapWord: (String) -> Void
     var onTranslateSelection: (String) -> Void
     var onSavePhrase: (String) -> Void
+    /// A selection to make cards of (the edit menu's „Add to deck…“): one phrase, or a card per
+    /// word. The text surface only; nil leaves the action out.
+    var onCollectSelection: ((String) -> Void)? = nil
+    /// Apple Pencil marks on the text surface (`PencilWordMarking`). Nil: the Pencil reads like a
+    /// finger.
+    var onPencilMark: ((PencilWordMark) -> Void)? = nil
 }
 
 /// What a surface marks in the text: words already saved to the posting's deck (an accent wash)
@@ -31,6 +37,12 @@ struct JobReadingDecorations: Equatable {
     var glossary: GlossaryHighlight = .none
     /// Print the glossary's English inline after each glossed word.
     var inlineGlosses: InlineGlossMode = .off
+    /// Words and phrases picked to become cards (`JobVocabBasket`): a marker-yellow wash. Words
+    /// lowercased.
+    var markedWords: Set<String> = []
+    var markedPhrases: [String] = []
+    /// Collect mode: one tap picks a word, so the text surface asks for a single tap.
+    var collecting = false
 
     static let none = JobReadingDecorations()
 }
