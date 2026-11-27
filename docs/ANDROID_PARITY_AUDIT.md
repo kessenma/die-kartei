@@ -218,6 +218,61 @@ stops and opens the system settings.
   spare after the tutor, otherwise the chosen system voice. Kyle liked all Supertonic and Google
   samples; not Anna or Kerstin.
 
+## Voice choice: system voices + Kartei voices (iOS and Android)
+
+Kyle's call (2026-11-27): keep both, and make Supertonic an opt-in with a clear warning. This
+upgrades the iOS app too.
+
+**What the learner sees** (Settings ▸ Voice, same layout on both platforms):
+- **System voices** (default). iOS keeps today's setup as it is: the voice pickers plus the guide
+  to download Enhanced/Premium voices in iOS Settings. Android lists Google's German voices and
+  downloads them in the app.
+- **Kartei voices** (opt-in): the 10 Supertonic voices, each with a sample button. Choosing them
+  opens a sheet first, for example:
+
+  > **Kartei voices**
+  > Ten German voices that run on your phone. They're a 129 MB download and use about 400 MB of
+  > memory while speaking.
+  > On phones with less memory, they may not work next to the tutor. When there isn't room, the
+  > app uses your system voice instead and tells you.
+  > [Download voices] [Not now]
+
+- The choice can be per use: e.g. Kartei voices for cards and stories, the system voice in
+  conversations. Boy/Girl dialogue roles stay on system voices (Supertonic has no child voices).
+
+**How it works underneath:**
+- A shared `SpeechPlayer` in the core with three backends: AVSpeech (iOS), Android TTS, Supertonic
+  through sherpa-onnx (both). Every feature calls the player, not a backend.
+- Before speaking with Kartei voices while a tutor is loaded, the app checks its memory budget
+  (`MemoryBudget` on iOS, `ActivityManager.MemoryInfo` on Android). With less than ~500 MB spare it
+  speaks with the system voice for that turn and shows a one-line notice. Voice on one thread
+  during conversations (cost to the tutor measured at ~4% on CPU, ~2% on GPU).
+- The voice files download from Hugging Face (mirrored, pinned checksums), through the same
+  downloader the tutor models use. Delete from the same screen.
+- Licence: OpenRAIL-M notice in Sources & Credits, and its use restrictions in the app's terms.
+
+**Catches:**
+- Word highlighting: Supertonic gives no word timings, so highlights are estimated from text
+  length and can drift a little in long sentences. System voices keep exact highlighting.
+- App size: sherpa-onnx + ONNX Runtime add roughly 27 MB on Android (arm64); iOS not measured.
+- Lock-screen playback: the app plays Supertonic's audio itself, so story playback needs its own
+  audio session / media session wiring on both platforms.
+
+**Effort (about 2–3 weeks in total):**
+
+| Step | Effort |
+| --- | --- |
+| Android system voice picker with in-app download, word ranges, queue | S–M |
+| `SpeechPlayer` in the core; iOS `SpeechService` behind it, no change for users | M |
+| sherpa-onnx built for Android (NDK, like llama.cpp) and iOS (xcframework), Swift wrapper | M |
+| Voice pack download, mirror and delete (reuses the model downloader) | S |
+| Voices screen + warning sheet on both platforms | S–M |
+| Memory check and fallback in conversations; estimated highlighting | S–M |
+| Licence notice | S |
+
+First check before building it: Supertonic's memory and speed on a real 6 GB iPhone and a mid-range
+Android phone, with a long conversation loaded.
+
 ## Other gaps, by area
 
 - **Home:** iOS has For You (Today plan, level card, streak calendar, week in review, Monatsbericht)
@@ -286,7 +341,7 @@ and Werkstatt. Diktat. Wortschatz hub. XP, goal ring, badges, celebrations, 2D p
 
 **Phase 6: The tutor for real users (M–L).** GGUFs on Hugging Face (in progress in another
 thread); in-app download with progress, RAM check and delete. Speech-to-text; the shared
-`SpeechPlayer` and the Supertonic voices on Android, then iOS. Voice
+`SpeechPlayer` and the opt-in Kartei voices (Supertonic) on both platforms. Voice
 Gespräch, Stammtisch. Stories. Typed Schreiben. AI deck generation.
 
 **Phase 7: Import, ink, sync (L).** Text intake (OCR, PDF, URLs) → flashcards from a document,
