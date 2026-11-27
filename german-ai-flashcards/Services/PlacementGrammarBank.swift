@@ -58,7 +58,7 @@ enum PlacementGrammarBank {
 
     private static func load() -> PlacementGrammarFile? {
         if let cache { return cache }
-        guard let url = Bundle.main.url(forResource: "placement_grammar", withExtension: "json"),
+        guard let url = AppResources.url("placement_grammar", "json"),
               let data = try? Data(contentsOf: url),
               let file = try? JSONDecoder().decode(PlacementGrammarFile.self, from: data)
         else { return nil }

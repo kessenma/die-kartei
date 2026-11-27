@@ -97,7 +97,7 @@ struct KartenView: View {
             Button {
                 GermanVoice.shared.speak([entry.article, entry.word].compactMap { $0 }.joined(separator: " "), slow: false)
             } label: {
-                Image(systemName: "play.fill")
+                Image(systemName: "speaker.wave.2.fill")
             }
             .buttonStyle(.bordered)
             if flipped {

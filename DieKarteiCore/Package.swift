@@ -21,6 +21,9 @@ let package = Package(
                 // CryptoKit stands in on Apple platforms (the sync files pick one with canImport).
                 .product(name: "Crypto", package: "swift-crypto",
                          condition: .when(platforms: [.android, .linux])),
+                // Core files `import SkipFuse` on Android (the Skip package supplies the real
+                // one). This empty stand-in lets `core_sync.py --prune` build the core alone.
+                .target(name: "SkipFuse", condition: .when(platforms: [.android])),
             ],
             swiftSettings: [
                 .swiftLanguageMode(.v5),
@@ -30,6 +33,7 @@ let package = Package(
                 .enableUpcomingFeature("MemberImportVisibility"),
             ]
         ),
+        .target(name: "SkipFuse", path: "Stubs/SkipFuse"),
         .testTarget(
             name: "DieKarteiCoreTests",
             dependencies: ["DieKarteiCore"],

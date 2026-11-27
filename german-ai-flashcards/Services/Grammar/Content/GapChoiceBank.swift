@@ -36,7 +36,7 @@ struct GapChoiceBank {
     static var bundled: GapChoiceBank {
         if let cache { return cache }
         let bank: GapChoiceBank
-        if let url = Bundle.main.url(forResource: "gap_choice_items", withExtension: "json"),
+        if let url = AppResources.url("gap_choice_items", "json"),
            let data = try? Data(contentsOf: url),
            let decoded = try? GapChoiceBank(data: data) {
             bank = decoded
@@ -97,7 +97,7 @@ struct GapChoiceBank {
     /// The bundled file decoded without the load-time assert, so a report can list every
     /// problem instead of stopping at the first.
     static var bundledUnchecked: GapChoiceBank {
-        guard let url = Bundle.main.url(forResource: "gap_choice_items", withExtension: "json"),
+        guard let url = AppResources.url("gap_choice_items", "json"),
               let data = try? Data(contentsOf: url),
               let decoded = try? GapChoiceBank(data: data) else { return empty }
         return decoded

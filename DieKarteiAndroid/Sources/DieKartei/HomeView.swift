@@ -24,30 +24,30 @@ struct HomeView: View {
             Section("Activities") {
                 NavigationLink { VocabularyView() } label: {
                     ActivityRow(title: "Vocabulary", subtitle: "Flashcards, Wortschatz",
-                                systemImage: "bookmark.fill", tint: Color.blue)
+                                systemImage: "rectangle.stack.fill", tint: Color.blue)
                 }
                 Button(action: openGrammar) {
                     ActivityRow(title: "Grammar", subtitle: "Die vier Fälle · der · die · das · Präpositionen",
-                                systemImage: "checkmark.circle.fill", tint: Color.purple)
+                                systemImage: "checklist", tint: Color.purple)
                 }
                 .buttonStyle(.plain)
                 NavigationLink { HoerenView() } label: {
                     ActivityRow(title: "Hören", subtitle: "Zahlen-Diktat with the German voice",
-                                systemImage: "play.fill", tint: Color.orange)
+                                systemImage: "ear.badge.waveform", tint: Color.orange)
                 }
                 NavigationLink { SpieleView() } label: {
                     ActivityRow(title: "Spiele", subtitle: "Galgenmännchen · Wortsuche",
-                                systemImage: "star.fill", tint: Color.teal)
+                                systemImage: "gamecontroller.fill", tint: Color.teal)
                 }
             }
             Section("Tutor") {
                 NavigationLink { GespraechView() } label: {
                     ActivityRow(title: "Gespräch", subtitle: "Talk with the tutor; every line gets corrected",
-                                systemImage: "person.fill", tint: Color.green)
+                                systemImage: "bubble.left.and.bubble.right.fill", tint: Color.green)
                 }
                 NavigationLink { SatzPruefenView() } label: {
                     ActivityRow(title: "Satz prüfen", subtitle: "One sentence, checked by the tutor",
-                                systemImage: "checkmark.circle.fill", tint: Color.green)
+                                systemImage: "checkmark.bubble", tint: Color.green)
                 }
             }
         }
@@ -99,11 +99,11 @@ struct VocabularyView: View {
         List {
             NavigationLink { KartenView() } label: {
                 ActivityRow(title: "Karteikarten", subtitle: "The Goethe deck with spaced repetition",
-                            systemImage: "bookmark.fill", tint: Color.blue)
+                            systemImage: "rectangle.stack", tint: Color.blue)
             }
             NavigationLink { WortschatzView() } label: {
                 ActivityRow(title: "Wortschatz", subtitle: "The A1–B1 word lists, searchable",
-                            systemImage: "list.bullet", tint: Color.blue)
+                            systemImage: "archivebox", tint: Color.blue)
             }
         }
         .navigationTitle("Vocabulary")

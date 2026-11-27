@@ -54,7 +54,10 @@ struct ZahlenDiktatView: View {
                 ScoreLine(done: index, right: right, total: items.count)
                 HStack(spacing: 12) {
                     Button { GermanVoice.shared.speak(item.spoken, slow: false) } label: {
+                        // SkipUI tints symbols with foregroundStyle (else Color.primary), not with
+                        // the prominent button's content colour, so set it as iOS draws it.
                         Label("Anhören", systemImage: "play.fill")
+                            .foregroundStyle(Color.white)
                             .frame(maxWidth: .infinity, minHeight: 44)
                     }
                     .buttonStyle(.borderedProminent)

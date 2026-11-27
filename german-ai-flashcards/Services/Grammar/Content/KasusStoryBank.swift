@@ -33,7 +33,7 @@ struct KasusStoryBank {
     static var bundled: KasusStoryBank {
         if let cache { return cache }
         let bank: KasusStoryBank
-        if let url = Bundle.main.url(forResource: "kasus_stories", withExtension: "json"),
+        if let url = AppResources.url("kasus_stories", "json"),
            let data = try? Data(contentsOf: url),
            let decoded = try? KasusStoryBank(data: data) {
             bank = decoded

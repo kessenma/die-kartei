@@ -60,7 +60,7 @@ nonisolated enum WritingPromptBank {
     }
 
     private static let cache: [WritingPrompt] = {
-        guard let url = Bundle.main.url(forResource: "writing_prompts", withExtension: "json"),
+        guard let url = AppResources.url("writing_prompts", "json"),
               let data = try? Data(contentsOf: url),
               let file = try? JSONDecoder().decode(File.self, from: data)
         else { return [] }
