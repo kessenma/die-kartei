@@ -115,6 +115,11 @@ dataset (`data/packed/`), QLoRA r=8, lr 2e-4, 2 epochs unless noted.
 > | E2B v1 | 251 (84%) | 13% (19/150) | 13 | 20% (30/150) | 10 | shipped |
 > | E2B v5 | 249 (83%) | 7% (11/150) | 10 | 27% (40/150) | 21 | archived |
 > | granite-4.1 v4 | 228 (76%) | 13% (19/150) | 11 | 35% (53/150) | 22 | 4 GB-tier favorite |
+> | granite-3.3 v4 (MLX, iOS) | 234 (78%) | 5% (7/150) | 6 | 39% (59/150) | 48 | shipped (scored 2026-11-27) |
+> | granite-3.3 v4 GGUF Q4_K_M from MLX | 238 (79%) | 5% (8/150) | 6 | 36% (54/150) | 41 | Android ships this |
+> | granite-3.3 v4 GGUF Q4_0 from MLX | 232 (77%) | 5% (8/150) | 6 | 40% (60/150) | 48 | published, not used |
+> | granite-3.3 v4 GGUF Q4_K_M from bf16 | 238 (79%) | 3% (4/150) | 3 | 39% (58/150) | 41 | not published |
+> | granite-3.3 v4 GGUF Q4_0 from bf16 | 245 (82%) | 8% (12/150) | 10 | 29% (43/150) | 32 | not adopted: +16/−9 vs Android's file, p = 0.23, and FC up 4 → 12 traps-wise (ANDROID_GGUF.md) |
 >
 > **What it adds to the 08-19 findings:** the E4B v4 fine-tune's low FC survives 93 traps (1 fooled; stock
 > falls for 19, v1 for 12), and its cost is now measured at full size — **27 bare-`OK` misses vs stock's 12**.
@@ -556,3 +561,13 @@ python -m python_coreml_stable_diffusion.torch2coreml \
 - Host the resulting `Resources/` as `<subfolder>/compiled/*` under `kessenma/coreml-<model>`
   (public) so `ResumableModelDownloader` + `HubCacheLocation` fetch it unchanged — the only app
   change is a new `ImageGenModel` case.
+
+## Release runs (scripts/release_model.py)
+
+One master, every format, the app's guard, /203 (core + ext + holdout). p is McNemar against MLX.
+
+| date | tutor | master | MLX | Q4_K_M | Q4_0 | MLX same as published |
+|---|---|---|---|---|---|---|
+| 2026-11-27 | Granite 3.3 2B German Tutor v4 | `kessenma/granite33-2b-german-v4-fp16` | 151 | 153 (p=0.81) | 169 (p=0.00) | yes |
+| 2026-11-27 | Granite 4.1 3B German Tutor v4 | `kessenma/granite41-3b-german-v4-fp16` | 165 | 154 (p=0.04) | 160 (p=0.36) | yes |
+| 2026-11-27 | Gemma 4 E2B German Tutor | `kessenma/gemma4-e2b-german-tutor` | 172 | 162 (p=0.10) | 169 (p=0.65) | no: 2 audio/vision projection tensors (text unaffected) |

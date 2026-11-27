@@ -442,9 +442,16 @@ def report_binary_stamps(version, build):
     means ASC will reject the build at submission even though the upload and
     processing succeeded. Diagnostics only; never fails the deploy.
     """
+    # `asc publish` in local-build mode picks its own per-version build number (1.7 (6)) rather
+    # than the CURRENT_PROJECT_VERSION set_next_build() wrote, so fall back to the newest IPA
+    # for this version instead of skipping the check.
     ipas = sorted(ARTIFACTS.glob(f"*-{version}-{build}.ipa"))
     if not ipas:
-        log("⚠️", f"No IPA for {version} ({build}) under {ARTIFACTS}; skipping stamp check.")
+        ipas = sorted(ARTIFACTS.glob(f"*-{version}-*.ipa"), key=lambda p: p.stat().st_mtime)
+        if ipas:
+            log("ℹ️", f"No IPA for {version} ({build}); checking the newest one for {version}: {ipas[-1].name}")
+    if not ipas:
+        log("⚠️", f"No IPA for {version} under {ARTIFACTS}; skipping stamp check.")
         return
     ipa = ipas[-1]
     # The app's own Info.plist AND every embedded extension's. An .appex is stamped by its own

@@ -13,12 +13,14 @@
 //
 
 import Foundation
-import SwiftUI
+import Foundation
 
 // MARK: - The four case groups
 
 /// The case a preposition puts the following noun into. `wechsel` is the two-way group, whose
 /// prepositions take Akkusativ for movement (Wohin?) and Dativ for location (Wo?).
+// Its color and symbol live in GrammarPalette.swift (SwiftUI); this file stays Foundation-only
+// for the Android core.
 nonisolated enum PrepositionCase: String, CaseIterable, Codable, Identifiable {
     case akkusativ
     case dativ
@@ -69,27 +71,6 @@ nonisolated enum PrepositionCase: String, CaseIterable, Codable, Identifiable {
         case .dativ:     "dem (m) · der (f) · dem (n) · den …n (Pl.)"
         case .wechsel:   "movement → den/die/das · location → dem/der/dem"
         case .genitiv:   "des …s (m/n) · der (f/Pl.)"
-        }
-    }
-
-    /// This group's fixed identity color, used on the drill buttons, the card's case tab and the
-    /// rules sheet so the color itself becomes a memory hook. From `CasePalette`, so a
-    /// preposition's case reads the same as that case everywhere else in the app.
-    var color: Color {
-        switch self {
-        case .akkusativ: GrammarCase.akkusativ.color
-        case .dativ:     GrammarCase.dativ.color
-        case .wechsel:   CasePalette.wechsel
-        case .genitiv:   GrammarCase.genitiv.color
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .akkusativ: GrammarCase.akkusativ.symbol
-        case .dativ:     GrammarCase.dativ.symbol
-        case .wechsel:   CasePalette.wechselSymbol
-        case .genitiv:   GrammarCase.genitiv.symbol
         }
     }
 }

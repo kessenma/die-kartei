@@ -1,0 +1,61 @@
+---
+title: Build and run on Android
+description: The toolchain on a Mac, and the loop from Swift to the emulator.
+---
+
+Everything here runs on one Mac: Xcode for iOS, and alongside it the Swift toolchain and Android
+tools.
+
+<BuildIllustration />
+
+## The toolchain
+
+| Tool | Notes |
+| --- | --- |
+| Xcode | Builds the iOS app; Skip drives its build through Xcode too |
+| [swiftly](https://www.swift.org/install/) + Swift 6.4.3 | First on `PATH`; Xcode keeps its own Swift |
+| Swift SDK for Android 6.4.3 | `swift sdk install …`, then run its `setup-android-sdk.sh` once with `ANDROID_NDK_HOME` set |
+| Android Studio | SDK, emulator and its own Java. Open it once by hand so macOS lets its Java run |
+| Android NDK r30 | `$ANDROID_HOME/ndk/android-ndk-r30` |
+| Skip | `brew install skiptools/skip/skip`; `skip checkup` should pass |
+
+`~/.zprofile` sets `ANDROID_HOME`, `ANDROID_NDK_HOME`, `JAVA_HOME` (Android Studio's Java) and the
+`PATH`.
+
+## Run it
+
+```bash
+python3 scripts/core_sync.py        # relink the shared files, copy the data files
+emulator -avd Medium_Phone_API_37.0 &
+cd DieKarteiAndroid
+export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+skip app launch --android
+```
+
+Grow the shared core with `python3 scripts/core_sync.py --prune`. It cross-compiles every
+candidate file, drops what fails, and lists the types most often missing: those are the next files
+worth splitting.
+
+## Check it
+
+```bash
+swift test --package-path DieKarteiCore           # the shared code, on the Mac
+adb exec-out screencap -p > shot.png              # a picture of the emulator
+adb shell uiautomator dump /sdcard/ui.xml         # every visible text, with its position
+adb logcat -d | grep -A25 "FATAL EXCEPTION"       # crashes
+```
+
+## Things that bit
+
+<Callout type="warn" title="A build that hangs at 0% CPU">
+  SwiftPM looks up github.com credentials in the login keychain before downloading Skip. With the
+  screen locked, that prompt waits forever. Run `swift package resolve --disable-keychain` once.
+</Callout>
+
+- `@State` and `@Environment` properties can't be `private` in Skip.
+- `ForEach` ids must be unique across a whole `List`, not just a section.
+- Only some SF Symbols have Android versions; others show a warning triangle.
+- `Text + Text` isn't available. Build an `AttributedString` instead (colours and bold render).
+- Data files are copied, not linked: resource copies resolve symlinks the wrong way.
+- The shared files assume the iOS target's settings (Swift 5 mode, `MainActor` by default), and
+  the package mirrors them.

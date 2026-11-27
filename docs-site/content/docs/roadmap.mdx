@@ -1,0 +1,67 @@
+---
+title: Roadmap
+description: The work in progress, in the order it's planned.
+---
+
+No dates, just the order. Each step lists what it's for and how we'll know it's done.
+
+<RoadmapIllustration />
+
+<Steps>
+<Step>
+
+### Bring the shared-code changes into main
+
+The Android work moved a few types into Foundation-only files on the `android-port` branch (no
+change on iOS). Merging that part into `main` now keeps later merges small.
+
+**Done when** `main` builds and its tests pass with the moves in.
+
+</Step>
+<Step>
+
+### Store Android progress the way iOS syncs it
+
+Same card ids, same field names, same merge rules as the iOS sync records. See
+[Sync on Android, step 1](/android/sync/#step-1-a-store-shaped-like-ios-sync).
+
+**Done when** two simulated devices merge a card the way iOS does, and iOS reads an Android-made
+card.
+
+</Step>
+<Step>
+
+### Android Auto Backup
+
+A new phone gets its progress back. See [step 2](/android/sync/#step-2-android-auto-backup).
+
+**Done when** a backup, uninstall and restore on the emulator brings progress back with a new
+device id.
+
+</Step>
+<Step>
+
+### Sync between Android devices through Google Drive
+
+Live sync with no server of ours. See [step 3](/android/sync/#step-3-sync-through-google-drive).
+
+**Done when** two emulators on one test account converge, and randomized tests show no review is
+lost or counted twice.
+
+</Step>
+<Step>
+
+### More of the app on Android
+
+The Kasus drills and stories (they need their value types split out of a SwiftData file), Matching
+and the reflexive drills. See [Android](/android/#whats-next).
+
+</Step>
+</Steps>
+
+## Later
+
+- iPhone ↔ Android sync (two possible routes on the [sync page](/android/sync/#later-iphone--android)).
+- A language model on Android, for the features that need the tutor: conversations, Stammtisch,
+  Lebenslauf practice, stories.
+- Pencil writing on Android tablets.

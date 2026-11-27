@@ -1,0 +1,8 @@
+module CLlama {
+    header "llama.h"
+    header "ggml-backend.h"
+    link "llama"
+    link "ggml"
+    link "ggml-base"
+    export *
+}

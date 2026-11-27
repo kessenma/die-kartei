@@ -1,0 +1,1411 @@
+import Foundation
+import Observation
+#if os(Android)
+import SkipFuse   // Android: @Observable through Skip's registrar, so Compose sees the changes
+#endif
+
+/// A single "what could I say next?" suggestion (German + an optional English gloss).
+struct HintSuggestion: Identifiable, Equatable {
+    let id = UUID()
+    let german: String
+    let english: String?
+}
+
+/// A phrase the learner asked help with via "Say it in German", now shown above the mic so they
+/// can practice saying it out loud themselves (instead of it being auto-posted). Tracks their
+/// spoken attempt so the card can coach them when they miss.
+struct SayItPrompt: Identifiable, Equatable {
+    let id = UUID()
+    /// The target German sentence to say out loud.
+    let german: String
+    /// The learner's original English (shown as a reminder of intent), if any.
+    let english: String?
+    /// What the recognizer heard on their most recent attempt.
+    var heardText: String?
+    /// nil until they've tried; true if the attempt was close enough, false if it missed.
+    var matched: Bool?
+}
+
+/// An in-flight elicitation ("Nudge me") repair: the coach found a mistake and, instead of handing
+/// over the fix, is asking a targeted question so the learner can correct themselves. The AI's reply
+/// is deferred until the repair resolves (a good-enough spoken retry, a reveal, or a skip). Mirrors
+/// `SayItPrompt`'s try-again loop, but the target is the corrected version of the learner's own line.
+struct RepairPrompt: Identifiable, Equatable {
+    let id = UUID()
+    /// The user message being repaired.
+    let messageID: UUID
+    /// The corrected sentence the learner should reproduce (the hidden answer).
+    let target: String
+    /// The German question steering the learner toward their mistake.
+    let hint: String
+    /// The short English "why", shown alongside the answer once it's revealed.
+    let note: String?
+    /// What the recognizer heard on the learner's most recent retry.
+    var heardText: String?
+    /// nil until they've tried; true if the retry matched the target, false if it missed.
+    var matched: Bool?
+    /// Whether the answer has been revealed — after a miss, or on request.
+    var revealed: Bool = false
+}
+
+/// Drives a single voice conversation: recording, correction, streamed replies,
+/// translation, playback, and the end-of-session coaching summary. Persists as it goes.
+/// Conforms to `WordInspecting` (inspectedWord/save/dismiss) so the shared `WordInspectorSheet`
+/// can present its tap-a-word state.
+///
+/// Shared by both apps: everything platform-specific comes in through `Host` (storage, settings,
+/// the study log), `TutorGenerating` (the model), and `SpeechInput` / `SpeechOutput`. iOS uses it
+/// as `ConversationEngine` (ConversationEngine.swift: SwiftData, Speech, AVSpeechSynthesizer).
+@Observable
+@MainActor
+final class ConversationSession<Host: ConversationHost>: WordInspecting {
+    typealias Message = Host.Conversation.Message
+
+    enum Phase: Equatable {
+        case idle           // ready for the user to speak
+        case loadingModel   // downloading / loading the model into memory
+        case listening      // recording the user's turn
+        case thinking       // running correction + reply
+        case summarizing    // generating the end-of-session report
+    }
+
+    // Injected
+    let conversation: Host.Conversation
+    let config: ConversationConfig
+    let speechRecognizer: any SpeechInput
+    private let host: Host
+    private let tutor: any TutorGenerating
+    private let speech: any SpeechOutput
+
+    // Derived
+    private let systemPrompt: String
+    /// Spaced re-encounter: surfaces SRS-due words and advances their schedule on correct use.
+    /// `nil` when the feature is off, doesn't apply to this mode, or nothing is currently due.
+    private let reviewTracker: (any ConversationReviewing)?
+
+    // UI state
+    private(set) var phase: Phase = .idle
+    /// The cumulative text of the AI reply currently streaming in.
+    private(set) var streamingReply: String = ""
+    private(set) var errorMessage: String?
+    /// IDs of assistant messages whose translation is being generated.
+    private(set) var translatingIDs: Set<UUID> = []
+    /// IDs of user messages whose correction's English meaning is being generated.
+    private(set) var translatingCorrectionIDs: Set<UUID> = []
+    /// The message currently being spoken aloud, if any.
+    private(set) var speakingMessageID: UUID?
+    /// The word range currently being spoken (for read-along highlighting), within `spokenText`.
+    private(set) var spokenRange: NSRange?
+    private(set) var spokenText: String?
+    /// "What could I say?" suggestions, shown in an inline card when requested.
+    private(set) var hints: [HintSuggestion] = []
+    private(set) var hintLoading = false
+    /// Earlier hint batches from this session, newest first — the hint card pages back through
+    /// them so a regenerate or a new turn never loses a suggestion the learner wanted to reuse.
+    private(set) var hintHistory: [[HintSuggestion]] = []
+    /// A "Say it in German" phrase the learner is practicing saying out loud, shown above the mic.
+    private(set) var sayItPrompt: SayItPrompt?
+    /// An in-flight "Nudge me" repair — the AI's reply is deferred until this resolves. `nil` unless
+    /// the learner is mid-elicitation on their latest turn.
+    private(set) var repairPrompt: RepairPrompt?
+    /// Pre-computed hints (eager assist), tied to the assistant message they were made for.
+    private var cachedHints: [HintSuggestion] = []
+    private var cachedHintMessageID: UUID?
+    /// Background pre-loading work (translation + hint) when eager assist is on.
+    private var eagerTask: Task<Void, Never>?
+    /// Set when the user views a hint; the next user turn is then marked hint-assisted.
+    private var pendingHintUse = false
+    /// Turns this session that came back clean or nearly clean from the correction pass.
+    /// Only ever increments — the view uses it as a sensory-feedback trigger.
+    private(set) var successTurnCount = 0
+    /// The word the user tapped to inspect (translate / save), if any.
+    private(set) var inspectedWord: InspectedWord?
+    /// Speaking or typing. Seeded from the chat's stored mode and switchable mid-session — the
+    /// reason to type (a plane, an office, a sleeping flatmate) usually arrives mid-conversation.
+    private(set) var inputMode: ChatInputMode
+    /// Set when a chat is re-opened with the learner's turn last and no reply after it — the app
+    /// was terminated, the tutor was evicted for memory, or a generation failed before the reply
+    /// landed. Deliberately *not* `errorMessage`: nothing is going wrong now, the AI just still
+    /// owes a turn, and the learner needs a way to ask for it.
+    private(set) var strandedTurnNotice: String?
+    /// Set when the user taps a model-requiring control before the model is loaded.
+    /// Drives the "load this conversation's model" prompt in the view.
+    private(set) var showModelLoadPrompt = false
+    /// Action to run once the model finishes loading from that prompt (if any).
+    private var pendingModelAction: (() -> Void)?
+
+    // Timer
+    /// When the running stretch started; nil while paused. Only the seconds of this sitting are
+    /// ever *added* to `conversation.durationSeconds` (and to the day log). The stored total is
+    /// never overwritten, because iCloud Sync merges it as a per-device counter: time spent on
+    /// this chat on the other device lands in it too, and a write-back of an older total here
+    /// would erase that.
+    private var appearedAt: Date?
+
+    var isRecording: Bool { speechRecognizer.isRecording }
+    var liveTranscript: String { speechRecognizer.transcript }
+    var micLevel: Double { speechRecognizer.level }
+    var isBusy: Bool { phase == .thinking || phase == .loadingModel || phase == .summarizing }
+    /// True when this conversation's model is loaded into memory and ready to generate.
+    var isModelReady: Bool { tutor.isReady(config.model) }
+    /// True while this conversation's model is loading / downloading.
+    var isLoadingModel: Bool { phase == .loadingModel }
+
+    /// `config` arrives complete: the host has already added the learner briefing, the class
+    /// context and the due review words (`reviewer`'s), which need its storage to look up.
+    init(
+        host: Host,
+        config: ConversationConfig,
+        tutor: any TutorGenerating,
+        speechInput: any SpeechInput,
+        speechOutput: any SpeechOutput,
+        reviewer: (any ConversationReviewing)? = nil
+    ) {
+        self.host = host
+        self.conversation = host.conversation
+        self.tutor = tutor
+        self.speechRecognizer = speechInput
+        self.speech = speechOutput
+        self.reviewTracker = reviewer
+        self.config = config
+        self.inputMode = config.inputMode
+        self.systemPrompt = ConversationPrompts.systemPrompt(for: config)
+    }
+
+    // MARK: - Lifecycle
+
+    func onAppear() {
+        if appearedAt == nil { appearedAt = Date() }
+        Task { await generateOpenerIfNeeded() }
+        noticeStrandedTurn()
+    }
+
+    /// A chat whose last message is the learner's is a turn the AI still owes. Re-opening one used
+    /// to show that message sitting at the bottom with nothing happening and no control to make
+    /// anything happen — the "Try again" affordance hangs off `errorMessage`, and a fresh launch
+    /// has no error to carry over from the run that died. The only apparent way forward was to
+    /// send again, which is exactly what puts two `user` turns back to back and trips the chat
+    /// template (see ``ChatTurnNormalizer``).
+    ///
+    /// With the model already in memory there's nothing to ask about, so the reply just runs.
+    /// Otherwise it's a notice with a Continue button, rather than silently starting a multi-GB
+    /// load the learner didn't ask for.
+    private func noticeStrandedTurn() {
+        guard !conversation.messages.isEmpty, canRetryReply else { return }
+        if isModelReady {
+            retryReply()
+        } else {
+            strandedTurnNotice = "Your last message never got a reply."
+        }
+    }
+
+    /// Ask for the owed reply from the stranded-turn notice, loading the model first if needed.
+    func continueStrandedTurn() {
+        strandedTurnNotice = nil
+        guard requireModelReady(orRun: { [weak self] in self?.retryReply() }) else { return }
+        retryReply()
+    }
+
+    func dismissStrandedTurnNotice() { strandedTurnNotice = nil }
+
+    /// Live elapsed seconds for the header timer: the stored total plus the running stretch.
+    func elapsedSeconds() -> Int {
+        guard let appearedAt else { return conversation.durationSeconds }
+        return conversation.durationSeconds + Int(Date().timeIntervalSince(appearedAt))
+    }
+
+    /// Persist the running duration (call on disappear / end).
+    func commitDuration() {
+        if let appearedAt {
+            addTime(Int(Date().timeIntervalSince(appearedAt)))
+            self.appearedAt = Date()
+        }
+        save()
+    }
+
+    /// Stop the timer accruing while the app is backgrounded / not actively in view.
+    func pause() {
+        guard let appearedAt else { return }
+        addTime(Int(Date().timeIntervalSince(appearedAt)))
+        self.appearedAt = nil
+        save()
+    }
+
+    /// Add a stretch to the chat's total and hand the same seconds to the day log. Done as it goes
+    /// rather than once at the end, so time still lands on the calendar for a chat that's abandoned,
+    /// never summarized, or spread over several sittings, and a resummarized one is never counted
+    /// twice.
+    private func addTime(_ seconds: Int) {
+        guard seconds > 0 else { return }
+        conversation.durationSeconds += seconds
+        host.recordStudyTime(seconds: seconds)
+    }
+
+    /// Resume counting when the user returns to the foreground.
+    func resume() {
+        if appearedAt == nil { appearedAt = Date() }
+        // The app shed this chat's tutor while we were away, to keep iOS from terminating a
+        // suspended app sitting on gigabytes of weights (see
+        // `MLXGenerationService.releaseMemory(reason:)`). Bring it back now: being in this
+        // conversation is the consent, and the worst time to discover the model is gone is when
+        // you tap Send after a trip to Settings that had nothing to do with it.
+        if tutor.wasEvicted(config.model), phase == .idle {
+            Task { await ensureModelLoaded() }
+        }
+    }
+
+    func tearDown() {
+        speechRecognizer.cancel()
+        speech.stop()
+        eagerTask?.cancel()
+        pause()
+    }
+
+    // MARK: - Model loading
+
+    private func ensureModelLoaded() async -> Bool {
+        if tutor.isReady(config.model) { return true }
+        phase = .loadingModel
+        await tutor.loadTutor(config.model)
+        if tutor.isReady(config.model) {
+            host.rememberLoaded(config.model)
+            if phase == .loadingModel { phase = .idle }
+            return true
+        }
+        errorMessage = tutor.loadFailure ?? "Couldn’t load \(config.model.rawValue)."
+        phase = .idle
+        return false
+    }
+
+    /// Guard a model-dependent action. Returns `true` if the model is already loaded; otherwise
+    /// raises the load prompt (optionally stashing `action` to run after a successful load) and
+    /// returns `false`. Lets every entry point fail gracefully when an older conversation is opened
+    /// before its model is in memory.
+    @discardableResult
+    func requireModelReady(orRun action: (() -> Void)? = nil) -> Bool {
+        if isModelReady { return true }
+        pendingModelAction = action
+        showModelLoadPrompt = true
+        return false
+    }
+
+    /// Explicitly load this conversation's model (e.g. from the header menu). No-op if it's already
+    /// loaded or currently loading.
+    func loadModel() {
+        guard !isModelReady, !isLoadingModel else { return }
+        Task { await ensureModelLoaded() }
+    }
+
+    /// The user confirmed the load prompt — load the model, then run any stashed action.
+    func confirmModelLoad() {
+        showModelLoadPrompt = false
+        let action = pendingModelAction
+        pendingModelAction = nil
+        Task { if await ensureModelLoaded() { action?() } }
+    }
+
+    /// The user dismissed the load prompt without loading.
+    func cancelModelLoad() {
+        showModelLoadPrompt = false
+        pendingModelAction = nil
+    }
+
+    // MARK: - Opener
+
+    private func generateOpenerIfNeeded() async {
+        guard conversation.messages.isEmpty else { return }
+        guard await ensureModelLoaded() else { return }
+
+        phase = .thinking
+        streamingReply = ""
+        do {
+            let reply = try await tutor.streamReply(
+                history: [(role: .user, content: ConversationPrompts.openerSeed(for: config))],
+                system: systemPrompt,
+                model: config.model,
+                maxTokens: TutorBudget.opener,
+                temperature: TutorBudget.replyTemperature
+            ) { [weak self] partial in
+                self?.streamingReply = partial
+            }
+            streamingReply = ""
+            if let message = appendAssistant(reply) {
+                if shouldAutoPlay { play(message, slow: false) }
+                startEagerAssist(for: message)
+            } else {
+                // The opener came back empty — surface it so the screen isn't stuck on
+                // "Getting ready…" with no way forward. "Try again" re-runs this.
+                errorMessage = "The conversation couldn’t get started."
+            }
+        } catch is CancellationError {
+            // ignore
+        } catch {
+            errorMessage = friendly(error)
+        }
+        streamingReply = ""
+        phase = .idle
+    }
+
+    // MARK: - Input mode
+
+    /// True while the session is meant to stay soundless — typing mode. Replies are still
+    /// playable on demand from each bubble; they just don't start speaking on their own.
+    var isSilent: Bool { inputMode.isSilent }
+
+    /// Auto-play is the learner's setting, minus typing mode — the whole point of typing is that
+    /// nothing makes a noise unless you ask it to.
+    private var shouldAutoPlay: Bool { host.autoPlayReplies && !isSilent }
+
+    /// Switch between speaking and typing mid-session and remember it on the chat, so resuming
+    /// later comes back the way it was left.
+    func setInputMode(_ mode: ChatInputMode) {
+        guard mode != inputMode else { return }
+        if mode == .type {
+            // Don't leave a hot mic (or a reply talking to the room) behind the keyboard.
+            speechRecognizer.cancel()
+            speech.stop()
+            speakingMessageID = nil
+            if phase == .listening { phase = .idle }
+        }
+        inputMode = mode
+        conversation.inputModeRaw = mode.rawValue
+        save()
+    }
+
+    // MARK: - Recording → turn
+
+    func toggleRecording() {
+        if speechRecognizer.isRecording {
+            speechRecognizer.stop()
+            return
+        }
+        guard phase == .idle else { return }
+        // An older conversation may be open before its model is loaded — prompt to load it rather
+        // than silently starting a (possibly long) load with a live mic. The user taps again once
+        // it's ready, so we don't hot-mic them at the end of a download.
+        guard requireModelReady() else { return }
+        eagerTask?.cancel()
+        eagerTask = nil
+        Task { await beginRecording() }
+    }
+
+    /// Add a punctuation mark to the live transcript while recording (period / question mark).
+    func addPunctuation(_ mark: String) {
+        speechRecognizer.appendPunctuation(mark)
+    }
+
+    /// Clear the current spoken turn and keep listening, for when the learner wants a do-over.
+    func restartRecording() {
+        guard speechRecognizer.isRecording else { return }
+        speechRecognizer.restart()
+    }
+
+    private func beginRecording() async {
+        if !speechRecognizer.isAvailable {
+            let granted = await speechRecognizer.requestAuthorization()
+            guard granted else {
+                errorMessage = authMessage()
+                return
+            }
+        }
+        speech.stop()
+        speakingMessageID = nil
+        errorMessage = nil
+        phase = .listening
+        speechRecognizer.start { [weak self] finalText in
+            guard let self else { return }
+            self.phase = .idle
+            self.route(finalText)
+        }
+    }
+
+    /// Take a typed turn. The keyboard's counterpart to finishing a recording — same routing, so a
+    /// nudge or a "say it" target judges a written attempt exactly as it judges a spoken one.
+    /// Returns false when the turn wasn't accepted, so the composer can keep what was written:
+    /// an unloaded model raises the load prompt here exactly as tapping the mic does.
+    @discardableResult
+    func submitTyped(_ text: String) -> Bool {
+        guard canSubmitTyped else { return false }
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        guard requireModelReady() else { return false }
+        eagerTask?.cancel()
+        eagerTask = nil
+        speech.stop()
+        speakingMessageID = nil
+        errorMessage = nil
+        route(text)
+        return true
+    }
+
+    /// True when a typed turn can be sent right now.
+    var canSubmitTyped: Bool { phase == .idle && !speechRecognizer.isRecording }
+
+    /// Send a finished turn down the right path: a live nudge makes it a self-correction attempt, a
+    /// live "say it" target makes it a practice attempt, otherwise it's a free reply.
+    private func route(_ raw: String) {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if repairPrompt != nil {
+            Task { await evaluateRepairAttempt(trimmed) }
+        } else if sayItPrompt != nil {
+            Task { await evaluateSayItAttempt(trimmed) }
+        } else {
+            Task { await handleUtterance(trimmed) }
+        }
+    }
+
+    private func handleUtterance(_ text: String, viaPhraseHelper: Bool = false) async {
+        guard await ensureModelLoaded() else { return }
+
+        // 1. Persist the user's turn.
+        let userMessage = host.appendMessage(role: .user, text: text, sortOrder: nextSortOrder())
+        userMessage.targetWordsUsed = ConversationPrompts.matchedWords(in: text, targetWords: config.deckWords)
+        // Auto-surfaced hints don't set `pendingHintUse`, but parroting one still counts as
+        // hint-assisted — otherwise auto-hints would make every turn look unaided.
+        let echoedHint = !pendingHintUse && hints.contains {
+            Self.phraseSimilarity(text, $0.german) >= 0.75
+        }
+        userMessage.usedHint = pendingHintUse || echoedHint
+        userMessage.usedPhraseHelper = viaPhraseHelper
+        pendingHintUse = false
+        archiveCurrentHints()
+        hints = []  // dismiss the hint card now that the turn is taken
+        sayItPrompt = nil  // and the say-it practice card
+        save()
+
+        phase = .thinking
+
+        // 2. Correction pass (optional). Skip for phrase-helper turns — the German is model-generated.
+        if config.correctionsEnabled && !viaPhraseHelper {
+            await runCorrection(on: userMessage)
+            // A clean or nearly-clean turn counts as a success (drives the gentle haptic).
+            if userMessage.confirmedClean
+                || userMessage.correctedText.map({ Self.closeEnough(original: userMessage.text, corrected: $0) }) == true {
+                successTurnCount += 1
+            }
+        }
+
+        // 2b. Spaced re-encounter: advance any SRS-due card the learner used correctly this turn.
+        //     Skip phrase-helper turns — the learner didn't produce that German themselves.
+        if let reviewTracker, !viaPhraseHelper {
+            let reviewed = reviewTracker.registerTurn(text: text, correctedText: userMessage.correctedText)
+            if !reviewed.isEmpty {
+                userMessage.reviewedWords = reviewed
+                save()
+            }
+        }
+
+        // 2c. Elicitation feedback ("Nudge me"): if there's a fix and a nudge question, hold the AI
+        //     reply and ask the learner to repair their own line first. The reply runs once the
+        //     repair resolves (see `continueAfterNudge`). Phrase-helper turns skip this — the German
+        //     wasn't the learner's own production.
+        if config.feedbackStyle == .nudgeMe, !viaPhraseHelper,
+           userMessage.hasCorrection, let hint = userMessage.correctionHint, !hint.isEmpty {
+            beginRepair(for: userMessage)
+            phase = .idle
+            return
+        }
+
+        // 3. Reply pass.
+        await runReply()
+
+        phase = .idle
+
+        // 4. With the turn done and the model free, fill in the correction's English meaning if the
+        //    setting is on (no-op when there was no correction). Kept off the reply's critical path.
+        if config.correctionTranslationEnabled && !viaPhraseHelper {
+            await translateCorrection(userMessage)
+        }
+    }
+
+    private func runCorrection(on message: Message) async {
+        let partnerLine = lastAssistantText()
+        let system = ConversationPrompts.correctionSystemPrompt(for: config)
+        let user = ConversationPrompts.correctionUserPrompt(partnerLine: partnerLine, studentLine: message.text)
+        do {
+            let raw = try await tutor.complete(
+                system: system, user: user, model: config.model, maxTokens: TutorBudget.correction
+            )
+            let result = ConversationPrompts.parseCorrection(raw, original: message.text)
+            if let corrected = result.correctedText {
+                message.correctedText = corrected
+                message.correctionNote = result.note
+                // Elicitation feedback: keep the German nudge question so the learner can self-correct.
+                if config.feedbackStyle == .nudgeMe { message.correctionHint = result.hint }
+                save()
+            } else {
+                // The model looked and said OK (or produced nothing actionable) — distinct from
+                // the catch below, where the correction call itself failed.
+                message.confirmedClean = true
+                save()
+            }
+        } catch {
+            // A failed correction shouldn't block the conversation.
+        }
+    }
+
+    /// Understandable with minor slips: the corrected sentence is at least 80% similar to what
+    /// was actually said. Drives the "Fast richtig" encouragement tier.
+    static func closeEnough(original: String, corrected: String) -> Bool {
+        PhraseMatch.closeEnough(original: original, corrected: corrected)
+    }
+
+    private func runReply(silentLearner: Bool = false) async {
+        streamingReply = ""
+        var history = recentHistory()
+        // Interviews get a one-line progress note per turn (which plan point comes next), so a
+        // small model keeps moving through the posting instead of circling on pleasantries.
+        let candidateTurns = conversation.messages.filter(\.isUser).count
+        let progress = ConversationPrompts.interviewProgressNote(for: config, candidateTurns: candidateTurns)
+        // Stammtisch: the app changes the topic every few turns; a silent turn gets its own note.
+        var notes = [progress].compactMap { $0 }
+        if silentLearner {
+            notes.append(ConversationPrompts.silentLearnerNote)
+            // A hidden user line stands for the silence, so the turns still alternate. Never stored.
+            history.append((role: .user, content: ConversationPrompts.silentLearnerLine))
+        } else if let topic = ConversationPrompts.stammtischNote(for: config, learnerTurns: candidateTurns,
+                                                                 seed: StammtischTopics.seed(conversation.id)) {
+            notes.append(topic)
+        }
+        let system = notes.isEmpty ? systemPrompt : systemPrompt + "\n\n" + notes.joined(separator: "\n\n")
+        do {
+            let reply = try await tutor.streamReply(
+                history: history,
+                system: system,
+                model: config.model,
+                maxTokens: TutorBudget.reply,
+                temperature: TutorBudget.replyTemperature
+            ) { [weak self] partial in
+                self?.streamingReply = partial
+            }
+            streamingReply = ""
+            if let message = appendAssistant(reply) {
+                if shouldAutoPlay { play(message, slow: false) }
+                startEagerAssist(for: message)
+            } else {
+                // Empty reply: nothing gets appended, so the turn would silently end on the
+                // learner's message. Flag it so a "Try again" affordance appears.
+                errorMessage = "The reply came back empty."
+            }
+        } catch is CancellationError {
+            streamingReply = ""
+        } catch {
+            streamingReply = ""
+            errorMessage = friendly(error)
+        }
+    }
+
+    // MARK: - Retry
+
+    /// True when the thread is left hanging on the learner: the AI opener never landed, or the
+    /// last message is the learner's with no reply after it (a failed or empty generation). Drives
+    /// the "Try again" affordance so the user isn't stuck as the last speaker.
+    var canRetryReply: Bool {
+        guard phase == .idle else { return false }
+        guard let last = conversation.sortedMessages.last else { return true }
+        return last.isUser
+    }
+
+    /// Re-run the generation that failed or came back empty: the opener when no messages exist yet,
+    /// otherwise a fresh reply to the learner's last turn. Correction isn't re-run — it already ran
+    /// (or was skipped) on the original turn, so this only regenerates the AI's reply.
+    func retryReply() {
+        guard canRetryReply else { return }
+        errorMessage = nil
+        strandedTurnNotice = nil
+        if conversation.messages.isEmpty {
+            Task { await generateOpenerIfNeeded() }
+            return
+        }
+        Task {
+            guard await ensureModelLoaded() else { return }
+            phase = .thinking
+            await runReply()
+            phase = .idle
+        }
+    }
+
+    /// Stammtisch's reply timer ran out with no answer: the tutor moves on, as a friend at the table
+    /// would. Only when the AI spoke last and nothing is running.
+    func tutorMovesOn() {
+        guard config.stammtisch != nil, phase == .idle,
+              let last = conversation.sortedMessages.last, !last.isUser else { return }
+        Task {
+            guard await ensureModelLoaded() else { return }
+            phase = .thinking
+            await runReply(silentLearner: true)
+            phase = .idle
+        }
+    }
+
+    // MARK: - Translation
+
+    /// User actively reveals an AI reply's translation (counts as a "click"); generates it if needed.
+    func revealTranslation(_ message: Message) {
+        guard !message.isUser else { return }
+        guard requireModelReady(orRun: { [weak self] in self?.revealTranslation(message) }) else { return }
+        message.translationViewed = true
+        save()
+        if message.translationText == nil {
+            Task { await translateInline(message) }
+        }
+    }
+
+    @discardableResult
+    private func translateInline(_ message: Message) async -> Bool {
+        guard !message.isUser, message.translationText == nil,
+              !translatingIDs.contains(message.id) else { return false }
+        translatingIDs.insert(message.id)
+        defer { translatingIDs.remove(message.id) }
+        guard await ensureModelLoaded() else { return false }
+        do {
+            let raw = try await tutor.complete(
+                system: ConversationPrompts.translationSystemPrompt,
+                user: ConversationPrompts.translationUserPrompt(german: message.text),
+                model: config.model,
+                maxTokens: TutorBudget.translation
+            )
+            message.translationText = ConversationPrompts.cleanTranslation(raw)
+            save()
+            return true
+        } catch is CancellationError {
+            return false
+        } catch {
+            errorMessage = friendly(error)
+            return false
+        }
+    }
+
+    func isTranslating(_ message: Message) -> Bool {
+        translatingIDs.contains(message.id)
+    }
+
+    /// Whether the translation block should be displayed under an AI reply.
+    func shouldShowTranslation(_ message: Message) -> Bool {
+        message.translationViewed || (config.eagerAssist && config.autoShowTranslation)
+    }
+
+    // MARK: - Correction translation ("what the suggestion means")
+
+    /// Whether the English meaning should be shown under a correction (driven by the setting).
+    func shouldShowCorrectionTranslation(_ message: Message) -> Bool {
+        config.correctionTranslationEnabled && message.hasCorrection
+    }
+
+    func isTranslatingCorrection(_ message: Message) -> Bool {
+        translatingCorrectionIDs.contains(message.id)
+    }
+
+    /// Lazily generate a correction's English meaning if it's missing — used when an older
+    /// conversation is reopened (or the setting is flipped on mid-session). Won't force a model
+    /// load; it runs once the model is ready.
+    func ensureCorrectionTranslation(_ message: Message) {
+        guard config.correctionTranslationEnabled,
+              message.hasCorrection,
+              message.correctionTranslationText == nil,
+              phase == .idle,
+              isModelReady else { return }
+        Task { await translateCorrection(message) }
+    }
+
+    @discardableResult
+    private func translateCorrection(_ message: Message) async -> Bool {
+        guard let corrected = message.correctedText, !corrected.isEmpty,
+              message.correctionTranslationText == nil,
+              !translatingCorrectionIDs.contains(message.id) else { return false }
+        translatingCorrectionIDs.insert(message.id)
+        defer { translatingCorrectionIDs.remove(message.id) }
+        guard await ensureModelLoaded() else { return false }
+        do {
+            let raw = try await tutor.complete(
+                system: ConversationPrompts.translationSystemPrompt,
+                user: ConversationPrompts.translationUserPrompt(german: corrected),
+                model: config.model,
+                maxTokens: TutorBudget.correctionTranslation
+            )
+            let cleaned = ConversationPrompts.cleanTranslation(raw)
+            message.correctionTranslationText = cleaned.isEmpty ? nil : cleaned
+            save()
+            return message.correctionTranslationText != nil
+        } catch is CancellationError {
+            return false
+        } catch {
+            return false
+        }
+    }
+
+    // MARK: - Hint ("what could I say?")
+
+    func requestHints() {
+        guard !hintLoading else { return }
+        guard requireModelReady(orRun: { [weak self] in self?.requestHints() }) else { return }
+        // Actively asking for a hint marks this turn as hint-assisted.
+        pendingHintUse = true
+        sayItPrompt = nil  // don't stack with a say-it practice card
+        // Use pre-computed hints if they're for the latest assistant turn.
+        if !cachedHints.isEmpty, cachedHintMessageID == latestAssistantID() {
+            archiveCurrentHints()
+            hints = cachedHints
+            return
+        }
+        hintLoading = true
+        archiveCurrentHints()
+        hints = []
+        Task {
+            defer { hintLoading = false }
+            let produced = await produceHints(count: config.hintCount)
+            if !produced.isEmpty {
+                hints = produced
+                cachedHints = produced
+                cachedHintMessageID = latestAssistantID()
+            }
+        }
+    }
+
+    /// Fresh suggestions for the same turn — the learner didn't like the first batch. Clears the
+    /// cache and tells the model what to avoid so it doesn't re-serve the same lines.
+    func regenerateHints() {
+        guard !hintLoading else { return }
+        guard requireModelReady(orRun: { [weak self] in self?.regenerateHints() }) else { return }
+        let previous = hints.isEmpty ? cachedHints : hints
+        hintLoading = true
+        archiveCurrentHints()
+        hints = []
+        cachedHints = []
+        cachedHintMessageID = nil
+        Task {
+            defer { hintLoading = false }
+            let produced = await produceHints(count: config.hintCount, avoiding: previous)
+            if !produced.isEmpty {
+                hints = produced
+                cachedHints = produced
+                cachedHintMessageID = latestAssistantID()
+            }
+        }
+    }
+
+    private func produceHints(count: Int, avoiding previous: [HintSuggestion] = []) async -> [HintSuggestion] {
+        guard await ensureModelLoaded() else { return [] }
+        let n = max(1, min(3, count))
+
+        var system = """
+        You are a helpful German tutor. The learner (level \(config.level.rawValue), \(config.formality.rawValue) form) is mid-conversation and may be stuck. \
+        Suggest \(n) different, natural thing\(n == 1 ? "" : "s") they could say next in German, each a single sentence appropriate as a reply.
+        """
+        if let scene = hintSceneLine() {
+            system += " " + scene
+        }
+        system += """
+         Every suggestion must fit that situation and directly continue the conversation — a plausible answer to the partner's last line, never an unrelated topic. \
+        Output each suggestion on its own line in EXACTLY this format and nothing else:
+        German sentence | English translation
+        """
+
+        // Give the model the actual conversation, not just the last line, so suggestions stay
+        // on-scene ("Was darf es sein?" at the bakery shouldn't yield "Wo ist die Post?").
+        let recent = conversation.sortedMessages.suffix(6)
+            .map { "\($0.isUser ? "LEARNER" : "PARTNER"): \($0.text)" }
+            .joined(separator: "\n")
+        var user: String
+        if recent.isEmpty {
+            user = "Suggest \(n) opening line\(n == 1 ? "" : "s") the learner could say."
+        } else {
+            user = "Conversation so far:\n\(recent)\n\nSuggest \(n) thing\(n == 1 ? "" : "s") the LEARNER could say next, replying to the PARTNER's last line."
+        }
+        if !previous.isEmpty {
+            user += "\n\nThe learner wants different ideas. Do NOT repeat or rephrase these:\n"
+                + previous.map { "- \($0.german)" }.joined(separator: "\n")
+        }
+
+        do {
+            let raw = try await tutor.complete(system: system, user: user, model: config.model, maxTokens: TutorBudget.hints(n))
+            return parseHintSuggestions(raw, limit: n)
+        } catch {
+            if !(error is CancellationError) { errorMessage = friendly(error) }
+            return []
+        }
+    }
+
+    /// One line of scene context for the hint prompt, mirroring the conversation's setup. Without
+    /// it the tutor model only sees the partner's last line and suggests situationally-wrong
+    /// replies (e.g. asking for the post office at the bakery).
+    private func hintSceneLine() -> String? {
+        switch config.mode {
+        case .scenario:
+            if config.scenario == .custom {
+                let custom = config.customScenario.trimmingCharacters(in: .whitespacesAndNewlines)
+                return custom.isEmpty ? nil : "The conversation is a role-play of this situation: \(custom)."
+            }
+            if let scenario = config.scenario, scenario != .custom {
+                return "The conversation is a role-play — the scene is: \(scenario.englishTitle) („\(scenario.germanTitle)“). The partner plays the other person in that scene."
+            }
+            return nil
+        case .interview:
+            let position = config.jobTitle.map { " for the position \"\($0)\"" } ?? ""
+            return "The conversation is a job interview\(position); the partner is the interviewer and the learner is the candidate."
+        case .paper:
+            return "The conversation is an academic discussion of a paper titled \"\(config.paperTitle ?? "das Papier")\"."
+        case .decks:
+            guard !config.deckWords.isEmpty else { return nil }
+            let sample = config.deckWords.prefix(12).joined(separator: ", ")
+            return "The learner is practicing these vocabulary words, so prefer suggestions that use one where it fits naturally: \(sample)."
+        case .freestyle:
+            return nil
+        }
+    }
+
+    private func parseHintSuggestions(_ raw: String, limit: Int) -> [HintSuggestion] {
+        let cleaned = ConversationPrompts.stripThinkBlocks(raw)
+        var result: [HintSuggestion] = []
+        for line in cleaned.components(separatedBy: .newlines) {
+            var trimmed = line.trimmingCharacters(in: .whitespaces)
+            // Drop leading list markers like "1." / "-".
+            trimmed = trimmed.replacingOccurrences(of: #"^\s*(\d+[\.\)]|[-•*])\s*"#, with: "", options: .regularExpression)
+            guard !trimmed.isEmpty else { continue }
+            if let sep = trimmed.range(of: "|") ?? trimmed.range(of: " — ") ?? trimmed.range(of: " - ") {
+                let german = String(trimmed[..<sep.lowerBound]).trimmingCharacters(in: .whitespaces)
+                let english = String(trimmed[sep.upperBound...]).trimmingCharacters(in: .whitespaces)
+                if !german.isEmpty {
+                    result.append(HintSuggestion(german: german, english: english.isEmpty ? nil : english))
+                }
+            } else {
+                result.append(HintSuggestion(german: trimmed, english: nil))
+            }
+            if result.count >= limit { break }
+        }
+        return result
+    }
+
+    func clearHints() { archiveCurrentHints(); hints = []; hintLoading = false }
+
+    /// Move the batch on screen into the history stack before it's replaced or dismissed, so the
+    /// card can page back to it. Skips empties and an exact repeat of the newest archived batch.
+    private func archiveCurrentHints() {
+        guard !hints.isEmpty else { return }
+        guard hintHistory.first?.map(\.id) != hints.map(\.id) else { return }
+        hintHistory.insert(hints, at: 0)
+        if hintHistory.count > 8 { hintHistory.removeLast() }
+    }
+
+    // MARK: - Tap-a-word inspector (translate + save)
+
+    /// Inspect a tapped word: show its translation and let the user save it to the deck library.
+    func inspectWord(_ raw: String) {
+        let word = SingleWordTranslator.cleanWord(raw)
+        guard !word.isEmpty else { return }
+        // A capitalized word may be a noun the dictionary knows outright (the lookup is
+        // case-insensitive, so lowercase words must not reach it: "gut" is not "das Gut").
+        let nounHit = word.first?.isUppercase == true
+            ? host.nounLookup(word) : nil
+        if let nounHit, let english = nounHit.english, !english.isEmpty {
+            // The dictionary answers fully — no model needed, no load prompt.
+            inspectedWord = InspectedWord(
+                word: word,
+                translation: english,
+                loading: false,
+                saved: conversation.isVocabSaved(german: word),
+                article: nounHit.article
+            )
+            return
+        }
+        // Translating a tapped word needs the model — prompt to load it rather than opening an
+        // inspector that just spins.
+        guard requireModelReady(orRun: { [weak self] in self?.inspectWord(raw) }) else { return }
+        inspectedWord = InspectedWord(
+            word: word,
+            translation: nil,
+            loading: true,
+            loadingModel: !SingleWordTranslator.isReady(config.model, in: tutor),
+            saved: conversation.isVocabSaved(german: word),
+            article: nounHit?.article
+        )
+        Task {
+            let translation = await translateSingleWord(word) { [self] in
+                guard inspectedWord?.word == word else { return }
+                inspectedWord?.loadingModel = false
+            }
+            // Only apply if the inspector is still showing the same word.
+            if inspectedWord?.word == word {
+                inspectedWord?.translation = translation
+                inspectedWord?.loading = false
+                inspectedWord?.loadingModel = false
+            }
+        }
+    }
+
+    /// `onModelReady` fires once the weights are in memory, so the sheet can stop explaining the
+    /// load wait and say it's translating.
+    private func translateSingleWord(
+        _ word: String,
+        onModelReady: (@MainActor () -> Void)? = nil
+    ) async -> String? {
+        guard await ensureModelLoaded() else { return nil }
+        return await SingleWordTranslator.translate(
+            word, mlxService: tutor, model: config.model, onModelReady: onModelReady
+        )
+    }
+
+    /// Save the currently-inspected word to the conversation's vocabulary library.
+    func saveInspectedWord() {
+        guard let inspected = inspectedWord else { return }
+        conversation.saveVocab(german: inspected.word, english: inspected.translation ?? "")
+        inspectedWord?.saved = true
+        save()
+    }
+
+    func dismissInspector() { inspectedWord = nil }
+
+    /// Number of words saved to the library this conversation.
+    var savedWordCount: Int { conversation.savedVocab.count }
+
+    func removeSavedWord(_ german: String) {
+        conversation.removeVocab(german: german)
+        save()
+    }
+
+    private func latestAssistantID() -> UUID? {
+        conversation.sortedMessages.last(where: { !$0.isUser })?.id
+    }
+
+    // MARK: - "Say it in German" phrase helper
+
+    /// Translate the learner's intended English response into natural German.
+    func englishToGerman(_ english: String) async -> String? {
+        let text = english.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, await ensureModelLoaded() else { return nil }
+        let system = """
+        You are a German tutor helping a learner (level \(config.level.rawValue), \(config.formality.rawValue) form) say something. \
+        Translate the learner's English into ONE natural German sentence they could say out loud. Use the \(config.formality.rawValue) form. \
+        Reply with ONLY the German sentence — no English, no quotes, no notes.
+        """
+        do {
+            let raw = try await tutor.complete(system: system, user: "English: \(text)\nGerman:", model: config.model, maxTokens: TutorBudget.phrase)
+            let german = ConversationPrompts.cleanTranslation(raw)  // reuses quote/label stripping
+            return german.isEmpty ? nil : german
+        } catch {
+            if !(error is CancellationError) { errorMessage = friendly(error) }
+            return nil
+        }
+    }
+
+    /// Post a phrase-helper sentence as the learner's spoken turn.
+    func usePhrase(_ german: String) {
+        let text = german.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, phase == .idle else { return }
+        eagerTask?.cancel()
+        Task { await handleUtterance(text, viaPhraseHelper: true) }
+    }
+
+    /// Surface a translated phrase above the mic so the learner can practice *saying* it themselves,
+    /// rather than auto-posting it. Mirrors how hints are shown. The user then taps the mic and
+    /// speaks it; `evaluateSayItAttempt` judges the result.
+    func practiceSaying(_ german: String, english: String?) {
+        let text = german.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        archiveCurrentHints()
+        hints = []  // don't stack with a hint card
+        let gloss = english?.trimmingCharacters(in: .whitespacesAndNewlines)
+        sayItPrompt = SayItPrompt(german: text, english: (gloss?.isEmpty == false) ? gloss : nil)
+    }
+
+    func clearSayItPrompt() { sayItPrompt = nil }
+
+    /// Post the active say-it target as the learner's turn without a spoken attempt — the
+    /// "use it anyway" escape hatch that preserves the old one-tap behavior.
+    func useSayItPromptAnyway() {
+        guard let prompt = sayItPrompt else { return }
+        sayItPrompt = nil
+        usePhrase(prompt.german)
+    }
+
+    /// Judge a spoken attempt against the active say-it target. Close enough → post the correct
+    /// German as the turn; otherwise keep the card up in a coaching state so they can try again.
+    private func evaluateSayItAttempt(_ heard: String) async {
+        guard let prompt = sayItPrompt else {
+            await handleUtterance(heard)  // safety: no target, treat as a normal turn
+            return
+        }
+        if Self.phraseSimilarity(heard, prompt.german) >= 0.75 {
+            sayItPrompt = nil
+            await handleUtterance(prompt.german, viaPhraseHelper: true)
+        } else {
+            sayItPrompt?.heardText = heard
+            sayItPrompt?.matched = false
+        }
+    }
+
+    // MARK: - Elicitation repair ("Nudge me")
+
+    /// The message whose correction is currently being elicited (its full fix stays hidden until the
+    /// repair resolves). Lets the view swap the answer card for a nudge while this is active.
+    var activeRepairMessageID: UUID? { repairPrompt?.messageID }
+
+    /// Raise a nudge for a corrected turn: show the question, defer the AI reply, and gate the mic so
+    /// the next utterance is judged as a self-correction attempt.
+    private func beginRepair(for message: Message) {
+        guard let corrected = message.correctedText,
+              let hint = message.correctionHint, !hint.isEmpty else { return }
+        archiveCurrentHints()
+        hints = []          // don't stack with a hint card
+        sayItPrompt = nil   // …or a say-it practice card
+        repairPrompt = RepairPrompt(
+            messageID: message.id,
+            target: corrected,
+            hint: hint,
+            note: message.correctionNote
+        )
+    }
+
+    /// Judge a spoken retry against the corrected sentence. Close enough → the learner repaired their
+    /// own error: mark it and let the conversation continue. A miss reveals the answer so they can
+    /// try again or move on.
+    private func evaluateRepairAttempt(_ heard: String) async {
+        guard let prompt = repairPrompt,
+              let message = conversation.messages.first(where: { $0.id == prompt.messageID }) else {
+            await handleUtterance(heard)  // safety: no active nudge, treat as a normal turn
+            return
+        }
+        if Self.phraseSimilarity(heard, prompt.target) >= 0.75 {
+            message.selfCorrected = true
+            save()
+            repairPrompt = nil
+            await continueAfterNudge(message)
+        } else {
+            // Missed — reveal the fix (per "only after a miss, or on request") and keep the card up.
+            repairPrompt?.heardText = heard
+            repairPrompt?.matched = false
+            repairPrompt?.revealed = true
+        }
+    }
+
+    /// Reveal the corrected sentence without a spoken retry ("show me the answer").
+    func revealRepair() {
+        repairPrompt?.revealed = true
+    }
+
+    /// Dismiss the nudge and let the conversation continue — the fix stays visible on the message,
+    /// but the learner didn't repair it themselves. Used by "Continue", "Skip", and the close button.
+    func skipRepair() {
+        guard let prompt = repairPrompt,
+              let message = conversation.messages.first(where: { $0.id == prompt.messageID }) else {
+            repairPrompt = nil
+            return
+        }
+        repairPrompt = nil
+        Task { await continueAfterNudge(message) }
+    }
+
+    /// Run the deferred AI reply after a nudge resolves, then fill in the correction's meaning if on.
+    private func continueAfterNudge(_ message: Message) async {
+        guard await ensureModelLoaded() else { return }
+        phase = .thinking
+        await runReply()
+        phase = .idle
+        if config.correctionTranslationEnabled {
+            await translateCorrection(message)
+        }
+    }
+
+    // MARK: - Eager assist (background pre-loading)
+
+    private func startEagerAssist(for message: Message) {
+        guard config.eagerAssist || config.autoHints else { return }
+        eagerTask?.cancel()
+        // Lower priority so background translation/hint work doesn't compete with the
+        // read-along highlight updates on the main actor while the reply is being read aloud.
+        eagerTask = Task(priority: .utility) { [weak self] in
+            guard let self else { return }
+            if self.config.eagerAssist { await self.translateInline(message) }
+            if Task.isCancelled { return }
+            let produced = await self.produceHints(count: self.config.hintCount)
+            if !produced.isEmpty {
+                self.cachedHints = produced
+                self.cachedHintMessageID = message.id
+                // Auto-hints: surface the card right away, without marking the turn
+                // hint-assisted — that only happens when the learner asks or parrots one.
+                if self.config.autoHints, message.id == self.latestAssistantID(),
+                   !self.isRecording, self.repairPrompt == nil, self.sayItPrompt == nil,
+                   self.phase == .idle {
+                    self.archiveCurrentHints()
+                    self.hints = produced
+                }
+            }
+        }
+    }
+
+    // MARK: - Playback
+
+    func play(_ message: Message, slow: Bool) {
+        speakingMessageID = message.id
+        spokenText = message.text
+        spokenRange = nil
+        // Stammtisch's background noise plays only under the tutor's voice, never into the mic.
+        let noise = config.stammtisch?.backgroundNoise == true
+        let speech = self.speech
+        if noise { speech.startBackgroundNoise() }
+        speech.speak(
+            message.text,
+            slow: slow,
+            onWord: { [weak self] range in
+                guard self?.speakingMessageID == message.id else { return }
+                self?.spokenRange = range
+            },
+            onFinish: { [weak self] in
+                if noise { speech.stopBackgroundNoise() }
+                if self?.speakingMessageID == message.id {
+                    self?.speakingMessageID = nil
+                    self?.spokenRange = nil
+                    self?.spokenText = nil
+                }
+            }
+        )
+    }
+
+    func stopPlayback() {
+        speech.stop()
+        speech.stopBackgroundNoise()
+        speakingMessageID = nil
+        spokenRange = nil
+        spokenText = nil
+    }
+
+    // MARK: - Summary
+
+    /// Longest run of consecutive user turns taken without aids. A turn is unaided when it used
+    /// no hint, no phrase helper, and the assistant reply immediately before it was never
+    /// translated. (A translation revealed later still counts against it — the timestamps to know
+    /// better aren't stored; documented approximation.)
+    private func bestUnaidedStreak(in messages: [Message]) -> Int {
+        var best = 0, run = 0
+        var previousAssistantTranslated = false
+        for m in messages {
+            if !m.isUser {
+                previousAssistantTranslated = m.translationViewed
+                continue
+            }
+            let unaided = !m.usedHint && !m.usedPhraseHelper && !previousAssistantTranslated
+            run = unaided ? run + 1 : 0
+            best = max(best, run)
+            previousAssistantTranslated = false
+        }
+        return best
+    }
+
+    @discardableResult
+    func endAndSummarize() async -> ConversationSummary? {
+        speechRecognizer.cancel()
+        speech.stop()
+        speakingMessageID = nil
+        commitDuration()
+
+        let messages = conversation.sortedMessages
+        let userTurns = messages.filter { $0.isUser }
+        let correctionCount = messages.filter { $0.hasCorrection }.count
+        let selfCorrections = messages.filter { $0.selfCorrected }.count
+        let hintsUsed = messages.filter { $0.usedHint }.count
+        let translationsUsed = messages.filter { !$0.isUser && $0.translationViewed }.count
+        let phraseHelperUsed = messages.filter { $0.usedPhraseHelper }.count
+        var wordsPracticed: [String] = []
+        for m in messages { wordsPracticed.append(contentsOf: m.targetWordsUsed) }
+        wordsPracticed = Array(Set(wordsPracticed)).sorted()
+
+        // SRS-due words the learner re-used correctly, whose review schedule was advanced this session.
+        var spacedReviews: [String] = []
+        for m in messages { spacedReviews.append(contentsOf: m.reviewedWords) }
+        spacedReviews = Array(Set(spacedReviews)).sorted()
+
+        // Confidence streak: longest run of turns taken without aids, and whether it's a record.
+        // Capture `isRecord` before updating the stored best.
+        let unaidedStreak = bestUnaidedStreak(in: messages)
+        let streakIsRecord = unaidedStreak > 0 && unaidedStreak > host.bestUnaidedStreak
+        if streakIsRecord { host.bestUnaidedStreak = unaidedStreak }
+
+        // Too little to analyze — store a gentle placeholder.
+        guard userTurns.count >= 1, await ensureModelLoaded() else {
+            let summary = ConversationSummary(
+                strengths: userTurns.isEmpty ? [] : ["You started a conversation in German — keep going!"],
+                improvements: ["Try to speak a few more turns next time so there's more to review."],
+                patternNote: "",
+                wordsPracticed: wordsPracticed,
+                correctionCount: correctionCount,
+                selfCorrections: selfCorrections,
+                hintsUsed: hintsUsed,
+                translationsUsed: translationsUsed,
+                phraseHelperUsed: phraseHelperUsed,
+                spacedReviews: spacedReviews.isEmpty ? nil : spacedReviews,
+                bestUnaidedStreak: unaidedStreak > 0 ? unaidedStreak : nil,
+                unaidedStreakIsRecord: streakIsRecord ? true : nil,
+                turnCount: userTurns.count,
+                generatedAt: Date(),
+                rawText: nil
+            )
+            conversation.setSummary(summary)
+            save()
+            return summary
+        }
+
+        phase = .summarizing
+        defer { phase = .idle }
+
+        let transcript = ConversationPrompts.transcript(
+            lines: messages.map { (sortOrder: $0.sortOrder, isUser: $0.isUser, text: $0.text) })
+        do {
+            let raw = try await tutor.complete(
+                system: ConversationPrompts.summarySystemPrompt(for: config),
+                user: transcript,
+                model: config.model,
+                maxTokens: TutorBudget.summary
+            )
+            let parsed = ConversationPrompts.parseSummary(raw)
+            let summary = ConversationSummary(
+                strengths: parsed.strengths,
+                improvements: parsed.improvements,
+                patternNote: parsed.pattern,
+                wordsPracticed: wordsPracticed,
+                correctionCount: correctionCount,
+                selfCorrections: selfCorrections,
+                hintsUsed: hintsUsed,
+                translationsUsed: translationsUsed,
+                phraseHelperUsed: phraseHelperUsed,
+                spacedReviews: spacedReviews.isEmpty ? nil : spacedReviews,
+                bestUnaidedStreak: unaidedStreak > 0 ? unaidedStreak : nil,
+                unaidedStreakIsRecord: streakIsRecord ? true : nil,
+                turnCount: userTurns.count,
+                generatedAt: Date(),
+                rawText: (parsed.strengths.isEmpty && parsed.improvements.isEmpty)
+                    ? ConversationPrompts.stripThinkBlocks(raw).trimmingCharacters(in: .whitespacesAndNewlines)
+                    : nil
+            )
+            conversation.setSummary(summary)
+
+            // Fold this session into the persistent learner profile (decay + WEAK/STRONG delta,
+            // vocabulary, single-token slips), cleaning old memories into the archive.
+            host.sessionSummarized(raw: raw, messages: messages, wordsPracticed: wordsPracticed)
+
+            save()
+            return summary
+        } catch {
+            errorMessage = friendly(error)
+            return nil
+        }
+    }
+
+    // MARK: - Helpers
+
+    @discardableResult
+    private func appendAssistant(_ text: String) -> Message? {
+        let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else { return nil }
+        let message = host.appendMessage(role: .assistant, text: clean, sortOrder: nextSortOrder())
+        save()
+        return message
+    }
+
+    private func nextSortOrder() -> Int {
+        (conversation.messages.map(\.sortOrder).max() ?? -1) + 1
+    }
+
+    private func lastAssistantText() -> String? {
+        conversation.sortedMessages.last(where: { !$0.isUser })?.text
+    }
+
+    /// The most recent turns, mapped for the model (capped to keep latency sane).
+    /// How many recent turns travel with each prompt. Bounded because the KV cache — not the text —
+    /// is what a tight device runs out of room for.
+    private static var historyTurns: Int { 12 }   // computed: generic types have no static storage
+
+    private func recentHistory() -> [(role: ChatRole, content: String)] {
+        let all = conversation.sortedMessages
+        var window = Array(all.suffix(Self.historyTurns))
+        // A trailing window can start on an assistant turn. ``ChatTurnNormalizer`` would then have
+        // to stand the opener seed in front of it — "begin the conversation now" — in the middle
+        // of a conversation already underway. Widening by one keeps the learner's real line that
+        // the AI was answering, which is both a valid sequence and a true one. (Only when there's
+        // something to widen into: a window that *is* the whole chat genuinely starts on the AI's
+        // opener, and the seed is the right stand-in there.)
+        if window.first?.isUser == false, all.count > window.count {
+            window = Array(all.suffix(Self.historyTurns + 1))
+        }
+        return window.map { (role: $0.role, content: $0.text) }
+    }
+
+    private func save() {
+        conversation.updatedAt = .now
+        host.save()
+    }
+
+    // MARK: - Phrase similarity (say-it practice)
+
+    static func phraseSimilarity(_ a: String, _ b: String) -> Double {
+        PhraseMatch.similarity(a, b)
+    }
+
+    private func friendly(_ error: Error) -> String {
+        if let message = tutor.friendlyMessage(for: error) { return message }
+        let description = error.localizedDescription
+        // A chat template refusing the turn sequence surfaces as "The operation couldn't be
+        // completed. (Jinja.TemplateException error 1.)" — accurate, and unreadable to a learner.
+        // `ChatTurnNormalizer` should make this unreachable; if an unfamiliar template still gets
+        // here, say the one thing that helps.
+        if description.localizedCaseInsensitiveContains("jinja")
+            || description.localizedCaseInsensitiveContains("templateexception") {
+            return "\(config.model.rawValue) couldn't read this conversation's history. "
+                + "Try again — or end the session and start a fresh chat."
+        }
+        return description
+    }
+
+    private func authMessage() -> String {
+        speechRecognizer.unavailableMessage
+            ?? "Microphone and speech recognition access are required to talk."
+    }
+}
+
+/// How close a spoken (or typed) attempt is to a target phrase. Not generic, so the Android app
+/// and the tests reach it without naming a host.
+enum PhraseMatch {
+    /// Understandable with minor slips: the corrected sentence is at least 80% similar to what
+    /// was actually said. Drives the "Fast richtig" encouragement tier.
+    static func closeEnough(original: String, corrected: String) -> Bool {
+        similarity(original, corrected) >= 0.8
+    }
+
+
+    /// A 0…1 similarity between two German phrases, ignoring case, punctuation and ß/ss spelling —
+    /// used to decide whether a spoken attempt matches the say-it target closely enough.
+    static func similarity(_ a: String, _ b: String) -> Double {
+        let x = Array(normalizedForCompare(a))
+        let y = Array(normalizedForCompare(b))
+        guard !x.isEmpty, !y.isEmpty else { return 0 }
+        if x == y { return 1 }
+        let distance = levenshtein(x, y)
+        let maxLen = max(x.count, y.count)
+        return maxLen == 0 ? 1 : 1 - Double(distance) / Double(maxLen)
+    }
+
+    /// Lowercase, fold ß→ss, drop everything but letters and single spaces — so the comparison
+    /// reflects the spoken words, not capitalization or end punctuation the recognizer omits anyway.
+    private static func normalizedForCompare(_ s: String) -> String {
+        let lowered = s.lowercased().replacingOccurrences(of: "ß", with: "ss")
+        let kept = lowered.unicodeScalars.filter { CharacterSet.letters.contains($0) || $0 == " " }
+        return String(String.UnicodeScalarView(kept))
+            .split(separator: " ")
+            .joined(separator: " ")
+    }
+
+    private static func levenshtein(_ a: [Character], _ b: [Character]) -> Int {
+        if a.isEmpty { return b.count }
+        if b.isEmpty { return a.count }
+        var prev = Array(0...b.count)
+        var curr = [Int](repeating: 0, count: b.count + 1)
+        for i in 1...a.count {
+            curr[0] = i
+            for j in 1...b.count {
+                let cost = a[i - 1] == b[j - 1] ? 0 : 1
+                curr[j] = min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost)
+            }
+            swap(&prev, &curr)
+        }
+        return prev[b.count]
+    }
+}

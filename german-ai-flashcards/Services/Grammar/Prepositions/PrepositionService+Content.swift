@@ -22,7 +22,7 @@ extension PrepositionService {
     /// Every preposition in the bundle, in authored order (Akkusativ → Dativ → Wechsel → Genitiv).
     static func all() -> [Preposition] {
         if let cache { return cache }
-        guard let url = Bundle.main.url(forResource: "prepositions", withExtension: "json"),
+        guard let url = AppResources.url("prepositions", "json"),
               let data = try? Data(contentsOf: url),
               let file = try? JSONDecoder().decode(PrepositionsFile.self, from: data)
         else { return [] }

@@ -1,0 +1,119 @@
+[
+ {
+  "family": "gemma4",
+  "case": "chat",
+  "messages": [
+   {
+    "role": "system",
+    "content": "Du bist ein freundlicher Tutor."
+   },
+   {
+    "role": "user",
+    "content": "Hallo!"
+   },
+   {
+    "role": "assistant",
+    "content": "Wie geht's?"
+   },
+   {
+    "role": "user",
+    "content": "Gut, danke."
+   }
+  ],
+  "prompt": "<|turn>system\nDu bist ein freundlicher Tutor.<turn|>\n<|turn>user\nHallo!<turn|>\n<|turn>model\nWie geht's?<turn|>\n<|turn>user\nGut, danke.<turn|>\n<|turn>model\n"
+ },
+ {
+  "family": "gemma4",
+  "case": "check",
+  "messages": [
+   {
+    "role": "system",
+    "content": "Correct the sentence.\nFIX: <sentence>\nWHY: <reason>"
+   },
+   {
+    "role": "user",
+    "content": "STUDENT: Ich warte für den Bus."
+   }
+  ],
+  "prompt": "<|turn>system\nCorrect the sentence.\nFIX: <sentence>\nWHY: <reason><turn|>\n<|turn>user\nSTUDENT: Ich warte für den Bus.<turn|>\n<|turn>model\n"
+ },
+ {
+  "family": "gemma4",
+  "case": "padded",
+  "messages": [
+   {
+    "role": "system",
+    "content": "  System mit Leerzeichen \n"
+   },
+   {
+    "role": "user",
+    "content": "\nZeile eins\nZeile zwei  "
+   }
+  ],
+  "prompt": "<|turn>system\nSystem mit Leerzeichen<turn|>\n<|turn>user\nZeile eins\nZeile zwei<turn|>\n<|turn>model\n"
+ },
+ {
+  "family": "gemma4",
+  "case": "no_system",
+  "messages": [
+   {
+    "role": "user",
+    "content": "Mach bitte weiter."
+   }
+  ],
+  "prompt": "<|turn>user\nMach bitte weiter.<turn|>\n<|turn>model\n"
+ },
+ {
+  "family": "granite",
+  "case": "chat",
+  "messages": [
+   {
+    "role": "system",
+    "content": "Du bist ein freundlicher Tutor."
+   },
+   {
+    "role": "user",
+    "content": "Hallo!"
+   },
+   {
+    "role": "assistant",
+    "content": "Wie geht's?"
+   },
+   {
+    "role": "user",
+    "content": "Gut, danke."
+   }
+  ],
+  "prompt": "<|start_of_role|>system<|end_of_role|>Du bist ein freundlicher Tutor.<|end_of_text|>\n<|start_of_role|>user<|end_of_role|>Hallo!<|end_of_text|>\n<|start_of_role|>assistant<|end_of_role|>Wie geht's?<|end_of_text|>\n<|start_of_role|>user<|end_of_role|>Gut, danke.<|end_of_text|>\n<|start_of_role|>assistant<|end_of_role|>"
+ },
+ {
+  "family": "granite",
+  "case": "check",
+  "messages": [
+   {
+    "role": "system",
+    "content": "Correct the sentence.\nFIX: <sentence>\nWHY: <reason>"
+   },
+   {
+    "role": "user",
+    "content": "STUDENT: Ich warte für den Bus."
+   }
+  ],
+  "prompt": "<|start_of_role|>system<|end_of_role|>Correct the sentence.\nFIX: <sentence>\nWHY: <reason><|end_of_text|>\n<|start_of_role|>user<|end_of_role|>STUDENT: Ich warte für den Bus.<|end_of_text|>\n<|start_of_role|>assistant<|end_of_role|>"
+ },
+ {
+  "family": "granite",
+  "case": "padded",
+  "messages": [
+   {
+    "role": "system",
+    "content": "  System mit Leerzeichen \n"
+   },
+   {
+    "role": "user",
+    "content": "\nZeile eins\nZeile zwei  "
+   }
+  ],
+  "prompt": "<|start_of_role|>system<|end_of_role|>  System mit Leerzeichen \n<|end_of_text|>\n<|start_of_role|>user<|end_of_role|>\nZeile eins\nZeile zwei  <|end_of_text|>\n<|start_of_role|>assistant<|end_of_role|>"
+ }
+]

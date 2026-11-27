@@ -22,7 +22,7 @@ enum GrammarTopicService {
 
     static func topics() -> [StoryTopic] {
         if let cached = cache { return cached }
-        guard let url = Bundle.main.url(forResource: "grammar_topics", withExtension: "json"),
+        guard let url = AppResources.url("grammar_topics", "json"),
               let data = try? Data(contentsOf: url),
               let file = try? JSONDecoder().decode(GrammarTopicsFile.self, from: data)
         else { return [] }

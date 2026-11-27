@@ -1,0 +1,54 @@
+---
+title: The Android port
+description: Keeping as much of Die Kartei in Swift as we can, on Android.
+---
+
+The goal is the same app on Android without a second codebase: the iOS app's own Swift where it
+can travel, and SwiftUI for the screens.
+
+<AndroidIllustration />
+
+## How it fits together
+
+Two layers, both Swift:
+
+- **DieKarteiCore** is a Swift package of the app's portable files. Its sources are symlinks into
+  `german-ai-flashcards/`, so the iOS app keeps compiling them in place and nothing is copied.
+  `scripts/core_sync.py` finds them: every file that needs only Foundation, cross-compiled for
+  Android with the [Swift SDK for Android](https://www.swift.org/documentation/articles/swift-sdk-for-android-getting-started.html).
+- **DieKarteiAndroid** is a [Skip Fuse](https://skip.dev) app. Skip compiles Swift natively for
+  Android and turns SwiftUI into Jetpack Compose, so the Android screens are SwiftUI too. A small
+  transpiled module, `GermanVoice`, reaches Android APIs Swift can't (text to speech).
+
+To bring more of the app across, a type that sits in a SwiftUI or SwiftData file moves to its own
+Foundation-only file, with no change on iOS. The script then picks up everything that depended on
+it.
+
+## What runs on Android today
+
+| Tab | What | Shared from iOS |
+| --- | --- | --- |
+| Karten | The Goethe deck with spaced repetition, four rating buttons, saved on device | SM-2 scheduler, word lists |
+| Wortschatz | The A1–B1 lists, searchable | Word lists |
+| Grammatik | Kasus lessons, der/die/das, Präpositionen, four gap-fill sets, Perfekt | Lessons, rules, exercises |
+| Hören | Zahlen-Diktat for every number kind, in Android's German voice | Number engine and answer check |
+| Spiele | Galgenmännchen, Wortsuche | Game engines |
+
+About 80 of the app's Swift files build for Android so far.
+
+## What stays Apple-only
+
+| Apple | On Android |
+| --- | --- |
+| SwiftData | A store shaped like the sync records (see [Sync](/android/sync/)) |
+| iCloud Sync | Merge engine is shared; Google Drive as the transport |
+| MLX (the tutor model) | Not yet; a GGUF build of the tutor models with llama.cpp is the likely path |
+| Speech | Android's text to speech, through `GermanVoice` |
+| PencilKit | Not yet; a Compose drawing surface later |
+
+## What's next
+
+- **Kasus drills and stories.** Their value types live in `KasusService.swift`, a SwiftData file.
+  Moving them out unlocks most of `Services/Grammar/Kasus`.
+- **Matching and the reflexive drills**, the same way.
+- **Sync**, in three steps: [Sync on Android](/android/sync/).

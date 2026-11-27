@@ -55,7 +55,7 @@ enum PastTenseVerbService {
 
     static var allEntries: [PastTenseVerbEntry] {
         if let cached = allCache { return cached }
-        guard let url = Bundle.main.url(forResource: "past_tense_verbs", withExtension: "json"),
+        guard let url = AppResources.url("past_tense_verbs", "json"),
               let data = try? Data(contentsOf: url),
               let entries = try? JSONDecoder().decode([PastTenseVerbEntry].self, from: data)
         else { return [] }
