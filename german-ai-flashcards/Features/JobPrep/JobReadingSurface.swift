@@ -20,10 +20,10 @@ struct JobReadingCallbacks {
     var onTranslateSelection: (String) -> Void
     var onSavePhrase: (String) -> Void
     /// A selection to make cards of (the edit menu's „Add to deck…“): one phrase, or a card per
-    /// word. The text surface only; nil leaves the action out.
+    /// word. The text and PDF surfaces; nil leaves the action out.
     var onCollectSelection: ((String) -> Void)? = nil
-    /// Apple Pencil marks on the text surface (`PencilWordMarking`). Nil: the Pencil reads like a
-    /// finger.
+    /// Apple Pencil marks on the text and PDF surfaces (`PencilWordMarking`). Nil: the Pencil
+    /// reads like a finger.
     var onPencilMark: ((PencilWordMark) -> Void)? = nil
 }
 
@@ -33,7 +33,8 @@ struct JobReadingDecorations: Equatable {
     var savedWords: Set<String> = []
     var lookedUpWords: Set<String> = []
     /// Words a vocabulary list explains (a dotted underline; a tap answers from the list). The
-    /// class handouts use this with the course's vocab deck; postings leave it empty.
+    /// class handouts use this with the course's vocab deck, postings with the usual job-ad
+    /// phrases (`JobAdGlossary`). The text surface only.
     var glossary: GlossaryHighlight = .none
     /// Print the glossary's English inline after each glossed word.
     var inlineGlosses: InlineGlossMode = .off

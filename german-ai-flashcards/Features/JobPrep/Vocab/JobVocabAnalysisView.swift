@@ -41,36 +41,47 @@ struct JobVocabAnalysisView: View {
     @State private var search = ""
     @State private var words: [JobVocabTerm] = []
     @State private var phrases: [JobVocabTerm] = []
+    @State private var formulas: [JobVocabTerm] = []
+    /// The parts of each compound in the count, by term id („Software + Entwicklung“).
+    @State private var compounds: [String: [String]] = [:]
     @State private var isCounting = false
     @State private var ticked: Set<String> = []
     @State private var showPicker = false
     @State private var showSave = false
     @State private var contextTerm: JobVocabTerm?
     @State private var savedNote: String?
-    /// Matched against a term's spellings to hide what is already in a deck.
-    @State private var knownKeys: Set<String> = []
+    /// Matched against a term's spellings and stem to hide what is already in a deck.
+    @State private var deckWords = JobVocabDeckWords()
     /// Lowercased Goethe headwords and the first level each is on.
     @State private var goetheLevels: [String: GoetheLevel] = [:]
 
     enum Tab: String, CaseIterable, Identifiable {
         case words = "Wörter"
         case phrases = "Wendungen"
+        case formulas = "Formeln"
         var id: String { rawValue }
     }
 
     private var chosen: [JobPosting] { postings.filter { selected.contains($0.id) } }
     private var hideUpTo: GoetheLevel? { GoetheLevel(rawValue: hideUpToRaw) }
 
-    private var terms: [JobVocabTerm] { tab == .words ? words : phrases }
+    private var terms: [JobVocabTerm] {
+        switch tab {
+        case .words: words
+        case .phrases: phrases
+        case .formulas: formulas
+        }
+    }
 
     /// What the list shows after the filters.
     private var visible: [JobVocabTerm] {
         let query = search.trimmingCharacters(in: .whitespaces).lowercased()
         return terms.filter { term in
-            if term.adCount < minimumAds { return false }
+            // The formulas are few and each worth knowing: no frequency floor.
+            if tab != .formulas, term.adCount < minimumAds { return false }
             if !query.isEmpty, !term.forms.keys.contains(where: { $0.lowercased().contains(query) }) { return false }
             if hideBasic, term.isBasic { return false }
-            if hideKnown, !term.matchKeys.isDisjoint(with: knownKeys), !ticked.contains(term.id) { return false }
+            if hideKnown, deckWords.contains(term), !ticked.contains(term.id) { return false }
             if let hideUpTo, !term.isPhrase, let level = goetheLevel(of: term), level.rank <= hideUpTo.rank { return false }
             return true
         }
@@ -164,7 +175,7 @@ struct JobVocabAnalysisView: View {
                 Text(summaryLine)
             }
         }
-        if chosen.count > 1 {
+        if chosen.count > 1, tab != .formulas {
             Section {
                 Stepper("In at least \(minimumAds) of \(chosen.count) ads", value: $minimumAds, in: 1...max(1, chosen.count))
                     .font(.subheadline)
@@ -176,10 +187,13 @@ struct JobVocabAnalysisView: View {
     private var summaryLine: String {
         let content = words.filter { !$0.isBasic }
         let total = content.reduce(0) { $0 + $1.total }
-        let known = content.filter { !$0.matchKeys.isDisjoint(with: knownKeys) }.reduce(0) { $0 + $1.total }
+        let known = content.filter { deckWords.contains($0) }.reduce(0) { $0 + $1.total }
         let share = total == 0 ? 0 : Int((Double(known) / Double(total) * 100).rounded())
         let shared = chosen.count > 1 ? " · \(content.filter { $0.adCount > 1 }.count) in more than one ad" : ""
         let shown = "\(visible.count) shown"
+        if tab == .formulas {
+            return "\(formulas.count) of the usual job-ad phrases · \(shown)"
+        }
         if tab == .phrases {
             return "\(phrases.count) phrases\(chosen.count > 1 ? " used in two ads or more" : " used twice or more") · \(shown)"
         }
@@ -189,7 +203,7 @@ struct JobVocabAnalysisView: View {
     private var termsSection: some View {
         Section {
             if !isCounting, visible.isEmpty {
-                Text(tab == .phrases ? "No phrase comes up often enough. Choose more ads, or lower the count." : "Nothing left to show: the filters hide every word.")
+                Text(emptyLine)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -198,8 +212,9 @@ struct JobVocabAnalysisView: View {
                     term: term,
                     adTotal: chosen.count,
                     ticked: ticked.contains(term.id),
-                    known: !term.matchKeys.isDisjoint(with: knownKeys),
-                    level: term.isPhrase ? nil : goetheLevel(of: term)
+                    known: deckWords.contains(term),
+                    level: term.isPhrase || tab == .formulas ? nil : goetheLevel(of: term),
+                    parts: compounds[term.id]
                 ) {
                     toggle(term)
                 } onInfo: {
@@ -208,7 +223,7 @@ struct JobVocabAnalysisView: View {
             }
         } header: {
             HStack {
-                Text(tab == .words ? "Wörter" : "Wendungen").themedSectionHeader()
+                Text(tab.rawValue).themedSectionHeader()
                 Spacer()
                 if !visible.isEmpty {
                     Button(allVisibleTicked ? "Untick all" : "Tick all") { tickAllVisible() }
@@ -279,8 +294,16 @@ struct JobVocabAnalysisView: View {
         if ticked.contains(term.id) { ticked.remove(term.id) } else { ticked.insert(term.id) }
     }
 
+    private var emptyLine: String {
+        switch tab {
+        case .words: "Nothing left to show: the filters hide every word."
+        case .phrases: "No phrase comes up often enough. Choose more ads, or lower the count."
+        case .formulas: hideKnown ? "No usual job-ad phrase here that isn't in a deck already." : "None of the usual job-ad phrases here."
+        }
+    }
+
     private var tickedPicks: [JobVocabPick] {
-        (words + phrases).filter { ticked.contains($0.id) }.map { JobVocabPick(german: $0.display, example: $0.example) }
+        (words + phrases + formulas).filter { ticked.contains($0.id) }.map { JobVocabPick(german: $0.display, example: $0.example) }
     }
 
     private func goetheLevel(of term: JobVocabTerm) -> GoetheLevel? {
@@ -307,11 +330,25 @@ struct JobVocabAnalysisView: View {
     }
 
     private func refreshKnown() {
-        var keys = Set<String>()
+        deckWords = JobVocabDeckWords.from(decks)
+    }
+
+    /// The compounds among the counted words, split against the Goethe lists, the learner's cards
+    /// and the ads' own words.
+    private func splitCompounds() {
+        var extra: [(word: String, noun: Bool, asWhole: Bool)] = []
         for deck in decks where deck.isBrowsableContent {
-            for card in deck.cards { keys.insert(CardKind.matchKey(card.germanWord)) }
+            for card in deck.cards { extra.append((card.germanWord, card.article != nil || card.wordType == "noun", true)) }
         }
-        knownKeys = keys
+        for term in words where !term.isBasic {
+            for form in term.forms.keys { extra.append((form, form.first?.isUppercase == true, false)) }
+        }
+        let lexicon = GermanCompoundLexicon.standard(extra: extra)
+        var found: [String: [String]] = [:]
+        for term in words where !term.isBasic && term.display.first?.isUppercase == true {
+            if let parts = GermanCompound.split(term.display, lexicon: lexicon) { found[term.id] = parts }
+        }
+        compounds = found
     }
 
     private func recount() {
@@ -321,10 +358,13 @@ struct JobVocabAnalysisView: View {
         if minimumAds > max(1, sources.count) { minimumAds = 1 }
         Task {
             let counted = await Task.detached(priority: .userInitiated) {
-                (JobVocabAnalyzer.words(in: sources, groupForms: group), JobVocabAnalyzer.phrases(in: sources))
+                (JobVocabAnalyzer.words(in: sources, groupForms: group), JobVocabAnalyzer.phrases(in: sources),
+                 JobVocabAnalyzer.formulas(in: sources))
             }.value
             words = counted.0
             phrases = counted.1
+            formulas = counted.2
+            splitCompounds()
             isCounting = false
             if startOnShared {
                 startOnShared = false
@@ -359,6 +399,7 @@ private struct JobVocabTermRow: View {
     let ticked: Bool
     let known: Bool
     let level: GoetheLevel?
+    var parts: [String]? = nil
     let onToggle: () -> Void
     let onInfo: () -> Void
 
@@ -385,11 +426,26 @@ private struct JobVocabTermRow: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        if !term.otherForms.isEmpty {
+                        if let gloss = term.gloss {
+                            Text(gloss)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            if let note = term.note {
+                                Text(note)
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            }
+                        } else if !term.otherForms.isEmpty {
                             Text("also " + term.otherForms.prefix(4).joined(separator: ", "))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
+                        }
+                        if let parts {
+                            Text(parts.joined(separator: " + "))
+                                .font(.caption)
+                                .foregroundStyle(.indigo)
+                                .accessibilityLabel("Made of " + parts.joined(separator: " and "))
                         }
                     }
                     Spacer(minLength: 8)
@@ -449,6 +505,9 @@ struct JobVocabContextSheet: View {
         sources.filter { term.sources.contains($0.id) }.map { source in
             let sentences = JobVocabAnalyzer.sentences(of: source.text).filter { sentence in
                 let words = JobVocabAnalyzer.tokens(in: sentence).map(\.text)
+                if term.gloss != nil {
+                    return term.forms.keys.contains { sentence.range(of: $0, options: [.caseInsensitive]) != nil }
+                }
                 if term.isPhrase {
                     return sentence.range(of: term.display, options: [.caseInsensitive]) != nil
                 }

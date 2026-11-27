@@ -2,10 +2,10 @@
 //  JobVocabDebug.swift
 //  german-ai-flashcards
 //
-//  `-jobPrep.debugOpen hub|count|phrases|posting|collect|save`: the job-ad word count and Collect mode on
+//  `-jobPrep.debugOpen hub|count|phrases|formulas|posting|collect|pdf|save`: the job-ad word count and Collect mode on
 //  a simulator that can't tap its way in. Seeds three sample postings (titles start „[debug]“)
 //  the first time. `collect` opens the first posting in Collect mode with a few words picked,
-//  `save` the save sheet for them. DEBUG only (docs/JOB_PREP.md ▸ Sammeln).
+//  `pdf` the same on its saved PDF (rendered from the text), `save` the save sheet for them. DEBUG only (docs/JOB_PREP.md ▸ Sammeln).
 //
 
 #if DEBUG
@@ -13,7 +13,7 @@ import SwiftUI
 import SwiftData
 
 enum JobVocabDebugOpen: String, Identifiable, CaseIterable {
-    case hub, count, phrases, posting, collect, save
+    case hub, count, phrases, formulas, posting, collect, pdf, save
 
     var id: String { rawValue }
 
@@ -31,17 +31,43 @@ enum JobVocabDebugSeeder {
     static func seed(in context: ModelContext) -> [JobPosting] {
         let all = (try? context.fetch(FetchDescriptor<JobPosting>())) ?? []
         let existing = all.filter { $0.title.hasPrefix(prefix) }
-        if !existing.isEmpty || SyncManager.shared.isRunning { return existing }
+        if !existing.isEmpty || SyncManager.shared.isRunning {
+            // Seeded before the PDF copies existed: give them one.
+            for posting in existing where !posting.hasSnapshot {
+                if let sample = samples.first(where: { prefix + $0.title == posting.title }) {
+                    posting.snapshotFile = pdf(of: sample.title, text: sample.text).flatMap(JobPostingSnapshotStore.save)
+                }
+            }
+            try? context.save()
+            return existing
+        }
         let made = samples.enumerated().map { index, sample -> JobPosting in
             let posting = JobPosting(title: prefix + sample.title, text: sample.text, sourceKind: .paste,
                                      createdAt: Date().addingTimeInterval(Double(-index) * 3600))
             posting.company = sample.company
             posting.location = "Berlin"
+            posting.snapshotFile = pdf(of: sample.title, text: sample.text).flatMap(JobPostingSnapshotStore.save)
             context.insert(posting)
             return posting
         }
         try? context.save()
         return made
+    }
+
+    /// A plain A4 PDF of the ad, standing in for a saved page copy.
+    private static func pdf(of title: String, text: String) -> Data? {
+        #if canImport(UIKit)
+        let page = CGRect(x: 0, y: 0, width: 595, height: 842)
+        let renderer = UIGraphicsPDFRenderer(bounds: page)
+        return renderer.pdfData { context in
+            context.beginPage()
+            let body = NSMutableAttributedString(string: title + "\n\n", attributes: [.font: UIFont.boldSystemFont(ofSize: 18)])
+            body.append(NSAttributedString(string: text, attributes: [.font: UIFont.systemFont(ofSize: 12)]))
+            body.draw(in: page.insetBy(dx: 48, dy: 48))
+        }
+        #else
+        return nil
+        #endif
     }
 
     static let pickedWords = ["eigenverantwortlich", "Kenntnisse", "abgeschlossenes Studium", "Zuverlässigkeit"]
@@ -107,6 +133,12 @@ struct JobVocabDebugScreen: View {
                 case .count:
                     JobVocabAnalysisView(modelManager: modelManager, mlxService: mlxService,
                                          initialSelection: Set(postings.map(\.id)))
+                case .formulas:
+                    JobVocabAnalysisView(modelManager: modelManager, mlxService: mlxService,
+                                         initialSelection: Set(postings.map(\.id)), initialTab: .formulas)
+                case .pdf:
+                    JobPostingDetailView(posting: postings[0], modelManager: modelManager, mlxService: mlxService,
+                                         debugPicks: JobVocabDebugSeeder.pickedWords, debugSurface: .pdf)
                 case .phrases:
                     JobVocabAnalysisView(modelManager: modelManager, mlxService: mlxService,
                                          initialSelection: Set(postings.map(\.id)), initialTab: .phrases)

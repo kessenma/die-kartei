@@ -57,6 +57,10 @@ final class PencilMarkRecognizer: UIGestureRecognizer {
         points = []
         super.reset()
     }
+
+    /// Nothing else takes a Pencil touch once this has it: no text selection, no loupe.
+    override func canBePrevented(by preventing: UIGestureRecognizer) -> Bool { false }
+    override func canPrevent(_ prevented: UIGestureRecognizer) -> Bool { true }
 }
 
 extension SelectableGermanText.Coordinator {

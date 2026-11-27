@@ -6,6 +6,9 @@
 //  tap on a word going to the same inspector the text surface uses and the same markings drawn
 //  over the words as in-memory highlight annotations (never written back to the file).
 //
+//  The Apple Pencil collects words here as on the text surface (`JobReadingPDFView+Pencil`): tap,
+//  underline, highlight or circle. Words picked are washed yellow, in memory like the rest.
+//
 //  Known limits of a WebKit-rendered snapshot: it's one tall page whose text layer includes the
 //  site's navigation and cookie text, and a word hyphenated across a line end comes back as its
 //  first half. The text surface is the exact one; this is the faithful-looking one.
@@ -64,6 +67,16 @@ struct JobPostingPDFSurface: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
+            if let collect = callbacks.onCollectSelection {
+                Button {
+                    collect(selection)
+                } label: {
+                    Label("Add to deck", systemImage: "rectangle.stack.badge.plus")
+                        .font(.caption.weight(.semibold))
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -112,9 +125,15 @@ private struct PDFSurfaceRepresentable: UIViewRepresentable {
         if view.document?.documentURL != url {
             view.document = PDFDocument(url: url)
             view.appliedDecorations = nil
+            view.pencilWords = [:]
         }
         if view.appliedDecorations != decorations {
             view.applyDecorations(decorations, accent: accent)
+        }
+        // Collect mode: one tap picks a word (a tap off the text still falls through).
+        let taps = decorations.collecting ? 1 : 2
+        if let wordTap = view.wordTap, wordTap.numberOfTapsRequired != taps {
+            wordTap.numberOfTapsRequired = taps
         }
     }
 
@@ -123,6 +142,8 @@ private struct PDFSurfaceRepresentable: UIViewRepresentable {
         context.coordinator.onSelectionChange = onSelectionChange
         view.onTranslate = callbacks.onTranslateSelection
         view.onSavePhrase = callbacks.onSavePhrase
+        view.onCollect = callbacks.onCollectSelection
+        view.onPencilMark = callbacks.onPencilMark
     }
 
     static func dismantleUIView(_ view: JobReadingPDFView, coordinator: Coordinator) {
@@ -170,11 +191,22 @@ private struct PDFSurfaceRepresentable: UIViewRepresentable {
 final class JobReadingPDFView: PDFView {
     var onTranslate: ((String) -> Void)?
     var onSavePhrase: ((String) -> Void)?
+    var onCollect: ((String) -> Void)?
+    /// Apple Pencil marks (`JobReadingPDFView+Pencil`). Setting it installs the Pencil recognizer.
+    var onPencilMark: ((PencilWordMark) -> Void)? {
+        didSet { updatePencil() }
+    }
+    var pencilRecognizer: PencilMarkRecognizer?
+    var pencilInk: CAShapeLayer?
+    /// Each page's words and their boxes, in page space, built on the first Pencil mark.
+    var pencilWords: [ObjectIdentifier: [PDFPencilWord]] = [:]
     /// The reader's double tap; PDFKit's zoom recognizers are told to wait for it to fail.
     weak var wordTap: UITapGestureRecognizer?
     var appliedDecorations: JobReadingDecorations?
 
     private var annotations: [(PDFPage, PDFAnnotation)] = []
+    /// The picked-word wash, kept apart so a pick redraws only its own layer.
+    private var markAnnotations: [(PDFPage, PDFAnnotation)] = []
     private var deferredZoomRecognizers = Set<ObjectIdentifier>()
 
     override func layoutSubviews() {
@@ -208,7 +240,14 @@ final class JobReadingPDFView: PDFView {
             self?.onSavePhrase?(text)
             self?.clearSelection()
         }
-        builder.insertChild(UIMenu(options: .displayInline, children: [translate, save]), atStartOfMenu: .root)
+        var children = [translate, save]
+        if onCollect != nil {
+            children.append(UIAction(title: "Add to deck…", image: UIImage(systemName: "rectangle.stack.badge.plus")) { [weak self] _ in
+                self?.onCollect?(text)
+                self?.clearSelection()
+            })
+        }
+        builder.insertChild(UIMenu(options: .displayInline, children: children), atStartOfMenu: .root)
     }
 
     // MARK: Decorations
@@ -216,25 +255,57 @@ final class JobReadingPDFView: PDFView {
     /// Replace the highlight annotations: an accent wash on every saved word, a red one on every
     /// looked-up word. In memory only; the file on disk is never touched.
     func applyDecorations(_ decorations: JobReadingDecorations, accent: UIColor) {
+        let previous = appliedDecorations
+        appliedDecorations = decorations
+        guard let document else { return }
+        if previous?.markedWords != decorations.markedWords || previous?.markedPhrases != decorations.markedPhrases {
+            applyMarks(decorations, in: document)
+        }
+        // A pick changes only the marks; the saved and looked-up washes stay as drawn.
+        if let previous, previous.savedWords == decorations.savedWords,
+           previous.lookedUpWords == decorations.lookedUpWords { return }
         for (page, annotation) in annotations {
             page.removeAnnotation(annotation)
         }
         annotations = []
-        appliedDecorations = decorations
-        guard let document else { return }
         let saved = accent.withAlphaComponent(0.28)
         let looked = UIColor.systemRed.withAlphaComponent(0.22)
         // A word in both sets is saved; the wash says so and the red would only muddy it.
         for word in decorations.lookedUpWords.subtracting(decorations.savedWords) {
-            highlight(word, in: document, color: looked)
+            annotations += highlight(word, in: document, color: looked)
         }
         for word in decorations.savedWords {
-            highlight(word, in: document, color: saved)
+            annotations += highlight(word, in: document, color: saved)
         }
     }
 
-    private func highlight(_ word: String, in document: PDFDocument, color: UIColor) {
-        guard word.count >= 2 else { return }
+    /// The picked words and phrases, washed marker-yellow.
+    private func applyMarks(_ decorations: JobReadingDecorations, in document: PDFDocument) {
+        for (page, annotation) in markAnnotations {
+            page.removeAnnotation(annotation)
+        }
+        markAnnotations = []
+        let marker = UIColor.systemYellow.withAlphaComponent(0.45)
+        for word in decorations.markedWords {
+            markAnnotations += highlight(word, in: document, color: marker)
+        }
+        for phrase in decorations.markedPhrases where phrase.count >= 2 {
+            for selection in document.findString(phrase, withOptions: [.caseInsensitive]) {
+                for line in selection.selectionsByLine() {
+                    guard let page = line.pages.first else { continue }
+                    let annotation = PDFAnnotation(bounds: line.bounds(for: page), forType: .highlight, withProperties: nil)
+                    annotation.color = marker
+                    page.addAnnotation(annotation)
+                    markAnnotations.append((page, annotation))
+                }
+            }
+        }
+    }
+
+    @discardableResult
+    private func highlight(_ word: String, in document: PDFDocument, color: UIColor) -> [(PDFPage, PDFAnnotation)] {
+        guard word.count >= 2 else { return [] }
+        var added: [(PDFPage, PDFAnnotation)] = []
         for selection in document.findString(word, withOptions: [.caseInsensitive]) {
             guard let page = selection.pages.first else { continue }
             // `findString` matches substrings ("Arbeit" inside "Mitarbeiter"); keep whole words.
@@ -247,9 +318,10 @@ final class JobReadingPDFView: PDFView {
                 let annotation = PDFAnnotation(bounds: line.bounds(for: linePage), forType: .highlight, withProperties: nil)
                 annotation.color = color
                 linePage.addAnnotation(annotation)
-                annotations.append((linePage, annotation))
+                added.append((linePage, annotation))
             }
         }
+        return added
     }
 
     // MARK: Zoom deferral

@@ -33,6 +33,8 @@ struct JobVocabSaveSheet: View {
     @State private var newDeckName = ""
     @State private var translator: JobVocabTranslator?
     @State private var loaded = false
+    /// For splitting compounds („Softwareentwicklung“ → Software + Entwicklung).
+    @State private var lexicon = GermanCompoundLexicon()
 
     /// Decks a learner would add words to, job decks first.
     private var targetDecks: [SavedDeck] {
@@ -103,20 +105,31 @@ struct JobVocabSaveSheet: View {
     private var rowsSection: some View {
         Section {
             ForEach($rows) { $row in
-                JobVocabRowEditor(row: $row, tutorReady: tutor.isDownloaded)
+                let parts = splitParts(of: row)
+                JobVocabRowEditor(row: $row, tutorReady: tutor.isDownloaded, compoundParts: compoundParts(of: row))
                     .swipeActions(edge: .trailing) {
                         Button(role: .destructive) {
                             rows.removeAll { $0.id == row.id }
                         } label: {
                             Label("Remove", systemImage: "trash")
                         }
-                        if row.isPhrase, JobVocabAnalyzer.contentWords(of: row.german).count > 1 {
+                        if parts.count > 1 {
                             Button {
-                                split(row)
+                                split(row, into: parts)
                             } label: {
                                 Label("Split", systemImage: "scissors")
                             }
                             .tint(.indigo)
+                        }
+                    }
+                    .swipeActions(edge: .leading) {
+                        if parts.count > 1, !row.isPhrase {
+                            Button {
+                                addParts(of: row, parts: parts)
+                            } label: {
+                                Label("Add parts", systemImage: "plus.square.on.square")
+                            }
+                            .tint(.teal)
                         }
                     }
             }
@@ -131,7 +144,7 @@ struct JobVocabSaveSheet: View {
             }
         } footer: {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Tap the circle to leave a word out. Swipe a phrase to split it into a card per word. The sentence from the ad goes on the card as its example.")
+                Text("Tap the circle to leave a word out. Swipe a phrase or a compound left to split it into a card per word, or a compound right to add its parts too. The sentence from the ad goes on the card as its example.")
                 if missingEnglish > 0 {
                     Text("\(missingEnglish) without English \(missingEnglish == 1 ? "is" : "are") left out unless you type one or let the tutor translate.")
                         .foregroundStyle(.orange)
@@ -176,6 +189,14 @@ struct JobVocabSaveSheet: View {
     private func load() {
         guard !loaded else { return }
         loaded = true
+        var extra: [(word: String, noun: Bool, asWhole: Bool)] = []
+        for deck in decks where deck.isBrowsableContent {
+            for card in deck.cards { extra.append((card.germanWord, card.article != nil || card.wordType == "noun", true)) }
+        }
+        for token in JobVocabAnalyzer.tokens(in: posting?.text ?? "") {
+            extra.append((token.text, token.text.first?.isUppercase == true, false))
+        }
+        lexicon = GermanCompoundLexicon.standard(extra: extra)
         let fresh = picks.map { JobVocabRow(german: $0.german, example: $0.example) }
         rows = JobVocabKnown.fill(fresh, from: JobVocabKnown.index(postings: postings, decks: decks))
         if let posting {
@@ -188,13 +209,36 @@ struct JobVocabSaveSheet: View {
         if newDeckName.isEmpty { newDeckName = posting.map { "Job: \($0.title)" } ?? "Job-Wortschatz" }
     }
 
-    private func split(_ row: JobVocabRow) {
-        guard let index = rows.firstIndex(where: { $0.id == row.id }) else { return }
+    /// A compound's parts, for its caption: from the word as it stood in the ad, so a tutor's
+    /// dictionary form doesn't change the answer.
+    private func compoundParts(of row: JobVocabRow) -> [String]? {
+        guard !row.isPhrase else { return nil }
+        return GermanCompound.split(CardKind.split(row.fromText).word, lexicon: lexicon)
+            ?? GermanCompound.split(CardKind.split(row.german).word, lexicon: lexicon)
+    }
+
+    /// What „Split“ makes of a row: a phrase's content words, or a compound's parts.
+    private func splitParts(of row: JobVocabRow) -> [String] {
+        if row.isPhrase { return JobVocabAnalyzer.contentWords(of: row.german) }
+        return compoundParts(of: row) ?? []
+    }
+
+    private func newRows(_ words: [String], example: String?) -> [JobVocabRow] {
         let existing = Set(rows.map { CardKind.matchKey($0.german) })
-        let words = JobVocabAnalyzer.contentWords(of: row.german).filter { !existing.contains(CardKind.matchKey($0)) }
-        let fresh = JobVocabKnown.fill(words.map { JobVocabRow(german: $0, example: row.example) },
-                                       from: JobVocabKnown.index(postings: postings, decks: decks))
-        rows.replaceSubrange(index...index, with: fresh)
+        let fresh = words.filter { !existing.contains(CardKind.matchKey($0)) }
+        return JobVocabKnown.fill(fresh.map { JobVocabRow(german: $0, example: example) },
+                                  from: JobVocabKnown.index(postings: postings, decks: decks))
+    }
+
+    private func split(_ row: JobVocabRow, into parts: [String]) {
+        guard let index = rows.firstIndex(where: { $0.id == row.id }) else { return }
+        rows.replaceSubrange(index...index, with: newRows(parts, example: row.example))
+    }
+
+    /// Keep the compound and add its parts after it.
+    private func addParts(of row: JobVocabRow, parts: [String]) {
+        guard let index = rows.firstIndex(where: { $0.id == row.id }) else { return }
+        rows.insert(contentsOf: newRows(parts, example: row.example), at: index + 1)
     }
 
     private func translate() {
@@ -238,6 +282,7 @@ struct JobVocabSaveSheet: View {
 private struct JobVocabRowEditor: View {
     @Binding var row: JobVocabRow
     let tutorReady: Bool
+    var compoundParts: [String]? = nil
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -273,6 +318,11 @@ private struct JobVocabRowEditor: View {
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
                     }
+                }
+                if let compoundParts {
+                    Text(compoundParts.joined(separator: " + "))
+                        .font(.caption)
+                        .foregroundStyle(.indigo)
                 }
                 if row.german != row.fromText {
                     Text("In the ad: \(row.fromText)")

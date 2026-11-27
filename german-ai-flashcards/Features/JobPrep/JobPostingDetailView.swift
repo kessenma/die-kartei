@@ -10,7 +10,7 @@
 //
 //  Sammeln · Collect is the fast way to the deck: with it on, one tap picks a word (no inspector),
 //  a selection asks „one phrase card or a card per word?“, and the tray at the bottom turns
-//  everything picked into cards in one sheet. The Apple Pencil collects on the text surface
+//  everything picked into cards in one sheet. The Apple Pencil collects on the text and PDF surfaces
 //  whether the mode is on or not: tap a word, run over a few, or circle them.
 //
 
@@ -24,6 +24,8 @@ struct JobPostingDetailView: View {
     #if DEBUG
     /// `-jobPrep.debugOpen collect`: open in Collect mode with these words picked.
     var debugPicks: [String] = []
+    /// `-jobPrep.debugOpen pdf`: open on the saved PDF.
+    var debugSurface: JobReadingSurfaceKind? = nil
     #endif
 
     @Environment(\.modelContext) private var modelContext
@@ -63,6 +65,11 @@ struct JobPostingDetailView: View {
     @State private var showSaveSheet = false
     /// Briefly what the last bulk save did.
     @State private var collectNote: String?
+    /// The usual job-ad phrases in this ad (`JobAdGlossary`): dotted in the text, listed below.
+    @State private var adGlossary: GlossaryHighlight = .none
+    @State private var adFormulas: [JobAdFormula] = []
+    /// How much of the ad the learner's decks cover (`JobVocabCoverage`), worked out on appear.
+    @State private var coverage: JobVocabCoverage?
 
     /// The tutor the lookups run on: the one that answered earlier lookups here, else the
     /// learner's story tutor, else whatever is on disk. Never starts a download for one word.
@@ -153,6 +160,7 @@ struct JobPostingDetailView: View {
             ) { added, deckTitle, keys in
                 wordsSaved += added
                 basket.remove(keys: keys)
+                refreshCoverage()
                 flashCollectNote(added == 0 ? "Already in \(deckTitle)" : "Added \(added) to \(deckTitle)")
             }
         }
@@ -161,6 +169,7 @@ struct JobPostingDetailView: View {
             NavigationStack {
                 List {
                     lookupSection
+                    formulaSection
                     deckSection
                     wordListSection
                     interviewSection
@@ -207,6 +216,9 @@ struct JobPostingDetailView: View {
             SyncInUse.begin(posting.id)
             setUp()
             #if DEBUG
+            if let debugSurface, surface != debugSurface, posting.availableSurfaces.contains(debugSurface) {
+                surface = debugSurface
+            }
             if !debugPicks.isEmpty, basket.isEmpty {
                 collecting = true
                 for word in debugPicks { basket.add(word, example: JobVocabAnalyzer.sentence(containing: word, in: posting.text)) }
@@ -241,6 +253,7 @@ struct JobPostingDetailView: View {
             }
             readSection.themedListRow()
             lookupSection
+            formulaSection
             deckSection
             wordListSection
             interviewSection
@@ -408,7 +421,7 @@ struct JobPostingDetailView: View {
         } footer: {
             Text(collecting
                  ? "Collecting: tap the words you don't know, or select a phrase and choose Add to deck. Picked words are marked yellow; add them all from the bar below. With the Apple Pencil, tap, underline or circle words."
-                 : "Double-tap a word to translate it; select a phrase to translate, save it, or add it to the deck. Words you've saved are washed in color, words you looked up get a red dashed line. To pick many words at once, turn on Collect (the list button above) or use the Apple Pencil.")
+                 : "Double-tap a word to translate it; select a phrase to translate, save it, or add it to the deck. Words you've saved are washed in color, words you looked up get a red dashed line, the usual job-ad phrases a dotted one. To pick many words at once, turn on Collect (the list button above) or use the Apple Pencil.")
         }
     }
 
@@ -489,9 +502,79 @@ struct JobPostingDetailView: View {
         .themedListRow()
     }
 
+    /// The usual job-ad phrases this ad uses, with what they mean. A tap on the plus puts one with
+    /// the picks.
+    @ViewBuilder
+    private var formulaSection: some View {
+        if !adFormulas.isEmpty {
+            Section {
+                ForEach(adFormulas) { formula in
+                    HStack(alignment: .top, spacing: 10) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(formula.german).font(.subheadline.weight(.medium))
+                            Text(formula.english).font(.subheadline).foregroundStyle(.secondary)
+                            if let note = formula.note {
+                                Text(note).font(.caption).foregroundStyle(.tertiary)
+                            }
+                        }
+                        Spacer(minLength: 6)
+                        let picked = basket.contains(formula.german)
+                        Button {
+                            if picked {
+                                basket.toggle(formula.german, example: nil)
+                            } else {
+                                basket.add(formula.german, example: formulaExample(formula))
+                            }
+                        } label: {
+                            Image(systemName: picked ? "checkmark.circle.fill" : "plus.circle")
+                                .font(.title3)
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityLabel(picked ? "Picked" : "Pick for the deck")
+                    }
+                }
+                let unpicked = adFormulas.filter { !basket.contains($0.german) }
+                if unpicked.count > 1 {
+                    Button {
+                        for formula in unpicked { basket.add(formula.german, example: formulaExample(formula)) }
+                    } label: {
+                        Label("Pick all \(unpicked.count)", systemImage: "plus.circle.fill")
+                    }
+                }
+            } header: {
+                Text("Formeln").themedSectionHeader()
+            } footer: {
+                Text("The set phrases German job ads are written in, dotted in the text. Double-tap one for its meaning.")
+            }
+            .themedListRow()
+        }
+    }
+
+    private func formulaExample(_ formula: JobAdFormula) -> String? {
+        JobAdGlossary.matches(in: posting.text).first { $0.formula == formula }
+            .flatMap { JobVocabAnalyzer.sentence(containing: $0.span, in: posting.text) }
+    }
+
     /// Every word of the ad, counted, to tick the unknown ones in one pass.
     private var wordListSection: some View {
         Section {
+            if let coverage, coverage.distinct > 0 {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Your decks cover \(coverage.percent)% of this ad")
+                            .font(.subheadline.weight(.semibold))
+                        Spacer()
+                    }
+                    ProgressView(value: coverage.share)
+                        .tint(accent)
+                    Text(coverage.missing == 0
+                         ? "Every word here is in a deck."
+                         : "\(coverage.missing) of its \(coverage.distinct) words aren't in a deck yet.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 2)
+            }
             NavigationLink {
                 JobVocabAnalysisView(modelManager: modelManager, mlxService: mlxService, initialSelection: [posting.id])
             } label: {
@@ -601,6 +684,7 @@ struct JobPostingDetailView: View {
         JobReadingDecorations(
             savedWords: savedWords,
             lookedUpWords: Set(posting.lookups.map { $0.german.lowercased() }),
+            glossary: adGlossary,
             markedWords: basket.markedWords,
             markedPhrases: basket.markedPhrases,
             collecting: collecting
@@ -663,10 +747,30 @@ struct JobPostingDetailView: View {
     }
 
     private func setUp() {
+        if adFormulas.isEmpty, adGlossary.isEmpty {
+            adGlossary = JobAdGlossary.highlight(in: posting.text)
+            adFormulas = JobAdGlossary.formulas(in: posting.text)
+        }
         if inspector == nil {
             inspector = makeInspector(for: surface)
-        } else {
-            inspector?.knownTranslations = JobWordInspector.knownTranslations(for: posting)
+        }
+        inspector?.knownTranslations = knownTranslations
+        refreshCoverage()
+    }
+
+    /// The posting's own lookups, then the job-ad formulas it uses.
+    private var knownTranslations: [String: KnownTranslation] {
+        JobWordInspector.knownTranslations(for: posting)
+            .merging(JobAdGlossary.knownTranslations(in: posting.text)) { lookup, _ in lookup }
+    }
+
+    private func refreshCoverage() {
+        let source = posting.asVocabSource
+        let deckWords = JobVocabDeckWords.fetch(in: modelContext)
+        Task {
+            coverage = await Task.detached(priority: .utility) {
+                JobVocabCoverage.of([source], deckWords: deckWords)
+            }.value
         }
     }
 
@@ -676,7 +780,10 @@ struct JobPostingDetailView: View {
             mlxService: mlxService,
             model: lookupModel(for: kind),
             feedsCoach: modelManager.storyFeedsCoach,
-            onSaved: { wordsSaved += 1 },
+            onSaved: {
+                wordsSaved += 1
+                refreshCoverage()
+            },
             context: modelContext
         )
     }
@@ -687,6 +794,7 @@ struct JobPostingDetailView: View {
         let known = inspector?.knownTranslations ?? [:]
         inspector = makeInspector(for: kind)
         inspector?.knownTranslations.merge(known) { current, _ in current }
+        inspector?.knownTranslations.merge(knownTranslations) { current, _ in current }
 
         if kind == .web {
             if webModel == nil { webModel = makeWebModel() }
@@ -706,7 +814,7 @@ struct JobPostingDetailView: View {
 
     private func makeWebModel() -> JobReadingWebModel {
         let model = JobReadingWebModel()
-        model.onWordTap = { inspect($0) }
+        model.onWordTap = { word in collecting ? pick(word) : inspect(word) }
         model.onTranslateSelection = { inspect($0) }
         model.onSavePhrase = { phraseDraft = PhraseDraft(german: $0) }
         return model
@@ -717,7 +825,7 @@ struct JobPostingDetailView: View {
         entries.remove(atOffsets: offsets)
         posting.setLookups(entries)
         try? modelContext.save()
-        inspector?.knownTranslations = JobWordInspector.knownTranslations(for: posting)
+        inspector?.knownTranslations = knownTranslations
     }
 
     private func addAllToDeck() {

@@ -223,20 +223,55 @@ This adds a bulk path beside it. Every way in ends in the same sheet.
   a lowercase one with the same stem, unless it was only ever first on its line. The list shows
   the shortest spelling, usually the base form; the tutor gives the real dictionary form on save.
 
-Simulator: `-jobPrep.debugOpen hub|count|phrases|posting|collect|save` seeds three sample postings
+Simulator: `-jobPrep.debugOpen hub|count|phrases|formulas|posting|collect|pdf|save` seeds three sample postings
+(each with a PDF copy rendered from its text)
 (titles start „[debug]“, refused while iCloud Sync runs) and opens that screen; `collect` opens the
-first in Collect mode with four words picked, `save` the save sheet for them (`JobVocabDebug.swift`).
+first in Collect mode with four words picked, `pdf` the same on its PDF, `save` the save sheet for them (`JobVocabDebug.swift`).
 
 Tests: `german-ai-flashcardsTests/JobVocabTests.swift` (stems, counting, basic words, the noun/verb
 split, line-initial capitals, shared phrases and pruning, sentences, splitting a phrase, the
 tutor's answers by position and by word, known English by stem, saving into the posting's deck
-(article, example, phrase type, no duplicates), the basket, the Pencil's tap,
+(article, example, phrase type, no duplicates), formulas (inflected, not inside other words,
+longest wins, highlight and answers, counted across ads), compound splits and non-splits, coverage
+by stem, PDF word boxes against PDFKit's own search, the basket, the Pencil's tap,
 stroke and loop).
 
-Not built yet: the Pencil on the PDF and live-page surfaces; a remembered basket; compound
-splitting („Softwareentwicklung“ = Software + Entwicklung); a bundled glossary of job-ad
-formulas („ab sofort“, „unbefristet“, „in Wort und Schrift“) shown with the existing dotted
-glossary marking.
+### Second round (same branch)
+
+- **Pencil on the PDF** (`JobReadingPDFView+Pencil.swift`). Same gestures and the same
+  `PencilWordMarking` as the text surface. A page's words come from its text layer
+  (`PDFPage.string` + `characterBounds(at:)`, first and last letter per word, letter by letter for
+  one that wraps), built once per page on the first mark and kept in page space, moved into view
+  space per mark (`visiblePages`), so zoom doesn't matter. PDFKit's scroll views stop taking Pencil
+  touches; the word tap is fingers-only while the Pencil marks. Picked words get a yellow highlight
+  annotation (in memory, a layer of its own so a pick doesn't redraw the saved/looked-up washes).
+  The selection strip and edit menu gain *Add to deck*; Collect mode makes the PDF's word tap a
+  single tap. Covers imported PDFs and saved page copies. Live page: still not.
+- **Formeln** (`JobAdGlossary`, ~85 bundled formulas with English and a note where the English
+  misleads: „von Vorteil“ = nice to have, „setzen wir voraus“ = must, „leistungsgerechte
+  Vergütung“ says nothing about the amount). Matched word by word on stems, so inflected uses
+  count and „befristet“ is never found in „unbefristet“; where two overlap the longer wins.
+  On a posting: dotted in the text surface (`JobReadingDecorations.glossary`), answered by a
+  double-tap without the tutor, listed in a *Formeln* section with a plus to pick each (or all).
+  In the word count: a third tab, every formula the chosen ads use with its English. In the save
+  sheet: English filled from the formulas (origin „job-ad phrase“, ranked under lookups and
+  decks, over the Goethe lists).
+- **Compounds** (`GermanCompound`). Dictionary-based: every part must be a known word (Goethe
+  lists, the learner's cards, the formulas, the ads' own words), the last part a noun, linking
+  letters s/es/n/en/e/er allowed, a verb stem as first part when its infinitive is known
+  (schreib- → schreiben). A word known in its own right is never split (Mitarbeiter); the ads'
+  own words are parts only (`asWhole: false`) so an ad's compound still splits. No split when
+  nothing fits. Shown as „Arbeit + Zeit“ under the word in the count and the save sheet; in the
+  sheet a compound swipes left to *Split* (parts replace it) or right to *Add parts* (parts join it).
+- **Coverage** (`JobVocabCoverage`, `JobVocabDeckWords`). On each posting, above *Every word in
+  this ad*: „Your decks cover 64% of this ad“ with a bar and how many of its words are in no deck,
+  recounted after a save. Word uses, basic words left out; a card covers every form of its word
+  (stem, same capitalisation). The word count's „hide words in my decks“ now uses the same test,
+  so „Kenntnissen“ is hidden by a „die Kenntnis“ card.
+- Collect mode now also picks on the live page (its word tap went straight to the inspector).
+
+Not built yet: the Pencil on the live page; a remembered basket; splitting compounds whose first
+part is a language or nationality („Deutschkenntnisse“: „Deutsch“ is in no list).
 
 ## Later
 

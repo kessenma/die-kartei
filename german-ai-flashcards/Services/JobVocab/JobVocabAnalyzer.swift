@@ -46,6 +46,9 @@ nonisolated struct JobVocabTerm: Identifiable, Hashable, Sendable {
     var isPhrase: Bool
     /// An article, pronoun, preposition… (`GermanBasicWords`).
     var isBasic: Bool
+    /// A job-ad formula's English and note (`JobAdGlossary`), for the Formeln list.
+    var gloss: String? = nil
+    var note: String? = nil
 
     var id: String { (isPhrase ? "p:" : "w:") + key }
     var adCount: Int { sources.count }
@@ -188,6 +191,29 @@ nonisolated enum JobVocabAnalyzer {
             out.display = term.forms.max { $0.value != $1.value ? $0.value < $1.value : $0.key > $1.key }?.key ?? term.display
             return out
         }.sorted(by: ranking)
+    }
+
+    // MARK: - Formulas
+
+    /// The job-ad formulas the sources use (`JobAdGlossary`), most widespread first.
+    static func formulas(in sources: [JobVocabSource]) -> [JobVocabTerm] {
+        var terms: [String: JobVocabTerm] = [:]
+        for source in sources {
+            for match in JobAdGlossary.matches(in: source.text) {
+                let formula = match.formula
+                var term = terms[formula.id] ?? JobVocabTerm(
+                    key: "f:" + formula.id, display: formula.german, forms: [:], total: 0, sources: [],
+                    example: sentence(containing: match.span, in: source.text),
+                    isPhrase: JobAdGlossary.searchKey(formula.german).contains(" "), isBasic: false,
+                    gloss: formula.english, note: formula.note
+                )
+                term.forms[match.span, default: 0] += 1
+                term.total += 1
+                term.sources.insert(source.id)
+                terms[formula.id] = term
+            }
+        }
+        return terms.values.sorted(by: ranking)
     }
 
     // MARK: - Context

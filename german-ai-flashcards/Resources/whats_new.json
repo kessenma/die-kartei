@@ -5,8 +5,13 @@
       "highlights": [
         {
           "title": "Wörter sammeln · Collect words from job ads",
-          "detail": "Tap, or circle with the Pencil, the words you don't know in a job ad and add them all to a deck at once, or count the words across several ads to see which ones they share.",
+          "detail": "Tap, or circle with the Pencil (on the text or the PDF), the words you don't know in a job ad and add them all to a deck at once, or count the words across several ads to see which ones they share.",
           "symbol": "checklist"
+        },
+        {
+          "title": "Formeln · Job-ad phrases",
+          "detail": "The set phrases job ads are written in, like „von Vorteil“ or „unbefristet“, are marked with what they mean, and each ad shows how much of it your decks already cover.",
+          "symbol": "text.book.closed"
         }
       ]
     },

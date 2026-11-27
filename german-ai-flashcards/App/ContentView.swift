@@ -84,7 +84,7 @@ struct ContentView: View {
     @State private var schreibenDebug: SchreibenDebugOpen?
     @State private var hoerenDebug: HoerenDebugOpen?
     @State private var spieleDebug: SpieleDebugOpen?
-    /// `-jobPrep.debugOpen hub|count|phrases|posting|collect|save`: the job-ad word count and Collect mode.
+    /// `-jobPrep.debugOpen hub|count|phrases|formulas|posting|collect|pdf|save`: the job-ad word count and Collect mode.
     @State private var jobVocabDebug: JobVocabDebugOpen?
     #endif
     @Environment(\.modelContext) private var modelContext
@@ -677,7 +677,7 @@ struct ContentView: View {
             if UserDefaults.standard.bool(forKey: "hoeren.debugVerify") {
                 print(HoerenDebugSeeder.runVerification())
             }
-            // `-jobPrep.debugOpen hub|count|phrases|posting|collect|save`: three sample postings, then the
+            // `-jobPrep.debugOpen hub|count|phrases|formulas|posting|collect|pdf|save`: three sample postings, then the
             // word count, a posting, Collect mode with words picked, or the save sheet.
             if let raw = UserDefaults.standard.string(forKey: "jobPrep.debugOpen") {
                 jobVocabDebug = JobVocabDebugOpen(argument: raw)

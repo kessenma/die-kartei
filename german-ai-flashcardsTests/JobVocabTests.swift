@@ -12,6 +12,10 @@ import CoreGraphics
 import Foundation
 import SwiftData
 import Testing
+#if canImport(UIKit)
+import PDFKit
+import UIKit
+#endif
 @testable import Die_Kartei
 
 @MainActor
@@ -207,6 +211,95 @@ import Testing
         #expect(deck.cards.count == 2)
     }
 
+    // MARK: Job-ad formulas
+
+    @Test func formulasAreFoundInTheirInflectedForms() {
+        let text = """
+        Wir suchen ab sofort eine:n Entwickler:in (m/w/d) in Vollzeit für ein unbefristetes Arbeitsverhältnis.
+        Voraussetzung ist eine abgeschlossene Berufsausbildung; mehrjährige Berufserfahrung ist von Vorteil.
+        Sehr gute Deutschkenntnisse in Wort und Schrift setzen wir voraus.
+        """
+        let found = JobAdGlossary.formulas(in: text).map(\.german)
+        #expect(found.contains("ab sofort"))
+        #expect(found.contains("(m/w/d)"))
+        #expect(found.contains("Vollzeit"))
+        #expect(found.contains("ein unbefristetes Arbeitsverhältnis"))
+        #expect(found.contains("abgeschlossene Berufsausbildung"))
+        #expect(found.contains("in Wort und Schrift"))
+        #expect(found.contains("setzen wir voraus"))
+        // The longer formula takes the place: „Berufserfahrung“ alone is not listed again.
+        #expect(found.contains("mehrjährige Berufserfahrung"))
+        #expect(!found.contains("die Berufserfahrung"))
+        // In the order they stand.
+        #expect(found.first == "ab sofort")
+    }
+
+    @Test func aFormulaIsNotFoundInsideAnotherWord() {
+        let found = JobAdGlossary.formulas(in: "Die Stelle ist unbefristet.").map(\.german)
+        #expect(found == ["unbefristet"])
+    }
+
+    @Test func formulasMarkTheTextAndAnswerATap() {
+        let text = "Wir bieten flexible Arbeitszeiten und Gleitzeit."
+        let highlight = JobAdGlossary.highlight(in: text)
+        #expect(highlight.phrases.contains("flexible Arbeitszeiten"))
+        #expect(highlight.words["gleitzeit"]?.english == "flexitime")
+        #expect(JobAdGlossary.knownTranslations(in: text)["wir bieten"]?.english == "We offer")
+    }
+
+    @Test func formulasAreCountedAcrossAds() {
+        let one = JobVocabSource(id: UUID(), title: "1", text: "Ab sofort in Teilzeit.")
+        let two = JobVocabSource(id: UUID(), title: "2", text: "Wir suchen dich ab sofort.")
+        let terms = JobVocabAnalyzer.formulas(in: [one, two])
+        #expect(terms.first?.display == "ab sofort")
+        #expect(terms.first?.adCount == 2)
+        #expect(terms.first?.gloss == "starting immediately")
+    }
+
+    // MARK: Compounds
+
+    private var lexicon: GermanCompoundLexicon {
+        var lexicon = GermanCompoundLexicon()
+        for (word, noun) in [("Software", true), ("Entwicklung", true), ("Beruf", true), ("Erfahrung", true),
+                             ("Kunde", true), ("Service", true), ("Mitarbeiter", true), ("Arbeit", true),
+                             ("Zeit", true), ("schreiben", false), ("Tisch", true), ("Team", true),
+                             ("Fähigkeit", true), ("mit", false), ("Arbeiter", true)] {
+            lexicon.add(word, noun: noun)
+        }
+        return lexicon
+    }
+
+    @Test func compoundsSplitIntoKnownWords() {
+        #expect(GermanCompound.split("Softwareentwicklung", lexicon: lexicon) == ["Software", "Entwicklung"])
+        #expect(GermanCompound.split("Berufserfahrung", lexicon: lexicon) == ["Beruf", "Erfahrung"])
+        #expect(GermanCompound.split("Arbeitszeiten", lexicon: lexicon) == ["Arbeit", "Zeit"])
+        #expect(GermanCompound.split("Schreibtisch", lexicon: lexicon) == ["schreiben", "Tisch"])
+        #expect(GermanCompound.split("Teamfähigkeit", lexicon: lexicon) == ["Team", "Fähigkeit"])
+        #expect(GermanCompound.split("Kundenservicemitarbeiter", lexicon: lexicon) == ["Kunde", "Service", "Mitarbeiter"])
+    }
+
+    @Test func aKnownWordOrAnUnknownPartIsNotSplit() {
+        // „Mitarbeiter“ is a word of its own, not mit + Arbeiter.
+        #expect(GermanCompound.split("Mitarbeiter", lexicon: lexicon) == nil)
+        #expect(GermanCompound.split("Informatik", lexicon: lexicon) == nil)
+        #expect(GermanCompound.split("Quantenentwicklung", lexicon: lexicon) == nil)
+        // The ads' own words are parts only: an ad's compound is still split.
+        var withAd = lexicon
+        withAd.add("Softwareentwicklung", noun: true, asWhole: false)
+        #expect(GermanCompound.split("Softwareentwicklung", lexicon: withAd) == ["Software", "Entwicklung"])
+    }
+
+    // MARK: Coverage
+
+    @Test func coverageCountsEveryFormOfADeckWord() {
+        let ad = JobVocabSource(id: UUID(), title: "C", text: "Kenntnisse in Swift. Gute Kenntnissen und Erfahrung mit Teams.")
+        let decks = JobVocabDeckWords(germanWords: ["die Kenntnis", "die Erfahrung"])
+        let coverage = JobVocabCoverage.of([ad], deckWords: decks)
+        // Content words: Kenntnisse ×2, Swift, gute, Erfahrung, Teams → 3 of 6 uses covered.
+        #expect(coverage.percent == 50)
+        #expect(coverage.missing == 3)
+    }
+
     // MARK: The basket
 
     @Test func theBasketTogglesAndDedupes() {
@@ -248,6 +341,39 @@ import Testing
         let underline = (0...30).map { CGPoint(x: 2 + CGFloat($0) * 4, y: 24) }
         #expect(PencilWordMarking.hits(.stroke(underline), words: boxes).contains(0))
     }
+
+    #if canImport(UIKit)
+    /// The Pencil on a PDF finds words by the boxes the page's text layer gives: each word's box
+    /// must sit where PDFKit's own search puts it, so a tap in its middle marks it.
+    @Test func pdfWordBoxesSitOnTheirWords() throws {
+        let bounds = CGRect(x: 0, y: 0, width: 595, height: 842)
+        let data = UIGraphicsPDFRenderer(bounds: bounds).pdfData { context in
+            context.beginPage()
+            NSAttributedString(string: "Fundierte Kenntnisse in agilen Methoden\nSehr gute Deutschkenntnisse in Wort und Schrift",
+                               attributes: [.font: UIFont.systemFont(ofSize: 14)])
+                .draw(in: bounds.insetBy(dx: 48, dy: 48))
+        }
+        let document = try #require(PDFDocument(data: data))
+        let page = try #require(document.page(at: 0))
+        let view = JobReadingPDFView()
+        let words = view.pageWords(page)
+        #expect(words.map(\.text).contains("Deutschkenntnisse"))
+
+        for target in ["Kenntnisse", "Methoden", "Schrift"] {
+            let word = try #require(words.first { $0.text == target })
+            let found = try #require(document.findString(target, withOptions: []).first { selection in
+                let box = selection.bounds(for: page)
+                return box.width < 200 && word.rects[0].intersects(box)
+            })
+            let box = found.bounds(for: page)
+            #expect(word.rects[0].insetBy(dx: -2, dy: -2).contains(CGPoint(x: box.midX, y: box.midY)))
+            // A Pencil tap in the middle of the box marks this word and no other.
+            let center = CGPoint(x: word.rects[0].midX, y: word.rects[0].midY)
+            let hits = PencilWordMarking.hits(.tap(center), words: words.map(\.rects))
+            #expect(hits.map { words[$0].text } == [target])
+        }
+    }
+    #endif
 
     @Test func aLoopMarksTheWordsInside() {
         let center = CGPoint(x: 110, y: 10), rx: CGFloat = 100, ry: CGFloat = 22

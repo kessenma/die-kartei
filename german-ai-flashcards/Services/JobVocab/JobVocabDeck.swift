@@ -32,7 +32,7 @@ struct JobVocabRow: Identifiable, Hashable {
     var origin: Origin = .none
 
     enum Origin: String, Hashable {
-        case none, lookup, deck, goethe, tutor, typed
+        case none, lookup, deck, goethe, glossary, tutor, typed
 
         var label: String? {
             switch self {
@@ -40,6 +40,7 @@ struct JobVocabRow: Identifiable, Hashable {
             case .lookup: "looked up"
             case .deck: "in a deck"
             case .goethe: "Goethe list"
+            case .glossary: "job-ad phrase"
             case .tutor: "tutor"
             }
         }
@@ -70,13 +71,17 @@ enum JobVocabKnown {
     }
 
     /// Everything known, by `CardKind.matchKey`. Looked-up words win over deck cards, which win
-    /// over the Goethe lists: the nearer to this learner and these ads, the better the answer.
+    /// over the job-ad formulas (`JobAdGlossary`), which win over the Goethe lists: the nearer to
+    /// this learner and these ads, the better the answer.
     static func index(postings: [JobPosting], decks: [SavedDeck]) -> [String: Entry] {
         var known: [String: Entry] = [:]
         for word in GoetheVocabService.orderedWords {
             guard let english = word.translation?.trimmingCharacters(in: .whitespaces), !english.isEmpty else { continue }
             let german = [word.article, word.word].compactMap { $0 }.joined(separator: " ")
             known[CardKind.matchKey(word.word)] = Entry(german: german, english: english, origin: .goethe)
+        }
+        for formula in JobAdGlossary.all {
+            known[CardKind.matchKey(formula.german)] = Entry(german: formula.german, english: formula.english, origin: .glossary)
         }
         for deck in decks where deck.isBrowsableContent {
             for card in deck.cards where !card.englishTranslation.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -122,8 +127,9 @@ enum JobVocabKnown {
 
     private static func rank(_ origin: JobVocabRow.Origin) -> Int {
         switch origin {
-        case .lookup: 3
-        case .deck: 2
+        case .lookup: 4
+        case .deck: 3
+        case .glossary: 2
         case .goethe: 1
         default: 0
         }
