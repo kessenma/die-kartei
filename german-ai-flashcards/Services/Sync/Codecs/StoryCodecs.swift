@@ -26,14 +26,7 @@ import SwiftData
 enum StudyStoryCodec: SyncCodec {
     typealias Model = StudyStory
 
-    static let spec = SyncKindSpec(
-        kind: "StudyStory",
-        rules: [
-            "bestScore": .max,
-            "generationComplete": .or,
-            "lookups": .set(idField: "german", lowercasedID: true),
-        ]
-    )
+    static let spec = SyncKinds.studyStory
 
     static func recordName(for model: StudyStory) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)
@@ -120,7 +113,7 @@ enum StudyStoryCodec: SyncCodec {
 enum StoryReadingSessionCodec: SyncCodec {
     typealias Model = StoryReadingSession
 
-    static let spec = SyncKindSpec(kind: "StoryReadingSession")
+    static let spec = SyncKinds.storyReadingSession
 
     static func recordName(for model: StoryReadingSession) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)
@@ -185,7 +178,7 @@ enum StoryReadingSessionCodec: SyncCodec {
 enum StoryQuizAttemptCodec: SyncCodec {
     typealias Model = StoryQuizAttempt
 
-    static let spec = SyncKindSpec(kind: "StoryQuizAttempt")
+    static let spec = SyncKinds.storyQuizAttempt
 
     static func recordName(for model: StoryQuizAttempt) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)
@@ -255,7 +248,7 @@ enum StoryQuizAttemptCodec: SyncCodec {
 enum StudyPaperCodec: SyncCodec {
     typealias Model = StudyPaper
 
-    static let spec = SyncKindSpec(kind: "StudyPaper", rules: ["generationComplete": .or])
+    static let spec = SyncKinds.studyPaper
 
     static func recordName(for model: StudyPaper) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)

@@ -1,54 +1,16 @@
 import Foundation
 import SwiftData
 
-/// The calendar date a `StudyDay` belongs to, as `yyyy-MM-dd`.
-///
-/// `dayStart` is an absolute instant: local midnight wherever the row was written. Formatting it
-/// directly would put a Berlin row on the previous date when read in New York. Formatting
-/// `dayStart + 12 h` lands mid-day, which reads as the same date in any time zone less than 12 hours
-/// away.
-enum SyncDayKey {
-    static func key(for dayStart: Date, calendar: Calendar = .current) -> String {
-        formatter(calendar).string(from: dayStart.addingTimeInterval(12 * 3600))
-    }
-
-    /// Local midnight of the date a key names, in this device's calendar.
-    static func dayStart(for key: String, calendar: Calendar = .current) -> Date? {
-        guard let noon = formatter(calendar).date(from: key)?.addingTimeInterval(12 * 3600) else { return nil }
-        return calendar.startOfDay(for: noon)
-    }
-
-    private static func formatter(_ calendar: Calendar) -> DateFormatter {
-        let f = DateFormatter()
-        f.calendar = Calendar(identifier: .gregorian)
-        f.timeZone = calendar.timeZone
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }
-}
+// `SyncDayKey` lives in `Core/SyncKinds.swift`, shared with Android.
 
 /// One study day: every activity tally is a per-device counter, so two devices studying the same
 /// day add up instead of overwriting each other. That makes XP, the streak and the daily goal right.
 enum StudyDayCodec: SyncCodec {
     typealias Model = StudyDay
 
-    static let counterFields = [
-        "cardsReviewed", "grammarExercises", "conversations", "storySeconds", "storyQuestions",
-        "cardSeconds", "grammarSeconds", "conversationSeconds", "storyQuizSeconds",
-        "newWordsIntroduced", "newWordsBonus",
-        "gameSeconds", "gameWordsSolved",
-        "wordsDrawn", "drawingSeconds",
-        "wordsWritten", "writingSeconds",
-        "sheetWordsWritten",
-        "hoerenItems", "hoerenSeconds",
-    ]
+    static let counterFields = SyncKinds.studyDayCounterFields
 
-    static let spec: SyncKindSpec = {
-        var rules = Dictionary(uniqueKeysWithValues: counterFields.map { ($0, SyncFieldRule.counter) })
-        rules["lastActivityAt"] = .max
-        return SyncKindSpec(kind: "StudyDay", rules: rules)
-    }()
+    static let spec = SyncKinds.studyDay
 
     static func recordName(for model: StudyDay) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, naturalKey: SyncDayKey.key(for: model.dayStart))

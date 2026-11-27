@@ -33,10 +33,7 @@ private enum ClassDayKey {
 enum ClassCourseCodec: SyncCodec {
     typealias Model = ClassCourse
 
-    static let spec = SyncKindSpec(kind: "ClassCourse", rules: [
-        "updatedAt": .max,
-        "questions": .keyed(item: .lwwBy("at")),
-    ])
+    static let spec = SyncKinds.classCourse
 
     static func recordName(for model: ClassCourse) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)
@@ -132,14 +129,7 @@ enum ClassCourseCodec: SyncCodec {
 enum ClassEntryCodec: SyncCodec {
     typealias Model = ClassEntry
 
-    static let spec = SyncKindSpec(
-        kind: "ClassEntry",
-        rules: [
-            "updatedAt": .max,
-            "words": .set(idField: "id"),
-            "teacherCorrections": .set(idField: "id"),
-        ]
-    )
+    static let spec = SyncKinds.classEntry
 
     static func recordName(for model: ClassEntry) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)
@@ -237,14 +227,7 @@ enum ClassEntryCodec: SyncCodec {
 enum ClassMaterialCodec: SyncCodec {
     typealias Model = ClassMaterial
 
-    static let spec = SyncKindSpec(
-        kind: "ClassMaterial",
-        rules: [
-            "lookups": .set(idField: "german", lowercasedID: true),
-            "worksheetAnswers": .keyed(item: .lwwBy("at")),
-        ],
-        groups: [SyncFieldGroup(fields: ["translation", "translationModelRaw"], orderBy: [])]
-    )
+    static let spec = SyncKinds.classMaterial
 
     static func recordName(for model: ClassMaterial) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)

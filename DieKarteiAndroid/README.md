@@ -13,7 +13,8 @@ bigger picture.
 - **CLlama**: llama.cpp's C API, for the tutor models (Android only). The libraries come from
   `../scripts/build_llama_android.sh`; `TutorEngine.swift` calls them from Swift directly.
 - **KarteiStore**: the app's SQLite database (`files/kartei.sqlite`) on SkipSQLPlus, which
-  builds its own SQLite 3.51.3. Opened at launch by `AppDatabase`; host tests:
+  builds its own SQLite 3.51.3. Opened at launch by `AppDatabase`. `RecordStore` keeps synced
+  data as iOS sync records (same ids and payloads, per-device counters); host tests:
   `swift test --filter KarteiStoreTests`.
 - **DieKartei**: the Android screens. It uses the core through `@testable import` so the iOS
   app's internal types stay internal.
@@ -23,8 +24,9 @@ Today the tab bar matches iOS: Home, Grammar, Library, Settings.
 - Library: the three Goethe decks with their progress.
 - Settings: Appearance, Voice (sample + Android's voice settings), Your Level, Flashcards (new
   words per session, reset a deck), Sources & Credits.
-- Karten: the Goethe deck with spaced repetition (shared SM-2, four rating buttons, progress
-  in SharedPreferences), with a speaker button.
+- Karten: the Goethe deck with spaced repetition (shared SM-2, four rating buttons), with a
+  speaker button. Progress is one Wortschatz deck in the database, with the iOS card ids
+  (`StudyStore` on `RecordStore`; docs/android-parity/persistence.md).
 - Wortschatz: the A1–B1 lists, searchable.
 - Grammatik: Kasus lessons (with the case-colour markup), der/die/das with ArticleRules hints,
   Präpositionen, the four Lückensatz sets, Perfekt haben/sein, Die vier Fälle.

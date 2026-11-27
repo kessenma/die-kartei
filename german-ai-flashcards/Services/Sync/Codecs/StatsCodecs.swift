@@ -5,25 +5,7 @@ import SwiftData
 /// and the Kasus drill (prepositions) each keep one lifetime row per word and one log row per
 /// finished round, with the same fields and the same merge.
 private enum GameStatSync {
-    /// A per-word stat row. Seen and missed are per-device counters and the wrong-pick tally is one
-    /// counter per wrong answer, so play on two devices adds up. The first-try streak and
-    /// `lastSeenAt` are taken together from the device that saw the word last: a streak is an
-    /// unbroken run of rounds, and two devices' runs can't be added. `lastSeenAt` sits in the group,
-    /// as `lastReviewedAt` does in a card's schedule: a miss that leaves the streak at 0 doesn't
-    /// change it, and a streak-only group would then take the other device's older streak.
-    /// `lastSeenAt` still comes out as the later time. `lastMissedAt` takes the later time.
-    static func statSpec(kind: String, tally: String) -> SyncKindSpec {
-        SyncKindSpec(
-            kind: kind,
-            rules: [
-                "timesSeen": .counter,
-                "timesMissed": .counter,
-                tally: .counterMap,
-                "lastMissedAt": .max,
-            ],
-            groups: [SyncFieldGroup(fields: ["firstTryStreak", "lastSeenAt"], orderBy: ["lastSeenAt"])]
-        )
-    }
+    // The stat spec (`SyncKinds.gameStat`) and `roundKey` are shared with Android in `Core/SyncKinds.swift`.
 
     /// A `[String: Int]` tally blob as an object of plain integers, which `.counterMap` turns into
     /// one counter per answer. Nil when there is no tally yet.
@@ -45,10 +27,8 @@ private enum GameStatSync {
         return try? JSONEncoder().encode(tally)
     }
 
-    /// A round row has no id, so its record is named after its content. Rounds are never edited,
-    /// and two rounds can't finish at the same instant on the same topic.
     static func roundKey(date: Date, topic: String, counts: [Int]) -> String {
-        (["\(date.timeIntervalSinceReferenceDate)", topic] + counts.map { String($0) }).joined(separator: "|")
+        SyncNaturalKeys.roundKey(date: date, topic: topic, counts: counts)
     }
 }
 
@@ -64,7 +44,7 @@ private enum GameStatSync {
 enum MatchingPairStatCodec: SyncCodec {
     typealias Model = MatchingPairStat
 
-    static let spec = GameStatSync.statSpec(kind: "MatchingPairStat", tally: "confusions")
+    static let spec = SyncKinds.matchingPairStat
 
     static func recordName(for model: MatchingPairStat) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, naturalKey: model.key)
@@ -124,7 +104,7 @@ enum MatchingPairStatCodec: SyncCodec {
 enum MatchingRoundCodec: SyncCodec {
     typealias Model = MatchingRound
 
-    static let spec = SyncKindSpec(kind: "MatchingRound")
+    static let spec = SyncKinds.matchingRound
 
     static func recordName(for model: MatchingRound) -> SyncRecordName {
         let key = GameStatSync.roundKey(date: model.date, topic: model.topic,
@@ -179,7 +159,7 @@ enum MatchingRoundCodec: SyncCodec {
 enum ArticleWordStatCodec: SyncCodec {
     typealias Model = ArticleWordStat
 
-    static let spec = GameStatSync.statSpec(kind: "ArticleWordStat", tally: "wrongPicks")
+    static let spec = SyncKinds.articleWordStat
 
     static func recordName(for model: ArticleWordStat) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, naturalKey: model.key)
@@ -238,7 +218,7 @@ enum ArticleWordStatCodec: SyncCodec {
 enum ArticleRoundCodec: SyncCodec {
     typealias Model = ArticleRound
 
-    static let spec = SyncKindSpec(kind: "ArticleRound")
+    static let spec = SyncKinds.articleRound
 
     static func recordName(for model: ArticleRound) -> SyncRecordName {
         let key = GameStatSync.roundKey(date: model.date, topic: model.topic,
@@ -293,7 +273,7 @@ enum ArticleRoundCodec: SyncCodec {
 enum PrepositionStatCodec: SyncCodec {
     typealias Model = PrepositionStat
 
-    static let spec = GameStatSync.statSpec(kind: "PrepositionStat", tally: "wrongPicks")
+    static let spec = SyncKinds.prepositionStat
 
     static func recordName(for model: PrepositionStat) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, naturalKey: model.key)
@@ -352,7 +332,7 @@ enum PrepositionStatCodec: SyncCodec {
 enum PrepositionRoundCodec: SyncCodec {
     typealias Model = PrepositionRound
 
-    static let spec = SyncKindSpec(kind: "PrepositionRound")
+    static let spec = SyncKinds.prepositionRound
 
     static func recordName(for model: PrepositionRound) -> SyncRecordName {
         let key = GameStatSync.roundKey(date: model.date, topic: model.topic,

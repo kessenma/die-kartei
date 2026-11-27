@@ -30,35 +30,15 @@ import SwiftData
 enum LearnerProfileCodec: SyncCodec {
     typealias Model = LearnerProfile
 
-    static let spec = SyncKindSpec(
-        kind: "LearnerProfile",
-        rules: [
-            "sessionCount": .counter,
-            "lastSessionAt": .max,
-            "grammar": .keyed(item: .lwwBy("lastSeen")),
-            "vocab": .set(idField: "german", lowercasedID: true, item: .lwwBy("lastSeen"), sortBy: "lastSeen"),
-            "slips": .set(idField: "id", item: .lwwBy("lastSeen"), sortBy: "lastSeen"),
-            // What the learner said they find hard (the journal hand-off). Matched on the
-            // computed `SelfReportNote.id`, written in like a slip's. A payload from a build
-            // without the field merges as an empty set, so the notes on the other side survive.
-            "selfReports": .set(idField: "id", item: .lwwBy("notedAt"), sortBy: "notedAt"),
-        ],
-        normalize: LearnerProfileCodec.normalize
-    )
+    static let spec = SyncKinds.learnerProfile
 
-    /// No sessions left after the merge means no last session: a reset on either device wins over
-    /// the other device's older date. Deterministic, so both devices normalize to the same bytes.
+    /// Shared with Android: `SyncKinds.normalizeLearnerProfile`.
     nonisolated static func normalize(_ payload: SyncPayload) -> SyncPayload {
-        guard payload["lastSessionAt"] != nil, SyncCounter(json: payload["sessionCount"]).value <= 0 else {
-            return payload
-        }
-        var out = payload
-        out["lastSessionAt"] = nil
-        return out
+        SyncKinds.normalizeLearnerProfile(payload)
     }
 
     /// The one name every device's profile row goes by.
-    static let singletonName = SyncRecordName(kind: "LearnerProfile", id: SyncNameUUID.make("learner-profile"))
+    static let singletonName = SyncKinds.learnerProfileName
 
     static func recordName(for model: LearnerProfile) -> SyncRecordName { singletonName }
 
@@ -160,7 +140,7 @@ enum LearnerProfileCodec: SyncCodec {
 enum ArchivedMemoryItemCodec: SyncCodec {
     typealias Model = ArchivedMemoryItem
 
-    static let spec = SyncKindSpec(kind: "ArchivedMemoryItem", rules: ["archivedAt": .min])
+    static let spec = SyncKinds.archivedMemoryItem
 
     static func recordName(for model: ArchivedMemoryItem) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, naturalKey: naturalKey(for: model))

@@ -5,10 +5,7 @@ import SwiftData
 enum LearnedPhraseCodec: SyncCodec {
     typealias Model = LearnedPhrase
 
-    static let spec = SyncKindSpec(
-        kind: "LearnedPhrase",
-        rules: ["lastSurfacedAt": .max, "surfacedCount": .max]
-    )
+    static let spec = SyncKinds.learnedPhrase
 
     static func recordName(for model: LearnedPhrase) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)

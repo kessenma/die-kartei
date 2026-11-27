@@ -9,7 +9,7 @@ import SwiftData
 enum WordArtworkCodec: SyncCodec {
     typealias Model = WordArtwork
 
-    static let spec = SyncKindSpec(kind: "WordArtwork")
+    static let spec = SyncKinds.wordArtwork
 
     static func recordName(for model: WordArtwork) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)
@@ -89,15 +89,9 @@ enum WordArtworkCodec: SyncCodec {
 enum WordDrawingStatCodec: SyncCodec {
     typealias Model = WordDrawingStat
 
-    static let counterFields = ["quickCount", "studioCount", "paintedCount", "recallRight", "recallMissed"]
+    static let counterFields = SyncKinds.wordDrawingCounterFields
 
-    static let spec: SyncKindSpec = {
-        var rules = Dictionary(uniqueKeysWithValues: counterFields.map { ($0, SyncFieldRule.counter) })
-        rules["lastQuickAt"] = .max
-        rules["lastStudioAt"] = .max
-        rules["lastPaintedAt"] = .max
-        return SyncKindSpec(kind: "WordDrawingStat", rules: rules)
-    }()
+    static let spec = SyncKinds.wordDrawingStat
 
     static func recordName(for model: WordDrawingStat) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, naturalKey: model.key)
@@ -161,7 +155,7 @@ enum WordDrawingStatCodec: SyncCodec {
 enum QuickDrawSetCodec: SyncCodec {
     typealias Model = QuickDrawSet
 
-    static let spec = SyncKindSpec(kind: "QuickDrawSet")
+    static let spec = SyncKinds.quickDrawSet
 
     static func recordName(for model: QuickDrawSet) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)

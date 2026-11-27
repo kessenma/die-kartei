@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Rules
 
 /// How to settle one item of a set or keyed field that both sides changed.
-nonisolated enum SyncItemRule: Sendable {
+nonisolated enum SyncItemRule: Sendable, Equatable {
     /// Take the payload-level winner's copy (later `_t`, then canonical bytes).
     case lww
     /// Take the copy with the larger number or date in this field, then the payload-level winner's.
@@ -11,7 +11,7 @@ nonisolated enum SyncItemRule: Sendable {
 }
 
 /// How one payload field merges when both devices changed the row.
-nonisolated enum SyncFieldRule: Sendable {
+nonisolated enum SyncFieldRule: Sendable, Equatable {
     /// Three-way against the last server copy: a side that didn't change the field takes the
     /// other side's value. If both changed it, the payload-level winner's value is kept.
     case lww
@@ -41,7 +41,7 @@ nonisolated enum SyncFieldRule: Sendable {
 /// Fields that must travel together, taken whole from one side: an SRS schedule must never be
 /// half one review and half another. Conflicting copies are ordered by `orderBy` (numbers or
 /// dates, missing = lowest, larger wins), then by the payload-level winner.
-nonisolated struct SyncFieldGroup: Sendable {
+nonisolated struct SyncFieldGroup: Sendable, Equatable {
     let fields: [String]
     let orderBy: [String]
 }

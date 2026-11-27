@@ -18,16 +18,7 @@ import SwiftData
 enum JournalEntryCodec: SyncCodec {
     typealias Model = JournalEntry
 
-    static let spec = SyncKindSpec(
-        kind: "JournalEntry",
-        rules: [
-            "updatedAt": .max,
-            "sharedWithCoachAt": .max,
-            "creditedWords": .max,
-            "lookups": .set(idField: "german", lowercasedID: true, item: .lwwBy("at")),
-        ],
-        groups: [SyncFieldGroup(fields: ["check", "checkedAt", "checkedModelID", "checkedTextHash"], orderBy: [])]
-    )
+    static let spec = SyncKinds.journalEntry
 
     static func recordName(for model: JournalEntry) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)

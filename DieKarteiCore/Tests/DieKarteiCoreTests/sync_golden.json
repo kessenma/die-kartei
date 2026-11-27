@@ -1,0 +1,294 @@
+{
+  "ids" : {
+    "card:Sie" : "9102E734-9976-59D6-9F94-4C6CB56B50E2",
+    "card:sie" : "50D34EE3-8DF7-5F37-94A0-4EEDA1308BC5",
+    "learnerProfile" : "LearnerProfile:1F3C8F95-B429-52FA-B9E6-1AB24850101C",
+    "studyDay:2026-11-27" : "StudyDay:4E933518-1919-5DC3-8FCA-871D14856A10",
+    "wortschatzDeck" : "57008407-D4C8-5F7B-A3C9-25B3CF29C607"
+  },
+  "records" : [
+    {
+      "kind" : "SavedDeck",
+      "label" : "full",
+      "name" : "SavedDeck:11111111-1111-4111-8111-111111111111",
+      "payload" : {
+        "courseIDRaw" : "22222222-2222-4222-8222-222222222222",
+        "createdAt" : 815000000.25,
+        "generationTimeSeconds" : 12.5,
+        "generatorRaw" : "gemma-e4b",
+        "id" : "11111111-1111-4111-8111-111111111111",
+        "includeConjugations" : true,
+        "includeExamples" : true,
+        "includeGender" : false,
+        "macPictureRequest" : {
+          "id" : "r1",
+          "words" : [
+            "Hund",
+            "Katze"
+          ]
+        },
+        "macPictureResult" : {
+          "done" : [
+            "Hund"
+          ],
+          "request" : "r1"
+        },
+        "selectedTenses" : [
+          "Präsens",
+          "Perfekt"
+        ],
+        "sourceFile" : "handout.pdf",
+        "sourceText" : "Wir fahren nach Berlin.",
+        "topic" : "Reise",
+        "wordCount" : 12,
+        "wordTypeFilterRaw" : "Nouns"
+      }
+    },
+    {
+      "kind" : "SavedDeck",
+      "label" : "bare",
+      "name" : "SavedDeck:33333333-3333-4333-8333-333333333333",
+      "payload" : {
+        "courseIDRaw" : null,
+        "createdAt" : 815000100,
+        "generationTimeSeconds" : 0,
+        "generatorRaw" : "",
+        "id" : "33333333-3333-4333-8333-333333333333",
+        "includeConjugations" : false,
+        "includeExamples" : false,
+        "includeGender" : true,
+        "macPictureRequest" : null,
+        "macPictureResult" : null,
+        "selectedTenses" : [
+
+        ],
+        "sourceFile" : null,
+        "sourceText" : null,
+        "topic" : "Leer",
+        "wordCount" : 0,
+        "wordTypeFilterRaw" : "All"
+      }
+    },
+    {
+      "kind" : "SavedDeck",
+      "label" : "wortschatz",
+      "name" : "SavedDeck:57008407-D4C8-5F7B-A3C9-25B3CF29C607",
+      "payload" : {
+        "courseIDRaw" : null,
+        "createdAt" : 815000200,
+        "generationTimeSeconds" : 0,
+        "generatorRaw" : "goethe-srs",
+        "id" : "57008407-D4C8-5F7B-A3C9-25B3CF29C607",
+        "includeConjugations" : false,
+        "includeExamples" : true,
+        "includeGender" : true,
+        "macPictureRequest" : null,
+        "macPictureResult" : null,
+        "selectedTenses" : [
+
+        ],
+        "sourceFile" : null,
+        "sourceText" : null,
+        "topic" : "Goethe Vocabulary",
+        "wordCount" : 2825,
+        "wordTypeFilterRaw" : "All"
+      }
+    },
+    {
+      "kind" : "SavedCard",
+      "label" : "full",
+      "name" : "SavedCard:44444444-4444-4444-8444-444444444444",
+      "payload" : {
+        "article" : null,
+        "conjugations" : [
+          {
+            "du" : "fährst",
+            "erSieEs" : "fährt",
+            "ich" : "fahre",
+            "ihr" : "fahrt",
+            "sieSie" : "fahren",
+            "tense" : "Präsens",
+            "wir" : "fahren"
+          }
+        ],
+        "deck" : "11111111-1111-4111-8111-111111111111",
+        "easeFactor" : 2.36,
+        "englishTranslation" : "to drive",
+        "exampleSentence" : "Wir fahren morgen.",
+        "firstReviewedAt" : 814000000,
+        "formsLine" : "fährt · ist gefahren",
+        "germanWord" : "fahren",
+        "id" : "44444444-4444-4444-8444-444444444444",
+        "imageFileName" : "fahren.jpg",
+        "interval" : 6,
+        "lapses" : 1,
+        "lastReviewWasCorrect" : false,
+        "lastReviewedAt" : 815000400.5,
+        "leitnerBox" : 3,
+        "nextReviewDate" : 815500000,
+        "repetitions" : 2,
+        "sortOrder" : 3,
+        "totalReviews" : 5,
+        "wordType" : "verb"
+      }
+    },
+    {
+      "kind" : "SavedCard",
+      "label" : "bare",
+      "name" : "SavedCard:55555555-5555-4555-8555-555555555555",
+      "payload" : {
+        "article" : null,
+        "conjugations" : null,
+        "deck" : "33333333-3333-4333-8333-333333333333",
+        "easeFactor" : 2.5,
+        "englishTranslation" : "empty",
+        "exampleSentence" : null,
+        "firstReviewedAt" : null,
+        "formsLine" : null,
+        "germanWord" : "leer",
+        "id" : "55555555-5555-4555-8555-555555555555",
+        "imageFileName" : null,
+        "interval" : 0,
+        "lapses" : 0,
+        "lastReviewWasCorrect" : null,
+        "lastReviewedAt" : null,
+        "leitnerBox" : 0,
+        "nextReviewDate" : null,
+        "repetitions" : 0,
+        "sortOrder" : 0,
+        "totalReviews" : 0,
+        "wordType" : null
+      }
+    },
+    {
+      "kind" : "SavedCard",
+      "label" : "wortschatz",
+      "name" : "SavedCard:9102E734-9976-59D6-9F94-4C6CB56B50E2",
+      "payload" : {
+        "article" : null,
+        "conjugations" : null,
+        "deck" : "57008407-D4C8-5F7B-A3C9-25B3CF29C607",
+        "easeFactor" : 2.6,
+        "englishTranslation" : "you (formal)",
+        "exampleSentence" : "Kommen Sie aus Berlin?",
+        "firstReviewedAt" : 815000400,
+        "formsLine" : null,
+        "germanWord" : "Sie",
+        "id" : "9102E734-9976-59D6-9F94-4C6CB56B50E2",
+        "imageFileName" : null,
+        "interval" : 1,
+        "lapses" : 0,
+        "lastReviewWasCorrect" : true,
+        "lastReviewedAt" : 815000400,
+        "leitnerBox" : 1,
+        "nextReviewDate" : 815086800,
+        "repetitions" : 1,
+        "sortOrder" : 41,
+        "totalReviews" : 1,
+        "wordType" : "pronoun"
+      }
+    },
+    {
+      "kind" : "QuizResult",
+      "label" : "full",
+      "name" : "QuizResult:66666666-6666-4666-8666-666666666666",
+      "payload" : {
+        "ankiRatings" : {
+          "0" : 3,
+          "1" : 1,
+          "2" : 4
+        },
+        "correctCount" : 7,
+        "date" : 815000500,
+        "deck" : "11111111-1111-4111-8111-111111111111",
+        "durationSeconds" : 95,
+        "id" : "66666666-6666-4666-8666-666666666666",
+        "incorrectCardIndices" : [
+          1,
+          4,
+          9
+        ],
+        "studyModeRaw" : "Anki",
+        "subDeckLabel" : "Teil 1",
+        "totalCards" : 10
+      }
+    },
+    {
+      "kind" : "QuizResult",
+      "label" : "bare",
+      "name" : "QuizResult:77777777-7777-4777-8777-777777777777",
+      "payload" : {
+        "ankiRatings" : null,
+        "correctCount" : 0,
+        "date" : 815000600,
+        "deck" : "33333333-3333-4333-8333-333333333333",
+        "durationSeconds" : 0,
+        "id" : "77777777-7777-4777-8777-777777777777",
+        "incorrectCardIndices" : [
+
+        ],
+        "studyModeRaw" : "Default",
+        "subDeckLabel" : null,
+        "totalCards" : 1
+      }
+    },
+    {
+      "kind" : "StudyDay",
+      "label" : "full",
+      "name" : "StudyDay:4E933518-1919-5DC3-8FCA-871D14856A10",
+      "payload" : {
+        "cardSeconds" : 6,
+        "cardsReviewed" : 1,
+        "conversationSeconds" : 8,
+        "conversations" : 3,
+        "day" : "2026-11-27",
+        "drawingSeconds" : 15,
+        "gameSeconds" : 12,
+        "gameWordsSolved" : 13,
+        "grammarExercises" : 2,
+        "grammarSeconds" : 7,
+        "hoerenItems" : 19,
+        "hoerenSeconds" : 20,
+        "lastActivityAt" : 816000000.75,
+        "newWordsBonus" : 11,
+        "newWordsIntroduced" : 10,
+        "sheetWordsWritten" : 18,
+        "storyQuestions" : 5,
+        "storyQuizSeconds" : 9,
+        "storySeconds" : 4,
+        "wordsDrawn" : 14,
+        "wordsWritten" : 16,
+        "writingSeconds" : 17
+      }
+    },
+    {
+      "kind" : "StudyDay",
+      "label" : "bare",
+      "name" : "StudyDay:AEF9D402-6C9E-57F2-A255-6A7220B4BFE3",
+      "payload" : {
+        "cardSeconds" : 0,
+        "cardsReviewed" : 0,
+        "conversationSeconds" : 0,
+        "conversations" : 0,
+        "day" : "2026-11-28",
+        "drawingSeconds" : 0,
+        "gameSeconds" : 0,
+        "gameWordsSolved" : 0,
+        "grammarExercises" : 0,
+        "grammarSeconds" : 0,
+        "hoerenItems" : 0,
+        "hoerenSeconds" : 0,
+        "lastActivityAt" : 816100000,
+        "newWordsBonus" : 0,
+        "newWordsIntroduced" : 0,
+        "sheetWordsWritten" : 0,
+        "storyQuestions" : 0,
+        "storyQuizSeconds" : 0,
+        "storySeconds" : 0,
+        "wordsDrawn" : 0,
+        "wordsWritten" : 0,
+        "writingSeconds" : 0
+      }
+    }
+  ]
+}

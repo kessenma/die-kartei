@@ -43,6 +43,8 @@ CloudKitSyncTransport = CKSyncEngine (zone "Kartei", one record type "KarteiItem
 | Piece | File |
 |---|---|
 | Pure merge engine (JSON payloads, PN counters, rules, UUIDv5, digest, fake server) | `Services/Sync/Core/` (also `KarteiSyncCore/`, see below) |
+| Every kind's merge rules and canonical ids (`SyncKinds`, `SyncSingletonDecks`, `SyncDayKey`), shared with Android | `Services/Sync/Core/SyncKinds.swift` |
+| Typed records for the Android store (`DeckRecord`, `CardRecord`, …) and the golden payloads both apps are tested against | `Services/Sync/Core/Records/`, `DieKarteiCore/Tests/DieKarteiCoreTests/sync_golden.json` |
 | One codec per `@Model` (fields ⇄ payload, merge rules) | `Services/Sync/Codecs/` |
 | Non-SwiftData records: Progress, Journey, PlacementAttempts, File | `Services/Sync/SyncDocuments.swift` |
 | History → "must upload" | `SyncChangeTracker.swift` |
@@ -131,9 +133,13 @@ App Review rejects). So a choice can land on a device that doesn't have the voic
   overrides the stored pick for one launch without saving it. Add `-voices.debugSpeak 1` to speak
   a line at launch (raises the alert) or `-voices.debugSheet 1` to open the "Show Me How" sheet.
 
-Field rules live in `Core/SyncMerge.swift` (`SyncFieldRule`). Every codec file ends with a
-`// Field coverage:` block listing each stored property and where it goes. **Adding a stored
-property to a synced model means adding it to its codec**, or it won't travel.
+Field rules live in `Core/SyncMerge.swift` (`SyncFieldRule`); each kind's rules are in
+`Core/SyncKinds.swift`, which the codecs and the Android record store both read. Every codec file
+ends with a `// Field coverage:` block listing each stored property and where it goes. **Adding a
+stored property to a synced model means adding it to its codec**, or it won't travel. For a kind
+Android stores (a record in `Core/Records/`), add it to the record too and regenerate
+`sync_golden.json`: `SyncGoldenTests` (iOS) and `SyncRecordTests` (DieKarteiCore) fail until both
+sides write the same payload. See [android-parity/persistence.md](android-parity/persistence.md).
 
 ## Development vs. Production
 

@@ -58,7 +58,7 @@ nonisolated struct ScreenshotSeedBackup: Codable {
     var createdAt: Date = Date()
 
     // Replaced wholesale
-    var studyDays: [StudyDayRecord] = []
+    var studyDays: [ScreenshotStudyDayBackup] = []
     /// Optional only because `JourneyDocument`'s init is MainActor-isolated and this struct is
     /// not — `captureBackup` always sets it.
     var journey: JourneyDocument?
@@ -89,7 +89,7 @@ nonisolated struct ScreenshotSeedBackup: Codable {
 }
 
 /// `StudyDay` flattened for the backup file — the model is a `@Model`, which is not `Codable`.
-nonisolated struct StudyDayRecord: Codable {
+nonisolated struct ScreenshotStudyDayBackup: Codable {
     var dayStart: Date
     var cardsReviewed: Int
     var grammarExercises: Int
@@ -347,7 +347,7 @@ enum ScreenshotDataSeeder {
     private static func captureBackup(in context: ModelContext) -> ScreenshotSeedBackup {
         var backup = ScreenshotSeedBackup()
         backup.studyDays = fetchAll(StudyDay.self, in: context).map { day in
-            StudyDayRecord(
+            ScreenshotStudyDayBackup(
                 dayStart: day.dayStart,
                 cardsReviewed: day.cardsReviewed,
                 grammarExercises: day.grammarExercises,

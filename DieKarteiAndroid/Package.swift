@@ -74,6 +74,8 @@ let package = Package(
             ]
         ),
         // Native Swift on SkipSQLPlus (SQLite + SQLCipher built from source for each ABI).
+        // `-enable-testing` for the same reason as the core: its API speaks the core's internal
+        // record types, and the UI module reaches it with `@testable import`.
         .target(
             name: "KarteiStore",
             dependencies: [
@@ -85,6 +87,7 @@ let package = Package(
                 .defaultIsolation(MainActor.self),
                 .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
                 .enableUpcomingFeature("InferIsolatedConformances"),
+                .unsafeFlags(["-enable-testing"]),
             ]
         ),
         .testTarget(

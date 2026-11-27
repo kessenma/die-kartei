@@ -15,14 +15,7 @@ import SwiftData
 enum ChatConversationCodec: SyncCodec {
     typealias Model = ChatConversation
 
-    static let spec = SyncKindSpec(
-        kind: "ChatConversation",
-        rules: [
-            "durationSeconds": .counter,
-            "updatedAt": .max,
-            "savedVocab": .set(idField: "german", lowercasedID: true),
-        ]
-    )
+    static let spec = SyncKinds.chatConversation
 
     static func recordName(for model: ChatConversation) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)
@@ -138,16 +131,7 @@ enum ChatConversationCodec: SyncCodec {
 enum ChatMessageCodec: SyncCodec {
     typealias Model = ChatMessage
 
-    static let spec = SyncKindSpec(
-        kind: "ChatMessage",
-        rules: [
-            "selfCorrected": .or,
-            "usedHint": .or,
-            "usedPhraseHelper": .or,
-            "confirmedClean": .or,
-            "translationViewed": .or,
-        ]
-    )
+    static let spec = SyncKinds.chatMessage
 
     static func recordName(for model: ChatMessage) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)
@@ -240,15 +224,7 @@ enum ChatMessageCodec: SyncCodec {
 enum JobPostingCodec: SyncCodec {
     typealias Model = JobPosting
 
-    static let spec = SyncKindSpec(
-        kind: "JobPosting",
-        rules: [
-            "readingSeconds": .counter,
-            "updatedAt": .max,
-            "lastOpenedAt": .max,
-            "lookups": .set(idField: "german", lowercasedID: true),
-        ]
-    )
+    static let spec = SyncKinds.jobPosting
 
     static func recordName(for model: JobPosting) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)

@@ -5,6 +5,37 @@ Scope: iOS `main` (`~/ws/die-kartei/german-ai-flashcards`) against `android-port
 pass: nothing was built or edited in either repo. Line and file counts come from grep over the
 737 iOS Swift files. 262 of those files import SwiftData, and 169 sites use `@Query`.
 
+## Status (sync-records branch)
+
+Built and tested; the rest of this document is the design it follows.
+
+- **One definition of the rules (step 1, all kinds):** every synced kind's `SyncKindSpec`, plus
+  `SyncSingletonDecks`, `SyncDayKey`, round and Kasus natural keys and the payload helpers
+  (`SyncFields`), moved to `Services/Sync/Core/SyncKinds.swift` and `SyncPayloadFields.swift`.
+  The iOS codecs read `SyncKinds.<kind>`; an iOS test checks `SyncRegistry` against
+  `SyncKinds.all`, rule for rule.
+- **Records (step 2, first four):** `DeckRecord`, `CardRecord`, `QuizResultRecord`,
+  `StudyDayRecord` in `Services/Sync/Core/Records/`. Unknown fields pass through (`extra`).
+  `WortschatzRecords` builds the Wortschatz deck and cards exactly as `DeckStore` does.
+- **The contract (step 10):** `DieKarteiCore/Tests/DieKarteiCoreTests/sync_golden.json`, written
+  from fully populated SwiftData rows. iOS `SyncGoldenTests`: the codecs produce it and apply it
+  back; `DeckStore`'s Wortschatz deck equals `WortschatzRecords` for every word. Core
+  `SyncRecordTests`: every record reads and writes it unchanged, records built in code match,
+  composed copies flatten back. Changing a codec without the record (or the other way) fails a
+  test on one side.
+- **RecordStore (step 3) and sync-shaped writes (step 9, minus backup rules):**
+  `KarteiStore/RecordStore.swift`, schema 2 (`record`, `tombstone`). Every `put` runs
+  `SyncRecordLogic.noteLocal` with this install's replica (`ReplicaID`, a file in `no_backup/`),
+  so counters are per device from the first write and `pending` holds what a transport will send.
+  Cascade delete over `parent`; tombstones only for records the server has (`didSend`).
+- **Wortschatz on the store (step 4):** `StudyStore` keeps reviewed cards as `CardRecord`s with
+  the iOS ids; the level is a filter. `WortschatzMigration` moves `studyProgress.v1` once,
+  merging a word's per-level copies by the card's sync rules (the old blob stays for rollback).
+
+Next: `LearnerProfile`, `ChatConversation`/`ChatMessage`, `LearnedPhrase` records when those
+Android features persist; StudyDay writes from Android sessions (step 5, needs
+`StudyLogService`'s counting moved to the core); Auto Backup rules (sync.mdx step 2); a transport.
+
 ## 0. Summary
 
 - `AppSchema.models` lists **35 `@Model` types**. **30** have a sync codec (`SyncRegistry`).

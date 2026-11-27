@@ -12,12 +12,11 @@ import SwiftData
 enum KasusRoundCodec: SyncCodec {
     typealias Model = KasusRound
 
-    static let spec = SyncKindSpec(kind: "KasusRound", rules: ["revealedAnswers": .or])
+    static let spec = SyncKinds.kasusRound
 
     static func naturalKey(_ r: KasusRound) -> String {
-        r.roundKey.isEmpty
-            ? "\(r.date.timeIntervalSinceReferenceDate)|\(r.storyID)|\(r.unitRaw)|\(r.stepRaw)"
-            : r.roundKey
+        SyncNaturalKeys.kasusRoundKey(roundKey: r.roundKey, date: r.date, storyID: r.storyID,
+                                      unitRaw: r.unitRaw, stepRaw: r.stepRaw)
     }
 
     static func recordName(for model: KasusRound) -> SyncRecordName {
@@ -92,7 +91,7 @@ enum KasusRoundCodec: SyncCodec {
 enum GeneratedKasusStoryCodec: SyncCodec {
     typealias Model = GeneratedKasusStory
 
-    static let spec = SyncKindSpec(kind: "GeneratedKasusStory")
+    static let spec = SyncKinds.generatedKasusStory
 
     static func recordName(for model: GeneratedKasusStory) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, naturalKey: model.id)

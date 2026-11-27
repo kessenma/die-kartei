@@ -1,34 +1,10 @@
 import Foundation
 import SwiftData
 
-/// Decks whose id both devices derive from (generatorRaw, topic) rather than make up at random:
-/// the Wortschatz deck and the per-topic stats and SRS decks, which each device fetch-or-creates.
-enum SyncSingletonDecks {
-    static let generators: Set<String> = ["goethe", "goethe-srs", "past-tense", "past-tense-srs", "grammar",
-                                          VerbPrepositionService.deckGenerator]
-
+/// The ids and generators live in `Core/SyncKinds.swift`, shared with Android.
+extension SyncSingletonDecks {
     static func isSingleton(_ deck: SavedDeck?) -> Bool {
-        deck.map { generators.contains($0.generatorRaw) } ?? false
-    }
-
-    /// Canonical deck id: the same on every device for the same generator and topic.
-    static func deckID(generatorRaw: String, topic: String) -> UUID {
-        SyncNameUUID.make("deck", generatorRaw, topic)
-    }
-
-    /// The id for a story's, job posting's or course's own deck when it has to be created here.
-    /// If the parent already links a deck that simply hasn't arrived from the other device yet,
-    /// reuse that id so the two become one record when it lands. Otherwise derive it from the
-    /// parent, so two devices creating it offline create the same deck.
-    static func linkedDeckID(existing: UUID?, kind: String, parentID: UUID) -> UUID {
-        existing ?? SyncNameUUID.make("linked-deck", kind, parentID.uuidString)
-    }
-
-    /// Canonical card id inside a singleton deck: one card per German word.
-    /// The exact word, never lowercased: the Goethe lists hold 34 pairs that differ only by
-    /// case (sie/Sie, essen/Essen), and each is its own card.
-    static func cardID(deckID: UUID, germanWord: String) -> UUID {
-        SyncNameUUID.make("card", deckID.uuidString, germanWord)
+        deck.map { isSingleton(generatorRaw: $0.generatorRaw) } ?? false
     }
 }
 
@@ -39,7 +15,7 @@ enum SyncSingletonDecks {
 enum SavedDeckCodec: SyncCodec {
     typealias Model = SavedDeck
 
-    static let spec = SyncKindSpec(kind: "SavedDeck")
+    static let spec = SyncKinds.savedDeck
 
     static func recordName(for model: SavedDeck) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)
@@ -121,23 +97,9 @@ enum SavedDeckCodec: SyncCodec {
 enum SavedCardCodec: SyncCodec {
     typealias Model = SavedCard
 
-    static let scheduleFields = [
-        "easeFactor", "interval", "repetitions", "nextReviewDate", "leitnerBox",
-        "lastReviewedAt", "lastReviewWasCorrect",
-    ]
+    static let scheduleFields = SyncKinds.cardScheduleFields
 
-    static let spec = SyncKindSpec(
-        kind: "SavedCard",
-        rules: [
-            "totalReviews": .counter,
-            "lapses": .counter,
-            "firstReviewedAt": .min,
-        ],
-        groups: [
-            SyncFieldGroup(fields: scheduleFields,
-                           orderBy: ["lastReviewedAt", "repetitions", "interval", "easeFactor"])
-        ]
-    )
+    static let spec = SyncKinds.savedCard
 
     static func recordName(for model: SavedCard) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)
@@ -239,7 +201,7 @@ enum SavedCardCodec: SyncCodec {
 enum QuizResultCodec: SyncCodec {
     typealias Model = QuizResult
 
-    static let spec = SyncKindSpec(kind: "QuizResult")
+    static let spec = SyncKinds.quizResult
 
     static func recordName(for model: QuizResult) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, id: model.id)

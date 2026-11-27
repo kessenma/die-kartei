@@ -8,7 +8,7 @@ import SwiftData
 enum HoerenRoundCodec: SyncCodec {
     typealias Model = HoerenRound
 
-    static let spec = SyncKindSpec(kind: "HoerenRound")
+    static let spec = SyncKinds.hoerenRound
 
     static func recordName(for model: HoerenRound) -> SyncRecordName {
         SyncRecordName(kind: spec.kind, naturalKey: model.roundKey)
