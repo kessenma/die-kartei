@@ -9,6 +9,8 @@
 //   target (Swift 5 mode, MainActor by default) so the shared files mean the same thing.
 // - GermanVoice: a few lines of transpiled Swift around Android's TextToSpeech (Skip Lite).
 // - CLlama: llama.cpp's C API (Android only), for the tutor models as GGUF. See TutorEngine.swift.
+// - KarteiStore: the app's SQLite database (SkipSQLPlus, its own SQLite build). Kept out of the
+//   core so the iOS-side core builds don't pull in skip-sql.
 // - DieKartei: the Android UI in SwiftUI (Skip Fuse). It reaches the core's internal types
 //   through `@testable import`, which is why the core builds with -enable-testing: the iOS
 //   app's code is internal, and making it public just for Android isn't worth the churn.
@@ -31,6 +33,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-crypto.git", "3.0.0"..<"5.0.0"),
         .package(url: "https://github.com/skiptools/skip-foundation.git", from: "1.0.0"),
         .package(url: "https://github.com/skiptools/skip-bridge.git", "0.17.3"..<"2.0.0"),
+        .package(url: "https://github.com/skiptools/skip-sql.git", from: "0.16.1"),
     ],
     targets: [
         .target(
@@ -70,10 +73,30 @@ let package = Package(
                 .unsafeFlags(["-L\(llamaLibs)"], .when(platforms: [.android])),
             ]
         ),
+        // Native Swift on SkipSQLPlus (SQLite + SQLCipher built from source for each ABI).
+        .target(
+            name: "KarteiStore",
+            dependencies: [
+                "DieKarteiCore",
+                .product(name: "SkipSQLPlus", package: "skip-sql"),
+            ],
+            swiftSettings: [
+                .swiftLanguageMode(.v5),
+                .defaultIsolation(MainActor.self),
+                .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
+                .enableUpcomingFeature("InferIsolatedConformances"),
+            ]
+        ),
+        .testTarget(
+            name: "KarteiStoreTests",
+            dependencies: ["KarteiStore"],
+            swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
         .target(
             name: "DieKartei",
             dependencies: [
                 "DieKarteiCore",
+                "KarteiStore",
                 "GermanVoice",
                 .target(name: "CLlama", condition: .when(platforms: [.android])),
                 .product(name: "SkipFuseUI", package: "skip-fuse-ui"),

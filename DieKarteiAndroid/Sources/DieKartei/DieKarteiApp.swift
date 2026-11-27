@@ -13,6 +13,7 @@ let logger: Logger = Logger(subsystem: "com.kessenma.diekartei", category: "DieK
     /* SKIP @bridge */public init() {
         // The shared services read the Goethe lists etc. from this module's resources.
         AppResources.bundle = Bundle.module
+        AppDatabase.open()
     }
 
     public var body: some View {
@@ -46,6 +47,7 @@ let logger: Logger = Logger(subsystem: "com.kessenma.diekartei", category: "DieK
 
     /* SKIP @bridge */public func onPause() {
         logger.debug("onPause")
+        Task { @MainActor in AppDatabase.checkpoint() }
     }
 
     /* SKIP @bridge */public func onStop() {

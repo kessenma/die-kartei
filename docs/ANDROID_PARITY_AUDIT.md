@@ -322,6 +322,10 @@ splits are moves into Foundation-only files, landed on main early so the branche
 
 **Phase 0: Line up (S).** Merge main into android-port and land the branch's iOS-side splits on
 main (including `ConversationHost`, which the chat store needs). Copy the missing data files.
+*Done (Nov 27):* merged both ways; the six banks load through `AppResources` and their JSON
+ships on Android; `--prune` builds again. `wiktionary_de.db` waits on its SQLite validator. The
+placement and Kasus code itself isn't portable yet (`KasusLexicon`, `PlacementService`): phases
+3 and 5. Icons (phase 2) landed alongside: 463 symbolsets, see `android-parity/icons.md`.
 
 **Phase 1: Database (M–L, critical path ≈ 2 weeks).** The plan above: SkipSQLPlus record store,
 spine records, decks and Wortschatz with the id migration, study-day log, learner profile, saved
@@ -357,9 +361,9 @@ worksheets, Atelier. Overnight queue. Google Drive sync. Keyboard via `PROCESS_T
 
 ## Still to verify
 
-- SkipSQLPlus building with Swift 6.4.3 for Android, and its APK size (phase 1, step 0).
+- ~~SkipSQLPlus on Android~~: done, see `android-parity/persistence.md` §3 (release APK size still open).
 - SceneView's Compose version against SkipUI; 3D frame rate on a low-end phone.
-- Symbolset rendering in Skip's tab bar (centring, cut-outs, `.fill`).
+- ~~Symbolset rendering in Skip's tab bar~~: checked on the emulator (light mode; dark mode open).
 - Jetpack Ink's input API from Skip; ML Kit on single handwritten letters.
 - Whether Skip picks the dark variant of an image asset (`figur-still`).
 - Supertonic speed and memory on a real phone; Samsung's TTS engine; OpenRAIL-M obligations.

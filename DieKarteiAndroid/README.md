@@ -12,6 +12,9 @@ bigger picture.
   native module. The place to add other Android-only APIs.
 - **CLlama**: llama.cpp's C API, for the tutor models (Android only). The libraries come from
   `../scripts/build_llama_android.sh`; `TutorEngine.swift` calls them from Swift directly.
+- **KarteiStore**: the app's SQLite database (`files/kartei.sqlite`) on SkipSQLPlus, which
+  builds its own SQLite 3.51.3. Opened at launch by `AppDatabase`; host tests:
+  `swift test --filter KarteiStoreTests`.
 - **DieKartei**: the Android screens. It uses the core through `@testable import` so the iOS
   app's internal types stay internal.
 

@@ -35,6 +35,11 @@ android {
     sourceSets["main"].jniLibs.srcDir("../../Vendor/llama")
 
     defaultConfig {
+        // The Swift libraries (and llama.cpp) are built for arm64 only, so other ABIs could never
+        // run the app; without this, skip-sql's CMake SQLite and JNA add ~9 MB for them. The
+        // arm64 libsqlext.so (~3 MB, unused: libSkipSQLPlus.so has its own SQLite) still ships;
+        // jniLibs excludes lose to the `**/*.so` pickFirst above.
+        ndk { abiFilters += "arm64-v8a" }
         minSdk = libs.versions.android.sdk.min.get().toInt()
         targetSdk = libs.versions.android.sdk.compile.get().toInt()
         // skip.tools.skip-build-plugin will automatically use Skip.env properties for:

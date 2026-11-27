@@ -196,14 +196,20 @@ ClassCourse/Entry), `cardIDs` as strings, tallies as counterMap objects, Learner
 `DieKarteiCore` and the `SkipSQLPlus` product. That keeps skip-sql out of the plain core, which
 iOS tests build. The protocols and records stay in the core.
 
-**Not verified** (read-only rule: no builds were run):
-- SkipSQLPlus building with Swift 6.4.3 and SDK android28 from a non-Skip native target.
-- Its APK size cost (SQLite + SQLCipher + libtomcrypt per ABI).
-- Whether `SQLExt` can be imported from a client module.
-- `onUpdate` working in native mode.
-- GRDB actually linking on Android.
-
-Step 0 of the build plan settles these.
+**Step 0 result (spike, done):** SkipSQLPlus 0.16.1 builds from the plain `KarteiStore` target
+with Swift 6.4.3 / android28 and runs on the emulator: `sqlite_version()` 3.51.3, WAL, schema 1,
+`files/kartei.sqlite`; a launch counter in `meta` survives force-stop and reinstall. Host
+`swift test --filter KarteiStoreTests` passes. `import SQLExt` works from a client module, so
+WiktionaryValidator can use it on Android.
+- APK cost (debug, arm64): `libSkipSQLPlus.so` 3.3 MB compressed (8.3 MB with debug symbols;
+  SQLite is linked in statically, 291 `sqlite3_` symbols). skip-sql's Kotlin side also brings a
+  CMake `libsqlext.so` and JNA for every ABI; `abiFilters = arm64-v8a` drops the other ABIs
+  (−9 MB). The arm64 `libsqlext.so` (3 MB, never loaded) still ships: `jniLibs.excludes` lose
+  to the template's `**/*.so` pickFirst. Release size not measured yet.
+- The CMake build makes AGP install NDK 28.2 next to r30. After that, a long-lived gradle daemon
+  failed the Swift step with "No Android NDK is installed at any of the standard locations";
+  `gradle --stop` fixed it.
+- Not checked yet: `onUpdate` in native mode; GRDB (no longer needed).
 
 ## 4. Schema: generic records vs typed tables
 
