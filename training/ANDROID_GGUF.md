@@ -100,6 +100,22 @@ published files stay the dequantized-MLX builds; the release gate (no quant > 6 
 significantly behind MLX) is why the master builds weren't uploaded. A 203-item suite picked the
 winner here, so a better-looking build needs a fresh eval set before it replaces the shipped one.
 
+**Checked on the frozen v3 suite (300 items, scored once each, 2026-11-27), Granite 3.3 2B:**
+
+| build | v3 /300 | false corrections /150 | traps fooled /93 | misses /150 |
+|---|---|---|---|---|
+| MLX 4-bit (iOS) | 234 | 7 | 6 | 59 |
+| Q4_K_M from MLX (Android) | 238 | 8 | 6 | 54 |
+| Q4_0 from MLX | 232 | 8 | 6 | 60 |
+| Q4_K_M from bf16 | 238 | 4 | 3 | 58 |
+| Q4_0 from bf16 | 245 | 12 | 10 | 43 |
+
+The +16 on the 203 shrank to +7 against Android's file (+16/−9, p = 0.23), and it isn't a better
+model so much as a differently balanced one: it says FIX more often, catching 11 more errors and
+wrongly "fixing" 4 more correct sentences. That's the same seesaw as the FIX-bias controls in
+REINFORCEMENT_LEARNING.md Part C.2. Every build stays within 13 items of the others, all close to
+MLX. Android keeps Q4_K_M from MLX: Granite 2B's selling point is that it rarely flags correct German.
+
 ## In the Android app (2026-11-26)
 
 `DieKarteiAndroid/Sources/DieKartei/TutorEngine.swift`: llama.cpp's C API from native Swift

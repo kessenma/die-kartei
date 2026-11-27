@@ -29,6 +29,8 @@ SUITES = {
     "core": ROOT / "data/eval/grammar_eval_v0.json",
     "ext": ROOT / "data/eval/grammar_eval_v1_extra.json",
     "holdout": ROOT / "data/eval/grammar_eval_v2_holdout.json",
+    # Frozen RL holdout: score each candidate once, never iterate against it.
+    "v3": ROOT / "data/eval/grammar_eval_v3.json",
 }
 
 
