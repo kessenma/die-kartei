@@ -92,6 +92,30 @@ German for identity words and headings, plain English for explanation.
   Settings ▸ Sources.
 - `docs/FUTURE_FEATURES.md` — ideas not yet built.
 
+## Android: one behaviour, two apps
+
+The Android app (`DieKarteiAndroid/`, Skip Fuse) runs the iOS app's own Swift wherever it can:
+`DieKarteiCore` symlinks ~100 Foundation-only files from `german-ai-flashcards/`
+(`DieKarteiCore/core_files.txt`). Rules, so the two apps keep behaving the same:
+
+- **Logic goes in a shared file, screens only show it.** Scheduling, scoring, what a round logs,
+  merge rules, ids and prompts belong in a Foundation-only file (no SwiftUI, SwiftData, UIKit,
+  `@Model`), with the platform part behind a small protocol or host the way
+  `ConversationSession`/`ConversationHost` and `StudyDayCounts` work. Don't write the same rule
+  twice, once per app.
+- **Never add an Apple-only import to a file in `core_files.txt`.** Split the Apple part into its
+  own file instead. `python3 scripts/core_sync.py --check` names any listed file that broke.
+- **Synced data has one format.** Adding a field to a synced model: the codec, the record in
+  `Services/Sync/Core/Records/`, and `sync_golden.json` (docs/ICLOUD_SYNC.md says how). The study
+  day: `StudyDayParityTests` on iOS.
+- **Settings use the iOS keys and defaults** (`wortschatz.newPerDay`, …); put them in a
+  Foundation-only file when Android needs them.
+- **Check before pushing:** `scripts/check_android.sh` (about 20 s; `--full` adds the Android
+  store tests). The pre-push hook runs it when a push touches shared code; enable it per clone
+  with `git config core.hooksPath .githooks`. Skip once with `SKIP_ANDROID_CHECK=1 git push`.
+- What Android has and lacks, and the plan: `docs/ANDROID_PARITY_AUDIT.md`,
+  `docs/android-parity/`, `ANDROID_PORT.md`.
+
 ## What's New maintenance
 
 Do this whenever you ship a change a learner would notice. The app shows release notes from

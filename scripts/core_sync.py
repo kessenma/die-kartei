@@ -7,6 +7,7 @@ rejects (an Apple-only API, or a type from a file that is not portable), repeati
 the package builds. The final list is written to DieKarteiCore/core_files.txt.
 
     python3 scripts/core_sync.py            # relink from core_files.txt
+    python3 scripts/core_sync.py --check    # relink, and fail if a listed file stopped being portable
     python3 scripts/core_sync.py --prune    # rediscover from scratch against Android
 """
 import os, re, shutil, subprocess, sys, pathlib
@@ -30,17 +31,37 @@ SDK = os.environ.get("CORE_SWIFT_SDK", "swift-6.4.3-RELEASE_android")
 IMPORT = re.compile(r"^[ \t]*(?:@\w+(?:\(.*?\))?[ \t]+)*import[ \t]+(?:(?:struct|class|enum|protocol|func|var|let|typealias)[ \t]+)?(\w+)", re.M)
 
 
+def unportable(s):
+    """Why a file's source can't be in the core, or None when it can."""
+    # SkipFuse: imported under #if os(Android) by @Observable core types.
+    allowed = {"Foundation", "Observation", "SkipFuse"}
+    if "canImport(CryptoKit)" in s:  # CryptoKit on Apple, swift-crypto elsewhere
+        allowed |= {"CryptoKit", "Crypto"}
+    extra = set(IMPORT.findall(s)) - allowed
+    if extra:
+        return "imports " + ", ".join(sorted(extra))
+    if "@Model" in s:
+        return "has a SwiftData @Model"
+    return None
+
+
 def candidates():
-    out = []
-    for p in sorted(APP.rglob("*.swift")):
-        s = p.read_text(errors="ignore")
-        # SkipFuse: imported under #if os(Android) by @Observable core types.
-        allowed = {"Foundation", "Observation", "SkipFuse"}
-        if "canImport(CryptoKit)" in s:  # CryptoKit on Apple, swift-crypto elsewhere
-            allowed |= {"CryptoKit", "Crypto"}
-        if set(IMPORT.findall(s)) <= allowed and "@Model" not in s:
-            out.append(p.relative_to(APP).as_posix())
-    return out
+    return [p.relative_to(APP).as_posix() for p in sorted(APP.rglob("*.swift"))
+            if unportable(p.read_text(errors="ignore")) is None]
+
+
+def check(files):
+    """Listed core files that are gone or no longer portable (the iOS app changed under Android)."""
+    problems = []
+    for rel in files:
+        path = APP / rel
+        if not path.exists():
+            problems.append(f"{rel}: listed in core_files.txt but missing (moved or deleted?)")
+            continue
+        why = unportable(path.read_text(errors="ignore"))
+        if why:
+            problems.append(f"{rel}: {why}")
+    return problems
 
 
 def link(files):
@@ -112,6 +133,16 @@ def main():
         print("most-missed types:", ", ".join(f"{k}×{v}" for k, v in top))
     else:
         files = [l for l in LIST.read_text().split() if l]
+        if "--check" in sys.argv:
+            problems = check(files)
+            if problems:
+                print("These shared files no longer build for Android:")
+                for line in problems:
+                    print("  " + line)
+                print("Keep Apple-only code out of them (split it into another file), or, if the file")
+                print("really moved, update DieKarteiCore/core_files.txt. See CLAUDE.md, Android.")
+                sys.exit(1)
+            files = [f for f in files if (APP / f).exists()]
         link(files)
         print(f"linked {len(files)} files")
 
