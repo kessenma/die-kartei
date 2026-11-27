@@ -129,7 +129,8 @@ struct JobPrepHubView: View {
                     title: "Häufige Wörter · Word count",
                     subtitle: "Count the words across several ads. See which ones they share, tick the ones you don't know, add them all to a deck.",
                     systemImage: "chart.bar.doc.horizontal",
-                    accent: JobPrepTile.tint
+                    accent: JobPrepTile.tint,
+                    showsChevron: false
                 )
             }
             NavigationLink {
@@ -139,7 +140,8 @@ struct JobPrepHubView: View {
                     title: "Lebenslauf · Your résumé",
                     subtitle: "So the recruiter asks about your own career. Stays on this device.",
                     systemImage: "person.text.rectangle",
-                    accent: JobPrepTile.tint
+                    accent: JobPrepTile.tint,
+                    showsChevron: false
                 )
             }
         } header: {
@@ -317,6 +319,8 @@ struct JobPrepHeroRow: View {
     let subtitle: String
     let systemImage: String
     let accent: Color
+    /// Off inside a `NavigationLink`, which draws its own.
+    var showsChevron = true
 
     @Environment(\.appTheme) private var theme
 
@@ -337,9 +341,11 @@ struct JobPrepHeroRow: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 8)
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+            if showsChevron {
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
