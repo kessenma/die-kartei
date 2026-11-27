@@ -235,10 +235,17 @@ upgrades the iOS app too.
   > memory while speaking.
   > On phones with less memory, they may not work next to the tutor. When there isn't room, the
   > app uses your system voice instead and tells you.
+  > The word highlighting while they read is estimated, so it can run a little ahead or behind,
+  > mostly in long sentences. System voices highlight exactly.
   > [Download voices] [Not now]
 
 - The choice can be per use: e.g. Kartei voices for cards and stories, the system voice in
   conversations. Boy/Girl dialogue roles stay on system voices (Supertonic has no child voices).
+- **Where words get highlighted** (story read-aloud, `StoryReadAloudView`; tutor replies read aloud,
+  `ConversationView`): while a Kartei voice is reading, a small ⓘ sits next to the playback controls.
+  Tapping it says: "You're listening to a Kartei voice. Its highlighting is estimated and can be a
+  little off. System voices highlight exactly." with a link to Settings ▸ Voice. The ⓘ only shows
+  with Kartei voices, so system-voice users see nothing new.
 
 **How it works underneath:**
 - A shared `SpeechPlayer` in the core with three backends: AVSpeech (iOS), Android TTS, Supertonic
@@ -266,7 +273,7 @@ upgrades the iOS app too.
 | `SpeechPlayer` in the core; iOS `SpeechService` behind it, no change for users | M |
 | sherpa-onnx built for Android (NDK, like llama.cpp) and iOS (xcframework), Swift wrapper | M |
 | Voice pack download, mirror and delete (reuses the model downloader) | S |
-| Voices screen + warning sheet on both platforms | S–M |
+| Voices screen + warning sheet on both platforms; the highlighting ⓘ in stories and chat | S–M |
 | Memory check and fallback in conversations; estimated highlighting | S–M |
 | Licence notice | S |
 
