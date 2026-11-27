@@ -228,8 +228,17 @@ struct GespraechView: View {
             config.mode = .scenario
             config.scenario = scenario
         }
+        // The chat's time drips into today as it runs; a summarized chat counts as one
+        // conversation (iOS: ConversationEngine.recordStudyTime, LearnerMemoryService.applySession).
+        let host = MemoryConversationHost()
+        host.onStudyTime = { seconds in
+            MainActor.assumeIsolated { StudyLog.shared.recordTime(.conversation, seconds: seconds) }
+        }
+        host.onSummary = { _, _ in
+            MainActor.assumeIsolated { StudyLog.shared.record(.conversation) }
+        }
         let new = AndroidConversation(
-            host: MemoryConversationHost(),
+            host: host,
             config: config,
             tutor: store,
             speechInput: NoSpeechInput(reason: "Speaking to the tutor isn't on Android yet; type instead."),

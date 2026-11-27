@@ -11,14 +11,24 @@ struct HomeView: View {
 
     @AppStorage("level") var levelRaw = GoetheLevel.a1.rawValue
     @State var store = StudyStore.shared
+    @State var log = StudyLog.shared
 
     var level: GoetheLevel { GoetheLevel(rawValue: levelRaw) ?? .a1 }
 
     var body: some View {
         List {
-            Section("Today") {
+            Section {
                 NavigationLink { KartenView() } label: {
                     todayRow
+                }
+            } header: {
+                HStack {
+                    Text("Today")
+                    Spacer()
+                    if log.streak > 0 {
+                        Label("\(log.streak)", systemImage: "flame.fill")
+                            .foregroundStyle(Color.orange)
+                    }
                 }
             }
             Section("Activities") {
@@ -56,7 +66,7 @@ struct HomeView: View {
 
     var todayRow: some View {
         let stats = store.stats(for: level)
-        let fresh = min(StudyStore.newPerSession, stats.total - stats.seen)
+        let fresh = min(StudyStore.newForNextSession, stats.total - stats.seen)
         return VStack(alignment: .leading, spacing: 2) {
             Text("Karteikarten · Goethe \(level.rawValue)")
                 .font(.headline)

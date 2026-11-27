@@ -115,7 +115,7 @@ struct ArtikelView: View {
         }
         .padding()
         .navigationTitle("der, die, das")
-        .onAppear { if round.isEmpty { newRound() } }
+        .onAppear { StudyLog.shared.begin(); if round.isEmpty { newRound() } }
     }
 
     func feedback(entry: A1Entry, article: GermanArticle, wasRight: Bool) -> some View {
@@ -135,6 +135,7 @@ struct ArtikelView: View {
             Button("Weiter") {
                 if wasRight { right += 1 }
                 picked = nil
+                StudyLog.shared.answered(.grammar(1))
                 index += 1
             }
             .buttonStyle(.borderedProminent)
@@ -142,6 +143,7 @@ struct ArtikelView: View {
     }
 
     func newRound() {
+        StudyLog.shared.begin()
         let nouns = GoetheVocabService.entries(for: level).filter { GermanArticle(text: $0.article) != nil }
         round = Array(nouns.shuffled().prefix(15))
         index = 0
@@ -188,6 +190,7 @@ struct PraepositionenView: View {
                         Button("Weiter") {
                             if picked == prep.governs.germanLabel { right += 1 }
                             self.picked = nil
+                            StudyLog.shared.answered(.grammar(1))
                             index += 1
                         }
                         .buttonStyle(.borderedProminent)
@@ -203,7 +206,7 @@ struct PraepositionenView: View {
         }
         .padding()
         .navigationTitle("Präpositionen")
-        .onAppear { if round.isEmpty { newRound() } }
+        .onAppear { StudyLog.shared.begin(); if round.isEmpty { newRound() } }
     }
 
     func caseColor(_ group: PrepositionCase?) -> Color {
@@ -217,6 +220,7 @@ struct PraepositionenView: View {
     }
 
     func newRound() {
+        StudyLog.shared.begin()
         let core = PrepositionService.all().filter { $0.tier != .advanced }
         round = Array(core.shuffled().prefix(10))
         index = 0
@@ -260,6 +264,7 @@ struct LueckenView: View {
                         Button("Weiter") {
                             if picked == exercise.correctAnswer { right += 1 }
                             self.picked = nil
+                            StudyLog.shared.answered(.grammar(1))
                             index += 1
                         }
                         .buttonStyle(.borderedProminent)
@@ -276,10 +281,11 @@ struct LueckenView: View {
         }
         .padding()
         .navigationTitle(category.title)
-        .onAppear { if round.isEmpty { newRound() } }
+        .onAppear { StudyLog.shared.begin(); if round.isEmpty { newRound() } }
     }
 
     func newRound() {
+        StudyLog.shared.begin()
         round = category.exercises.shuffled()
         index = 0
         right = 0
@@ -323,6 +329,7 @@ struct PerfektView: View {
                         Button("Weiter") {
                             if picked == verb.auxiliary { right += 1 }
                             self.picked = nil
+                            StudyLog.shared.answered(.grammar(1))
                             index += 1
                         }
                         .buttonStyle(.borderedProminent)
@@ -338,11 +345,12 @@ struct PerfektView: View {
         }
         .padding()
         .navigationTitle("Perfekt")
-        .onAppear { if round.isEmpty { newRound() } }
+        .onAppear { StudyLog.shared.begin(); if round.isEmpty { newRound() } }
         .onChange(of: level) { _, _ in newRound() }
     }
 
     func newRound() {
+        StudyLog.shared.begin()
         round = Array(PastTenseVerbService.entries(for: level).shuffled().prefix(12))
         index = 0
         right = 0

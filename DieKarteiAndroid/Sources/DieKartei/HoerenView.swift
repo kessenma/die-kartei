@@ -92,7 +92,7 @@ struct ZahlenDiktatView: View {
         }
         .padding()
         .navigationTitle(kind.germanLabel)
-        .onAppear { if items.isEmpty { newRound() } }
+        .onAppear { StudyLog.shared.begin(); if items.isEmpty { newRound() } }
     }
 
     func check(_ item: HoerenNumberItem) {
@@ -103,6 +103,8 @@ struct ZahlenDiktatView: View {
     }
 
     func next() {
+        // An item heard and answered, right or wrong (iOS: listening is the work).
+        if verdict != nil { StudyLog.shared.answered(.hoeren(1)) }
         typed = ""
         verdict = nil
         index += 1
@@ -110,6 +112,7 @@ struct ZahlenDiktatView: View {
     }
 
     func newRound() {
+        StudyLog.shared.begin()
         var rng = SystemRandomNumberGenerator()
         items = HoerenNumberGenerator.round(kinds: [kind], level: level, mode: .bare, count: 10, rng: &rng)
         index = 0

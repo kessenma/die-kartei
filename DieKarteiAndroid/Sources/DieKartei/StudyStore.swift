@@ -80,14 +80,19 @@ final class StudyStore {
         }
     }
 
-    /// Due reviews first (oldest due first), then up to `newPerSession` unseen words in list order.
+    /// New words a session may bring in now: the per-session setting, within what's left of
+    /// today's budget (iOS's daily `wortschatz.newPerDay`).
+    static var newForNextSession: Int { min(newPerSession, StudyLog.shared.newWordsLeftToday) }
+
+    /// Due reviews first (oldest due first), then up to `newForNextSession` unseen words in list order.
     func session(for level: GoetheLevel, now: Date = Date()) -> [A1Entry] {
         var due: [(A1Entry, Date)] = []
         var fresh: [A1Entry] = []
+        let newLimit = Self.newForNextSession
         for entry in words(for: level) {
             if let card = cards[entry.word] {
                 if let next = card.nextReviewDate, next <= now { due.append((entry, next)) }
-            } else if fresh.count < Self.newPerSession {
+            } else if fresh.count < newLimit {
                 fresh.append(entry)
             }
         }
@@ -109,6 +114,7 @@ final class StudyStore {
 
     func rate(_ entry: A1Entry, level: GoetheLevel, index: Int, rating: AnkiRating) {
         guard let record = card(for: entry) else { return }
+        let firstRating = cards[entry.word] == nil
         let card = StudyCard(record)
         SRSScheduling.apply(rating: rating, to: card)
         cards[entry.word] = card.record
@@ -117,6 +123,9 @@ final class StudyStore {
         } catch {
             logger.error("StudyStore: could not save \(entry.word): \(error)")
         }
+        // As iOS: the review counts toward today, a first rating against the new-word budget.
+        StudyLog.shared.answered(.cards(1))
+        if firstRating { StudyLog.shared.recordNewWords(1) }
     }
 
     func stats(for level: GoetheLevel, now: Date = Date()) -> (seen: Int, due: Int, total: Int) {

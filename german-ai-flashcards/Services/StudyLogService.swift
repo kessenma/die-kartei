@@ -1,43 +1,8 @@
 import Foundation
 import SwiftData
 
-/// One thing the learner just finished — the unit recorded into the per-day `StudyDay` log.
-enum StudyActivity {
-    case cards(Int)             // n flashcards reviewed
-    case grammar(Int)           // n grammar exercises answered
-    case conversation           // one chat finished
-    case storyReading(Int)      // n seconds spent reading/listening to a story
-    case storyQuestions(Int)    // n story comprehension questions answered
-    case games(Int)             // n words solved in the Spiele room
-    case drawing(Int)           // n words drawn in the Zeichnen room
-    case writing(Int)           // n words written in the Schreiben room
-    case sheetWords(Int)        // n words on a Schreibblatt sheet just marked Fertig
-    case hoeren(Int)            // n items heard and answered in the Hören room
-
-    /// Which time bucket this activity's seconds belong to.
-    var timeBucket: StudyTimeBucket {
-        switch self {
-        case .cards:          return .cards
-        case .grammar:        return .grammar
-        case .conversation:   return .conversation
-        case .storyReading:   return .storyReading
-        case .storyQuestions: return .storyQuiz
-        case .games:          return .games
-        case .drawing:        return .drawing
-        case .writing:        return .writing
-        // Nothing times a sheet yet; were it to, by-hand writing is writing.
-        case .sheetWords:     return .writing
-        case .hoeren:         return .hoeren
-        }
-    }
-}
-
-/// The time-on-task buckets a day is split into. Kept separate from `StudyActivity` because time
-/// can accrue without anything being *finished* — a conversation drips seconds into the day while
-/// it's still running.
-enum StudyTimeBucket {
-    case cards, grammar, conversation, storyReading, storyQuiz, games, drawing, writing, hoeren
-}
+// `StudyActivity`, `StudyTimeBucket` and the day rules live in StudyDayCounts.swift (shared
+// with Android); this file is the SwiftData side.
 
 /// Records daily study activity and derives the streak the "Today" screen shows.
 ///
@@ -57,23 +22,7 @@ enum StudyLogService {
     static func record(_ activity: StudyActivity, seconds: Int = 0, in context: ModelContext) {
         let dayStart = Calendar.current.startOfDay(for: Date())
         let day = fetchOrCreate(dayStart, in: context)
-
-        switch activity {
-        case .cards(let n):           day.cardsReviewed += max(0, n)
-        case .grammar(let n):         day.grammarExercises += max(0, n)
-        case .conversation:           day.conversations += 1
-        case .storyReading(let s):    day.storySeconds += max(0, s)
-        case .storyQuestions(let n):  day.storyQuestions += max(0, n)
-        case .games(let n):           day.gameWordsSolved += max(0, n)
-        case .drawing(let n):         day.wordsDrawn += max(0, n)
-        case .writing(let n):         day.wordsWritten += max(0, n)
-        case .sheetWords(let n):      day.sheetWordsWritten += max(0, n)
-        case .hoeren(let n):          day.hoerenItems += max(0, n)
-        }
-        // Story reading's seconds *are* its count, already added above.
-        if case .storyReading = activity {} else {
-            add(seconds: seconds, to: activity.timeBucket, on: day)
-        }
+        day.add(StudyDayTally.increments(for: activity, seconds: seconds))
         day.lastActivityAt = Date()
         try? context.save()
     }
@@ -85,7 +34,7 @@ enum StudyLogService {
         guard seconds > 0 else { return }
         let dayStart = Calendar.current.startOfDay(for: Date())
         let day = fetchOrCreate(dayStart, in: context)
-        add(seconds: seconds, to: bucket, on: day)
+        day.add(StudyDayTally.increments(time: bucket, seconds: seconds))
         day.lastActivityAt = Date()
         try? context.save()
     }
@@ -111,33 +60,12 @@ enum StudyLogService {
 
     /// Today's introduced count and bonus, read off an already-fetched set.
     static func todayNewWords(_ days: [StudyDay], asOf now: Date = Date()) -> (introduced: Int, bonus: Int) {
-        let today = Calendar.current.startOfDay(for: now)
-        guard let day = days.first(where: { Calendar.current.startOfDay(for: $0.dayStart) == today }) else {
-            return (0, 0)
-        }
-        return (day.newWordsIntroduced, day.newWordsBonus)
+        StudyStreak.todayNewWords(days, asOf: now)
     }
 
     /// New words still allowed today under `newPerDay`.
     static func newWordBudgetRemaining(_ days: [StudyDay], newPerDay: Int, asOf now: Date = Date()) -> Int {
-        let today = todayNewWords(days, asOf: now)
-        return max(0, newPerDay + today.bonus - today.introduced)
-    }
-
-    private static func add(seconds: Int, to bucket: StudyTimeBucket, on day: StudyDay) {
-        let s = max(0, seconds)
-        guard s > 0 else { return }
-        switch bucket {
-        case .cards:        day.cardSeconds += s
-        case .grammar:      day.grammarSeconds += s
-        case .conversation: day.conversationSeconds += s
-        case .storyReading: day.storySeconds += s
-        case .storyQuiz:    day.storyQuizSeconds += s
-        case .games:        day.gameSeconds += s
-        case .drawing:      day.drawingSeconds += s
-        case .writing:      day.writingSeconds += s
-        case .hoeren:       day.hoerenSeconds += s
-        }
+        StudyStreak.newWordBudgetRemaining(days, newPerDay: newPerDay, asOf: now)
     }
 
     private static func fetchOrCreate(_ dayStart: Date, in context: ModelContext) -> StudyDay {
@@ -155,65 +83,23 @@ enum StudyLogService {
         return created
     }
 
-    // MARK: - Read (pure, over an already-fetched set)
+    // MARK: - Read (pure, over an already-fetched set; the rules are `StudyStreak`'s)
 
     /// Did the learner study today?
     static func studiedToday(_ days: [StudyDay], asOf now: Date = Date()) -> Bool {
-        let today = Calendar.current.startOfDay(for: now)
-        return studiedDays(days).contains(today)
+        StudyStreak.studiedToday(days, asOf: now)
     }
 
-    /// The current streak: consecutive days with activity ending today. If today has no activity
-    /// yet but yesterday did, the streak is still "alive" (counted from yesterday) so today's chat
-    /// can be framed as *keeping* it. Zero once a full day is missed.
+    /// The current streak: consecutive days with activity ending today, still "alive" from
+    /// yesterday until today ends.
     static func currentStreak(_ days: [StudyDay], asOf now: Date = Date()) -> Int {
-        let cal = Calendar.current
-        let studied = studiedDays(days)
-        guard !studied.isEmpty else { return 0 }
-
-        let today = cal.startOfDay(for: now)
-        var cursor = today
-        if !studied.contains(today) {
-            // No activity today — the streak survives only if yesterday counted.
-            guard let yesterday = cal.date(byAdding: .day, value: -1, to: today),
-                  studied.contains(yesterday) else { return 0 }
-            cursor = yesterday
-        }
-
-        var streak = 0
-        while studied.contains(cursor) {
-            streak += 1
-            guard let prev = cal.date(byAdding: .day, value: -1, to: cursor) else { break }
-            cursor = prev
-        }
-        return streak
+        StudyStreak.currentStreak(days, asOf: now)
     }
 
-    /// Time on task over a date range, plus the context that makes the number mean something:
-    /// how many of those days were active, and the average across them.
-    struct TimeSummary {
-        var totalSeconds: Int
-        var activeDays: Int
-        /// Average over *active* days only — an average over 365 calendar days would read as zero
-        /// for anyone with a normal life.
-        var averageSeconds: Int { activeDays > 0 ? totalSeconds / activeDays : 0 }
-        var hasTime: Bool { totalSeconds > 0 }
-    }
+    typealias TimeSummary = StudyTimeSummary
 
     /// Sum the log over `start ..< end` (both expected at midnight).
     static func timeSummary(_ days: [StudyDay], from start: Date, to end: Date) -> TimeSummary {
-        var total = 0
-        var active = 0
-        for day in days where day.dayStart >= start && day.dayStart < end {
-            guard day.hasActivity else { continue }
-            active += 1
-            total += day.totalSeconds
-        }
-        return TimeSummary(totalSeconds: total, activeDays: active)
-    }
-
-    private static func studiedDays(_ days: [StudyDay]) -> Set<Date> {
-        let cal = Calendar.current
-        return Set(days.filter(\.hasActivity).map { cal.startOfDay(for: $0.dayStart) })
+        StudyStreak.timeSummary(days, from: start, to: end)
     }
 }

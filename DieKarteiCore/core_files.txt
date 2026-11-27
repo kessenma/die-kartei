@@ -78,6 +78,7 @@ Services/Spiele/HangmanState.swift
 Services/Spiele/WordSearchGenerator.swift
 Services/StoryReadingTimer.swift
 Services/StoryStarterService.swift
+Services/StudyDayCounts.swift
 Services/Sync/Core/FakeSyncServer.swift
 Services/Sync/Core/Records/ChatRecords.swift
 Services/Sync/Core/Records/DeckRecords.swift

@@ -36,10 +36,20 @@ Built and tested; the rest of this document is the design it follows.
   the iOS ids; the level is a filter. `WortschatzMigration` moves `studyProgress.v1` once,
   merging a word's per-level copies by the card's sync rules (the old blob stays for rollback).
 
+- **Study-day log (step 5):** `Services/StudyDayCounts.swift` (core) holds `StudyActivity`,
+  `StudyTimeBucket`, what each adds (`StudyDayTally`), when a day is active, the streak, time
+  totals and the new-word budget (`StudyStreak`), over a `StudyDayCounts` protocol that iOS
+  `StudyDay` (a key-path table) and Android `StudyDayRecord` both adopt. `StudyLogService` keeps
+  its API and forwards there. Android: `RecordStore.recordStudy/recordStudyTime/recordNewWords`
+  (KarteiStore/StudyLog.swift) and the app's `StudyLog`; cards, the four grammar drills, Zahlen-
+  Diktat, Galgenmännchen, Wortsuche and the tutor's live time and summary write to it, per answer
+  with the time since the last one (capped at 120 s). Home shows the streak; new words per session
+  now sit inside iOS's daily budget (`wortschatz.newPerDay`, 15). iOS `StudyDayParityTests` checks
+  both apps write the same payload for the same activities.
+
 Next: Android writes for the new kinds (steps 6–7: `TutorStore` saving chats and messages,
-`sessionSummarized` into the profile, saved phrases); StudyDay writes from Android sessions
-(step 5, needs `StudyLogService`'s counting moved to the core); Auto Backup rules (sync.mdx
-step 2); a transport. Android code that adds a slip or self-report to the profile must write the
+`sessionSummarized` into the profile, saved phrases); Auto Backup rules (sync.mdx step 2); a
+transport. Kasus lesson reading time isn't logged on Android yet (iOS banks it as grammar time). Android code that adds a slip or self-report to the profile must write the
 item's `"id"` the way the iOS codec does (see `LearnerProfileRecord`).
 
 ## 0. Summary

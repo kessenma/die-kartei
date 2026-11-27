@@ -55,7 +55,7 @@ struct KartenView: View {
         }
         .padding()
         .navigationTitle("Karteikarten")
-        .onAppear { if deck.isEmpty { reload() } }
+        .onAppear { StudyLog.shared.begin(); if deck.isEmpty { reload() } }
         .onChange(of: levelRaw) { _, _ in reload() }
     }
 
@@ -134,6 +134,7 @@ struct KartenView: View {
     }
 
     func reload() {
+        StudyLog.shared.begin()
         deck = store.session(for: level)
         index = 0
         rated = 0

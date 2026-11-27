@@ -108,26 +108,43 @@ final class StudyDay {
     /// Time only counts as a study day once it passes a minute — a ten-second glance at a story
     /// shouldn't keep a streak alive, but a real read with no questions answered should. Applies
     /// to any untallied stretch (reading, an unsummarized conversation).
-    static let storyStreakSeconds = 60
+    static let storyStreakSeconds = StudyDayTally.streakSeconds
 
     /// Whole minutes of story reading, the unit the calendar and progress screens show.
     var storyMinutes: Int { storySeconds / 60 }
 
-    /// Every second logged today, across all activities — the number the calendar totals.
-    var totalSeconds: Int {
-        cardSeconds + grammarSeconds + conversationSeconds + storySeconds + storyQuizSeconds
-            + gameSeconds + drawingSeconds + writingSeconds + hoerenSeconds
-    }
-
     /// Whole minutes studied today, the unit the calendar's time shading buckets on.
     var totalMinutes: Int { totalSeconds / 60 }
 
-    /// Did the learner do anything at all on this day? (Guards against empty rows.)
-    var hasActivity: Bool {
-        cardsReviewed > 0 || grammarExercises > 0 || conversations > 0
-            || storyQuestions > 0 || gameWordsSolved > 0 || wordsDrawn > 0 || wordsWritten > 0
-            || sheetWordsWritten > 0 || hoerenItems > 0
-            || totalSeconds >= Self.storyStreakSeconds
+    /// Every counter by its sync payload name (`SyncKinds.studyDayCounterFields`), so the shared
+    /// rules in `StudyDayCounts.swift` (what counts as active, total time, the streak) read and
+    /// write this row exactly as they do Android's `StudyDayRecord`.
+    static let counters: [String: ReferenceWritableKeyPath<StudyDay, Int>] = [
+        "cardsReviewed": \.cardsReviewed, "grammarExercises": \.grammarExercises,
+        "conversations": \.conversations, "storySeconds": \.storySeconds,
+        "storyQuestions": \.storyQuestions, "cardSeconds": \.cardSeconds,
+        "grammarSeconds": \.grammarSeconds, "conversationSeconds": \.conversationSeconds,
+        "storyQuizSeconds": \.storyQuizSeconds, "newWordsIntroduced": \.newWordsIntroduced,
+        "newWordsBonus": \.newWordsBonus, "gameSeconds": \.gameSeconds,
+        "gameWordsSolved": \.gameWordsSolved, "wordsDrawn": \.wordsDrawn,
+        "drawingSeconds": \.drawingSeconds, "wordsWritten": \.wordsWritten,
+        "writingSeconds": \.writingSeconds, "sheetWordsWritten": \.sheetWordsWritten,
+        "hoerenItems": \.hoerenItems, "hoerenSeconds": \.hoerenSeconds,
+    ]
+
+    /// Fold increments (by payload name) into the row.
+    func add(_ increments: [String: Int]) {
+        for (field, n) in increments where n > 0 {
+            guard let path = Self.counters[field] else { continue }
+            self[keyPath: path] += n
+        }
+    }
+}
+
+/// `totalSeconds` and `hasActivity` come from here (`StudyDayCounts`), shared with Android.
+extension StudyDay: StudyDayCounts {
+    func count(_ field: String) -> Int {
+        Self.counters[field].map { self[keyPath: $0] } ?? 0
     }
 }
 

@@ -101,7 +101,7 @@ struct HangmanView: View {
         }
         .padding()
         .navigationTitle("Galgenmännchen")
-        .onAppear { if words.isEmpty { newRound() } }
+        .onAppear { StudyLog.shared.begin(); if words.isEmpty { newRound() } }
     }
 
     func blanks(_ state: HangmanState) -> some View {
@@ -161,6 +161,10 @@ struct HangmanView: View {
     }
 
     func next() {
+        // A word is over: solved counts, the time counts either way (iOS banks abandoned time too).
+        if let state, state.isOver {
+            StudyLog.shared.answered(.games(state.isWon && !state.isLost ? 1 : 0))
+        }
         if index + 1 < words.count {
             index += 1
             state = HangmanState(word: words[index])
@@ -201,7 +205,7 @@ struct WortsucheView: View {
         }
         .padding()
         .navigationTitle("Wortsuche")
-        .onAppear { if puzzle == nil { newPuzzle() } }
+        .onAppear { StudyLog.shared.begin(); if puzzle == nil { newPuzzle() } }
     }
 
     func grid(_ puzzle: WordSearchPuzzle) -> some View {
@@ -253,6 +257,7 @@ struct WortsucheView: View {
         }
         if let placement = puzzle.placement(matching: cells), !found.contains(placement.id) {
             found.insert(placement.id)
+            StudyLog.shared.answered(.games(1))
             message = "\(placement.word.display) = \(placement.word.english)"
         } else {
             message = "Kein Wort"
