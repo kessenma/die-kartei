@@ -1,15 +1,20 @@
 # Android parity audit
 
-What the iOS app (main @ 42b1cc7) has that the Android port (android-port @ ffd2307) doesn't,
-and an order to close the gap. Written 2026-11-27 from reading both codebases. Nothing was built
-for this audit; the Android screenshots in `android-parity/shots/` are from the emulator today.
+What the iOS app (main @ 42b1cc7) has that the Android port (android-port) doesn't, and an
+order to close the gap. Written 2026-11-27 from reading both codebases, plus two proofs run in
+scratch copies: the 3D scenes exported to GLB and played on the emulator, and the icon
+inventory. Screenshots are in `android-parity/shots/`.
 
 Detail per area, with files, storage keys and effort per item:
 
-- [`android-parity/settings.md`](android-parity/settings.md): every Settings pane and control
-- [`android-parity/home-library-onboarding.md`](android-parity/home-library-onboarding.md): tab shell, Home, Library, onboarding, placement quiz, progress/gamification
-- [`android-parity/3d-and-learning.md`](android-parity/3d-and-learning.md): every 3D surface, the port options, and Cards / Wortschatz / Grammar / Hören / Spiele / Matching
-- [`android-parity/ai-platform-infra.md`](android-parity/ai-platform-infra.md): tutor features, content import, ink, sync, notifications, themes, persistence, model download, speech
+- [`persistence.md`](android-parity/persistence.md): every SwiftData model and the Android database design (phase 1)
+- [`settings.md`](android-parity/settings.md): every Settings pane and control
+- [`home-library-onboarding.md`](android-parity/home-library-onboarding.md): tab shell, Home, Library, onboarding, placement quiz, progress
+- [`3d-and-learning.md`](android-parity/3d-and-learning.md): every 3D surface, and Cards / Wortschatz / Grammar / Hören / Spiele / Matching
+- [`3d-android.md`](android-parity/3d-android.md): 3D rendering options, the GLB export and the SceneView spike
+- [`icons.md`](android-parity/icons.md) + [`icon-map.csv`](android-parity/icon-map.csv): every SF Symbol and its Android match
+- [`stylus.md`](android-parity/stylus.md): Apple Pencil features and the Android stylus design
+- [`ai-platform-infra.md`](android-parity/ai-platform-infra.md): tutor features, content import, sync, notifications, themes, model download, speech
 
 Effort: S ≈ a day or two, M ≈ a few days to two weeks, L ≈ three weeks or more.
 
@@ -25,27 +30,58 @@ Android is ahead in a few small places worth keeping: Wortsuche (iOS has the eng
 screen), the haben/sein quiz, the System/Light/Dark picker, the slow voice sample, per-level
 reset, the Version row.
 
-## The four things you noticed
+## Database (phase 1)
 
-### 1. No 3D / Figur animations
-iOS has 86 USDZ scenes (~26 MB) on 11 user-facing surfaces: die Figur in the placement check
-and the Treppe, preposition scenes (case game, cards, rules sheet), verb-preposition cards,
-Kasus lesson scenes, endings blocks, the Lernpyramide, Dein Weg, the Schreibblatt celebration.
-Skip has no 3D module and Android can't read USDZ.
+Most of what's missing saves something: decks, chats, phrases, stories, study days, grammar
+rounds, stats. Android today keeps a JSON blob in UserDefaults with its own card ids (`A1:word`),
+so every screen built on it would need its storage redone later. The database comes first.
 
-- iOS already has a "Stills Only" path (`LightweightGraphics`), with 173 Blender stills plus
-  `figur-still`. Android can behave like an iOS device set to Stills Only: about a day's work,
-  no new dependencies. Gaps: the pyramid, journey and Treppe have no still yet.
-- Real 3D afterwards: export GLB next to the USDZ in the two Blender export functions
-  (`figur.py`, `prep_render.py` cover all 86 assets), render with SceneView (Filament, Compose)
-  in a small Kotlin-bridged Skip module, like `GermanVoice`. Baked scenes first (Figur, 39 verb,
-  5 Kasus, celebration); preposition scenes after their per-frame motion moves into a shared
-  Swift file so both apps run one choreography.
-- Not recommended: video/Lottie/sprites. The scenes are tinted per case and theme at runtime,
-  so the variants run into the hundreds.
-- Related trap: SkipUI has no `Canvas` (the file is commented out) and its `TimelineView`
-  schedules are `fatalError()` stubs. The 2D stand-ins that use `Canvas` (Hangman gallows,
-  `PyramidGlyph`, grammar task art) need rewriting with `Shape`/`Path`.
+- iOS has **35 `@Model` types**; 30 sync through codecs, 5 stay on the device. Only 5
+  relationships (all parent → children cascades), no unique attributes. About 14 struct types
+  stored in `Data` fields sit inside SwiftData files and need moving out so Android can decode them.
+- **Technology: SkipSQLPlus** (skip-sql 0.16.1, bundles SQLite 3.51.3 and SQLCipher). Plain
+  SkipSQL `fatalError`s on Android because the NDK ships no SQLite to link; GRDB has the same gap.
+- **Schema: one `record` table** whose payload is exactly what the iOS sync codec writes, plus a
+  few index columns (parent, due, day, sort, natural key). Android rows are iOS-readable by
+  construction, the sync plan's step 1 comes with it, and new iOS fields need no table changes.
+- **Swift API:** a store protocol per aggregate in the core (`DeckStoring`, `StudyLogStoring`,
+  `LearnerProfileStoring`, `ConversationStoring`, `PhraseStoring`). iOS adopts them through thin
+  SwiftData adapters and keeps `@Query`; nothing changes for iOS users.
+- **Migration:** Android's `A1:word` progress moves to iOS's Wortschatz card ids once.
+- **Order** (steps 0–5 ≈ two weeks): a SkipSQLPlus spike on the emulator → sync specs into the
+  core (on main) → 8 spine record types → the database → decks and Wortschatz (with migration) →
+  study-day log (streak, daily new-word budget) → learner profile → saved chats and phrases →
+  `.kartei` import → sync-shaped writes and Auto Backup → an iOS test that reads Android's records.
+
+## The things you noticed
+
+### 1. No 3D / Figur animations: it works on Android
+Proven in a scratch spike, not yet in the app:
+- **Export:** one `export_glb()` call next to `export_usdz` in `figur.py` and `prep_render.py`
+  exports all 82 shipped scenes to GLB in 35 s (`tools/glb/glb-export.patch`). Node names like
+  `subject` survive, materials come out as standard PBR, 13.6 MB raw vs 26.2 MB of USDZ.
+  Multi-clip verb scenes need `export_animation_mode="SCENE"` to come out as one clip.
+- **Rendering:** SceneView 4.76.0 (Filament, Compose-native, Apache-2.0; Android's counterpart of
+  react-native-filament) in a standalone app on the emulator: die Figur assembles and holds, the
+  `helfen` and `geben` clips play, and in `prep3d-auf` the ball is found by name, tinted and moved
+  per frame from code, all over a transparent background.
+
+  ![die Figur assembling on Android](android-parity/shots/3d-android-aufbau-sequence.png)
+  ![prep, verb and Kasus scenes on Android](android-parity/shots/3d-android-scenes.png)
+- **In the app:** a small Kotlin-bridged Skip module, `Kartei3D`, next to `GermanVoice`, shown
+  through `ComposeView`. The scene description stays in the shared core; each platform renders it.
+- **Costs and catches:** about +6.6 MB APK (arm64, compressed libs); SceneView snaps a finished clip
+  back to frame 0, so the module drives playback itself (fix verified); SceneView pulls a newer
+  Compose (BOM 2026.09) than Skip uses (2026.05), untested against SkipUI. Not measured yet: frame
+  rate on a low-end phone.
+- **Rollout:** stills first wherever 3D isn't ready (iOS's own "Stills Only" path, 173 stills
+  exist), then baked scenes (Figur, 39 verb, 5 Kasus, celebration), then the preposition scenes
+  after their per-frame motion moves into a shared Swift file, then the procedural ones (pyramid,
+  journey, Treppe) once they have Blender GLBs.
+- **Found on the way** (existing pipeline, not this change): with Blender 5.3, 12 of 39 verb scenes
+  fail the USD verify step, and `verb3d-handeln` / `verb3d-verlangen` export with no animation.
+- SkipUI has no `Canvas` and stubbed `TimelineView`, so the 2D stand-ins that use `Canvas`
+  (Hangman gallows, `PyramidGlyph`, grammar task art) need redrawing with shapes.
 
 ### 2. No entry quiz / no quiz in Settings
 iOS: a one-time onboarding wizard (welcome → tutor offer → the three-minute check), plus
@@ -55,12 +91,11 @@ at A1, and Your Level is an inline A1–B1 picker.
 - The engine is nearly portable as is: `PlacementService`, `PlacementSession`,
   `PlacementAttemptStore` import only Foundation; `PlacementResult`/`PlacementAttempt` are
   already in the core. `PlacementGrammarBank` needs `Bundle.main` → `AppResources.bundle`, and
-  `placement_grammar.json` isn't copied to Android yet.
-- The UI (`PlacementQuizStages`, 830 lines) is SwiftUI without SwiftData, so it adapts to Skip.
-- No model needed: every item comes from bundled data. The cheapest large win in this audit.
-- The level itself needs to change on Android: iOS stores CEFR A1–C1 under `german.level`
-  (on `MLXModelManager`, which Android doesn't share); Android stores Goethe A1–B1 under
-  `level`. Split the level setting into a Foundation-only file both apps use.
+  `placement_grammar.json` isn't copied to Android yet. The UI is SwiftUI without SwiftData.
+- No model needed: every item comes from bundled data.
+- The level itself changes on Android: iOS stores CEFR A1–C1 under `german.level` (on
+  `MLXModelManager`, which Android doesn't share); Android stores Goethe A1–B1 under `level`.
+  Split the level setting into a Foundation-only file both apps use.
 
 ### 3. Settings is way off
 Android has 6 of iOS's 17 panes, all of them partial; it has no icons, no grey summaries,
@@ -86,120 +121,139 @@ Account/App/Learning/Model/About/Developer).
 | Developer | Missing (debug only) |
 
 Fix: rebuild Settings on the `SettingsPane` structure (one list of panes with group, title, icon,
-summary), add a Skip-safe `SettingsHeader` (no `symbolEffect`), and use the iOS storage keys so
-sync can line up later. Key mismatches today: `german.level` vs `level`,
-`wortschatz.newPerDay`/`sessionCap` vs `flashcards.newPerSession`, `selectedMLXModel` vs
-`tutor.model`, `app.theme` vs `appearance`.
+summary), add a Skip-safe `SettingsHeader` (no `symbolEffect`), and use the iOS storage keys.
+Key mismatches today: `german.level` vs `level`, `wortschatz.newPerDay`/`sessionCap` vs
+`flashcards.newPerSession`, `selectedMLXModel` vs `tutor.model`, `app.theme` vs `appearance`.
 
 ### 4. Library looks like an old version
-It does, for a specific reason: Android lists the three Goethe decks, which iOS's
-`UnifiedLibraryView` deliberately hides as activity plumbing. iOS's Library is an archive of
-what the learner made: Decks · Chats · Reading · Phrases, with mix decks, deck stats, share,
-course assignment and delete.
+Android lists the three Goethe decks, which iOS's `UnifiedLibraryView` deliberately hides as
+activity plumbing. iOS's Library is an archive of what the learner made: Decks · Chats · Reading ·
+Phrases, with mix decks, deck stats, share, course assignment and delete. Android can't show that
+until the database exists, plus a way to make decks (tutor download, or `.kartei` import from an
+iPhone) and saved chats. The shell with iOS's segments and empty states can come right after the
+database; the Goethe levels move to Home ▸ Vocabulary where iOS has them.
 
-Android can't show that yet because it has no store for user content (`SavedDeck`,
-`ChatConversation`, etc. are SwiftData), nothing to create decks with (generation needs the
-tutor download; document/photo import needs OCR/PDF), and Gespräch keeps chats in memory only.
+## Icons
 
-- Now (S): the iOS shell: segmented Decks/Chats/Reading/Phrases with iOS's empty states; move
-  the Goethe levels to Home ▸ Vocabulary / Wortschatz where iOS has them.
-- Then (M): a deck store plus `.kartei` import, so decks shared from an iPhone open on Android;
-  splitting `DeckTransferEnvelope` out of `DeckTransfer.swift` makes that possible. Saved chats
-  fill the Chats segment.
+iOS uses **463 distinct SF Symbols** (2,236 uses). They **can't ship on Android**: Apple's
+licence limits SF Symbols to Apple platforms, exported or traced SVGs included. So iOS keeps SF
+Symbols unchanged and Android gets the closest legal match.
+
+- Today Skip maps 47 of the names (23% of uses); every other icon shows a warning triangle.
+- Matches: Material Symbols Rounded alone gives 269 exact, 134 close, 52 meaning-only, 8 none.
+  Adding ~30 icons from Phosphor, Lucide and Tabler makes it 303 / 129 / 29 / 2. All are
+  Apache-2.0 / MIT / ISC; the app needs a licence notice.
+- **No iOS code changes:** SkipUI looks for a `<sf-name>.symbolset` in the Android module's asset
+  catalog before its own table, and Google publishes Material Symbols in exactly that format. So
+  `Image(systemName: "cpu")` stays as written and shows Material `memory` on Android. A script
+  generates the ~440 symbolsets from `icon-map.csv` (`tools/icons/`).
+- **Custom drawings needed (8–10, Bauhaus style):** `figure.stairs` (no match anywhere), the card
+  stack, the Library-tab head, pyramid, hare, three geometry marks, two 3×3 game grids.
+- The tab bar is off today: iOS uses `house` / `checklist` / `brain.head.profile` / `gearshape.2`;
+  Android has house / check circle / bookmark / one gear. Seven Home rows differ too.
+- Limits: `.symbolEffect` and friends don't compile under Skip (28 call sites, need a no-op
+  wrapper); Skip draws icons in one colour, so multicolour/hierarchical modes don't carry over.
+- To test first: one Material, one Phosphor and one `.fill` symbolset in the tab bar.
+
+## Stylus / Apple Pencil
+
+iOS runs seven features on one shared Pencil engine: Schreibblatt, the journal page, worksheets,
+Quick Draw, Atelier, paint-by-number and "Write it after a miss". Its own tool dock, PencilKit
+inks, partial and circle erasers, finger-tap undo, a wrist guard, Pencil Pro squeeze. Handwriting
+is read (Vision) in the journal and worksheets.
+
+- **Android has the parts:** Jetpack Ink 1.0 (stable) for strokes and rendering, low-latency
+  front-buffered drawing (API 29+), motion prediction, and `MotionEvent` gives stylus vs eraser vs
+  finger, pressure, tilt, hover and barrel buttons. ML Kit Digital Ink reads German handwriting
+  offline after a ~20 MB model download.
+- **Module:** `KarteiInk`, a Kotlin-bridged Skip module wrapping a Jetpack Ink canvas, PDF export
+  through `PdfDocument`. Jetpack Ink has no eraser, so whole-stroke erase first, partial later.
+- **Devices:** real pens are mostly Samsung Galaxy Tab S / S Ultra, plus USI pens on Pixel Tablet
+  and Chromebooks: a small share of users. Treat the stylus as an enhancement: gate on tablet vs
+  phone, switch on pen-only drawing once a pen has actually touched the screen, keep finger drawing
+  everywhere else.
+- **Ink format:** Android can't read PKDrawing. A neutral stroke file in the shared core for later
+  iPhone↔Android sync; until then ink stays on the device.
+- **Order:** spike (M) → Write it (S) → Quick Draw (S–M) → Schreibblatt (M) → journal with
+  recognition (M) → worksheets (L) → Atelier (L).
 
 ## Other gaps, by area
 
 - **Home:** iOS has For You (Today plan, level card, streak calendar, week in review, Monatsbericht)
   and All Activities (7 tiles, 6 wide cards). Android has one due-cards row and a list.
-  `TodayPlanner.plan` is a pure function three small splits away from the core.
-- **Activity log:** nothing on Android records study days, so there's no streak, XP, badges or
-  daily new-word budget. Android hands out new words per session, so reopening Karten gives
-  another 10; iOS budgets per day. `StudyDay` needs a plain-value twin.
+- **Activity log:** nothing on Android records study days, so no streak, XP, badges or daily
+  new-word budget; Android hands out new words per session instead of per day.
 - **Gamification:** XP/rank, Tagesziel ring, 16 badges, celebrations, Fortschritt, Lernpyramide,
   Dein Weg: all missing.
-- **Grammar:** the 19 Kasus drill types, Kasus stories and the case path are missing: the core
-  of the grammar teaching. One split unblocks most of it (the value types in `KasusService.swift`,
-  `KasusConceptPlayable`, a `KasusRound` twin; already listed in ANDROID_PORT.md). The Grammar
-  hub layout (Üben/Fortschritt, Weiter, case path, areas, Nachschlagen) differs; Android is one list.
-  Also missing: endings table and Werkstatt, Präpositionen cards / rules sheet / verb-prepositions,
-  grammar progress and history.
+- **Grammar:** the 19 Kasus drill types, Kasus stories and the case path are missing, the core of
+  the grammar teaching. One split unblocks most of it (value types in `KasusService.swift`,
+  `KasusConceptPlayable`, a `KasusRound` twin). The hub layout differs; also missing: endings table
+  and Werkstatt, Präpositionen cards / rules / verb-prepositions, grammar progress and history.
 - **Flashcards:** no Default or Leitner styles, no article-hiding quiz, no repeat-missed, no
-  summary, no 3D flip (`rotation3DEffect` works in Skip), no user decks or pictures.
-- **Matching:** missing, though the game view is portable (swap its Combine timer for a Task).
+  summary, no 3D flip, no user decks or pictures.
+- **Matching:** missing, though the game view is portable.
 - **Hören:** numbers only; Diktat, carrier sentences, stats, Gist and Hör-Check missing.
-- **Tutor:** typed only, nothing saved. Missing: voice input, autoplay with word highlight,
-  Stammtisch, phrase library, review deck, quality stats.
-- **Not started:** Stories, Schreiben, Schreibblatt, Deutschkurs/ClassNotes and worksheets, Job
-  prep and Lebenslauf, Zeichnen, flashcards from a document, PhotoScan/Paper, the overnight queue,
-  AI deck generation, the keyboard, reminders, sync/backup, themes.
+- **Tutor:** typed only, nothing saved; no voice input, autoplay, Stammtisch, phrase library.
+- **Not started:** Stories, Schreiben, Schreibblatt, Deutschkurs and worksheets, Job prep and
+  Lebenslauf, Zeichnen, flashcards from a document, PhotoScan/Paper, the overnight queue, AI deck
+  generation, the keyboard, reminders, sync/backup, themes.
 - **Data not copied to Android yet:** `placement_grammar.json`, `kasus_concepts.json`,
   `kasus_stories.json`, `kasus_triggers.json`, `gap_choice_items.json`, `writing_prompts.json`,
   the 3D manifests, the 173 stills, `wiktionary_de.db`.
 
-## What's in the way
+## Other foundations
 
-Most gaps trace back to a few foundations, not to the screens themselves:
-
-1. **Persistence.** ~35 SwiftData `@Model` types; Android has a JSON blob in UserDefaults whose
-   card ids (`A1:word`) don't match iOS's. Plan: a SkipSQL store holding records in the same shape
-   as the 30 sync codecs, behind per-feature store protocols. That is also step 1 of the sync plan.
-2. **Model download.** The GGUFs aren't on Hugging Face yet, so the tutor only works via adb.
-   Every AI feature is effectively missing for a real user until this lands.
-3. **Speech.** TTS speaks; no word ranges, voice picker or background playback. No speech-to-text
-   (Android `SpeechRecognizer` behind the core's existing `SpeechInput` protocol).
-4. **Design system.** The theme tokens port; the Apple fonts (Noteworthy, Marker Felt, Futura)
-   don't, so bundle open-licence substitutes. Do this before porting many more screens, or each
-   one gets re-themed later.
-5. **3D and 2D drawing.** As in #1 above.
-6. **Platform modules** (Kotlin-bridged, like `GermanVoice`): notifications/WorkManager, text
-   intake (ML Kit OCR, PDF text, URLs; five features need it), ink (four features).
+- **Model download.** The GGUFs aren't on Hugging Face yet, so the tutor only works via adb.
+  Every AI feature is effectively missing for a real user until this lands.
+- **Speech.** TTS speaks; no word ranges, voice picker or background playback. No speech-to-text
+  (Android `SpeechRecognizer` behind the core's existing `SpeechInput` protocol).
+- **Design system.** The theme tokens port; the Apple fonts (Noteworthy, Marker Felt, Futura)
+  don't, so bundle open-licence substitutes before porting many more screens.
+- **Platform modules** (Kotlin-bridged, like `GermanVoice`): `Kartei3D`, `KarteiInk`,
+  notifications/WorkManager, text intake (ML Kit OCR, PDF text, URLs).
 
 ## Phases
 
-Each phase ends with something visible on the emulator. iOS behaviour doesn't change: splits on
-the iOS side are moves into Foundation-only files, landed on main early so the branches don't drift.
+Each phase ends with something visible on the emulator. iOS behaviour doesn't change: iOS-side
+splits are moves into Foundation-only files, landed on main early so the branches don't drift.
 
-**Phase 0: Line up (S).** Merge main into android-port (1 behind) and land the branch's iOS-side
-splits on main (15 ahead). Copy the missing data files and stills into Android Resources.
+**Phase 0: Line up (S).** Merge main into android-port and land the branch's iOS-side splits on
+main (including `ConversationHost`, which the chat store needs). Copy the missing data files.
 
-**Phase 1: Placement check and onboarding (M).** Placement engine into the core; one shared level
-setting (CEFR, `german.level`); the quiz UI; a two-step onboarding (welcome, check); Settings ▸
-Your Level as its own screen with "Take the three-minute check". Die Figur appears as her still.
+**Phase 1: Database (M–L, critical path ≈ 2 weeks).** The plan above: SkipSQLPlus record store,
+spine records, decks and Wortschatz with the id migration, study-day log, learner profile, saved
+chats and phrases, `.kartei` import, Auto Backup.
 
-**Phase 2: Settings, Library and Home look like iOS (M).** Settings on the `SettingsPane`
-structure with icons, summaries and header; the cheap panes (Conversation settings wired into
-Gespräch, fuller Flashcards options, Feedback, Rate, What's New, full Sources). Library shell with
-iOS's segments and empty states; Goethe decks back under Vocabulary. Home For You / All Activities.
-Theme tokens and two themes with bundled fonts. Re-tap a tab to pop to root.
+**Phase 2: Look like iOS (M).** Icons (symbolsets + the custom drawings), theme tokens and fonts,
+Settings on the `SettingsPane` structure with the cheap panes (Conversation settings wired into
+Gespräch, fuller Flashcards, Feedback, Rate, What's New, Sources), the Library with real decks and
+chats, Home For You / All Activities with streak and Today plan. The parts that save nothing
+(icons, themes, Settings shell) can start alongside phase 1.
 
-**Phase 3: Stills everywhere, then a 3D spike (S, then M).** Android as a Stills Only device: case
-game reveal, Kasus lessons, preposition and verb cards. Rewrite the `Canvas` stand-ins with shapes.
-Then a spike: GLB export of die Figur's assembly, played in SceneView on the emulator, with APK
-size and frame rate measured on a real phone before committing to more.
+**Phase 3: Placement check and onboarding (M).** Engine into the core, one shared CEFR level,
+the quiz UI, a two-step onboarding, Settings ▸ Your Level with the check. Results saved to the
+learner profile.
 
-**Phase 4: Persistence spine (M–L).** SkipSQL record store; study-day log (streak, daily new-word
-budget); deck store with `.kartei` import; saved chats; card ids migrated to iOS's. Unlocks the
-Library's content, the Today plan, streaks and Auto Backup. Reminders come at the end of this
-phase, since they key off the last study day.
+**Phase 4: 3D (M–L).** `Kartei3D` module with SceneView; stills where scenes aren't ready; die
+Figur in onboarding first, then Kasus and verb scenes, preposition choreography into the core,
+procedural scenes last. Check frame rate on a real low-end phone before going past the baked set.
 
-**Phase 5: Learning depth (L).** The Kasus split, then drills, stories, path and grammar progress.
-Matching. Flashcard styles, flip and summary. Präpositionen cards, rules sheet and
-verb-prepositions. Endings table and Werkstatt. Diktat. Wortschatz hub. XP, goal ring, badges,
-celebrations, a 2D pyramid. Real 3D for the baked scenes, if the spike was good.
+**Phase 5: Learning depth (L).** Kasus split → drills, stories, path, grammar progress. Matching.
+Flashcard styles, flip and summary. Präpositionen cards, rules, verb-prepositions. Endings table
+and Werkstatt. Diktat. Wortschatz hub. XP, goal ring, badges, celebrations, 2D pyramid. Reminders.
 
-**Phase 6: The tutor for real users (M–L).** GGUFs on Hugging Face; in-app download with progress,
-RAM check and delete (Model & Downloads). Speech-to-text and fuller TTS. Voice Gespräch,
-Stammtisch, saved phrases. Stories. Typed Schreiben. AI deck generation.
+**Phase 6: The tutor for real users (M–L).** GGUFs on Hugging Face (in progress in another
+thread); in-app download with progress, RAM check and delete. Speech-to-text and fuller TTS. Voice
+Gespräch, Stammtisch. Stories. Typed Schreiben. AI deck generation.
 
-**Phase 7: Import, ink, sync (L).** Text intake module → flashcards from a document, PhotoScan,
-Paper, Deutschkurs, Job prep. Ink module → Schreibblatt, Zeichnen, handwriting. Overnight queue.
-Google Drive sync. Keyboard via `PROCESS_TEXT` first.
-
-Phases 1–3 need none of the foundations and can start now. Phase 3's spike can run alongside 1–2.
+**Phase 7: Import, ink, sync (L).** Text intake (OCR, PDF, URLs) → flashcards from a document,
+PhotoScan, Paper, Deutschkurs, Job prep. `KarteiInk` → Write it, Quick Draw, Schreibblatt, journal,
+worksheets, Atelier. Overnight queue. Google Drive sync. Keyboard via `PROCESS_TEXT` first.
 
 ## Still to verify
 
-- Filament/SceneView APK size and frame rate on a low-end phone; glTF export of the multi-clip verb scenes.
+- SkipSQLPlus building with Swift 6.4.3 for Android, and its APK size (phase 1, step 0).
+- SceneView's Compose version against SkipUI; 3D frame rate on a low-end phone.
+- Symbolset rendering in Skip's tab bar (centring, cut-outs, `.fill`).
+- Jetpack Ink's input API from Skip; ML Kit on single handwritten letters.
 - Whether Skip picks the dark variant of an image asset (`figur-still`).
-- `core_sync.py --prune` on the placement and TodayPlanner splits (portability above is from reading imports).
-- Skip's file/photo pickers, skip-sql and skip-web specifics; ML Kit Digital Ink for German.
