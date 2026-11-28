@@ -5,18 +5,19 @@ import SkipFuse   // Android: @Observable through Skip's registrar, so Compose s
 #endif
 
 // A real file in the core, not a link to the app: iOS keeps its chats in SwiftData.
-// A conversation kept in memory: the records and host the Android app runs its chats on until
-// they're saved to disk, and the ones the core tests drive the session with. Observable, so a
+// A conversation kept in memory: the records and host the Android app runs its chats on (saved
+// as `ChatConversationRecord`/`ChatMessageRecord` through StoredConversation.swift), and the
+// ones the core tests drive the session with. Observable, so a
 // SwiftUI view redraws when the session annotates a message (a correction landing, a
 // translation filled in).
 
 @Observable
 final class MemoryChatMessage: TutorChatMessage, Identifiable {
-    let id = UUID()
+    let id: UUID
     let role: ChatRole
     let text: String
     let sortOrder: Int
-    let createdAt = Date()
+    let createdAt: Date
 
     var correctedText: String?
     var correctionNote: String?
@@ -31,7 +32,9 @@ final class MemoryChatMessage: TutorChatMessage, Identifiable {
     var translationText: String?
     var translationViewed = false
 
-    init(role: ChatRole, text: String, sortOrder: Int) {
+    init(id: UUID = UUID(), role: ChatRole, text: String, sortOrder: Int, createdAt: Date = Date()) {
+        self.id = id
+        self.createdAt = createdAt
         self.role = role
         self.text = text
         self.sortOrder = sortOrder
@@ -43,7 +46,7 @@ final class MemoryChatMessage: TutorChatMessage, Identifiable {
 
 @Observable
 final class MemoryChatRecord: TutorChatRecord {
-    let id = UUID()
+    let id: UUID
     var messages: [MemoryChatMessage] = []
     var durationSeconds = 0
     var inputModeRaw: String
@@ -51,8 +54,21 @@ final class MemoryChatRecord: TutorChatRecord {
     private(set) var savedVocab: [SavedVocabItem] = []
     private(set) var summary: ConversationSummary?
 
-    init(inputMode: ChatInputMode = .type) {
+    init(id: UUID = UUID(), inputMode: ChatInputMode = .type) {
+        self.id = id
         inputModeRaw = inputMode.rawValue
+    }
+
+    /// A saved chat, reopened.
+    init(id: UUID, inputModeRaw: String, durationSeconds: Int, updatedAt: Date, savedVocab: [SavedVocabItem],
+         summary: ConversationSummary?, messages: [MemoryChatMessage]) {
+        self.id = id
+        self.inputModeRaw = inputModeRaw
+        self.durationSeconds = durationSeconds
+        self.updatedAt = updatedAt
+        self.savedVocab = savedVocab
+        self.summary = summary
+        self.messages = messages
     }
 
     var sortedMessages: [MemoryChatMessage] { messages.sorted { $0.sortOrder < $1.sortOrder } }

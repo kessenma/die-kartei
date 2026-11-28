@@ -64,6 +64,18 @@ Built and tested; the rest of this document is the design it follows.
   through the Android record format. One difference: an item archived again on Android keeps its
   first archive record (iOS keeps both rows locally but syncs only the earliest).
 
+- **Chats and phrases (step 7):** `Models/ChatSetup.swift` (core) is what a chat keeps of its
+  config and how a reopened chat gets it back; iOS `ChatConversation(config:)` and `makeConfig`
+  and Android's `ChatConversationRecord(setup:)` all use it (`ChatSetupParityTests`: a new chat's
+  payload is identical from both). Android saves a chat as it runs (`ChatHistory`,
+  KarteiStore/ChatStore.swift: only changed rows are written), reopens it from Library ▸ Saved
+  conversations, deletes it with its messages, and banks chat time when the app goes to the
+  background (as iOS). `Models/PhraseRotation.swift` (core) holds which phrases a scenario chat
+  works in and what starting with them does; Android has the phrase library (the tutor checks a
+  phrase with iOS's prompts), and the pre-chat phrase preview. Not yet on Android: speaking,
+  the chat-settings screen (hint count, translations; defaults are used), the iOS list's filters,
+  and adding a phrase to a deck.
+
 Next: Android writes for the new kinds (steps 6–7: `TutorStore` saving chats and messages,
 `sessionSummarized` into the profile, saved phrases); Auto Backup rules (sync.mdx step 2); a
 transport. Android code that adds a slip or self-report to the profile must write the

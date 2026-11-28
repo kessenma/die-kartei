@@ -67,41 +67,76 @@ final class ChatConversation {
     @Relationship(deleteRule: .cascade, inverse: \ChatMessage.conversation)
     var messages: [ChatMessage]
 
+    /// What it keeps of the config comes from `ChatSetup` (shared with Android).
     init(config: ConversationConfig, createdAt: Date = .now) {
+        let setup = ChatSetup(config: config)
         self.id = UUID()
-        self.title = config.displayTitle
+        self.title = setup.title
         self.createdAt = createdAt
         self.updatedAt = createdAt
         self.durationSeconds = 0
-        self.modeRaw = config.mode.rawValue
-        self.scenarioRaw = config.scenario?.rawValue
-        self.customScenario = config.customScenario.isEmpty ? nil : config.customScenario
-        self.focusRaw = config.focusAreas.map { $0.rawValue }
-        self.levelRaw = config.level.rawValue
-        self.formalityRaw = config.formality.rawValue
-        self.strictnessRaw = config.strictness.rawValue
-        self.feedbackStyleRaw = config.feedbackStyle.rawValue
-        self.correctionsEnabled = config.correctionsEnabled
-        self.inputModeRaw = config.inputMode.rawValue
-        self.autoPlay = config.autoPlay
-        self.modelRaw = config.model.rawValue
-        self.deckIDsRaw = config.deckIDs.map { $0.uuidString }
-        self.deckLabel = config.deckLabel
-        self.paperTitle = config.paperTitle
-        self.paperContext = config.paperContext
-        self.jobTitle = config.jobTitle
-        self.jobContext = config.jobContext
-        self.jobCompany = config.jobCompany
-        self.jobLocation = config.jobLocation
-        self.jobURL = config.jobURL
-        self.interviewRoundRaw = config.interviewRound?.rawValue
-        self.interviewFormatRaw = config.interviewFormat?.rawValue
-        self.jobSnapshotFile = config.jobSnapshotFile
-        self.jobPostingIDRaw = config.jobPostingID?.uuidString
-        self.stammtischData = config.stammtisch.flatMap { try? JSONEncoder().encode($0) }
-        self.usesResume = config.resumeProfile != nil
+        self.modeRaw = setup.modeRaw
+        self.scenarioRaw = setup.scenarioRaw
+        self.customScenario = setup.customScenario
+        self.focusRaw = setup.focusRaw
+        self.levelRaw = setup.levelRaw
+        self.formalityRaw = setup.formalityRaw
+        self.strictnessRaw = setup.strictnessRaw
+        self.feedbackStyleRaw = setup.feedbackStyleRaw
+        self.correctionsEnabled = setup.correctionsEnabled
+        self.inputModeRaw = setup.inputModeRaw
+        self.autoPlay = setup.autoPlay
+        self.modelRaw = setup.modelRaw
+        self.deckIDsRaw = setup.deckIDsRaw
+        self.deckLabel = setup.deckLabel
+        self.paperTitle = setup.paperTitle
+        self.paperContext = setup.paperContext
+        self.jobTitle = setup.jobTitle
+        self.jobContext = setup.jobContext
+        self.jobCompany = setup.jobCompany
+        self.jobLocation = setup.jobLocation
+        self.jobURL = setup.jobURL
+        self.interviewRoundRaw = setup.interviewRoundRaw
+        self.interviewFormatRaw = setup.interviewFormatRaw
+        self.jobSnapshotFile = setup.jobSnapshotFile
+        self.jobPostingIDRaw = setup.jobPostingIDRaw
+        self.stammtischData = setup.stammtischData
+        self.usesResume = setup.usesResume
         self.summaryData = nil
         self.messages = []
+    }
+
+    /// The stored setup, for reopening the chat (`ChatSetup.apply`).
+    var setup: ChatSetup {
+        var s = ChatSetup(modelRaw: modelRaw)
+        s.title = title
+        s.modeRaw = modeRaw
+        s.scenarioRaw = scenarioRaw
+        s.customScenario = customScenario
+        s.focusRaw = focusRaw
+        s.levelRaw = levelRaw
+        s.formalityRaw = formalityRaw
+        s.strictnessRaw = strictnessRaw
+        s.feedbackStyleRaw = feedbackStyleRaw
+        s.correctionsEnabled = correctionsEnabled
+        s.inputModeRaw = inputModeRaw
+        s.autoPlay = autoPlay
+        s.deckIDsRaw = deckIDsRaw
+        s.deckLabel = deckLabel
+        s.paperTitle = paperTitle
+        s.paperContext = paperContext
+        s.jobTitle = jobTitle
+        s.jobContext = jobContext
+        s.jobCompany = jobCompany
+        s.jobLocation = jobLocation
+        s.jobURL = jobURL
+        s.interviewRoundRaw = interviewRoundRaw
+        s.interviewFormatRaw = interviewFormatRaw
+        s.jobSnapshotFile = jobSnapshotFile
+        s.jobPostingIDRaw = jobPostingIDRaw
+        s.stammtischData = stammtischData
+        s.usesResume = usesResume
+        return s
     }
 
     // MARK: Derived

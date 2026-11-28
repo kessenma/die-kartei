@@ -62,10 +62,6 @@ final class LearnedPhrase {
         focusAreasRaw.compactMap { GrammarFocus(rawValue: $0) }
     }
 
-    func applies(to scenario: ConversationScenario) -> Bool {
-        scenarioTagsRaw.contains(scenario.rawValue)
-    }
-
     /// The model that created this phrase, if it's still a known model.
     var creatorModel: MLXModel? { MLXModel(rawValue: creatorModelRaw) }
 
@@ -76,36 +72,21 @@ final class LearnedPhrase {
         return model.usesSFSymbolLogo ? nil : model.logoName
     }
 
-    /// A lightweight value-type copy for carrying into a session config.
-    var item: LearnedPhraseItem { LearnedPhraseItem(german: german, english: english) }
+    // MARK: - Rotation (shared with Android: Models/PhraseRotation.swift)
 
-    // MARK: - Rotation sampling
-
-    /// Pick up to `limit` active phrases for `scenario`, preferring least-recently-surfaced ones so
-    /// repeated sessions rotate through the library instead of cramming the same few in every time.
+    /// Pick up to `limit` active phrases for `scenario`, least-recently-surfaced first.
     static func sample(
         for scenario: ConversationScenario,
         from all: [LearnedPhrase],
         limit: Int = 5
     ) -> [LearnedPhrase] {
-        let candidates = all.filter { $0.isActive && $0.applies(to: scenario) }
-        let sorted = candidates.sorted { a, b in
-            // Never-surfaced (nil) first; then oldest surfaced; then fewest surfacings.
-            switch (a.lastSurfacedAt, b.lastSurfacedAt) {
-            case (nil, nil): return a.surfacedCount < b.surfacedCount
-            case (nil, _):   return true
-            case (_, nil):   return false
-            case let (da?, db?):
-                if da != db { return da < db }
-                return a.surfacedCount < b.surfacedCount
-            }
-        }
-        return Array(sorted.prefix(max(0, limit)))
+        PhraseRotation.sample(for: scenario, from: all, limit: limit)
     }
 
     /// Mark this phrase as surfaced in a session (advances it in the rotation).
     func markSurfaced(at date: Date = .now) {
-        surfacedCount += 1
-        lastSurfacedAt = date
+        PhraseRotation.markSurfaced(count: &surfacedCount, last: &lastSurfacedAt, at: date)
     }
 }
+
+extension LearnedPhrase: RotatingPhrase {}

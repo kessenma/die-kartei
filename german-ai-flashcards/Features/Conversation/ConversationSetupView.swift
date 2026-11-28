@@ -802,10 +802,8 @@ struct ConversationSetupView: View {
         try? modelContext.save()
 
         var config = baseConfig
-        config.learnedPhrases = confirmed.map(\.item)
-        // Fold any grammar focus the surfaced phrases carry into the session's steering.
-        let union = Set(config.focusAreas).union(confirmed.flatMap(\.focusAreas))
-        config.focusAreas = GrammarFocus.allCases.filter { union.contains($0) }
+        // The phrases ride in the config and their grammar joins the focus (shared with Android).
+        PhraseRotation.begin(&config, with: confirmed)
 
         onStart(config)
     }

@@ -15,39 +15,16 @@ extension ChatConversation {
         let model = ModelHandoff.current(original: self.model, pick: modelManager.selectedChatModel).model
         var c = ConversationConfig(model: model)
         c.learnerName = ConversationConfig.learnerName(from: modelManager.learnerName)
-        c.mode = mode
-        c.deckIDs = deckIDsRaw.compactMap { UUID(uuidString: $0) }
-        c.deckLabel = deckLabel
+        // The stored setup (shared with Android), then this device's settings and the deck's words.
+        setup.apply(to: &c)
         let ids = Set(c.deckIDs)
         c.deckWords = decks.filter { ids.contains($0.id) }.flatMap { $0.cards.map(\.germanWord) }
-        c.scenario = scenario
-        c.customScenario = customScenario ?? ""
-        c.focusAreas = focusAreas
-        c.level = level
-        c.formality = formality
-        c.correctionsEnabled = correctionsEnabled
         c.correctionTranslationEnabled = modelManager.chatShowCorrectionTranslation
-        c.strictness = strictness
-        c.feedbackStyle = feedbackStyle
-        c.autoPlay = autoPlay
-        c.inputMode = inputMode
         c.eagerAssist = modelManager.chatEagerAssist
         c.autoShowTranslation = modelManager.chatAutoShowTranslation
         c.hintCount = modelManager.chatHintCount
         c.autoHints = modelManager.chatAutoHints
         c.genderColors = modelManager.chatGenderColors
-        c.paperTitle = paperTitle
-        c.paperContext = paperContext
-        c.jobTitle = jobTitle
-        c.jobContext = jobContext
-        c.jobCompany = jobCompany
-        c.jobLocation = jobLocation
-        c.jobURL = jobURL
-        c.interviewRound = interviewRound
-        c.interviewFormat = interviewFormat
-        c.jobSnapshotFile = jobSnapshotFile
-        c.jobPostingID = jobPostingID
-        c.stammtisch = stammtischData.flatMap { try? JSONDecoder().decode(StammtischOptions.self, from: $0) }
         // The résumé stays on the device: re-read it here, capped to this tutor's slice.
         if usesResume, let context = modelContext, let resume = ResumeStore.current(in: context), !resume.kurzprofil.isEmpty {
             c.resumeProfile = String(resume.kurzprofil.prefix(ResumePrompts.kurzprofilSlice(saver: MemorySaver.isActive(for: model))))

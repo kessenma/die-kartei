@@ -183,23 +183,37 @@ typealias AndroidConversation = ConversationSession<MemoryConversationHost>
 /// A conversation with the tutor: the iOS app's own session (`ConversationSession`, shared
 /// through DieKarteiCore), so the flow is the same: the tutor opens, every learner line gets the
 /// correction pass (or a nudge), then the reply; hints, translations and the summary on request.
-/// Typed only for now, and kept in memory (no saved history yet).
+/// Typed only for now. Saved as it runs (`ChatHistory`); Library ▸ Chats reopens it.
 struct GespraechView: View {
+    /// A saved chat to reopen (Library ▸ Chats); nil starts at the setup.
+    var resume: ChatConversationRecord? = nil
     @State var store = TutorStore.shared
     @State var scenario: ConversationScenario? = nil
     @State var session: AndroidConversation?
+    /// A scenario chat's phrases to confirm first (iOS's phrase preview).
+    @State var preview: PendingPhrases?
+    @Environment(\.scenePhase) var scenePhase
 
     var body: some View {
         Group {
             if let session {
                 GespraechChat(session: session) { restart() }
+            } else if let preview {
+                PhrasePreviewView(phrases: preview.phrases) { confirmed in begin(preview.config, with: confirmed) }
             } else {
                 setup
             }
         }
-        .navigationTitle("Gespräch")
-        .onAppear { store.refreshFiles() }
+        .navigationTitle(resume?.title ?? "Gespräch")
+        .onAppear {
+            store.refreshFiles()
+            if session == nil, let resume { reopen(resume) }
+        }
         .onDisappear { session?.tearDown() }
+        // As iOS: time stops (and is saved) while the app is in the background.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { session?.resume() } else { session?.pause() }
+        }
     }
 
     var setup: some View {
@@ -227,12 +241,50 @@ struct GespraechView: View {
         if let scenario {
             config.mode = .scenario
             config.scenario = scenario
+            // As iOS: a scenario chat with phrases in rotation shows them first.
+            let sample = PhraseBook.shared.sample(for: scenario)
+            if !sample.isEmpty {
+                preview = PendingPhrases(config: config, phrases: sample)
+                return
+            }
         }
-        // As iOS's ConversationEngine: the coach's memory primes the chat, the chat's time drips
-        // into today as it runs, and the summary folds into the memory (and counts the
-        // conversation) when personalized coaching is on.
+        let (chat, base) = ChatHistory.shared.start(config)
+        run(config, chat: chat, base: base)
+    }
+
+    /// The learner kept these phrases (iOS `begin(baseConfig:confirmed:)`): they advance in the
+    /// rotation and ride in the chat (`PhraseRotation.begin`).
+    func begin(_ base: ConversationConfig, with confirmed: [LearnedPhraseRecord]) {
+        PhraseBook.shared.markSurfaced(confirmed)
+        var config = base
+        PhraseRotation.begin(&config, with: confirmed)
+        preview = nil
+        let (chat, base) = ChatHistory.shared.start(config)
+        run(config, chat: chat, base: base)
+    }
+
+    /// A saved chat, on this phone's tutor (iOS `makeConfig`: the stored setup, then this
+    /// device's model). Typed: Android can't listen yet.
+    func reopen(_ record: ChatConversationRecord) {
+        guard let model = store.available ?? record.setup.model else { return }
+        var config = ConversationConfig(model: model)
+        record.setup.apply(to: &config)
+        config.inputMode = .type
+        run(config, chat: ChatHistory.shared.open(record), base: record)
+    }
+
+    func run(_ config: ConversationConfig, chat: MemoryChatRecord, base: ChatConversationRecord) {
+        var config = config
+        // As iOS's ConversationEngine: the coach's memory primes the chat, the chat is saved after
+        // every change, its time drips into today as it runs, and the summary folds into the
+        // memory (and counts the conversation) when personalized coaching is on.
         CoachMemory.shared.prime(&config)
-        let host = MemoryConversationHost()
+        let host = MemoryConversationHost(conversation: chat)
+        host.onSave = { [weak host] in
+            MainActor.assumeIsolated {
+                if let chat = host?.conversation { ChatHistory.shared.save(chat, base: base) }
+            }
+        }
         host.onStudyTime = { seconds in
             MainActor.assumeIsolated { StudyLog.shared.recordTime(.conversation, seconds: seconds) }
         }
@@ -256,7 +308,14 @@ struct GespraechView: View {
     func restart() {
         session?.tearDown()
         session = nil
+        preview = nil
     }
+}
+
+/// A scenario chat waiting on its phrase preview.
+struct PendingPhrases {
+    let config: ConversationConfig
+    let phrases: [LearnedPhraseRecord]
 }
 
 struct GespraechChat: View {
@@ -299,7 +358,7 @@ struct GespraechChat: View {
                         }
                     }
                 }
-                if let summary {
+                if let summary = summary ?? session.conversation.summary {
                     summaryCard(summary)
                 }
             }

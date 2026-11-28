@@ -2,6 +2,7 @@ Features/Shared/WordInspection.swift
 Features/Shared/WordTokenizer.swift
 Models/CardImageTiming.swift
 Models/ChatRole.swift
+Models/ChatSetup.swift
 Models/CloudImageModel.swift
 Models/ConversationConfig.swift
 Models/ConversationSummary.swift
@@ -29,6 +30,7 @@ Models/JobPostingCapture.swift
 Models/LearnerMemory.swift
 Models/MLXModel+Catalog.swift
 Models/ModelConfiguration.swift
+Models/PhraseRotation.swift
 Models/PlacementAttempt.swift
 Models/PlacementResult.swift
 Models/SeededGenerator.swift
