@@ -35,7 +35,7 @@ import Testing
 
     static let models: [any PersistentModel.Type] = [SavedDeck.self, SavedCard.self, QuizResult.self, StudyDay.self,
                                                      LearnerProfile.self, ChatConversation.self, ChatMessage.self,
-                                                     LearnedPhrase.self, KasusRound.self]
+                                                     LearnedPhrase.self, KasusRound.self, ArchivedMemoryItem.self]
 
     static func t(_ seconds: Double) -> Date { Date(timeIntervalSinceReferenceDate: seconds) }
 
@@ -225,6 +225,22 @@ import Testing
                                 firstTryCount: 4, durationSeconds: 60, date: t(816_700_200))
         for r in [round, lesson, legacy] { context.insert(r) }
 
+        let archivedWord = ArchivedMemoryItem(kind: .vocab, reason: .replacedByLRU, title: "der Park", subtitle: "the park",
+                                              payload: try? JSONEncoder().encode(VocabTouch(german: "der Park", english: "the park",
+                                                                                            lastSeen: t(816_800_000), timesUsed: 3)))
+        archivedWord.id = UUID(uuidString: "0C0C0C0C-0C0C-4C0C-8C0C-0C0C0C0C0C0C")!
+        archivedWord.archivedAt = t(816_800_100)
+        let archivedSlip = ArchivedMemoryItem(kind: .slip, reason: .mastered, title: "die → den", subtitle: "",
+                                              payload: try? JSONEncoder().encode(LexicalSlip(
+                                                  wrong: "die", right: "den", note: "", lastSeen: t(816_800_000), timesSeen: 2,
+                                                  sentence: "Ich gehe in den Park.", blankIndex: 3)))
+        archivedSlip.id = UUID(uuidString: "0D0D0D0D-0D0D-4D0D-8D0D-0D0D0D0D0D0D")!
+        archivedSlip.archivedAt = t(816_800_200)
+        let archivedBroken = ArchivedMemoryItem(kind: .selfReport, reason: .removedByUser, title: "?", subtitle: "", payload: nil)
+        archivedBroken.id = UUID(uuidString: "0E0E0E0E-0E0E-4E0E-8E0E-0E0E0E0E0E0E")!
+        archivedBroken.archivedAt = t(816_800_300)
+        for a in [archivedWord, archivedSlip, archivedBroken] { context.insert(a) }
+
         return [
             Sample(kind: "SavedDeck", label: "full", name: SavedDeckCodec.recordName(for: full), payload: SavedDeckCodec.known(full)),
             Sample(kind: "SavedDeck", label: "bare", name: SavedDeckCodec.recordName(for: bare), payload: SavedDeckCodec.known(bare)),
@@ -247,6 +263,9 @@ import Testing
             Sample(kind: "KasusRound", label: "full", name: KasusRoundCodec.recordName(for: round), payload: KasusRoundCodec.known(round)),
             Sample(kind: "KasusRound", label: "lesson", name: KasusRoundCodec.recordName(for: lesson), payload: KasusRoundCodec.known(lesson)),
             Sample(kind: "KasusRound", label: "legacy", name: KasusRoundCodec.recordName(for: legacy), payload: KasusRoundCodec.known(legacy)),
+            Sample(kind: "ArchivedMemoryItem", label: "vocab", name: ArchivedMemoryItemCodec.recordName(for: archivedWord), payload: ArchivedMemoryItemCodec.known(archivedWord)),
+            Sample(kind: "ArchivedMemoryItem", label: "slip", name: ArchivedMemoryItemCodec.recordName(for: archivedSlip), payload: ArchivedMemoryItemCodec.known(archivedSlip)),
+            Sample(kind: "ArchivedMemoryItem", label: "no-payload", name: ArchivedMemoryItemCodec.recordName(for: archivedBroken), payload: ArchivedMemoryItemCodec.known(archivedBroken)),
         ]
     }
 

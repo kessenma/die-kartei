@@ -1,12 +1,14 @@
 import Foundation
 
-// LearnerProfile and LearnedPhrase as plain values. Field names, encodings and merge rules follow
-// `LearnerProfileCodec` (Codecs/LearnerCodecs.swift) and `LearnedPhraseCodec`.
+// LearnerProfile, ArchivedMemoryItem and LearnedPhrase as plain values. Field names, encodings and
+// merge rules follow `LearnerProfileCodec`, `ArchivedMemoryItemCodec` (Codecs/LearnerCodecs.swift)
+// and `LearnedPhraseCodec`.
 
 /// The coach's memory of the learner (`LearnerProfile`). A singleton: every device's profile is
 /// the one record `SyncKinds.learnerProfileName`, and the payload carries no id.
 ///
-/// The sections stay JSON here (their Swift types live next to the SwiftData model on iOS):
+/// The sections stay JSON here; `LearnerMemory(record:)` and `write(to:from:)` (Models/LearnerMemory.swift)
+/// read and write them as the shared value types:
 /// - `grammar`: `[GrammarFocus.rawValue: GrammarSkill]`, merged per key by the later `lastSeen`.
 /// - `vocab`: `[VocabTouch]`, merged on `german` lowercased.
 /// - `slips` and `selfReports`: `[LexicalSlip]` / `[SelfReportNote]`, merged on an `"id"` the
@@ -56,6 +58,112 @@ nonisolated struct LearnerProfileRecord: KarteiRecord {
     }
 
     var index: RecordIndex { RecordIndex() }
+}
+
+/// How the coach's memories are told apart: `VocabTouch.id`, `LexicalSlip.id` and
+/// `SelfReportNote.id` (Models/LearnerMemory.swift) are these, and sync names archived rows and
+/// merges the profile's lists by them.
+nonisolated enum MemoryItemID {
+    /// A word is the same word however the learner met it: German, lowercased.
+    static func vocab(german: String) -> String { german.lowercased() }
+
+    /// `wrong→right`, plus `@source` for slips that didn't come from the learner's own production.
+    static func slip(wrong: String, right: String, source: String?) -> String {
+        (wrong + "→" + right + (source.map { "@" + $0 } ?? "")).lowercased()
+    }
+
+    /// Letters and single spaces, lowercased, first 60: the same thought written twice is one note.
+    static func note(text: String) -> String {
+        String(text.lowercased().filter { $0.isLetter || $0 == " " }
+            .split(separator: " ").joined(separator: " ").prefix(60))
+    }
+}
+
+/// A memory that left the active profile (`ArchivedMemoryItem`): mastered, pushed out by newer
+/// ones past a cap, or removed by the learner. Named after what it holds, so the same word
+/// archived on two devices is one record: `kindRaw|<item id>` (`VocabTouch.id`, `LexicalSlip.id`,
+/// `SelfReportNote.id`), or the row's own id when the payload won't decode. `archivedAt` keeps the
+/// earlier date.
+nonisolated struct ArchivedMemoryRecord: KarteiRecord {
+    static var spec: SyncKindSpec { SyncKinds.archivedMemoryItem }
+
+    var id: UUID
+    var kindRaw: String
+    var reasonRaw: String
+    var archivedAt: Date
+    var title: String
+    var subtitle: String
+    /// The encoded item, as parsed JSON (default `JSONEncoder` dates: numbers).
+    var payload: SyncJSON?
+    var extra: SyncPayload = [:]
+
+    init(id: UUID = UUID(), kindRaw: String, reasonRaw: String, archivedAt: Date = Date(), title: String,
+         subtitle: String, payload: SyncJSON?) {
+        self.id = id
+        self.kindRaw = kindRaw
+        self.reasonRaw = reasonRaw
+        self.archivedAt = archivedAt
+        self.title = title
+        self.subtitle = subtitle
+        self.payload = payload
+    }
+
+    init(payload p: SyncPayload) {
+        id = p.uuid("id") ?? UUID()
+        kindRaw = p.string("kindRaw") ?? "vocab"
+        reasonRaw = p.string("reasonRaw") ?? "agedOut"
+        archivedAt = p.date("archivedAt") ?? Date(timeIntervalSinceReferenceDate: 0)
+        title = p.string("title") ?? ""
+        subtitle = p.string("subtitle") ?? ""
+        payload = p.json("payload")
+        keepExtra(from: p)
+    }
+
+    /// The encoded item, for `LearnerMemory.restore`.
+    var payloadData: Data? { payload?.canonicalData }
+
+    /// The id of the memory it holds (iOS `ArchivedMemoryItemCodec.itemID` calls this): nil when
+    /// the payload isn't a whole item of its kind, i.e. when a default `JSONDecoder` would fail on it.
+    static func itemID(kindRaw: String, payload: SyncJSON?) -> String? {
+        guard let o = payload?.objectValue else { return nil }
+        func string(_ k: String) -> String? { if case .string(let v)? = o[k] { v } else { nil } }
+        func number(_ k: String) -> Bool { switch o[k] { case .int?, .double?: true; default: false } }
+        func bool(_ k: String) -> Bool { if case .bool? = o[k] { true } else { false } }
+        switch kindRaw {
+        case "vocab":
+            guard let german = string("german"), string("english") != nil, number("lastSeen"), number("timesUsed"),
+                  bool("pinned") else { return nil }
+            return MemoryItemID.vocab(german: german)
+        case "slip":
+            guard let wrong = string("wrong"), let right = string("right"), string("note") != nil,
+                  number("lastSeen"), number("timesSeen"), bool("pinned") else { return nil }
+            return MemoryItemID.slip(wrong: wrong, right: right, source: string("source"))
+        case "selfReport":
+            guard let text = string("text"), number("notedAt"), number("timesNoted"), bool("pinned") else { return nil }
+            return MemoryItemID.note(text: text)
+        default:
+            return nil
+        }
+    }
+
+    var key: String { kindRaw + "|" + (Self.itemID(kindRaw: kindRaw, payload: payload) ?? id.uuidString) }
+
+    var name: SyncRecordName { SyncRecordName(kind: Self.spec.kind, naturalKey: key) }
+
+    var fields: SyncPayload {
+        var f = SyncFields()
+        f.set("id", id)
+        f.set("kindRaw", kindRaw)
+        f.set("reasonRaw", reasonRaw)
+        f.set("archivedAt", archivedAt)
+        f.set("title", title)
+        f.set("subtitle", subtitle)
+        f.set("payload", json: payload)
+        return f.payload
+    }
+
+    /// Listed newest first by `archivedAt`; found by kind.
+    var index: RecordIndex { RecordIndex(naturalKey: kindRaw, sort: archivedAt.timeIntervalSinceReferenceDate) }
 }
 
 /// A phrase from the phrase library (`LearnedPhrase`). Plain content; the rotation bookkeeping

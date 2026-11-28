@@ -240,7 +240,7 @@ class MLXModelManager {
     /// personalize each session (steer toward weak spots, reuse the learner's words, sharpen
     /// corrections). See `LearnerMemoryService`.
     var chatPersonalizedCoaching: Bool {
-        didSet { UserDefaults.standard.set(chatPersonalizedCoaching, forKey: "chatPersonalizedCoaching") }
+        didSet { UserDefaults.standard.set(chatPersonalizedCoaching, forKey: LearnerMemory.personalizedCoachingKey) }
     }
     /// When on, conversation tutors read what the learner's class covered in the last fortnight
     /// (`ClassTutorContext`). On-device only, like the rest of the coach's memory.
@@ -475,7 +475,7 @@ class MLXModelManager {
         self.learnerName = UserDefaults.standard.string(forKey: "learnerName") ?? ""
         self.chatGenderColors = (UserDefaults.standard.object(forKey: "chatGenderColors") as? Bool) ?? true
         self.chatBestUnaidedStreak = UserDefaults.standard.integer(forKey: "chatBestUnaidedStreak")
-        self.chatPersonalizedCoaching = (UserDefaults.standard.object(forKey: "chatPersonalizedCoaching") as? Bool) ?? true
+        self.chatPersonalizedCoaching = (UserDefaults.standard.object(forKey: LearnerMemory.personalizedCoachingKey) as? Bool) ?? true
         self.chatSpacedReview = (UserDefaults.standard.object(forKey: "chatSpacedReview") as? Bool) ?? true
         self.classFeedsCoach = (UserDefaults.standard.object(forKey: "classFeedsCoach") as? Bool) ?? true
         self.chatSpacedReviewScopeRaw = UserDefaults.standard.string(forKey: "chatSpacedReviewScopeRaw") ?? SpacedReviewScope.everywhere.rawValue

@@ -26,6 +26,7 @@ Models/Grammar/Prepositions/VerbPreposition.swift
 Models/HapticFeedbackMode.swift
 Models/Hoeren/HoerenNumberKind.swift
 Models/JobPostingCapture.swift
+Models/LearnerMemory.swift
 Models/MLXModel+Catalog.swift
 Models/ModelConfiguration.swift
 Models/PlacementAttempt.swift

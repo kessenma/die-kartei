@@ -199,13 +199,8 @@ enum ArchivedMemoryItemCodec: SyncCodec {
 
     /// The id of the memory an archived row holds: `VocabTouch.id` or `LexicalSlip.id`.
     static func itemID(kindRaw: String, payload: Data?) -> String? {
-        guard let payload else { return nil }
-        switch MemoryKind(rawValue: kindRaw) {
-        case .vocab: return (try? JSONDecoder().decode(VocabTouch.self, from: payload))?.id
-        case .slip: return (try? JSONDecoder().decode(LexicalSlip.self, from: payload))?.id
-        case .selfReport: return (try? JSONDecoder().decode(SelfReportNote.self, from: payload))?.id
-        case nil: return nil
-        }
+        // Shared with Android, so both apps name an archived row alike.
+        ArchivedMemoryRecord.itemID(kindRaw: kindRaw, payload: payload.flatMap { try? SyncJSON(data: $0) })
     }
 
     /// Local rows a record name points at. The title always names the item (the German word, or

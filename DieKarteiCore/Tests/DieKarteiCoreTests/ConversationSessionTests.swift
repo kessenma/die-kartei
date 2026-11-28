@@ -140,7 +140,7 @@ struct ConversationSessionTests {
         }
         let host = MemoryConversationHost(bestUnaidedStreak: 1)
         var summarized: [String]?
-        host.onSummary = { _, words in summarized = words }
+        host.onSummary = { _, _, words in summarized = words }
         let session = makeSession(tutor, host: host)
         session.onAppear()
         await settle(session) { session.conversation.messages.count == 1 }

@@ -60,7 +60,7 @@ final class StudyLog {
         reload()
     }
 
-    private func reload() {
+    func reload() {
         days = records?.records(StudyDayRecord.self) ?? []
     }
 }

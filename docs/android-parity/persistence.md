@@ -50,6 +50,20 @@ Built and tested; the rest of this document is the design it follows.
   `WortschatzSessionPlan` with iOS's `WortschatzPrefs` keys (15 new a day, 40 cards a session).
   iOS `StudyDayParityTests` holds the two apps to the same payloads and ids.
 
+- **Coach's memory (step 6):** `Models/LearnerMemory.swift` (core) holds the memory's value types
+  and every rule that changes it: sessions, drills, cloze, hand-offs, caps and archiving, pins,
+  restore, the briefing and correction hint. iOS `LearnerMemoryService` now reads the
+  `LearnerProfile` row into a `LearnerMemory`, applies a rule, writes back only changed sections and
+  inserts what was archived. Item ids (`MemoryItemID`) live in Sync/Core so both apps name
+  `ArchivedMemoryItem` records alike. Android: `RecordStore.updateLearnerMemory/applySession/
+  restore/resetLearnerMemory` (KarteiStore/LearnerMemoryStore.swift), the app's `CoachMemory`,
+  Settings ▸ Coaching (iOS's `chatPersonalizedCoaching` key) and Coach's Notes. A chat is primed
+  with the briefing and folds its summary in, as on iOS; with coaching off, iOS keeps nothing and
+  does not count the conversation, and neither does Android. `LearnerMemoryParityTests` (iOS)
+  writes learner_memory_golden.json, an 11-step script; core `LearnerMemoryTests` replays it
+  through the Android record format. One difference: an item archived again on Android keeps its
+  first archive record (iOS keeps both rows locally but syncs only the earliest).
+
 Next: Android writes for the new kinds (steps 6–7: `TutorStore` saving chats and messages,
 `sessionSummarized` into the profile, saved phrases); Auto Backup rules (sync.mdx step 2); a
 transport. Android code that adds a slip or self-report to the profile must write the

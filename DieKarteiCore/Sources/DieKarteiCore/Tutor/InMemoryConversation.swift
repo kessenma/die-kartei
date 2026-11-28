@@ -83,7 +83,8 @@ final class MemoryConversationHost: ConversationHost {
     var onSave: () -> Void = {}
     var onStudyTime: (Int) -> Void = { _ in }
     var onLoaded: (MLXModel) -> Void = { _ in }
-    var onSummary: (_ raw: String, _ wordsPracticed: [String]) -> Void = { _, _ in }
+    /// The summary is in, with the messages it read (iOS folds them into the coach's memory).
+    var onSummary: (_ raw: String, _ messages: [MemoryChatMessage], _ wordsPracticed: [String]) -> Void = { _, _, _ in }
     var dictionary: (String) -> (article: GermanArticle, english: String?)? = { _ in nil }
 
     init(conversation: MemoryChatRecord? = nil, autoPlayReplies: Bool = false,
@@ -102,7 +103,7 @@ final class MemoryConversationHost: ConversationHost {
     func save() { onSave() }
     func recordStudyTime(seconds: Int) { onStudyTime(seconds) }
     func sessionSummarized(raw: String, messages: [MemoryChatMessage], wordsPracticed: [String]) {
-        onSummary(raw, wordsPracticed)
+        onSummary(raw, messages, wordsPracticed)
     }
     func rememberLoaded(_ model: MLXModel) { onLoaded(model) }
     func nounLookup(_ word: String) -> (article: GermanArticle, english: String?)? { dictionary(word) }

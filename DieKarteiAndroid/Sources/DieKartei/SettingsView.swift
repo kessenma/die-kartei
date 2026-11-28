@@ -5,6 +5,8 @@ import SwiftUI
 /// The Settings tab, grouped like the iOS app's (App / Learning / About). Only settings that do
 /// something on Android are here; the rest are named at the bottom so nobody hunts for them.
 struct SettingsView: View {
+    /// iOS's key (`MLXModelManager.chatPersonalizedCoaching`), on by default.
+    @AppStorage(LearnerMemory.personalizedCoachingKey) var personalizedCoaching = true
     /// "", "light" or "dark"; ContentView applies it.
     @AppStorage("appearance") var appearance = ""
     /// The level every Goethe screen opens at (Karteikarten, Wortschatz, Grammar, Spiele).
@@ -37,6 +39,16 @@ struct SettingsView: View {
                 NavigationLink { TutorModelView() } label: {
                     Text("Tutor Model")
                 }
+            }
+            Section {
+                Toggle("Personalized coaching", isOn: $personalizedCoaching)
+                NavigationLink { CoachNotesView() } label: {
+                    Label("Coach's Notes", systemImage: "brain.head.profile")
+                }
+            } header: {
+                Text("Coaching")
+            } footer: {
+                Text("The coach quietly remembers what you struggle with and the words you're learning, and uses that to steer and sharpen future conversations. Everything stays on your device.")
             }
             Section("About") {
                 NavigationLink { SourcesView() } label: {

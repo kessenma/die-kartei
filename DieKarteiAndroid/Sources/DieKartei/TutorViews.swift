@@ -228,14 +228,19 @@ struct GespraechView: View {
             config.mode = .scenario
             config.scenario = scenario
         }
-        // The chat's time drips into today as it runs; a summarized chat counts as one
-        // conversation (iOS: ConversationEngine.recordStudyTime, LearnerMemoryService.applySession).
+        // As iOS's ConversationEngine: the coach's memory primes the chat, the chat's time drips
+        // into today as it runs, and the summary folds into the memory (and counts the
+        // conversation) when personalized coaching is on.
+        CoachMemory.shared.prime(&config)
         let host = MemoryConversationHost()
         host.onStudyTime = { seconds in
             MainActor.assumeIsolated { StudyLog.shared.recordTime(.conversation, seconds: seconds) }
         }
-        host.onSummary = { _, _ in
-            MainActor.assumeIsolated { StudyLog.shared.record(.conversation) }
+        host.onSummary = { [weak host] raw, messages, words in
+            MainActor.assumeIsolated {
+                CoachMemory.shared.sessionSummarized(raw: raw, messages: messages,
+                                                     savedVocab: host?.conversation.savedVocab ?? [], wordsPracticed: words)
+            }
         }
         let new = AndroidConversation(
             host: host,

@@ -43,6 +43,7 @@ import Testing
         case "ChatMessage": let r = ChatMessageRecord(payload: g.payload); return (r.name.description, r.payload)
         case "LearnedPhrase": let r = LearnedPhraseRecord(payload: g.payload); return (r.name.description, r.payload)
         case "KasusRound": let r = KasusRoundRecord(payload: g.payload); return (r.name.description, r.payload)
+        case "ArchivedMemoryItem": let r = ArchivedMemoryRecord(payload: g.payload); return (r.name.description, r.payload)
         default: return nil
         }
     }
@@ -55,9 +56,10 @@ import Testing
     }
 
     @Test func theGoldenFileIsThere() {
-        #expect(Self.records.count >= 21)
+        #expect(Self.records.count >= 24)
         #expect(Set(Self.records.map(\.kind)) == ["SavedDeck", "SavedCard", "QuizResult", "StudyDay", "LearnerProfile",
-                                                  "ChatConversation", "ChatMessage", "LearnedPhrase", "KasusRound"])
+                                                  "ChatConversation", "ChatMessage", "LearnedPhrase", "KasusRound",
+                                                  "ArchivedMemoryItem"])
     }
 
     @Test(arguments: records.indices)
