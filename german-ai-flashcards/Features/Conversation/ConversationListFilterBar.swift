@@ -9,42 +9,7 @@
 
 import SwiftUI
 
-// MARK: - Filter state
-
-/// The conversation library's browse filters. Every field nil means "show everything", so a fresh
-/// `ConversationListFilter()` is the whole library.
-struct ConversationListFilter: Equatable {
-    var mode: ConversationMode?
-    /// Employer, matched case-insensitively against `ChatConversation.jobCompany`. Only interview
-    /// chats carry one, so a company alone already narrows the list to interviews.
-    var company: String?
-
-    var isActive: Bool { mode != nil || company != nil }
-
-    func matches(_ conversation: ChatConversation) -> Bool {
-        if let mode, conversation.mode != mode { return false }
-        if let company {
-            guard let theirs = conversation.jobCompany, Self.sameCompany(theirs, company) else { return false }
-        }
-        return true
-    }
-
-    static func sameCompany(_ a: String, _ b: String) -> Bool {
-        normalized(a) == normalized(b)
-    }
-
-    static func normalized(_ company: String) -> String {
-        company.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-    }
-}
-
-extension ConversationMode {
-    /// How the mode reads on a library pill and row. Interviews say "Interview prep" so the pill
-    /// and the row it narrows to use the same words.
-    var libraryLabel: String {
-        self == .interview ? "Interview prep" : rawValue
-    }
-}
+// The filter itself is `ConversationListFilter` (Models/ConversationListFilter.swift), shared with Android.
 
 // MARK: - Filter bar
 
@@ -73,11 +38,7 @@ struct ConversationFilterBar: View {
                         tint: accent,
                         isOn: filter.mode == mode
                     ) {
-                        set {
-                            $0.mode = $0.mode == mode ? nil : mode
-                            // An employer only narrows interviews; drop it under any other type.
-                            if let chosen = $0.mode, chosen != .interview { $0.company = nil }
-                        }
+                        set { $0 = $0.toggling(mode: mode) }
                     }
                 }
             }
@@ -91,14 +52,7 @@ struct ConversationFilterBar: View {
                             tint: accent,
                             isOn: filter.company.map { ConversationListFilter.sameCompany($0, company) } ?? false
                         ) {
-                            set {
-                                if let current = $0.company, ConversationListFilter.sameCompany(current, company) {
-                                    $0.company = nil
-                                } else {
-                                    $0.company = company
-                                    $0.mode = .interview
-                                }
-                            }
+                            set { $0 = $0.toggling(company: company) }
                         }
                     }
                 }
@@ -126,3 +80,5 @@ struct ConversationFilterBar: View {
         withAnimation(.snappy(duration: 0.25)) { filter = updated }
     }
 }
+
+extension ChatConversation: FilterableChat {}

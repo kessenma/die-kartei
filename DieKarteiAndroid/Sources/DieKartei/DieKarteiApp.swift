@@ -13,7 +13,16 @@ let logger: Logger = Logger(subsystem: "com.kessenma.diekartei", category: "DieK
     /* SKIP @bridge */public init() {
         // The shared services read the Goethe lists etc. from this module's resources.
         AppResources.bundle = Bundle.module
+        // The shared code's settings are this app's (Skip's SharedPreferences store), not its
+        // package's own separate UserDefaults file.
+        SharedDefaults.store = UserDefaults.standard
         AppDatabase.open()
+        // iOS keeps the learner's level under `german.level`; Android's level picker wrote only
+        // its own key before, so carry that over once.
+        if UserDefaults.standard.string(forKey: ChatPrefs.levelKey) == nil {
+            UserDefaults.standard.set(UserDefaults.standard.string(forKey: "level") ?? GoetheLevel.a1.rawValue,
+                                      forKey: ChatPrefs.levelKey)
+        }
     }
 
     public var body: some View {

@@ -183,7 +183,8 @@ typealias AndroidConversation = ConversationSession<MemoryConversationHost>
 /// A conversation with the tutor: the iOS app's own session (`ConversationSession`, shared
 /// through DieKarteiCore), so the flow is the same: the tutor opens, every learner line gets the
 /// correction pass (or a nudge), then the reply; hints, translations and the summary on request.
-/// Typed only for now. Saved as it runs (`ChatHistory`); Library ▸ Chats reopens it.
+/// Spoken or typed, as Settings ▸ Conversation says. Saved as it runs (`ChatHistory`); Library ▸
+/// Saved conversations reopens it.
 struct GespraechView: View {
     /// A saved chat to reopen (Library ▸ Chats); nil starts at the setup.
     var resume: ChatConversationRecord? = nil
@@ -237,7 +238,8 @@ struct GespraechView: View {
     func start() {
         guard let model = store.available else { return }
         var config = ConversationConfig(model: model)
-        config.inputMode = .type
+        // Settings ▸ Conversation, as iOS's setup screen starts from (`ChatPrefs`).
+        ChatPrefs.applyDefaults(to: &config)
         if let scenario {
             config.mode = .scenario
             config.scenario = scenario
@@ -263,13 +265,13 @@ struct GespraechView: View {
         run(config, chat: chat, base: base)
     }
 
-    /// A saved chat, on this phone's tutor (iOS `makeConfig`: the stored setup, then this
-    /// device's model). Typed: Android can't listen yet.
+    /// A saved chat, on this phone's tutor (iOS `makeConfig`: the stored setup, this device's
+    /// chat settings, this device's model).
     func reopen(_ record: ChatConversationRecord) {
         guard let model = store.available ?? record.setup.model else { return }
         var config = ConversationConfig(model: model)
         record.setup.apply(to: &config)
-        config.inputMode = .type
+        ChatPrefs.applyDeviceSettings(to: &config)
         run(config, chat: ChatHistory.shared.open(record), base: record)
     }
 
@@ -298,7 +300,7 @@ struct GespraechView: View {
             host: host,
             config: config,
             tutor: store,
-            speechInput: NoSpeechInput(reason: "Speaking to the tutor isn't on Android yet; type instead."),
+            speechInput: AndroidSpeechInput(),
             speechOutput: AndroidSpeechOutput()
         )
         session = new
@@ -373,6 +375,59 @@ struct GespraechChat: View {
     }
 
     var composer: some View {
+        VStack(spacing: 8) {
+            if session.inputMode == .speak {
+                speakComposer
+            } else {
+                typeComposer
+            }
+        }
+        .padding()
+    }
+
+    /// iOS's mic: tap to talk, tap to send; a mark or a do-over while talking.
+    var speakComposer: some View {
+        let ear = session.speechRecognizer
+        return VStack(spacing: 8) {
+            if ear.isRecording {
+                Text(ear.transcript.isEmpty ? "Ich höre zu…" : ear.transcript)
+                    .foregroundStyle(ear.transcript.isEmpty ? Color.secondary : Color.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: 20) {
+                    Button(".") { session.addPunctuation(".") }
+                    Button("?") { session.addPunctuation("?") }
+                    Button("Neu sagen") { session.restartRecording() }
+                    Spacer()
+                    ProgressView(value: ear.level).frame(width: 80)
+                }
+                .buttonStyle(.borderless)
+            }
+            if !ear.isRecording, let problem = ear.unavailableMessage {
+                Text(problem).font(.caption).foregroundStyle(Color.orange)
+            }
+            HStack {
+                Button("Tipp") { session.requestHints() }
+                    .disabled(session.isBusy || session.hintLoading || ear.isRecording)
+                Spacer()
+                Button { session.toggleRecording() } label: {
+                    Image(systemName: ear.isRecording ? "stop.fill" : "mic.fill")
+                        .font(.title)
+                        .padding(14)
+                        .background(Circle().fill(ear.isRecording ? Color.red.opacity(0.2) : Color.blue.opacity(0.15)))
+                }
+                .buttonStyle(.borderless)
+                .disabled(!ear.isRecording && session.phase != .idle)
+                Spacer()
+                Button { session.setInputMode(.type) } label: {
+                    Image(systemName: "keyboard")
+                }
+                .buttonStyle(.borderless)
+                .disabled(ear.isRecording)
+            }
+        }
+    }
+
+    var typeComposer: some View {
         HStack {
             Button("Tipp") { session.requestHints() }
                 .disabled(session.isBusy || session.hintLoading)
@@ -382,8 +437,11 @@ struct GespraechChat: View {
                 if session.submitTyped(draft) { draft = "" }
             }
             .disabled(!session.canSubmitTyped || draft.trimmingCharacters(in: .whitespaces).isEmpty)
+            Button { session.setInputMode(.speak) } label: {
+                Image(systemName: "mic.fill")
+            }
+            .buttonStyle(.borderless)
         }
-        .padding()
     }
 
     @ViewBuilder
@@ -470,6 +528,21 @@ struct GespraechChat: View {
     }
 
     func summaryCard(_ summary: ConversationSummary) -> some View {
+        SummaryCard(summary: summary)
+    }
+
+    func end() async {
+        summarizing = true
+        summary = await session.endAndSummarize()
+        summarizing = false
+    }
+}
+
+/// A chat's coaching report (iOS `ConversationSummaryView`, in short).
+struct SummaryCard: View {
+    let summary: ConversationSummary
+
+    var body: some View {
         Section("Zusammenfassung") {
             ForEach(summary.strengths, id: \.self) { Text("👍 \($0)") }
             ForEach(summary.improvements, id: \.self) { Text("→ \($0)") }
@@ -479,11 +552,5 @@ struct GespraechChat: View {
             Text("\(summary.turnCount) turns · \(summary.correctionCount) corrections")
                 .font(.caption).foregroundStyle(.secondary)
         }
-    }
-
-    func end() async {
-        summarizing = true
-        summary = await session.endAndSummarize()
-        summarizing = false
     }
 }

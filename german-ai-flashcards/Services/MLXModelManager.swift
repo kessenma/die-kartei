@@ -144,7 +144,7 @@ class MLXModelManager {
     /// Whether the AI's spoken replies auto-play when they arrive.
     var autoPlayReplies: Bool {
         didSet {
-            UserDefaults.standard.set(autoPlayReplies, forKey: "autoPlayReplies")
+            UserDefaults.standard.set(autoPlayReplies, forKey: ChatPrefs.autoPlayRepliesKey)
         }
     }
 
@@ -158,7 +158,7 @@ class MLXModelManager {
     /// defaults — the reason no declared default could be respected before.
     var germanLevelRaw: String {
         didSet {
-            UserDefaults.standard.set(germanLevelRaw, forKey: "german.level")
+            UserDefaults.standard.set(germanLevelRaw, forKey: ChatPrefs.levelKey)
             UserDefaults.standard.set(Date.now, forKey: Self.germanLevelSetAtKey)
         }
     }
@@ -181,42 +181,42 @@ class MLXModelManager {
 
     /// Remembered conversation-setup defaults (so a new chat reuses the last choices).
     var chatFormalityRaw: String {
-        didSet { UserDefaults.standard.set(chatFormalityRaw, forKey: "chatFormalityRaw") }
+        didSet { UserDefaults.standard.set(chatFormalityRaw, forKey: ChatPrefs.formalityKey) }
     }
     var chatStrictnessRaw: String {
-        didSet { UserDefaults.standard.set(chatStrictnessRaw, forKey: "chatStrictnessRaw") }
+        didSet { UserDefaults.standard.set(chatStrictnessRaw, forKey: ChatPrefs.strictnessKey) }
     }
     /// Raw `FeedbackStyle` — whether corrections are handed over ("Tell me") or elicited via a
     /// question first ("Nudge me"). New conversations start from this default.
     var chatFeedbackStyleRaw: String {
-        didSet { UserDefaults.standard.set(chatFeedbackStyleRaw, forKey: "chatFeedbackStyleRaw") }
+        didSet { UserDefaults.standard.set(chatFeedbackStyleRaw, forKey: ChatPrefs.feedbackStyleKey) }
     }
     var chatCorrectionsEnabled: Bool {
-        didSet { UserDefaults.standard.set(chatCorrectionsEnabled, forKey: "chatCorrectionsEnabled") }
+        didSet { UserDefaults.standard.set(chatCorrectionsEnabled, forKey: ChatPrefs.correctionsEnabledKey) }
     }
     /// When a correction is shown, also surface the English meaning of the corrected sentence.
     var chatShowCorrectionTranslation: Bool {
-        didSet { UserDefaults.standard.set(chatShowCorrectionTranslation, forKey: "chatShowCorrectionTranslation") }
+        didSet { UserDefaults.standard.set(chatShowCorrectionTranslation, forKey: ChatPrefs.showCorrectionTranslationKey) }
     }
     /// Pre-compute translations & hints in the background (learning aid; uses more compute/battery).
     var chatEagerAssist: Bool {
-        didSet { UserDefaults.standard.set(chatEagerAssist, forKey: "chatEagerAssist") }
+        didSet { UserDefaults.standard.set(chatEagerAssist, forKey: ChatPrefs.eagerAssistKey) }
     }
     /// When eager assist is on, auto-show the translation (vs. just pre-load it for instant reveal).
     var chatAutoShowTranslation: Bool {
-        didSet { UserDefaults.standard.set(chatAutoShowTranslation, forKey: "chatAutoShowTranslation") }
+        didSet { UserDefaults.standard.set(chatAutoShowTranslation, forKey: ChatPrefs.autoShowTranslationKey) }
     }
     /// Number of hint suggestions to generate (1–3).
     var chatHintCount: Int {
-        didSet { UserDefaults.standard.set(chatHintCount, forKey: "chatHintCount") }
+        didSet { UserDefaults.standard.set(chatHintCount, forKey: ChatPrefs.hintCountKey) }
     }
     /// Surface a "you could say" hint automatically after every AI reply (beginner aid).
     var chatAutoHints: Bool {
-        didSet { UserDefaults.standard.set(chatAutoHints, forKey: "chatAutoHints") }
+        didSet { UserDefaults.standard.set(chatAutoHints, forKey: ChatPrefs.autoHintsKey) }
     }
     /// Raw `ChatInputMode` — whether new conversations start in speaking or typing mode.
     var chatInputModeRaw: String {
-        didSet { UserDefaults.standard.set(chatInputModeRaw, forKey: "chatInputModeRaw") }
+        didSet { UserDefaults.standard.set(chatInputModeRaw, forKey: ChatPrefs.inputModeKey) }
     }
     /// Typed accessor for the default conversation input mode.
     var chatInputMode: ChatInputMode {
@@ -226,15 +226,15 @@ class MLXModelManager {
     /// How the conversation partner addresses the learner ("Kyle", or "Herr Essenmacher" for
     /// formal chats). Empty means the model is left to pick something, which it does badly.
     var learnerName: String {
-        didSet { UserDefaults.standard.set(learnerName, forKey: "learnerName") }
+        didSet { UserDefaults.standard.set(learnerName, forKey: ChatPrefs.learnerNameKey) }
     }
     /// Tint nouns in AI replies with their der/die/das color.
     var chatGenderColors: Bool {
-        didSet { UserDefaults.standard.set(chatGenderColors, forKey: "chatGenderColors") }
+        didSet { UserDefaults.standard.set(chatGenderColors, forKey: ChatPrefs.genderColorsKey) }
     }
     /// All-time best run of consecutive unaided conversation turns (no hints/translations).
     var chatBestUnaidedStreak: Int {
-        didSet { UserDefaults.standard.set(chatBestUnaidedStreak, forKey: "chatBestUnaidedStreak") }
+        didSet { UserDefaults.standard.set(chatBestUnaidedStreak, forKey: ChatPrefs.bestUnaidedStreakKey) }
     }
     /// When on, the coach keeps a persistent on-device learner profile and uses it to
     /// personalize each session (steer toward weak spots, reuse the learner's words, sharpen
@@ -245,16 +245,16 @@ class MLXModelManager {
     /// When on, conversation tutors read what the learner's class covered in the last fortnight
     /// (`ClassTutorContext`). On-device only, like the rest of the coach's memory.
     var classFeedsCoach: Bool {
-        didSet { UserDefaults.standard.set(classFeedsCoach, forKey: "classFeedsCoach") }
+        didSet { UserDefaults.standard.set(classFeedsCoach, forKey: ChatPrefs.classFeedsCoachKey) }
     }
     /// When on, conversations resurface SRS-due flashcards ("spaced re-encounter") and advance a
     /// card's real review schedule when the learner uses the word correctly. See `ConversationReviewTracker`.
     var chatSpacedReview: Bool {
-        didSet { UserDefaults.standard.set(chatSpacedReview, forKey: "chatSpacedReview") }
+        didSet { UserDefaults.standard.set(chatSpacedReview, forKey: ChatPrefs.spacedReviewKey) }
     }
     /// Which conversations spaced review applies to (raw `SpacedReviewScope`).
     var chatSpacedReviewScopeRaw: String {
-        didSet { UserDefaults.standard.set(chatSpacedReviewScopeRaw, forKey: "chatSpacedReviewScopeRaw") }
+        didSet { UserDefaults.standard.set(chatSpacedReviewScopeRaw, forKey: ChatPrefs.spacedReviewScopeKey) }
     }
     /// Typed accessor for the spaced-review scope.
     var spacedReviewScope: SpacedReviewScope {
@@ -447,11 +447,11 @@ class MLXModelManager {
         self.selectedChatModel = MLXModel(rawValue: chatModelRaw)
             ?? MLXModel(rawValue: modelRaw)
             ?? firstRunDefault
-        self.autoPlayReplies = (UserDefaults.standard.object(forKey: "autoPlayReplies") as? Bool) ?? true
+        self.autoPlayReplies = ChatPrefs.bool(ChatPrefs.autoPlayRepliesKey, ChatPrefs.autoPlayRepliesDefault)
         // The level anchor, migrated forward from the two settings it replaced. `chatLevelRaw` is
         // preferred because it's what placement wrote and what conversations read; `storyLevelRaw`
         // only ever diverged by a learner's per-story pick.
-        let migratedLevel = UserDefaults.standard.string(forKey: "german.level")
+        let migratedLevel = UserDefaults.standard.string(forKey: ChatPrefs.levelKey)
             ?? UserDefaults.standard.string(forKey: "chatLevelRaw")
             ?? UserDefaults.standard.string(forKey: "storyLevelRaw")
             ?? CEFRLevel.a2.rawValue
@@ -459,26 +459,25 @@ class MLXModelManager {
         // Written through explicitly: `didSet` doesn't fire during `init`, so without this the
         // migrated value would live only in memory and the app would keep re-deriving it from the
         // legacy keys on every launch — one cleanup away from silently resetting to A2.
-        UserDefaults.standard.set(migratedLevel, forKey: "german.level")
+        UserDefaults.standard.set(migratedLevel, forKey: ChatPrefs.levelKey)
         self.germanLevelIsDeclared = UserDefaults.standard.bool(forKey: "german.level.declared")
-        self.chatFormalityRaw = UserDefaults.standard.string(forKey: "chatFormalityRaw") ?? Formality.du.rawValue
-        self.chatStrictnessRaw = UserDefaults.standard.string(forKey: "chatStrictnessRaw") ?? CorrectionStrictness.balanced.rawValue
-        self.chatFeedbackStyleRaw = UserDefaults.standard.string(forKey: "chatFeedbackStyleRaw") ?? FeedbackStyle.tellMe.rawValue
-        self.chatCorrectionsEnabled = (UserDefaults.standard.object(forKey: "chatCorrectionsEnabled") as? Bool) ?? true
-        self.chatShowCorrectionTranslation = (UserDefaults.standard.object(forKey: "chatShowCorrectionTranslation") as? Bool) ?? false
-        self.chatEagerAssist = (UserDefaults.standard.object(forKey: "chatEagerAssist") as? Bool) ?? false
-        self.chatAutoShowTranslation = (UserDefaults.standard.object(forKey: "chatAutoShowTranslation") as? Bool) ?? true
-        let storedHintCount = UserDefaults.standard.integer(forKey: "chatHintCount")
-        self.chatHintCount = (1...3).contains(storedHintCount) ? storedHintCount : 1
-        self.chatAutoHints = (UserDefaults.standard.object(forKey: "chatAutoHints") as? Bool) ?? false
-        self.chatInputModeRaw = UserDefaults.standard.string(forKey: "chatInputModeRaw") ?? ChatInputMode.speak.rawValue
-        self.learnerName = UserDefaults.standard.string(forKey: "learnerName") ?? ""
-        self.chatGenderColors = (UserDefaults.standard.object(forKey: "chatGenderColors") as? Bool) ?? true
-        self.chatBestUnaidedStreak = UserDefaults.standard.integer(forKey: "chatBestUnaidedStreak")
+        self.chatFormalityRaw = UserDefaults.standard.string(forKey: ChatPrefs.formalityKey) ?? Formality.du.rawValue
+        self.chatStrictnessRaw = UserDefaults.standard.string(forKey: ChatPrefs.strictnessKey) ?? CorrectionStrictness.balanced.rawValue
+        self.chatFeedbackStyleRaw = UserDefaults.standard.string(forKey: ChatPrefs.feedbackStyleKey) ?? FeedbackStyle.tellMe.rawValue
+        self.chatCorrectionsEnabled = ChatPrefs.bool(ChatPrefs.correctionsEnabledKey, ChatPrefs.correctionsEnabledDefault)
+        self.chatShowCorrectionTranslation = ChatPrefs.bool(ChatPrefs.showCorrectionTranslationKey, ChatPrefs.showCorrectionTranslationDefault)
+        self.chatEagerAssist = ChatPrefs.bool(ChatPrefs.eagerAssistKey, ChatPrefs.eagerAssistDefault)
+        self.chatAutoShowTranslation = ChatPrefs.bool(ChatPrefs.autoShowTranslationKey, ChatPrefs.autoShowTranslationDefault)
+        self.chatHintCount = ChatPrefs.hintCount()
+        self.chatAutoHints = ChatPrefs.bool(ChatPrefs.autoHintsKey, ChatPrefs.autoHintsDefault)
+        self.chatInputModeRaw = UserDefaults.standard.string(forKey: ChatPrefs.inputModeKey) ?? ChatInputMode.speak.rawValue
+        self.learnerName = UserDefaults.standard.string(forKey: ChatPrefs.learnerNameKey) ?? ""
+        self.chatGenderColors = ChatPrefs.bool(ChatPrefs.genderColorsKey, ChatPrefs.genderColorsDefault)
+        self.chatBestUnaidedStreak = UserDefaults.standard.integer(forKey: ChatPrefs.bestUnaidedStreakKey)
         self.chatPersonalizedCoaching = (UserDefaults.standard.object(forKey: LearnerMemory.personalizedCoachingKey) as? Bool) ?? true
-        self.chatSpacedReview = (UserDefaults.standard.object(forKey: "chatSpacedReview") as? Bool) ?? true
-        self.classFeedsCoach = (UserDefaults.standard.object(forKey: "classFeedsCoach") as? Bool) ?? true
-        self.chatSpacedReviewScopeRaw = UserDefaults.standard.string(forKey: "chatSpacedReviewScopeRaw") ?? SpacedReviewScope.everywhere.rawValue
+        self.chatSpacedReview = ChatPrefs.bool(ChatPrefs.spacedReviewKey, ChatPrefs.spacedReviewDefault)
+        self.classFeedsCoach = ChatPrefs.bool(ChatPrefs.classFeedsCoachKey, ChatPrefs.classFeedsCoachDefault)
+        self.chatSpacedReviewScopeRaw = UserDefaults.standard.string(forKey: ChatPrefs.spacedReviewScopeKey) ?? SpacedReviewScope.everywhere.rawValue
         let paperModelRaw = UserDefaults.standard.string(forKey: "selectedPaperModel") ?? ""
         self.selectedPaperModel = MLXModel(rawValue: paperModelRaw) ?? PaperStudyService.requiredModel
 

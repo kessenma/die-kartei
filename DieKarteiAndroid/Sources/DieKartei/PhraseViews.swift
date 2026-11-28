@@ -77,10 +77,11 @@ struct PhraseLibraryView: View {
                         Toggle("", isOn: Binding(get: { phrase.isActive }, set: { book.setActive(phrase, $0) }))
                             .labelsHidden()
                     }
-                }
-                .onDelete { offsets in
-                    let ids = offsets.map { book.phrases[$0].id }
-                    for id in ids { book.delete(id) }
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) { book.delete(phrase.id) } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
                 }
             } header: {
                 Text("Your phrases")
@@ -120,6 +121,8 @@ struct PhraseEditorView: View {
     @State var focus: Set<GrammarFocus> = []
     @State var isActive = true
     @State var loaded = false
+    /// The learner asked the AI to pick where you'd hear it and it couldn't (iOS's banner).
+    @State var aiCouldNotCategorize = false
 
     static let allScenarios = ConversationScenario.allCases.filter { $0 != .custom }
 
@@ -152,6 +155,13 @@ struct PhraseEditorView: View {
                     Text(result.english).foregroundStyle(.secondary)
                     if let note = result.note, !note.isEmpty {
                         Text(note).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                if aiCouldNotCategorize && scenarios.isEmpty {
+                    Section {
+                        Label("The AI wasn't sure where you'd hear this phrase. Pick a category below so it can be saved.",
+                              systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(Color.orange)
                     }
                 }
                 Section {
@@ -224,6 +234,7 @@ struct PhraseEditorView: View {
         checking = true
         checkError = nil
         result = nil
+        aiCouldNotCategorize = false
         Task {
             defer { checking = false }
             guard await tutor.ensureLoaded(), let model = tutor.available else {
@@ -236,11 +247,18 @@ struct PhraseEditorView: View {
                         inputIsGerman: inputIsGerman, suggestScenarios: autoScenario, suggestGrammar: autoGrammar),
                     user: ConversationPrompts.phraseCheckUserPrompt(text),
                     maxTokens: (autoScenario || autoGrammar) ? 256 : 160)
+                logger.debug("PhraseEditor: check answered: \(raw)")
                 if let parsed = ConversationPrompts.parsePhraseCheck(raw) {
                     result = parsed
                     checkedModelRaw = model.rawValue
                     // iOS `applyAISuggestions`: scenarios only when the AI named some, grammar as given.
-                    if autoScenario, !parsed.scenarios.isEmpty { scenarios = Set(parsed.scenarios) }
+                    if autoScenario {
+                        if !parsed.scenarios.isEmpty {
+                            scenarios = Set(parsed.scenarios)
+                        } else if scenarios.isEmpty {
+                            aiCouldNotCategorize = true
+                        }
+                    }
                     if autoGrammar { focus = Set(parsed.focusAreas) }
                 } else {
                     checkError = "Couldn't read a clear answer. Try rephrasing the phrase."

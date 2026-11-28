@@ -22,25 +22,9 @@ struct ConversationListView: View {
         conversations.filter(filter.matches)
     }
 
-    /// Conversation types the library holds, in declaration order.
-    private var presentModes: [ConversationMode] {
-        let present = Set(conversations.map(\.mode))
-        return ConversationMode.allCases.filter { present.contains($0) }
-    }
-
-    /// Employers among the interview chats, most frequent first, one spelling per company.
-    private var presentCompanies: [String] {
-        var counts: [String: (label: String, count: Int)] = [:]
-        for convo in conversations where convo.mode == .interview {
-            guard let company = convo.jobCompany?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !company.isEmpty else { continue }
-            counts[ConversationListFilter.normalized(company), default: (company, 0)].count += 1
-        }
-        return counts.values
-            .sorted { $0.count != $1.count ? $0.count > $1.count : $0.label < $1.label }
-            .prefix(10)
-            .map(\.label)
-    }
+    /// The pills (shared with Android: `ConversationListFilter`).
+    private var presentModes: [ConversationMode] { ConversationListFilter.presentModes(conversations) }
+    private var presentCompanies: [String] { ConversationListFilter.presentCompanies(conversations) }
 
     var body: some View {
         List {

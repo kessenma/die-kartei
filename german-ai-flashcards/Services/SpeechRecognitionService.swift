@@ -37,10 +37,9 @@ final class SpeechRecognitionService {
     // are ignored, so their cancellation error can't tear down the live session.
     private var recognitionGeneration = 0
 
-    // On-device recognition resets `formattedString` after each pause/utterance, so we
-    // accumulate finalized utterances ourselves to keep the whole spoken turn.
-    private var committedText = ""
-    private var currentUtterance = ""
+    // On-device recognition resets `formattedString` after each pause/utterance, so the whole
+    // spoken turn is accumulated in `SpeechTranscript` (shared with Android).
+    private var words = SpeechTranscript()
 
     var isAvailable: Bool {
         if case .ready = availability { return true }
@@ -103,8 +102,7 @@ final class SpeechRecognitionService {
         self.onFinal = onFinal
         self.hasDelivered = false
         self.transcript = ""
-        self.committedText = ""
-        self.currentUtterance = ""
+        self.words = SpeechTranscript()
 
         do {
             let session = AVAudioSession.sharedInstance()
@@ -185,9 +183,8 @@ final class SpeechRecognitionService {
     func restart() {
         guard isRecording, let recognizer else { return }
         resetRecognitionTask()
+        words = SpeechTranscript()
         transcript = ""
-        committedText = ""
-        currentUtterance = ""
         level = 0
         try? startRecognitionTask(with: recognizer)
     }
@@ -196,74 +193,20 @@ final class SpeechRecognitionService {
     /// recognition doesn't add end punctuation, so this lets the learner mark sentence
     /// boundaries while speaking — it matters in German, where "?" vs "." changes the meaning.
     func appendPunctuation(_ mark: String) {
-        guard isRecording, let recognizer else { return }
-        var base = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
-        // With automatic punctuation on, the recognizer may already have ended the segment with a
-        // mark — replace it rather than stacking ("Ich glaube." + "," → "Ich glaube,").
-        while let last = base.last, ".,!?…".contains(last) {
-            base.removeLast()
-        }
-        guard !base.isEmpty else { return }
-
+        guard isRecording, let recognizer, let next = words.punctuated(mark) else { return }
         // Swap in a fresh recognizer so the in-progress utterance isn't re-delivered (and
         // re-appended) after we fold it into the committed text with its new mark.
         resetRecognitionTask()
-        committedText = base + mark
-        currentUtterance = ""
-        transcript = committedText
+        words = next
+        transcript = words.text
         level = 0
         try? startRecognitionTask(with: recognizer)
     }
 
-    /// Accumulate recognizer output across utterance resets so the whole spoken turn is kept.
-    ///
-    /// On-device recognition emits a run of results per spoken segment: partial hypotheses
-    /// (`isFinal == false`) that revise the *same* segment, then a final result (`isFinal == true`)
-    /// when a pause ends it. Each result's `formattedString` is the complete hypothesis for the
-    /// *current* segment only (it resets after a pause), so we fold finalized segments into
-    /// `committedText` and keep the in-progress one in `currentUtterance`.
-    ///
-    /// Partials *revise* earlier words — e.g. "neue Hof" → "neue Koffer" — they don't only append.
-    /// So we replace the current segment wholesale rather than merging by prefix. The old
-    /// prefix merge mistook such a revision for a brand-new sentence and kept both, which produced
-    /// the duplicated "…neue Hof …neue Koffer" transcripts.
+    /// Fold one recognizer result into the turn (`SpeechTranscript.ingest`).
     private func ingest(_ raw: String, isFinal: Bool) {
-        let segment = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        if isFinal {
-            commit(segment)
-            currentUtterance = ""
-        } else if isNewSegment(segment, replacing: currentUtterance) {
-            // A pause began a fresh segment without a final result — bank the previous one.
-            commit(currentUtterance)
-            currentUtterance = segment
-        } else {
-            // Same segment, revised hypothesis — replace it, never append.
-            currentUtterance = segment
-        }
-
-        transcript = [committedText, currentUtterance]
-            .filter { !$0.isEmpty }
-            .joined(separator: " ")
-    }
-
-    /// Fold a finished segment into the running committed transcript.
-    private func commit(_ segment: String) {
-        guard !segment.isEmpty else { return }
-        committedText = committedText.isEmpty ? segment : committedText + " " + segment
-    }
-
-    /// Whether `next` is a brand-new segment rather than a revision of `current`. A fresh on-device
-    /// segment starts over from scratch, so it shares no leading words with the prior hypothesis;
-    /// a revision keeps most of them. Comparing on shared *words* (not raw character prefix) means
-    /// the recognizer rewording a word or two no longer reads as a new segment — the bug that
-    /// duplicated text.
-    private func isNewSegment(_ next: String, replacing current: String) -> Bool {
-        guard !current.isEmpty, !next.isEmpty else { return false }
-        let currentWords = current.lowercased().split(separator: " ")
-        let nextWords = next.lowercased().split(separator: " ")
-        let sharedLeadingWords = zip(currentWords, nextWords).prefix { $0.0 == $0.1 }.count
-        return sharedLeadingWords == 0 && !next.hasPrefix(current) && !current.hasPrefix(next)
+        words.ingest(raw, isFinal: isFinal)
+        transcript = words.text
     }
 
     /// Cancel without delivering a result (e.g. leaving the screen).
@@ -276,8 +219,7 @@ final class SpeechRecognitionService {
         request = nil
         isRecording = false
         transcript = ""
-        committedText = ""
-        currentUtterance = ""
+        words = SpeechTranscript()
         level = 0
     }
 

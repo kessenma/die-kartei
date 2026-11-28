@@ -14,17 +14,11 @@ extension ChatConversation {
     func makeConfig(modelManager: MLXModelManager, decks: [SavedDeck]) -> ConversationConfig {
         let model = ModelHandoff.current(original: self.model, pick: modelManager.selectedChatModel).model
         var c = ConversationConfig(model: model)
-        c.learnerName = ConversationConfig.learnerName(from: modelManager.learnerName)
-        // The stored setup (shared with Android), then this device's settings and the deck's words.
+        // The stored setup and this device's chat settings (both shared with Android), then the deck's words.
         setup.apply(to: &c)
         let ids = Set(c.deckIDs)
         c.deckWords = decks.filter { ids.contains($0.id) }.flatMap { $0.cards.map(\.germanWord) }
-        c.correctionTranslationEnabled = modelManager.chatShowCorrectionTranslation
-        c.eagerAssist = modelManager.chatEagerAssist
-        c.autoShowTranslation = modelManager.chatAutoShowTranslation
-        c.hintCount = modelManager.chatHintCount
-        c.autoHints = modelManager.chatAutoHints
-        c.genderColors = modelManager.chatGenderColors
+        ChatPrefs.applyDeviceSettings(to: &c)
         // The résumé stays on the device: re-read it here, capped to this tutor's slice.
         if usesResume, let context = modelContext, let resume = ResumeStore.current(in: context), !resume.kurzprofil.isEmpty {
             c.resumeProfile = String(resume.kurzprofil.prefix(ResumePrompts.kurzprofilSlice(saver: MemorySaver.isActive(for: model))))

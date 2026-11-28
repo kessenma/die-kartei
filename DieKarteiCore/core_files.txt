@@ -1,10 +1,12 @@
 Features/Shared/WordInspection.swift
 Features/Shared/WordTokenizer.swift
 Models/CardImageTiming.swift
+Models/ChatPrefs.swift
 Models/ChatRole.swift
 Models/ChatSetup.swift
 Models/CloudImageModel.swift
 Models/ConversationConfig.swift
+Models/ConversationListFilter.swift
 Models/ConversationSummary.swift
 Models/FlashcardStyle.swift
 Models/Grammar/Article/ArticleGame.swift
@@ -72,6 +74,8 @@ Services/SchreibblattParts.swift
 Services/SchreibblattStats.swift
 Services/Schreiben/WritingDiff.swift
 Services/Schreiben/WritingSentences.swift
+Services/SharedDefaults.swift
+Services/SpeechTranscript.swift
 Services/Spiele/FillInGenerator.swift
 Services/Spiele/FillInJudge.swift
 Services/Spiele/GameLetters.swift

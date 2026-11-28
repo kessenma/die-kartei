@@ -103,6 +103,9 @@ The Android app (`DieKarteiAndroid/`, Skip Fuse) runs the iOS app's own Swift wh
   `@Model`), with the platform part behind a small protocol or host the way
   `ConversationSession`/`ConversationHost` and `StudyDayCounts` work. Don't write the same rule
   twice, once per app.
+- **Settings in shared code go through `SharedDefaults.store`**, never `UserDefaults.standard`:
+  on Android the shared package's own `UserDefaults.standard` is a separate file the app never
+  writes, so a setting would silently read its default. Keys are the iOS ones.
 - **Never add an Apple-only import to a file in `core_files.txt`.** Split the Apple part into its
   own file instead. `python3 scripts/core_sync.py --check` names any listed file that broke.
 - **Synced data has one format.** Adding a field to a synced model: the codec, the record in

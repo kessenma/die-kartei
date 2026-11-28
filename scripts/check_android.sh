@@ -5,7 +5,9 @@
 #   scripts/check_android.sh --full   also the Android store's host tests (KarteiStoreTests)
 #
 # Checks, in order:
-#   1. every file in DieKarteiCore/core_files.txt is still Foundation-only (core_sync.py --check)
+#   1. every file in DieKarteiCore/core_files.txt is still Foundation-only (core_sync.py --check),
+#      and reads settings through SharedDefaults.store (on Android the package's own
+#      UserDefaults.standard is a separate file the app never writes)
 #   2. DieKarteiCore cross-compiles for Android
 #   3. DieKarteiCore tests on the Mac: the sync golden contract (SyncRecordTests), the study-day
 #      rules, the tutor session
@@ -34,7 +36,7 @@ step() {  # step "label" command...
     echo "  ok    $label ($((SECONDS - t0))s)"
   else
     echo "  FAIL  $label"
-    sed 's/\x1b\[[0-9;]*m//g' "$LOG" | grep -E '\.swift:[0-9]+:[0-9]+: error|✘|error:|no longer|  [A-Za-z].*: (imports|has a|listed)' | grep -v ' -o /' | head -25
+    sed 's/\x1b\[[0-9;]*m//g' "$LOG" | grep -E '\.swift:[0-9]+:[0-9]+: error|✘|error:|no longer|  [A-Za-z].*: (imports|has a|listed)|SharedDefaults' | grep -v ' -o /' | head -25
     echo "  (full log: $LOG)"
     exit 1
   fi
@@ -42,6 +44,16 @@ step() {  # step "label" command...
 
 echo "check_android: shared iOS/Android code"
 step "core files are portable" python3 scripts/core_sync.py --check
+shared_defaults() {  # no UserDefaults.standard in shared code but SharedDefaults itself
+  local bad
+  bad=$( { sed 's|^|german-ai-flashcards/|' DieKarteiCore/core_files.txt; find DieKarteiCore/Sources -type f -name '*.swift'; } \
+    | grep -v 'SharedDefaults.swift' | while read -r f; do [ -f "$f" ] && grep -l 'UserDefaults\.standard' "$f"; done | sort -u)
+  if [ -n "$bad" ]; then
+    echo "$bad" | sed 's|$|: uses UserDefaults.standard; use SharedDefaults.store|'
+    return 1
+  fi
+}
+step "shared settings go through SharedDefaults" shared_defaults
 step "core builds for Android" swift build --package-path DieKarteiCore --swift-sdk "$SDK" --triple "$TRIPLE" --static-swift-stdlib
 step "core tests (golden contract, study days, tutor)" swift test --package-path DieKarteiCore
 step "sync engine tests" swift test --package-path KarteiSyncCore

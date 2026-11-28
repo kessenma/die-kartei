@@ -19,10 +19,10 @@ nonisolated enum CloudImageModel: String, CaseIterable, Identifiable, Sendable {
 
     static var current: CloudImageModel {
         get {
-            UserDefaults.standard.string(forKey: selectionDefaultsKey)
+            SharedDefaults.store.string(forKey: selectionDefaultsKey)
                 .flatMap(CloudImageModel.init(rawValue:)) ?? .museImage
         }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: selectionDefaultsKey) }
+        set { SharedDefaults.store.set(newValue.rawValue, forKey: selectionDefaultsKey) }
     }
 
     var id: String { rawValue }
@@ -88,8 +88,8 @@ nonisolated enum CloudImageModel: String, CaseIterable, Identifiable, Sendable {
     /// confirmation is evidently done and Settings stops asking for it; a later
     /// `needsAgeConfirmation` failure (a different account) clears it again.
     var hasDrawnBefore: Bool {
-        get { UserDefaults.standard.bool(forKey: "cloudImageModel.drewOnce." + rawValue) }
-        nonmutating set { UserDefaults.standard.set(newValue, forKey: "cloudImageModel.drewOnce." + rawValue) }
+        get { SharedDefaults.store.bool(forKey: "cloudImageModel.drewOnce." + rawValue) }
+        nonmutating set { SharedDefaults.store.set(newValue, forKey: "cloudImageModel.drewOnce." + rawValue) }
     }
 
     /// The model's page on OpenRouter. For Muse it's where the 18+ confirmation pops up: a

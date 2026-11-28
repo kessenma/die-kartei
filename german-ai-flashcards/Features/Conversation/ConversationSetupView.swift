@@ -666,7 +666,8 @@ struct ConversationSetupView: View {
         let deckLabel = chosenDecks.map(\.topic).joined(separator: ", ")
 
         var config = ConversationConfig(model: model)
-        config.learnerName = ConversationConfig.learnerName(from: modelManager.learnerName)
+        // Settings ▸ Conversation (shared with Android), then this chat's own choices below.
+        ChatPrefs.applyDefaults(to: &config)
         config.mode = mode
         config.deckIDs = chosenDecks.map(\.id)
         config.deckLabel = deckLabel
@@ -698,17 +699,8 @@ struct ConversationSetupView: View {
         config.focusAreas = GrammarFocus.allCases.filter { focus.contains($0) }
         config.level = level
         config.formality = formality
-        config.correctionsEnabled = modelManager.chatCorrectionsEnabled
-        config.correctionTranslationEnabled = modelManager.chatShowCorrectionTranslation
-        config.strictness = CorrectionStrictness(rawValue: modelManager.chatStrictnessRaw) ?? .balanced
-        config.feedbackStyle = FeedbackStyle(rawValue: modelManager.chatFeedbackStyleRaw) ?? .tellMe
-        config.autoPlay = modelManager.autoPlayReplies
         config.inputMode = inputMode
-        config.eagerAssist = modelManager.chatEagerAssist
-        config.autoShowTranslation = modelManager.chatAutoShowTranslation
-        config.hintCount = modelManager.chatHintCount
         config.autoHints = autoHints
-        config.genderColors = modelManager.chatGenderColors
 
         // For a scenario chat with phrases in rotation, review them (and warm up the model)
         // before starting. Otherwise begin immediately, as before.

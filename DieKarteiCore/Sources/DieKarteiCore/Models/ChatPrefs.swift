@@ -1,0 +1,1 @@
+../../../../german-ai-flashcards/Models/ChatPrefs.swift

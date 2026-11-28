@@ -27,10 +27,10 @@ nonisolated enum CardImageTiming: String, CaseIterable, Identifiable {
     /// to be thrown away.
     static var current: CardImageTiming {
         get {
-            UserDefaults.standard.string(forKey: defaultsKey)
+            SharedDefaults.store.string(forKey: defaultsKey)
                 .flatMap(CardImageTiming.init(rawValue:)) ?? .keptCards
         }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: defaultsKey) }
+        set { SharedDefaults.store.set(newValue.rawValue, forKey: defaultsKey) }
     }
 
     var id: String { rawValue }

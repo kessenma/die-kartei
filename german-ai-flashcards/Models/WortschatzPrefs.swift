@@ -27,17 +27,17 @@ nonisolated enum WortschatzPrefs {
     /// How many new words the "Learn more" button adds to today's budget.
     static let bonusStep = 10
 
-    static func newPerDay(_ defaults: UserDefaults = .standard) -> Int {
+    static func newPerDay(_ defaults: UserDefaults = SharedDefaults.store) -> Int {
         let stored = defaults.integer(forKey: newPerDayKey)
         return stored > 0 ? stored : newPerDayDefault
     }
 
-    static func sessionCap(_ defaults: UserDefaults = .standard) -> Int {
+    static func sessionCap(_ defaults: UserDefaults = SharedDefaults.store) -> Int {
         let stored = defaults.integer(forKey: sessionCapKey)
         return stored > 0 ? stored : sessionCapDefault
     }
 
-    static func style(_ defaults: UserDefaults = .standard) -> FlashcardStyle {
+    static func style(_ defaults: UserDefaults = SharedDefaults.store) -> FlashcardStyle {
         guard let raw = defaults.string(forKey: styleKey), let style = FlashcardStyle(rawValue: raw),
               style != .default else { return .anki }
         return style

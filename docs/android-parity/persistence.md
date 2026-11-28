@@ -72,9 +72,18 @@ Built and tested; the rest of this document is the design it follows.
   conversations, deletes it with its messages, and banks chat time when the app goes to the
   background (as iOS). `Models/PhraseRotation.swift` (core) holds which phrases a scenario chat
   works in and what starting with them does; Android has the phrase library (the tutor checks a
-  phrase with iOS's prompts), and the pre-chat phrase preview. Not yet on Android: speaking,
-  the chat-settings screen (hint count, translations; defaults are used), the iOS list's filters,
-  and adding a phrase to a deck.
+  phrase with iOS's prompts), and the pre-chat phrase preview. Adding a phrase to a deck
+  waits for user decks on Android (step 8).
+- **Chat screens (after step 7):** both apps now run the same code for the rest of the chat:
+  `Models/ChatPrefs.swift` (Settings ▸ Conversation: keys, defaults, what a new chat starts from
+  and what a reopened one takes from this device), `Models/ConversationListFilter.swift` (the
+  saved-chats pills) and `Services/SpeechTranscript.swift` (how a spoken turn adds up). Android
+  listens with the platform `SpeechRecognizer` (`GermanEar`, `AndroidSpeechInput`): it stops at
+  every pause, so the turn restarts it until the learner taps stop; on-device first as iOS, and
+  online with a download request when the phone has no German pack. Swipe reveals Delete (and
+  Report on a summarised chat) as on iOS. Shared code reads settings through
+  `SharedDefaults.store` (Android points it at the app's store at launch; `check_android.sh`
+  fails on `UserDefaults.standard` in shared files).
 
 Next: Android writes for the new kinds (steps 6–7: `TutorStore` saving chats and messages,
 `sessionSummarized` into the profile, saved phrases); Auto Backup rules (sync.mdx step 2); a
