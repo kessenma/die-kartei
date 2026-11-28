@@ -268,15 +268,12 @@ extension CardDeckView {
         sessionStartTime = .now
         elapsedSeconds = 0
         isReviewingMissed = false
-        cardOrder = shuffleCards ? Array(cards.indices).shuffled() : Array(cards.indices)
+        // Which cards and in what order: shared with Android (`AnkiSessionRules`).
+        cardOrder = AnkiSessionRules.classicOrder(count: cards.count, shuffle: shuffleCards)
         cardPosition = 0
         currentIndex = cardOrder.first ?? 0
         if isAnkiMode {
-            ankiDueIndices = savedCards.enumerated().compactMap { index, card in
-                guard let next = card.nextReviewDate else { return index }
-                return next <= .now ? index : nil
-            }
-            if shuffleCards { ankiDueIndices.shuffle() }
+            ankiDueIndices = AnkiSessionRules.dueOrder(savedCards.map(\.nextReviewDate), now: .now, shuffle: shuffleCards)
             ankiDuePosition = 0
             if !ankiDueIndices.isEmpty {
                 currentIndex = ankiDueIndices[0]

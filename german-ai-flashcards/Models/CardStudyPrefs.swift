@@ -16,9 +16,9 @@ enum CardStudyPrefs {
     /// Hide a noun's article on the German side until the flip, so every noun is a gender check.
     static let articleQuizKey = "cards.articleQuiz"
     /// A card rated Again comes back a few cards later in the same session.
-    static let repeatMissedKey = "cards.repeatMissed"
+    static let repeatMissedKey = AnkiSessionRules.repeatMissedKey
     /// Deal the cards in a fresh random order every time a session starts (off: the deck's order).
-    static let shuffleKey = "cards.shuffle"
+    static let shuffleKey = AnkiSessionRules.shuffleKey
     /// A phrase card shows with one word missing and four choices (`PhraseGapCardView`) instead of
     /// flipping. On by default.
     static let phraseGapsKey = "cards.phraseGaps"

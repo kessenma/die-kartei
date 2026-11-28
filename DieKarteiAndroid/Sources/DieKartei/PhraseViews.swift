@@ -53,6 +53,7 @@ final class PhraseBook {
 
 struct PhraseLibraryView: View {
     @State var book = PhraseBook.shared
+    @State var addingToDeck = false
 
     var body: some View {
         List {
@@ -91,9 +92,17 @@ struct PhraseLibraryView: View {
         }
         .navigationTitle("Phrase library")
         .toolbar {
+            if !book.phrases.isEmpty {
+                Button { addingToDeck = true } label: {
+                    Image(systemName: "rectangle.stack.badge.plus")
+                }
+            }
             NavigationLink { PhraseEditorView(phrase: nil) } label: {
                 Image(systemName: "plus")
             }
+        }
+        .sheet(isPresented: $addingToDeck) {
+            NavigationStack { PhraseDeckSheet(phrases: book.phrases) }
         }
         .onAppear { book.reload() }
     }

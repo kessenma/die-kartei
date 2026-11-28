@@ -22,6 +22,7 @@ struct LibraryView: View {
             } header: {
                 Text("Decks")
             }
+            UserDecksSection()
             // As iOS: one conversation can't be filtered into anything but itself.
             if history.chats.count > 1 {
                 filterSection

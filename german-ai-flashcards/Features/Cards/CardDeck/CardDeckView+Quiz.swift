@@ -192,9 +192,7 @@ extension CardDeckView {
     }
 
     func finishQuiz() {
-        let correct = cardResults.values.filter { $0 }.count
-        let total = playOrder.count
-        let missed = cardResults.filter { !$0.value }.map { $0.key }.sorted()
+        let (correct, total, missed) = AnkiSessionRules.classicTally(results: cardResults, played: playOrder.count)
         stampDefaultModeAnswers()
         if isReviewingMissed {
             recordMissedReview(cards: total)

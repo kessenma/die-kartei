@@ -28,25 +28,8 @@ import UniformTypeIdentifiers
 @MainActor
 enum DeckImporter {
 
-    enum Failure: LocalizedError {
-        case unreadable
-        case notADeck
-        case fromANewerVersion(Int)
-        case wortschatz
-
-        var errorDescription: String? {
-            switch self {
-            case .unreadable:
-                "This file could not be read."
-            case .notADeck:
-                "This isn't a Die Kartei deck."
-            case .fromANewerVersion:
-                "This deck was shared from a newer version of Die Kartei. Update the app and try again."
-            case .wortschatz:
-                "The Goethe word box can't be shared between devices — it's built from the lists already on each one."
-            }
-        }
-    }
+    /// Why a file couldn't be taken in (shared with Android: DeckTransferFormat.swift).
+    typealias Failure = DeckTransferFailure
 
     enum Mode {
         /// Take the file's deck id: the deck already here is deleted first.
@@ -63,18 +46,8 @@ enum DeckImporter {
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
 
         guard let data = try? Data(contentsOf: url) else { throw Failure.unreadable }
-
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        guard let envelope = try? decoder.decode(DeckTransferEnvelope.self, from: data),
-              envelope.schema == DeckTransfer.schema else {
-            throw Failure.notADeck
-        }
-        guard envelope.schemaVersion <= DeckTransfer.schemaVersion else {
-            throw Failure.fromANewerVersion(envelope.schemaVersion)
-        }
-        guard envelope.deck.generator != "goethe-srs" else { throw Failure.wortschatz }
-
+        // Schema, version and the Wortschatz refusal: the same checks Android runs.
+        let envelope = try DeckTransferFormat.decode(data)
         discardInboxCopy(url)
         return envelope
     }

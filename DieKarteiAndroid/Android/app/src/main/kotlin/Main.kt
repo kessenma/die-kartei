@@ -26,6 +26,8 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.MaterialTheme
 import androidx.core.app.ActivityCompat
+import androidx.activity.result.contract.ActivityResultContracts
+import android.content.Intent
 
 internal val logger: SkipLogger = SkipLogger(subsystem = "die.kartei", category = "DieKartei")
 
@@ -53,10 +55,19 @@ open class MainActivity: AppCompatActivity {
     constructor() {
     }
 
+    /// Library ▸ Import deck: the system picker. Its file comes back as an "open this file"
+    /// intent, the same way a `.kartei` from another app arrives, so `onOpenURL` takes both.
+    private val deckPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            onNewIntent(Intent(Intent.ACTION_VIEW, uri))
+        }
+    }
+
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
         logger.info("starting activity")
         UIApplication.launch(this)
+        german.voice.DeckFiles.shared.openDocument = { deckPicker.launch(kotlin.arrayOf("*/*")) }
         enableEdgeToEdge()
 
         setContent {

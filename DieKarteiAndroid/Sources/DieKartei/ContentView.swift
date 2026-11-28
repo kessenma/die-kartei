@@ -16,6 +16,8 @@ struct ContentView: View {
     @AppStorage("menuTab") var tab = MenuTab.home
     /// Settings ▸ Appearance: "", "light" or "dark".
     @AppStorage("appearance") var appearance = ""
+    /// `.kartei` files arriving from other apps or the picker (Library ▸ Import deck).
+    @State var decks = DeckLibrary.shared
 
     var colorScheme: ColorScheme? {
         switch appearance {
@@ -41,5 +43,18 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(colorScheme)
+        // A deck file handed over (iOS: the `.kartei` document type and DeckImportSheet).
+        .onOpenURL { url in
+            decks.open(url)
+            if decks.pending != nil { tab = .library }
+        }
+        .sheet(item: $decks.pending) { request in
+            NavigationStack { DeckImportSheet(request: request) }
+        }
+        .alert("Deck importieren", isPresented: Binding(get: { decks.problem != nil }, set: { if !$0 { decks.problem = nil } })) {
+            Button("OK") { decks.problem = nil }
+        } message: {
+            Text(decks.problem ?? "")
+        }
     }
 }

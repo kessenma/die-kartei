@@ -1,25 +1,7 @@
 import SwiftUI
 import SwiftData
 
-enum WordTypeFilter: String, CaseIterable, Codable {
-    case all = "All"
-    case nouns = "Nouns"
-    case verbs = "Verbs"
-    case adjectives = "Adjectives"
-    case verbsAndAdjectives = "Verbs & Adj."
-
-    var includesVerbs: Bool {
-        self == .all || self == .verbs || self == .verbsAndAdjectives
-    }
-
-    var includesAdjectives: Bool {
-        self == .all || self == .adjectives || self == .verbsAndAdjectives
-    }
-
-    var includesNouns: Bool {
-        self == .all || self == .nouns
-    }
-}
+// `WordTypeFilter` lives in Models/DeckKind.swift (shared with Android).
 
 struct HomeView: View {
     @Bindable var service: GenerationCoordinator

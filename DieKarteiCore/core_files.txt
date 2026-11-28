@@ -1,5 +1,6 @@
 Features/Shared/WordInspection.swift
 Features/Shared/WordTokenizer.swift
+Models/AnkiRound.swift
 Models/CardImageTiming.swift
 Models/ChatPrefs.swift
 Models/ChatRole.swift
@@ -8,6 +9,7 @@ Models/CloudImageModel.swift
 Models/ConversationConfig.swift
 Models/ConversationListFilter.swift
 Models/ConversationSummary.swift
+Models/DeckKind.swift
 Models/FlashcardStyle.swift
 Models/Grammar/Article/ArticleGame.swift
 Models/Grammar/Article/ArticleRules.swift
@@ -32,6 +34,7 @@ Models/JobPostingCapture.swift
 Models/LearnerMemory.swift
 Models/MLXModel+Catalog.swift
 Models/ModelConfiguration.swift
+Models/PhraseCards.swift
 Models/PhraseRotation.swift
 Models/PlacementAttempt.swift
 Models/PlacementResult.swift
@@ -47,6 +50,7 @@ Models/WordArt/WordArtKey.swift
 Models/WordArt/WordArtStyle.swift
 Models/Worksheet.swift
 Models/WortschatzPrefs.swift
+Models/WortschatzScope.swift
 Services/A1VocabService.swift
 Services/AnswerTimeLog.swift
 Services/AppResources.swift
@@ -54,6 +58,8 @@ Services/CardKind.swift
 Services/ChatTurnNormalizer.swift
 Services/ClassTutorContext+Prompt.swift
 Services/ConversationPrompts.swift
+Services/DeckTransferFormat.swift
+Services/DeckTransferRecords.swift
 Services/FlashcardTopicService.swift
 Services/GermanGenderInference.swift
 Services/Grammar/GrammarExerciseService.swift

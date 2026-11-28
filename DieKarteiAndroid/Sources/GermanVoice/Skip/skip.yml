@@ -3,3 +3,9 @@
 skip:
   mode: 'transpiled'
   bridging: true
+# DeckFiles.share hands a deck to other apps through androidx's FileProvider.
+build:
+  contents:
+    - block: 'dependencies'
+      contents:
+        - 'implementation("androidx.core:core:1.16.0")'

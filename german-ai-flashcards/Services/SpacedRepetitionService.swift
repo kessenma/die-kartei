@@ -13,10 +13,7 @@ enum SpacedRepetitionService {
     static func dueCards(in deck: SavedDeck) -> [SavedCard] {
         let now = Date.now
         return deck.cards
-            .filter { card in
-                guard let next = card.nextReviewDate else { return true } // never reviewed
-                return next <= now
-            }
+            .filter { AnkiSessionRules.isDue(nextReviewDate: $0.nextReviewDate, now: now) }
             .sorted { $0.sortOrder < $1.sortOrder }
     }
 

@@ -88,7 +88,7 @@ struct CardDeckView: View {
     /// How often each card has been put back into the queue (capped so a card can't loop forever).
     @State var requeueCounts: [Int: Int] = [:]
     /// How many cards later a missed card comes back.
-    let requeueGap = 3
+    let requeueGap = AnkiSessionRules.requeueGap
     /// The summary's "Review Missed Cards" round is running: the play order (`cardOrder`, or
     /// `ankiDueIndices` in SRS modes) holds only the missed cards. The session itself was recorded
     /// when it finished, so this round is practice — it banks time on the study log, not a score.
@@ -170,12 +170,9 @@ struct CardDeckView: View {
     /// records the lapse either way. Returns whether the card was actually re-queued.
     @discardableResult
     func requeue(_ idx: Int) -> Bool {
-        sessionLapses.insert(idx)
-        guard repeatMissed, requeueCounts[idx, default: 0] < 2 else { return false }
-        requeueCounts[idx, default: 0] += 1
-        let at = min(ankiDuePosition + 1 + requeueGap, ankiDueIndices.count)
-        ankiDueIndices.insert(idx, at: at)
-        return true
+        // Shared with Android (`AnkiSessionRules`).
+        AnkiSessionRules.requeue(idx, into: &ankiDueIndices, after: ankiDuePosition, lapses: &sessionLapses,
+                                 counts: &requeueCounts, repeatMissed: repeatMissed)
     }
 
     /// Resets the re-queue bookkeeping for a fresh pass over `ankiDueIndices`.

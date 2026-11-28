@@ -92,9 +92,7 @@ extension CardDeckView {
     /// every other card was rated exactly once (that rating still sits in `ankiRatings`).
     /// `ankiRatings` itself holds a re-queued card's *last* rating.
     var ankiFirstRatings: [Int: AnkiRating] {
-        var first = ankiRatings.filter { !sessionLapses.contains($0.key) }
-        for idx in sessionLapses { first[idx] = .again }
-        return first
+        AnkiSessionRules.firstRatings(ankiRatings, lapses: sessionLapses)
     }
 
     /// The Anki summary's centrepiece: four ratings don't fit an n / n score, so show how the
@@ -148,9 +146,7 @@ extension CardDeckView {
     }
 
     func finishAnkiSession() {
-        let total = sessionDueCount
-        let missed = sessionLapses.sorted()
-        let correct = max(0, total - missed.count)
+        let (correct, total, missed) = AnkiSessionRules.tally(dueCount: sessionDueCount, lapses: sessionLapses)
         if isReviewingMissed {
             recordMissedReview(cards: total)
         } else {

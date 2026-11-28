@@ -85,6 +85,24 @@ Built and tested; the rest of this document is the design it follows.
   `SharedDefaults.store` (Android points it at the app's store at launch; `check_android.sh`
   fails on `UserDefaults.standard` in shared files).
 
+- **Decks, files and results (step 8):** the `.kartei` file is shared code
+  (`Services/DeckTransferFormat.swift`: the envelope, encode, decode and its refusals), and so is
+  what a file becomes as records (`Services/DeckTransferRecords.swift`). `DeckTransferParityTests`
+  (iOS) checks that a file imported by both apps syncs as the same payload and that both apps
+  write the same bytes for a deck. Card sessions run on shared rules (`Models/AnkiRound.swift`:
+  which cards are due, the Didn't-know card returning three cards later, first ratings, the
+  score; Classic's tally) and write `QuizResultRecord.cardSession`, the row iOS's
+  `saveQuizResult` makes (parity-tested for Anki, Leitner and Classic). `Models/DeckKind.swift`
+  and `Models/WortschatzScope.swift` moved out of SwiftUI files so both apps sort decks and label
+  Wortschatz results the same. Android: Library ▸ My decks (tap to study in the Settings card
+  style, swipe to delete or share, ⓘ for past results), Import deck (the system picker) and
+  "open with" from other apps (`DeckFiles`, a `content://` link into `onOpenURL`), the import
+  sheet with Replace / Keep both, a Wortschatz session's result on the Wortschatz deck, and
+  phrases to flashcards (`Models/PhraseCards.swift`, shared). Deliberate differences: Leitner
+  isn't on Android yet (a deck set to Leitner studies with Anki; its boxes need the session
+  count); a half-done session is logged on leave (as for Wortschatz, no pause yet); Android's
+  file says no app version.
+
 Next: Android writes for the new kinds (steps 6–7: `TutorStore` saving chats and messages,
 `sessionSummarized` into the profile, saved phrases); Auto Backup rules (sync.mdx step 2); a
 transport. Android code that adds a slip or self-report to the profile must write the

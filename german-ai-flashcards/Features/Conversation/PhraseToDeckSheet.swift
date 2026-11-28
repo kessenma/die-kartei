@@ -15,7 +15,7 @@ struct PhraseToDeckSheet: View {
 
     @State private var selected: Set<UUID> = []
     @State private var selectedDeckID: UUID?          // nil == new deck
-    @State private var newDeckName = "Sätze"
+    @State private var newDeckName = PhraseCards.newDeckName
     @State private var savedSummary: String?
     @State private var didInit = false
 
@@ -135,57 +135,52 @@ struct PhraseToDeckSheet: View {
         selected = allSelected ? [] : Set(phrases.map(\.id))
     }
 
+    /// What the cards are is shared with Android (`PhraseCards`).
     private func save() {
         let chosen = phrases.filter { selected.contains($0.id) }
         guard !chosen.isEmpty else { return }
+        let shared = chosen.map { PhraseCards.Phrase(german: $0.german, english: $0.english) }
 
         if let deckID = selectedDeckID, let deck = existingDecks.first(where: { $0.id == deckID }) {
-            let existing = Set(deck.cards.map { CardKind.matchKey($0.germanWord) })
-            var order = (deck.cards.map(\.sortOrder).max() ?? -1) + 1
-            var added = 0
-            for phrase in chosen {
-                guard !existing.contains(CardKind.matchKey(phrase.german)) else { continue }
+            let cards = PhraseCards.merge(shared, intoDeckWith: deck.cards.map(\.germanWord),
+                                          lastOrder: deck.cards.map(\.sortOrder).max())
+            for made in cards {
                 let card = SavedCard(
-                    germanWord: phrase.german,
-                    englishTranslation: phrase.english,
-                    wordType: CardKind.isPhrase(phrase.german) ? CardKind.phrase : nil,
+                    germanWord: made.german,
+                    englishTranslation: made.english,
+                    wordType: made.wordType,
                     article: nil,
-                    sortOrder: order
+                    sortOrder: made.sortOrder
                 )
                 card.deck = deck
                 deck.cards.append(card)
                 modelContext.insert(card)
-                order += 1
-                added += 1
             }
             deck.wordCount = deck.cards.count
             try? modelContext.save()
-            savedSummary = added == 0
-                ? "Those phrases are already in “\(deck.topic)”."
-                : "Added \(added) phrase\(added == 1 ? "" : "s") to “\(deck.topic)”."
+            savedSummary = PhraseCards.addedSummary(cards.count, deck: deck.topic)
         } else {
-            let name = newDeckName.trimmingCharacters(in: .whitespaces)
-            let vocab = chosen.map { phrase in
+            let vocab = PhraseCards.newDeck(shared).map { made in
                 VocabCard(
-                    germanWord: phrase.german,
-                    englishTranslation: phrase.english,
-                    wordType: CardKind.isPhrase(phrase.german) ? CardKind.phrase : nil,
+                    germanWord: made.german,
+                    englishTranslation: made.english,
+                    wordType: made.wordType,
                     article: nil,
                     exampleSentence: nil,
                     conjugations: nil
                 )
             }
             let deck = SavedDeck(
-                topic: name.isEmpty ? "Sätze" : name,
+                topic: PhraseCards.deckName(newDeckName),
                 wordCount: vocab.count,
                 includeExamples: false,
                 includeGender: false,
                 vocabCards: vocab
             )
-            deck.generatorRaw = "phrase"
+            deck.generatorRaw = PhraseCards.generator
             modelContext.insert(deck)
             try? modelContext.save()
-            savedSummary = "Created “\(deck.topic)” with \(vocab.count) card\(vocab.count == 1 ? "" : "s")."
+            savedSummary = PhraseCards.createdSummary(vocab.count, deck: deck.topic)
         }
     }
 }

@@ -1,38 +1,7 @@
 import Foundation
 import SwiftData
 
-/// Codable representation of a conjugation for persistence.
-struct StoredConjugation: Codable {
-    var tense: String
-    var ich: String
-    var du: String
-    var erSieEs: String
-    var wir: String
-    var ihr: String
-    var sieSie: String
-
-    init(from conjugation: Conjugation) {
-        self.tense = conjugation.tense
-        self.ich = conjugation.ich
-        self.du = conjugation.du
-        self.erSieEs = conjugation.erSieEs
-        self.wir = conjugation.wir
-        self.ihr = conjugation.ihr
-        self.sieSie = conjugation.sieSie
-    }
-
-    func toConjugation() -> Conjugation {
-        Conjugation(
-            tense: tense,
-            ich: ich,
-            du: du,
-            erSieEs: erSieEs,
-            wir: wir,
-            ihr: ihr,
-            sieSie: sieSie
-        )
-    }
-}
+// `StoredConjugation` lives in Services/DeckTransferFormat.swift (shared with Android).
 
 @Model
 final class SavedCard {

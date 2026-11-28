@@ -51,68 +51,7 @@ extension UTType {
 
 // MARK: - Envelope
 
-struct DeckTransferEnvelope: Codable {
-    struct App: Codable {
-        var name: String
-        var version: String?
-        var build: String?
-    }
-
-    /// One card's scheduling state. Optional on `Card` so a deck can be shared without it.
-    struct Progress: Codable {
-        var easeFactor: Double
-        var interval: Int
-        var repetitions: Int
-        var nextReviewDate: Date?
-        var totalReviews: Int
-        var lapses: Int
-        var leitnerBox: Int
-        var lastReviewedAt: Date?
-        var lastReviewWasCorrect: Bool?
-        var firstReviewedAt: Date?
-    }
-
-    struct Card: Codable {
-        var id: String
-        var germanWord: String
-        var englishTranslation: String
-        var wordType: String?
-        var article: String?
-        var exampleSentence: String?
-        /// Structured rather than the stored `Data` blob: a JSON file with base64 inside it is a
-        /// file no one can read, and the blob is only ever `[StoredConjugation]` anyway.
-        var conjugations: [StoredConjugation]?
-        var sortOrder: Int
-        var progress: Progress?
-    }
-
-    struct Deck: Codable {
-        var id: String
-        var topic: String
-        var wordCount: Int
-        var includeExamples: Bool
-        var includeGender: Bool
-        var wordTypeFilter: String
-        var includeConjugations: Bool
-        var selectedTenses: [String]
-        var createdAt: Date
-        var generationTimeSeconds: Double
-        /// `SavedDeck.generatorRaw` — which model or source made this deck, so the receiving
-        /// device shows the same badge in the Library.
-        var generator: String
-        var cards: [Card]
-    }
-
-    var schema: String = DeckTransfer.schema
-    var schemaVersion: Int = DeckTransfer.schemaVersion
-    var exportedAt: Date
-    var app: App
-    /// False in schema 1 — see the header. Here so a package format never needs a version bump.
-    var includesImages: Bool = false
-    var deck: Deck
-
-    var includesProgress: Bool { deck.cards.contains { $0.progress != nil } }
-}
+// `DeckTransferEnvelope` and the encode/decode rules live in DeckTransferFormat.swift (shared with Android).
 
 // MARK: - Document
 
@@ -133,8 +72,8 @@ struct DeckTransferDocument: Transferable {
 /// is a plain `Data` value, so the share sheet's own export work stays off this actor.
 @MainActor
 enum DeckTransfer {
-    static let schema = "die-kartei.deck"
-    static let schemaVersion = 1
+    static let schema = DeckTransferFormat.schema
+    static let schemaVersion = DeckTransferFormat.schemaVersion
 
     /// The shareable file for one deck, or nil if the deck cannot travel.
     ///
@@ -143,11 +82,17 @@ enum DeckTransfer {
     /// from another device would break the hub rather than add anything. The Library list already
     /// hides it — this is the belt to that suspenders.
     static func document(for deck: SavedDeck) -> DeckTransferDocument? {
-        guard deck.kind != .goetheSRS else { return nil }
+        guard let envelope = envelope(for: deck),
+              let data = try? DeckTransferFormat.encode(envelope) else { return nil }
+        return DeckTransferDocument(data: data, fileName: DeckTransferFormat.fileName(topic: deck.topic))
+    }
 
+    /// The file's contents for one deck, or nil if the deck cannot travel.
+    static func envelope(for deck: SavedDeck, exportedAt: Date = Date()) -> DeckTransferEnvelope? {
+        guard DeckTransferFormat.canExport(generatorRaw: deck.generatorRaw) else { return nil }
         let info = Bundle.main.infoDictionary
-        let envelope = DeckTransferEnvelope(
-            exportedAt: Date(),
+        return DeckTransferEnvelope(
+            exportedAt: exportedAt,
             app: .init(
                 name: "Die Kartei",
                 version: info?["CFBundleShortVersionString"] as? String,
@@ -170,13 +115,6 @@ enum DeckTransfer {
                     .map(card)
             )
         )
-
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-
-        guard let data = try? encoder.encode(envelope) else { return nil }
-        return DeckTransferDocument(data: data, fileName: "\(fileStem(deck.topic)).kartei")
     }
 
     private static func card(_ card: SavedCard) -> DeckTransferEnvelope.Card {
@@ -196,17 +134,9 @@ enum DeckTransfer {
         )
     }
 
-    /// A never-studied card carries no progress block, so the file stays readable and an untouched
-    /// deck exports as plain content.
+    /// A never-studied card carries no progress block (`Progress.ifStudied`, shared).
     private static func progress(_ card: SavedCard) -> DeckTransferEnvelope.Progress? {
-        let untouched = card.totalReviews == 0
-            && card.repetitions == 0
-            && card.leitnerBox == 0
-            && card.lapses == 0
-            && card.nextReviewDate == nil
-            && card.lastReviewedAt == nil
-        guard !untouched else { return nil }
-        return DeckTransferEnvelope.Progress(
+        DeckTransferEnvelope.Progress(
             easeFactor: card.easeFactor,
             interval: card.interval,
             repetitions: card.repetitions,
@@ -217,7 +147,7 @@ enum DeckTransfer {
             lastReviewedAt: card.lastReviewedAt,
             lastReviewWasCorrect: card.lastReviewWasCorrect,
             firstReviewedAt: card.firstReviewedAt
-        )
+        ).ifStudied
     }
 
     /// A file name that survives a topic with slashes, colons or emoji in it.
@@ -225,12 +155,6 @@ enum DeckTransfer {
     /// `nonisolated` and shared rather than private: `SchreibblattPDF` names its exports the same
     /// way and has no reason to own a second copy of this. Pure string work, so it needs no actor.
     nonisolated static func fileStem(_ topic: String, fallback: String = "deck") -> String {
-        let allowed = topic.unicodeScalars.map { scalar -> Character in
-            CharacterSet.alphanumerics.contains(scalar) ? Character(scalar) : "-"
-        }
-        let collapsed = String(allowed)
-            .split(separator: "-", omittingEmptySubsequences: true)
-            .joined(separator: "-")
-        return collapsed.isEmpty ? fallback : String(collapsed.prefix(40))
+        DeckTransferFormat.fileStem(topic, fallback: fallback)
     }
 }

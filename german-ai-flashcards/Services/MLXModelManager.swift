@@ -20,7 +20,7 @@ class MLXModelManager {
     /// The preferred flashcard review style.
     var flashcardStyle: FlashcardStyle {
         didSet {
-            UserDefaults.standard.set(flashcardStyle.rawValue, forKey: "flashcardStyle")
+            UserDefaults.standard.set(flashcardStyle.rawValue, forKey: AnkiSessionRules.flashcardStyleKey)
         }
     }
 
@@ -415,7 +415,7 @@ class MLXModelManager {
         let modelRaw = UserDefaults.standard.string(forKey: "selectedMLXModel") ?? ""
         self.selectedMLXModel = MLXModel(rawValue: modelRaw) ?? firstRunDefault
 
-        let styleRaw = UserDefaults.standard.string(forKey: "flashcardStyle") ?? ""
+        let styleRaw = UserDefaults.standard.string(forKey: AnkiSessionRules.flashcardStyleKey) ?? ""
         self.flashcardStyle = FlashcardStyle(rawValue: styleRaw) ?? .default
         self.flashcardIllustrationsEnabled = UserDefaults.standard.bool(forKey: "flashcardIllustrationsEnabled")
 

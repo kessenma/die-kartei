@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Files DeckFiles.share offers to other apps: a deck written to the cache for sending. -->
+<paths>
+    <cache-path name="shared" path="shared/" />
+</paths>
